@@ -7,7 +7,7 @@ pip install -r requirements.txt
 Run Crawlers
 ------------
 ```
-python CRAWLER_NAME.py # e.g. python marriot.py
+python CRAWLER_NAME.py # e.g. python marriott.py
 ```
 
 Notes
