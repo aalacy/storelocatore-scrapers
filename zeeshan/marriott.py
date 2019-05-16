@@ -38,9 +38,10 @@ class Marriott(base.Base):
                 if r2.status_code == 200:
                     text = r2.text.encode('ascii', 'ignore')
                     hxt = html.fromstring(text)
+                    image_source = xpath(hxt, "//div[contains(@class,'l-header-section')]//img/@src")
                     yield {
                         'locator_domain': self.domain_name
-                        ,'location_name': None
+                        ,'location_name': xpath(hxt, '//span[@itemprop="name"]/text()')
                         ,'street_address': xpath(hxt, '//span[@itemprop="streetAddress"]/text()')
                         ,'city': xpath(hxt, '//span[@itemprop="addressLocality"]/text()')
                         ,'state': xpath(hxt, '//span[@itemprop="addressRegion"]/text()')
@@ -48,7 +49,7 @@ class Marriott(base.Base):
                         ,'country_code': xpath(hxt, '//span[@itemprop="addressCountry"]/text()')
                         ,'store_number': None
                         ,'phone': xpath(hxt, '//span[@itemprop="telephone"]/text()')
-                        ,'location_type': 'Hotel'
+                        ,'location_type': image_source.split('/')[5]
                         ,'naics_code': None 
                         ,'latitude': xpath(hxt, '//span[@itemprop="latitude"]/text()')
                         ,'longitude': xpath(hxt, '//span[@itemprop="longitude"]/text()')
