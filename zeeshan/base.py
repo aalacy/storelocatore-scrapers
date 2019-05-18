@@ -17,7 +17,8 @@ class Base(object):
     rows = []
 
     def write_to_csv(self):
-        with open(self.csv_filename, 'w') as csvfile:
+        output_file = 'output/%s' % self.csv_filename
+        with open(output_file, 'w') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=self.csv_fieldnames)
             writer.writeheader()
             for row in self.rows:
