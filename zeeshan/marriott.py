@@ -4,11 +4,7 @@ from lxml import html
 
 from pdb import set_trace as bp
 
-def xpath(hxt, query_string):
-    hxp = hxt.xpath(query_string)
-    if hxp:
-        return hxp[0].encode('ascii', 'ignore')
-    return None
+xpath = base.xpath
 
 class Marriott(base.Base):
 
