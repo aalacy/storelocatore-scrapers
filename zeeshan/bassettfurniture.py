@@ -16,7 +16,7 @@ class BassettFurniture(base.Base):
         geo = row.get('_geoloc', {})
         return {
             'locator_domain': row.get('domain')
-            ,'location_name': None
+            ,'location_name': attributes.get('name')
             ,'street_address': attributes.get('address1')
             ,'city': attributes.get('city')
             ,'state': attributes.get('state')
