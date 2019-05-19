@@ -5,7 +5,6 @@ from pdb import set_trace as bp
 class ShopnSaveFood(base.Base):
 
     csv_filename = 'shopnsavefood.csv'
-    csv_fieldnames = ['locator_domain', 'location_name', 'street_address', 'city', 'state', 'zip', 'country_code', 'store_number', 'phone', 'location_type', 'naics_code', 'latitude', 'longitude', 'hours_of_operation']
     domain_name = 'shopnsavefood.com'
     default_country = 'US'
     url = 'https://www.shopnsavefood.com/DesktopModules/StoreLocator/API/StoreWebAPI.asmx/GetAllStores'
