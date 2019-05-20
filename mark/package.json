@@ -1,0 +1,28 @@
+{
+  "name": "safegraph",
+  "version": "1.0.0",
+  "description": "Store Locator Crawl",
+  "main": "app.js",
+  "scripts": {
+    "marriott": "node ./marriott/crawl.js"
+  },
+  "author": "Mark Wong",
+  "license": "ISC",
+  "dependencies": {
+    "fs-extra": "^8.0.1",
+    "moment": "^2.24.0",
+    "puppeteer": "^1.16.0"
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/bearsworth/safegraph.git"
+  },
+  "bugs": {
+    "url": "https://gitlab.com/bearsworth/safegraph/issues"
+  },
+  "homepage": "https://gitlab.com/bearsworth/safegraph#readme"
+}
