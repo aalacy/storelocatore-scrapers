@@ -1,6 +1,8 @@
 To get started first ensure all packages are installed. 
 To run the crawler, simply type: npm run marriott (if the crawl is for Marriott hotels).
 
+The .csv file will be generated in the folder "Data". One warning: You will need to delete or change the name of the file after the crawler has finished or before the next start (fixable in future). The folder should either be empty or any files should have a different name then "marriott.csv".
+
 Additionally, there are various settings which can be changed.
 To change any default settings go search for the config.json file.
 
@@ -27,4 +29,5 @@ Notes:
 Headless is currently set to "false". This forces a chrome browser to pop up to ensure the crawler is working properly, but to disable this, simply set to "true".
 
 DelayTime (in ms): Sets the amount of delay for the website being scraped/crawled. Greater than 5000 (5 seconds) is preferred due to server sending back over load errors or blacklisting you. 
+
 
