@@ -1,7 +1,9 @@
-To get started first ensure all packages are installed. 
-To run the crawler, simply type: npm run marriott (if the crawl is for Marriott hotels).
+To get started first ensure all packages are installed. (npm i)
+To run the crawler, simply type: 
+npm run marriott (Marriott hotels)
+npm run shopnsave (shopnsave data).
 
-The .csv file will be generated in the folder "Data". One warning: You will need to delete or change the name of the file after the crawler has finished or before the next start (fixable in future). The folder should either be empty or any files should have a different name then "marriott.csv".
+The .csv file will be generated in the folder "Data". One warning: You will need to delete or change the name of the file after the crawler has finished for Marriot only or before the next start (fixable in future). The folder should either be empty or any files should have a different name then "marriott.csv".
 
 Additionally, there are various settings which can be changed.
 To change any default settings go search for the config.json file.
@@ -19,12 +21,14 @@ Example:
     "Website_Settings": {
         "Marriott": {
             "filenameBody": "marriott"
+        },
+        "ShopNSave": {
+            "filenameBody": "shopnsave"
         }
     }
-    
 }
 
-Notes:
+Other Notes:
 
 Headless is currently set to "false". This forces a chrome browser to pop up to ensure the crawler is working properly, but to disable this, simply set to "true".
 
