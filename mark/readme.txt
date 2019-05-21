@@ -3,8 +3,6 @@ To run the crawler, simply type:
 npm run marriott (Marriott hotels)
 npm run shopnsave (shopnsave data).
 
-The .csv file will be generated in the folder "Data". One warning: You will need to delete or change the name of the file after the crawler has finished for Marriot only or before the next start (fixable in future). The folder should either be empty or any files should have a different name then "marriott.csv".
-
 Additionally, there are various settings which can be changed.
 To change any default settings go search for the config.json file.
 
