@@ -35,13 +35,16 @@ const   axios       = require('axios'),
         
             //For Store Data -> Combines hours in one property, fills in empty data, formats phone numbers to 10 digits 
             for await (let obj of storeData) {
-                if (typeof(obj['Hours2']) != undefined && obj['Hours2'] != '') {
+                
+                if (obj.hasOwnProperty('Hours2') && obj['Hours2'] != '') {
                     obj['Hours'] = obj['Hours'] + ', ' + (obj['Hours2']);
                 }
+
                 for await(let property of Object.keys(obj)){
                     if (obj[property] === '') {
                         obj[property] = 'NO-DATA';
                     }
+                    
                     if (property === 'Phone' && obj[property] != 'NO-DATA'){
                         obj[property] = converter.formatPhoneNumber(obj[property]);
                     }
