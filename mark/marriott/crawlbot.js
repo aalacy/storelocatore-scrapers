@@ -7,12 +7,12 @@ const   puppeteer   = require('puppeteer'),
         moment      = require('moment'),
         path        = require('path');
 
-async function startCrawling(initialClick, secondaryClick, country) {
+async function startCrawling(initialClick, secondaryClick, country, fileLocation) {
 
-    let click1 = initialClick;
-    let click2 = secondaryClick;
-    let fileLocation = `${config.General_Settings.filenamePrefix}${config.Website_Settings.Marriott.filenameBody}.csv`;
-
+    const click1        = initialClick,
+          click2        = secondaryClick,
+          fileLocationMemory  = fileLocation;
+    
     try {
 
         const browser = await puppeteer.launch({ headless: config.General_Settings.headless });
@@ -24,9 +24,6 @@ async function startCrawling(initialClick, secondaryClick, country) {
         await page.setUserAgent(config.General_Settings.userAgent);
 
         await page.goto(marriottDirectory);
-
-        //Create .CSV file and prepopulate with columns - check if we already have data. If we do, don't create a new file. 
-        if (await fs.existsSync(path.join(__dirname, fileLocation))) { } else { await fs.writeFile(path.join(__dirname, fileLocation), config.General_Settings.headerRow); }
     
         //Waits for Canada Selector before proceeding to search page
         await page.waitForSelector('.l-accordion');
@@ -95,7 +92,7 @@ async function startCrawling(initialClick, secondaryClick, country) {
                     hours_of_operation  = 'NO-DATA'
 
                 await fs.appendFile(
-                    path.join(__dirname, fileLocation), 
+                    path.join(__dirname, fileLocationMemory), 
                     `"${locatorDomain}","${locationName}","${streetAddress}","${city}","${state}","${zip}","${countryCode}","${storeNumber}","${phone}","${locationType}","${naics}","${latitude}","${longitude}","${hours_of_operation}"\n`
                 );
             }
