@@ -1,3 +1,5 @@
+const parseString = require('xml2js').parseString;
+
 //Warning does not work for arrays with deeply nested objects. Arrays should be of equal length
 const combineObjArray = (array1, array2) => {
     let firstArray = array1.slice();
@@ -67,13 +69,22 @@ const formatOuterArray = (array) => {
     return arrayCopy;
 }
 
-const formatPhoneNumbers = (array) => {
-
+const xml2json = (xmlString) => {
+    return new Promise((fullfill, reject) => {
+        parseString(xmlString, {explicitArray : false}, (err,result) => {
+            if (err) {
+                reject(err);
+            } else {
+                fullfill(result);
+            }
+        });
+    });
 }
 
 module.exports = {
     combineObjArray,
     formatPhoneNumber,
     removeSpaces,
-    formatInnerArray
+    formatInnerArray,
+    xml2json
 }
