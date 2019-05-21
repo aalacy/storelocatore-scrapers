@@ -7,6 +7,12 @@ def xpath(hxt, query_string):
         return hxp[0].encode('ascii', 'ignore')
     return None
 
+def query_params(url):
+    try:
+        return {obj.split('=')[0]: obj.split('=')[1].replace('+', ' ') for obj in url.split('?')[1].split('&')}
+    except:
+        return {}
+
 class DataMixin(object):
     us_states = ['alabama ', 'alaska ', 'arizona ', 'arkansas ', 'california ', 'colorado ', 'connecticut ', 'delaware ', 'florida ', 'georgia ', 'hawaii ', 'idaho ', 'illinois indiana ', 'iowa ', 'kansas ', 'kentucky ', 'louisiana ', 'maine ', 'maryland ', 'massachusetts ', 'michigan ', 'minnesota ', 'mississippi ', 'missouri ', 'montana nebraska ', 'nevada ', 'new hampshire ', 'new jersey ', 'new mexico ', 'new york ', 'north carolina ', 'north dakota ', 'ohio ', 'oklahoma ', 'oregon ', 'pennsylvania rhode island ', 'south carolina ', 'south dakota ', 'tennessee ', 'texas ', 'utah ', 'vermont ', 'virginia ', 'washington ', 'west virginia ', 'wisconsin ', 'wyoming']
     ca_provinces = ['alberta', 'british columbia', 'manitoba', 'new brunswick', 'newfoundland and labrador', 'nova scotia', 'ontario', 'prince edward island', 'quebec', 'saskatchewan']
