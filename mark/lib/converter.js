@@ -27,6 +27,11 @@ const countryCode = (string) => {
     }
 }
 
+const sanitizeInput = (string) => {
+    
+    return string.replace(',', '').replace('"', '').replace('"','');
+}
+
 const validateData = (anything) => {
     if (anything === undefined || anything === null) {
         return 'NO-DATA';
@@ -86,5 +91,6 @@ module.exports = {
     formatPhoneNumber,
     removeSpaces,
     formatInnerArray,
-    xml2json
+    xml2json,
+    sanitizeInput
 }

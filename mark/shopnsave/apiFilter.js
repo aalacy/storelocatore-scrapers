@@ -26,46 +26,53 @@ const   axios       = require('axios'),
                 await fs.writeFile(path.join(__dirname, fileLocation), config.General_Settings.headerRow); 
             }
 
+
             // const allLocationsData = data['ArrayOfStore']['Store]; <--- Use for all data including gas stations
             const storeData = data['ArrayOfStore']['Store'].filter((x) => x.IsGasStation === 'false');
+            const gasStation = data['ArrayOfStore']['Store'].filter((x) => x.IsGasStation === 'true');
+
+            
         
-            //Combines hours in one property, fills in empty data, formats phone numbers to 10 digits 
+            //For Store Data -> Combines hours in one property, fills in empty data, formats phone numbers to 10 digits 
             for await (let obj of storeData) {
-                if ( typeof(obj['Hours2'] != undefined) && obj['Hours2'] != '') {
+                if (typeof(obj['Hours2']) != undefined && obj['Hours2'] != '') {
                     obj['Hours'] = obj['Hours'] + ', ' + (obj['Hours2']);
                 }
                 for await(let property of Object.keys(obj)){
                     if (obj[property] === '') {
                         obj[property] = 'NO-DATA';
                     }
-                    if (property === "Phone" && obj[property] != 'NO-DATA'){
+                    if (property === 'Phone' && obj[property] != 'NO-DATA'){
                         obj[property] = converter.formatPhoneNumber(obj[property]);
+                    }
+                    if (property === 'IsGasStation' && obj[property] === 'false') {
+                        obj[property] = 'Store';
+                    }
+                }
+            }
+
+            //For Gas Station Data -> Since it has no phone numbers or hours of operation
+            for await (let obj of gasStation) {
+                for await (let property of Object.keys(obj)) {
+                    obj[property] = converter.sanitizeInput(obj[property]);
+                    if (obj[property] === '') {
+                        obj[property] = 'NO-DATA';
+                    }
+                    if (!obj.hasOwnProperty('Phone')) {
+                        obj['Phone'] = 'NO-DATA';
+                    }
+                    if (!obj.hasOwnProperty('Hours')) {
+                        obj['Hours'] = 'NO-DATA';
+                    }
+                    if (property === 'IsGasStation' && obj[property] === 'true') {
+                        obj[property] = 'Gas Station';
                     }
                 }
             }
         
-            //Upload data to .csv -> There is no data for country. 'US' used a placeholder until it becomes necessary to compare address with US addresses. 
-            for await (let obj of storeData){
-                let locatorDomain       = 'shopnsavefood.com__api',
-                    locationName        = obj.Name,
-                    streetAddress       = obj.Address1,
-                    city                = obj.City,
-                    state               = obj.State,
-                    zip                 = obj.Zip,
-                    countryCode         = 'US',
-                    storeNumber         = obj.StoreID,
-                    phone               = obj.Phone,
-                    locationType        = 'NO-DATA',
-                    naics               = 'NO-DATA',
-                    latitude            = obj.Latitude,
-                    longitude           = obj.Longitude,
-                    hours_of_operation  = obj.Hours
-            
-                await fs.appendFile(
-                    path.join(__dirname, fileLocation), 
-                    `"${locatorDomain}","${locationName}","${streetAddress}","${city}","${state}","${zip}","${countryCode}","${storeNumber}","${phone}","${locationType}","${naics}","${latitude}","${longitude}","${hours_of_operation}"\n`
-                );
-            }
+            //Upload storeData, then gasStationData
+            await updateShopCSV(storeData, fileLocation);
+            await updateShopCSV(gasStation, fileLocation);
             
         } else {
             throw response.status;
@@ -76,7 +83,30 @@ const   axios       = require('axios'),
     
 })();
 
+const updateShopCSV = async (arrayOfObjects, fileLocation) => {
 
+    for await (let obj of arrayOfObjects){
+        let locatorDomain       = 'shopnsavefood.com__api',
+            locationName        = obj.Name,
+            streetAddress       = obj.Address1,
+            city                = obj.City,
+            state               = obj.State,
+            zip                 = obj.Zip,
+            countryCode         = 'US',
+            storeNumber         = obj.StoreID,
+            phone               = obj.Phone,
+            locationType        = obj.IsGasStation,
+            naics               = 'NO-DATA',
+            latitude            = obj.Latitude,
+            longitude           = obj.Longitude,
+            hours_of_operation  = obj.Hours
+    
+        await fs.appendFile(
+            path.join(__dirname, fileLocation), 
+            `"${locatorDomain}","${locationName}","${streetAddress}","${city}","${state}","${zip}","${countryCode}","${storeNumber}","${phone}","${locationType}","${naics}","${latitude}","${longitude}","${hours_of_operation}"\n`
+        );
+    }
+}
 
 
 /*
