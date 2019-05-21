@@ -9,7 +9,9 @@
     "Website_Settings": {
         "Marriott": {
             "filenameBody": "marriott"
+        },
+        "ShopNSave": {
+            "filenameBody": "shopnsave"
         }
     }
-    
 }

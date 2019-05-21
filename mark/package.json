@@ -4,14 +4,17 @@
   "description": "Store Locator Crawl",
   "main": "app.js",
   "scripts": {
-    "marriott": "node ./marriott/crawl.js"
+    "marriott": "node ./marriott/crawl.js",
+    "shopnsave": "node ./shopnsave/apiFilter.js"
   },
   "author": "Mark Wong",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.18.0",
     "fs-extra": "^8.0.1",
     "moment": "^2.24.0",
-    "puppeteer": "^1.16.0"
+    "puppeteer": "^1.16.0",
+    "xml2js": "^0.4.19"
   },
   "directories": {
     "lib": "lib"
