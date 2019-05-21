@@ -27,9 +27,11 @@ class ShopVersona(base.Base):
             link = link[0]
             query_params = base.query_params(link)
             latitude, longitude = query_params.get('sll', ',').split(',')
-            postal_code = re.findall('[0-9]{5}', query_params.get('daddr', ''))
-            if postal_code:
-                postal_code = postal_code[0]
+            address = query_params.get('daddr', None)
+            if address:
+                postal_code = re.findall('[0-9]{5}', address)
+                if postal_code:
+                    postal_code = postal_code[0]
 
         h4 = row.xpath('./h4/text()')
         if h4:
