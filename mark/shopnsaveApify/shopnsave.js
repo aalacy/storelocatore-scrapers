@@ -20,6 +20,18 @@ const xml2json = xmlString => new Promise((fullfill, reject) => {
 // Makes the a phone number 10 digits with no punctutations
 const formatPhoneNumber = string => string.replace(/\D/g, '');
 
+const validateHours = (string1, string2) => {
+  if (string1 === 'NO-DATA' || string1.length === 0) {
+    return 'NO-DATA';
+  }
+  if (string1 !== 'NO-DATA' || string1.length !== 0) {
+    if (string2 === 'NO-DATA' || string2.length === 0) {
+      return string1;
+    }
+  }
+  return `${string1}, ${string2}`;
+};
+
 // Simply receives data from the scrape, then formats it.
 const parsedShopData = ({
   // If any data points are undefined / null, return 'NO-DATA'
@@ -46,9 +58,7 @@ const parsedShopData = ({
     naics_code: naics,
     latitude: Latitude,
     longitude: Longitude,
-    ...((Hours === 'NO-DATA') && { hours_of_operation: 'NO-DATA' }),
-    ...((Hours.length !== 'NO-DATA' && Hours2 === 'NO-DATA' && Hours2 === '') && { hours_of_operation: Hours }),
-    ...((Hours.length !== 'NO-DATA' && Hours2 !== 'NO-DATA' && Hours2 !== '') && { hours_of_operation: `${Hours}, ${Hours2}` }),
+    hours_of_operation: validateHours(Hours, Hours2),
   });
 
 Apify.main(async () => {
@@ -64,6 +74,7 @@ Apify.main(async () => {
     handleRequestFunction: async ({ request }) => {
       const html = await rp(request.url);
       const json = await xml2json(html);
+
       // The data is nested so define data to this new object
       const data = json.ArrayOfStore.Store;
 
