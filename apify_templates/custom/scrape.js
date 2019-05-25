@@ -1,11 +1,11 @@
 const Apify = require('apify');
 
 Apify.main(async () => {
-	const data = await scraper();
+	const data = await scrape();
 	await Apify.pushData(data);
 });
 
-async function scraper() {
+async function scrape() {
 	// Replace this with your actual scraper
 	const record = {
 		locator_domain: "safegraph.com", 
