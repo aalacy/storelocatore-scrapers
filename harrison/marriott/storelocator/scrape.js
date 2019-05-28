@@ -1,7 +1,6 @@
 const puppeteer = require('puppeteer');
-const { Cluster } = require('puppeteer-cluster');
 const ObjectsToCsv = require('objects-to-csv');
-
+const fs = require('fs'); 
 var mkdirp = require('mkdirp');
 
 var all_hotels = []
@@ -117,7 +116,6 @@ async function get_state_hrefs(browser, url){
 
     for(let href of hrefs){
         await get_destination_info(browser, href)
-        //cluster.queue(href, get_destination_info);
     }
 
     browser.close();
@@ -127,4 +125,7 @@ async function get_state_hrefs(browser, url){
     await mkdirp.sync(dirpath);
     await csv.toDisk(dirpath+ 'hotels.csv', { bom: false });
     console.log("Created "+dirpath+'hotels.csv');
+
+    fs.writeFileSync('./apify_storage/hotels.json', JSON.stringify(hotels))
+    console.log("Created ./apify_storage/hotels.json");
 })();

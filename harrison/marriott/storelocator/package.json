@@ -13,11 +13,9 @@
   "author": "Harrison Hayes",
   "license": "ISC",
   "dependencies": {
-    "csv-parser": "^2.3.0",
     "mkdirp": "^0.5.1",
     "objects-to-csv": "^1.2.1",
     "puppeteer": "^1.16.0",
-    "puppeteer-cluster": "^0.16.0",
     "apify": "^0.13"
   },
   "devDependencies": {
