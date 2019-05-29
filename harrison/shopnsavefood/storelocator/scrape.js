@@ -1,7 +1,6 @@
 const puppeteer = require('puppeteer');
 const ObjectsToCsv = require('objects-to-csv');
-const fs = require('fs');
-
+const Apify = require('apify');
 const mkdirp = require('mkdirp');
 
 
@@ -61,12 +60,10 @@ const mkdirp = require('mkdirp');
     let csv = new ObjectsToCsv(stores);
 
     //save to files
-    await mkdirp.sync(dirpath);
-    await csv.toDisk(dirpath+ 'stores.csv', { bom: false });
-    console.log("Created "+dirpath+'stores.csv');
-
-    fs.writeFileSync('./apify_storage/stores.json', JSON.stringify(stores))
-    console.log("Created ./apify_storage/stores.json");
+    //await mkdirp.sync(dirpath);
+    //await csv.toDisk(dirpath+ 'stores.csv', { bom: false });
+    //console.log("Created "+dirpath+'stores.csv');
+    Apify.pushData(stores);
 })();
 
 

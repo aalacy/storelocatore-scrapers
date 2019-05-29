@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer');
 const ObjectsToCsv = require('objects-to-csv');
-const fs = require('fs'); 
-var mkdirp = require('mkdirp');
+const mkdirp = require('mkdirp');
+const Apify = require('apify');
 
 var all_hotels = []
 
@@ -119,13 +119,13 @@ async function get_state_hrefs(browser, url){
     }
 
     browser.close();
-    let csv = new ObjectsToCsv(all_hotels);
+    //let csv = new ObjectsToCsv(all_hotels);
 
     //save to files
-    await mkdirp.sync(dirpath);
-    await csv.toDisk(dirpath+ 'hotels.csv', { bom: false });
-    console.log("Created "+dirpath+'hotels.csv');
+    //await mkdirp.sync(dirpath);
+    //await csv.toDisk(dirpath+ 'hotels.csv', { bom: false });
+    //console.log("Created "+dirpath+'hotels.csv');
 
-    fs.writeFileSync('./apify_storage/hotels.json', JSON.stringify(hotels))
-    console.log("Created ./apify_storage/hotels.json");
+    //console.log("Created ./apify_storage/hotels.json");
+    Apify.pushData(all_hotels);
 })();
