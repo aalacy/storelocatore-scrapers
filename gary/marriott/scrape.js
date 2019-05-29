@@ -234,7 +234,7 @@ async function run(csvFile) {
       });
     });
     
-    Apify.pushData(stores__);
+    await Apify.pushData(stores__);
 
     await stores.write();
     await browser.close();
