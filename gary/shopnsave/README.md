@@ -12,7 +12,3 @@
 
 To run the Shop 'N Save crawler, execute `node shopnsave.js -o output.csv`.
 
-### Marriott
-
-To run the Marriott crawler, execute `node marriott.js -o output.csv`
-
