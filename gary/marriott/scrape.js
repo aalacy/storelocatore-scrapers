@@ -6,64 +6,66 @@ const Stores  = require('./store.js').Stores;
 const NO_DATA = require('./store.js').NO_DATA;
 
 async function parsePage({request, page}) {
-  try {
-    await page.waitFor('address', { timeout: 5000 });
-    const texts = [];
-    const values = {};
 
-    let dataLayer = await page.evaluate(() => dataLayer);
+  //await page.waitForNavigation(15000, { waitUntil: 'networkidle2' });
+  await page.waitFor('address', { timeout: 5000 });
+ 
+  const texts = [];
+  const values = {};
+  
+  let dataLayer = await page.evaluate(() => dataLayer);
+  
+  let locator_domain = 'www.marriott.com';
+  let store_number =
+      request.url.split('propertyCode')[1].split('=')[1].split('&')[0];
+  let location_type =
+      dataLayer['prop_brand_name'] == undefined ?
+      NO_DATA : dataLayer['prop_brand_name'];
+  let naics_code = NO_DATA;
+  let external_lat_lon = false;
+  let hours_of_operation = NO_DATA; 
 
-    let locator_domain = 'www.marriott.com';
-    let locator_name =
-        dataLayer['prop_brand_name'] == undefined ?
-        NO_DATA : dataLayer['prop_brand_name'];
-    let store_number = NO_DATA;
-    let location_type =
-        dataLayer['prop_brand_name'] == undefined ?
-        NO_DATA : dataLayer['prop_brand_name'];
-    let naics_code = NO_DATA;
-    let external_lat_lon = false;
-    let hours_of_operation = NO_DATA; 
-    
-    let streetAddress = await page.evaluate(
-      () => document.querySelector('[itemprop="streetAddress"]').innerText);
-    let zip = await page.evaluate(
-      () => document.querySelector('[itemprop="postalCode"]').innerText);
-    let phone = await page.evaluate(
-      () => document.querySelector('[itemprop="telephone"]').innerText);
-    let latitude = await page.evaluate(
-      () => document.querySelector('[itemprop="latitude"]').innerText);
-    let longitude = await page.evaluate(
-      () => document.querySelector('[itemprop="longitude"]').innerText);
-    await page.waitFor('[itemprop="addressLocality"]', { timeout: 5000 });
-    let city = await page.evaluate(
-      () => document.querySelector('[itemprop="addressLocality"]').innerText);
-    let state = await page.evaluate(
-      () => document.querySelector('[itemprop="addressRegion"]').innerText)
-    let country_code = await page.evaluate(
-      () => document.querySelector('[itemprop="addressCountry"]').innerText);
-    
-    const store = new Store(locator_domain,
-                            locator_name,
-                            streetAddress,
-                            city,
-                            state,
-                            zip,
-                            country_code,
-                            store_number,
-                            phone,
-                            location_type,
-                            naics_code,
-                            latitude,
-                            longitude,
-                            external_lat_lon,
-                            hours_of_operation);
-    const dataset = await Apify.openDataset('stores');
-    await dataset.pushData(store);
-    console.log(store.toString());
-  } catch (e) {
-    console.log(e);
-  }
+  let locator_name = await page.evaluate(
+    () => document.querySelector('[itemprop="name"]').innerText);
+  let streetAddress = await page.evaluate(
+    () => document.querySelector('[itemprop="streetAddress"]').innerText);
+  let zip = await page.evaluate(
+    () => document.querySelector('[itemprop="postalCode"]').innerText);
+  let phone = await page.evaluate(
+    () => document.querySelector('[itemprop="telephone"]').innerText);
+  let latitude = await page.evaluate(
+    () => document.querySelector('[itemprop="latitude"]').innerText);
+  let longitude = await page.evaluate(
+    () => document.querySelector('[itemprop="longitude"]').innerText);
+  await page.waitFor('[itemprop="addressLocality"]', { timeout: 5000 });
+  let city = await page.evaluate(
+    () => document.querySelector('[itemprop="addressLocality"]').innerText);
+  let state = await page.evaluate(
+    () => document.querySelector('[itemprop="addressRegion"]').innerText)
+  let country_code = await page.evaluate(
+    () => document.querySelector('[itemprop="addressCountry"]').innerText);
+  
+  const store = new Store(locator_domain,
+                          locator_name,
+                          streetAddress,
+                          city,
+                          state,
+                          zip,
+                          country_code,
+                          store_number,
+                          phone,
+                          location_type,
+                          naics_code,
+                          latitude,
+                          longitude,
+                          external_lat_lon,
+                          hours_of_operation);
+  const dataset = await Apify.openDataset('stores');
+  await dataset.pushData(store);
+  console.log(request.url);
+  console.log(store.toString());
+
+  await page.close();
 }
 
 async function getHotelLinks(browser, page_) {
@@ -78,8 +80,6 @@ async function getHotelLinks(browser, page_) {
     for (let j = 0; j < retries; j+=1) {
       try {
         await page_.goto(url + i);
-         
-        //await next.click();
       
         await page_.waitForSelector(buttonsSelector);
         let buttons = await page_.$$eval(buttonsSelector, buttons => {
@@ -151,11 +151,9 @@ async function navigateToHotelDirectory(browser, page, stores) {
 async function run(csvFile) {
   try {
     const browser = await puppeteer.launch({
-      headless: true,
+      //headless: true,
     });
     const page = await browser.newPage();
-    
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36');
     
     let stores = new Stores(true, csvFile);
 
@@ -193,7 +191,15 @@ async function run(csvFile) {
         requestQueue,
         handlePageFunction: parsePage,
         maxRequestsPerCrawl: 10000 ,
-        maxConcurrency: 10 
+        maxConcurrency: 1,
+        maxOpenPagesPerInstance: 1,
+        puppeteerPoolOptions: {
+          maxOpenPagesPerInstance: 1
+        },
+        launchPuppeteerOptions: {
+          useChrome: true,
+          //stealth: true
+        }
       });
       console.log('Running crawler');
       await crawler.run();

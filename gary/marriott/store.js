@@ -29,7 +29,11 @@ class Store {
     }
     this.state = state.trim();
     this.zip = zip.trim();
-    this.country_code = country_code.trim();
+    if (country_code.trim() == 'Canada' || country_code.trim() == 'CA') {
+      this.country_code = 'CA';
+    } else {
+      this.country_code = 'US';
+    }
     this.store_number = store_number;
     
     if (phone == null) {
