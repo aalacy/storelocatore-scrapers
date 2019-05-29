@@ -207,6 +207,7 @@ async function run(csvFile) {
     }
 
     console.log('Writing stores');
+    const stores__ = [];
     await dataset.map(store => {
       let state = store.state;
       if (state.length == 0) {
@@ -214,8 +215,27 @@ async function run(csvFile) {
       }
       const store_ = new Store(store.locator_domain, store.locator_name, store.street_address, store.city, state, store.zip, store.country_code, store.store_number, store.phone, store.location_type, store.naics_code, store.latitude, store.longitude, store.external_lat_lon, store.hours_of_operation);
       stores.addStore(store_);
+      stores__.push({
+        locator_domain: store.locator_domain,
+	location_name: store.location_name,
+	street_address: store.street_address,
+	city: store.city,
+	state: store.state,
+	zip: store.zip,
+	country_code: store.country_code,
+	store_number: store.store_number,
+	phone: store.phone,
+	location_type: store.location_type,
+	naics_code: store.naics_code,
+	latitude: store.latitude,
+	longitude: store.longitude,
+	hours_of_operation: store.hours_of_operation,
+        external_lat_lon: store.external_lat_lon
+      });
     });
     
+    Apify.pushData(stores__);
+
     await stores.write();
     await browser.close();
   } catch (err) {
