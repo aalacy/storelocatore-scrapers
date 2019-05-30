@@ -38,13 +38,13 @@ function arrayToCSV(data) {
     regionLinks = regionLinks.slice(0, 1);
   }
 
-  const progressBar = new ProgressBar(
-    ':bar :current/:total :percent :elapseds/:etas',
-    { total: regionLinks.length }
-  );
+  const progressBar = new ProgressBar(':bar :current/:total :percent :elapseds/:etas', {
+    total: regionLinks.length,
+  });
 
-  let scraped = [];
-  for (let n in regionLinks) {
+  const scraped = [];
+  /* eslint-disable-next-line guard-for-in */
+  for (const n in regionLinks) {
     const link = regionLinks[n];
     await page.goto(`https://www.marriott.com${link}`);
 
@@ -53,10 +53,7 @@ function arrayToCSV(data) {
       // console.log(`Page ${i}`);
       let destinationName;
       try {
-        destinationName = await page.$eval(
-          '#destination a',
-          el => el.innerText
-        );
+        destinationName = await page.$eval('#destination a', el => el.innerText);
         // eslint-disable-next-line no-empty
       } catch (err) {}
 
@@ -66,36 +63,29 @@ function arrayToCSV(data) {
       //   console.log(destinationName);
       // }
 
-      const locations = await page.$$eval(
-        '.js-property-list-container > div',
-        divs =>
-          divs.map(div => ({
-            locationName: div.querySelector('.l-property-name').innerText,
-            country: div.querySelector('.m-hotel-address').dataset.country,
-            addressLine1: div.querySelector('.m-hotel-address').dataset
-              .addressLine1,
-            postalCode: div.querySelector('.m-hotel-address').dataset
-              .postalCode,
-            city: div.querySelector('.m-hotel-address').dataset.city,
-            state: div.querySelector('.m-hotel-address').dataset.state,
-            countryDescription: div.querySelector('.m-hotel-address').dataset
-              .countryDescription,
-            contact: div.querySelector('.m-hotel-address').dataset.contact
-          }))
+      const locations = await page.$$eval('.js-property-list-container > div', divs =>
+        divs.map(div => ({
+          locationName: div.querySelector('.l-property-name').innerText,
+          country: div.querySelector('.m-hotel-address').dataset.country,
+          addressLine1: div.querySelector('.m-hotel-address').dataset.addressLine1,
+          postalCode: div.querySelector('.m-hotel-address').dataset.postalCode,
+          city: div.querySelector('.m-hotel-address').dataset.city,
+          state: div.querySelector('.m-hotel-address').dataset.state,
+          countryDescription: div.querySelector('.m-hotel-address').dataset.countryDescription,
+          contact: div.querySelector('.m-hotel-address').dataset.contact,
+        }))
       );
 
       scraped.push(
         ...locations.map(l => ({
           ...l,
-          destinationName
+          destinationName,
         }))
       );
 
       let nextPageHref;
       try {
-        nextPageHref = await page.$eval('.m-pagination-next', el =>
-          el.getAttribute('href')
-        );
+        nextPageHref = await page.$eval('.m-pagination-next', el => el.getAttribute('href'));
         // eslint-disable-next-line no-empty
       } catch (err) {}
 

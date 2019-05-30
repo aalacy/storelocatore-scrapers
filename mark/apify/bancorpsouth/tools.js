@@ -1,7 +1,7 @@
 const noDataLabel = 'NO-DATA';
 
 // Leaves only digits for the phone number
-const formatPhoneNumber = (string) => {
+const formatPhoneNumber = string => {
   const number = string.replace(/\D/g, '');
   if (number.length === 0) {
     return undefined;
@@ -12,8 +12,8 @@ const formatPhoneNumber = (string) => {
   return number;
 };
 
-const parseGoogleMapsUrl = (string) => {
-  if (typeof (string) !== 'string') {
+const parseGoogleMapsUrl = string => {
+  if (typeof string !== 'string') {
     return undefined;
   }
   const a = string.match(/(?=)([-]?[\d]*\.[\d]*),([-]?[\d]*\.[\d]*)(?=&)/g);
@@ -26,7 +26,7 @@ const parseGoogleMapsUrl = (string) => {
 };
 
 const formatStreetAddress = (string1, string2) => {
-  if (typeof (string2) === 'string') {
+  if (typeof string2 === 'string') {
     if (string2.length === 0) {
       return string1;
     }
@@ -35,8 +35,8 @@ const formatStreetAddress = (string1, string2) => {
   return string1;
 };
 
-const parseAddress = (a) => {
-  if (typeof (a) !== 'string') {
+const parseAddress = a => {
+  if (typeof a !== 'string') {
     return undefined;
   }
   const r = {};
@@ -49,7 +49,7 @@ const parseAddress = (a) => {
   return r;
 };
 
-const checkLocationType = (url) => {
+const checkLocationType = url => {
   if (url.includes('branch')) {
     return 'Branch';
   }
@@ -62,7 +62,7 @@ const checkLocationType = (url) => {
   return undefined;
 };
 
-const checkHours = (string) => {
+const checkHours = string => {
   if (string.length === 0) {
     return noDataLabel;
   }

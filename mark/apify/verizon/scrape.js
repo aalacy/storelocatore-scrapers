@@ -12,14 +12,15 @@ Apify.main(async () => {
   // Get list of urls from store locator sitemap
   const xml = await rp(verizonurl);
   const $c = cheerio.load(xml);
-  const urls = $c('loc').map((i, e) => ({ url: $c(e).text() })).toArray();
+  const urls = $c('loc')
+    .map((i, e) => ({ url: $c(e).text() }))
+    .toArray();
 
   const requestList = new Apify.RequestList({
     sources: urls,
   });
   await requestList.initialize();
 
-  /* eslint-disable no-unused-vars */
   const crawler = new Apify.CheerioCrawler({
     requestList,
     minConcurrency: 1,
@@ -28,11 +29,11 @@ Apify.main(async () => {
     handlePageTimeoutSecs: 60,
     handleFailedRequestFunction: ({ request }) => {
       const details = _.pick(request, 'id', 'url', 'method', 'uniqueKey');
-      log.error('Verizon Crawler: Request failed and reached maximum retries', { errorDetails: details });
+      log.error('Verizon Crawler: Request failed and reached maximum retries', {
+        errorDetails: details,
+      });
     },
-    handlePageFunction: async ({
-      request, response, html, $,
-    }) => {
+    handlePageFunction: async ({ request, response, html, $ }) => {
       const pageTitle = $('#pageTitle > h1').text();
       // Only push data for pages Verizon has
       if (pageTitle !== 'Page is not currently available') {
