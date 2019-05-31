@@ -7,7 +7,7 @@ async function scrape() {
     //console.log(res.data.markers[369])
     for (let store of res.data.markers) {
         let s = {
-            locator_domain: 'https://www.columbia.com/',
+            locator_domain: 'https://newbalance.locally.com/',
             location_name: store.name,
             street_address: store.address,
             city: store.city,
