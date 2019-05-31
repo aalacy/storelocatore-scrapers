@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Barrabes Esquí y Montaña (Barcelona)",
+  "street_address": "Carrer de Roger de Llúria, 77",
+  "city": "Barcelona",
+  "state": "Barcelona",
+  "zip": "08009",
+  "country_code": "ES",
+  "store_number": 69279,
+  "phone": "936 11 11 11",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.39467821",
+  "longitude": "2.16678355",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

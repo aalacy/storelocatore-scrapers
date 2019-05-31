@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Blain's Farm & Fleet",
+  "street_address": "8401 Durand Ave",
+  "city": "Sturtevant",
+  "state": "WI",
+  "zip": "53177",
+  "country_code": "US",
+  "store_number": 52906,
+  "phone": "(262) 886-2757",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.69669955",
+  "longitude": "-87.88614399",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 1800,
+    "mon_time_open": 700,
+    "mon_time_close": 2100,
+    "tue_time_open": 700,
+    "tue_time_close": 2100,
+    "wed_time_open": 700,
+    "wed_time_close": 2100,
+    "thu_time_open": 700,
+    "thu_time_close": 2100,
+    "fri_time_open": 700,
+    "fri_time_close": 2100,
+    "sat_time_open": 700,
+    "sat_time_close": 2000
+  }
+}

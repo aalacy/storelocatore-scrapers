@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Branson",
+  "street_address": "1106 Branson Landing Blvd",
+  "city": "Branson",
+  "state": "MO",
+  "zip": "65616",
+  "country_code": "US",
+  "store_number": 34398,
+  "phone": "(417) 348-0093",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.64299600",
+  "longitude": "-93.21326153",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 2000,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2200,
+    "sat_time_open": 1000,
+    "sat_time_close": 2200
+  }
+}

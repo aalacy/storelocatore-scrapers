@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Weirton",
+  "street_address": "1228 Penn Avenue (Convenient Mart)",
+  "city": "Weirton",
+  "state": "VW",
+  "zip": "26062",
+  "country_code": "US",
+  "store_number": "251",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.50772",
+  "longitude": "-80.56529",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

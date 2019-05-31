@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Lynden Park",
+  "street_address": "84 Lynden Rd Unit #20",
+  "city": "Brantford",
+  "state": "ON",
+  "zip": "N3R6B8",
+  "country_code": "CA",
+  "store_number": 103569,
+  "phone": "(519) 750-0101",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.17221360",
+  "longitude": "-80.24092110",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

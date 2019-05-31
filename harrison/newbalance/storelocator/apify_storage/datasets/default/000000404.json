@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Barrabes Esquí y Montaña (Benasque)",
+  "street_address": "Ctra. de Francia s/n",
+  "city": "Benasque",
+  "state": "Huesca",
+  "zip": "22440",
+  "country_code": "ES",
+  "store_number": 69280,
+  "phone": "974 55 13 51",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.60275880",
+  "longitude": "0.52255260",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Nencini Sport Calenzano NS1 Sport",
+  "street_address": "Via Ciolli, 8/10 50041 Calenzano (FI)",
+  "city": "Calenzano",
+  "state": "FIRENZE",
+  "zip": "50041",
+  "country_code": "IT",
+  "store_number": 73651,
+  "phone": "055 882 6000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.85371849",
+  "longitude": "11.16618295",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1500,
+    "sun_time_close": 2000,
+    "mon_time_open": 930,
+    "mon_time_close": 2000,
+    "tue_time_open": 930,
+    "tue_time_close": 2000,
+    "wed_time_open": 930,
+    "wed_time_close": 2000,
+    "thu_time_open": 930,
+    "thu_time_close": 2000,
+    "fri_time_open": 930,
+    "fri_time_close": 2000,
+    "sat_time_open": 930,
+    "sat_time_close": 2000
+  }
+}

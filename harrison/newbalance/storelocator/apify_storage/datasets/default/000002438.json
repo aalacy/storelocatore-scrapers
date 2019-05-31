@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Bauerhaus Bikes",
+  "street_address": "1417 W Grove St",
+  "city": "Boise",
+  "state": "ID",
+  "zip": "83702",
+  "country_code": "US",
+  "store_number": 86851,
+  "phone": "(208) 509-3453",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.61839715",
+  "longitude": "-116.21180190",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

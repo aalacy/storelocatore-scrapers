@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Philadelphia Runner",
+  "street_address": "3621 Walnut St",
+  "city": "Philadelphia",
+  "state": "PA",
+  "zip": "19104",
+  "country_code": "US",
+  "store_number": 16094,
+  "phone": "(215) 662-5100",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.95365460",
+  "longitude": "-75.19629123",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

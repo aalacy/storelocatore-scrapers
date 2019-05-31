@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Greenville - Augusta St",
+  "street_address": "1400 Augusta St",
+  "city": "Greenville",
+  "state": "SC",
+  "zip": "29605",
+  "country_code": "US",
+  "store_number": 1199,
+  "phone": "8642418450",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.83029,
+  "longitude": -82.402033,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

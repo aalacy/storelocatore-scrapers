@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Dick Pond Athletics Park Ridge",
+  "street_address": "29 S Prospect Ave",
+  "city": "Park Ridge",
+  "state": "IL",
+  "zip": "60068",
+  "country_code": "US",
+  "store_number": 16295,
+  "phone": "(847) 720-4083",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.01007688",
+  "longitude": "-87.82993144",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1600,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

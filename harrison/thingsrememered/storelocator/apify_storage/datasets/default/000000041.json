@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "COLUMBIA MALL",
+  "street_address": "10300 LITTLE PATUXENT PKWY",
+  "city": "COLUMBIA",
+  "state": "MD",
+  "zip": "21044",
+  "country_code": "US",
+  "store_number": "323",
+  "phone": "(410) 992-1986",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 39.21436,
+  "longitude": -76.879715,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

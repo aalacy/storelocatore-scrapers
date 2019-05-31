@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Baltimore",
+  "street_address": "2135-B York Rd  Timonium Square",
+  "city": "Timonium",
+  "state": "MD",
+  "zip": "21093",
+  "country_code": "US",
+  "store_number": 84853,
+  "phone": "(410) 252-6500",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.44261100",
+  "longitude": "-76.62569530",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

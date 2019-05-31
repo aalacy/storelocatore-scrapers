@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Little General - Barrackville",
+  "street_address": "213 Pike St.",
+  "city": "Barrackville",
+  "state": "WV",
+  "zip": "26559",
+  "country_code": "US",
+  "store_number": "264",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "39.5039551",
+  "longitude": "-80.167091",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

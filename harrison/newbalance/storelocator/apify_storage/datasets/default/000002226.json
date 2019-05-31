@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "ASICS Outlet Las Vegas North",
+  "street_address": "875 S Grand Central Pkwy #1895",
+  "city": "Las Vegas",
+  "state": "NV",
+  "zip": "89106",
+  "country_code": "US",
+  "store_number": 62611,
+  "phone": "(702) 385-0717",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.16342593",
+  "longitude": "-115.15884189",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 2000,
+    "mon_time_open": 900,
+    "mon_time_close": 2100,
+    "tue_time_open": 900,
+    "tue_time_close": 2100,
+    "wed_time_open": 900,
+    "wed_time_close": 2100,
+    "thu_time_open": 900,
+    "thu_time_close": 2100,
+    "fri_time_open": 900,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 2100
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "GALLERIA AT SOUTH BAY",
+  "street_address": "1815 HAWTHORNE BLVD",
+  "city": "REDONDO BEACH",
+  "state": "CA",
+  "zip": "90278",
+  "country_code": "US",
+  "store_number": "435",
+  "phone": "(310) 542-3191",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.870213,
+  "longitude": -118.37336,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#07:00 PM|2#11:00 AM#09:00 PM|3#11:00 AM#09:00 PM|4#11:00 AM#09:00 PM|5#11:00 AM#09:00 PM|6#11:00 AM#09:00 PM|7#11:00 AM#08:00 PM"
+}

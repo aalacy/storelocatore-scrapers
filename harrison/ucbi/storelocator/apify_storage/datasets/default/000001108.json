@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Perimeter",
+  "street_address": "1100 Hammond Dr Ste 300",
+  "city": "Sandy Springs",
+  "state": "GA",
+  "zip": "30328-8153",
+  "country_code": "US",
+  "store_number": 3070,
+  "phone": "6784432100",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.920084,
+  "longitude": -84.35266,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:30 AM - 11:00 PM,Mon 6:30 AM - 11:00 PM,Tues 6:30 AM - 11:00 PM,Wed 6:30 AM - 11:00 PM,Thurs 6:30 AM - 11:00 PM,Fri 6:30 AM - 11:00 PM,Sat 6:30 AM - 11:00 PM,"
+}

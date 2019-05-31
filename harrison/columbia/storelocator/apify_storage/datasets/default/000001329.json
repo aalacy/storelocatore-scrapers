@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Benjamin Lovell Shoes",
+  "street_address": "525 Glen Eagle Square",
+  "city": "Glen Mills",
+  "state": "PA",
+  "zip": "19342",
+  "country_code": "US",
+  "store_number": 42464,
+  "phone": "(610) 358-0060",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.86473653",
+  "longitude": "-75.54263124",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "Barceloneta Outlets Village, Carretera #2 Km 54.8",
+  "city": "Barceloneta",
+  "state": "PR",
+  "zip": "00616",
+  "country_code": "US",
+  "store_number": 10037277,
+  "phone": "(787) 970-3614",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 18.43652753452499,
+  "longitude": -66.54132496197127,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

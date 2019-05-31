@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Bonanza",
+  "street_address": "Mountain View, State Rd. 4",
+  "city": "Carolina",
+  "state": "PR",
+  "zip": "00987",
+  "country_code": "US",
+  "store_number": 10037508,
+  "phone": "(787) 743-8885",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 18.378165,
+  "longitude": -65.919473,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

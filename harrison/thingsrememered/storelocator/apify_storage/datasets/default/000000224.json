@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "WHEATON SHOPPING MALL",
+  "street_address": "11160 VEIRS MILL RD",
+  "city": "WHEATON",
+  "state": "MD",
+  "zip": "20902",
+  "country_code": "US",
+  "store_number": "366",
+  "phone": "(301) 946-0582",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 39.041348,
+  "longitude": -77.04769,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#07:00 PM|2#10:00 AM#09:30 PM|3#10:00 AM#09:30 PM|4#10:00 AM#09:30 PM|5#10:00 AM#09:30 PM|6#10:00 AM#09:30 PM|7#10:00 AM#09:30 PM"
+}

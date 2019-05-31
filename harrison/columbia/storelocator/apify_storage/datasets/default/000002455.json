@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Peachtree Square",
+  "street_address": "2701 Skaha Lake Rd Unit # 101",
+  "city": "Penticton",
+  "state": "BC",
+  "zip": "V2A9B8",
+  "country_code": "CA",
+  "store_number": 103712,
+  "phone": "(250) 276-8370",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.46581810",
+  "longitude": "-119.58721196",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

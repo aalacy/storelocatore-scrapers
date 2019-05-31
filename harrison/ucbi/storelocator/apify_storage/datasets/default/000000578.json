@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Center of Bonita Springs",
+  "street_address": "3304 Bonita Beach Rd",
+  "city": "Bonita Springs",
+  "state": "FL",
+  "zip": "34134-4174",
+  "country_code": "US",
+  "store_number": 3715,
+  "phone": "2394951600",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.331761,
+  "longitude": -81.810218,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

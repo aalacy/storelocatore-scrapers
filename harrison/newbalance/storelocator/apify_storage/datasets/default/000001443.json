@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Attridge Ski & Board",
+  "street_address": "2706 48 Ave",
+  "city": "Vernon",
+  "state": "BC",
+  "zip": "V1T3R4",
+  "country_code": "CA",
+  "store_number": 104257,
+  "phone": "(250) 542-1515",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "50.28168200",
+  "longitude": "-119.26789300",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1800,
+    "tue_time_open": 1000,
+    "tue_time_close": 1800,
+    "wed_time_open": 1000,
+    "wed_time_close": 1800,
+    "thu_time_open": 1000,
+    "thu_time_close": 1800,
+    "fri_time_open": 1000,
+    "fri_time_close": 1800,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Bob Ward's Bozeman",
+  "street_address": "3011 Max Ave",
+  "city": "Bozeman",
+  "state": "MT",
+  "zip": "59718",
+  "country_code": "US",
+  "store_number": 83514,
+  "phone": "(406) 586-4381",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.71030749",
+  "longitude": "-111.07081820",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 900,
+    "mon_time_close": 2000,
+    "tue_time_open": 900,
+    "tue_time_close": 2000,
+    "wed_time_open": 900,
+    "wed_time_close": 2000,
+    "thu_time_open": 900,
+    "thu_time_close": 2000,
+    "fri_time_open": 900,
+    "fri_time_close": 2100,
+    "sat_time_open": 800,
+    "sat_time_close": 1900
+  }
+}

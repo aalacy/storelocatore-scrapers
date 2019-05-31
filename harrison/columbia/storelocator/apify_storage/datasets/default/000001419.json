@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Atmosphere - Polo Park",
+  "street_address": "1440 Jack Blick Ave #0100a",
+  "city": "Winnipeg",
+  "state": "MB",
+  "zip": "R3G0L4",
+  "country_code": "CA",
+  "store_number": 19703,
+  "phone": "(204) 772-2822",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.88681733",
+  "longitude": "-97.19715925",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

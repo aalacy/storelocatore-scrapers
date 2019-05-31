@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Yas Island - ABU DHABI",
+  "street_address": "Yas Mall, ABU DHABI",
+  "city": "Abu Dhabi",
+  "state": null,
+  "country_code": "AE",
+  "store_number": "7995689",
+  "phone": "02-565-1674",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "24.438983",
+  "longitude": "54.574211",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Valhalla Pure Outfitters Medicine Hat",
+  "street_address": "621 2 St SE",
+  "city": "Medicine Hat",
+  "state": "AB",
+  "zip": "T1A0C8",
+  "country_code": "CA",
+  "store_number": 10743,
+  "phone": "(403) 487-5474",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "50.04072820",
+  "longitude": "-110.67562181",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

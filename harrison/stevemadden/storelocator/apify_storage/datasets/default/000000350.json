@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Valley Fair",
+  "street_address": "2855 Stevens Creek Blvd",
+  "city": "Santa Clara",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995671",
+  "phone": "408-261-8723",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.325900",
+  "longitude": "-121.945000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Pittsburgh Homestead",
+  "street_address": "112 West Bridge St",
+  "city": "Homestead",
+  "state": "PA",
+  "zip": "15120",
+  "country_code": "US",
+  "store_number": 85767,
+  "phone": "(412) 464-1002",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.40802662",
+  "longitude": "-79.91602131",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 1000,
+    "sat_time_close": 2100
+  }
+}

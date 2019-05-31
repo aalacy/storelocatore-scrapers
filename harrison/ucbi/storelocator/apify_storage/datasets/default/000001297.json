@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Concord Village",
+  "street_address": "10638 Concord Rd",
+  "city": "Brentwood",
+  "state": "TN",
+  "zip": "37027-8811",
+  "country_code": "US",
+  "store_number": 3357,
+  "phone": "6159418871",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.997144,
+  "longitude": -86.691837,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 6:30 AM - 10:00 PM,Tues 6:30 AM - 10:00 PM,Wed 6:30 AM - 10:00 PM,Thurs 6:30 AM - 10:00 PM,Fri 6:30 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

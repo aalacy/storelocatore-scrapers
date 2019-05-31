@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Salem Summit Company",
+  "street_address": "240 Commercial St NE",
+  "city": "Salem",
+  "state": "OR",
+  "zip": "97301",
+  "country_code": "US",
+  "store_number": 970,
+  "phone": "(503) 990-7304",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.94190736",
+  "longitude": "-123.03912016",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

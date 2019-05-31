@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Outland USA",
+  "street_address": "7223 Haley Industrial Dr",
+  "city": "Nolensville",
+  "state": "TN",
+  "zip": "37135",
+  "country_code": "US",
+  "store_number": 15775,
+  "phone": "(615) 776-8824",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.97167589",
+  "longitude": "-86.67452142",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

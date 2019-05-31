@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "CHICAGO PREMIUM",
+  "street_address": "1650 PREMIUM OUTLETS BLVD",
+  "city": "AURORA",
+  "state": "IL",
+  "country_code": "US",
+  "store_number": "7995233",
+  "phone": "630-585-5524",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.800800",
+  "longitude": "-88.273000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

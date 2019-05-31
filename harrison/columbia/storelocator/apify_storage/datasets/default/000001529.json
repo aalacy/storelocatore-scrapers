@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Foot Solutions Columbia",
+  "street_address": "7001 St Andrews Rd",
+  "city": "Columbia",
+  "state": "SC",
+  "zip": "29212",
+  "country_code": "US",
+  "store_number": 22789,
+  "phone": "(803) 781-1230",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.07571558",
+  "longitude": "-81.17815133",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

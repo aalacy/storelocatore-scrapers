@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Latrobe",
+  "street_address": "1910 Dailey Avenue ",
+  "city": "Latrobe",
+  "state": "PA",
+  "zip": "15650",
+  "country_code": "US",
+  "store_number": "58",
+  "phone": "1346",
+  "location_type": {
+    "gas_station": "724-539-3080",
+    "active": "724-539-2120",
+    "pump_perk": "40.309574"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sat 7:00-10:00",
+  "longitude": "Sun 7:00-7:00",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

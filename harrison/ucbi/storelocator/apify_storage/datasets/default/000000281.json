@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Country Walk Shopping Center",
+  "street_address": "13735 SW 152nd St",
+  "city": "Miami",
+  "state": "FL",
+  "zip": "33177-1106",
+  "country_code": "US",
+  "store_number": 2803,
+  "phone": "3052519889",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.627438,
+  "longitude": -80.415675,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

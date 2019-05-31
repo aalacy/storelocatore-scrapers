@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sole Provisions",
+  "street_address": "2130 Pond Rd # F",
+  "city": "Ronkonkoma",
+  "state": "NY",
+  "zip": "11779",
+  "country_code": "US",
+  "store_number": 36277,
+  "phone": "(631) 421-5600",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.79756668",
+  "longitude": "-73.11929120",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

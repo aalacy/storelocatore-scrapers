@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Maryville",
+  "street_address": "1406 S Main St",
+  "city": "Maryville",
+  "state": "MO",
+  "zip": "64468",
+  "country_code": "US",
+  "store_number": 26890,
+  "phone": "(660) 582-4641",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.33178800",
+  "longitude": "-94.87495990",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 900,
+    "mon_time_close": 1800,
+    "tue_time_open": 900,
+    "tue_time_close": 1800,
+    "wed_time_open": 900,
+    "wed_time_close": 1800,
+    "thu_time_open": 900,
+    "thu_time_close": 1800,
+    "fri_time_open": 900,
+    "fri_time_close": 1800,
+    "sat_time_open": 900,
+    "sat_time_close": 1700
+  }
+}

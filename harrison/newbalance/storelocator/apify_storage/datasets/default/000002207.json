@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Sport",
+  "street_address": "Cornate D'adda, Via Berlinguer,48 presso CC Globo",
+  "city": "Cornate d'Adda",
+  "state": "MB",
+  "zip": "20872",
+  "country_code": "IT",
+  "store_number": 75781,
+  "phone": "039 682 2021",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.62474752",
+  "longitude": "9.47006155",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 2100,
+    "mon_time_open": 900,
+    "mon_time_close": 2200,
+    "tue_time_open": 900,
+    "tue_time_close": 2200,
+    "wed_time_open": 900,
+    "wed_time_close": 2200,
+    "thu_time_open": 900,
+    "thu_time_close": 2200,
+    "fri_time_open": 900,
+    "fri_time_close": 2200,
+    "sat_time_open": 900,
+    "sat_time_close": 2200
+  }
+}

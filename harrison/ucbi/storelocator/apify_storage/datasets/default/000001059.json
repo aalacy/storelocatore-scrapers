@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Knoxville - Northshore Dr - Loan Office",
+  "street_address": "1111 N Northshore Dr",
+  "city": "Knoxville",
+  "state": "TN",
+  "zip": "37919",
+  "country_code": "US",
+  "store_number": 1203,
+  "phone": "8655832000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.93813,
+  "longitude": -84.004427,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

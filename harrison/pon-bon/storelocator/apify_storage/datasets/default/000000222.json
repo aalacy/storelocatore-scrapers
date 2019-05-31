@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Bonanza",
+  "street_address": "300 Commerce Park Dr.",
+  "city": "New Columbia",
+  "state": "PA",
+  "zip": "17886",
+  "country_code": "US",
+  "store_number": 10037541,
+  "phone": "(570) 568-1200",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 41.04671481254111,
+  "longitude": -76.87301179493716,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

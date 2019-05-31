@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Venetian",
+  "street_address": "ESTRADA DA BAIA DE N.",
+  "city": "Taipa",
+  "state": null,
+  "country_code": "MO",
+  "store_number": "7995673",
+  "phone": "28828630",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "22.100000",
+  "longitude": "113.330000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

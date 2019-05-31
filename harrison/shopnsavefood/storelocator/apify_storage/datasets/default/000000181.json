@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Penn Hills",
+  "street_address": "600 Rodi Road",
+  "city": "Pittsburgh",
+  "state": "PA",
+  "zip": "15235",
+  "country_code": "US",
+  "store_number": "214",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.4493014",
+  "longitude": "-79.8273842",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

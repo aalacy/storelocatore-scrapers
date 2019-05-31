@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Road Runner Sports",
+  "street_address": "1714 Newbury Rd j",
+  "city": "Newbury Park",
+  "state": "CA",
+  "zip": "91320",
+  "country_code": "US",
+  "store_number": 16461,
+  "phone": "(805) 375-1415",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.18356006",
+  "longitude": "-118.91719484",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 900,
+    "sat_time_close": 1900
+  }
+}

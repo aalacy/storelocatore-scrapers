@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Narcoossee Shoppes",
+  "street_address": "1951 S Narcoossee Rd",
+  "city": "Saint Cloud",
+  "state": "FL",
+  "zip": "34771-7211",
+  "country_code": "US",
+  "store_number": 3346,
+  "phone": "4078920595",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.247648,
+  "longitude": -81.242351,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

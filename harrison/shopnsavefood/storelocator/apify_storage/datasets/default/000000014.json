@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Bethel Park",
+  "street_address": "5001 Library Road",
+  "city": "Bethel Park",
+  "state": "PA",
+  "zip": "15102",
+  "country_code": "US",
+  "store_number": "30",
+  "phone": "1630",
+  "location_type": {
+    "gas_station": "412-831-7177",
+    "active": "412-831-0440",
+    "pump_perk": "412-831-5516"
+  },
+  "niacs_code": null,
+  "latitude": "Monday - Saturday 8am - 9pm",
+  "longitude": "Sunday 9am - 9pm",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

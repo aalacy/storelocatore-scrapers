@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Reserve at Boca Raton",
+  "street_address": "9720 Clint Moore Rd",
+  "city": "Boca Raton",
+  "state": "FL",
+  "zip": "33496-1011",
+  "country_code": "US",
+  "store_number": 2732,
+  "phone": "5612186114",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.40772,
+  "longitude": -80.200104,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

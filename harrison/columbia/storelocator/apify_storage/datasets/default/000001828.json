@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Northfield",
+  "street_address": "114 E Aurora Rd #200",
+  "city": "Northfield",
+  "state": "OH",
+  "zip": "44067",
+  "country_code": "US",
+  "store_number": 17975,
+  "phone": "(330) 908-3234",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.31367689",
+  "longitude": "-81.53413359",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

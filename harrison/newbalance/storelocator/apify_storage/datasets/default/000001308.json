@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Strides Running Store",
+  "street_address": "380 Canyon Meadows Dr SE",
+  "city": "Calgary",
+  "state": "AB",
+  "zip": "T2J7C3",
+  "country_code": "CA",
+  "store_number": 16130,
+  "phone": "(403) 454-4354",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "50.93098345",
+  "longitude": "-114.06424187",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1830,
+    "tue_time_open": 1000,
+    "tue_time_close": 1830,
+    "wed_time_open": 1000,
+    "wed_time_close": 1830,
+    "thu_time_open": 1000,
+    "thu_time_close": 1830,
+    "fri_time_open": 1000,
+    "fri_time_close": 1830,
+    "sat_time_open": 900,
+    "sat_time_close": 1700
+  }
+}

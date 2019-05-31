@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Eastgate Square",
+  "street_address": "75 Centennial Pkwy N N1",
+  "city": "Hamilton",
+  "state": "ON",
+  "zip": "L8E2P2",
+  "country_code": "CA",
+  "store_number": 103647,
+  "phone": "(905) 560-9371",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.23077708",
+  "longitude": "-79.76530131",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

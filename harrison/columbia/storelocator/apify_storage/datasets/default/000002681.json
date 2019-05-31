@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "PEDAL",
+  "street_address": "185 Romence Rd",
+  "city": "Portage",
+  "state": "MI",
+  "zip": "49024",
+  "country_code": "US",
+  "store_number": 32785,
+  "phone": "(269) 324-5555",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.21509692",
+  "longitude": "-85.59057140",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

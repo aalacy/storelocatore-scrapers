@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Summit Sports - East Lansing",
+  "street_address": "2650 Grand River Avenue ",
+  "city": "East Lansing",
+  "state": "MI",
+  "zip": "48823",
+  "country_code": "US",
+  "store_number": 1770,
+  "phone": "(517) 332-4000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.72540700",
+  "longitude": "-84.44732138",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

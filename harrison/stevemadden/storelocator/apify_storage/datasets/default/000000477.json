@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "The Westchester  (STEVEN)",
+  "street_address": "125 Westchester Ave.",
+  "city": "White Plains",
+  "state": "NY",
+  "country_code": "US",
+  "store_number": "7995650",
+  "phone": "914-997-0274",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.031902",
+  "longitude": "-73.760767",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

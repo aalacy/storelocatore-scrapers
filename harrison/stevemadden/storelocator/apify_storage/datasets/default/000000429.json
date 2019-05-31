@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Mall of America",
+  "street_address": "142 West Market SPC W142",
+  "city": "Bloomington",
+  "state": "MN",
+  "country_code": "US",
+  "store_number": "7995389",
+  "phone": "952-876-0370",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.854500",
+  "longitude": "-93.244700",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

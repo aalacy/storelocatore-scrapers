@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Road Runner Sports",
+  "street_address": "211 N Hwy 101",
+  "city": "Solana Beach",
+  "state": "CA",
+  "zip": "92075",
+  "country_code": "US",
+  "store_number": 125615,
+  "phone": "(858) 227-6594",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.99354057",
+  "longitude": "-117.27219214",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1900
+  }
+}

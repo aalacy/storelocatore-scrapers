@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Danner - The Box Factory",
+  "street_address": "555 NW Arizona Ave",
+  "city": "Bend",
+  "state": "OR",
+  "zip": "97701",
+  "country_code": "US",
+  "store_number": 123744,
+  "phone": "(541) 388-1798",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.05072173",
+  "longitude": "-121.31519876",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1900
+  }
+}

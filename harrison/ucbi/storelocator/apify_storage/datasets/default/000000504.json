@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Shops of Marco",
+  "street_address": "175 S Barfield Dr",
+  "city": "Marco Island",
+  "state": "FL",
+  "zip": "34145-5143",
+  "country_code": "US",
+  "store_number": 2796,
+  "phone": "2393943371",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.931774,
+  "longitude": -81.699376,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

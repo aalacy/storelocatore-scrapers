@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Spanish Plaines Shopping Center",
+  "street_address": "1566 Bella Cruz Dr",
+  "city": "The Villages",
+  "state": "FL",
+  "zip": "32159",
+  "country_code": "US",
+  "store_number": 3835,
+  "phone": "3527514346",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.952181,
+  "longitude": -81.96098,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

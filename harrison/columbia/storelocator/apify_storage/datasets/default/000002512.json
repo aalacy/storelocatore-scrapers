@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Trek Bicycle Store",
+  "street_address": "500 Route 35, Suite 578",
+  "city": "Red Bank",
+  "state": "NJ",
+  "zip": "07701",
+  "country_code": "US",
+  "store_number": 17603,
+  "phone": "(732) 497-1000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.37706615",
+  "longitude": "-74.09211214",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1800,
+    "tue_time_open": 1000,
+    "tue_time_close": 1800,
+    "wed_time_open": 1000,
+    "wed_time_close": 1800,
+    "thu_time_open": 1000,
+    "thu_time_close": 0,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 900,
+    "sat_time_close": 1800
+  }
+}

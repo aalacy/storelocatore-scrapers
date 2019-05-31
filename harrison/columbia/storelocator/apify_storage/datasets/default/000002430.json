@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "ASICS Outlet Barstow",
+  "street_address": "2796 Tanger Way Suite 2048",
+  "city": "Barstow",
+  "state": "CA",
+  "zip": "92311",
+  "country_code": "US",
+  "store_number": 72750,
+  "phone": "760.253.2104",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.84653571",
+  "longitude": "-117.08542192",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 2000,
+    "mon_time_open": 900,
+    "mon_time_close": 2000,
+    "tue_time_open": 900,
+    "tue_time_close": 2000,
+    "wed_time_open": 900,
+    "wed_time_close": 2000,
+    "thu_time_open": 900,
+    "thu_time_close": 2000,
+    "fri_time_open": 900,
+    "fri_time_close": 2000,
+    "sat_time_open": 900,
+    "sat_time_close": 2000
+  }
+}

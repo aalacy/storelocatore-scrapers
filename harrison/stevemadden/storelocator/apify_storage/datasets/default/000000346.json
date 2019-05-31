@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Ontario Mills Outlet",
+  "street_address": "1 Mills Circle",
+  "city": "Ontario",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995440",
+  "phone": "909-291-0140",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.073700",
+  "longitude": "-117.550000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

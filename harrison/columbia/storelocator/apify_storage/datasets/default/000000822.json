@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Schuler Shoes: Maple Grove",
+  "street_address": "7845 Main St",
+  "city": "Maple Grove",
+  "state": "MN",
+  "zip": "55369",
+  "country_code": "US",
+  "store_number": 20311,
+  "phone": "(763) 494-4878",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.09678739",
+  "longitude": "-93.44195153",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1800,
+    "mon_time_open": 930,
+    "mon_time_close": 2000,
+    "tue_time_open": 930,
+    "tue_time_close": 2000,
+    "wed_time_open": 930,
+    "wed_time_close": 2000,
+    "thu_time_open": 930,
+    "thu_time_close": 2000,
+    "fri_time_open": 930,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

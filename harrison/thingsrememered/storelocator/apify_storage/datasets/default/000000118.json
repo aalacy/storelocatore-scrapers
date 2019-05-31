@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "PARKWAY PLAZA",
+  "street_address": "407 PARKWAY PLAZA",
+  "city": "EL CAJON",
+  "state": "CA",
+  "zip": "92020",
+  "country_code": "US",
+  "store_number": "709",
+  "phone": "(619) 588-6272",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 32.79168,
+  "longitude": -116.96649,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#07:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

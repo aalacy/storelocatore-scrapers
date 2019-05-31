@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Hill Center at Nashville West",
+  "street_address": "6614 Charlotte Pike",
+  "city": "Nashville",
+  "state": "TN",
+  "zip": "37209-4202",
+  "country_code": "US",
+  "store_number": 3580,
+  "phone": "6153521055",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 36.140236,
+  "longitude": -86.882974,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

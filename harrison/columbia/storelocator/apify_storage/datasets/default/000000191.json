@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Great Outdoor Provision Co. - Charlottesville",
+  "street_address": "1125 Emmet St N",
+  "city": "Charlottesville",
+  "state": "VA",
+  "zip": "22903",
+  "country_code": "US",
+  "store_number": 10894,
+  "phone": "(434) 995-5669",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.05262346",
+  "longitude": "-78.50187813",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 1800
+  }
+}

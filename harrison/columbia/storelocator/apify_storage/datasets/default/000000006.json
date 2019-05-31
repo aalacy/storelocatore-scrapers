@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Arc'teryx Washington DC ",
+  "street_address": "1099 H Street NW",
+  "city": "Washington",
+  "state": "DC",
+  "zip": "20001",
+  "country_code": "US",
+  "store_number": 37182,
+  "phone": "(202) 589-0462",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.90001637",
+  "longitude": "-77.02677126",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 2000
+  }
+}

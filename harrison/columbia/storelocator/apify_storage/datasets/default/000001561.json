@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Peter Glenn Ski & Sports",
+  "street_address": "9507 W Broad St",
+  "city": "Richmond",
+  "state": "VA",
+  "zip": "23294",
+  "country_code": "US",
+  "store_number": 1139,
+  "phone": "(804) 527-2020",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.63970617",
+  "longitude": "-77.55904127",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

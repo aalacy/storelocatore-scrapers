@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Clear Water Outdoor - Lake Geneva",
+  "street_address": "744 W Main St",
+  "city": "Lake Geneva",
+  "state": "WI",
+  "zip": "53147",
+  "country_code": "US",
+  "store_number": 728,
+  "phone": "(262) 348-2422",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.59146978",
+  "longitude": "-88.43460145",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1800,
+    "tue_time_open": 1000,
+    "tue_time_close": 1800,
+    "wed_time_open": 1000,
+    "wed_time_close": 1800,
+    "thu_time_open": 1000,
+    "thu_time_close": 1800,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 2000
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Smithfield",
+  "street_address": "25 Main Street",
+  "city": "Smithfield",
+  "state": "PA",
+  "zip": "15478",
+  "country_code": "US",
+  "store_number": "234",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "39.8042271",
+  "longitude": "-79.8050047",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

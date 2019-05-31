@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "S&W Sports",
+  "street_address": "296 S Main St",
+  "city": "Concord",
+  "state": "NH",
+  "zip": "03301",
+  "country_code": "US",
+  "store_number": 11514,
+  "phone": "(603) 228-1441",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.18997210",
+  "longitude": "-71.53284230",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

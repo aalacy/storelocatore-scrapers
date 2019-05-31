@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Williston Plaza",
+  "street_address": "5200 SW 34th St",
+  "city": "Gainesville",
+  "state": "FL",
+  "zip": "32608-5010",
+  "country_code": "US",
+  "store_number": 3339,
+  "phone": "3523751094",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 29.604962,
+  "longitude": -82.372845,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

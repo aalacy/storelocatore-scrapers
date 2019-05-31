@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Arizona Mills Outlet",
+  "street_address": "5000 S. Arizona Mills Circle",
+  "city": "Tempe",
+  "state": "AZ",
+  "country_code": "US",
+  "store_number": "7995167",
+  "phone": "480-730-7099",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.383127",
+  "longitude": "-111.964483",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

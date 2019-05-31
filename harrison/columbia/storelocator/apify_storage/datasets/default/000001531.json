@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Morlaix",
+  "street_address": "Rue du Grand Launay",
+  "city": "Saint-Martin-des-Champs",
+  "state": "",
+  "zip": "29600",
+  "country_code": "FR",
+  "store_number": 95454,
+  "phone": "02 98 88 00 17",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.57204796",
+  "longitude": "-3.85719632",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

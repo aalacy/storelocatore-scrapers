@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Cartersville - Joe Frank Harris Pkwy",
+  "street_address": "1320 Joe Frank Harris Pkwy SE",
+  "city": "Cartersville",
+  "state": "GA",
+  "zip": "30120",
+  "country_code": "US",
+  "store_number": 23,
+  "phone": "7706078004",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.206424,
+  "longitude": -84.815225,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

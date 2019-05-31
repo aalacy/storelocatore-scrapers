@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Ooltewah - Chesterton Way - Loan Office",
+  "street_address": "6011 Chesterton Way",
+  "city": "Ooltewah",
+  "state": "TN",
+  "zip": "37363",
+  "country_code": "US",
+  "store_number": 3877,
+  "phone": "4233033484",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.08326,
+  "longitude": -85.05392,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

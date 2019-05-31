@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance House Wichita Falls",
+  "street_address": "5007 Taft Blvd",
+  "city": "Wichita Falls",
+  "state": "TX",
+  "zip": "76308",
+  "country_code": "US",
+  "store_number": 18640,
+  "phone": "(940) 234-7946",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.85604890",
+  "longitude": "-98.52079560",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

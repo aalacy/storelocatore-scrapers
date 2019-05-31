@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rick's Bike Shop",
+  "street_address": "368 Ridge Rd",
+  "city": "Queensbury",
+  "state": "NY",
+  "zip": "12804",
+  "country_code": "US",
+  "store_number": 35816,
+  "phone": "(518) 793-8986",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.33161710",
+  "longitude": "-73.63585121",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Forest Village Shopping Center",
+  "street_address": "5032 Capital Cir SW Ste 1",
+  "city": "Tallahassee",
+  "state": "FL",
+  "zip": "32305-7886",
+  "country_code": "US",
+  "store_number": 3037,
+  "phone": "8508781133",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.373265,
+  "longitude": -84.291555,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

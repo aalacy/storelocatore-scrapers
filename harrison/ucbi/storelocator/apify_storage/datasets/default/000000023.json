@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Ocean Isle Beach Market Place",
+  "street_address": "1560 Market Place Blvd",
+  "city": "Ocean Isle Beach",
+  "state": "NC",
+  "zip": "28469",
+  "country_code": "US",
+  "store_number": 3869,
+  "phone": "9103932059",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.903642,
+  "longitude": -78.439291,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

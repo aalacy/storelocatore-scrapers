@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Fountains West",
+  "street_address": "301 West Rd",
+  "city": "Ocoee",
+  "state": "FL",
+  "zip": "34761-5300",
+  "country_code": "US",
+  "store_number": 3470,
+  "phone": "4076541356",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.604461,
+  "longitude": -81.549397,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

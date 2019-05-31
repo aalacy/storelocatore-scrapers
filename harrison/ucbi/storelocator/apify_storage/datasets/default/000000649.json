@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Eagle Ridge Shoppes",
+  "street_address": "7975 State Road 50",
+  "city": "Groveland",
+  "state": "FL",
+  "zip": "34736-9381",
+  "country_code": "US",
+  "store_number": 3464,
+  "phone": "3524290233",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.560046,
+  "longitude": -81.821408,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

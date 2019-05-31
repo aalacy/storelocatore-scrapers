@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Fort Myers Beach",
+  "street_address": "4791 Estero Blvd",
+  "city": "Fort Myers Beach",
+  "state": "FL",
+  "zip": "33931-3923",
+  "country_code": "US",
+  "store_number": 3159,
+  "phone": "2394630378",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.437233,
+  "longitude": -81.920193,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 8:00 AM - 9:00 PM,Mon 8:00 AM - 9:00 PM,Tues 8:00 AM - 9:00 PM,Wed 8:00 AM - 9:00 PM,Thurs 8:00 AM - 10:00 PM,Fri 8:00 AM - 10:00 PM,Sat 8:00 AM - 10:00 PM,"
+}

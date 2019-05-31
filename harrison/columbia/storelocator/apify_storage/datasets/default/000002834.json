@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Four Star Family Cyclery",
+  "street_address": "2115 N Western Ave",
+  "city": "Chicago",
+  "state": "IL",
+  "zip": "60647",
+  "country_code": "US",
+  "store_number": 132988,
+  "phone": "(224) 358-5455",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.92068682",
+  "longitude": "-87.68714367",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

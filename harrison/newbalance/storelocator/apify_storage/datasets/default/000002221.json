@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Racks for the Road",
+  "street_address": "18207 N Eldridge Pkwy Ste A8",
+  "city": "Tomball",
+  "state": "TX",
+  "zip": "77377",
+  "country_code": "US",
+  "store_number": 151576,
+  "phone": "(832) 761-5470",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.02349191",
+  "longitude": "-95.60815665",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

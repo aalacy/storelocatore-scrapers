@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Peach",
+  "street_address": "2900 Peachtree Rd NW",
+  "city": "Atlanta",
+  "state": "GA",
+  "zip": "30305-4915",
+  "country_code": "US",
+  "store_number": 2800,
+  "phone": "4048480330",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.835215,
+  "longitude": -84.383795,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:00 AM - 11:00 PM,Mon 6:00 AM - 11:00 PM,Tues 6:00 AM - 11:00 PM,Wed 6:00 AM - 11:00 PM,Thurs 6:00 AM - 11:00 PM,Fri 6:00 AM - 11:00 PM,Sat 6:00 AM - 11:00 PM,"
+}

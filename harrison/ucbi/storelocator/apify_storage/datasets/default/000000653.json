@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Cape Coral Landings",
+  "street_address": "127 Cape Coral Pkwy W",
+  "city": "Cape Coral",
+  "state": "FL",
+  "zip": "33914-8353",
+  "country_code": "US",
+  "store_number": 3600,
+  "phone": "2395400137",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.563328,
+  "longitude": -81.975992,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

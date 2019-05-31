@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Hendersonville - Chimney Rock Rd",
+  "street_address": "2520 Chimney Rock Rd",
+  "city": "Hendersonville",
+  "state": "NC",
+  "zip": "28792",
+  "country_code": "US",
+  "store_number": 59,
+  "phone": "8286985684",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.346107,
+  "longitude": -82.432114,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

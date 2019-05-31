@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Fashion Square Sherman Oaks",
+  "street_address": "14006 Riverside Drive",
+  "city": "Sherman Oaks",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995282",
+  "phone": "(818)2059563",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.156600",
+  "longitude": "-118.437000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

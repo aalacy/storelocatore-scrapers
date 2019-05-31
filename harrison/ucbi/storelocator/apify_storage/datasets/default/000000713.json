@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Bloomingdale Shopping Center",
+  "street_address": "855 E Bloomingdale Ave",
+  "city": "Brandon",
+  "state": "FL",
+  "zip": "33511-8113",
+  "country_code": "US",
+  "store_number": 2814,
+  "phone": "8136858859",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.892459,
+  "longitude": -82.272509,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

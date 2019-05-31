@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Boaters Republic",
+  "street_address": "2122 S Dale Mabry Hwy",
+  "city": "Tampa",
+  "state": "FL",
+  "zip": "33629",
+  "country_code": "US",
+  "store_number": 132878,
+  "phone": "",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "27.92645754",
+  "longitude": "-82.50561352",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

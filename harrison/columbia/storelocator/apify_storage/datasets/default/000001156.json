@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "SlimPickins Outfitters",
+  "street_address": "200 W Washington St",
+  "city": "Stephenville",
+  "state": "TX",
+  "zip": "76401",
+  "country_code": "US",
+  "store_number": 66149,
+  "phone": "(254) 434-4677",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.22009528",
+  "longitude": "-98.20301609",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Jay's Cycle Center",
+  "street_address": "227 N Ave E",
+  "city": "Westfield",
+  "state": "NJ",
+  "zip": "07090",
+  "country_code": "US",
+  "store_number": 33530,
+  "phone": "(908) 232-3250",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.65093666",
+  "longitude": "-74.34409122",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

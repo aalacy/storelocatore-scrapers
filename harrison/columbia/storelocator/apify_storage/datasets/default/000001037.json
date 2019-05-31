@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Village Green",
+  "street_address": "4900 27 St Unit # 0340",
+  "city": "Vernon",
+  "state": "BC",
+  "zip": "V1T7G7",
+  "country_code": "CA",
+  "store_number": 103776,
+  "phone": "(250) 260-2860",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "50.28391824",
+  "longitude": "-119.26930195",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

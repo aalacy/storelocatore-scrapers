@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Conyers - Hwy 138",
+  "street_address": "1000 Highway 138 SE",
+  "city": "Conyers",
+  "state": "GA",
+  "zip": "30013",
+  "country_code": "US",
+  "store_number": 33,
+  "phone": "7707857880",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.635996,
+  "longitude": -84.019213,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

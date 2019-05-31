@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Celestial Cycles",
+  "street_address": "2929 W Hefner Rd",
+  "city": "Oklahoma City",
+  "state": "OK",
+  "zip": "73120",
+  "country_code": "US",
+  "store_number": 21455,
+  "phone": "(405) 751-8809",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.58059583",
+  "longitude": "-97.56899160",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

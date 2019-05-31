@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Fillmore",
+  "street_address": "44 Genesee St.",
+  "city": "Fillmore",
+  "state": "NY",
+  "zip": "14735",
+  "country_code": "US",
+  "store_number": "45",
+  "phone": "1091",
+  "location_type": {
+    "gas_station": "42.461634",
+    "active": "-78.112364",
+    "pump_perk": "false"
+  },
+  "niacs_code": null,
+  "latitude": "585-567-2701",
+  "longitude": "585-567-2701",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

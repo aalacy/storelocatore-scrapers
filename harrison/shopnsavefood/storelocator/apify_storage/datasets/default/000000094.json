@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Handy Mart #19",
+  "street_address": "760 Warriors Ave.",
+  "city": "Stephens City",
+  "state": "VA",
+  "zip": "22655",
+  "country_code": "US",
+  "store_number": "341",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "false",
+    "pump_perk": "false"
+  },
+  "niacs_code": null,
+  "latitude": "39.095492",
+  "longitude": "-78.178237",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

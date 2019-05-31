@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Albuquerque II",
+  "street_address": "3731 Ellison NW #D",
+  "city": "Albuquerque",
+  "state": "NM",
+  "zip": "87114",
+  "country_code": "US",
+  "store_number": 84813,
+  "phone": "(505) 899-0060",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.20758577",
+  "longitude": "-106.65473175",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1730,
+    "tue_time_open": 1000,
+    "tue_time_close": 1730,
+    "wed_time_open": 1000,
+    "wed_time_close": 1730,
+    "thu_time_open": 1000,
+    "thu_time_close": 1730,
+    "fri_time_open": 1000,
+    "fri_time_close": 1730,
+    "sat_time_open": 1000,
+    "sat_time_close": 1730
+  }
+}

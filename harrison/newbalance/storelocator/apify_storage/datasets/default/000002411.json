@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek The Quarry Shopping Centre",
+  "street_address": "60 Quarry St #4",
+  "city": "Cochrane",
+  "state": "AB",
+  "zip": "T4C0W5",
+  "country_code": "CA",
+  "store_number": 103604,
+  "phone": "(403) 851-3638",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "51.18409839",
+  "longitude": "-114.46841875",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

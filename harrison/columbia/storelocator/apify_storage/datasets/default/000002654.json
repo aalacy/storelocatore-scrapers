@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Magic Beans - Brookline",
+  "street_address": "312 Harvard St",
+  "city": "Brookline",
+  "state": "MA",
+  "zip": "02446",
+  "country_code": "US",
+  "store_number": 36542,
+  "phone": "(617) 383-8250",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.34316938",
+  "longitude": "-71.12325117",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 1800,
+    "tue_time_open": 1000,
+    "tue_time_close": 1800,
+    "wed_time_open": 1000,
+    "wed_time_close": 1800,
+    "thu_time_open": 1000,
+    "thu_time_close": 1800,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1900
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Pedal Power Bike Shop",
+  "street_address": "401 S Upper St",
+  "city": "Lexington",
+  "state": "KY",
+  "zip": "40508",
+  "country_code": "US",
+  "store_number": 33884,
+  "phone": "(859) 255-6408",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.04419623",
+  "longitude": "-84.50250138",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

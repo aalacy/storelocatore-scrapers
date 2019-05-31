@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Boise",
+  "street_address": "4572 N Eagle Rd",
+  "city": "Boise",
+  "state": "ID",
+  "zip": "83713",
+  "country_code": "US",
+  "store_number": 84851,
+  "phone": "(208) 939-7463",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.64641715",
+  "longitude": "-116.35300191",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

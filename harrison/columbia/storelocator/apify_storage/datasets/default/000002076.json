@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Vibram USA",
+  "street_address": "840 Commonwealth Avenue",
+  "city": "Brookline",
+  "state": "MA",
+  "zip": "02446",
+  "country_code": "US",
+  "store_number": 148312,
+  "phone": "(857) 263-8508",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.35069387",
+  "longitude": "-71.11319312",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

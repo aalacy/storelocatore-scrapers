@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "North 40 Outfitters",
+  "street_address": "477181 US-95",
+  "city": "Ponderay",
+  "state": "ID",
+  "zip": "83852",
+  "country_code": "US",
+  "store_number": 13751,
+  "phone": "(208) 255-5757",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.31079151",
+  "longitude": "-116.54412191",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "95 Washington Heights Dr.",
+  "city": "Washington",
+  "state": "MO",
+  "zip": "63090",
+  "country_code": "US",
+  "store_number": 10037357,
+  "phone": "(636) 390-2700",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 38.53672342974463,
+  "longitude": -90.99897867584167,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

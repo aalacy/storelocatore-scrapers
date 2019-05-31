@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Westchester",
+  "street_address": "350 Tarrytown Rd",
+  "city": "White Plains",
+  "state": "NY",
+  "zip": "10607",
+  "country_code": "US",
+  "store_number": 84796,
+  "phone": "(914) 993-6291",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.04268610",
+  "longitude": "-73.79525690",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

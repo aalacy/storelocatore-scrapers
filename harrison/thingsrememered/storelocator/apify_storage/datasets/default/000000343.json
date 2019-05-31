@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "THE SHOPS AT WILLOW BEND",
+  "street_address": "6121 W PARK BLVD",
+  "city": "PLANO",
+  "state": "TX",
+  "zip": "75093",
+  "country_code": "US",
+  "store_number": "954",
+  "phone": "(972) 202-8364",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.0308,
+  "longitude": -96.8003,
+  "external_lat_long": false,
+  "hours_of_operation": "1#12:00 PM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

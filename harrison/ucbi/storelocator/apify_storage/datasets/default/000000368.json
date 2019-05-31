@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Miller Street",
+  "street_address": "34 Miller St",
+  "city": "Winston-Salem",
+  "state": "NC",
+  "zip": "27104-4212",
+  "country_code": "US",
+  "store_number": 3740,
+  "phone": "3367243707",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 36.095706,
+  "longitude": -80.276166,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

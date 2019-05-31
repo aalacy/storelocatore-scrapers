@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Washington",
+  "street_address": "501 Jefferson Ave.",
+  "city": "Washington",
+  "state": "PA",
+  "zip": "15301",
+  "country_code": "US",
+  "store_number": "346",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.1760732 ",
+  "longitude": "-80.2579146 ",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

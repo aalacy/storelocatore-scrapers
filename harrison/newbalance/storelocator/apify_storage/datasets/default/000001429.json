@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brands Cycle and Fitness",
+  "street_address": "1966 Wantagh Ave",
+  "city": "Wantagh",
+  "state": "NY",
+  "zip": "11793",
+  "country_code": "US",
+  "store_number": 11218,
+  "phone": "(800) 649-3739",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.67218666",
+  "longitude": "-73.51057120",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1630,
+    "mon_time_open": 930,
+    "mon_time_close": 1900,
+    "tue_time_open": 930,
+    "tue_time_close": 1900,
+    "wed_time_open": 930,
+    "wed_time_close": 1900,
+    "thu_time_open": 930,
+    "thu_time_close": 1900,
+    "fri_time_open": 930,
+    "fri_time_close": 1900,
+    "sat_time_open": 930,
+    "sat_time_close": 1730
+  }
+}

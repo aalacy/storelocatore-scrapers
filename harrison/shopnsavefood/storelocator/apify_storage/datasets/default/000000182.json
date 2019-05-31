@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Penn Hills",
+  "street_address": "6500 Saltsburg Road",
+  "city": "Penn Hills Township",
+  "state": "PA",
+  "zip": "15235",
+  "country_code": "US",
+  "store_number": "215",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.3986",
+  "longitude": "-80.00085",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

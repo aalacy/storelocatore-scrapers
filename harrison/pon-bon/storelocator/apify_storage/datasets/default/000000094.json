@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "1001 W Morton Ave.",
+  "city": "Jacksonville",
+  "state": "IL",
+  "zip": "62650",
+  "country_code": "US",
+  "store_number": 10037354,
+  "phone": "(217) 245-2445",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 39.72266738544278,
+  "longitude": -90.24471929508917,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

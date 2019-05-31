@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Ski Barn",
+  "street_address": "795 Broad St",
+  "city": "Shrewsbury",
+  "state": "NJ",
+  "zip": "07702",
+  "country_code": "US",
+  "store_number": 13788,
+  "phone": "(732) 945-3900",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.32614661",
+  "longitude": "-74.06145121",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 2000
+  }
+}

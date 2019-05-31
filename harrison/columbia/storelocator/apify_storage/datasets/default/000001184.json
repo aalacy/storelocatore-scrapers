@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Kafe Racer",
+  "street_address": "998 Douglas Ave",
+  "city": "Dunedin",
+  "state": "FL",
+  "zip": "34698",
+  "country_code": "US",
+  "store_number": 108585,
+  "phone": "(727) 466-1245",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "28.01545901",
+  "longitude": "-82.78813564",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "BG Bicycles",
+  "street_address": "6860 W Park Ave",
+  "city": "Houma",
+  "state": "LA",
+  "zip": "70364",
+  "country_code": "US",
+  "store_number": 35609,
+  "phone": "(985) 327-8709",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "29.60929485",
+  "longitude": "-90.74389149",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

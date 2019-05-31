@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "AZRIELI MALL",
+  "street_address": "148 MENAHEM BEGIN ST",
+  "city": "TEL AVIV",
+  "state": null,
+  "country_code": "IL",
+  "store_number": "7995179",
+  "phone": "36038680",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.093422",
+  "longitude": "34.832201",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

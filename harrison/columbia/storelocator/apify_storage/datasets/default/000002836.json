@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Utility Bicycle Works",
+  "street_address": "228 Wall St",
+  "city": "Kingston",
+  "state": "NY",
+  "zip": "12401",
+  "country_code": "US",
+  "store_number": 132989,
+  "phone": "(845) 481-0269",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.93115264",
+  "longitude": "-74.01853778",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

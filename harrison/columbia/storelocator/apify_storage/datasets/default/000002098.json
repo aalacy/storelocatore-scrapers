@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Benevento",
+  "street_address": "Via dei Longobardi (ex Via Valfortore), 10",
+  "city": "Benevento",
+  "state": "BN",
+  "zip": "82100",
+  "country_code": "IT",
+  "store_number": 144681,
+  "phone": "0824 54164",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.13467395",
+  "longitude": "14.78224219",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 2030,
+    "mon_time_open": 930,
+    "mon_time_close": 2030,
+    "tue_time_open": 930,
+    "tue_time_close": 2030,
+    "wed_time_open": 930,
+    "wed_time_close": 2030,
+    "thu_time_open": 930,
+    "thu_time_close": 2030,
+    "fri_time_open": 930,
+    "fri_time_close": 2030,
+    "sat_time_open": 930,
+    "sat_time_close": 2030
+  }
+}

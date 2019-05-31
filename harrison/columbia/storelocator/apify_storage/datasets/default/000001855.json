@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Fort Morgan",
+  "street_address": "315 Main St",
+  "city": "Fort Morgan",
+  "state": "CO",
+  "zip": "80701",
+  "country_code": "US",
+  "store_number": 42060,
+  "phone": "(970) 867-6462",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.25064500",
+  "longitude": "-103.80161500",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Follett's Mountain Sports",
+  "street_address": "714 D Street",
+  "city": "Lewiston",
+  "state": "ID",
+  "zip": "83501",
+  "country_code": "US",
+  "store_number": 18079,
+  "phone": "(208) 743-4200",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "46.42144761",
+  "longitude": "-117.02405192",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

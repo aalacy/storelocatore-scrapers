@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Salem Road Station",
+  "street_address": "13015 Brown Bridge Rd",
+  "city": "Covington",
+  "state": "GA",
+  "zip": "30016-9111",
+  "country_code": "US",
+  "store_number": 3163,
+  "phone": "6783420766",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.576602,
+  "longitude": -83.965002,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "BikeSource Highlands Ranch",
+  "street_address": "2690 E County Line Rd ",
+  "city": "Highlands Ranch",
+  "state": "CO",
+  "zip": "80126",
+  "country_code": "US",
+  "store_number": 37978,
+  "phone": "(303) 221-4840",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.56480648",
+  "longitude": "-104.95679172",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Abbotts Village at Ocee",
+  "street_address": "11585 Jones Bridge Rd Ste 500",
+  "city": "Johns Creek",
+  "state": "GA",
+  "zip": "30022-8173",
+  "country_code": "US",
+  "store_number": 2953,
+  "phone": "7707514580",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.062197,
+  "longitude": -84.213212,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

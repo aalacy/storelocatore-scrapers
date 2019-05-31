@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Pittsburgh Street",
+  "street_address": "<Website>",
+  "city": "<Website>",
+  "state": "730 East Pittsburgh Street ",
+  "zip": "Greensburg",
+  "country_code": "US",
+  "store_number": "52",
+  "phone": "1060",
+  "location_type": {
+    "gas_station": "Mon-Sat 7:00-11:00",
+    "active": "Sun 7:00-9:00",
+    "pump_perk": "724-834-4470"
+  },
+  "niacs_code": null,
+  "latitude": "PA",
+  "longitude": "15601",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

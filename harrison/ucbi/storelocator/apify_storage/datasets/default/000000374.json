@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Island Crossing SC",
+  "street_address": "11 Palmetto Bay Rd",
+  "city": "Hilton Head Island",
+  "state": "SC",
+  "zip": "29928-3293",
+  "country_code": "US",
+  "store_number": 3120,
+  "phone": "8438422632",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 32.157909,
+  "longitude": -80.766139,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

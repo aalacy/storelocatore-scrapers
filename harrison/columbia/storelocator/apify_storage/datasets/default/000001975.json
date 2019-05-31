@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Mt. Pleasant",
+  "street_address": "108 S Main St",
+  "city": "Mt Pleasant",
+  "state": "IA",
+  "zip": "52641",
+  "country_code": "US",
+  "store_number": 21983,
+  "phone": "(319) 385-2931",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.96667119",
+  "longitude": "-91.55215000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

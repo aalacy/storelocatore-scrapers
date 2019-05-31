@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Castle Shannon",
+  "street_address": "3505 Library Road",
+  "city": "Castle Shannon",
+  "state": "PA",
+  "zip": "15234",
+  "country_code": "US",
+  "store_number": "144",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.366413",
+  "longitude": "-80.0145257",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

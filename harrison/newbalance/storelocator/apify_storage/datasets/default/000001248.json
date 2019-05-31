@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Dally's Ozark Fly Fisher",
+  "street_address": "1200 West Main St ",
+  "city": "Cotter",
+  "state": "AR",
+  "zip": "72626",
+  "country_code": "US",
+  "store_number": 34379,
+  "phone": "(870) 435-6166",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.28554036",
+  "longitude": "-92.51408018",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

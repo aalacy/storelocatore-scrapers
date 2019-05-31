@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "ASICS Outlet Woodburn",
+  "street_address": "1001 N Arney Rd #1016",
+  "city": "Woodburn",
+  "state": "OR",
+  "zip": "97071",
+  "country_code": "US",
+  "store_number": 62199,
+  "phone": "(503) 981-1449",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.15620740",
+  "longitude": "-122.87828201",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1900,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 1000,
+    "sat_time_close": 2100
+  }
+}

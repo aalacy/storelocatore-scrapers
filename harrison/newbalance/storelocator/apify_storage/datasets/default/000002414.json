@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Blain's Farm & Fleet",
+  "street_address": "1600 Lincoln Way",
+  "city": "Clinton",
+  "state": "IA",
+  "zip": "52732",
+  "country_code": "US",
+  "store_number": 52653,
+  "phone": "(563) 243-4311",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.81668513",
+  "longitude": "-90.22361478",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 1800,
+    "mon_time_open": 700,
+    "mon_time_close": 2100,
+    "tue_time_open": 700,
+    "tue_time_close": 2100,
+    "wed_time_open": 700,
+    "wed_time_close": 2100,
+    "thu_time_open": 700,
+    "thu_time_close": 2100,
+    "fri_time_open": 700,
+    "fri_time_close": 2100,
+    "sat_time_open": 700,
+    "sat_time_close": 2000
+  }
+}

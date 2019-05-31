@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Lake Miriam Square",
+  "street_address": "4730 S Florida Ave",
+  "city": "Lakeland",
+  "state": "FL",
+  "zip": "33813-2181",
+  "country_code": "US",
+  "store_number": 2835,
+  "phone": "8636468537",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.978389,
+  "longitude": -81.955941,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

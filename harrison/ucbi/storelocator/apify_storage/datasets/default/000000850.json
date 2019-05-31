@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Inman - Asheville Hwy",
+  "street_address": "11500 Asheville Hwy",
+  "city": "Inman",
+  "state": "SC",
+  "zip": "29349",
+  "country_code": "US",
+  "store_number": 1247,
+  "phone": "8644725300",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.040195,
+  "longitude": -82.082954,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

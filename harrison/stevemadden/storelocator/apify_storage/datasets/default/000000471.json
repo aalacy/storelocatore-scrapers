@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Outlet Warehouse 921",
+  "street_address": "7373 Westside Avenue",
+  "city": "North Bergen",
+  "state": "NJ",
+  "country_code": "US",
+  "store_number": "7995446",
+  "phone": "888-762-3336",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.803132",
+  "longitude": "-74.027524",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

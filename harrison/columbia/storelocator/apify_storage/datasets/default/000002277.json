@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "ASICS Outlet St Augustine",
+  "street_address": "2700 FL-16 #107a",
+  "city": "St Augustine",
+  "state": "FL",
+  "zip": "32092",
+  "country_code": "US",
+  "store_number": 62185,
+  "phone": "(904) 826-0136",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "29.92507490",
+  "longitude": "-81.41737133",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 900,
+    "mon_time_close": 2100,
+    "tue_time_open": 900,
+    "tue_time_close": 2100,
+    "wed_time_open": 900,
+    "wed_time_close": 2100,
+    "thu_time_open": 900,
+    "thu_time_close": 2100,
+    "fri_time_open": 900,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 2100
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Queens Center",
+  "street_address": "90-15 Queens Blvd",
+  "city": "Elmhurst",
+  "state": "NY",
+  "country_code": "US",
+  "store_number": "7995472",
+  "phone": "718-271-3591",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.734500",
+  "longitude": "-73.870942",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

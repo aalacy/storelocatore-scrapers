@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Confederation Centre",
+  "street_address": "301 Confederation Dr",
+  "city": "Saskatoon",
+  "state": "SK",
+  "zip": "S7L5C3",
+  "country_code": "CA",
+  "store_number": 103732,
+  "phone": "(306) 931-8833",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "52.13058541",
+  "longitude": "-106.72487175",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Huntersville",
+  "street_address": "16620 Cranlyn Rd #100",
+  "city": "Huntersville",
+  "state": "NC",
+  "zip": "28078",
+  "country_code": "US",
+  "store_number": 19070,
+  "phone": "(704) 896-2202",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.44458073",
+  "longitude": "-80.87713251",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Foxwoods Outlet",
+  "street_address": "455 Trolley Line Blvd. Suite #800",
+  "city": "Mashantucket",
+  "state": "CT",
+  "country_code": "US",
+  "store_number": "7995293",
+  "phone": "860-213-5260",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.476300",
+  "longitude": "-71.962000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

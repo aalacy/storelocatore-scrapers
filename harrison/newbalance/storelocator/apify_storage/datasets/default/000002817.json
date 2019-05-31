@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Roscoe Village Bikes",
+  "street_address": "2016 W Roscoe",
+  "city": "Chicago",
+  "state": "IL",
+  "zip": "60618",
+  "country_code": "US",
+  "store_number": 109407,
+  "phone": "(773) 477-7550",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.94340687",
+  "longitude": "-87.67920144",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 1100,
+    "mon_time_close": 2000,
+    "tue_time_open": 1100,
+    "tue_time_close": 2000,
+    "wed_time_open": 1100,
+    "wed_time_close": 2000,
+    "thu_time_open": 1100,
+    "thu_time_close": 2000,
+    "fri_time_open": 1100,
+    "fri_time_close": 1800,
+    "sat_time_open": 1100,
+    "sat_time_close": 1800
+  }
+}

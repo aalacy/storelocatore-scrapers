@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Sassari Loc. Predda Niedda",
+  "street_address": "Loc. Predda Niedda",
+  "city": "Sassari",
+  "state": "SS",
+  "zip": "7100",
+  "country_code": "IT",
+  "store_number": 144752,
+  "phone": "0792 675035",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.73366737",
+  "longitude": "8.53033140",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 2030,
+    "mon_time_open": 900,
+    "mon_time_close": 2100,
+    "tue_time_open": 900,
+    "tue_time_close": 2100,
+    "wed_time_open": 900,
+    "wed_time_close": 2100,
+    "thu_time_open": 900,
+    "thu_time_close": 2100,
+    "fri_time_open": 900,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 2100
+  }
+}

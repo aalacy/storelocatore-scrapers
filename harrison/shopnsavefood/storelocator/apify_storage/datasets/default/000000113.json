@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Lappans AC&T",
+  "street_address": "8650 Sharpsburg Pike",
+  "city": "Fairplay",
+  "state": "MD",
+  "zip": "21733",
+  "country_code": "US",
+  "store_number": "328",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "false",
+    "pump_perk": "false"
+  },
+  "niacs_code": null,
+  "latitude": "39.553678",
+  "longitude": "-77.737943",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

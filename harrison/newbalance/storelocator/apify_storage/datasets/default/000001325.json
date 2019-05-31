@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Atmosphere - Park Royal",
+  "street_address": "1100 Park Royal S #06a",
+  "city": "West Vancouver",
+  "state": "BC",
+  "zip": "V7T1A1",
+  "country_code": "CA",
+  "store_number": 14116,
+  "phone": "(604) 922-0388",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.32529808",
+  "longitude": "-123.14015202",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

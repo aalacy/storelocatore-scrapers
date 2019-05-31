@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Norwich Centre",
+  "street_address": "399 Norwich Ave",
+  "city": "Woodstock",
+  "state": "ON",
+  "zip": "N4S3W4",
+  "country_code": "CA",
+  "store_number": 103797,
+  "phone": "(519) 537-8965",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.11882706",
+  "longitude": "-80.73615132",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

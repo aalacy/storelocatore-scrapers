@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Corbetts Ski + Snowboard",
+  "street_address": "120 Speers Rd",
+  "city": "Oakville",
+  "state": "ON",
+  "zip": "L6K2E7",
+  "country_code": "CA",
+  "store_number": 19849,
+  "phone": "(905) 845-1561",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.44567712",
+  "longitude": "-79.68735131",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Polo Park",
+  "street_address": "1485 Portage Ave Unit 130A",
+  "city": "Winnipeg",
+  "state": "MB",
+  "zip": "R3G0W4",
+  "country_code": "CA",
+  "store_number": 103794,
+  "phone": "(204) 772-9541",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.88225590",
+  "longitude": "-97.19865140",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

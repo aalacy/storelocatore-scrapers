@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Aptos",
+  "street_address": "26 Rancho Del Mar",
+  "city": "Aptos",
+  "state": "CA",
+  "zip": "95003",
+  "country_code": "US",
+  "store_number": 17949,
+  "phone": "(831) 662-0886",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.97828631",
+  "longitude": "-121.90812751",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

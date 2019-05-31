@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Oak Knolls Hardware",
+  "street_address": "1155 E Clark Ave",
+  "city": "Santa Maria",
+  "state": "CA",
+  "zip": "93455",
+  "country_code": "US",
+  "store_number": 90267,
+  "phone": "(805) 937-3536",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.86548571",
+  "longitude": "-120.41745197",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

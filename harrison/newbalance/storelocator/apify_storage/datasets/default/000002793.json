@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "CITRUS PARK BIKES",
+  "street_address": "7424 Edgemere Rd",
+  "city": "Tampa",
+  "state": "FL",
+  "zip": "33625",
+  "country_code": "US",
+  "store_number": 145229,
+  "phone": "(813) 749-6732",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "28.06845987",
+  "longitude": "-82.56971353",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

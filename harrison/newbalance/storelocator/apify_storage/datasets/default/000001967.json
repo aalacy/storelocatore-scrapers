@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Muskogee",
+  "street_address": "2234A E Shawnee Bypass",
+  "city": "Muskogee",
+  "state": "OK",
+  "zip": "74403",
+  "country_code": "US",
+  "store_number": 24024,
+  "phone": "(918) 687-5950",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.77239850",
+  "longitude": "-95.34482780",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

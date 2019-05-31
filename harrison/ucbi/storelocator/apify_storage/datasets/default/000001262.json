@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix",
+  "street_address": "610 Eglin Pkwy NE",
+  "city": "Fort Walton Beach",
+  "state": "FL",
+  "zip": "32547-2832",
+  "country_code": "US",
+  "store_number": 3584,
+  "phone": "8508626789",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.441629,
+  "longitude": -86.600485,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

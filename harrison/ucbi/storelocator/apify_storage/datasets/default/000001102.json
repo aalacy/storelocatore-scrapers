@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "King's Market",
+  "street_address": "1425 Market Blvd Ste 600",
+  "city": "Roswell",
+  "state": "GA",
+  "zip": "30076-6711",
+  "country_code": "US",
+  "store_number": 3344,
+  "phone": "7706406035",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.017899,
+  "longitude": -84.319994,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

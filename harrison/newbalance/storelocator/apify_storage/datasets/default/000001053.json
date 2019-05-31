@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Don Thomas Sporthaus",
+  "street_address": "690 S Old Woodward Ave",
+  "city": "Birmingham",
+  "state": "MI",
+  "zip": "48009",
+  "country_code": "US",
+  "store_number": 10985,
+  "phone": "(248) 220-1999",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.54169700",
+  "longitude": "-83.20913633",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

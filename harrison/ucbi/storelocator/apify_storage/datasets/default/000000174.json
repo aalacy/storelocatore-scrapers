@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Coral Landings II",
+  "street_address": "6270 W Sample Rd",
+  "city": "Coral Springs",
+  "state": "FL",
+  "zip": "33067-3176",
+  "country_code": "US",
+  "store_number": 3420,
+  "phone": "9543445560",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.272391,
+  "longitude": -80.209821,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

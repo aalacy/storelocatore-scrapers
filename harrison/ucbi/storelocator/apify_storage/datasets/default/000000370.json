@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Sunshine Park Shopping Center",
+  "street_address": "2400 S Ridgewood Ave",
+  "city": "South Daytona",
+  "state": "FL",
+  "zip": "32119-3097",
+  "country_code": "US",
+  "store_number": 3187,
+  "phone": "3867569969",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 29.16455,
+  "longitude": -81.00114,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

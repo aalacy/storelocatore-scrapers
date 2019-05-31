@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Hillcrest Mall",
+  "street_address": "9350 Yonge St Y-2",
+  "city": "Richmond Hill",
+  "state": "ON",
+  "zip": "L4C5G2",
+  "country_code": "CA",
+  "store_number": 103722,
+  "phone": "(905) 508-1917",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.85393150",
+  "longitude": "-79.43777540",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Corner Brook Plaza",
+  "street_address": "54 Maple Valley Rd M-02A",
+  "city": "Corner Brook",
+  "state": "NL",
+  "zip": "A2H3C5",
+  "country_code": "CA",
+  "store_number": 103610,
+  "phone": "(709) 634-4700",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.94728802",
+  "longitude": "-57.91628949",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

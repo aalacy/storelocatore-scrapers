@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Mall Of Louisiana",
+  "street_address": "6401 Bluebonnet Blvd.",
+  "city": "Baton Rouge",
+  "state": "LA",
+  "country_code": "US",
+  "store_number": "7995393",
+  "phone": "225-769-9997",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.388975",
+  "longitude": "-91.088543",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

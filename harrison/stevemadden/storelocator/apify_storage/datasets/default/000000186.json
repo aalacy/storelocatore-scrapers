@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Arabian Center",
+  "street_address": "Ground Level",
+  "city": "Dubai",
+  "state": null,
+  "country_code": "AE",
+  "store_number": "7995165",
+  "phone": "97142559476",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "25.271139",
+  "longitude": "55.307485",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "Carr. Estatal, #176, K.M. 1.2., Barrio Cupey",
+  "city": "Rio Piedras",
+  "state": "PR",
+  "zip": "00926",
+  "country_code": "US",
+  "store_number": 10037288,
+  "phone": "(787) 756-1525",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 18.38318581867175,
+  "longitude": -66.05627649570084,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

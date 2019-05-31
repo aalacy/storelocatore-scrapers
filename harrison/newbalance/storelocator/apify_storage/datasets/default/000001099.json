@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Coastal Farm & Ranch",
+  "street_address": "7303 Crater Lake Hwy",
+  "city": "White City",
+  "state": "OR",
+  "zip": "97503",
+  "country_code": "US",
+  "store_number": 30951,
+  "phone": "(541) 830-3713",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.42256951",
+  "longitude": "-122.85402013",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

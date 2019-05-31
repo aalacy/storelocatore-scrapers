@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Newland - Linville St",
+  "street_address": "200 Linville St",
+  "city": "Newland",
+  "state": "NC",
+  "zip": "28657",
+  "country_code": "US",
+  "store_number": 78,
+  "phone": "8287339281",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 36.084444,
+  "longitude": -81.926333,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Jans on Park Avenue",
+  "street_address": "1600 Park Ave",
+  "city": "Park City",
+  "state": "UT",
+  "zip": "84060",
+  "country_code": "US",
+  "store_number": 323,
+  "phone": "(435) 649-4949",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.65691666",
+  "longitude": "-111.50628183",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 800,
+    "sun_time_close": 1900,
+    "mon_time_open": 800,
+    "mon_time_close": 1900,
+    "tue_time_open": 800,
+    "tue_time_close": 1900,
+    "wed_time_open": 800,
+    "wed_time_close": 1900,
+    "thu_time_open": 800,
+    "thu_time_close": 1900,
+    "fri_time_open": 800,
+    "fri_time_close": 1900,
+    "sat_time_open": 800,
+    "sat_time_close": 1900
+  }
+}

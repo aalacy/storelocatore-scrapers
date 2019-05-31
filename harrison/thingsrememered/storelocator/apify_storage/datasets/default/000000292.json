@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "BRIDGEWATER COMMONS",
+  "street_address": "400 COMMONS WAY",
+  "city": "BRIDGEWATER",
+  "state": "NJ",
+  "zip": "08807",
+  "country_code": "US",
+  "store_number": "704",
+  "phone": "(908) 707-4464",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 40.59105,
+  "longitude": -74.62178,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

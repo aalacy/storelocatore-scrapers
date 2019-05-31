@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "Khalifa Int. Tennis & Squash Complex, Khalifa Road",
+  "city": "Doha",
+  "state": "Qatar",
+  "zip": "",
+  "country_code": "US",
+  "store_number": 10037366,
+  "phone": "44583006",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 25.312472957246662,
+  "longitude": 51.513021911482724,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

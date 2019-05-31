@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Sport S.p.A.",
+  "street_address": "Via Generale Gaetano Giardino, 1",
+  "city": "Lissone",
+  "state": "MB",
+  "zip": "20035",
+  "country_code": "IT",
+  "store_number": 144704,
+  "phone": "039 278 2140",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.59974710",
+  "longitude": "9.23299151",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 2000,
+    "mon_time_open": 900,
+    "mon_time_close": 2100,
+    "tue_time_open": 900,
+    "tue_time_close": 2100,
+    "wed_time_open": 900,
+    "wed_time_close": 2100,
+    "thu_time_open": 900,
+    "thu_time_close": 2100,
+    "fri_time_open": 900,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 2100
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Eastern Panhandle Bicycle Company",
+  "street_address": "805 E Moler Avenue",
+  "city": "Martinsburg",
+  "state": "WV",
+  "zip": "25404",
+  "country_code": "US",
+  "store_number": 26599,
+  "phone": "(304) 263-3760",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.46504647",
+  "longitude": "-77.94769128",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

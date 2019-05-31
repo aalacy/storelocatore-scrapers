@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Georgetown",
+  "street_address": "280 Guelph St",
+  "city": "Georgetown",
+  "state": "ON",
+  "zip": "L7G4B1",
+  "country_code": "CA",
+  "store_number": 103645,
+  "phone": "(905) 877-5781",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.64867715",
+  "longitude": "-79.89833131",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

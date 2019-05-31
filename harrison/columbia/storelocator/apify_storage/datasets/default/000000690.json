@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Just Roughin' It Adventure Company",
+  "street_address": "8658 E Shea Blvd., Ste 175",
+  "city": "Scottsdale",
+  "state": "AZ",
+  "zip": "85260",
+  "country_code": "US",
+  "store_number": 17485,
+  "phone": "(480) 857-2477",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.61321551",
+  "longitude": "-111.91621183",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 900,
+    "sat_time_close": 1800
+  }
+}

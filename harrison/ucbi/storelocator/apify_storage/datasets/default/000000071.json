@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix At Riviera Beach",
+  "street_address": "228 E Blue Heron Blvd",
+  "city": "Riviera Beach",
+  "state": "FL",
+  "zip": "33404-4545",
+  "country_code": "US",
+  "store_number": 3629,
+  "phone": "5618413058",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.783809,
+  "longitude": -80.050446,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Mt. View Marketplace",
+  "street_address": "3532 Murfreesboro Pike",
+  "city": "Antioch",
+  "state": "TN",
+  "zip": "37013-2210",
+  "country_code": "US",
+  "store_number": 3525,
+  "phone": "6155018250",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 36.053451,
+  "longitude": -86.614913,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:30 AM - 10:00 PM,Mon 6:30 AM - 10:00 PM,Tues 6:30 AM - 10:00 PM,Wed 6:30 AM - 10:00 PM,Thurs 6:30 AM - 10:00 PM,Fri 6:30 AM - 10:00 PM,Sat 6:30 AM - 10:00 PM,"
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Topeka",
+  "street_address": "1920 SW Wanamaker Rd # 150",
+  "city": "Topeka",
+  "state": "KS",
+  "zip": "66604",
+  "country_code": "US",
+  "store_number": 21994,
+  "phone": "(785) 271-6961",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.03225600",
+  "longitude": "-95.76160700",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 900,
+    "mon_time_close": 1900,
+    "tue_time_open": 900,
+    "tue_time_close": 1900,
+    "wed_time_open": 900,
+    "wed_time_close": 1900,
+    "thu_time_open": 900,
+    "thu_time_close": 1900,
+    "fri_time_open": 900,
+    "fri_time_close": 1900,
+    "sat_time_open": 900,
+    "sat_time_close": 1800
+  }
+}

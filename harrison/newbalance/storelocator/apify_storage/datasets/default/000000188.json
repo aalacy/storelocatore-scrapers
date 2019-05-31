@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sports Basement Redwood City",
+  "street_address": "202 Walnut St",
+  "city": "Redwood City",
+  "state": "CA",
+  "zip": "94063",
+  "country_code": "US",
+  "store_number": 133020,
+  "phone": "(650) 421-7440",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.49311100",
+  "longitude": "-122.22613600",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

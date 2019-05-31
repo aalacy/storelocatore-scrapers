@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cabela's",
+  "street_address": "3231 E Mall Dr",
+  "city": "Rapid City",
+  "state": "SD",
+  "zip": "57701",
+  "country_code": "US",
+  "store_number": 13916,
+  "phone": "(605) 388-5600",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.10172255",
+  "longitude": "-103.16216902",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

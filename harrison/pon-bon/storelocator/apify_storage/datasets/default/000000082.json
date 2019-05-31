@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "Clock Tower Roundabout",
+  "city": "Deira",
+  "state": "Dubai",
+  "zip": "",
+  "country_code": "US",
+  "store_number": 10037365,
+  "phone": "26393375",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 25.26012961397403,
+  "longitude": 55.33110002579497,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

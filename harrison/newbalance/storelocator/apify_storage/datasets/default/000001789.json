@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Worthington",
+  "street_address": "7227 High St",
+  "city": "Worthington",
+  "state": "OH",
+  "zip": "43085",
+  "country_code": "US",
+  "store_number": 22792,
+  "phone": "(614) 847-0301",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.10798992",
+  "longitude": "-83.01690798",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

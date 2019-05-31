@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Galleria Mall",
+  "street_address": "Galleria Mall",
+  "city": "Amman",
+  "state": null,
+  "country_code": "JO",
+  "store_number": "7995300",
+  "phone": "5555555555",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "31.959672",
+  "longitude": "35.862290",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

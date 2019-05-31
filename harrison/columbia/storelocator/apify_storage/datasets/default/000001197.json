@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Mouilleron-le-Captif",
+  "street_address": "70 Rue du Clair Bocage",
+  "city": "Mouilleron-le-Captif",
+  "state": "",
+  "zip": "85000",
+  "country_code": "FR",
+  "store_number": 87442,
+  "phone": "02 51 36 28 98",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "46.70668610",
+  "longitude": "-1.43049310",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

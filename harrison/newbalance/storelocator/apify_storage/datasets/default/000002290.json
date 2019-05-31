@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Louisiana Running + Walking Co.",
+  "street_address": "3020 Veterans Memorial Blvd",
+  "city": "Metairie",
+  "state": "LA",
+  "zip": "70002",
+  "country_code": "US",
+  "store_number": 65397,
+  "phone": "(504) 324-5780",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.00242492",
+  "longitude": "-90.15332148",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1830,
+    "tue_time_open": 1000,
+    "tue_time_close": 1830,
+    "wed_time_open": 1000,
+    "wed_time_close": 1830,
+    "thu_time_open": 1000,
+    "thu_time_close": 1830,
+    "fri_time_open": 1000,
+    "fri_time_close": 1830,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

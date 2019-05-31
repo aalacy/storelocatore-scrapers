@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "The Outdoor Store",
+  "street_address": "30A Church St",
+  "city": "Montclair",
+  "state": "NJ",
+  "zip": "07042",
+  "country_code": "US",
+  "store_number": 551,
+  "phone": "(973) 746-5900",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.81386687",
+  "longitude": "-74.21891122",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1630,
+    "mon_time_open": 1000,
+    "mon_time_close": 1800,
+    "tue_time_open": 1000,
+    "tue_time_close": 1800,
+    "wed_time_open": 1000,
+    "wed_time_close": 1800,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1800,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

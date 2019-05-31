@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Takoma Park Bikes",
+  "street_address": "7030 Carrol Ave",
+  "city": "Takoma Park",
+  "state": "MD",
+  "zip": "20912",
+  "country_code": "US",
+  "store_number": 109723,
+  "phone": "(301) 270-0202",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.97529260",
+  "longitude": "-77.01157720",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

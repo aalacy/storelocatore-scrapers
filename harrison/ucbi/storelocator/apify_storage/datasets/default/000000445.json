@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Savannah - Victory Dr",
+  "street_address": "2225 E Victory Dr",
+  "city": "Savannah",
+  "state": "GA",
+  "zip": "31404",
+  "country_code": "US",
+  "store_number": 91,
+  "phone": "9123039667",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 32.038836,
+  "longitude": -81.061136,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

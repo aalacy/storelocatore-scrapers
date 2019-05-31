@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Le Sequestre",
+  "street_address": "114 Allée du Commerce",
+  "city": "Le Sequestre",
+  "state": "",
+  "zip": "81990",
+  "country_code": "FR",
+  "store_number": 87438,
+  "phone": "05 63 43 01 36",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.91771954",
+  "longitude": "2.11104346",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

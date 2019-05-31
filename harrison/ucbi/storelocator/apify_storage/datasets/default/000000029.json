@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Little River - Hwy 9 E",
+  "street_address": "3187 Hwy 9 E",
+  "city": "Little River",
+  "state": "SC",
+  "zip": "29566",
+  "country_code": "US",
+  "store_number": 1303,
+  "phone": "8433999523",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.874844,
+  "longitude": -78.678314,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

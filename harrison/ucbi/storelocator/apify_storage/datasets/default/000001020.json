@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Village Shoppes of Sugarloaf",
+  "street_address": "3370 Sugarloaf Pkwy",
+  "city": "Lawrenceville",
+  "state": "GA",
+  "zip": "30044-5478",
+  "country_code": "US",
+  "store_number": 3270,
+  "phone": "6783763844",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.921475,
+  "longitude": -84.018387,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

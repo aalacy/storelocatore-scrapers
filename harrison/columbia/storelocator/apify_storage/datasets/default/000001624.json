@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Victoria Bay Centre",
+  "street_address": "1150 Douglas St Unit #311A",
+  "city": "Victoria",
+  "state": "BC",
+  "zip": "V8W3M9",
+  "country_code": "CA",
+  "store_number": 103777,
+  "phone": "(250) 388-5103",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.42501793",
+  "longitude": "-123.36566202",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

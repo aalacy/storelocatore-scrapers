@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Danner - The Landing",
+  "street_address": "829 N 10th St",
+  "city": "Renton",
+  "state": "WA",
+  "zip": "98057",
+  "country_code": "US",
+  "store_number": 18470,
+  "phone": "(425) 226-6338",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.49763778",
+  "longitude": "-122.20387200",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1900,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 2000
+  }
+}

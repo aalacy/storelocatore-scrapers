@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Fresno",
+  "street_address": "9447 Ft Washington Rd #106",
+  "city": "Fresno",
+  "state": "CA",
+  "zip": "93730",
+  "country_code": "US",
+  "store_number": 19082,
+  "phone": "(559) 433-6750",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.87460415",
+  "longitude": "-119.77719624",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

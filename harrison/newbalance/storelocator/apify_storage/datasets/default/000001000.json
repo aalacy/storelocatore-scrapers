@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Pella",
+  "street_address": "721 Franklin St",
+  "city": "Pella",
+  "state": "IA",
+  "zip": "50219",
+  "country_code": "US",
+  "store_number": 22015,
+  "phone": "(641) 628-2251",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.40636784",
+  "longitude": "-92.91715224",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

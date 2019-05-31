@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "REI - Tacoma",
+  "street_address": "3825 S Steele St",
+  "city": "Tacoma",
+  "state": "WA",
+  "zip": "98409",
+  "country_code": "US",
+  "store_number": 11158,
+  "phone": "(253) 671-1938",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.22200112",
+  "longitude": "-122.46851842",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

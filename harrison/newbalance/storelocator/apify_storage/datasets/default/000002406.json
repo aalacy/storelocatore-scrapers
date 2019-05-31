@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Smithers Mall",
+  "street_address": "3664 BC-16 #1440",
+  "city": "Smithers",
+  "state": "BC",
+  "zip": "V0J2N0",
+  "country_code": "CA",
+  "store_number": 103740,
+  "phone": "(250) 847-1650",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "54.78077700",
+  "longitude": "-127.16231750",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Baby Central ",
+  "street_address": "2436 McDonald Ave",
+  "city": "Brooklyn",
+  "state": "NY",
+  "zip": "11223",
+  "country_code": "US",
+  "store_number": 38296,
+  "phone": "(718) 372-2229",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.59286651",
+  "longitude": "-73.97418121",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

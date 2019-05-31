@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "P.C. Richard & Son – Mount Laurel",
+  "street_address": "1450 Nixon Dr",
+  "city": "Mt Laurel",
+  "state": "NJ",
+  "zip": "08054",
+  "country_code": "US",
+  "store_number": 128408,
+  "phone": "(856) 780-1030",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.94265442",
+  "longitude": "-74.95612281",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 2100
+  }
+}

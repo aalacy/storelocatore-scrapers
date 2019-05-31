@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Stoneybrook West Village",
+  "street_address": "15502 Stoneybrook West Pkwy Ste 100",
+  "city": "Winter Garden",
+  "state": "FL",
+  "zip": "34787-4767",
+  "country_code": "US",
+  "store_number": 3456,
+  "phone": "4076546404",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.51632,
+  "longitude": -81.618715,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

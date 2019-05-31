@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Coastal Farm and Ranch",
+  "street_address": "3141 S Hwy 97",
+  "city": "Redmond",
+  "state": "OR",
+  "zip": "97756",
+  "country_code": "US",
+  "store_number": 30942,
+  "phone": "(541) 548-4095",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.26000000",
+  "longitude": "-121.22000000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

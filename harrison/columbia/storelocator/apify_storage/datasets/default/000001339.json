@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Richmond Centre",
+  "street_address": "6551 No 3 Rd #1140",
+  "city": "Richmond",
+  "state": "BC",
+  "zip": "V6Y2B6",
+  "country_code": "CA",
+  "store_number": 103721,
+  "phone": "(604) 278-5461",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.16550440",
+  "longitude": "-123.13990740",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "San Francisco Center",
+  "street_address": "865 Market Street",
+  "city": "San Francisco",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995494",
+  "phone": "415-278-0445",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.784000",
+  "longitude": "-122.407000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

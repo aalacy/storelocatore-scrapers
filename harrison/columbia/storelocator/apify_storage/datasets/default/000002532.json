@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Mom's Milk Boutique",
+  "street_address": "601 S Emma St",
+  "city": "West Frankfort",
+  "state": "IL",
+  "zip": "62896",
+  "country_code": "US",
+  "store_number": 37108,
+  "phone": "(855) 227-5662",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.89178621",
+  "longitude": "-88.92701146",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

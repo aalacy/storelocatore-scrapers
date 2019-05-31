@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Greenville NC",
+  "street_address": "709 Greenville Blvd SE Suite 104",
+  "city": "Greenville",
+  "state": "NC",
+  "zip": "27858",
+  "country_code": "US",
+  "store_number": 69395,
+  "phone": "(252) 353-3338",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.58772750",
+  "longitude": "-77.36941110",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

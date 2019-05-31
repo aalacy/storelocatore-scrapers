@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Performance Running Outfitters",
+  "street_address": "7956 S Main St",
+  "city": "Oak Creek",
+  "state": "WI",
+  "zip": "53154",
+  "country_code": "US",
+  "store_number": 35841,
+  "phone": "(414) 574-5155",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.90142100",
+  "longitude": "-87.91746700",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1600,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

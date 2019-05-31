@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Pedestrian Shops",
+  "street_address": "2525 Arapahoe Ave",
+  "city": "Boulder",
+  "state": "CO",
+  "zip": "80302",
+  "country_code": "US",
+  "store_number": 31303,
+  "phone": "(303) 449-7440",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.01565656",
+  "longitude": "-105.26135172",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

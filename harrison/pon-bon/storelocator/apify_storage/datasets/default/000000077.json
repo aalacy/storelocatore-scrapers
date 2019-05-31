@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Bonanza",
+  "street_address": "Carretera No. 167, Rexville",
+  "city": "Bayamon",
+  "state": "PR",
+  "zip": "00619",
+  "country_code": "US",
+  "store_number": 10037505,
+  "phone": "(787) 306-5003",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 18.367123365187332,
+  "longitude": -66.18774659755326,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

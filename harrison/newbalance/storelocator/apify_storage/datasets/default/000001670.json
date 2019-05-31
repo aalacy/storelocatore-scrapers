@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Skookum Cycle & Ski Ltd",
+  "street_address": "141 Shuswap St N",
+  "city": "Salmon Arm",
+  "state": "BC",
+  "zip": "V1E4H8",
+  "country_code": "CA",
+  "store_number": 33655,
+  "phone": "(250) 832-7368",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "50.70081831",
+  "longitude": "-119.28512195",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

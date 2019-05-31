@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Lucky Feet",
+  "street_address": "3801 S. Harbor Blvd STE E",
+  "city": "Costa Mesa",
+  "state": "CA",
+  "zip": "92704",
+  "country_code": "US",
+  "store_number": 59952,
+  "phone": "(714) 668-9150",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.69600900",
+  "longitude": "-117.91902000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

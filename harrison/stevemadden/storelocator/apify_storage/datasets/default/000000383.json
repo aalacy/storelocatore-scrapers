@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Beijing Hanguang Department Store",
+  "street_address": "1F, No. 176, Xidan North St.,",
+  "city": "Beijing",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995189",
+  "phone": "1066015493",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.904210",
+  "longitude": "116.407390",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

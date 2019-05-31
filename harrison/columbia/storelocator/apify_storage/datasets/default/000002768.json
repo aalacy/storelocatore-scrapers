@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Kerr Brothers",
+  "street_address": "305 Virgina Ave",
+  "city": "Cumberland",
+  "state": "MD",
+  "zip": "21502",
+  "country_code": "US",
+  "store_number": 108593,
+  "phone": "(301) 759-4867",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.63453170",
+  "longitude": "-78.76374960",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

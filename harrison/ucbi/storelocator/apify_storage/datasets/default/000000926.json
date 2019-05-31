@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "McAlister Square",
+  "street_address": "235 S Pleasantburg Dr",
+  "city": "Greenville",
+  "state": "SC",
+  "zip": "29607-2521",
+  "country_code": "US",
+  "store_number": 3030,
+  "phone": "8642504700",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.836173,
+  "longitude": -82.364511,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

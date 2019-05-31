@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "115 Hensley",
+  "city": "Dickson",
+  "state": "TN",
+  "zip": "37055",
+  "country_code": "US",
+  "store_number": 10037311,
+  "phone": "(615) 441-8841",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 36.076674524980774,
+  "longitude": -87.37052977865733,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

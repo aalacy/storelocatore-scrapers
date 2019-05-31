@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Seabreeze Plaza Shopping Center",
+  "street_address": "30535 US Highway 19 N",
+  "city": "Palm Harbor",
+  "state": "FL",
+  "zip": "34684-4415",
+  "country_code": "US",
+  "store_number": 3296,
+  "phone": "7277878802",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.050181,
+  "longitude": -82.735746,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

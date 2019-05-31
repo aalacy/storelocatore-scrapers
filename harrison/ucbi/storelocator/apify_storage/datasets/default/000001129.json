@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Fayette Pavilion",
+  "street_address": "108 Pavilion Pkwy",
+  "city": "Fayetteville",
+  "state": "GA",
+  "zip": "30214-4056",
+  "country_code": "US",
+  "store_number": 3010,
+  "phone": "7704604100",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.478445,
+  "longitude": -84.438522,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

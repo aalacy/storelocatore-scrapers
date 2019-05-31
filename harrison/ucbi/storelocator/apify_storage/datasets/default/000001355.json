@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Hillwood Shopping Center",
+  "street_address": "2370 Hillcrest Rd, Unit J",
+  "city": "Mobile",
+  "state": "AL",
+  "zip": "36695-3838",
+  "country_code": "US",
+  "store_number": 3703,
+  "phone": "2516615361",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.641775,
+  "longitude": -88.192304,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

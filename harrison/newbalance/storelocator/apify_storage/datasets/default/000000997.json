@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Plateau Runner",
+  "street_address": "1490 NW Gilman Blvd",
+  "city": "Issaquah",
+  "state": "WA",
+  "zip": "98027",
+  "country_code": "US",
+  "store_number": 19454,
+  "phone": "(425) 898-4173",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.54648779",
+  "longitude": "-122.05933200",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

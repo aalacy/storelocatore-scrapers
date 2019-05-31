@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Peter Glenn Ski & Sports",
+  "street_address": "7229 N Dale Mabry Hwy #1",
+  "city": "Tampa",
+  "state": "FL",
+  "zip": "33614",
+  "country_code": "US",
+  "store_number": 1135,
+  "phone": "(813) 960-2453",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "28.01590459",
+  "longitude": "-82.50438135",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

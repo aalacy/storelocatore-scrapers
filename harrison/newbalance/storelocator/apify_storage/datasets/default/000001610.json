@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Atmosphere - Coquitlam Centre",
+  "street_address": "2929 Barnet Hwy #2860",
+  "city": "Coquitlam",
+  "state": "BC",
+  "zip": "V3B5R5",
+  "country_code": "CA",
+  "store_number": 17393,
+  "phone": "(604) 945-9511",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.27727807",
+  "longitude": "-122.80045201",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

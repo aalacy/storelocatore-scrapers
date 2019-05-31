@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Coastal Farm & Ranch",
+  "street_address": "1550 Mt Hood Ave",
+  "city": "Woodburn",
+  "state": "OR",
+  "zip": "97071",
+  "country_code": "US",
+  "store_number": 38062,
+  "phone": "(503) 981-6322",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.14958740",
+  "longitude": "-122.83581201",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

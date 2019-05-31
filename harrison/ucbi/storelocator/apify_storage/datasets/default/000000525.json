@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Berkshire Commons",
+  "street_address": "7101 Radio Rd",
+  "city": "Naples",
+  "state": "FL",
+  "zip": "34104-6706",
+  "country_code": "US",
+  "store_number": 2869,
+  "phone": "2394553001",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.155598,
+  "longitude": -81.72209,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Barton's Toys",
+  "street_address": "88 Folly Rd Blvd",
+  "city": "Charleston",
+  "state": "SC",
+  "zip": "29407",
+  "country_code": "US",
+  "store_number": 54118,
+  "phone": "(843) 723-7900",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.77566537",
+  "longitude": "-79.97481310",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

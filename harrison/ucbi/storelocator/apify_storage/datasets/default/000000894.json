@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Holiday Centre",
+  "street_address": "4701 Sunray Dr",
+  "city": "Holiday",
+  "state": "FL",
+  "zip": "34690-3808",
+  "country_code": "US",
+  "store_number": 2943,
+  "phone": "7279443551",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.199293,
+  "longitude": -82.737808,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

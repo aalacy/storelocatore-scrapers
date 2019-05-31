@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Palm Aire",
+  "street_address": "1140 SW 36th Ave",
+  "city": "Pompano Beach",
+  "state": "FL",
+  "zip": "33069-4835",
+  "country_code": "US",
+  "store_number": 3167,
+  "phone": "9549750119",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.21529,
+  "longitude": -80.171477,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

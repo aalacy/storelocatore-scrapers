@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Lutz Lake Crossing",
+  "street_address": "19221 N Dale Mabry Hwy",
+  "city": "Lutz",
+  "state": "FL",
+  "zip": "33548-5067",
+  "country_code": "US",
+  "store_number": 3243,
+  "phone": "8139493882",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.156478,
+  "longitude": -82.481062,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

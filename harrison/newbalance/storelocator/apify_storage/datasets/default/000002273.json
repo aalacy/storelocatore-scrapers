@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Elite Cycling & Fitness",
+  "street_address": "13108 S Dixie Hwy",
+  "city": "Miami",
+  "state": "FL",
+  "zip": "33156",
+  "country_code": "US",
+  "store_number": 82075,
+  "phone": "(786) 242-3733",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "25.64857247",
+  "longitude": "-80.33210070",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

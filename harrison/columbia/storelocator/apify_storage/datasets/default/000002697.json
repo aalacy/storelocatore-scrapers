@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Adventure Sports Kayak City",
+  "street_address": "7812 Auburn Blvd",
+  "city": "Citrus Heights",
+  "state": "CA",
+  "zip": "95610",
+  "country_code": "US",
+  "store_number": 31531,
+  "phone": "(916) 565-1400",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.70817634",
+  "longitude": "-121.28976199",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

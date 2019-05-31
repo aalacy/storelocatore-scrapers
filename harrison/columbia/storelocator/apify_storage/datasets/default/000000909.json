@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Jackson",
+  "street_address": "500 US-51",
+  "city": "Ridgeland",
+  "state": "MS",
+  "zip": "39157",
+  "country_code": "US",
+  "store_number": 21137,
+  "phone": "(601) 899-9696",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.42911432",
+  "longitude": "-90.12845183",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

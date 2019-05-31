@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Monroe LA",
+  "street_address": "1866 Forsythe Avenue",
+  "city": "Monroe",
+  "state": "LA",
+  "zip": "71201",
+  "country_code": "US",
+  "store_number": 19202,
+  "phone": "(318) 855-3146",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.53053297",
+  "longitude": "-92.11415092",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

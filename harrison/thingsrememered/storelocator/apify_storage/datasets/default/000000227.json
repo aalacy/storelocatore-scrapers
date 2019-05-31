@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "ORANGE PARK MALL",
+  "street_address": "1910 WELLS RD",
+  "city": "ORANGE PARK",
+  "state": "FL",
+  "zip": "32073",
+  "country_code": "US",
+  "store_number": "378",
+  "phone": "(904) 269-6782",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.172209,
+  "longitude": -81.74405,
+  "external_lat_long": false,
+  "hours_of_operation": "1#12:00 PM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

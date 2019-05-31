@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brielle Cyclery",
+  "street_address": "205 Union Ave",
+  "city": "Brielle",
+  "state": "NJ",
+  "zip": "08730",
+  "country_code": "US",
+  "store_number": 17602,
+  "phone": "(732) 528-9121",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.11493657",
+  "longitude": "-74.05529121",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "BFS - South Fairmont SNS Cheat Lake",
+  "street_address": "169 Fairchance Rd.",
+  "city": "Morgantown",
+  "state": "WV",
+  "zip": "26508",
+  "country_code": "US",
+  "store_number": "271",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "39.59532",
+  "longitude": "-79.92287",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

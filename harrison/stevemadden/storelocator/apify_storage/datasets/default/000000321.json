@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "The Shops at Mission Viejo",
+  "street_address": "588 The Shops @Mission Viejo",
+  "city": "Mission Viejo",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995648",
+  "phone": "949-364-2152",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.558518",
+  "longitude": "-117.668097",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

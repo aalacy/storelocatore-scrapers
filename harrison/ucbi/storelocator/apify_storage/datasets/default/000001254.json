@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Crossing",
+  "street_address": "1520 John Sims Pkwy E",
+  "city": "Niceville",
+  "state": "FL",
+  "zip": "32578-2138",
+  "country_code": "US",
+  "store_number": 3727,
+  "phone": "8506783002",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.513689,
+  "longitude": -86.448529,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

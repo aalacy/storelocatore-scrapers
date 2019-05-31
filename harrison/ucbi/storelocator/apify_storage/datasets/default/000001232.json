@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Summerville - Hwy 27",
+  "street_address": "9699 Rome Blvd",
+  "city": "Summerville",
+  "state": "GA",
+  "zip": "30747",
+  "country_code": "US",
+  "store_number": 97,
+  "phone": "7068579245",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.475766,
+  "longitude": -85.347014,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

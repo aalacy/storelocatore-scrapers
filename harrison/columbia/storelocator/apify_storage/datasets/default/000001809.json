@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Get Fit",
+  "street_address": "1911 S Georgia St",
+  "city": "Amarillo",
+  "state": "TX",
+  "zip": "79109",
+  "country_code": "US",
+  "store_number": 19744,
+  "phone": "(806) 350-4262",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.19464577",
+  "longitude": "-101.86624167",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

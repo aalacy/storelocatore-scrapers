@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Bridgewater Mall",
+  "street_address": "421 Lahave St Unit 3",
+  "city": "Bridgewater",
+  "state": "NS",
+  "zip": "B4V3A2",
+  "country_code": "CA",
+  "store_number": 103570,
+  "phone": "(902) 527-0281",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.37717271",
+  "longitude": "-64.51545106",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

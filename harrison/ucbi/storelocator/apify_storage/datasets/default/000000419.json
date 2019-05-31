@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Saxon Crossings",
+  "street_address": "2100 Saxon Blvd",
+  "city": "Deltona",
+  "state": "FL",
+  "zip": "32725-3251",
+  "country_code": "US",
+  "store_number": 3603,
+  "phone": "3865328584",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.909451,
+  "longitude": -81.266274,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "ROBINSONS DEPARTMENT STORE",
+  "street_address": "260 Orchard Road, LEVEL 2 LADI",
+  "city": "SINGAPORE",
+  "state": null,
+  "country_code": "SG",
+  "store_number": "7995484",
+  "phone": "6567330888",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "1.301450",
+  "longitude": "103.840104",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

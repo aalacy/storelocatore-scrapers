@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "All Out Kids Gear",
+  "street_address": "#108 33 McKenzie Cres. (Trailhead Climbing)",
+  "city": "Red Deer County",
+  "state": "AB",
+  "zip": "T4S2H5",
+  "country_code": "CA",
+  "store_number": 50939,
+  "phone": "1-833-265-4327",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "52.25538562",
+  "longitude": "-113.80021865",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 2000,
+    "mon_time_open": 1100,
+    "mon_time_close": 2200,
+    "tue_time_open": 1100,
+    "tue_time_close": 2200,
+    "wed_time_open": 1100,
+    "wed_time_close": 2200,
+    "thu_time_open": 1100,
+    "thu_time_close": 2200,
+    "fri_time_open": 1100,
+    "fri_time_close": 2200,
+    "sat_time_open": 1000,
+    "sat_time_close": 2200
+  }
+}

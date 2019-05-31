@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Stockton",
+  "street_address": "277 Lincoln Center",
+  "city": "Stockton",
+  "state": "CA",
+  "zip": "95207",
+  "country_code": "US",
+  "store_number": 17952,
+  "phone": "(209) 952-1446",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.01159917",
+  "longitude": "-121.32408067",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

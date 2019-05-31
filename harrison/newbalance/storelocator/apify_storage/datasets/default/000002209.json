@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "44 Board",
+  "street_address": "373 Mamaroneck Ave",
+  "city": "White Plains",
+  "state": "NY",
+  "zip": "10605",
+  "country_code": "US",
+  "store_number": 31479,
+  "phone": "(914) 948-5111",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.02380803",
+  "longitude": "-73.76242319",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 1800,
+    "wed_time_open": 1000,
+    "wed_time_close": 1800,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 1800,
+    "sat_time_open": 1000,
+    "sat_time_close": 1730
+  }
+}

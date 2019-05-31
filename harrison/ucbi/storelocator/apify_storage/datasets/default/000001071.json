@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Johns Creek - McGinnis Ferry",
+  "street_address": "6600 McGinnis Ferry Rd",
+  "city": "Duluth",
+  "state": "GA",
+  "zip": "30097",
+  "country_code": "US",
+  "store_number": 64,
+  "phone": "7704769797",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.067101,
+  "longitude": -84.16717,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

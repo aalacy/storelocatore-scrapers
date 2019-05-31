@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Mountainview Mall",
+  "street_address": "9226 Hwy 93 #129",
+  "city": "Midland",
+  "state": "ON",
+  "zip": "L4R4K4",
+  "country_code": "CA",
+  "store_number": 103678,
+  "phone": "(705) 527-4234",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.73688733",
+  "longitude": "-79.91203131",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

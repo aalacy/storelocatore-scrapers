@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Momo Sports Granby",
+  "street_address": "234 Rue Saint-Jude N",
+  "city": "Granby",
+  "state": "QC",
+  "zip": "J2J0C2",
+  "country_code": "CA",
+  "store_number": 19942,
+  "phone": "(450) 372-9066",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.40867440",
+  "longitude": "-72.76293119",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

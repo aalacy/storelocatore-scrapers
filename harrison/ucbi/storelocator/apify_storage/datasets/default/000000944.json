@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Boulevard Market Fair",
+  "street_address": "3801-E Clemson Blvd",
+  "city": "Anderson",
+  "state": "SC",
+  "zip": "29621-1318",
+  "country_code": "US",
+  "store_number": 2996,
+  "phone": "8642311170",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.553624,
+  "longitude": -82.685347,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

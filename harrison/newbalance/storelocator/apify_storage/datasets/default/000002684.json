@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Monfalcone",
+  "street_address": "Via F.Pocar, 1",
+  "city": "Monfalcone",
+  "state": "GO",
+  "zip": "34074",
+  "country_code": "IT",
+  "store_number": 144714,
+  "phone": "0481 414274",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.79698944",
+  "longitude": "13.54724407",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 930,
+    "sun_time_close": 2000,
+    "mon_time_open": 900,
+    "mon_time_close": 2030,
+    "tue_time_open": 900,
+    "tue_time_close": 2030,
+    "wed_time_open": 900,
+    "wed_time_close": 2030,
+    "thu_time_open": 900,
+    "thu_time_close": 2030,
+    "fri_time_open": 900,
+    "fri_time_close": 2030,
+    "sat_time_open": 900,
+    "sat_time_close": 2030
+  }
+}

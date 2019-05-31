@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Red Fox Outfitters",
+  "street_address": "234 N Leroy St",
+  "city": "Fenton",
+  "state": "MI",
+  "zip": "48430",
+  "country_code": "US",
+  "store_number": 27341,
+  "phone": "(810) 354-8861",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.79816701",
+  "longitude": "-83.70440137",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Pine Ridge Crossing Shopping Center",
+  "street_address": "2310 Pine Ridge Rd",
+  "city": "Naples",
+  "state": "FL",
+  "zip": "34109-2006",
+  "country_code": "US",
+  "store_number": 2931,
+  "phone": "2394350387",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.210485,
+  "longitude": -81.771689,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

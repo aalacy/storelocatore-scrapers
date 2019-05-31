@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Maine Running",
+  "street_address": "89 Maine St",
+  "city": "Brunswick",
+  "state": "ME",
+  "zip": "04011",
+  "country_code": "US",
+  "store_number": 19085,
+  "phone": "(207) 721-9299",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.91671953",
+  "longitude": "-69.96511463",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

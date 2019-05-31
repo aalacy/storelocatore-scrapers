@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Sports Salerno",
+  "street_address": "Via dei Greci, n.5",
+  "city": "Salerno",
+  "state": "SA",
+  "zip": "84135",
+  "country_code": "IT",
+  "store_number": 144747,
+  "phone": "089 285 9341",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.70366689",
+  "longitude": "14.77682421",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 930,
+    "sun_time_close": 2200,
+    "mon_time_open": 930,
+    "mon_time_close": 2130,
+    "tue_time_open": 930,
+    "tue_time_close": 2130,
+    "wed_time_open": 930,
+    "wed_time_close": 2130,
+    "thu_time_open": 930,
+    "thu_time_close": 2130,
+    "fri_time_open": 930,
+    "fri_time_close": 2130,
+    "sat_time_open": 930,
+    "sat_time_close": 2200
+  }
+}

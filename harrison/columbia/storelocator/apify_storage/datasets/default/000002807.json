@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Flowood",
+  "street_address": "153 Ridge Way ste c",
+  "city": "Flowood",
+  "state": "MS",
+  "zip": "39232",
+  "country_code": "US",
+  "store_number": 138839,
+  "phone": "(769) 235-4786",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.34052987",
+  "longitude": "-90.06541476",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

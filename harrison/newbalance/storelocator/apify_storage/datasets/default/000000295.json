@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sporthaus Schuster",
+  "street_address": "Rosenstraße 1-5",
+  "city": "München",
+  "state": "Bayern",
+  "zip": "80331",
+  "country_code": "DE",
+  "store_number": 133019,
+  "phone": "+49 (0)89 23707-0",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.13678867",
+  "longitude": "11.57418964",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

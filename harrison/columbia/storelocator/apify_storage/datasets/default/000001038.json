@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Poupons Et Cie",
+  "street_address": "560 Boulevard du Séminaire N",
+  "city": "Saint-Jean-sur-Richelieu",
+  "state": "QC",
+  "zip": "J3B7E3",
+  "country_code": "CA",
+  "store_number": 86902,
+  "phone": "(450) 529-0159",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.31793640",
+  "longitude": "-73.26454790",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

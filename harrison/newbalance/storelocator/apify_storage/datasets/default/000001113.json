@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Idaho Mountain Touring - Meridian",
+  "street_address": "1739 W Cherry Ln",
+  "city": "Meridian",
+  "state": "ID",
+  "zip": "83646",
+  "country_code": "US",
+  "store_number": 391,
+  "phone": "(208) 350-6455",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.61877146",
+  "longitude": "-116.41491907",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1800,
+    "tue_time_open": 1000,
+    "tue_time_close": 1800,
+    "wed_time_open": 1000,
+    "wed_time_close": 1800,
+    "thu_time_open": 1000,
+    "thu_time_close": 1800,
+    "fri_time_open": 1000,
+    "fri_time_close": 1800,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Cypress Lakes Town Center",
+  "street_address": "1297 S State Road 7",
+  "city": "North Lauderdale",
+  "state": "FL",
+  "zip": "33068-4021",
+  "country_code": "US",
+  "store_number": 2804,
+  "phone": "9549733337",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.212312,
+  "longitude": -80.205839,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

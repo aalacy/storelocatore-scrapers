@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "GREAT LAKES CROSSING",
+  "street_address": "4622 BALDWIN RD",
+  "city": "AUBURN HILLS",
+  "state": "MI",
+  "zip": "48326",
+  "country_code": "US",
+  "store_number": "232",
+  "phone": "(248) 334-8379",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 42.661823,
+  "longitude": -83.23796,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

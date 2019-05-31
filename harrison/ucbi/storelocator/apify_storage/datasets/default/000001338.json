@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Nine Mile",
+  "street_address": "2180 W Nine Mile Rd",
+  "city": "Pensacola",
+  "state": "FL",
+  "zip": "32534-9472",
+  "country_code": "US",
+  "store_number": 3613,
+  "phone": "8504735020",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.536034,
+  "longitude": -87.312287,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:30 AM - 10:00 PM,Mon 6:30 AM - 10:00 PM,Tues 6:30 AM - 10:00 PM,Wed 6:30 AM - 10:00 PM,Thurs 6:30 AM - 10:00 PM,Fri 6:30 AM - 10:00 PM,Sat 6:30 AM - 10:00 PM,"
+}

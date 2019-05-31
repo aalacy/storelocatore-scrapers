@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "アークテリクス原宿ブランドストア",
+  "street_address": "神宮前6丁目12-23",
+  "city": "渋谷区",
+  "state": "東京都",
+  "zip": "150-0001",
+  "country_code": "JP",
+  "store_number": 65322,
+  "phone": "03-6450-6681",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.66730800",
+  "longitude": "139.70464400",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 2000,
+    "mon_time_open": 1100,
+    "mon_time_close": 2000,
+    "tue_time_open": 1100,
+    "tue_time_close": 2000,
+    "wed_time_open": 1100,
+    "wed_time_close": 2000,
+    "thu_time_open": 1100,
+    "thu_time_close": 2000,
+    "fri_time_open": 1100,
+    "fri_time_close": 2000,
+    "sat_time_open": 1100,
+    "sat_time_close": 2000
+  }
+}

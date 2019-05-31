@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "SCHEELS ALL SPORTS",
+  "street_address": "1850 Adams St",
+  "city": "Mankato",
+  "state": "MN",
+  "zip": "56001",
+  "country_code": "US",
+  "store_number": 10996,
+  "phone": "(507) 386-7767",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.17296724",
+  "longitude": "-93.95356154",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 930,
+    "mon_time_close": 2100,
+    "tue_time_open": 930,
+    "tue_time_close": 2100,
+    "wed_time_open": 930,
+    "wed_time_close": 2100,
+    "thu_time_open": 930,
+    "thu_time_close": 2100,
+    "fri_time_open": 930,
+    "fri_time_close": 2100,
+    "sat_time_open": 930,
+    "sat_time_close": 2100
+  }
+}

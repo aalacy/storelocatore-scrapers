@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Cranberry Twp",
+  "street_address": "1165 Freedom",
+  "city": "Cranberry",
+  "state": "PA",
+  "zip": "16066",
+  "country_code": "US",
+  "store_number": "283",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.682667",
+  "longitude": "-80.127353",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

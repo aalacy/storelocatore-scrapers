@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Elliott's Boots Shoes Sandals",
+  "street_address": "165 N Calderwood St",
+  "city": "Alcoa",
+  "state": "TN",
+  "zip": "37701",
+  "country_code": "US",
+  "store_number": 99604,
+  "phone": "(865) 977-1599",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.76435586",
+  "longitude": "-83.97949138",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 930,
+    "mon_time_close": 1900,
+    "tue_time_open": 930,
+    "tue_time_close": 1900,
+    "wed_time_open": 930,
+    "wed_time_close": 1900,
+    "thu_time_open": 930,
+    "thu_time_close": 1900,
+    "fri_time_open": 700,
+    "fri_time_close": 1900,
+    "sat_time_open": 930,
+    "sat_time_close": 1900
+  }
+}

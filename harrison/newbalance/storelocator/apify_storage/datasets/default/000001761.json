@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Tacoma",
+  "street_address": "3812 N 26th St",
+  "city": "Tacoma",
+  "state": "WA",
+  "zip": "98407",
+  "country_code": "US",
+  "store_number": 51297,
+  "phone": "(253) 272-8890",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.27077448",
+  "longitude": "-122.48720068",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

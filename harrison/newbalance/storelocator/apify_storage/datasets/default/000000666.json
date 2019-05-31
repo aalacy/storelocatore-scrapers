@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Portland Running & Walking Co",
+  "street_address": "800 SE Grand Ave",
+  "city": "Portland",
+  "state": "OR",
+  "zip": "97214",
+  "country_code": "US",
+  "store_number": 16935,
+  "phone": "(503) 232-8077",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.51702746",
+  "longitude": "-122.66052201",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

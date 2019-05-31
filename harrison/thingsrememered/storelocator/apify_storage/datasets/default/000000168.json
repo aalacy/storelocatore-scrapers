@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "ST. CLAIR SQUARE",
+  "street_address": "241 ST CLAIR SQ",
+  "city": "FAIRVIEW HEIGHTS",
+  "state": "IL",
+  "zip": "62208",
+  "country_code": "US",
+  "store_number": "957",
+  "phone": "(618) 632-8237",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 38.59179,
+  "longitude": -89.995636,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

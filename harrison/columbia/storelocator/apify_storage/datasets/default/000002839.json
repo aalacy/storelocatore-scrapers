@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Landry's Bicycles",
+  "street_address": "66 Needham St",
+  "city": "Newton Highlands",
+  "state": "MA",
+  "zip": "02461",
+  "country_code": "US",
+  "store_number": 63102,
+  "phone": "(617) 831-4351",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.31520693",
+  "longitude": "-71.21051167",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Shoppes at Palm Pointe",
+  "street_address": "25771 Perdido Beach Blvd",
+  "city": "Orange Beach",
+  "state": "AL",
+  "zip": "36561-6107",
+  "country_code": "US",
+  "store_number": 3508,
+  "phone": "2519801400",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.271769,
+  "longitude": -87.588045,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:00 AM - 11:00 PM,Mon 6:00 AM - 11:00 PM,Tues 6:00 AM - 11:00 PM,Wed 6:00 AM - 11:00 PM,Thurs 6:00 AM - 11:00 PM,Fri 6:00 AM - 11:00 PM,Sat 6:00 AM - 11:00 PM,"
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Valhalla Pure Outfitters -  Abbotsford",
+  "street_address": "1707 Salton Rd",
+  "city": "Abbotsford",
+  "state": "BC",
+  "zip": "V2S7P2",
+  "country_code": "CA",
+  "store_number": 4023,
+  "phone": "(604) 850-5523",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.03328034",
+  "longitude": "-122.28803200",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 930,
+    "mon_time_close": 1800,
+    "tue_time_open": 930,
+    "tue_time_close": 1800,
+    "wed_time_open": 930,
+    "wed_time_close": 1800,
+    "thu_time_open": 930,
+    "thu_time_close": 2000,
+    "fri_time_open": 930,
+    "fri_time_close": 2000,
+    "sat_time_open": 930,
+    "sat_time_close": 1800
+  }
+}

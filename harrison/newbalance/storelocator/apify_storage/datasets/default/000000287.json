@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Conrad",
+  "street_address": "Blumenstraße 35",
+  "city": "Wielenbach",
+  "state": "Bayern",
+  "zip": "82407",
+  "country_code": "DE",
+  "store_number": 144306,
+  "phone": "0881 934115",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.86978429",
+  "longitude": "11.16318291",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

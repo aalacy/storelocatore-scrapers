@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit McCook",
+  "street_address": "303 Norris Ave",
+  "city": "McCook",
+  "state": "NE",
+  "zip": "69001",
+  "country_code": "US",
+  "store_number": 22001,
+  "phone": "(308) 345-2380",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.19976010",
+  "longitude": "-100.62564890",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

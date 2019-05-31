@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "TCO Fly Shop - Boiling Springs",
+  "street_address": "2 E 1st St",
+  "city": "Boiling Springs",
+  "state": "PA",
+  "zip": "17007",
+  "country_code": "US",
+  "store_number": 17122,
+  "phone": "(717) 609-0169 ext 5",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.14979658",
+  "longitude": "-77.12761264",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

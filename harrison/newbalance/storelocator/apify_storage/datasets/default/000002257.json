@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "BikeSource Littleton",
+  "street_address": "8176 W Bowles Ave",
+  "city": "Littleton",
+  "state": "CO",
+  "zip": "80123",
+  "country_code": "US",
+  "store_number": 16600,
+  "phone": "(303) 979-6463",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.60854649",
+  "longitude": "-105.09056172",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

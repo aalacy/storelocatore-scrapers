@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Touright Bicycle Shop",
+  "street_address": "124 2nd St NE",
+  "city": "Little Falls",
+  "state": "MN",
+  "zip": "56345",
+  "country_code": "US",
+  "store_number": 65020,
+  "phone": "(320) 639-2453",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.97706753",
+  "longitude": "-94.36043155",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

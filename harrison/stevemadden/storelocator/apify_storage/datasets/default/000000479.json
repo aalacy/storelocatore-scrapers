@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Smith Haven Mall",
+  "street_address": "310 Smith Haven Mall",
+  "city": "Lake Grove",
+  "state": "NY",
+  "country_code": "US",
+  "store_number": "7995568",
+  "phone": "631-724-8100",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.863000",
+  "longitude": "-73.129700",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

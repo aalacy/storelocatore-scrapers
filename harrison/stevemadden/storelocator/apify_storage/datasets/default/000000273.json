@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Shanghai New World",
+  "street_address": "1F,No.939--947,Middle Huaihai",
+  "city": "Shanghai",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995518",
+  "phone": "2164333730",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "31.100000",
+  "longitude": "121.280000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

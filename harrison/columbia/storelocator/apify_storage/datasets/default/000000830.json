@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Deerfield",
+  "street_address": "800 IL-43",
+  "city": "Deerfield",
+  "state": "IL",
+  "zip": "60015",
+  "country_code": "US",
+  "store_number": 22619,
+  "phone": "(847) 945-2929",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.16769087",
+  "longitude": "-87.84614393",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Arc'teryx Piccadilly (London) ",
+  "street_address": "212 Piccadilly",
+  "city": "London",
+  "state": "England",
+  "zip": "W1J9HL",
+  "country_code": "GB",
+  "store_number": 65315,
+  "phone": "020 7287 7429",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "51.50929844",
+  "longitude": "-0.13535222",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1130,
+    "sun_time_close": 1730,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1900
+  }
+}

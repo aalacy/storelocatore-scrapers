@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Frisco",
+  "street_address": "8300 Gaylord Pkwy #4",
+  "city": "Frisco",
+  "state": "TX",
+  "zip": "75034",
+  "country_code": "US",
+  "store_number": 84789,
+  "phone": "(214) 618-4442",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.10386130",
+  "longitude": "-96.81174330",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

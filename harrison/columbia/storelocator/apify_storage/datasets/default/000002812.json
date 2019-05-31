@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Swift Fix Bike Shop",
+  "street_address": "2813 N 1050 E",
+  "city": "North Ogden",
+  "state": "UT",
+  "zip": "84414",
+  "country_code": "US",
+  "store_number": 148313,
+  "phone": "(801) 690-4531",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.31146768",
+  "longitude": "-111.94718341",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

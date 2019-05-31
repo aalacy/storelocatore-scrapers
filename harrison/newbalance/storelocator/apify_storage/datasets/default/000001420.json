@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Pish Posh Baby",
+  "street_address": "1915 Swarthmore Ave",
+  "city": "Lakewood",
+  "state": "NJ",
+  "zip": "08701",
+  "country_code": "US",
+  "store_number": 40102,
+  "phone": "(877) 747-4767",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.07716566",
+  "longitude": "-74.16561215",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 900,
+    "mon_time_close": 1700,
+    "tue_time_open": 900,
+    "tue_time_close": 1700,
+    "wed_time_open": 900,
+    "wed_time_close": 1700,
+    "thu_time_open": 900,
+    "thu_time_close": 1700,
+    "fri_time_open": 900,
+    "fri_time_close": 1200,
+    "sat_time_open": 0,
+    "sat_time_close": 0
+  }
+}

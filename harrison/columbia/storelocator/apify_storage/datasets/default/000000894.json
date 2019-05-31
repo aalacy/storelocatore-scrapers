@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Menlo Park",
+  "street_address": "859 Santa Cruz Ave",
+  "city": "Menlo Park",
+  "state": "CA",
+  "zip": "94025",
+  "country_code": "US",
+  "store_number": 19083,
+  "phone": "(650) 325-9432",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.45026614",
+  "longitude": "-122.18532200",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

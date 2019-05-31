@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Potomac River Running - DC",
+  "street_address": "919 F Street NW",
+  "city": "Washington",
+  "state": "DC",
+  "zip": "20004",
+  "country_code": "US",
+  "store_number": 16096,
+  "phone": "(202) 393-8500",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.89764637",
+  "longitude": "-77.02495126",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1800,
+    "mon_time_open": 1100,
+    "mon_time_close": 2000,
+    "tue_time_open": 1100,
+    "tue_time_close": 2000,
+    "wed_time_open": 1100,
+    "wed_time_close": 2000,
+    "thu_time_open": 1100,
+    "thu_time_close": 2000,
+    "fri_time_open": 1100,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

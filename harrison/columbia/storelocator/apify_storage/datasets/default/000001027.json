@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rackultra Montréal",
+  "street_address": "5950 Boul Métropolitain E",
+  "city": "Saint-Léonard",
+  "state": "QC",
+  "zip": "H1S1A9",
+  "country_code": "CA",
+  "store_number": 59371,
+  "phone": "(514) 324-7225",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.58812747",
+  "longitude": "-73.58286121",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

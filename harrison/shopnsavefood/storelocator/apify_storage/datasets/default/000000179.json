@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Parsons Express",
+  "street_address": "302 D&W Lane",
+  "city": "Parsons",
+  "state": "WV",
+  "zip": "26287",
+  "country_code": "US",
+  "store_number": "80",
+  "phone": "1538",
+  "location_type": {
+    "gas_station": "304-478-4945",
+    "active": "39.097445",
+    "pump_perk": "-79.680963"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sun 8:00am-10:00pm",
+  "longitude": "304-478-4803",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

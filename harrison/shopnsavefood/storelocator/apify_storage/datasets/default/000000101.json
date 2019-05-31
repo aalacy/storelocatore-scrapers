@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Helds",
+  "street_address": "Rt. 66 & 16th Street ",
+  "city": "North Apollo",
+  "state": "PA",
+  "zip": "15673",
+  "country_code": "US",
+  "store_number": "75",
+  "phone": "1495",
+  "location_type": {
+    "gas_station": "724-478-4751",
+    "active": "724-478-5787",
+    "pump_perk": "40.594517"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sat 7:30-9:30",
+  "longitude": "Sun 8:00-5:00",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

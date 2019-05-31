@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Glenshaw",
+  "street_address": "www.mihelicshopnsaves.com/",
+  "city": "917 Butler Street",
+  "state": "Pittsburgh",
+  "zip": "PA",
+  "country_code": "US",
+  "store_number": "87",
+  "phone": "2403",
+  "location_type": {
+    "gas_station": "412-487-1460",
+    "active": "412-492-8724",
+    "pump_perk": "412-487-4302"
+  },
+  "niacs_code": null,
+  "latitude": "15223",
+  "longitude": "Mon-Sun 6:00am-11:00pm",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

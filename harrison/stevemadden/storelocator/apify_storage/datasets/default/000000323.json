@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "South Coast Pl. Mall",
+  "street_address": "3333 Bristol St.",
+  "city": "Costa Mesa",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995572",
+  "phone": "714-241-7055",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.690900",
+  "longitude": "-117.888000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Town and Country Square",
+  "street_address": "2300 Griffin Rd",
+  "city": "Lakeland",
+  "state": "FL",
+  "zip": "33810-6760",
+  "country_code": "US",
+  "store_number": 3122,
+  "phone": "8638581146",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.079325,
+  "longitude": -81.992307,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

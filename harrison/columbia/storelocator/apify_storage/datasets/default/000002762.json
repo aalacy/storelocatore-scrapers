@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Acme Surf & Skate",
+  "street_address": "2 E 27Th St",
+  "city": "Beach Haven",
+  "state": "NJ",
+  "zip": "08008",
+  "country_code": "US",
+  "store_number": 106794,
+  "phone": "(609) 492-5150",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.58029648",
+  "longitude": "-74.22790122",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

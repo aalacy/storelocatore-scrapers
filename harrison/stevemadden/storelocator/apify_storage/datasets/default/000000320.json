@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Del Amo Fashion Center",
+  "street_address": "21540 HAWTHORNE BLVD",
+  "city": "TORRENCE",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995252",
+  "phone": "310-214-2453",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.832800",
+  "longitude": "-118.351000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

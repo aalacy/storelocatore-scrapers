@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Dartmouth Crossing",
+  "street_address": "25 Lemlair Row Unit 10-2",
+  "city": "Dartmouth",
+  "state": "NS",
+  "zip": "B3B0C6",
+  "country_code": "CA",
+  "store_number": 103616,
+  "phone": "(902) 468-6506",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.69976732",
+  "longitude": "-63.56615104",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

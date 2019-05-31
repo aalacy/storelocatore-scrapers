@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Hill on Wheels Bike & Multisport",
+  "street_address": "9701 Ford Ave suite b",
+  "city": "Richmond Hill",
+  "state": "GA",
+  "zip": "31324",
+  "country_code": "US",
+  "store_number": 122761,
+  "phone": "(912) 445-0247",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "31.95373080",
+  "longitude": "-81.31377070",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

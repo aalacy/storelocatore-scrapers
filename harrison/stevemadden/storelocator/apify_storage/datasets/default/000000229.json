@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Wenzhou Intime Department Store",
+  "street_address": "B1F,NO.9,South Jiefang Road,We",
+  "city": "Wenzhou",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995675",
+  "phone": "0577-56989308",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "27.994270",
+  "longitude": "120.699370",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

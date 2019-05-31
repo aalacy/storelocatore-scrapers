@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Arc'teryx Yorkdale",
+  "street_address": "3401 Dufferin St #511",
+  "city": "North York",
+  "state": "ON",
+  "zip": "M6A2T9",
+  "country_code": "CA",
+  "store_number": 51114,
+  "phone": "(416) 787-6978",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.72477716",
+  "longitude": "-79.45538130",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1900,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 930,
+    "sat_time_close": 2100
+  }
+}

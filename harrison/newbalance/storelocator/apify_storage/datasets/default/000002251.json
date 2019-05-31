@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Laufladen Endspurt Paderborn",
+  "street_address": "Kamp 30",
+  "city": "Paderborn",
+  "state": "",
+  "zip": "33098",
+  "country_code": "DE",
+  "store_number": 139541,
+  "phone": "+49-5251-24617",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "51.71684733",
+  "longitude": "8.75725143",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

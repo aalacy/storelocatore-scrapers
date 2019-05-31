@@ -1,0 +1,15 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Square One Shopping Centre",
+  "street_address": "100 City Centre Drive",
+  "city": "Mississauga",
+  "country_code": "CA",
+  "store_number": "7995575",
+  "phone": "905-277-8160",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.588309",
+  "longitude": "-79.645777",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

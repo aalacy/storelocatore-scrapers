@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "SPRINGFIELD MALL",
+  "street_address": "1250 BALTIMORE PIKE",
+  "city": "SPRINGFIELD",
+  "state": "PA",
+  "zip": "19064",
+  "country_code": "US",
+  "store_number": "515",
+  "phone": "(610) 328-2630",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 39.929832,
+  "longitude": -75.33734,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

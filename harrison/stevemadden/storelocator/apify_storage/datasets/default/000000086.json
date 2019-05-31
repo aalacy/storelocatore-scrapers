@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "SM - Chennai",
+  "street_address": "Phoenix Marketcity",
+  "city": "Mumbai",
+  "state": null,
+  "country_code": "IN",
+  "store_number": "7995554",
+  "phone": "5555555555",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "19.017617",
+  "longitude": "72.856129",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Pine Centre",
+  "street_address": "3115 Massey Dr",
+  "city": "Prince George",
+  "state": "BC",
+  "zip": "V2N2S9",
+  "country_code": "CA",
+  "store_number": 103717,
+  "phone": "(250) 561-3002",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "53.89647590",
+  "longitude": "-122.77816240",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

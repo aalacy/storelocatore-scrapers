@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Patchwork Farms Shopping Center",
+  "street_address": "3040 Healthy Way",
+  "city": "Vestavia Hills",
+  "state": "AL",
+  "zip": "35243",
+  "country_code": "US",
+  "store_number": 3809,
+  "phone": "2059707501",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.429371,
+  "longitude": -86.737591,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

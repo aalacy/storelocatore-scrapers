@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Village Shopping Centre",
+  "street_address": "430 Topsail Rd Unit 102",
+  "city": "St. John's",
+  "state": "NL",
+  "zip": "A1E4N1",
+  "country_code": "CA",
+  "store_number": 103749,
+  "phone": "(709) 364-7068",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.53437788",
+  "longitude": "-52.74955864",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

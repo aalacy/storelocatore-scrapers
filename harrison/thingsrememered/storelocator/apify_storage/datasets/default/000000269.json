@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "BARTON CREEK SQUARE",
+  "street_address": "2901 S CAPITAL OF TEXAS HWY",
+  "city": "AUSTIN",
+  "state": "TX",
+  "zip": "78746",
+  "country_code": "US",
+  "store_number": "597",
+  "phone": "(512) 328-1105",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.294987,
+  "longitude": -97.81097,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#07:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rack Solid",
+  "street_address": "610 3rd St",
+  "city": "San Francisco",
+  "state": "CA",
+  "zip": "94107",
+  "country_code": "US",
+  "store_number": 33591,
+  "phone": "(415) 543-7225",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.77975619",
+  "longitude": "-122.39428201",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

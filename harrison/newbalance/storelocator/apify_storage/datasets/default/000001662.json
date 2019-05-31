@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "1st Tracks Ski Shop",
+  "street_address": "1380 NC-105",
+  "city": "Boone",
+  "state": "NC",
+  "zip": "28607",
+  "country_code": "US",
+  "store_number": 45001,
+  "phone": "(828) 264-7368",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.20299593",
+  "longitude": "-81.67676134",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 800,
+    "sun_time_close": 2300,
+    "mon_time_open": 800,
+    "mon_time_close": 2300,
+    "tue_time_open": 800,
+    "tue_time_close": 2300,
+    "wed_time_open": 800,
+    "wed_time_close": 2300,
+    "thu_time_open": 800,
+    "thu_time_close": 2300,
+    "fri_time_open": 800,
+    "fri_time_close": 2300,
+    "sat_time_open": 800,
+    "sat_time_close": 2300
+  }
+}

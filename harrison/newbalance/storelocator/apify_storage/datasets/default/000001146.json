@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fit2Run-The Runner's Superstore",
+  "street_address": "6419 W Newberry Rd H0015",
+  "city": "Gainesville",
+  "state": "FL",
+  "zip": "32605",
+  "country_code": "US",
+  "store_number": 16310,
+  "phone": "(352) 872-5860",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "29.65642486",
+  "longitude": "-82.41045135",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 1000,
+    "sat_time_close": 2100
+  }
+}

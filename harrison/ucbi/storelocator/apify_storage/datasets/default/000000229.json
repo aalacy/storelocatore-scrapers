@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Pinecrest",
+  "street_address": "13401 S Dixie Hwy",
+  "city": "Pinecrest",
+  "state": "FL",
+  "zip": "33156-6512",
+  "country_code": "US",
+  "store_number": 3690,
+  "phone": "3052510911",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.646104,
+  "longitude": -80.331252,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

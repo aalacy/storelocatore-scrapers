@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Steele Creek Crossing",
+  "street_address": "12810 S Tryon St",
+  "city": "Charlotte",
+  "state": "NC",
+  "zip": "28273-6949",
+  "country_code": "US",
+  "store_number": 3748,
+  "phone": "7045870339",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.103794,
+  "longitude": -80.986964,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

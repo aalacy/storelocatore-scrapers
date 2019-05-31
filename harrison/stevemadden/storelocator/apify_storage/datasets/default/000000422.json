@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Send Sale Test Store",
+  "street_address": "6302 NUGGET CIRCLE",
+  "city": "hanover park",
+  "state": "AZ",
+  "country_code": "US",
+  "store_number": "7995509",
+  "phone": "3334445555",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.987589",
+  "longitude": "-88.142485",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

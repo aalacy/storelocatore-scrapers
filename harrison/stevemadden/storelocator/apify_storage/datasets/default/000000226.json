@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Ellenton Premium",
+  "street_address": "5257 Factory Shops Blvd",
+  "city": "Ellenton",
+  "state": "FL",
+  "country_code": "US",
+  "store_number": "7995273",
+  "phone": "941-721-0587",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "27.535272",
+  "longitude": "-82.507837",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

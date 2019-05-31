@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Searstown Shopping Center",
+  "street_address": "3316 N Roosevelt Blvd",
+  "city": "Key West",
+  "state": "FL",
+  "zip": "33040-4115",
+  "country_code": "US",
+  "store_number": 2939,
+  "phone": "3052962225",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 24.569493,
+  "longitude": -81.763841,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

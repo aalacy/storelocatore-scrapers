@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Helen's Cycles",
+  "street_address": "2501 Broadway",
+  "city": "Santa Monica",
+  "state": "CA",
+  "zip": "90404",
+  "country_code": "US",
+  "store_number": 16578,
+  "phone": "(310) 829-1836",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.03161558",
+  "longitude": "-118.47354194",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

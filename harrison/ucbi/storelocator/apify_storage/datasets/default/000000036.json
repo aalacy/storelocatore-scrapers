@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Dunn - Four Oaks Place",
+  "street_address": "115 Four Oaks Place",
+  "city": "Dunn",
+  "state": "NC",
+  "zip": "28334",
+  "country_code": "US",
+  "store_number": 1477,
+  "phone": "9102303775",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.31629,
+  "longitude": -78.62337,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

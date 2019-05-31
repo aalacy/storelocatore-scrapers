@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Inverrary Falls",
+  "street_address": "5855 W Oakland Park Blvd Ste 203",
+  "city": "Lauderhill",
+  "state": "FL",
+  "zip": "33313-1321",
+  "country_code": "US",
+  "store_number": 3408,
+  "phone": "9547351328",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.166144,
+  "longitude": -80.230155,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

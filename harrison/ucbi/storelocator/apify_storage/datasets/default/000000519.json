@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Brawley Commons",
+  "street_address": "631 Brawley School Rd",
+  "city": "Mooresville",
+  "state": "NC",
+  "zip": "28117-6204",
+  "country_code": "US",
+  "store_number": 3783,
+  "phone": "7046606800",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.581768,
+  "longitude": -80.874651,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

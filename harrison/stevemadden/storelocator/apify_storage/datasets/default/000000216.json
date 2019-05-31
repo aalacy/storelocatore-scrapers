@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "BAHRAIN CITY CENTER",
+  "street_address": "Seef District, Manama",
+  "city": "Bahrain",
+  "state": null,
+  "country_code": "BH",
+  "store_number": "7995181",
+  "phone": "97317179380",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "26.233754",
+  "longitude": "50.552344",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

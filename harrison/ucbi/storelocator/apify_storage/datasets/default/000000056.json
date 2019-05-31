@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Sunshine Square",
+  "street_address": "501 SE 18th Ave",
+  "city": "Boynton Beach",
+  "state": "FL",
+  "zip": "33435-6949",
+  "country_code": "US",
+  "store_number": 3673,
+  "phone": "5612924080",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.512687,
+  "longitude": -80.06151,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

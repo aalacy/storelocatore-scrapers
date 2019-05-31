@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Atmosphere - Orchard Place",
+  "street_address": "1835 Dilworth Dr",
+  "city": "Kelowna",
+  "state": "BC",
+  "zip": "V1Y9T1",
+  "country_code": "CA",
+  "store_number": 19683,
+  "phone": "(778) 436-8162",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.88098172",
+  "longitude": "-119.43721196",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

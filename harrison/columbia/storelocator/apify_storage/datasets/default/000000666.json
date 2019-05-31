@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Mike's Bike Shop",
+  "street_address": "67 Englehart St",
+  "city": "Dieppe",
+  "state": "NB",
+  "zip": "E1A8K2",
+  "country_code": "CA",
+  "store_number": 19938,
+  "phone": "(506) 852-7100",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "46.10273755",
+  "longitude": "-64.70098106",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

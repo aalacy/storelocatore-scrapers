@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cap-it - Calgary North",
+  "street_address": "3360 14 Ave NE",
+  "city": "Calgary",
+  "state": "AB",
+  "zip": "T2A6J4",
+  "country_code": "CA",
+  "store_number": 32889,
+  "phone": "(403) 248-4147",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "51.06548837",
+  "longitude": "-113.98593187",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

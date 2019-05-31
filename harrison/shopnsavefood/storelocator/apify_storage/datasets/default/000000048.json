@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Coraopolis",
+  "street_address": "6700 University Blvd",
+  "city": "Coraopolis",
+  "state": "PA",
+  "zip": "15108",
+  "country_code": "US",
+  "store_number": "238",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.46926",
+  "longitude": "-80.14022",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

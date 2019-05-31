@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Smithfield - N Second St",
+  "street_address": "128 N 2nd St",
+  "city": "Smithfield",
+  "state": "NC",
+  "zip": "27577",
+  "country_code": "US",
+  "store_number": 1471,
+  "phone": "9199896700",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.512558,
+  "longitude": -78.34679,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

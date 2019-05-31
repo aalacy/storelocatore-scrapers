@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "REI - West Hartford",
+  "street_address": "1417 New Britain Ave",
+  "city": "West Hartford",
+  "state": "CT",
+  "zip": "06110",
+  "country_code": "US",
+  "store_number": 11099,
+  "phone": "(860) 313-0128",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.72615684",
+  "longitude": "-72.75711119",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 1000,
+    "sat_time_close": 2100
+  }
+}

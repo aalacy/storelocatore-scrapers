@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Hibernia Pavilion",
+  "street_address": "865 Hibernia Rd Ste 200",
+  "city": "Fleming Island",
+  "state": "FL",
+  "zip": "32003-8707",
+  "country_code": "US",
+  "store_number": 3505,
+  "phone": "9045291250",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.070022,
+  "longitude": -81.706069,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

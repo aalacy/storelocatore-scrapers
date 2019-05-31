@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "ANNAPOLIS MALL",
+  "street_address": "1420 ANNAPOLIS MALL",
+  "city": "ANNAPOLIS",
+  "state": "MD",
+  "zip": "21401",
+  "country_code": "US",
+  "store_number": "586",
+  "phone": "(410) 841-6254",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 38.982353,
+  "longitude": -76.53369,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#07:00 PM|2#10:00 AM#09:30 PM|3#10:00 AM#09:30 PM|4#10:00 AM#09:30 PM|5#10:00 AM#09:30 PM|6#10:00 AM#09:30 PM|7#10:00 AM#09:30 PM"
+}

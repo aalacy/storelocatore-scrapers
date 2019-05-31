@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sports Basement Campbell",
+  "street_address": "1875 S Bascom Ave #240",
+  "city": "Campbell",
+  "state": "CA",
+  "zip": "95008",
+  "country_code": "US",
+  "store_number": 13822,
+  "phone": "(408) 899-5783",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.28807611",
+  "longitude": "-121.93331200",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

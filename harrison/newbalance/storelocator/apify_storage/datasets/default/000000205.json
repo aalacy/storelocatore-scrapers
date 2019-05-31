@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Bauman's Running & Walking Shop",
+  "street_address": "1473 W Hill Rd",
+  "city": "Flint",
+  "state": "MI",
+  "zip": "48507",
+  "country_code": "US",
+  "store_number": 21944,
+  "phone": "(810) 238-5981",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.97289704",
+  "longitude": "-83.75982137",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Tactics Boardshop",
+  "street_address": "933 NW Wall St",
+  "city": "Bend",
+  "state": "OR",
+  "zip": "97701",
+  "country_code": "US",
+  "store_number": 67460,
+  "phone": "(541) 640-8265",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.05937722",
+  "longitude": "-121.31396199",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

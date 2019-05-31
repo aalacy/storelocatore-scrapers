@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Dacula Village",
+  "street_address": "720 Dacula Rd",
+  "city": "Dacula",
+  "state": "GA",
+  "zip": "30019-7055",
+  "country_code": "US",
+  "store_number": 3220,
+  "phone": "7708225959",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.003422,
+  "longitude": -83.912577,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

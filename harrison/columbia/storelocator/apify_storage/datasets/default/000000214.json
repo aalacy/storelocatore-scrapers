@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Alabama Outdoors ",
+  "street_address": "3054 Independence Dr",
+  "city": "Homewood",
+  "state": "AL",
+  "zip": "35209",
+  "country_code": "US",
+  "store_number": 10831,
+  "phone": "(205) 870-1919",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.47640548",
+  "longitude": "-86.78766142",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1900
+  }
+}

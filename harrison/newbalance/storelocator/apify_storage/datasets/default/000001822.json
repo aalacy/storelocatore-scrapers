@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Palmetto Running Company HHI",
+  "street_address": "28 Shelter Cove Lane",
+  "city": "Hilton Head Island Island",
+  "state": "SC",
+  "zip": "29928",
+  "country_code": "US",
+  "store_number": 16432,
+  "phone": "(843) 341-2677",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.18515527",
+  "longitude": "-80.72179132",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

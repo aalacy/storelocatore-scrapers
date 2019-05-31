@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "The Wheelhouse",
+  "street_address": "305 Mitkof Highway",
+  "city": "Petersburg",
+  "state": "AK",
+  "zip": "99833",
+  "country_code": "US",
+  "store_number": 145090,
+  "phone": "(907) 772-2453",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "56.77987722",
+  "longitude": "-132.96739623",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

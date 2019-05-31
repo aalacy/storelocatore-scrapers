@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Sunrise West",
+  "street_address": "9300 W Commercial Blvd",
+  "city": "Sunrise",
+  "state": "FL",
+  "zip": "33351-4302",
+  "country_code": "US",
+  "store_number": 3195,
+  "phone": "9547480418",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.192351,
+  "longitude": -80.274328,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:45 AM - 10:00 PM,Mon 6:45 AM - 11:00 PM,Tues 6:45 AM - 11:00 PM,Wed 6:45 AM - 11:00 PM,Thurs 6:45 AM - 11:00 PM,Fri 6:45 AM - 11:00 PM,Sat 6:45 AM - 11:00 PM,"
+}

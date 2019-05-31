@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Youngwood",
+  "street_address": "506 S. Fourth Street",
+  "city": "Youngwood",
+  "state": "PA",
+  "zip": "15697",
+  "country_code": "US",
+  "store_number": "258",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.24053",
+  "longitude": "-79.50588",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

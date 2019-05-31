@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Pasadena",
+  "street_address": "270 S Arroyo Pkwy",
+  "city": "Pasadena",
+  "state": "CA",
+  "zip": "91105",
+  "country_code": "US",
+  "store_number": 26868,
+  "phone": "(626) 793-7900",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.14135559",
+  "longitude": "-118.14724194",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Dodge City",
+  "street_address": "1701 N 14th Ave",
+  "city": "Dodge City",
+  "state": "KS",
+  "zip": "67801",
+  "country_code": "US",
+  "store_number": 21991,
+  "phone": "(620) 227-8779",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.76349210",
+  "longitude": "-100.03434600",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1300,
+    "sun_time_close": 1700,
+    "mon_time_open": 900,
+    "mon_time_close": 1900,
+    "tue_time_open": 900,
+    "tue_time_close": 1800,
+    "wed_time_open": 900,
+    "wed_time_close": 1900,
+    "thu_time_open": 900,
+    "thu_time_close": 1900,
+    "fri_time_open": 900,
+    "fri_time_close": 1900,
+    "sat_time_open": 900,
+    "sat_time_close": 1900
+  }
+}

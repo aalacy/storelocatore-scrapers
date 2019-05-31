@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Glorietta 3",
+  "street_address": "1st Level, Glorietta 3",
+  "city": "Makati",
+  "state": null,
+  "country_code": "PH",
+  "store_number": "7995306",
+  "phone": "6328943259",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "14.554729",
+  "longitude": "121.024445",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

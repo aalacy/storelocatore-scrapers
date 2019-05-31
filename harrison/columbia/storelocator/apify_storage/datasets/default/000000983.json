@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance North Jersey",
+  "street_address": "459 State Rt 17",
+  "city": "Hasbrouck Heights",
+  "state": "NJ",
+  "zip": "07604",
+  "country_code": "US",
+  "store_number": 26608,
+  "phone": "(201) 727-0745",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.86463670",
+  "longitude": "-74.06535121",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

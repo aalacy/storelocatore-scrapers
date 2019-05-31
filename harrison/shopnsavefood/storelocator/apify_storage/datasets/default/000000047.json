@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Clarksburg",
+  "street_address": "\"15389 Route 286, Highway W\"",
+  "city": "Clarksburg",
+  "state": "PA",
+  "zip": "15725",
+  "country_code": "US",
+  "store_number": "147",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.5355325",
+  "longitude": "-79.3771621",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

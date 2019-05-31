@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Goat's Beard Mountain Supplies",
+  "street_address": "50 Lost River Rd",
+  "city": "Mazama",
+  "state": "WA",
+  "zip": "98833",
+  "country_code": "US",
+  "store_number": 13880,
+  "phone": "(509) 996-2515",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.59345796",
+  "longitude": "-120.40571973",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

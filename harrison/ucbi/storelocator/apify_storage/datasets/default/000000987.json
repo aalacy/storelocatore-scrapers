@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Gainesville - Quillians Corner",
+  "street_address": "5172 Cleveland Hwy",
+  "city": "Gainesville",
+  "state": "GA",
+  "zip": "30506",
+  "country_code": "US",
+  "store_number": 54,
+  "phone": "7709832593",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.444732,
+  "longitude": -83.805396,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

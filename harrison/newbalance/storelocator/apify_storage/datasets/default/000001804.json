@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Mountain to Sound Outfitters",
+  "street_address": "3602 SW Alaska Street",
+  "city": "Seattle",
+  "state": "WA",
+  "zip": "98126",
+  "country_code": "US",
+  "store_number": 21277,
+  "phone": "(206) 935-7669",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.56127792",
+  "longitude": "-122.37784201",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

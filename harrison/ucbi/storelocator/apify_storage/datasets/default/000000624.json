@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Brunswick - Commercial Dr",
+  "street_address": "2001 S Commercial Dr",
+  "city": "Brunswick",
+  "state": "GA",
+  "zip": "31525",
+  "country_code": "US",
+  "store_number": 14,
+  "phone": "9122621500",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 31.227468,
+  "longitude": -81.528303,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

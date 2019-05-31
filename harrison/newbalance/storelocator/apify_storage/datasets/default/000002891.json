@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Black River Adventurers' Shop",
+  "street_address": "129 Mill St",
+  "city": "Watertown",
+  "state": "NY",
+  "zip": "13601",
+  "country_code": "US",
+  "store_number": 21698,
+  "phone": "(315) 786-8800",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.97541720",
+  "longitude": "-75.90801244",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

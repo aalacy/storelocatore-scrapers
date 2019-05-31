@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Richardson Bike Mart",
+  "street_address": "9040 Garland Rd",
+  "city": "Dallas",
+  "state": "TX",
+  "zip": "75218",
+  "country_code": "US",
+  "store_number": 16957,
+  "phone": "(214) 321-0705",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.82793538",
+  "longitude": "-96.70855158",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

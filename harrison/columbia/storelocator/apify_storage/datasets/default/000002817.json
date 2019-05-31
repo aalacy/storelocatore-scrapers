@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Pedal Sports",
+  "street_address": "20 Elm St",
+  "city": "Oakland",
+  "state": "NJ",
+  "zip": "07436",
+  "country_code": "US",
+  "store_number": 33886,
+  "phone": "(201) 337-9380",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.02514672",
+  "longitude": "-74.24279122",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Summit Ski & Snowboard",
+  "street_address": "686 Worcester Road",
+  "city": "Framingham",
+  "state": "MA",
+  "zip": "01702",
+  "country_code": "US",
+  "store_number": 19672,
+  "phone": "(508) 875-5551",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.29806930",
+  "longitude": "-71.42518117",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

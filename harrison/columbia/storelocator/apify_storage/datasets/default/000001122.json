@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "The Clean Machine",
+  "street_address": "104 W Main St",
+  "city": "Carrboro",
+  "state": "NC",
+  "zip": "27510",
+  "country_code": "US",
+  "store_number": 21362,
+  "phone": "(919) 967-5104",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.91042588",
+  "longitude": "-79.07292130",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1900
+  }
+}

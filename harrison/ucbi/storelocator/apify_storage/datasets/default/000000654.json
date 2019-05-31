@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Midpoint Center",
+  "street_address": "2420 Santa Barbara Blvd",
+  "city": "Cape Coral",
+  "state": "FL",
+  "zip": "33914-4485",
+  "country_code": "US",
+  "store_number": 3266,
+  "phone": "2395746395",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.60682,
+  "longitude": -81.975876,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

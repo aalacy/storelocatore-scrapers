@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Global Bikes - Bike Shop Chandler South",
+  "street_address": "1055 S Arizona Ave #9",
+  "city": "Chandler",
+  "state": "AZ",
+  "zip": "85286",
+  "country_code": "US",
+  "store_number": 17479,
+  "phone": "(480) 782-8342",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.29039545",
+  "longitude": "-111.84091183",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

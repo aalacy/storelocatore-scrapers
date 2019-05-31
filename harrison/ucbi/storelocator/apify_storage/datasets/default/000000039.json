@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Raleigh - Garner Station Blvd",
+  "street_address": "1408 Garner Station Blvd",
+  "city": "Raleigh",
+  "state": "NC",
+  "zip": "27603",
+  "country_code": "US",
+  "store_number": 1479,
+  "phone": "9197722331",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.725411,
+  "longitude": -78.651707,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Runners Soul",
+  "street_address": "2646 S Parkside Dr",
+  "city": "Lethbridge",
+  "state": "AB",
+  "zip": "T1K0C4",
+  "country_code": "CA",
+  "store_number": 19550,
+  "phone": "(403) 327-2241",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.68352814",
+  "longitude": "-112.80368185",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

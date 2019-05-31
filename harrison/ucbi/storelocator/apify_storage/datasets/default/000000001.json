@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Seneca - 1094 US Hwy 123",
+  "street_address": "1094 US Hwy 123",
+  "city": "Seneca",
+  "state": "SC",
+  "zip": "29678",
+  "country_code": "US",
+  "store_number": 1470,
+  "phone": "8648823992",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 0,
+  "longitude": 0,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

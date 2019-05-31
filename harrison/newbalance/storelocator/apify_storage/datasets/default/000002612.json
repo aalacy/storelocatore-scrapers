@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cap-it - Kelowna",
+  "street_address": "880 McCurdy Place",
+  "city": "Kelowna",
+  "state": "BC",
+  "zip": "V1X8C8",
+  "country_code": "CA",
+  "store_number": 32906,
+  "phone": "(778) 478-0556",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.89033817",
+  "longitude": "-119.41591957",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

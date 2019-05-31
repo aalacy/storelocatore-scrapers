@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "LIMA",
+  "street_address": "JAVIER PRADO ESTE",
+  "city": "SANTIAGO DE SURCO",
+  "state": null,
+  "country_code": "PE",
+  "store_number": "7995378",
+  "phone": "5114351619",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "-12.083543",
+  "longitude": "-76.971638",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

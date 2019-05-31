@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "REI - Las Vegas Boca Park",
+  "street_address": "710 S Rampart Blvd",
+  "city": "Las Vegas",
+  "state": "NV",
+  "zip": "89145",
+  "country_code": "US",
+  "store_number": 11127,
+  "phone": "(702) 951-4488",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.16311500",
+  "longitude": "-115.28796450",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1900,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 1000,
+    "sat_time_close": 2100
+  }
+}

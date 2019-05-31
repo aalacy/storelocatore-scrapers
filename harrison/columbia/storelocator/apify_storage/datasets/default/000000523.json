@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rogan's Shoes - Beloit",
+  "street_address": "1960 Sutler Ave",
+  "city": "Beloit",
+  "state": "WI",
+  "zip": "53512",
+  "country_code": "US",
+  "store_number": 38897,
+  "phone": "(608) 361-0979",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.52351030",
+  "longitude": "-88.98918600",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Promenade",
+  "street_address": "841 Cypress Pkwy",
+  "city": "Poinciana",
+  "state": "FL",
+  "zip": "34759-3408",
+  "country_code": "US",
+  "store_number": 3177,
+  "phone": "3216975487",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.14839,
+  "longitude": -81.451488,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

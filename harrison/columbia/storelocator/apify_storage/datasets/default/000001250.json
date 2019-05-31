@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Tuckaseegee Fly Shop",
+  "street_address": "530 W Main St",
+  "city": "Sylva",
+  "state": "NC",
+  "zip": "28779",
+  "country_code": "US",
+  "store_number": 52106,
+  "phone": "(828) 488-3333",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.37457957",
+  "longitude": "-83.21933136",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

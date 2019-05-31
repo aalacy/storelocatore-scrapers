@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Gazelle Sports Holland",
+  "street_address": "24 W 8th St",
+  "city": "Holland",
+  "state": "MI",
+  "zip": "49423",
+  "country_code": "US",
+  "store_number": 524,
+  "phone": "(616) 392-2282",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.79001701",
+  "longitude": "-86.10838141",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1600,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

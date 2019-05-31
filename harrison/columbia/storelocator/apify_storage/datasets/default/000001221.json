@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Benjamin Lovell Shoes",
+  "street_address": "1728 Chestnut St",
+  "city": "Philadelphia",
+  "state": "PA",
+  "zip": "19103",
+  "country_code": "US",
+  "store_number": 42480,
+  "phone": "(215) 564-4655",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.95165456",
+  "longitude": "-75.16912316",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

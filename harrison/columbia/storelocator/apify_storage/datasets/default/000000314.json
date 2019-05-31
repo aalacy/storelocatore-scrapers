@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Salomon Store Praha (Chodov)",
+  "street_address": "Centrum Praha Jih Chodov",
+  "city": "Prague - Chodov-Praha 11",
+  "state": "",
+  "zip": "14800",
+  "country_code": "CZ",
+  "store_number": 99344,
+  "phone": "272 075 405",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "50.03781982",
+  "longitude": "14.47723720",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "711 Lincoln Road - STEVEN",
+  "street_address": "663 Lincoln Road",
+  "city": "Miami Beach",
+  "state": "FL",
+  "country_code": "US",
+  "store_number": "7995142",
+  "phone": "305-535-8192",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "25.790700",
+  "longitude": "-80.135000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

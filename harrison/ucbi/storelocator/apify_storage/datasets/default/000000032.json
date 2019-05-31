@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Benson - E Church St",
+  "street_address": "200 E Church St",
+  "city": "Benson",
+  "state": "NC",
+  "zip": "27504",
+  "country_code": "US",
+  "store_number": 1474,
+  "phone": "9198941800",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.381297,
+  "longitude": -78.54601,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Shops at Locust Grove",
+  "street_address": "2730 Highway 155",
+  "city": "Locust Grove",
+  "state": "GA",
+  "zip": "30248-2401",
+  "country_code": "US",
+  "store_number": 3353,
+  "phone": "7702884180",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.365803,
+  "longitude": -84.181419,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Our New Baby!",
+  "street_address": "3119 Ross Clark Cir",
+  "city": "Dothan",
+  "state": "AL",
+  "zip": "36303",
+  "country_code": "US",
+  "store_number": 25755,
+  "phone": "(334) 677-2229",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "31.23075117",
+  "longitude": "-85.43211400",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

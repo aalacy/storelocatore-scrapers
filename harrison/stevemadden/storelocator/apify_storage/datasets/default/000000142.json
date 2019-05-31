@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Abu Dhabi",
+  "street_address": "Centrepoint, Marina",
+  "city": "Abu Dhabi",
+  "state": null,
+  "country_code": "AE",
+  "store_number": "7995147",
+  "phone": "97126816834",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "24.466667",
+  "longitude": "54.366667",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

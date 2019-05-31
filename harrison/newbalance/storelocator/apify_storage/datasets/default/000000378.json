@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Pack & Paddle",
+  "street_address": "601 E Pinhook Rd",
+  "city": "Lafayette",
+  "state": "LA",
+  "zip": "70501",
+  "country_code": "US",
+  "store_number": 414,
+  "phone": "(337) 232-5854",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.21884000",
+  "longitude": "-92.00393900",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Lost Mountain Crossings",
+  "street_address": "5100 Dallas Hwy",
+  "city": "Powder Springs",
+  "state": "GA",
+  "zip": "30127-4491",
+  "country_code": "US",
+  "store_number": 2936,
+  "phone": "7704196000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.942188,
+  "longitude": -84.703602,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

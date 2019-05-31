@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Cumming - Hammonds Crossing",
+  "street_address": "4365 Browns Bridge Rd",
+  "city": "Cumming",
+  "state": "GA",
+  "zip": "30041",
+  "country_code": "US",
+  "store_number": 37,
+  "phone": "7708881880",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.256699,
+  "longitude": -84.071671,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

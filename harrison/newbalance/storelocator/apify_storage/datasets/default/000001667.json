@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Seattle Footwear",
+  "street_address": "15423 SE 272nd St",
+  "city": "Kent",
+  "state": "WA",
+  "zip": "98042",
+  "country_code": "US",
+  "store_number": 42893,
+  "phone": "(253) 277-0751",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.35751776",
+  "longitude": "-122.13559200",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

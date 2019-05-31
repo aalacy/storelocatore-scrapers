@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Bike Room",
+  "street_address": "2808 4th St N",
+  "city": "St. Petersburg",
+  "state": "FL",
+  "zip": "33704",
+  "country_code": "US",
+  "store_number": 40945,
+  "phone": "(727) 897-9701",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "27.79785455",
+  "longitude": "-82.63885135",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

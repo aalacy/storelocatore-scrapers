@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Allison - Bonnett Plaza",
+  "street_address": "3014 Allison Bonnett Memorial Dr Ste 130",
+  "city": "Hueytown",
+  "state": "AL",
+  "zip": "35023-2395",
+  "country_code": "US",
+  "store_number": 3365,
+  "phone": "2054975366",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.453253,
+  "longitude": -86.978254,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Running Center",
+  "street_address": "28751 Rancho California Rd #106",
+  "city": "Temecula",
+  "state": "CA",
+  "zip": "92590",
+  "country_code": "US",
+  "store_number": 16497,
+  "phone": "(951) 587-8450",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.49789549",
+  "longitude": "-117.15519195",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

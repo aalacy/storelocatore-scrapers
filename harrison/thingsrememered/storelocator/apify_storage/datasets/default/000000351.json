@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "SOLOMON POND MALL",
+  "street_address": "601 DONALD LYNCH BLVD",
+  "city": "MARLBOROUGH",
+  "state": "MA",
+  "zip": "01752",
+  "country_code": "US",
+  "store_number": "995",
+  "phone": "(508) 303-3828",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 42.351746,
+  "longitude": -71.54494,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

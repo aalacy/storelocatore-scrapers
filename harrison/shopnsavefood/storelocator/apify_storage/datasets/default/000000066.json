@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "East Pittsburgh",
+  "street_address": "Route 30 & Centre",
+  "city": "Pittsburgh",
+  "state": "PA",
+  "zip": "15112",
+  "country_code": "US",
+  "store_number": "160",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.43443",
+  "longitude": "-80.02481",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

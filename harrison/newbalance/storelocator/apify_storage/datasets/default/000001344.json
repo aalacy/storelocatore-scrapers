@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "oops,gottaRUN! Running Store",
+  "street_address": "Via Vettabbia, 1",
+  "city": "Milano",
+  "state": "MI",
+  "zip": "20122",
+  "country_code": "IT",
+  "store_number": 76043,
+  "phone": "02 3296 0609",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.45674475",
+  "longitude": "9.18471505",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

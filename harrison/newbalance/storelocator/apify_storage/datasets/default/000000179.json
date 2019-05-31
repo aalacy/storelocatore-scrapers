@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "The Bear Mountain",
+  "street_address": "4425 W Waco Dr",
+  "city": "Waco",
+  "state": "TX",
+  "zip": "76710",
+  "country_code": "US",
+  "store_number": 17642,
+  "phone": "(254) 772-4327",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "31.52651653",
+  "longitude": "-97.17315921",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

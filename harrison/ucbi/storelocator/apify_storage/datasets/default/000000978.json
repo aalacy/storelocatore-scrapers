@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Valley Forge Shopping Center",
+  "street_address": "2656 Parkway",
+  "city": "Pigeon Forge",
+  "state": "TN",
+  "zip": "37863-3246",
+  "country_code": "US",
+  "store_number": 3779,
+  "phone": "8657742030",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.803148,
+  "longitude": -83.578263,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

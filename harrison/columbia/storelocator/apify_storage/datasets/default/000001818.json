@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Coeur d'Alene",
+  "street_address": "511 Sherman Ave",
+  "city": "Coeur d'Alene",
+  "state": "ID",
+  "zip": "83814",
+  "country_code": "US",
+  "store_number": 17959,
+  "phone": "(208) 765-7604",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.67346103",
+  "longitude": "-116.77903598",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

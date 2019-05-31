@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Incycle Bicycles",
+  "street_address": "9110 E Foothill Blvd",
+  "city": "Rancho Cucamonga",
+  "state": "CA",
+  "zip": "91730",
+  "country_code": "US",
+  "store_number": 16746,
+  "phone": "(909) 483-1991",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.10705588",
+  "longitude": "-117.60641927",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

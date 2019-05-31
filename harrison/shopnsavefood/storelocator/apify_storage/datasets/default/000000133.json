@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Masontown",
+  "street_address": "R.D. #1 Box 30",
+  "city": "Masontown",
+  "state": "PA",
+  "zip": "15461",
+  "country_code": "US",
+  "store_number": "183",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "39.94577",
+  "longitude": "-79.68183",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

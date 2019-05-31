@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Oakland Express",
+  "street_address": "406 Weber Road",
+  "city": "Oaklane ",
+  "state": "MD",
+  "zip": "21550",
+  "country_code": "US",
+  "store_number": "278",
+  "phone": "1082",
+  "location_type": {
+    "gas_station": "301-334-4411",
+    "active": "39.401942",
+    "pump_perk": "-79.391225"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Thur 8am-930pm",
+  "longitude": "Sat 8am-10pm Sun 9am-9pm",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

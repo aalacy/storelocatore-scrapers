@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Newton Falls",
+  "street_address": "37 Ridge Road",
+  "city": "Newton Falls",
+  "state": "OH",
+  "zip": "44444",
+  "country_code": "US",
+  "store_number": "74",
+  "phone": "2125",
+  "location_type": {
+    "gas_station": "330-872-9907",
+    "active": "41.190399",
+    "pump_perk": "-80.978855"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sun 8:00am-9:00pm",
+  "longitude": "330-872-0134",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

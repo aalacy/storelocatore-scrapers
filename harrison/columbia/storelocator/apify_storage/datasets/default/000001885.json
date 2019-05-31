@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Lawrenceville",
+  "street_address": "145 N Perry St",
+  "city": "Lawrenceville",
+  "state": "GA",
+  "zip": "30046",
+  "country_code": "US",
+  "store_number": 19066,
+  "phone": "(770) 338-2996",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.95675563",
+  "longitude": "-83.98913761",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

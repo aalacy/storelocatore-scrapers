@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "St Simons - Demere Rd",
+  "street_address": "2461 Demere Rd",
+  "city": "Saint Simons Island",
+  "state": "GA",
+  "zip": "31522",
+  "country_code": "US",
+  "store_number": 95,
+  "phone": "9126387118",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 31.16054,
+  "longitude": -81.392844,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Farmington Hills",
+  "street_address": "37606 W 12 Mile Road",
+  "city": "Farmington Hills",
+  "state": "MI",
+  "zip": "48331",
+  "country_code": "US",
+  "store_number": 26310,
+  "phone": "(248) 324-0506",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.49932696",
+  "longitude": "-83.42011367",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

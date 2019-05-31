@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "The Velveteen Rabbit",
+  "street_address": "7386 Harbour Towne Parkway",
+  "city": "Suffolk",
+  "state": "VA",
+  "zip": "23435",
+  "country_code": "US",
+  "store_number": 38245,
+  "phone": "(757) 483-0750",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.87550604",
+  "longitude": "-76.43611125",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Babinski's Baby",
+  "street_address": "1324 Foothill Dr",
+  "city": "Salt Lake City",
+  "state": "UT",
+  "zip": "84108",
+  "country_code": "US",
+  "store_number": 38184,
+  "phone": "(801) 583-2229",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.74082667",
+  "longitude": "-111.82754183",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

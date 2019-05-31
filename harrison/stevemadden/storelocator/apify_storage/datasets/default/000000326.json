@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Shenzhen maoye department store",
+  "street_address": "1F, Maoye Department Store,Nor",
+  "city": "Shenzhen",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995537",
+  "phone": "7034182400",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.123894",
+  "longitude": "118.766448",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

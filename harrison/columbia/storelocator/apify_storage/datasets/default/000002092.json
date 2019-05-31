@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Sport Mestre Terraglio",
+  "street_address": "Via Pionara, 16",
+  "city": "Venezia",
+  "state": "VE",
+  "zip": "30174",
+  "country_code": "IT",
+  "store_number": 144765,
+  "phone": "041 301 2150",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.51774576",
+  "longitude": "12.23032004",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 2000,
+    "mon_time_open": 900,
+    "mon_time_close": 2030,
+    "tue_time_open": 900,
+    "tue_time_close": 2030,
+    "wed_time_open": 900,
+    "wed_time_close": 2030,
+    "thu_time_open": 900,
+    "thu_time_close": 2030,
+    "fri_time_open": 900,
+    "fri_time_close": 2030,
+    "sat_time_open": 900,
+    "sat_time_close": 2030
+  }
+}

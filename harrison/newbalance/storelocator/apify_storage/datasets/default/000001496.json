@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fit2Run-The Runner's Superstore",
+  "street_address": "1494 Buena Vista Dr",
+  "city": "Lake Buena Vista",
+  "state": "FL",
+  "zip": "32830",
+  "country_code": "US",
+  "store_number": 16311,
+  "phone": "(407) 560-8333",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "28.37030380",
+  "longitude": "-81.52160100",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 2300,
+    "mon_time_open": 1000,
+    "mon_time_close": 2300,
+    "tue_time_open": 1000,
+    "tue_time_close": 2300,
+    "wed_time_open": 1000,
+    "wed_time_close": 2300,
+    "thu_time_open": 1000,
+    "thu_time_close": 2300,
+    "fri_time_open": 1000,
+    "fri_time_close": 2330,
+    "sat_time_open": 1000,
+    "sat_time_close": 2330
+  }
+}

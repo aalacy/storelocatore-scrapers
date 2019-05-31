@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "2227 Marion Mt Gilead Road",
+  "city": "Marion",
+  "state": "OH",
+  "zip": "43302",
+  "country_code": "US",
+  "store_number": 10037318,
+  "phone": "(740) 914-6365",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 40.580985943494014,
+  "longitude": -83.07020637323222,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

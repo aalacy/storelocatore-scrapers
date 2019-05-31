@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Colorado Springs",
+  "street_address": "119 N Tejon St",
+  "city": "Colorado Springs",
+  "state": "CO",
+  "zip": "80903",
+  "country_code": "US",
+  "store_number": 23502,
+  "phone": "(719) 635-1575",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.83614990",
+  "longitude": "-104.82321970",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

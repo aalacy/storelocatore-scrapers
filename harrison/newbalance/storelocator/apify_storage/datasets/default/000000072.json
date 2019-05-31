@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "REI - Grand Junction",
+  "street_address": "925 Independent Ave",
+  "city": "Grand Junction",
+  "state": "CO",
+  "zip": "81505",
+  "country_code": "US",
+  "store_number": 11095,
+  "phone": "(970) 254-8970",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.08023820",
+  "longitude": "-108.58054630",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 900,
+    "mon_time_close": 2000,
+    "tue_time_open": 900,
+    "tue_time_close": 2000,
+    "wed_time_open": 900,
+    "wed_time_close": 2000,
+    "thu_time_open": 900,
+    "thu_time_close": 2000,
+    "fri_time_open": 900,
+    "fri_time_close": 2000,
+    "sat_time_open": 900,
+    "sat_time_close": 1800
+  }
+}

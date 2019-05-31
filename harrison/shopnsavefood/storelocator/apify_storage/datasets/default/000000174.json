@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Nunda",
+  "street_address": "9045 Route 408",
+  "city": "Nunda",
+  "state": "NY",
+  "zip": "14517",
+  "country_code": "US",
+  "store_number": "77",
+  "phone": "1124",
+  "location_type": {
+    "gas_station": "-77.940209",
+    "active": "false",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sun 7am-9pm",
+  "longitude": "42.58843",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

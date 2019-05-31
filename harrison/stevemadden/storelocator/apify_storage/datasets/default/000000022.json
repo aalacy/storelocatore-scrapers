@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "COMUNA DE LAS CONDES/SANTIAGO",
+  "street_address": "AV. PRESIDENT KENNEDY 9001",
+  "city": "SANTIAGO DE CHILE",
+  "state": null,
+  "country_code": "CL",
+  "store_number": "7995242",
+  "phone": "7034182400",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "-33.388825",
+  "longitude": "-70.545271",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

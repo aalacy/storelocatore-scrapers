@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "SM - Noida",
+  "street_address": "E148 Ground Floor, Plot No. M-",
+  "city": "Noida",
+  "state": null,
+  "country_code": "IN",
+  "store_number": "7995561",
+  "phone": "0120-6662486",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "28.454337",
+  "longitude": "77.531165",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

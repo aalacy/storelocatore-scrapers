@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Team Nashville",
+  "street_address": "3205 West End Ave",
+  "city": "Nashville",
+  "state": "TN",
+  "zip": "37203",
+  "country_code": "US",
+  "store_number": 81947,
+  "phone": "(615) 383-0098",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.14134592",
+  "longitude": "-86.81634142",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

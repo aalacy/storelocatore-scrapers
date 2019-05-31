@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "REHOVOT MALL",
+  "street_address": "1ST FLOOR – 2 BILAV ST",
+  "city": "REHOVOT",
+  "state": null,
+  "country_code": "IL",
+  "store_number": "7995475",
+  "phone": "5555555555",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "31.892773",
+  "longitude": "34.811272",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

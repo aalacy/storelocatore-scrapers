@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "St. Peter's Fly Shop - South",
+  "street_address": "2008 E Harmony Rd",
+  "city": "Fort Collins",
+  "state": "CO",
+  "zip": "80528",
+  "country_code": "US",
+  "store_number": 26475,
+  "phone": "(970) 377-3785",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.52339664",
+  "longitude": "-105.04017210",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

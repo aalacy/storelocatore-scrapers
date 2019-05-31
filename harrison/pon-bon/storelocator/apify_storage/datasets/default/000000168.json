@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "Carretera Estatal No. 3 Km 78.0, Plaza Palma Real",
+  "city": "Humacao",
+  "state": "PR",
+  "zip": "00791",
+  "country_code": "US",
+  "store_number": 10037285,
+  "phone": "(787) 285-1447",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 18.14348101109188,
+  "longitude": -65.80799823567241,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

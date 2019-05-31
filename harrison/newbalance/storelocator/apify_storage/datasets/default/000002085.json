@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Curry Ace Paint & Hardware",
+  "street_address": "1271 Washington St",
+  "city": "Hanover",
+  "state": "MA",
+  "zip": "02339",
+  "country_code": "US",
+  "store_number": 132973,
+  "phone": "781-826-8250",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.14069042",
+  "longitude": "-70.84211607",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

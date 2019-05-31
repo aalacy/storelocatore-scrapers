@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Bloomfield",
+  "street_address": "4779 Liberty St. at Mathilda",
+  "city": "Bloomfield",
+  "state": "PA",
+  "zip": "15224",
+  "country_code": "US",
+  "store_number": "134",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.461144",
+  "longitude": "-79.947298",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

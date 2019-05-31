@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Exchange Tower",
+  "street_address": "130 King St ",
+  "city": "Toronto",
+  "state": "ON",
+  "zip": "M5X1A9",
+  "country_code": "CA",
+  "store_number": 36778,
+  "phone": "(416) 306-9992",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.64848715",
+  "longitude": "-79.38321130",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

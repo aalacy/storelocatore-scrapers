@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Southpark Centre",
+  "street_address": "1320 99 St NW",
+  "city": "Edmonton",
+  "state": "AB",
+  "zip": "T6N0A8",
+  "country_code": "CA",
+  "store_number": 103629,
+  "phone": "(780) 435-8488",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "53.44182876",
+  "longitude": "-113.48462186",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

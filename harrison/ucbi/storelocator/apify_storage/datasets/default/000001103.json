@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Town Brookhaven",
+  "street_address": "104 Town Blvd Ste A100",
+  "city": "Brookhaven",
+  "state": "GA",
+  "zip": "30319-3146",
+  "country_code": "US",
+  "store_number": 3633,
+  "phone": "4042337475",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.870381,
+  "longitude": -84.334481,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

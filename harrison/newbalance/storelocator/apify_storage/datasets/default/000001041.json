@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "The Runner's Edge-Libertyville",
+  "street_address": "524 N Milwaukee Ave",
+  "city": "Libertyville",
+  "state": "IL",
+  "zip": "60048",
+  "country_code": "US",
+  "store_number": 10805,
+  "phone": "(847) 549-1108",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.28838693",
+  "longitude": "-87.95414144",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 930,
+    "sat_time_close": 1800
+  }
+}

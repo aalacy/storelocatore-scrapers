@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Route 8",
+  "street_address": "www.mihelicshopnsaves.com",
+  "city": "RD #3, 5375 William Flynn Highway ",
+  "state": "Gibsonia",
+  "zip": "PA",
+  "country_code": "US",
+  "store_number": "48",
+  "phone": "2405",
+  "location_type": {
+    "gas_station": "724-443-8420",
+    "active": "724-443-5990",
+    "pump_perk": "724-443-1861"
+  },
+  "niacs_code": null,
+  "latitude": "15044",
+  "longitude": "Mon-Sun 6:00am-10:00pm",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

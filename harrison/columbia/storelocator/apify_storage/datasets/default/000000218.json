@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Coastal Farm & Ranch",
+  "street_address": "1355 Goldfish Farm Rd SE",
+  "city": "Albany",
+  "state": "OR",
+  "zip": "97322",
+  "country_code": "US",
+  "store_number": 21809,
+  "phone": "(541) 928-2511",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.62768731",
+  "longitude": "-123.04736202",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

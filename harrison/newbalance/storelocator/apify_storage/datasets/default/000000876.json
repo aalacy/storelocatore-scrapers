@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Wichita",
+  "street_address": "2556 N Maize Rd #108",
+  "city": "Wichita",
+  "state": "KS",
+  "zip": "67205",
+  "country_code": "US",
+  "store_number": 19073,
+  "phone": "(316) 978-9690",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.72976182",
+  "longitude": "-97.46215968",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Little General - Cheat Lake SNS",
+  "street_address": "Rt. 310 East Grafton Rd.",
+  "city": "Fairmont",
+  "state": "WV",
+  "zip": "26554",
+  "country_code": "US",
+  "store_number": "260",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "39.49411",
+  "longitude": "-80.22128",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Bicycle Center LLC",
+  "street_address": "612 Federal Rd",
+  "city": "Brookfield",
+  "state": "CT",
+  "zip": "06804",
+  "country_code": "US",
+  "store_number": 31676,
+  "phone": "(203) 775-7083",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.46846794",
+  "longitude": "-73.41041203",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

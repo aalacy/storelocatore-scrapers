@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Dahlonega - Morrison Moore Pkwy",
+  "street_address": "206 Morrison Moore Pkwy W",
+  "city": "Dahlonega",
+  "state": "GA",
+  "zip": "30533",
+  "country_code": "US",
+  "store_number": 41,
+  "phone": "7068648223",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.525033,
+  "longitude": -83.981515,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

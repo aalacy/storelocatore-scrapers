@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Reims",
+  "street_address": "37 Rue Jacques de La Giraudière",
+  "city": "Reims",
+  "state": "",
+  "zip": "51100",
+  "country_code": "FR",
+  "store_number": 87446,
+  "phone": "03 26 46 12 28",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.24025030",
+  "longitude": "4.08594700",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

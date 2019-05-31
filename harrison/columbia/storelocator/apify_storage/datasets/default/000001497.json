@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cole Sport - Park Avenue Flagship Store",
+  "street_address": "1615 Park Ave",
+  "city": "Park City",
+  "state": "UT",
+  "zip": "84060",
+  "country_code": "US",
+  "store_number": 12878,
+  "phone": "(435) 649-4806",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.65663666",
+  "longitude": "-111.50715183",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 800,
+    "sun_time_close": 2100,
+    "mon_time_open": 800,
+    "mon_time_close": 2100,
+    "tue_time_open": 800,
+    "tue_time_close": 2100,
+    "wed_time_open": 800,
+    "wed_time_close": 2100,
+    "thu_time_open": 800,
+    "thu_time_close": 2100,
+    "fri_time_open": 800,
+    "fri_time_close": 2100,
+    "sat_time_open": 800,
+    "sat_time_close": 2100
+  }
+}

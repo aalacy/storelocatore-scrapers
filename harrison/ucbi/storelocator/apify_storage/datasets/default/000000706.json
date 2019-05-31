@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Shoppes of Dade City",
+  "street_address": "11830 US Hwy 301",
+  "city": "Dade City",
+  "state": "FL",
+  "zip": "33525-6037",
+  "country_code": "US",
+  "store_number": 3761,
+  "phone": "3525213017",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.3306,
+  "longitude": -82.184,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

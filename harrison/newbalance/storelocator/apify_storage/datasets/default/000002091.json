@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek St. John's",
+  "street_address": "75 Aberdeen Ave",
+  "city": "St. John's",
+  "state": "NL",
+  "zip": "A1A5N6",
+  "country_code": "CA",
+  "store_number": 103748,
+  "phone": "(709) 739-7708",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.61758780",
+  "longitude": "-52.71615864",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

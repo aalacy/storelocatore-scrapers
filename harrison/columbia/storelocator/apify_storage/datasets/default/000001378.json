@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Summit Sports",
+  "street_address": "1751 S Telegraph Rd",
+  "city": "Bloomfield Hills",
+  "state": "MI",
+  "zip": "48302",
+  "country_code": "US",
+  "store_number": 7947,
+  "phone": "(248) 738-4444",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.61513698",
+  "longitude": "-83.31075136",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 2000
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Billy's Bike Shop & Segway of Sanibel",
+  "street_address": "1509 Periwinkle Way",
+  "city": "Sanibel",
+  "state": "FL",
+  "zip": "33957",
+  "country_code": "US",
+  "store_number": 77378,
+  "phone": "(239) 472-3620",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "26.44243323",
+  "longitude": "-82.05313444",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

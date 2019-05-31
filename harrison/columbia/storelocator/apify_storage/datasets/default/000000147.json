@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rogan's Shoes - Eau Claire",
+  "street_address": "3015 E Hamilton Ave",
+  "city": "Eau Claire",
+  "state": "WI",
+  "zip": "54701",
+  "country_code": "US",
+  "store_number": 38893,
+  "phone": "(715) 833-1440",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.78465600",
+  "longitude": "-91.45886320",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

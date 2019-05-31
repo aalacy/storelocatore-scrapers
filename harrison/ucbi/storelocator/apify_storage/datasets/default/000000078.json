@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Fifth & Alton",
+  "street_address": "1100 6th St",
+  "city": "Miami Beach",
+  "state": "FL",
+  "zip": "33139-6312",
+  "country_code": "US",
+  "store_number": 3504,
+  "phone": "3055352212",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.775114,
+  "longitude": -80.140204,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

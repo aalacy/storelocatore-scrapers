@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Matawan Bike Shop",
+  "street_address": "77 Main St",
+  "city": "Matawan",
+  "state": "NJ",
+  "zip": "07747",
+  "country_code": "US",
+  "store_number": 58895,
+  "phone": "(732) 696-2487",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.41766220",
+  "longitude": "-74.22792122",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "jans.com",
+  "street_address": "1790 Bonanza Dr",
+  "city": "Park City",
+  "state": "UT",
+  "zip": "84060",
+  "country_code": "US",
+  "store_number": 143585,
+  "phone": "(800) 745-1012",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.66076662",
+  "longitude": "-111.50018268",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 500,
+    "sun_time_close": 2500,
+    "mon_time_open": 500,
+    "mon_time_close": 2500,
+    "tue_time_open": 500,
+    "tue_time_close": 2500,
+    "wed_time_open": 500,
+    "wed_time_close": 2500,
+    "thu_time_open": 500,
+    "thu_time_close": 2500,
+    "fri_time_open": 500,
+    "fri_time_close": 2500,
+    "sat_time_open": 500,
+    "sat_time_close": 2500
+  }
+}

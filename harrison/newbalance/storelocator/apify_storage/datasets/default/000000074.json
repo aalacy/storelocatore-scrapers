@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rogan's Shoes - Mundelein",
+  "street_address": "147 N Seymour Ave",
+  "city": "Mundelein",
+  "state": "IL",
+  "zip": "60060",
+  "country_code": "US",
+  "store_number": 38907,
+  "phone": "(847) 566-6077",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.26514920",
+  "longitude": "-88.00068000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

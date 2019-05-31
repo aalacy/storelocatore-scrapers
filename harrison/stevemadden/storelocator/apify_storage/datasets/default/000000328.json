@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "The Outlets at Orange",
+  "street_address": "20 CITY BLVD, SPACE #603A",
+  "city": "Orange",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995646",
+  "phone": "714 453-0216",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.783100",
+  "longitude": "-117.893000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

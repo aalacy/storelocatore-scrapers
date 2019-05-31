@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Aspen East Ski Shop",
+  "street_address": "3429 US-4",
+  "city": "Killington",
+  "state": "VT",
+  "zip": "05751",
+  "country_code": "US",
+  "store_number": 20093,
+  "phone": "(802) 422-3739",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.66367154",
+  "longitude": "-72.83611934",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 1730,
+    "mon_time_open": 900,
+    "mon_time_close": 1730,
+    "tue_time_open": 900,
+    "tue_time_close": 1730,
+    "wed_time_open": 900,
+    "wed_time_close": 1730,
+    "thu_time_open": 900,
+    "thu_time_close": 1730,
+    "fri_time_open": 900,
+    "fri_time_close": 1730,
+    "sat_time_open": 900,
+    "sat_time_close": 1730
+  }
+}

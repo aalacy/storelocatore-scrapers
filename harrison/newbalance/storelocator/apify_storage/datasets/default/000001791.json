@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Jacksonville",
+  "street_address": "901 W Morton Ave",
+  "city": "Jacksonville",
+  "state": "IL",
+  "zip": "62650",
+  "country_code": "US",
+  "store_number": 22025,
+  "phone": "(217) 243-2926",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.72086810",
+  "longitude": "-90.24288080",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1600,
+    "mon_time_open": 900,
+    "mon_time_close": 1900,
+    "tue_time_open": 900,
+    "tue_time_close": 1900,
+    "wed_time_open": 900,
+    "wed_time_close": 1900,
+    "thu_time_open": 900,
+    "thu_time_close": 1900,
+    "fri_time_open": 900,
+    "fri_time_close": 1900,
+    "sat_time_open": 900,
+    "sat_time_close": 1700
+  }
+}

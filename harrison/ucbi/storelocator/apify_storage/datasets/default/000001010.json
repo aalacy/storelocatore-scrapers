@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Golden Park Village",
+  "street_address": "4840 Golden Pkwy",
+  "city": "Buford",
+  "state": "GA",
+  "zip": "30518-5843",
+  "country_code": "US",
+  "store_number": 3126,
+  "phone": "7706147700",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.14212,
+  "longitude": -83.950605,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Shoppes at Palencia Commons",
+  "street_address": "7462 US Hwy 1 N",
+  "city": "Saint Augustine",
+  "state": "FL",
+  "zip": "32095",
+  "country_code": "US",
+  "store_number": 3862,
+  "phone": "9048263537",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.012017,
+  "longitude": -81.389672,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Kelley's Pace",
+  "street_address": "27 Coogan Blvd",
+  "city": "Mystic",
+  "state": "CT",
+  "zip": "06355",
+  "country_code": "US",
+  "store_number": 19209,
+  "phone": "(860) 536-8175",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.37300678",
+  "longitude": "-71.95591179",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

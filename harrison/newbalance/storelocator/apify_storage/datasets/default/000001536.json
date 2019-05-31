@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Park Royal",
+  "street_address": "1000 Park Royal S",
+  "city": "West Vancouver",
+  "state": "BC",
+  "zip": "V7T1A1",
+  "country_code": "CA",
+  "store_number": 103784,
+  "phone": "(604) 922-3336",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.32506290",
+  "longitude": "-123.13812500",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

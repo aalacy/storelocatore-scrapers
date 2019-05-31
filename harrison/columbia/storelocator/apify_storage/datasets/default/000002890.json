@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Aaron's Bicycle Repair, Inc.",
+  "street_address": "9614 16th Ave SW",
+  "city": "Seattle",
+  "state": "WA",
+  "zip": "98106",
+  "country_code": "US",
+  "store_number": 133057,
+  "phone": "(206) 938-9795",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.51677852",
+  "longitude": "-122.35420047",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

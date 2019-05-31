@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Benjamin Lovell Shoes",
+  "street_address": "60 N 3rd St",
+  "city": "Philadelphia",
+  "state": "PA",
+  "zip": "19106",
+  "country_code": "US",
+  "store_number": 42481,
+  "phone": "(215) 238-1969",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.95179655",
+  "longitude": "-75.14545123",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

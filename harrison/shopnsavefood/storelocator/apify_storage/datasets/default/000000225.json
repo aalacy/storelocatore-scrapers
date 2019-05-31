@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "South Park",
+  "street_address": "5660 Brownsville Rd.",
+  "city": "South Park",
+  "state": "PA",
+  "zip": "15236",
+  "country_code": "US",
+  "store_number": "236",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.330742",
+  "longitude": "-79.9876707",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Runners Forum - Fishers",
+  "street_address": "14033 Mundy Dr",
+  "city": "Fishers",
+  "state": "IN",
+  "zip": "46038",
+  "country_code": "US",
+  "store_number": 16109,
+  "phone": "(317) 773-7108",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.99213655",
+  "longitude": "-86.00227141",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

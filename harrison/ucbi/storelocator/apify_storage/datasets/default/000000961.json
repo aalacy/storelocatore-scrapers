@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Butler's Crossing",
+  "street_address": "2061 Experiment Station Rd",
+  "city": "Watkinsville",
+  "state": "GA",
+  "zip": "30677-5328",
+  "country_code": "US",
+  "store_number": 3043,
+  "phone": "7067692080",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.871212,
+  "longitude": -83.441116,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

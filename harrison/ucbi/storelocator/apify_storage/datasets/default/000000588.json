@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "St. John's Town Center",
+  "street_address": "4413 Town Center Pkwy Ste 100",
+  "city": "Jacksonville",
+  "state": "FL",
+  "zip": "32246-8570",
+  "country_code": "US",
+  "store_number": 3424,
+  "phone": "9045643632",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.264218,
+  "longitude": -81.526432,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Hobbs",
+  "street_address": "1935 N Turner St",
+  "city": "Hobbs",
+  "state": "NM",
+  "zip": "88240",
+  "country_code": "US",
+  "store_number": 22029,
+  "phone": "(575) 397-1212",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.72204570",
+  "longitude": "-103.14389520",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1300,
+    "sun_time_close": 1700,
+    "mon_time_open": 930,
+    "mon_time_close": 1900,
+    "tue_time_open": 930,
+    "tue_time_close": 1900,
+    "wed_time_open": 930,
+    "wed_time_close": 1900,
+    "thu_time_open": 930,
+    "thu_time_close": 1900,
+    "fri_time_open": 930,
+    "fri_time_close": 1900,
+    "sat_time_open": 930,
+    "sat_time_close": 1700
+  }
+}

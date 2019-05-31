@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "SM - Hyderabad",
+  "street_address": "Jubilee Hills, Road No. 36",
+  "city": "Hyderabad",
+  "state": null,
+  "country_code": "IN",
+  "store_number": "7995557",
+  "phone": "5555555555",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "17.435147",
+  "longitude": "78.402977",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

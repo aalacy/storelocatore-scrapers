@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "ASICS Outlet National Harbor",
+  "street_address": "6800 Oxon Hill Rd #815",
+  "city": "Oxon Hill",
+  "state": "MD",
+  "zip": "20745",
+  "country_code": "US",
+  "store_number": 62203,
+  "phone": "(301) 839-4350",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.79526636",
+  "longitude": "-77.00080126",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1900,
+    "mon_time_open": 900,
+    "mon_time_close": 2100,
+    "tue_time_open": 900,
+    "tue_time_close": 2100,
+    "wed_time_open": 900,
+    "wed_time_close": 2100,
+    "thu_time_open": 900,
+    "thu_time_close": 2100,
+    "fri_time_open": 900,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 2100
+  }
+}

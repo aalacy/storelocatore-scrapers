@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Vernon Powell Shoes",
+  "street_address": "2401 E Naylor Mill Rd",
+  "city": "Salisbury",
+  "state": "MD",
+  "zip": "21804",
+  "country_code": "US",
+  "store_number": 22243,
+  "phone": "(410) 749-4561",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.40141629",
+  "longitude": "-75.56171124",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

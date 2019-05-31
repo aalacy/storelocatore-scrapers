@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Great Outdoor Provision Co. - Greensboro",
+  "street_address": "1410 Westover Terrace",
+  "city": "Greensboro",
+  "state": "NC",
+  "zip": "27408",
+  "country_code": "US",
+  "store_number": 10889,
+  "phone": "(336) 851-1331",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.09059131",
+  "longitude": "-79.81381308",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1300,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

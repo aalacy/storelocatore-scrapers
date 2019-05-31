@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "King of Prussia Mall",
+  "street_address": "160 North Gulph Rd.",
+  "city": "King of Prussia",
+  "state": "PA",
+  "country_code": "US",
+  "store_number": "7995354",
+  "phone": "610-337-5915",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.086100",
+  "longitude": "-75.395300",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

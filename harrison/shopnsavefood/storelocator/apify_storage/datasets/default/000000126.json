@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Little General - Fairmont",
+  "street_address": "2395 White Hall Blvd",
+  "city": "Fairmont",
+  "state": "WV",
+  "zip": "26554",
+  "country_code": "US",
+  "store_number": "261",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "39.435618",
+  "longitude": "-80.183637",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

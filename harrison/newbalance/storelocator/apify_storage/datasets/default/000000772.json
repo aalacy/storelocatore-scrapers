@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Columbus",
+  "street_address": "1270 E Powell Rd",
+  "city": "Lewis Center",
+  "state": "OH",
+  "zip": "43035",
+  "country_code": "US",
+  "store_number": 17978,
+  "phone": "(614) 846-5625",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.15610380",
+  "longitude": "-83.00090340",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Highland City Town Center",
+  "street_address": "5185 US Highway 98 S",
+  "city": "Lakeland",
+  "state": "FL",
+  "zip": "33812",
+  "country_code": "US",
+  "store_number": 3467,
+  "phone": "8636440386",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.969755,
+  "longitude": -81.88345,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

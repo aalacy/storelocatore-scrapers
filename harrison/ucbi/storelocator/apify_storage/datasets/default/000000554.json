@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Windsor Commons Shopping Center",
+  "street_address": "4765 Hodges Blvd",
+  "city": "Jacksonville",
+  "state": "FL",
+  "zip": "32224-5280",
+  "country_code": "US",
+  "store_number": 3133,
+  "phone": "9042230554",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.254207,
+  "longitude": -81.464873,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

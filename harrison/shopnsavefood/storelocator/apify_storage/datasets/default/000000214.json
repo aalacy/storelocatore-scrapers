@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Shaler",
+  "street_address": "www.edandmarks.com/",
+  "city": "1620 Babcock Blvd.",
+  "state": "Pittsburgh",
+  "zip": "PA",
+  "country_code": "US",
+  "store_number": "95",
+  "phone": "1581",
+  "location_type": {
+    "gas_station": "Sun 7:00am-7:00pm",
+    "active": "412-821-1400",
+    "pump_perk": "412-821-1840"
+  },
+  "niacs_code": null,
+  "latitude": "15209",
+  "longitude": "Mon-Sat 7:00am-9:00pm",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

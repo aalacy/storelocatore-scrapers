@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Square One",
+  "street_address": "100 City Centre Dr",
+  "city": "Mississauga",
+  "state": "ON",
+  "zip": "L5B4C1",
+  "country_code": "CA",
+  "store_number": 103682,
+  "phone": "(905) 281-8422",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.59200714",
+  "longitude": "-79.64324130",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

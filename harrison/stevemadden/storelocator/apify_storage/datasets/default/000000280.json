@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Suzhou Sogo",
+  "street_address": "B1F-17, No.268 Wangdun Rd",
+  "city": "Suzhou",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995629",
+  "phone": "15371455340",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "31.170000",
+  "longitude": "120.350000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Landry's Bicycles",
+  "street_address": "44 Granite St",
+  "city": "Braintree",
+  "state": "MA",
+  "zip": "02184",
+  "country_code": "US",
+  "store_number": 35612,
+  "phone": "(781) 519-6306",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.22637692",
+  "longitude": "-71.03134116",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

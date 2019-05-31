@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Appleby Crossing",
+  "street_address": "2445 Appleby Line Unit #A03",
+  "city": "Burlington",
+  "state": "ON",
+  "zip": "L7L0B6",
+  "country_code": "CA",
+  "store_number": 103572,
+  "phone": "(905) 331-2560",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.40597711",
+  "longitude": "-79.80355131",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

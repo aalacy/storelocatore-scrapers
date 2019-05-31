@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Beachway Plaza",
+  "street_address": "402 E Dania Beach Blvd",
+  "city": "Dania Beach",
+  "state": "FL",
+  "zip": "33004-3040",
+  "country_code": "US",
+  "store_number": 3206,
+  "phone": "9549204289",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.05134,
+  "longitude": -80.13653,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

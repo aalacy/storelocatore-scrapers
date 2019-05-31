@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Ridgefield Running Company",
+  "street_address": "423 Main St",
+  "city": "Ridgefield",
+  "state": "CT",
+  "zip": "06877",
+  "country_code": "US",
+  "store_number": 13165,
+  "phone": "(203) 438-7778",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.28267637",
+  "longitude": "-73.49912042",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

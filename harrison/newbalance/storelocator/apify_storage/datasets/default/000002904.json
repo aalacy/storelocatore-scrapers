@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Bike Stop",
+  "street_address": "248 NW Oldham Pkwy",
+  "city": "Lee's Summit",
+  "state": "MO",
+  "zip": "64081",
+  "country_code": "US",
+  "store_number": 32722,
+  "phone": "(816) 525-8686",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.91828638",
+  "longitude": "-94.40244155",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Quarry Village",
+  "street_address": "270 E Basse Rd",
+  "city": "San Antonio",
+  "state": "TX",
+  "zip": "78209",
+  "country_code": "US",
+  "store_number": 84798,
+  "phone": "(210) 804-0808",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "29.49448324",
+  "longitude": "-98.47816135",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

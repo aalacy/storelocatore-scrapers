@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Runnings",
+  "street_address": "2202 MN-7",
+  "city": "Montevideo",
+  "state": "MN",
+  "zip": "56265",
+  "country_code": "US",
+  "store_number": 97196,
+  "phone": "(320) 269-6025",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.94740440",
+  "longitude": "-95.70009320",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

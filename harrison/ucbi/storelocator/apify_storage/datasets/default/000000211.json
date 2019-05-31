@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Pines City Center",
+  "street_address": "10450 Pines Blvd",
+  "city": "Pembroke Pines",
+  "state": "FL",
+  "zip": "33026",
+  "country_code": "US",
+  "store_number": 3848,
+  "phone": "9544372457",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.008263,
+  "longitude": -80.283671,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

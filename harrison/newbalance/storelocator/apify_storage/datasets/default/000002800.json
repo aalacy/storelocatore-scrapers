@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Landry's Bicycles",
+  "street_address": "276 Turnpike Rd #1",
+  "city": "Westborough",
+  "state": "MA",
+  "zip": "01581",
+  "country_code": "US",
+  "store_number": 17489,
+  "phone": "(508) 836-3878",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.28228693",
+  "longitude": "-71.64424117",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

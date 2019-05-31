@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Mouse Creek Crossing",
+  "street_address": "635 Paul Huff Pkwy NW",
+  "city": "Cleveland",
+  "state": "TN",
+  "zip": "37312-2970",
+  "country_code": "US",
+  "store_number": 3626,
+  "phone": "4234764022",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.209568,
+  "longitude": -84.860688,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

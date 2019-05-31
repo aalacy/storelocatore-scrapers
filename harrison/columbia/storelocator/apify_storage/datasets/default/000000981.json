@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Salina",
+  "street_address": "2150 Planet Ave",
+  "city": "Salina",
+  "state": "KS",
+  "zip": "67401",
+  "country_code": "US",
+  "store_number": 21998,
+  "phone": "(785) 823-2146",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.80377800",
+  "longitude": "-97.61364900",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 900,
+    "mon_time_close": 1800,
+    "tue_time_open": 900,
+    "tue_time_close": 1800,
+    "wed_time_open": 900,
+    "wed_time_close": 1800,
+    "thu_time_open": 900,
+    "thu_time_close": 1800,
+    "fri_time_open": 900,
+    "fri_time_close": 1800,
+    "sat_time_open": 900,
+    "sat_time_close": 1800
+  }
+}

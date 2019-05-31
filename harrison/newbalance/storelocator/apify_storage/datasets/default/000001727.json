@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "MOVATIK",
+  "street_address": "3579 NW 82nd Ave",
+  "city": "Doral",
+  "state": "FL",
+  "zip": "33166",
+  "country_code": "US",
+  "store_number": 91804,
+  "phone": "(305) 403-3828",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "25.80642282",
+  "longitude": "-80.32813161",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

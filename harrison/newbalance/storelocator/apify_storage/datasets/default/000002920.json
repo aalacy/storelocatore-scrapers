@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Village Bicycles",
+  "street_address": "9913 Warwick Blvd",
+  "city": "Newport News",
+  "state": "VA",
+  "zip": "23601",
+  "country_code": "US",
+  "store_number": 32990,
+  "phone": "(757) 595-1333",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.02780607",
+  "longitude": "-76.45672125",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

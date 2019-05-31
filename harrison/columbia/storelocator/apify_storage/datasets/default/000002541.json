@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Comor Sports",
+  "street_address": "1787 W 4th Ave",
+  "city": "Vancouver",
+  "state": "BC",
+  "zip": "V6J1M2",
+  "country_code": "CA",
+  "store_number": 20105,
+  "phone": "(604) 736-7547",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.26789310",
+  "longitude": "-123.14478210",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

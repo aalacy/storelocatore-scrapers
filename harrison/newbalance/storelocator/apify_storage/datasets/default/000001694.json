@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sunshine Ace Hardware",
+  "street_address": "9100 Bonita Beach Rd SE",
+  "city": "Bonita Springs",
+  "state": "FL",
+  "zip": "34135",
+  "country_code": "US",
+  "store_number": 40371,
+  "phone": "(239) 992-0169",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "26.33237234",
+  "longitude": "-81.80128941",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 800,
+    "sun_time_close": 1800,
+    "mon_time_open": 700,
+    "mon_time_close": 2000,
+    "tue_time_open": 700,
+    "tue_time_close": 2000,
+    "wed_time_open": 700,
+    "wed_time_close": 2000,
+    "thu_time_open": 700,
+    "thu_time_close": 2000,
+    "fri_time_open": 700,
+    "fri_time_close": 2000,
+    "sat_time_open": 700,
+    "sat_time_close": 2000
+  }
+}

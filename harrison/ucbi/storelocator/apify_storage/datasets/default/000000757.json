@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Northridge",
+  "street_address": "5100 Clark Rd",
+  "city": "Sarasota",
+  "state": "FL",
+  "zip": "34233-3226",
+  "country_code": "US",
+  "store_number": 2683,
+  "phone": "9419268297",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.265808,
+  "longitude": -82.467904,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

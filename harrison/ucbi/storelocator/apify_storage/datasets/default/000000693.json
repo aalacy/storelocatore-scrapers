@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Heather Island Plaza",
+  "street_address": "7578 SE Maricamp Rd Ste 100",
+  "city": "Ocala",
+  "state": "FL",
+  "zip": "34472-4279",
+  "country_code": "US",
+  "store_number": 3152,
+  "phone": "3526878200",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 29.116344,
+  "longitude": -82.027716,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

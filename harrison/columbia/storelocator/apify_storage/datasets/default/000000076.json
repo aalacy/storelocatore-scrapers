@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Salomon Store Yekaterinburg ",
+  "street_address": "Yekaterinburg, 8th March street, 46, premise С29",
+  "city": "Yekaterinburg",
+  "state": "Sverdlovskaya oblast'",
+  "zip": "620014",
+  "country_code": "RU",
+  "store_number": 122253,
+  "phone": "8 (343) 311-15-57",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "56.83705139",
+  "longitude": "60.59001160",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 2200,
+    "mon_time_open": 1000,
+    "mon_time_close": 2200,
+    "tue_time_open": 1000,
+    "tue_time_close": 2200,
+    "wed_time_open": 1000,
+    "wed_time_close": 2200,
+    "thu_time_open": 1000,
+    "thu_time_close": 2200,
+    "fri_time_open": 1000,
+    "fri_time_close": 2200,
+    "sat_time_open": 1000,
+    "sat_time_close": 2200
+  }
+}

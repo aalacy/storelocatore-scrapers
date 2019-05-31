@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Fuzhou Dayang 1",
+  "street_address": "BF1,No.133 BaYiQi Rd",
+  "city": "Fuzhou",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995298",
+  "phone": "59188319246",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "26.300000",
+  "longitude": "119.180000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

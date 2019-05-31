@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Backwoods Paddle Sports",
+  "street_address": "480 N Taylor St",
+  "city": "Fort Worth",
+  "state": "TX",
+  "zip": "76102",
+  "country_code": "US",
+  "store_number": 34095,
+  "phone": "(817) 403-6906",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.75924537",
+  "longitude": "-97.33825159",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

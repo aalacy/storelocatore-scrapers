@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Winter Haven Square",
+  "street_address": "6031 Cypress Gardens Blvd",
+  "city": "Winter Haven",
+  "state": "FL",
+  "zip": "33884-4115",
+  "country_code": "US",
+  "store_number": 2898,
+  "phone": "8633241182",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.98718,
+  "longitude": -81.68591,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

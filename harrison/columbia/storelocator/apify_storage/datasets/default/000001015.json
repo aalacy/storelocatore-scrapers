@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Up-N-Running",
+  "street_address": "208 W High St",
+  "city": "Ebensburg",
+  "state": "PA",
+  "zip": "15931",
+  "country_code": "US",
+  "store_number": 62996,
+  "phone": "(814) 472-2200",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.48518663",
+  "longitude": "-78.72655129",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

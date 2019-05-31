@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Gazelle Sports Birmingham",
+  "street_address": "99 West Maple",
+  "city": "Birmingham",
+  "state": "MI",
+  "zip": "48009",
+  "country_code": "US",
+  "store_number": 59752,
+  "phone": "(248) 282-4874",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.54648697",
+  "longitude": "-83.21474136",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1600,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

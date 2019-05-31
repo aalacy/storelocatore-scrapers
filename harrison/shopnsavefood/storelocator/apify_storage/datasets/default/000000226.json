@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Sunoco",
+  "street_address": "3850 Washington Ave",
+  "city": "Finleyville",
+  "state": "PA",
+  "zip": "15332",
+  "country_code": "US",
+  "store_number": "350",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "false",
+    "pump_perk": "false"
+  },
+  "niacs_code": null,
+  "latitude": "40.25327",
+  "longitude": "-80.0016854",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

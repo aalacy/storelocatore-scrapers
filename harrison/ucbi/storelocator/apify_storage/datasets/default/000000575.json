@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Bonita Bay Plaza",
+  "street_address": "26841 S Tamiami Trl",
+  "city": "Bonita Springs",
+  "state": "FL",
+  "zip": "34134-7817",
+  "country_code": "US",
+  "store_number": 3598,
+  "phone": "2399920105",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.348348,
+  "longitude": -81.804954,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

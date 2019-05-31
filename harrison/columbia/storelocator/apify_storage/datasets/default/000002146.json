@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Kim's Bike Shop",
+  "street_address": "111 French St",
+  "city": "New Brunswick",
+  "state": "NJ",
+  "zip": "08901",
+  "country_code": "US",
+  "store_number": 21693,
+  "phone": "(732) 846-3880",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.49349663",
+  "longitude": "-74.45213122",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

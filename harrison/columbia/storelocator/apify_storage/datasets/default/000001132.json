@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Dijon",
+  "street_address": "55 Rue Jean Jacques Rousseau",
+  "city": "Dijon",
+  "state": "",
+  "zip": "21000",
+  "country_code": "FR",
+  "store_number": 85467,
+  "phone": "03 80 45 03 10",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.32477536",
+  "longitude": "5.04485827",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

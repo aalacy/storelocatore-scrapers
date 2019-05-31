@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Center Point",
+  "street_address": "6525 Calhoun Memorial Hwy",
+  "city": "Easley",
+  "state": "SC",
+  "zip": "29640-3669",
+  "country_code": "US",
+  "store_number": 2765,
+  "phone": "8648502270",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.820006,
+  "longitude": -82.584828,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

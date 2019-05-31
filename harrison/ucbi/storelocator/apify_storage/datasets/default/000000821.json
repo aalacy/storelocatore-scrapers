@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Springhill Commons",
+  "street_address": "9200 NW 39th Ave",
+  "city": "Gainesville",
+  "state": "FL",
+  "zip": "32606-7331",
+  "country_code": "US",
+  "store_number": 3154,
+  "phone": "3523751285",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 29.691764,
+  "longitude": -82.440116,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "THE MALL OF NEW HAMPSHIRE",
+  "street_address": "1500 S WILLOW ST",
+  "city": "MANCHESTER",
+  "state": "NH",
+  "zip": "03103",
+  "country_code": "US",
+  "store_number": "445",
+  "phone": "(603) 669-0053",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 42.9677,
+  "longitude": -71.43733,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

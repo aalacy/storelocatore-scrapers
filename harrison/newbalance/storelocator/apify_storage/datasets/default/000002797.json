@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Landry's Bicycles",
+  "street_address": "790 Worcester St",
+  "city": "Natick",
+  "state": "MA",
+  "zip": "01760",
+  "country_code": "US",
+  "store_number": 17487,
+  "phone": "(508) 655-1990",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.29983693",
+  "longitude": "-71.35681117",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Smithsburg Exxon",
+  "street_address": "22507 Jefferson Blvd",
+  "city": "Smithsburg",
+  "state": "MD",
+  "zip": "21783",
+  "country_code": "US",
+  "store_number": "333",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "false",
+    "pump_perk": "false"
+  },
+  "niacs_code": null,
+  "latitude": "39.642323",
+  "longitude": "-77.585341",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

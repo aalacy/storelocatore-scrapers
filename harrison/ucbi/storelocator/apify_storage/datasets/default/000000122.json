@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Frenchman's Crossing",
+  "street_address": "4101 Hood Rd",
+  "city": "Palm Beach Gardens",
+  "state": "FL",
+  "zip": "33410-2171",
+  "country_code": "US",
+  "store_number": 3637,
+  "phone": "5616221047",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.865418,
+  "longitude": -80.097217,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

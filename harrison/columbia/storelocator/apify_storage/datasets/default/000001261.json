@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Half Hitch-Panama City Beach",
+  "street_address": "2206 Thomas Dr",
+  "city": "Panama City",
+  "state": "FL",
+  "zip": "32408",
+  "country_code": "US",
+  "store_number": 10862,
+  "phone": "(850) 234-2621",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.16299494",
+  "longitude": "-85.75564141",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 600,
+    "sun_time_close": 1800,
+    "mon_time_open": 600,
+    "mon_time_close": 1900,
+    "tue_time_open": 600,
+    "tue_time_close": 1900,
+    "wed_time_open": 600,
+    "wed_time_close": 1900,
+    "thu_time_open": 600,
+    "thu_time_close": 1900,
+    "fri_time_open": 600,
+    "fri_time_close": 2000,
+    "sat_time_open": 600,
+    "sat_time_close": 2000
+  }
+}

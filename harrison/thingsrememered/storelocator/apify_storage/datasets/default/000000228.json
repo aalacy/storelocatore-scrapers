@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "BAYBROOK MALL",
+  "street_address": "1308 BAYBROOK MALL",
+  "city": "FRIENDSWOOD",
+  "state": "TX",
+  "zip": "77546",
+  "country_code": "US",
+  "store_number": "386",
+  "phone": "(281) 280-0866",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 29.521435,
+  "longitude": -95.189674,
+  "external_lat_long": false,
+  "hours_of_operation": "1#12:00 PM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

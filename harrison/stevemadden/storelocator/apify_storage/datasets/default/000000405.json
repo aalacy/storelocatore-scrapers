@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Opry Mills Outlet",
+  "street_address": "433 Opry Mills Drive",
+  "city": "Nashville",
+  "state": "TN",
+  "country_code": "US",
+  "store_number": "7995441",
+  "phone": "615-823-3125",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.203100",
+  "longitude": "-86.693600",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

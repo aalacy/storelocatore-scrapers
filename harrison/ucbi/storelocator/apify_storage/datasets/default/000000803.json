@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Ninety-Six - 207 Cambridge St",
+  "street_address": "207 Cambridge St",
+  "city": "Ninety-Six",
+  "state": "SC",
+  "zip": "29666",
+  "country_code": "US",
+  "store_number": 3879,
+  "phone": "8645432117",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.177778,
+  "longitude": -82.024328,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

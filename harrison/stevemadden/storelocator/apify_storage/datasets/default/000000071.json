@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Robinson's place Midtown",
+  "street_address": "2nd level, Midtown Wing",
+  "city": "Midtown",
+  "state": null,
+  "country_code": "PH",
+  "store_number": "7995487",
+  "phone": "6325673618",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "14.570199",
+  "longitude": "120.991585",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

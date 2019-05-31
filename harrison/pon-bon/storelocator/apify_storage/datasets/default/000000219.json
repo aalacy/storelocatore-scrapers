@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "2F, No. 28, Sec. 2, Singuang Road - Zoo Road",
+  "city": "Taipei City",
+  "state": "Taiwan",
+  "zip": "116",
+  "country_code": "US",
+  "store_number": 10037359,
+  "phone": "228669332",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 24.996618070715925,
+  "longitude": 121.5770797853229,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "HULEN MALL",
+  "street_address": "4800 S HULEN ST",
+  "city": "FORT WORTH",
+  "state": "TX",
+  "zip": "76132",
+  "country_code": "US",
+  "store_number": "814",
+  "phone": "(817) 294-1994",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 32.668114,
+  "longitude": -97.42086,
+  "external_lat_long": false,
+  "hours_of_operation": "1#12:00 PM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

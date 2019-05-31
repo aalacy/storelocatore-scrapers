@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Shoppes at Avalon",
+  "street_address": "13455 County Line Rd",
+  "city": "Spring Hill",
+  "state": "FL",
+  "zip": "34609-6600",
+  "country_code": "US",
+  "store_number": 3565,
+  "phone": "3527978027",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.435551,
+  "longitude": -82.491959,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

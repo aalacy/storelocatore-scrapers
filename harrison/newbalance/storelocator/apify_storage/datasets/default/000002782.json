@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Ready Set Run",
+  "street_address": "431 Main St",
+  "city": "Stroudsburg",
+  "state": "PA",
+  "zip": "18360",
+  "country_code": "US",
+  "store_number": 13382,
+  "phone": "(570) 424-6529",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.98656672",
+  "longitude": "-75.19007123",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

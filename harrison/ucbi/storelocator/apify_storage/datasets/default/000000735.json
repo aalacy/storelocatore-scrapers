@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "University Corner",
+  "street_address": "7325 University Pkwy",
+  "city": "Lakewood Ranch",
+  "state": "FL",
+  "zip": "34202",
+  "country_code": "US",
+  "store_number": 3849,
+  "phone": "9413558803",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.388444,
+  "longitude": -82.396415,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

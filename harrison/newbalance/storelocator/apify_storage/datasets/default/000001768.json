@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Run Moore",
+  "street_address": "13 Liberty St",
+  "city": "Westminster",
+  "state": "MD",
+  "zip": "21157",
+  "country_code": "US",
+  "store_number": 19477,
+  "phone": "(443) 201-8203",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.57481648",
+  "longitude": "-76.99655126",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

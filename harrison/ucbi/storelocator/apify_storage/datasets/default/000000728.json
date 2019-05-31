@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Summerfield Crossings",
+  "street_address": "13154 US Highway 301 S",
+  "city": "Riverview",
+  "state": "FL",
+  "zip": "33579",
+  "country_code": "US",
+  "store_number": 3333,
+  "phone": "8137410693",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.793631,
+  "longitude": -82.333109,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

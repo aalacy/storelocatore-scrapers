@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Robson",
+  "street_address": "788 Robson St",
+  "city": "Vancouver",
+  "state": "BC",
+  "zip": "V6Z1A1",
+  "country_code": "CA",
+  "store_number": 103772,
+  "phone": "(604) 687-7668",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.28179210",
+  "longitude": "-123.12083450",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

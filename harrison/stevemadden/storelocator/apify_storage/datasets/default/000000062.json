@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "ZEN",
+  "street_address": "4, 4/5 Rajadamri Road, Pathumw",
+  "city": "Bangkok",
+  "state": null,
+  "country_code": "TH",
+  "store_number": "7995694",
+  "phone": "21009086",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "13.740167",
+  "longitude": "100.535237",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

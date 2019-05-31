@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Elliott's Boots Shoes Sandals",
+  "street_address": "215 E Morris Blvd",
+  "city": "Morristown",
+  "state": "TN",
+  "zip": "37813",
+  "country_code": "US",
+  "store_number": 34474,
+  "phone": "(423) 318-8787",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.21325933",
+  "longitude": "-83.29022136",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 930,
+    "mon_time_close": 1900,
+    "tue_time_open": 930,
+    "tue_time_close": 1900,
+    "wed_time_open": 930,
+    "wed_time_close": 1900,
+    "thu_time_open": 930,
+    "thu_time_close": 1900,
+    "fri_time_open": 930,
+    "fri_time_close": 1900,
+    "sat_time_open": 930,
+    "sat_time_close": 1900
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Grand Canal Shoppes",
+  "street_address": "3377 South Las Vegas Blvd",
+  "city": "Las Vegas",
+  "state": "NV",
+  "country_code": "US",
+  "store_number": "7995309",
+  "phone": "702-866-0783",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.121900",
+  "longitude": "-115.170000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Promenade at Pleasant Hill",
+  "street_address": "1625 Pleasant Hill Rd Ste 200",
+  "city": "Duluth",
+  "state": "GA",
+  "zip": "30096-5863",
+  "country_code": "US",
+  "store_number": 2944,
+  "phone": "7708062780",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.943891,
+  "longitude": -84.128154,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:30 AM - 11:00 PM,Mon 6:30 AM - 11:00 PM,Tues 6:30 AM - 11:00 PM,Wed 6:30 AM - 11:00 PM,Thurs 6:30 AM - 11:00 PM,Fri 6:30 AM - 11:00 PM,Sat 6:30 AM - 11:00 PM,"
+}

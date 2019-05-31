@@ -1,0 +1,15 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Madden Canada Warehouse",
+  "street_address": "2328 Rue Cohen",
+  "city": "Saint-Laurent",
+  "country_code": "CA",
+  "store_number": "7995386",
+  "phone": "514-858-7272",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.495400",
+  "longitude": "-73.733200",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

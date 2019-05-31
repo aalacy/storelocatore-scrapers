@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Al Asmakh Mall",
+  "street_address": "Al Asmakh Mall",
+  "city": "Doha",
+  "state": null,
+  "country_code": "QA",
+  "store_number": "7995151",
+  "phone": "97444289126",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "25.285507",
+  "longitude": "51.531074",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

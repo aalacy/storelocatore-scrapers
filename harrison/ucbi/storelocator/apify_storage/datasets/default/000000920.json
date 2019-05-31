@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Indian Rocks Shopping Center",
+  "street_address": "12022 Indian Rocks Rd",
+  "city": "Largo",
+  "state": "FL",
+  "zip": "33774-3215",
+  "country_code": "US",
+  "store_number": 3736,
+  "phone": "7275958192",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.882064,
+  "longitude": -82.834077,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

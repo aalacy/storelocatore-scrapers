@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sulphur Creek Outfitters",
+  "street_address": "625 S 7th St",
+  "city": "Heber Springs",
+  "state": "AR",
+  "zip": "72543",
+  "country_code": "US",
+  "store_number": 26481,
+  "phone": "(501) 691-0138",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.48646522",
+  "longitude": "-92.03673688",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

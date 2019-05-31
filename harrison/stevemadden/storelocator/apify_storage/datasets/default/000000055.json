@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "SM - Bangalore 100ft",
+  "street_address": "Reliance Brands Ltd.",
+  "city": "Bangalore",
+  "state": null,
+  "country_code": "IN",
+  "store_number": "7995551",
+  "phone": "5555555555",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "12.978346",
+  "longitude": "77.640787",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

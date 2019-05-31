@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "The Fly Fishers Fly Shop",
+  "street_address": "14740 W. Greenfield Ave",
+  "city": "Milwaukee",
+  "state": "WI",
+  "zip": "53005",
+  "country_code": "US",
+  "store_number": 18260,
+  "phone": "(414) 259-8100",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.01770479",
+  "longitude": "-88.09611443",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

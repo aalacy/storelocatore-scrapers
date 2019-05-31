@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix Sabor Hialeah Plaza",
+  "street_address": "1290 W 68th St",
+  "city": "Hialeah",
+  "state": "FL",
+  "zip": "33014-4524",
+  "country_code": "US",
+  "store_number": 3654,
+  "phone": "3058208885",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.883721,
+  "longitude": -80.309487,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Imagine That Toys",
+  "street_address": "2939 N Rock Rd",
+  "city": "Wichita",
+  "state": "KS",
+  "zip": "67226",
+  "country_code": "US",
+  "store_number": 38373,
+  "phone": "(316) 239-7483",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.73654618",
+  "longitude": "-97.24628159",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

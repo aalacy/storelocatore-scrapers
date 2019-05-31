@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Steve Madden Sandton City",
+  "street_address": "Shop LL138, Rivonia Road",
+  "city": "Johannesburg",
+  "state": null,
+  "country_code": "ZA",
+  "store_number": "7995621",
+  "phone": "(011) 784 0406",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "-26.094631",
+  "longitude": "28.055964",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

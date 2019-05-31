@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "The Radical Edge",
+  "street_address": "386 Queen St",
+  "city": "Fredericton",
+  "state": "NB",
+  "zip": "E3B3L4",
+  "country_code": "CA",
+  "store_number": 3966,
+  "phone": "(844) 459-3478",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.96375306",
+  "longitude": "-66.64369109",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

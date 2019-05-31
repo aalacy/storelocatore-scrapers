@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Plaza Del Paraiso",
+  "street_address": "12100 SW 127th Ave",
+  "city": "Miami",
+  "state": "FL",
+  "zip": "33186-4663",
+  "country_code": "US",
+  "store_number": 3247,
+  "phone": "3052381019",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.655428,
+  "longitude": -80.401071,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

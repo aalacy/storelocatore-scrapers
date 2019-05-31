@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Milano C.So Vercelli",
+  "street_address": "Corso Vercelli, 18",
+  "city": "Milano",
+  "state": "MI",
+  "zip": "20145",
+  "country_code": "IT",
+  "store_number": 144708,
+  "phone": "02 4800 5861",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.46674492",
+  "longitude": "9.16175150",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1930,
+    "mon_time_open": 1000,
+    "mon_time_close": 1930,
+    "tue_time_open": 1000,
+    "tue_time_close": 1930,
+    "wed_time_open": 1000,
+    "wed_time_close": 1930,
+    "thu_time_open": 1000,
+    "thu_time_close": 1930,
+    "fri_time_open": 1000,
+    "fri_time_close": 1930,
+    "sat_time_open": 1000,
+    "sat_time_close": 1930
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Taichung Chungyo Department Store",
+  "street_address": "B1F., No.161, Sec 3, Sanmin RD",
+  "city": "Taichung City",
+  "state": null,
+  "country_code": "TW",
+  "store_number": "7995630",
+  "phone": "886 4 2225 2673",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "22.590000",
+  "longitude": "120.120000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

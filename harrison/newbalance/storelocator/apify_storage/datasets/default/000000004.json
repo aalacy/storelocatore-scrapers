@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rogan's Shoes - Green Bay West",
+  "street_address": "2462 W Mason St",
+  "city": "Green Bay",
+  "state": "WI",
+  "zip": "54303",
+  "country_code": "US",
+  "store_number": 38895,
+  "phone": "(920) 499-0340",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.48770120",
+  "longitude": "-87.96915520",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

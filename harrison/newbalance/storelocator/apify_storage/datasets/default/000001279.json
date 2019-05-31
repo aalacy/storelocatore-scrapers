@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Outermost Layer",
+  "street_address": "518 Broadway N",
+  "city": "Fargo",
+  "state": "ND",
+  "zip": "58102",
+  "country_code": "US",
+  "store_number": 18183,
+  "phone": "(701) 232-2977",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "46.88170768",
+  "longitude": "-96.78773159",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1600,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

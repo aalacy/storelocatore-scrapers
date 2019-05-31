@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Arrowhead",
+  "street_address": "7369 W Bell Rd #7",
+  "city": "Peoria",
+  "state": "AZ",
+  "zip": "85382",
+  "country_code": "US",
+  "store_number": 84831,
+  "phone": "(623) 334-6868",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.63744380",
+  "longitude": "-112.21751260",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1600,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1800,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

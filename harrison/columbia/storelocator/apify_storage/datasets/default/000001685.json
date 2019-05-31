@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Lucky Feet Shoes",
+  "street_address": "1811 Ximeno Ave",
+  "city": "Long Beach",
+  "state": "CA",
+  "zip": "90815",
+  "country_code": "US",
+  "store_number": 62829,
+  "phone": "(562) 498-4998",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.79030990",
+  "longitude": "-118.13981220",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

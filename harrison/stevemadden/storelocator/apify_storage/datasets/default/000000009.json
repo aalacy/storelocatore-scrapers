@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Chadstone",
+  "street_address": "1341 Dandenong Road",
+  "city": "Chadstone",
+  "state": null,
+  "country_code": "AU",
+  "store_number": "7995223",
+  "phone": "395304385",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "-37.886547",
+  "longitude": "145.083108",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

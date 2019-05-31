@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rogan's Shoes - Green Bay East",
+  "street_address": "2151 Main St",
+  "city": "Green Bay",
+  "state": "WI",
+  "zip": "54302",
+  "country_code": "US",
+  "store_number": 38905,
+  "phone": "(920) 469-0830",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.48770120",
+  "longitude": "-87.96915520",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

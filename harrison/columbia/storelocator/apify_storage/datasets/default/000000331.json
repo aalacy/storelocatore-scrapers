@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "REI - Greensboro",
+  "street_address": "3334 W Friendly Ave #140",
+  "city": "Greensboro",
+  "state": "NC",
+  "zip": "27410",
+  "country_code": "US",
+  "store_number": 11119,
+  "phone": "(336) 323-3117",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.08735913",
+  "longitude": "-79.83931308",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1900,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 1000,
+    "sat_time_close": 2100
+  }
+}

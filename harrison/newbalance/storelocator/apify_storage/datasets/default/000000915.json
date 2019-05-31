@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet San Antonio",
+  "street_address": "17603 La Cantera Pkwy #117",
+  "city": "San Antonio",
+  "state": "TX",
+  "zip": "78257",
+  "country_code": "US",
+  "store_number": 19091,
+  "phone": "(210) 877-6007",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "29.61048514",
+  "longitude": "-98.59616154",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

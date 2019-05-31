@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "BELLEVUE SQUARE",
+  "street_address": "188 Bellevue Square",
+  "city": "Bellevue",
+  "state": "WA",
+  "country_code": "US",
+  "store_number": "7995197",
+  "phone": "425-453-3054",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.615128",
+  "longitude": "-122.203095",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

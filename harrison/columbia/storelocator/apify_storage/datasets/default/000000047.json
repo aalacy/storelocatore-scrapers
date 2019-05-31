@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Texas Running Company - Gateway",
+  "street_address": "9901 N Capital of Texas Hwy #160",
+  "city": "Austin",
+  "state": "TX",
+  "zip": "78759",
+  "country_code": "US",
+  "store_number": 22366,
+  "phone": "(512) 795-2022",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.39029498",
+  "longitude": "-97.74012160",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

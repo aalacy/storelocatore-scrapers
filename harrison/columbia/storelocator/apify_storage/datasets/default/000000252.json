@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sports Basement Walnut Creek",
+  "street_address": "1881 Ygnacio Valley Rd",
+  "city": "Walnut Creek",
+  "state": "CA",
+  "zip": "94598",
+  "country_code": "US",
+  "store_number": 13826,
+  "phone": "(925) 941-6100",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.91861621",
+  "longitude": "-122.03684200",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

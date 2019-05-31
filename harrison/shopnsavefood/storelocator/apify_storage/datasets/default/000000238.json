@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Washington",
+  "street_address": "125 W. Beau St.",
+  "city": "Washington",
+  "state": "PA",
+  "zip": "15301",
+  "country_code": "US",
+  "store_number": "108",
+  "phone": "1620",
+  "location_type": {
+    "gas_station": "724-223-5494",
+    "active": "724-223-5499",
+    "pump_perk": "40.170758"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sat 6:00am-11:00pm",
+  "longitude": "Sun 7:00am-11:00pm",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

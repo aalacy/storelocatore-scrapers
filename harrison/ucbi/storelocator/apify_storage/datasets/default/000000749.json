@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Clinton - West Carolina Ave",
+  "street_address": "101 W Carolina Ave",
+  "city": "Clinton",
+  "state": "SC",
+  "zip": "29325",
+  "country_code": "US",
+  "store_number": 1240,
+  "phone": "8648337761",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.472627,
+  "longitude": -81.880918,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

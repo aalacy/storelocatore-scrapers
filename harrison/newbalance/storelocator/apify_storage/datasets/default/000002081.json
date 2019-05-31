@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "ASICS Outlet Milpitas",
+  "street_address": "447 Great Mall Dr",
+  "city": "Milpitas",
+  "state": "CA",
+  "zip": "95035",
+  "country_code": "US",
+  "store_number": 62025,
+  "phone": "(408) 941-9780",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.41585613",
+  "longitude": "-121.89757200",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1900,
+    "mon_time_open": 900,
+    "mon_time_close": 2100,
+    "tue_time_open": 900,
+    "tue_time_close": 2100,
+    "wed_time_open": 900,
+    "wed_time_close": 2100,
+    "thu_time_open": 900,
+    "thu_time_close": 2100,
+    "fri_time_open": 900,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 2100
+  }
+}

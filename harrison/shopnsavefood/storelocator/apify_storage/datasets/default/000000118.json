@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Latrobe",
+  "street_address": "\"3963 Route 30, Box 211\"",
+  "city": "Latrobe",
+  "state": "PA",
+  "zip": "15650",
+  "country_code": "US",
+  "store_number": "177",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.35577",
+  "longitude": "-79.42196",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Twickenham Square",
+  "street_address": "310 Pelham Ave SW",
+  "city": "Huntsville",
+  "state": "AL",
+  "zip": "35801-5016",
+  "country_code": "US",
+  "store_number": 3717,
+  "phone": "2565342330",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.723385,
+  "longitude": -86.583938,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:30 AM - 10:00 PM,Mon 6:30 AM - 10:00 PM,Tues 6:30 AM - 10:00 PM,Wed 6:30 AM - 10:00 PM,Thurs 6:30 AM - 10:00 PM,Fri 6:30 AM - 10:00 PM,Sat 6:30 AM - 10:00 PM,"
+}

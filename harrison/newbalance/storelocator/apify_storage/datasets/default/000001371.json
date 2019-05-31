@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "3 Rivers Outdoor Co.",
+  "street_address": "1130 S Braddock Ave",
+  "city": "Pittsburgh",
+  "state": "PA",
+  "zip": "15218",
+  "country_code": "US",
+  "store_number": 85986,
+  "phone": "(412) 871-5038",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.43176662",
+  "longitude": "-79.89375131",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

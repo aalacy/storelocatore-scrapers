@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Kozy's Cyclery",
+  "street_address": "3712 N Halsted St",
+  "city": "Chicago",
+  "state": "IL",
+  "zip": "60613",
+  "country_code": "US",
+  "store_number": 16758,
+  "phone": "(773) 281-2263",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.94967687",
+  "longitude": "-87.64981436",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

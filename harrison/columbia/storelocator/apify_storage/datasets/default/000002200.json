@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Runnings",
+  "street_address": "1400 18th Ave NW",
+  "city": "Austin",
+  "state": "MN",
+  "zip": "55912",
+  "country_code": "US",
+  "store_number": 40920,
+  "phone": "(507) 433-7437",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.68771577",
+  "longitude": "-92.99193152",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

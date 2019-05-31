@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "JayDiz Fishing",
+  "street_address": "330 N Market St",
+  "city": "Monticello",
+  "state": "IL",
+  "zip": "61856",
+  "country_code": "US",
+  "store_number": 53215,
+  "phone": "(217) 631-1178",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.02856558",
+  "longitude": "-88.57341145",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Doncaster",
+  "street_address": "619 Doncaster Road",
+  "city": "Westfield Doncaster",
+  "state": null,
+  "country_code": "AU",
+  "store_number": "7995264",
+  "phone": "7034182400",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "-37.785162",
+  "longitude": "145.126110",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

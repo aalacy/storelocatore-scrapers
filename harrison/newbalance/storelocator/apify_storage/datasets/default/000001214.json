@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Gannett Peak Sports",
+  "street_address": "351 Main St",
+  "city": "Lander",
+  "state": "WY",
+  "zip": "82520",
+  "country_code": "US",
+  "store_number": 33243,
+  "phone": "(307) 332-2926",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.83323702",
+  "longitude": "-108.73241178",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

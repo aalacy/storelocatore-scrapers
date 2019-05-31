@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Shanghai Parkson",
+  "street_address": "3F, No. 918, Middle Huaihai Rd",
+  "city": "Shanghai",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995520",
+  "phone": "2164730673",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "31.000000",
+  "longitude": "121.240000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

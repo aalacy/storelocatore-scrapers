@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sound Runner - Old Saybrook",
+  "street_address": "238 Main St",
+  "city": "Old Saybrook",
+  "state": "CT",
+  "zip": "06475",
+  "country_code": "US",
+  "store_number": 16128,
+  "phone": "(860) 388-3800",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.29157677",
+  "longitude": "-72.37577119",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

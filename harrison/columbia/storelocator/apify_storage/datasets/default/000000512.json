@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "NOC Outfitter's Store",
+  "street_address": "13077 W Hwy 19",
+  "city": "Bryson City",
+  "state": "NC",
+  "zip": "28713",
+  "country_code": "US",
+  "store_number": 10900,
+  "phone": "(828) 488-7230",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.33134970",
+  "longitude": "-83.59207250",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 1700,
+    "mon_time_open": 900,
+    "mon_time_close": 1700,
+    "tue_time_open": 900,
+    "tue_time_close": 1700,
+    "wed_time_open": 900,
+    "wed_time_close": 1700,
+    "thu_time_open": 900,
+    "thu_time_close": 1700,
+    "fri_time_open": 900,
+    "fri_time_close": 1800,
+    "sat_time_open": 900,
+    "sat_time_close": 1800
+  }
+}

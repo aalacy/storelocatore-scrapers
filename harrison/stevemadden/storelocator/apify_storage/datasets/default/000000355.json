@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Stoneridge Shopping Center",
+  "street_address": "2045 Stoneridge Mall",
+  "city": "Pleasanton",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995624",
+  "phone": "925-469-6006",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.698200",
+  "longitude": "-121.929000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

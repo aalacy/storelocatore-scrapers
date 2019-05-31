@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "ASICS Outlet El Paso",
+  "street_address": "7051 S Desert Blvd D-420",
+  "city": "Canutillo",
+  "state": "TX",
+  "zip": "79835",
+  "country_code": "US",
+  "store_number": 62208,
+  "phone": "(915) 877-7101",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "31.91160523",
+  "longitude": "-106.58591175",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1900,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 1000,
+    "sat_time_close": 2100
+  }
+}

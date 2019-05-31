@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Nencini Sport Livorno",
+  "street_address": "Via Firenze, 144",
+  "city": "Livorno",
+  "state": "LIVORNO",
+  "zip": "57121",
+  "country_code": "IT",
+  "store_number": 75953,
+  "phone": "0586 444651",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.57871398",
+  "longitude": "10.34016942",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1500,
+    "sun_time_close": 2000,
+    "mon_time_open": 930,
+    "mon_time_close": 2000,
+    "tue_time_open": 930,
+    "tue_time_close": 2000,
+    "wed_time_open": 930,
+    "wed_time_close": 2000,
+    "thu_time_open": 930,
+    "thu_time_close": 2000,
+    "fri_time_open": 930,
+    "fri_time_close": 2000,
+    "sat_time_open": 930,
+    "sat_time_close": 2000
+  }
+}

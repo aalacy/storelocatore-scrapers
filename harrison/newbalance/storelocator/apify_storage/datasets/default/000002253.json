@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Higher Pursuits",
+  "street_address": "3114 Cheeks Bend Rd",
+  "city": "Columbia",
+  "state": "TN",
+  "zip": "38401",
+  "country_code": "US",
+  "store_number": 53256,
+  "phone": "(931) 840-8575",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.57882583",
+  "longitude": "-86.88129142",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

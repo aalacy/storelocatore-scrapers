@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Pesaro",
+  "street_address": "Via Gagarin Loc. Torraccia, CC Rossini",
+  "city": "Pesaro",
+  "state": "PU",
+  "zip": "61122",
+  "country_code": "IT",
+  "store_number": 144726,
+  "phone": "0721 25707",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.90771939",
+  "longitude": "12.88121104",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 2130,
+    "mon_time_open": 900,
+    "mon_time_close": 2130,
+    "tue_time_open": 900,
+    "tue_time_close": 2130,
+    "wed_time_open": 900,
+    "wed_time_close": 2130,
+    "thu_time_open": 900,
+    "thu_time_close": 2130,
+    "fri_time_open": 900,
+    "fri_time_close": 2130,
+    "sat_time_open": 900,
+    "sat_time_close": 2130
+  }
+}

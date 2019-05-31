@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Mountain High Outfitters",
+  "street_address": "1248 West Paces Ferry Rd NW",
+  "city": "Atlanta",
+  "state": "GA",
+  "zip": "30327",
+  "country_code": "US",
+  "store_number": 401,
+  "phone": "(404) 343-1764",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.77176290",
+  "longitude": "-84.36551210",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1900,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 2100
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Erik's - Bike Board Ski",
+  "street_address": "3701 W 95th St",
+  "city": "Leawood",
+  "state": "KS",
+  "zip": "66206",
+  "country_code": "US",
+  "store_number": 16595,
+  "phone": "(913) 428-8430",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.95605290",
+  "longitude": "-94.62849530",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

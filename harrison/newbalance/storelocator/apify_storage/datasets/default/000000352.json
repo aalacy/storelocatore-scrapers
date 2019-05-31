@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Walkabout Outfitter - Lexington",
+  "street_address": "21 S Main St",
+  "city": "Lexington",
+  "state": "VA",
+  "zip": "24450",
+  "country_code": "US",
+  "store_number": 11290,
+  "phone": "(540) 464-4453",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.78476191",
+  "longitude": "-79.44251302",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

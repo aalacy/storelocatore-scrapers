@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Palmetto Park Square",
+  "street_address": "1339 W Palmetto Park Rd",
+  "city": "Boca Raton",
+  "state": "FL",
+  "zip": "33486-3303",
+  "country_code": "US",
+  "store_number": 2987,
+  "phone": "5613625305",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.353252,
+  "longitude": -80.111932,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

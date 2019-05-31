@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Ride Brooklyn Williamsburg",
+  "street_address": "50 N 7th St",
+  "city": "Brooklyn",
+  "state": "NY",
+  "zip": "11249",
+  "country_code": "US",
+  "store_number": 20256,
+  "phone": "(718) 387-2453",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.72035667",
+  "longitude": "-73.96214121",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

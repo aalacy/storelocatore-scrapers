@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Murrysville",
+  "street_address": "<Website>",
+  "city": "<Website>",
+  "state": "4536 William Penn Highway",
+  "zip": "Murrysville",
+  "country_code": "US",
+  "store_number": "69",
+  "phone": "1271",
+  "location_type": {
+    "gas_station": "Mon-Sat 7 AM - 11 PM",
+    "active": "Sun 7 AM - 9 PM",
+    "pump_perk": "724-733-0556"
+  },
+  "niacs_code": null,
+  "latitude": "PA",
+  "longitude": "15668",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

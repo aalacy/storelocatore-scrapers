@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Belleair Bluffs",
+  "street_address": "2770 W Bay Dr",
+  "city": "Belleair Bluffs",
+  "state": "FL",
+  "zip": "33770-2618",
+  "country_code": "US",
+  "store_number": 3588,
+  "phone": "7275860213",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.915674,
+  "longitude": -82.816112,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

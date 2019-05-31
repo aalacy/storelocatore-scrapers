@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "MONTCLAIR PLAZA",
+  "street_address": "2046 E MONTCLAIR PLAZA LN",
+  "city": "MONTCLAIR",
+  "state": "CA",
+  "zip": "91763",
+  "country_code": "US",
+  "store_number": "457",
+  "phone": "(909) 621-9124",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.07445,
+  "longitude": -117.69775,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#07:00 PM|2#10:00 AM#08:30 PM|3#10:00 AM#08:30 PM|4#10:00 AM#08:30 PM|5#10:00 AM#08:30 PM|6#10:00 AM#08:30 PM|7#10:00 AM#08:30 PM"
+}

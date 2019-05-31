@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Cornerstone",
+  "street_address": "7700 Vaughn Rd",
+  "city": "Montgomery",
+  "state": "AL",
+  "zip": "36116-1337",
+  "country_code": "US",
+  "store_number": 3327,
+  "phone": "3342904920",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 32.33679,
+  "longitude": -86.182781,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

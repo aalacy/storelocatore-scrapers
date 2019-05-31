@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rogan's Shoes - Winona",
+  "street_address": "985 E Highway 61",
+  "city": "Winona",
+  "state": "MN",
+  "zip": "55987",
+  "country_code": "US",
+  "store_number": 38898,
+  "phone": "(507) 453-7954",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.02770420",
+  "longitude": "-91.61890710",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

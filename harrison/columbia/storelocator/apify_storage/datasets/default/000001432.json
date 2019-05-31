@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Atmosphere - The Centre Mall",
+  "street_address": "3310 8 St E #445",
+  "city": "Saskatoon",
+  "state": "SK",
+  "zip": "S7H5M3",
+  "country_code": "CA",
+  "store_number": 61824,
+  "phone": "(306) 244-4607",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "52.11443854",
+  "longitude": "-106.60225175",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

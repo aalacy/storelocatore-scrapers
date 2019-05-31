@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Running Wild",
+  "street_address": "3216 Brady St",
+  "city": "Davenport",
+  "state": "IA",
+  "zip": "52803",
+  "country_code": "US",
+  "store_number": 19591,
+  "phone": "(563) 323-7025",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.55322681",
+  "longitude": "-90.56966148",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

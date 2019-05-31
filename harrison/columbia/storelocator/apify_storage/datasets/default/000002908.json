@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Skinny Wheels Bike Shop",
+  "street_address": "111 W Innes St",
+  "city": "Salisbury",
+  "state": "NC",
+  "zip": "28144",
+  "country_code": "US",
+  "store_number": 109525,
+  "phone": "(336) 751-7433",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.66755540",
+  "longitude": "-80.47046790",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

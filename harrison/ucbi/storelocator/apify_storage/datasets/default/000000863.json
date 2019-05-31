@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Duncan - East Main St",
+  "street_address": "108 E Main St",
+  "city": "Duncan",
+  "state": "SC",
+  "zip": "29334",
+  "country_code": "US",
+  "store_number": 1239,
+  "phone": "8644394976",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.936401,
+  "longitude": -82.134918,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

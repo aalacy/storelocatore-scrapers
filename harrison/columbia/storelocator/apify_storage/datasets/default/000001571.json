@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Brest",
+  "street_address": "1 Rue d'Audierne",
+  "city": "Brest",
+  "state": "",
+  "zip": "29200",
+  "country_code": "FR",
+  "store_number": 73005,
+  "phone": "02 98 36 51 48",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.40393793",
+  "longitude": "-4.46463731",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

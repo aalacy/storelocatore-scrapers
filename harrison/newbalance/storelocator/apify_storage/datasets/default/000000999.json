@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sound Runner - Branford",
+  "street_address": "1088 Main St",
+  "city": "Branford",
+  "state": "CT",
+  "zip": "06405",
+  "country_code": "US",
+  "store_number": 16127,
+  "phone": "(203) 483-8222",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.28301676",
+  "longitude": "-72.81067119",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

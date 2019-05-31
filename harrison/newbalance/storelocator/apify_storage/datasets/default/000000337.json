@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Uncle Lem's Outfitters",
+  "street_address": "9715 Kingston Pike",
+  "city": "Knoxville",
+  "state": "TN",
+  "zip": "37922",
+  "country_code": "US",
+  "store_number": 1078,
+  "phone": "(865) 357-8566",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.90720588",
+  "longitude": "-84.10927138",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

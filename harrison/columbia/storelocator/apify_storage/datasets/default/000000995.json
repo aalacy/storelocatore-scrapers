@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Emporia",
+  "street_address": "603 Commercial St",
+  "city": "Emporia",
+  "state": "KS",
+  "zip": "66801",
+  "country_code": "US",
+  "store_number": 22012,
+  "phone": "(620) 342-5871",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.40520840",
+  "longitude": "-96.18035620",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

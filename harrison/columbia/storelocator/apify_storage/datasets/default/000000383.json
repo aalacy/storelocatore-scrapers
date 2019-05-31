@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "SCHEELS ALL SPORTS",
+  "street_address": "4400 Sergeant Rd #54",
+  "city": "Sioux City",
+  "state": "IA",
+  "zip": "51106",
+  "country_code": "US",
+  "store_number": 11006,
+  "phone": "(712) 252-1551",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.44669544",
+  "longitude": "-96.35015786",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 930,
+    "mon_time_close": 2100,
+    "tue_time_open": 930,
+    "tue_time_close": 2100,
+    "wed_time_open": 930,
+    "wed_time_close": 2100,
+    "thu_time_open": 930,
+    "thu_time_close": 2100,
+    "fri_time_open": 930,
+    "fri_time_close": 2100,
+    "sat_time_open": 930,
+    "sat_time_close": 2100
+  }
+}

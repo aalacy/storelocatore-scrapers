@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "EverestGear",
+  "street_address": "117 N Prospect St",
+  "city": "Granville",
+  "state": "OH",
+  "zip": "43023",
+  "country_code": "US",
+  "store_number": 11282,
+  "phone": "(740) 587-1490",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.06851656",
+  "longitude": "-82.51864135",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

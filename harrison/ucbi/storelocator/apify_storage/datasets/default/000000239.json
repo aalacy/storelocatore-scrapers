@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Colonial Plaza Shopping Center",
+  "street_address": "9510 SW 160th St",
+  "city": "Miami",
+  "state": "FL",
+  "zip": "33157-3300",
+  "country_code": "US",
+  "store_number": 3020,
+  "phone": "3059719790",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.618809,
+  "longitude": -80.347421,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

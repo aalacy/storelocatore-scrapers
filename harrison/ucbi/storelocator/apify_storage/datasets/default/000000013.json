@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Pine Valley",
+  "street_address": "716 Bragg Dr",
+  "city": "Wilmington",
+  "state": "NC",
+  "zip": "28412",
+  "country_code": "US",
+  "store_number": 3780,
+  "phone": "9103132201",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.180192,
+  "longitude": -77.89256,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

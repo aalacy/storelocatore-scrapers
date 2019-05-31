@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Coastal Farm & Ranch",
+  "street_address": "2112 S 1st St",
+  "city": "Yakima",
+  "state": "WA",
+  "zip": "98903",
+  "country_code": "US",
+  "store_number": 24158,
+  "phone": "(509) 457-2447",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "46.57164763",
+  "longitude": "-120.48927197",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "SCHEELS ALL SPORTS",
+  "street_address": "3030 Pine Lake Road",
+  "city": "Lincoln",
+  "state": "NE",
+  "zip": "68516",
+  "country_code": "US",
+  "store_number": 10994,
+  "phone": "(402) 420-9000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.74102116",
+  "longitude": "-96.67603625",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 930,
+    "mon_time_close": 2100,
+    "tue_time_open": 930,
+    "tue_time_close": 2100,
+    "wed_time_open": 930,
+    "wed_time_close": 2100,
+    "thu_time_open": 930,
+    "thu_time_close": 2100,
+    "fri_time_open": 930,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 2100
+  }
+}

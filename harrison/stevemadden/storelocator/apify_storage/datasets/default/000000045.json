@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "PANAMA CITY",
+  "street_address": "ALBROOK LOCAL NO. 63P",
+  "city": "Panama",
+  "state": null,
+  "country_code": "PA",
+  "store_number": "7995455",
+  "phone": "987654321",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "8.986875",
+  "longitude": "-79.512670",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

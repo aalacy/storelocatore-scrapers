@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Muscle Shoals Commons",
+  "street_address": "3220 Woodward Ave",
+  "city": "Muscle Shoals",
+  "state": "AL",
+  "zip": "35661-3322",
+  "country_code": "US",
+  "store_number": 3796,
+  "phone": "2563890080",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.730736,
+  "longitude": -87.669066,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

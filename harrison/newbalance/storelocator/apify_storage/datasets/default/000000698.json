@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "RunAbout Sports",
+  "street_address": "1470 S Main St",
+  "city": "Blacksburg",
+  "state": "VA",
+  "zip": "24060",
+  "country_code": "US",
+  "store_number": 23065,
+  "phone": "(540) 552-9339",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.21350610",
+  "longitude": "-80.40228132",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

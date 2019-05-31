@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Citadel Outlets",
+  "street_address": "100 Citadel Drive",
+  "city": "Commerce",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995237",
+  "phone": "323-346-0102",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.005900",
+  "longitude": "-118.153000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

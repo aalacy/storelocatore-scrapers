@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek St.Vital Centre",
+  "street_address": "1225 St Mary's Rd Unit #54A",
+  "city": "Winnipeg",
+  "state": "MB",
+  "zip": "R2M5E5",
+  "country_code": "CA",
+  "store_number": 103792,
+  "phone": "(204) 257-7418",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.82961230",
+  "longitude": "-97.10943350",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

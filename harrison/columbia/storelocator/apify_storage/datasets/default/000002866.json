@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Scooter",
+  "street_address": "130 N Main St",
+  "city": "Souderton",
+  "state": "PA",
+  "zip": "18964",
+  "country_code": "US",
+  "store_number": 109468,
+  "phone": "(215) 723-5909",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.31070660",
+  "longitude": "-75.32365123",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

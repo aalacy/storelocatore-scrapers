@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Mike's Indoor Bike Park",
+  "street_address": "1300 E First St",
+  "city": "Dayton",
+  "state": "OH",
+  "zip": "45403",
+  "country_code": "US",
+  "store_number": 108844,
+  "phone": "(937) 963-2366",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.76571652",
+  "longitude": "-84.17141138",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

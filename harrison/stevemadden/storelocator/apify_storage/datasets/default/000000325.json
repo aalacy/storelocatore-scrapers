@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Gran Plaza",
+  "street_address": "888 W. Second St.",
+  "city": "Calexico",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "8529272",
+  "phone": "760-357-0667",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.679160",
+  "longitude": "-115.506260",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

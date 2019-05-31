@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Walkabout Outfitter - Harrisonburg",
+  "street_address": "90 N Main St",
+  "city": "Harrisonburg",
+  "state": "VA",
+  "zip": "22802",
+  "country_code": "US",
+  "store_number": 11289,
+  "phone": "(540) 434-9900",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.45026300",
+  "longitude": "-78.86801292",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

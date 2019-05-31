@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "iRun Texas",
+  "street_address": "TX-1604 Loop #106",
+  "city": "San Antonio",
+  "state": "TX",
+  "zip": "78248",
+  "country_code": "US",
+  "store_number": 16043,
+  "phone": "(210) 479-7200",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "29.60192300",
+  "longitude": "-98.53389600",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

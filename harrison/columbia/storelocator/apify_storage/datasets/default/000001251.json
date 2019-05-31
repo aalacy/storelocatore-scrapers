@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Trailwalker Gear Outfitters",
+  "street_address": "4818 14th St W",
+  "city": "Bradenton",
+  "state": "FL",
+  "zip": "34207",
+  "country_code": "US",
+  "store_number": 19659,
+  "phone": "(877) 837-1106",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "27.45477450",
+  "longitude": "-82.57723135",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Summit Bicycles",
+  "street_address": "111 Curtner Ave #80",
+  "city": "San Jose",
+  "state": "CA",
+  "zip": "95125",
+  "country_code": "US",
+  "store_number": 67861,
+  "phone": "(408) 264-2453",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.30235611",
+  "longitude": "-121.86556200",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

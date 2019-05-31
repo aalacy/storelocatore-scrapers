@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "740 Shenango Rd",
+  "city": "Beaver Falls",
+  "state": "PA",
+  "zip": "15010",
+  "country_code": "US",
+  "store_number": 10037300,
+  "phone": "(724) 846-3966",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 40.7750288,
+  "longitude": -80.374598,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

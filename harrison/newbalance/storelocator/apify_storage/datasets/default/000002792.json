@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Burlington County Bike Shop",
+  "street_address": "630 W US-130",
+  "city": "Burlington",
+  "state": "NJ",
+  "zip": "08016",
+  "country_code": "US",
+  "store_number": 143437,
+  "phone": "(609) 877-8016",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.07116565",
+  "longitude": "-74.86612266",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

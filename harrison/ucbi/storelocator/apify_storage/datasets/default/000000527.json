@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Seminole Shoppes",
+  "street_address": "630 Atlantic Blvd",
+  "city": "Neptune Beach",
+  "state": "FL",
+  "zip": "32266-4000",
+  "country_code": "US",
+  "store_number": 3636,
+  "phone": "9042410944",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.322734,
+  "longitude": -81.404256,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

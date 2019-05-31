@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Shorewood True Value",
+  "street_address": "23540 MN-7",
+  "city": "Excelsior",
+  "state": "MN",
+  "zip": "55331",
+  "country_code": "US",
+  "store_number": 90713,
+  "phone": "(952) 474-2571",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.89265736",
+  "longitude": "-93.58031153",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

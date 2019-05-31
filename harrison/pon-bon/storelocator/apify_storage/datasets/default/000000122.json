@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "2625 Hart St.",
+  "city": "Vincennes",
+  "state": "IN",
+  "zip": "47591",
+  "country_code": "US",
+  "store_number": 10037338,
+  "phone": "(812) 882-9469",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 38.658353258844244,
+  "longitude": -87.5074220391362,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

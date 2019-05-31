@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Run Shoe Store",
+  "street_address": "533 Spring Garden St D2",
+  "city": "Philadelphia",
+  "state": "PA",
+  "zip": "19123",
+  "country_code": "US",
+  "store_number": 40258,
+  "phone": "(215) 964-9558",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.96165655",
+  "longitude": "-75.14742123",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

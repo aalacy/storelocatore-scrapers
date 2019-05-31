@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Jerks Bike Shop",
+  "street_address": "4967 S State St",
+  "city": "Murray",
+  "state": "UT",
+  "zip": "84107",
+  "country_code": "US",
+  "store_number": 108537,
+  "phone": "(801) 261-0736",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.66372666",
+  "longitude": "-111.88803183",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

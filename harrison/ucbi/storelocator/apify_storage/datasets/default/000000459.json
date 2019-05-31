@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "North Pointe Shopping Center",
+  "street_address": "10128 Two Notch Rd",
+  "city": "Columbia",
+  "state": "SC",
+  "zip": "29223-4384",
+  "country_code": "US",
+  "store_number": 3017,
+  "phone": "8037889484",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.114472,
+  "longitude": -80.88457,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

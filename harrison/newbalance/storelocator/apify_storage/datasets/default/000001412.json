@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Reno Running Company",
+  "street_address": "1276 Disc Dr",
+  "city": "Sparks",
+  "state": "NV",
+  "zip": "89436",
+  "country_code": "US",
+  "store_number": 65473,
+  "phone": "(775) 683-9433",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.57753648",
+  "longitude": "-119.72231196",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1800,
+    "tue_time_open": 1000,
+    "tue_time_close": 1800,
+    "wed_time_open": 1000,
+    "wed_time_close": 1800,
+    "thu_time_open": 1000,
+    "thu_time_close": 1800,
+    "fri_time_open": 1000,
+    "fri_time_close": 1800,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

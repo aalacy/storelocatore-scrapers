@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "North 40 Outfitters",
+  "street_address": "8307 East Trent",
+  "city": "Spokane",
+  "state": "WA",
+  "zip": "99212",
+  "country_code": "US",
+  "store_number": 21280,
+  "phone": "(509) 922-1090",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.67977812",
+  "longitude": "-117.29281922",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

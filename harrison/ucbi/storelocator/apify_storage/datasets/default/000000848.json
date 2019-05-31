@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Gateway Mall",
+  "street_address": "7999 Dr Martin Luther King Jr St N",
+  "city": "Saint Petersburg",
+  "state": "FL",
+  "zip": "33702-4107",
+  "country_code": "US",
+  "store_number": 3109,
+  "phone": "7275782833",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.845389,
+  "longitude": -82.643724,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Laguna Niguel",
+  "street_address": "32341 Street of the Golden Lantern e",
+  "city": "Laguna Niguel",
+  "state": "CA",
+  "zip": "92677",
+  "country_code": "US",
+  "store_number": 36827,
+  "phone": "(949) 481-6491",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.49361549",
+  "longitude": "-117.69729193",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

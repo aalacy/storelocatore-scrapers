@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Shoppes On The Ridge",
+  "street_address": "23965 Hwy 27",
+  "city": "Lake Wales",
+  "state": "FL",
+  "zip": "33859-7812",
+  "country_code": "US",
+  "store_number": 2720,
+  "phone": "8636761215",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.958635,
+  "longitude": -81.620824,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

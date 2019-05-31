@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "May St Bicycles",
+  "street_address": "1110 N May St",
+  "city": "Southern Pines",
+  "state": "NC",
+  "zip": "28387",
+  "country_code": "US",
+  "store_number": 108794,
+  "phone": "(910) 528-4365",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.18051576",
+  "longitude": "-79.37650130",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

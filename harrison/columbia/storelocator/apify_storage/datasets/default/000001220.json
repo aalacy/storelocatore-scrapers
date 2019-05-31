@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "EDP SPORT",
+  "street_address": "Via Ostiense, 119/S",
+  "city": "Roma",
+  "state": "RM",
+  "zip": "00154",
+  "country_code": "IT",
+  "store_number": 76270,
+  "phone": "06 575132",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.86706859",
+  "longitude": "12.47983204",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

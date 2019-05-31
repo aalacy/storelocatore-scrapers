@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Tread Bike Shop",
+  "street_address": "250 Dyckman St",
+  "city": "New York",
+  "state": "NY",
+  "zip": "10034",
+  "country_code": "US",
+  "store_number": 32935,
+  "phone": "(212) 544-7055",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.86610670",
+  "longitude": "-73.92768121",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

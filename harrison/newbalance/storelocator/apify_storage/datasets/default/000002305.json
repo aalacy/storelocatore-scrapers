@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Striders - Grandville",
+  "street_address": "4045 Chicago Dr SW",
+  "city": "Grandville",
+  "state": "MI",
+  "zip": "49418",
+  "country_code": "US",
+  "store_number": 16525,
+  "phone": "(616) 261-9706",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.90959200",
+  "longitude": "-85.76414900",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Island Walk at Palm Coast",
+  "street_address": "250 Palm Coast Pkwy NE Unit 1000",
+  "city": "Palm Coast",
+  "state": "FL",
+  "zip": "32137-8286",
+  "country_code": "US",
+  "store_number": 3758,
+  "phone": "3865974776",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 29.557944,
+  "longitude": -81.209874,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

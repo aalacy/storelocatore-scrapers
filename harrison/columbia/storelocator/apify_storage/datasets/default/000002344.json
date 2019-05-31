@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Centre du Vélo Mascouche",
+  "street_address": "270 Montée Masson",
+  "city": "Mascouche",
+  "state": "QC",
+  "zip": "J7K3B5",
+  "country_code": "CA",
+  "store_number": 32936,
+  "phone": "(450) 966-6275",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.72717492",
+  "longitude": "-73.61831121",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

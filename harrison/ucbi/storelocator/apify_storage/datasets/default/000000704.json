@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at FishHawk Ranch",
+  "street_address": "5642 FishHawk Crossing Blvd",
+  "city": "Lithia",
+  "state": "FL",
+  "zip": "33547-5900",
+  "country_code": "US",
+  "store_number": 3433,
+  "phone": "8136555646",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.853321,
+  "longitude": -82.205023,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

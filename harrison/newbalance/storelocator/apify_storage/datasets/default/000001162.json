@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Chartres",
+  "street_address": "10 Rue de la Clouterie",
+  "city": "Chartres",
+  "state": "",
+  "zip": "28000",
+  "country_code": "FR",
+  "store_number": 73006,
+  "phone": "02 37 23 98 83",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.44455794",
+  "longitude": "1.48887244",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

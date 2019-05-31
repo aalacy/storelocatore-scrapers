@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "OUTLET SUR DEL CALZADO",
+  "street_address": "AV. ADOLFO LOPEZ MATEOS",
+  "city": "SAN AGUSTIN CASILLAS",
+  "state": null,
+  "country_code": "MX",
+  "store_number": "7995445",
+  "phone": "7034182400",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.562024",
+  "longitude": "-82.540228",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

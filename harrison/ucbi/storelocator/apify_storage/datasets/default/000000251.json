@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Promenade at Silver Palm",
+  "street_address": "23300 SW 112th Ave",
+  "city": "Homestead",
+  "state": "FL",
+  "zip": "33032-7173",
+  "country_code": "US",
+  "store_number": 3535,
+  "phone": "3052574090",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.550363,
+  "longitude": -80.37356,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

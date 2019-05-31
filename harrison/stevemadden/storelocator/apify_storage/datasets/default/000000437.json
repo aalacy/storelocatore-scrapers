@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Fashion Centre at Pentagon City",
+  "street_address": "1100 South Hayes Street",
+  "city": "Arlington",
+  "state": "VA",
+  "country_code": "US",
+  "store_number": "7995278",
+  "phone": "703-418-2400",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.863723",
+  "longitude": "-77.060559",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

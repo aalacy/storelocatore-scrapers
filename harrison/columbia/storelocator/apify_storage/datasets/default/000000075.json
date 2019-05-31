@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "North 40 Outfitters",
+  "street_address": "1227 Koala Dr",
+  "city": "Omak",
+  "state": "WA",
+  "zip": "98841",
+  "country_code": "US",
+  "store_number": 13750,
+  "phone": "(509) 422-9840",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.43023793",
+  "longitude": "-119.49731196",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

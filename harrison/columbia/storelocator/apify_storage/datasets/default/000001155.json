@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "The Ultra Running Company - SouthEnd",
+  "street_address": "110 West Boulevard",
+  "city": "Charlotte",
+  "state": "NC",
+  "zip": "28203",
+  "country_code": "US",
+  "store_number": 41797,
+  "phone": "(980) 209-9894",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.21319577",
+  "longitude": "-80.85902132",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1100,
+    "mon_time_close": 1900,
+    "tue_time_open": 1100,
+    "tue_time_close": 1900,
+    "wed_time_open": 1100,
+    "wed_time_close": 1900,
+    "thu_time_open": 1100,
+    "thu_time_close": 1900,
+    "fri_time_open": 1100,
+    "fri_time_close": 1900,
+    "sat_time_open": 1100,
+    "sat_time_close": 1900
+  }
+}

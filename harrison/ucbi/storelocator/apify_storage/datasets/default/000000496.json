@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Marketplace at Dr. Phillips",
+  "street_address": "7524 Dr Phillips Blvd",
+  "city": "Orlando",
+  "state": "FL",
+  "zip": "32819-5148",
+  "country_code": "US",
+  "store_number": 3706,
+  "phone": "4072269882",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.453548,
+  "longitude": -81.490169,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

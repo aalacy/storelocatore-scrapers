@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Citrus Park Cyclery",
+  "street_address": "6573 Gunn Highway",
+  "city": "Tampa",
+  "state": "FL",
+  "zip": "33625",
+  "country_code": "US",
+  "store_number": 107653,
+  "phone": "(813) 644-7222",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "28.06593460",
+  "longitude": "-82.56166135",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Rogers",
+  "street_address": "1720 W Walnut St",
+  "city": "Rogers",
+  "state": "AR",
+  "zip": "72756",
+  "country_code": "US",
+  "store_number": 58086,
+  "phone": "(479) 636-9200",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.33367510",
+  "longitude": "-94.14216110",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

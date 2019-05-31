@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Savannah - Bull St",
+  "street_address": "27 Bull St",
+  "city": "Savannah",
+  "state": "GA",
+  "zip": "31401",
+  "country_code": "US",
+  "store_number": 90,
+  "phone": "9122346565",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 32.080067,
+  "longitude": -81.092267,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

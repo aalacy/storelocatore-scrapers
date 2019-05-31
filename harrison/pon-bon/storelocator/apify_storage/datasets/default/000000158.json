@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "8612 Pine Avenue",
+  "city": "Niagara Falls",
+  "state": "NY",
+  "zip": "14304",
+  "country_code": "US",
+  "store_number": 10037297,
+  "phone": "(716) 297-1902",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 43.0916125,
+  "longitude": -78.9652798,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

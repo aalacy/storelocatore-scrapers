@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Mechanicsburg",
+  "street_address": "6416 Carlisle Pike #700",
+  "city": "Mechanicsburg",
+  "state": "PA",
+  "zip": "17050",
+  "country_code": "US",
+  "store_number": 21135,
+  "phone": "(717) 691-3000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.24916594",
+  "longitude": "-77.00901262",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

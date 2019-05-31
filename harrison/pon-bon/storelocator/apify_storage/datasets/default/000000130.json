@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "308 Morton Blvd.",
+  "city": "Hazard",
+  "state": "KY",
+  "zip": "41701",
+  "country_code": "US",
+  "store_number": 10037315,
+  "phone": "(606) 439-1525",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 37.2771239,
+  "longitude": -83.2222901,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Belington Express",
+  "street_address": "806 Crim Avenue ",
+  "city": "Belington",
+  "state": "WV",
+  "zip": "26250",
+  "country_code": "US",
+  "store_number": "28",
+  "phone": "1041",
+  "location_type": {
+    "gas_station": "304-823-3104",
+    "active": "39.022257",
+    "pump_perk": "-79.936953"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sun 7:00-11:00",
+  "longitude": "304-823-3104",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

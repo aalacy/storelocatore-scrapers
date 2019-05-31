@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "The Angling Company",
+  "street_address": "333 Simonton St",
+  "city": "Key West",
+  "state": "FL",
+  "zip": "33040",
+  "country_code": "US",
+  "store_number": 36612,
+  "phone": "(305) 292-6306",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "24.55804402",
+  "longitude": "-81.80230134",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

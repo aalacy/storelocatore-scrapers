@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Aistriu",
+  "street_address": "931 NJ-73",
+  "city": "Marlton",
+  "state": "NJ",
+  "zip": "08053",
+  "country_code": "US",
+  "store_number": 95257,
+  "phone": "(856) 267-3878",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.86180000",
+  "longitude": "-74.92290000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

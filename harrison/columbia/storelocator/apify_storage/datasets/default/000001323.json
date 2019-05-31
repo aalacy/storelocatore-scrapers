@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Atmosphere - Country Club",
+  "street_address": "3200 Island Hwy",
+  "city": "Nanaimo",
+  "state": "BC",
+  "zip": "V9T1W1",
+  "country_code": "CA",
+  "store_number": 19686,
+  "phone": "(250) 751-1425",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.20464806",
+  "longitude": "-124.00170203",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

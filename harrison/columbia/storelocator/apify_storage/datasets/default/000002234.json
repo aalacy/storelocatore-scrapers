@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "MEC Vancouver",
+  "street_address": "130 W Broadway",
+  "city": "Vancouver",
+  "state": "BC",
+  "zip": "V5Y1P3",
+  "country_code": "CA",
+  "store_number": 19955,
+  "phone": "(604) 872-7858",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.26281807",
+  "longitude": "-123.10850202",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

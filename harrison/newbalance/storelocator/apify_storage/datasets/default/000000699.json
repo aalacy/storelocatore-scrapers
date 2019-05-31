@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sundance Ski & Snowboard Shop",
+  "street_address": "4745 Gateway Blvd",
+  "city": "Edmonton",
+  "state": "AB",
+  "zip": "T6H5C3",
+  "country_code": "CA",
+  "store_number": 66586,
+  "phone": "(780) 432-0711",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "53.48548763",
+  "longitude": "-113.49081859",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rack-It Car Racks",
+  "street_address": "7582 Clairemont Mesa Blvd",
+  "city": "San Diego",
+  "state": "CA",
+  "zip": "92111",
+  "country_code": "US",
+  "store_number": 33587,
+  "phone": "(858) 560-8877",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.83307538",
+  "longitude": "-117.15631192",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

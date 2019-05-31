@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Simpsonville - West College St",
+  "street_address": "106 W College St",
+  "city": "Simpsonville",
+  "state": "SC",
+  "zip": "29681",
+  "country_code": "US",
+  "store_number": 1251,
+  "phone": "8649633671",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.738845,
+  "longitude": -82.256379,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Albany",
+  "street_address": "155 Wolf Rd",
+  "city": "Albany",
+  "state": "NY",
+  "zip": "12205",
+  "country_code": "US",
+  "store_number": 17971,
+  "phone": "(518) 459-3338",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.72056999",
+  "longitude": "-73.80112092",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Ski Country Sports",
+  "street_address": "3149 Tynecastle Hwy",
+  "city": "Banner Elk",
+  "state": "NC",
+  "zip": "28604",
+  "country_code": "US",
+  "store_number": 13791,
+  "phone": "(828) 898-9786",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.13432592",
+  "longitude": "-81.84336134",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 800,
+    "sun_time_close": 2300,
+    "mon_time_open": 800,
+    "mon_time_close": 2300,
+    "tue_time_open": 800,
+    "tue_time_close": 2300,
+    "wed_time_open": 800,
+    "wed_time_close": 2300,
+    "thu_time_open": 800,
+    "thu_time_close": 2300,
+    "fri_time_open": 800,
+    "fri_time_close": 2300,
+    "sat_time_open": 800,
+    "sat_time_close": 2300
+  }
+}

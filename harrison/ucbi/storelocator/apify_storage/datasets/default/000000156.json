@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Chasewood Plaza",
+  "street_address": "6330 W Indiantown Rd",
+  "city": "Jupiter",
+  "state": "FL",
+  "zip": "33458-7981",
+  "country_code": "US",
+  "store_number": 2775,
+  "phone": "5617411220",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.93246,
+  "longitude": -80.131026,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

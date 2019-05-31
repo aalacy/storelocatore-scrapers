@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "East Rochester",
+  "street_address": "750 Ohio River Blvd.",
+  "city": "Rochester",
+  "state": "PA",
+  "zip": "15074",
+  "country_code": "US",
+  "store_number": "100",
+  "phone": "1794",
+  "location_type": {
+    "gas_station": "724-728-8017",
+    "active": "40.699121",
+    "pump_perk": "-80.272744"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sun 7:00am-11:00pm",
+  "longitude": "724-728-6728",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

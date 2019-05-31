@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Westfield Sydney",
+  "street_address": "188 Pitt Stree",
+  "city": "Sydney",
+  "state": null,
+  "country_code": "AU",
+  "store_number": "7995679",
+  "phone": "7034182400",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "-33.870745",
+  "longitude": "151.208214",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

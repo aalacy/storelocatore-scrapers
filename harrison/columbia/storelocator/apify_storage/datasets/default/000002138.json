@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Global Bikes - Ahwatukee Bike Shop",
+  "street_address": "3636 E Ray Rd #6",
+  "city": "Phoenix",
+  "state": "AZ",
+  "zip": "85044",
+  "country_code": "US",
+  "store_number": 35423,
+  "phone": "(480) 706-0858",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.31698546",
+  "longitude": "-112.00433184",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

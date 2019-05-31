@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Sawgrass Square",
+  "street_address": "12500 W Sunrise Blvd",
+  "city": "Sunrise",
+  "state": "FL",
+  "zip": "33323-2987",
+  "country_code": "US",
+  "store_number": 2948,
+  "phone": "9548511000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.144165,
+  "longitude": -80.315531,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

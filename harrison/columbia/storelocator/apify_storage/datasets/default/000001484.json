@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Sunridge Mall",
+  "street_address": "2525 36 St NE Unit #250A",
+  "city": "Calgary",
+  "state": "AB",
+  "zip": "T1Y5T4",
+  "country_code": "CA",
+  "store_number": 103592,
+  "phone": "(403) 285-2435",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "51.07333540",
+  "longitude": "-113.98493810",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Bicycle Evolution",
+  "street_address": "4101 E Park Blvd #138",
+  "city": "Plano",
+  "state": "TX",
+  "zip": "75074",
+  "country_code": "US",
+  "store_number": 143434,
+  "phone": "(214) 556-0997",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.03254120",
+  "longitude": "-96.64815835",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

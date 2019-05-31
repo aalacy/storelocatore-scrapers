@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Colmar",
+  "street_address": "40 Avenue Jean de Lattre de Tassigny",
+  "city": "Colmar",
+  "state": "COLMAR",
+  "zip": "68000",
+  "country_code": "FR",
+  "store_number": 73007,
+  "phone": "03 89 24 50 15",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.07887788",
+  "longitude": "7.35173120",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Lloydminster Power Centre",
+  "street_address": "7501 44 St Unit 102",
+  "city": "Lloydminster",
+  "state": "AB",
+  "zip": "T9V0X9",
+  "country_code": "CA",
+  "store_number": 103665,
+  "phone": "(780) 872-5246",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "53.27594660",
+  "longitude": "-110.05606530",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Podium Finish Sport Boutique",
+  "street_address": "921 Texas Ave – B",
+  "city": "El Paso",
+  "state": "TX",
+  "zip": "79901",
+  "country_code": "US",
+  "store_number": 109185,
+  "phone": "(915) 920-7500",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "31.76233520",
+  "longitude": "-106.48146174",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Loganville Town Centre",
+  "street_address": "4325 Atlanta Hwy",
+  "city": "Loganville",
+  "state": "GA",
+  "zip": "30052-2341",
+  "country_code": "US",
+  "store_number": 3031,
+  "phone": "7704665150",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.839252,
+  "longitude": -83.908064,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

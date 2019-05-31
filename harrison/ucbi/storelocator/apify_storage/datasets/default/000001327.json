@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Bellevue Center",
+  "street_address": "7604 Highway 70 S",
+  "city": "Nashville",
+  "state": "TN",
+  "zip": "37221-1852",
+  "country_code": "US",
+  "store_number": 2730,
+  "phone": "6156461870",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 36.078419,
+  "longitude": -86.945487,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

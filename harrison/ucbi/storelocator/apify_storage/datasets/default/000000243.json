@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "El Mercado Shopping Center",
+  "street_address": "2414 W 60th St",
+  "city": "Hialeah",
+  "state": "FL",
+  "zip": "33016-4418",
+  "country_code": "US",
+  "store_number": 2829,
+  "phone": "3055570566",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.875649,
+  "longitude": -80.332133,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

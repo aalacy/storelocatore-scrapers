@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Castle Shannon",
+  "street_address": "799 Castle Shannon Blvd ",
+  "city": "Pittsburgh",
+  "state": "PA",
+  "zip": "15234",
+  "country_code": "US",
+  "store_number": "85",
+  "phone": "2413",
+  "location_type": {
+    "gas_station": "412-561-1709",
+    "active": "40.368569",
+    "pump_perk": "-80.028126"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sun 6:00am-12:00am",
+  "longitude": "412-561-1418",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

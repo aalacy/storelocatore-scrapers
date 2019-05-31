@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Everyday Athlete",
+  "street_address": "264 Central Way",
+  "city": "Kirkland",
+  "state": "WA",
+  "zip": "98033",
+  "country_code": "US",
+  "store_number": 18643,
+  "phone": "(425) 821-4301",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.67745781",
+  "longitude": "-122.20402002",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

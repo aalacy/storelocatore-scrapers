@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Cleveland - Keith St",
+  "street_address": "2525 Keith St NW",
+  "city": "Cleveland",
+  "state": "TN",
+  "zip": "37312",
+  "country_code": "US",
+  "store_number": 30,
+  "phone": "4235592696",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.185153,
+  "longitude": -84.87241,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

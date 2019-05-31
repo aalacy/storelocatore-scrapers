@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Plantation Towne Square",
+  "street_address": "6921 W Broward Blvd",
+  "city": "Plantation",
+  "state": "FL",
+  "zip": "33317-2902",
+  "country_code": "US",
+  "store_number": 3123,
+  "phone": "9543279705",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.122307,
+  "longitude": -80.239144,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

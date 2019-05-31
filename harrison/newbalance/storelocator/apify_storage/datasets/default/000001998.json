@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Hastings",
+  "street_address": "600 W 2nd St",
+  "city": "Hastings",
+  "state": "NE",
+  "zip": "68901",
+  "country_code": "US",
+  "store_number": 22011,
+  "phone": "(402) 462-9311",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.58566495",
+  "longitude": "-98.38816120",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

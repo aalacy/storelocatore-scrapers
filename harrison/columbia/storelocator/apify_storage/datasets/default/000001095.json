@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Station Mall",
+  "street_address": "293 Bay St",
+  "city": "Sault Ste. Marie",
+  "state": "ON",
+  "zip": "P6A1X3",
+  "country_code": "CA",
+  "store_number": 103733,
+  "phone": "(705) 945-0900",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "46.51271470",
+  "longitude": "-84.33954080",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

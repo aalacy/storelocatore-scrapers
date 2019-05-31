@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Bonanza",
+  "street_address": "1635 Lincoln way E.",
+  "city": "Chambersburg",
+  "state": "PA",
+  "zip": "17202",
+  "country_code": "US",
+  "store_number": 10037524,
+  "phone": "(717) 263-8943",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 39.92498644323966,
+  "longitude": -77.6129248560062,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

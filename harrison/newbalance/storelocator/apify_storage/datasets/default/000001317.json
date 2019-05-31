@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Atmosphere - Deerfoot Meadows",
+  "street_address": "8180 11 St SE #500",
+  "city": "Calgary",
+  "state": "AB",
+  "zip": "T2H3B8",
+  "country_code": "CA",
+  "store_number": 17392,
+  "phone": "(403) 355-6628",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "50.97983525",
+  "longitude": "-114.04418685",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

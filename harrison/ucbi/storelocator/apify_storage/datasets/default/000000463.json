@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Hunter's Creek Promenade",
+  "street_address": "3972 Town Ctr Blvd",
+  "city": "Orlando",
+  "state": "FL",
+  "zip": "32837-6103",
+  "country_code": "US",
+  "store_number": 2884,
+  "phone": "4078504351",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.361607,
+  "longitude": -81.424333,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

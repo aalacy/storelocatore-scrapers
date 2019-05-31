@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Roosevelt Field",
+  "street_address": "630 Old Country Rd.",
+  "city": "Garden City",
+  "state": "NY",
+  "country_code": "US",
+  "store_number": "7995489",
+  "phone": "516-294-1470",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.740000",
+  "longitude": "-73.613600",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

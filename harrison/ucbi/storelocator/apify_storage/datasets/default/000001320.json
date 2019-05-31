@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Harpeth Village",
+  "street_address": "2020 Fieldstone Pkwy",
+  "city": "Franklin",
+  "state": "TN",
+  "zip": "37069-4337",
+  "country_code": "US",
+  "store_number": 2747,
+  "phone": "6155991825",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.964567,
+  "longitude": -86.883006,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:30 AM - 10:00 PM,Mon 6:30 AM - 10:00 PM,Tues 6:30 AM - 10:00 PM,Wed 6:30 AM - 10:00 PM,Thurs 6:30 AM - 10:00 PM,Fri 6:30 AM - 10:00 PM,Sat 6:30 AM - 10:00 PM,"
+}

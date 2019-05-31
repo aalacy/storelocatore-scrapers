@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Hot Springs",
+  "street_address": "1303 Malvern Ave",
+  "city": "Hot Springs",
+  "state": "AR",
+  "zip": "71901",
+  "country_code": "US",
+  "store_number": 84784,
+  "phone": "(501) 623-3115",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.49871460",
+  "longitude": "-93.04118790",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "FAIRLANE MALL",
+  "street_address": "18900 MICHIGAN AVE",
+  "city": "DEARBORN",
+  "state": "MI",
+  "zip": "48126",
+  "country_code": "US",
+  "store_number": "482",
+  "phone": "(313) 593-4445",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 42.33445,
+  "longitude": -83.18083,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

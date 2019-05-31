@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Pine Lake Plaza",
+  "street_address": "411 S Cypress Rd",
+  "city": "Pompano Beach",
+  "state": "FL",
+  "zip": "33060-7135",
+  "country_code": "US",
+  "store_number": 3113,
+  "phone": "9547843277",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.225139,
+  "longitude": -80.12447,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

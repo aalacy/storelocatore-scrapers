@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Tiltonsville Express",
+  "street_address": "206 Walden Avenue",
+  "city": "Tiltonsville",
+  "state": "OH",
+  "zip": "43963",
+  "country_code": "US",
+  "store_number": "106",
+  "phone": "6197",
+  "location_type": {
+    "gas_station": "40.172791",
+    "active": "-80.696683",
+    "pump_perk": "false"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sun 730am-10pm",
+  "longitude": "740-859-0318",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

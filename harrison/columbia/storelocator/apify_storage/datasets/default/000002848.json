@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Bernie's Bicycle Center",
+  "street_address": "111 NJ-33",
+  "city": "Mercerville",
+  "state": "NJ",
+  "zip": "08619",
+  "country_code": "US",
+  "store_number": 31618,
+  "phone": "(609) 586-5126",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.23392659",
+  "longitude": "-74.68945122",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

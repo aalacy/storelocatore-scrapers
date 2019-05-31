@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Spokesman Pro Bike Works",
+  "street_address": "1848 N Causeway Blvd",
+  "city": "Mandeville",
+  "state": "LA",
+  "zip": "70471",
+  "country_code": "US",
+  "store_number": 20503,
+  "phone": "(985) 727-7211",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.39219498",
+  "longitude": "-90.09203148",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

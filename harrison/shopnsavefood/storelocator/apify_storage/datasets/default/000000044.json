@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Cecil",
+  "street_address": "3232 Millers Run Road (Winkle's Pit Stop)",
+  "city": "Cecil",
+  "state": "PA",
+  "zip": "15321",
+  "country_code": "US",
+  "store_number": "145",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.3270248",
+  "longitude": "-80.1911507",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Shoppes at the Royale",
+  "street_address": "1600 66th St N",
+  "city": "Saint Petersburg",
+  "state": "FL",
+  "zip": "33710-5535",
+  "country_code": "US",
+  "store_number": 3494,
+  "phone": "7273441216",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.786215,
+  "longitude": -82.72964,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

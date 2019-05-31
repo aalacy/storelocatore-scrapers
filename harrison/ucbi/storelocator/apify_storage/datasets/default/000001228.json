@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Trion - Hwy 27",
+  "street_address": "14031 Highway 27",
+  "city": "Trion",
+  "state": "GA",
+  "zip": "30753",
+  "country_code": "US",
+  "store_number": 101,
+  "phone": "7067342900",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.52807,
+  "longitude": -85.309274,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

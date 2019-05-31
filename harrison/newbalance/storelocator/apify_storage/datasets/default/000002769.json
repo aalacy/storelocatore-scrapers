@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Red Newt Bikes",
+  "street_address": "314 S Main St suite b",
+  "city": "Lexington",
+  "state": "VA",
+  "zip": "24450",
+  "country_code": "US",
+  "store_number": 143415,
+  "phone": "(540) 463-7969",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.78161901",
+  "longitude": "-79.44513016",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

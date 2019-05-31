@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Brickell Village",
+  "street_address": "134 SW 13th St",
+  "city": "Miami",
+  "state": "FL",
+  "zip": "33130-4211",
+  "country_code": "US",
+  "store_number": 3011,
+  "phone": "3058602280",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.761217,
+  "longitude": -80.196648,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

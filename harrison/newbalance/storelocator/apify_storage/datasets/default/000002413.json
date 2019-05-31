@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Kingston Cyclery",
+  "street_address": "985 Morton Blvd",
+  "city": "Kingston",
+  "state": "NY",
+  "zip": "12401",
+  "country_code": "US",
+  "store_number": 33631,
+  "phone": "(845) 382-2453",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.95842687",
+  "longitude": "-73.99372121",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

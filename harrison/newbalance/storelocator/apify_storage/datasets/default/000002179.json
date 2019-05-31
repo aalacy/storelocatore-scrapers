@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Mon Beau Bebe",
+  "street_address": "6226 Irvine Blvd",
+  "city": "Irvine",
+  "state": "CA",
+  "zip": "92620",
+  "country_code": "US",
+  "store_number": 37109,
+  "phone": "(949) 748-8043",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.69810552",
+  "longitude": "-117.74338193",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

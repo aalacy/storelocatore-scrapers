@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Headwaters Outfitters",
+  "street_address": "25 Parkway Road",
+  "city": "Rosman",
+  "state": "NC",
+  "zip": "28772",
+  "country_code": "US",
+  "store_number": 14956,
+  "phone": "(828) 877-3106",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.14350576",
+  "longitude": "-82.83918136",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

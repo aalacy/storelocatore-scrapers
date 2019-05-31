@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Hayesville - Hwy 64",
+  "street_address": "95 Highway 64 W",
+  "city": "Hayesville",
+  "state": "NC",
+  "zip": "28904",
+  "country_code": "US",
+  "store_number": 57,
+  "phone": "8283896363",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.034088,
+  "longitude": -83.822602,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

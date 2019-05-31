@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Helen - Hwy 75",
+  "street_address": "8460 Highway 75 N",
+  "city": "Helen",
+  "state": "GA",
+  "zip": "30545",
+  "country_code": "US",
+  "store_number": 58,
+  "phone": "7068782121",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.700941,
+  "longitude": -83.727388,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

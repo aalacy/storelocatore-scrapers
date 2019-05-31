@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Stream N Wood",
+  "street_address": "135 17 St N",
+  "city": "Brandon",
+  "state": "MB",
+  "zip": "R7A0M4",
+  "country_code": "CA",
+  "store_number": 18969,
+  "phone": "(204) 727-2767",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.85318168",
+  "longitude": "-99.96061638",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

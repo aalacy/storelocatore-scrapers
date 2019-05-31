@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Dear-Born Baby",
+  "street_address": "72 Doncaster Ave",
+  "city": "Thornhill",
+  "state": "ON",
+  "zip": "L3T1L3",
+  "country_code": "CA",
+  "store_number": 37061,
+  "phone": "(905) 881-3334",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.80453718",
+  "longitude": "-79.41542130",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Grayson Village",
+  "street_address": "2715 Loganville Hwy SW",
+  "city": "Loganville",
+  "state": "GA",
+  "zip": "30052-6660",
+  "country_code": "US",
+  "store_number": 3207,
+  "phone": "7708220637",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.879049,
+  "longitude": -83.938425,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

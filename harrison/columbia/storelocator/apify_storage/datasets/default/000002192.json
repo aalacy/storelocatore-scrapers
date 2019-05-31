@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Heritage Place",
+  "street_address": "1350 16th St E",
+  "city": "Owen Sound",
+  "state": "ON",
+  "zip": "N4K6N7",
+  "country_code": "CA",
+  "store_number": 103710,
+  "phone": "(519) 371-5114",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.57432730",
+  "longitude": "-80.92007133",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

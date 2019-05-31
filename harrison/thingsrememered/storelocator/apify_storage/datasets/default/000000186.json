@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "WESTMORELAND MALL",
+  "street_address": "5256 ROUTE 30",
+  "city": "GREENSBURG",
+  "state": "PA",
+  "zip": "15601",
+  "country_code": "US",
+  "store_number": "141",
+  "phone": "(724) 834-1318",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 40.295383,
+  "longitude": -79.54157,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#05:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

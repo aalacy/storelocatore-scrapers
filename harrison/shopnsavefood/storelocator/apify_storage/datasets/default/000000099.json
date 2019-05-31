@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Haymaker Village",
+  "street_address": "4548 Broadway Blvd ",
+  "city": "Monroeville",
+  "state": "PA",
+  "zip": "15146",
+  "country_code": "US",
+  "store_number": "65",
+  "phone": "2100",
+  "location_type": {
+    "gas_station": "412-858-5800",
+    "active": "412-858-5806",
+    "pump_perk": "40.39044"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sat 7:00-11:00",
+  "longitude": "Sun 7:00-9:00",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

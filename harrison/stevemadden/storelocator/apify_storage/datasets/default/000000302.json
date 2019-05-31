@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "TSURUYA KUMAMOTO",
+  "street_address": "6-1?Tedorihoncyou, Chuo-ku, Ku",
+  "city": "Kumamoto",
+  "state": null,
+  "country_code": "JP",
+  "store_number": "7995664",
+  "phone": "81 96320 9388",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.803100",
+  "longitude": "130.707890",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

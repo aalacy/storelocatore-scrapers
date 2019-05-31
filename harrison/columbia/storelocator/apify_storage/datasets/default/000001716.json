@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fit2Run-The Runner's Superstore",
+  "street_address": "1400 Main St",
+  "city": "Sarasota",
+  "state": "FL",
+  "zip": "34236",
+  "country_code": "US",
+  "store_number": 16319,
+  "phone": "(941) 364-2600",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "27.33624120",
+  "longitude": "-82.54214720",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 900,
+    "sat_time_close": 2000
+  }
+}

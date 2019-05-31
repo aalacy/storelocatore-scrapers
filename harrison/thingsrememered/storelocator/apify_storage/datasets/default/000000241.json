@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "WEST TOWN MALL",
+  "street_address": "7600 KINGSTON PIKE",
+  "city": "KNOXVILLE",
+  "state": "TN",
+  "zip": "37919",
+  "country_code": "US",
+  "store_number": "455",
+  "phone": "(865) 691-3940",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.926064,
+  "longitude": -84.00688,
+  "external_lat_long": false,
+  "hours_of_operation": "1#12:00 PM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

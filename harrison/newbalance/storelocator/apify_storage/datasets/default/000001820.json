@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Palmetto Running Company",
+  "street_address": "30 Plantation Park Dr Suite #202",
+  "city": "Bluffton",
+  "state": "SC",
+  "zip": "29910",
+  "country_code": "US",
+  "store_number": 16431,
+  "phone": "(843) 815-1718",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.27181529",
+  "longitude": "-80.86738132",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

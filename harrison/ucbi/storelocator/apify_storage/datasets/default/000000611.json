@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Plantation Plaza",
+  "street_address": "2750 Race Track Rd",
+  "city": "Saint Johns",
+  "state": "FL",
+  "zip": "32259-3227",
+  "country_code": "US",
+  "store_number": 3384,
+  "phone": "9042303970",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.112822,
+  "longitude": -81.590103,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

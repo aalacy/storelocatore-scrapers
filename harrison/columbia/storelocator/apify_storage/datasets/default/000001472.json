@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Aquabatics",
+  "street_address": "7391 Highway 16 W",
+  "city": "Smithers",
+  "state": "BC",
+  "zip": "V0J2N2",
+  "country_code": "CA",
+  "store_number": 42996,
+  "phone": "(800) 748-2333",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "54.81561898",
+  "longitude": "-127.19901208",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Runnings",
+  "street_address": "1020 N Lacrosse St",
+  "city": "Rapid City",
+  "state": "SD",
+  "zip": "57701",
+  "country_code": "US",
+  "store_number": 40918,
+  "phone": "(605) 342-9008",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.09441722",
+  "longitude": "-103.20044169",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Run Wild",
+  "street_address": "4611 Jackson St",
+  "city": "Alexandria",
+  "state": "LA",
+  "zip": "71303",
+  "country_code": "US",
+  "store_number": 14633,
+  "phone": "(318) 445-9735",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "31.27687512",
+  "longitude": "-92.48084152",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

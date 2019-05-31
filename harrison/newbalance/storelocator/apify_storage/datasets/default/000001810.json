@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Gord's Running Store",
+  "street_address": "919 Centre St N",
+  "city": "Calgary",
+  "state": "AB",
+  "zip": "T2E2P6",
+  "country_code": "CA",
+  "store_number": 19745,
+  "phone": "(403) 270-8606",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "51.06033837",
+  "longitude": "-114.06309187",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

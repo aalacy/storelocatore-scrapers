@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Second Sole",
+  "street_address": "755 Boardman-Canfield Rd",
+  "city": "Youngstown",
+  "state": "OH",
+  "zip": "44512",
+  "country_code": "US",
+  "store_number": 16509,
+  "phone": "(330) 758-8708",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.02366672",
+  "longitude": "-80.68501132",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

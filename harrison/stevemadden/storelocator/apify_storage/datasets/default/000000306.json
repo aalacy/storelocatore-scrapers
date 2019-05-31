@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "SHIBUYA HIKARIE",
+  "street_address": "2-21-1, Shibuya, shibuya-ku, T",
+  "city": "Tokyo",
+  "state": null,
+  "country_code": "JP",
+  "store_number": "7995540",
+  "phone": "81 33409 3593",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.689490",
+  "longitude": "139.691710",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

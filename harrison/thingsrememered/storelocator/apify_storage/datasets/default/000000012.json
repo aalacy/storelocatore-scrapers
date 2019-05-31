@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "OCEAN COUNTY MALL",
+  "street_address": "1201 HOOPER AVE",
+  "city": "TOMS RIVER",
+  "state": "NJ",
+  "zip": "08753",
+  "country_code": "US",
+  "store_number": "152",
+  "phone": "(732) 240-3730",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 39.9779,
+  "longitude": -74.1587,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:30 PM|3#10:00 AM#09:30 PM|4#10:00 AM#09:30 PM|5#10:00 AM#09:30 PM|6#10:00 AM#09:30 PM|7#10:00 AM#09:30 PM"
+}

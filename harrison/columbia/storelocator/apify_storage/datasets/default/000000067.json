@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Wilderness Exchange Unlimited",
+  "street_address": "2401 15th St #100",
+  "city": "Denver",
+  "state": "CO",
+  "zip": "80202",
+  "country_code": "US",
+  "store_number": 1890,
+  "phone": "(303) 964-0708",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.75686651",
+  "longitude": "-105.00913172",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 1100,
+    "mon_time_close": 2100,
+    "tue_time_open": 1100,
+    "tue_time_close": 2100,
+    "wed_time_open": 1100,
+    "wed_time_close": 2100,
+    "thu_time_open": 1100,
+    "thu_time_close": 2100,
+    "fri_time_open": 1100,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1900
+  }
+}

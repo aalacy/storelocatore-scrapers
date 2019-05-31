@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Midway Plaza",
+  "street_address": "5881 N University Dr",
+  "city": "Tamarac",
+  "state": "FL",
+  "zip": "33321-4618",
+  "country_code": "US",
+  "store_number": 2806,
+  "phone": "9547217800",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.196949,
+  "longitude": -80.255352,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

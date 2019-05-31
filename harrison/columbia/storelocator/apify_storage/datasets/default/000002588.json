@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Baby Sweet Pea's Boutique",
+  "street_address": "3875 Massillon Rd #210",
+  "city": "Uniontown",
+  "state": "OH",
+  "zip": "44685",
+  "country_code": "US",
+  "store_number": 37031,
+  "phone": "(330) 316-1659",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.95682671",
+  "longitude": "-81.46361335",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

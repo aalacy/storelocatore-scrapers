@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Omega Sports Winston Salem",
+  "street_address": "414 S. Stratford Rd, Suite 120",
+  "city": "Winston-Salem",
+  "state": "NC",
+  "zip": "27103",
+  "country_code": "US",
+  "store_number": 16084,
+  "phone": "(336) 760-9172",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.09125913",
+  "longitude": "-80.28535132",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 900,
+    "mon_time_close": 2100,
+    "tue_time_open": 900,
+    "tue_time_close": 2100,
+    "wed_time_open": 900,
+    "wed_time_close": 2100,
+    "thu_time_open": 900,
+    "thu_time_close": 2100,
+    "fri_time_open": 900,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 2100
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "LAS FLORES MALL",
+  "street_address": "ETAPA LOCAL 33B",
+  "city": "SAN JOSE",
+  "state": null,
+  "country_code": "CR",
+  "store_number": "7995368",
+  "phone": "987654321",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "9.927128",
+  "longitude": "-84.082012",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

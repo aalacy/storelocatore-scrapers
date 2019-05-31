@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Coastal Farm & Ranch",
+  "street_address": "3865 OR-8",
+  "city": "Cornelius",
+  "state": "OR",
+  "zip": "97113",
+  "country_code": "US",
+  "store_number": 24038,
+  "phone": "(503) 640-4241",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.52023746",
+  "longitude": "-123.07922017",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

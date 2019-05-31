@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Nantahala Outdoor Center Asheville",
+  "street_address": "290 Macon Ave",
+  "city": "Asheville",
+  "state": "NC",
+  "zip": "28804",
+  "country_code": "US",
+  "store_number": 10898,
+  "phone": "(888) 905-7238",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.62017584",
+  "longitude": "-82.54286135",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 1700,
+    "mon_time_open": 900,
+    "mon_time_close": 1900,
+    "tue_time_open": 900,
+    "tue_time_close": 1900,
+    "wed_time_open": 900,
+    "wed_time_close": 1900,
+    "thu_time_open": 900,
+    "thu_time_close": 1900,
+    "fri_time_open": 900,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 2100
+  }
+}

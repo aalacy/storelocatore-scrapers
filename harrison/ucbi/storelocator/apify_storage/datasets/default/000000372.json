@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Westport Square",
+  "street_address": "1660 Taylor Rd",
+  "city": "Port Orange",
+  "state": "FL",
+  "zip": "32128-6753",
+  "country_code": "US",
+  "store_number": 3716,
+  "phone": "3867607332",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 29.10611,
+  "longitude": -81.03388,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Camrose",
+  "street_address": "6703 48 Ave Unit #130",
+  "city": "Camrose",
+  "state": "AB",
+  "zip": "T4V3K3",
+  "country_code": "CA",
+  "store_number": 103597,
+  "phone": "(780) 672-0306",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "53.01727790",
+  "longitude": "-112.85778130",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

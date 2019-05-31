@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Del Prado Crossing",
+  "street_address": "1735 NE Pine Island Rd",
+  "city": "Cape Coral",
+  "state": "FL",
+  "zip": "33909-1731",
+  "country_code": "US",
+  "store_number": 3601,
+  "phone": "2395730818",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.671219,
+  "longitude": -81.937816,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

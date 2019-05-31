@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Philly Electric Wheels",
+  "street_address": "7153 Sprague St",
+  "city": "Philadelphia",
+  "state": "PA",
+  "zip": "19119",
+  "country_code": "US",
+  "store_number": 109144,
+  "phone": "(215) 821-9266",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.06378656",
+  "longitude": "-75.18651232",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Milwaukee Brookfield",
+  "street_address": "17155 W Bluemound Rd Ste A",
+  "city": "Brookfield",
+  "state": "WI",
+  "zip": "53005",
+  "country_code": "US",
+  "store_number": 34962,
+  "phone": "(262) 432-1400",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.03505705",
+  "longitude": "-88.12568144",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 930,
+    "mon_time_close": 2100,
+    "tue_time_open": 930,
+    "tue_time_close": 2100,
+    "wed_time_open": 930,
+    "wed_time_close": 2100,
+    "thu_time_open": 930,
+    "thu_time_close": 2100,
+    "fri_time_open": 930,
+    "fri_time_close": 2100,
+    "sat_time_open": 930,
+    "sat_time_close": 1800
+  }
+}

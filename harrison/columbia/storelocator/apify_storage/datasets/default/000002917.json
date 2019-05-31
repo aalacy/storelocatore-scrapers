@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "McLain Cycle & Fitness",
+  "street_address": "750 East 8th Street",
+  "city": "Traverse City",
+  "state": "MI",
+  "zip": "49684",
+  "country_code": "US",
+  "store_number": 17629,
+  "phone": "(231) 941-7161",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.75891733",
+  "longitude": "-85.60561403",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

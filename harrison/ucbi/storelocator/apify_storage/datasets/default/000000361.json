@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Westchester Square",
+  "street_address": "2005 N Main St Ste 101",
+  "city": "High Point",
+  "state": "NC",
+  "zip": "27262",
+  "country_code": "US",
+  "store_number": 3836,
+  "phone": "3369058610",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.981561,
+  "longitude": -80.024928,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

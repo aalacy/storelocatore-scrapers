@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Top Tier Bikes",
+  "street_address": "405 Center Dr d",
+  "city": "Superior",
+  "state": "CO",
+  "zip": "80027",
+  "country_code": "US",
+  "store_number": 122759,
+  "phone": "(720) 619-8699",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.95765467",
+  "longitude": "-105.17017231",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

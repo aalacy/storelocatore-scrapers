@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Caldwell Square",
+  "street_address": "460 Long Hollow Pike",
+  "city": "Goodlettsville",
+  "state": "TN",
+  "zip": "37072-3480",
+  "country_code": "US",
+  "store_number": 3439,
+  "phone": "6158517180",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 36.3315,
+  "longitude": -86.699175,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

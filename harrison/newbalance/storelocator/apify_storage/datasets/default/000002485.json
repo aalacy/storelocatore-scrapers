@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Runnings",
+  "street_address": "1706 Morningside Dr",
+  "city": "Milbank",
+  "state": "SD",
+  "zip": "57252",
+  "country_code": "US",
+  "store_number": 97195,
+  "phone": "(605) 438-3301",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.22701741",
+  "longitude": "-96.60682158",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

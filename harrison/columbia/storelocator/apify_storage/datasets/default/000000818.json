@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Charm City Run",
+  "street_address": "2045 York Rd #2",
+  "city": "Lutherville-Timonium",
+  "state": "MD",
+  "zip": "21093",
+  "country_code": "US",
+  "store_number": 13654,
+  "phone": "(410) 561-3570",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.43819646",
+  "longitude": "-76.62481255",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

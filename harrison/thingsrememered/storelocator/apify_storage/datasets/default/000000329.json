@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "BRANDON TOWN CENTER",
+  "street_address": "637 BRANDON TOWN CENTER MALL",
+  "city": "BRANDON",
+  "state": "FL",
+  "zip": "33511",
+  "country_code": "US",
+  "store_number": "876",
+  "phone": "(813) 653-4545",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.9141,
+  "longitude": -82.2996,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

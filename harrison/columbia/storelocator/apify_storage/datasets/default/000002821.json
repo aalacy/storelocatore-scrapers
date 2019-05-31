@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Thurman's Bike & Sport",
+  "street_address": "300 S 11Th Ave",
+  "city": "Nebraska City",
+  "state": "NE",
+  "zip": "68410",
+  "country_code": "US",
+  "store_number": 109928,
+  "phone": "(402) 873-7509",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.67456666",
+  "longitude": "-95.85924157",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

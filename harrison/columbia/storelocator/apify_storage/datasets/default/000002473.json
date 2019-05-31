@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "ZukaBaby Metairie",
+  "street_address": "3248 Severn Ave",
+  "city": "Metairie",
+  "state": "LA",
+  "zip": "70002",
+  "country_code": "US",
+  "store_number": 52040,
+  "phone": "(504) 407-2700",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.00899492",
+  "longitude": "-90.15969148",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

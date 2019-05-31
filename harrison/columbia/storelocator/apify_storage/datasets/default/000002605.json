@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Magic Beans - Wellesley",
+  "street_address": "200 Linden St",
+  "city": "Wellesley",
+  "state": "MA",
+  "zip": "02482",
+  "country_code": "US",
+  "store_number": 36545,
+  "phone": "(781) 235-2120",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.30156693",
+  "longitude": "-71.29153117",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Bike Hub",
+  "street_address": "503 East Market St",
+  "city": "Celina",
+  "state": "OH",
+  "zip": "45822",
+  "country_code": "US",
+  "store_number": 107247,
+  "phone": "(567) 279-3945",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.54922664",
+  "longitude": "-84.56379139",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

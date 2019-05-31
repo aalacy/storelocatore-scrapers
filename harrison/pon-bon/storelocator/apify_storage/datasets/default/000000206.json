@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "185 Market St.",
+  "city": "Potsdam",
+  "state": "NY",
+  "zip": "13676",
+  "country_code": "US",
+  "store_number": 10037296,
+  "phone": "(315) 265-8080",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 44.6849056280394,
+  "longitude": -74.98752894477462,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

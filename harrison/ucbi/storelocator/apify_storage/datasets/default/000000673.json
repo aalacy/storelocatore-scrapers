@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Punta Gorda Crossing",
+  "street_address": "2310 Tamiami Trl Unit 1129",
+  "city": "Punta Gorda",
+  "state": "FL",
+  "zip": "33950-5933",
+  "country_code": "US",
+  "store_number": 2793,
+  "phone": "9415754740",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.919071,
+  "longitude": -82.046608,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

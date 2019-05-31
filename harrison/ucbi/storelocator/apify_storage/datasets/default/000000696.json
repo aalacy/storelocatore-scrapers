@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Belleview Commons",
+  "street_address": "10135 SE US Highway 441",
+  "city": "Belleview",
+  "state": "FL",
+  "zip": "34420-2850",
+  "country_code": "US",
+  "store_number": 2894,
+  "phone": "3522454115",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 29.074716,
+  "longitude": -82.070728,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

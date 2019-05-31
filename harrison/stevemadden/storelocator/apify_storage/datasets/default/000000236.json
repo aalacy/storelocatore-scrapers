@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "SM -Delhi (Saket)",
+  "street_address": "Select Citywalk, Steve Madden",
+  "city": "New Delhi",
+  "state": null,
+  "country_code": "IN",
+  "store_number": "7995566",
+  "phone": "011-405867011",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "28.527912",
+  "longitude": "77.208899",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

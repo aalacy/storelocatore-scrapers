@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Carmel",
+  "street_address": "9893 N Michigan Rd Suite 150",
+  "city": "Carmel",
+  "state": "IN",
+  "zip": "46032",
+  "country_code": "US",
+  "store_number": 84859,
+  "phone": "(317) 876-4615",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.93214654",
+  "longitude": "-86.23183141",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1900
+  }
+}

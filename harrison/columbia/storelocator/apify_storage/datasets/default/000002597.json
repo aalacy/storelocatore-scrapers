@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Flip Flop Shops",
+  "street_address": "4325 Glenwood Ave",
+  "city": "Raleigh",
+  "state": "NC",
+  "zip": "27612",
+  "country_code": "US",
+  "store_number": 50975,
+  "phone": "(919) 787-8724",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.83865872",
+  "longitude": "-78.67481289",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

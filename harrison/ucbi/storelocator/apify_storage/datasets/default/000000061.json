@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Lake Worth",
+  "street_address": "214 N Dixie Hwy",
+  "city": "Lake Worth",
+  "state": "FL",
+  "zip": "33460-3362",
+  "country_code": "US",
+  "store_number": 3652,
+  "phone": "5614935042",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.618592,
+  "longitude": -80.056909,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

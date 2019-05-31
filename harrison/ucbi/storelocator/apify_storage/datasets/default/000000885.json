@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Eagles Park Retail Center",
+  "street_address": "5577 Park St N",
+  "city": "Saint Petersburg",
+  "state": "FL",
+  "zip": "33709-6309",
+  "country_code": "US",
+  "store_number": 2809,
+  "phone": "7275458488",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.822636,
+  "longitude": -82.75153,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

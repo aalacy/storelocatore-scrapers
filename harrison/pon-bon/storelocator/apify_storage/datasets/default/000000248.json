@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "7598 W Irlo Bronson Dr.",
+  "city": "Kissimmee",
+  "state": "FL",
+  "zip": "32746",
+  "country_code": "US",
+  "store_number": 10037308,
+  "phone": "(407) 396-7721",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 28.33329190980352,
+  "longitude": -81.59010526914898,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

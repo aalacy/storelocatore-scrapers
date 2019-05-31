@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix Sabor at Fountain Square",
+  "street_address": "9951 W Flagler St",
+  "city": "Miami",
+  "state": "FL",
+  "zip": "33174-1805",
+  "country_code": "US",
+  "store_number": 3732,
+  "phone": "3052072329",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.769888,
+  "longitude": -80.357669,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Towson Town Center",
+  "street_address": "825 Dulaney Valley Rd",
+  "city": "Towson",
+  "state": "MD",
+  "country_code": "US",
+  "store_number": "7995662",
+  "phone": "410-938-8724",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.403900",
+  "longitude": "-76.600600",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

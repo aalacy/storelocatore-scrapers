@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "FREEHOLD RACEWAY MALL",
+  "street_address": "3710 ROUTE 9",
+  "city": "FREEHOLD",
+  "state": "NJ",
+  "zip": "07728",
+  "country_code": "US",
+  "store_number": "758",
+  "phone": "(732) 303-9721",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 40.245373,
+  "longitude": -74.27727,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#07:00 PM|2#10:00 AM#09:30 PM|3#10:00 AM#09:30 PM|4#10:00 AM#09:30 PM|5#10:00 AM#09:30 PM|6#10:00 AM#09:30 PM|7#10:00 AM#09:30 PM"
+}

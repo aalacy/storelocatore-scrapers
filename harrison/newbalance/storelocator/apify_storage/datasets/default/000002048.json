@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Runnings",
+  "street_address": "1090 MN-15",
+  "city": "Hutchinson",
+  "state": "MN",
+  "zip": "55350",
+  "country_code": "US",
+  "store_number": 40913,
+  "phone": "(320) 587-7104",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.87489735",
+  "longitude": "-94.37885155",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "House of Fraser",
+  "street_address": "98-116 Deansgate",
+  "city": "Manchester",
+  "state": null,
+  "country_code": "GB",
+  "store_number": "7995335",
+  "phone": "7034182400",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "53.481822",
+  "longitude": "-2.247458",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

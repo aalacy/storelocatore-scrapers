@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "3875 South High Street",
+  "city": "Columbus",
+  "state": "OH",
+  "zip": "43207",
+  "country_code": "US",
+  "store_number": 10037320,
+  "phone": "(614) 491-7552",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 39.883185883595914,
+  "longitude": -83.00094361474993,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

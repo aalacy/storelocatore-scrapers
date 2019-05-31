@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "REI - Colorado Springs",
+  "street_address": "1376 E Woodmen Rd",
+  "city": "Colorado Springs",
+  "state": "CO",
+  "zip": "80920",
+  "country_code": "US",
+  "store_number": 11051,
+  "phone": "(719) 260-1455",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.93380638",
+  "longitude": "-104.79977172",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1900,
+    "mon_time_open": 900,
+    "mon_time_close": 2100,
+    "tue_time_open": 900,
+    "tue_time_close": 2100,
+    "wed_time_open": 900,
+    "wed_time_close": 2100,
+    "thu_time_open": 900,
+    "thu_time_close": 2100,
+    "fri_time_open": 900,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 2100
+  }
+}

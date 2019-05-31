@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Irwin",
+  "street_address": "9616 Route 30",
+  "city": "Irwin",
+  "state": "PA",
+  "zip": "15642",
+  "country_code": "US",
+  "store_number": "172",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.36502",
+  "longitude": "-79.58406",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Eastside Junction",
+  "street_address": "22031 US Highway 72",
+  "city": "Athens",
+  "state": "AL",
+  "zip": "35613-2614",
+  "country_code": "US",
+  "store_number": 3498,
+  "phone": "2562302076",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.783808,
+  "longitude": -86.929765,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

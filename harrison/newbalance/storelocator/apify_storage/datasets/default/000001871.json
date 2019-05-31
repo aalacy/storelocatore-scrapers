@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Bloomington",
+  "street_address": "105 Krispy Kreme Drive",
+  "city": "Bloomington",
+  "state": "IL",
+  "zip": "61704",
+  "country_code": "US",
+  "store_number": 19053,
+  "phone": "(309) 808-3220",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.48015136",
+  "longitude": "-88.95148935",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Murrells Inlet - Plaza Dr",
+  "street_address": "11915 Plaza Dr",
+  "city": "Murrells Inlet",
+  "state": "SC",
+  "zip": "29576",
+  "country_code": "US",
+  "store_number": 1269,
+  "phone": "8438391801",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.587139,
+  "longitude": -79.026016,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

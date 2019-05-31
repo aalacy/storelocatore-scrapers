@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "West Gate Shopping Center",
+  "street_address": "125 SW 34th St",
+  "city": "Gainesville",
+  "state": "FL",
+  "zip": "32607-2850",
+  "country_code": "US",
+  "store_number": 2731,
+  "phone": "3523761217",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 29.650911,
+  "longitude": -82.371132,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Downtown Summerlin",
+  "street_address": "1980 Festival Plaza Dr",
+  "city": "Las Vegas",
+  "state": "NV",
+  "country_code": "US",
+  "store_number": "7995266",
+  "phone": "702-256-3001",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.150029",
+  "longitude": "-115.332396",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

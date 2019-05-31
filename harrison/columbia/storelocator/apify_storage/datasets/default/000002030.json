@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Spoke-N-Sport Brookings",
+  "street_address": "503 Main Ave",
+  "city": "Brookings",
+  "state": "SD",
+  "zip": "57006",
+  "country_code": "US",
+  "store_number": 109602,
+  "phone": "(605) 696-7979",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.31072598",
+  "longitude": "-96.79915860",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

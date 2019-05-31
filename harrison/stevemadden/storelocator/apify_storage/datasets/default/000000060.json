@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Siam Discovery",
+  "street_address": "Rama I Road",
+  "city": "Pathumwan Bangkok",
+  "state": null,
+  "country_code": "TH",
+  "store_number": "7995549",
+  "phone": "987654321",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "13.720845",
+  "longitude": "100.585879",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

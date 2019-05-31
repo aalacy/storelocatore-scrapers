@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Aventuron",
+  "street_address": "631 N 8th St",
+  "city": "Sheboygan",
+  "state": "WI",
+  "zip": "53081",
+  "country_code": "US",
+  "store_number": 136436,
+  "phone": "(920) 783-8168",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.75171683",
+  "longitude": "-87.71214371",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

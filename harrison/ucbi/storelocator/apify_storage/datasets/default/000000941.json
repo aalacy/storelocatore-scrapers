@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "South Oaks Square",
+  "street_address": "1528 Ohio Ave S",
+  "city": "Live Oak",
+  "state": "FL",
+  "zip": "32064-4514",
+  "country_code": "US",
+  "store_number": 2777,
+  "phone": "3863627144",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.2811,
+  "longitude": -82.9897,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 8:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

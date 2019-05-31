@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fraser Bicycle",
+  "street_address": "34501 Utica Rd",
+  "city": "Fraser",
+  "state": "MI",
+  "zip": "48026",
+  "country_code": "US",
+  "store_number": 20813,
+  "phone": "(586) 294-4070",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.54920697",
+  "longitude": "-82.95957136",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

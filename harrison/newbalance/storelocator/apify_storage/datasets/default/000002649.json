@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Estevan",
+  "street_address": "400 King St Unit 1220",
+  "city": "Estevan",
+  "state": "SK",
+  "zip": "S4A1K6",
+  "country_code": "CA",
+  "store_number": 103632,
+  "phone": "(306) 636-6930",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.14580520",
+  "longitude": "-102.97801687",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

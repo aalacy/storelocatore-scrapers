@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "TCO Fly Shop - Main Line Philadelphia",
+  "street_address": "895 Penn St",
+  "city": "Bryn Mawr",
+  "state": "PA",
+  "zip": "19010",
+  "country_code": "US",
+  "store_number": 17121,
+  "phone": "(610) 527-3388",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.01737656",
+  "longitude": "-75.31163123",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "BEIJING Indigo",
+  "street_address": "No.18,JiuXianQiao Rd",
+  "city": "Beijing",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995190",
+  "phone": "1084200831",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.550000",
+  "longitude": "116.250000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

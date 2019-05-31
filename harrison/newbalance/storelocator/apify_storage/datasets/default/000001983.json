@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Scottsbluff",
+  "street_address": "1720 Broadway",
+  "city": "Scottsbluff",
+  "state": "NE",
+  "zip": "69361",
+  "country_code": "US",
+  "store_number": 21993,
+  "phone": "(308) 632-6665",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.86368590",
+  "longitude": "-103.66316984",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

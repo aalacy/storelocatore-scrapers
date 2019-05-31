@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Puzzle Creek Outdoor Company",
+  "street_address": "121 E Main St",
+  "city": "Forest City",
+  "state": "NC",
+  "zip": "28043",
+  "country_code": "US",
+  "store_number": 14926,
+  "phone": "(828) 245-6050",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.33395789",
+  "longitude": "-81.86441341",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

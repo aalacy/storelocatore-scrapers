@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Montclair Place",
+  "street_address": "1325 Montclair Rd",
+  "city": "Birmingham",
+  "state": "AL",
+  "zip": "35210-2205",
+  "country_code": "US",
+  "store_number": 3359,
+  "phone": "2059516626",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.52109,
+  "longitude": -86.731149,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:30 AM - 10:00 PM,Mon 6:30 AM - 10:00 PM,Tues 6:30 AM - 10:00 PM,Wed 6:30 AM - 10:00 PM,Thurs 6:30 AM - 10:00 PM,Fri 6:30 AM - 10:00 PM,Sat 6:30 AM - 10:00 PM,"
+}

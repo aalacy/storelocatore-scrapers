@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Frontier Mall",
+  "street_address": "11429 Railway Ave E",
+  "city": "North Battleford",
+  "state": "SK",
+  "zip": "S9A3G8",
+  "country_code": "CA",
+  "store_number": 103695,
+  "phone": "(306) 446-2872",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "52.76053864",
+  "longitude": "-108.27471774",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

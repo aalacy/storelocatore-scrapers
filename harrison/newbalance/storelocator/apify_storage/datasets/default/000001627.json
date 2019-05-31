@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Austin Canoe & Kayak - San Antonio",
+  "street_address": "12746 Cimarron Path",
+  "city": "San Antonio",
+  "state": "TX",
+  "zip": "78249",
+  "country_code": "US",
+  "store_number": 10825,
+  "phone": "(210) 593-7063",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "29.56006484",
+  "longitude": "-98.59767162",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1800,
+    "tue_time_open": 1000,
+    "tue_time_close": 1800,
+    "wed_time_open": 1000,
+    "wed_time_close": 1800,
+    "thu_time_open": 1000,
+    "thu_time_close": 1800,
+    "fri_time_open": 1000,
+    "fri_time_close": 1800,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

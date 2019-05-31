@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Cullman Shopping Center",
+  "street_address": "1104 Cullman Shopping Ctr NW",
+  "city": "Cullman",
+  "state": "AL",
+  "zip": "35055-2855",
+  "country_code": "US",
+  "store_number": 3768,
+  "phone": "2567367000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.181938,
+  "longitude": -86.849326,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:30 AM - 10:00 PM,Mon 6:30 AM - 10:00 PM,Tues 6:30 AM - 10:00 PM,Wed 6:30 AM - 10:00 PM,Thurs 6:30 AM - 10:00 PM,Fri 6:30 AM - 10:00 PM,Sat 6:30 AM - 10:00 PM,"
+}

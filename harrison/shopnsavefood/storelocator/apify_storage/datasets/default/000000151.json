@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Mt. Pleasant",
+  "street_address": "819 W. Main Street",
+  "city": "Mt. Pleasant",
+  "state": "PA",
+  "zip": "15666",
+  "country_code": "US",
+  "store_number": "195",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.20221",
+  "longitude": "-79.60998",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

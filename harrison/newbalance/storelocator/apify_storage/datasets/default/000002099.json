@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Koopman Lumber Whitinsville",
+  "street_address": "665 Church st",
+  "city": "Whitinsville",
+  "state": "Massachusetts",
+  "zip": "01588",
+  "country_code": "US",
+  "store_number": 89833,
+  "phone": "(508) 234-4545",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.12337690",
+  "longitude": "-71.64690117",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,15 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Les Promenades St-Bruno",
+  "street_address": "1 Boul. Des Promenades",
+  "city": "St-Bruno-De-Montarville",
+  "country_code": "CA",
+  "store_number": "7995376",
+  "phone": "450-653-7463",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.504876",
+  "longitude": "-73.381982",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

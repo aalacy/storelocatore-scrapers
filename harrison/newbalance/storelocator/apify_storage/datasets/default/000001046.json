@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Atmosphere - South Edmonton Common",
+  "street_address": "1612 99 St NW",
+  "city": "Edmonton",
+  "state": "AB",
+  "zip": "T6N1M5",
+  "country_code": "CA",
+  "store_number": 19680,
+  "phone": "(780) 638-6150",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "53.44587564",
+  "longitude": "-113.48185936",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

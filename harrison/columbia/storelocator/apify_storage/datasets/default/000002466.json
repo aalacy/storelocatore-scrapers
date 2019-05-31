@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Sport Varese",
+  "street_address": "Piazza della Repubblica, 25",
+  "city": "Varese",
+  "state": "VA",
+  "zip": "21100",
+  "country_code": "IT",
+  "store_number": 144763,
+  "phone": "0332 281966",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.81575064",
+  "longitude": "8.82807145",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1400,
+    "sun_time_close": 2000,
+    "mon_time_open": 1430,
+    "mon_time_close": 2000,
+    "tue_time_open": 900,
+    "tue_time_close": 2000,
+    "wed_time_open": 900,
+    "wed_time_close": 2000,
+    "thu_time_open": 900,
+    "thu_time_close": 2000,
+    "fri_time_open": 900,
+    "fri_time_close": 2000,
+    "sat_time_open": 900,
+    "sat_time_close": 2000
+  }
+}

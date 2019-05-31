@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Nantes",
+  "street_address": "5 Rue des Trois Croissants",
+  "city": "Nantes",
+  "state": "",
+  "zip": "44000",
+  "country_code": "FR",
+  "store_number": 104389,
+  "phone": "02 40 08 28 06",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.21677359",
+  "longitude": "-1.55578255",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

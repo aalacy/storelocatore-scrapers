@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "128 Clearview Cir",
+  "city": "Butler",
+  "state": "PA",
+  "zip": "16001",
+  "country_code": "US",
+  "store_number": 10037302,
+  "phone": "(724) 285-6525",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 40.8975134,
+  "longitude": -79.9076821,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

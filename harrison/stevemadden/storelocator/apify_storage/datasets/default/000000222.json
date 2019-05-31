@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Town Center at Boca Raton",
+  "street_address": "6000 W. Glades Road",
+  "city": "Boca Raton",
+  "state": "FL",
+  "country_code": "US",
+  "store_number": "7995661",
+  "phone": "561-361-8434",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "26.365900",
+  "longitude": "-80.134300",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

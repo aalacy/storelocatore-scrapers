@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Garry Gribble's Running Sports - Overland Park",
+  "street_address": "11908 W 119th St",
+  "city": "Overland Park",
+  "state": "KS",
+  "zip": "66213",
+  "country_code": "US",
+  "store_number": 18099,
+  "phone": "(913) 469-4090",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.91333638",
+  "longitude": "-94.72454155",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

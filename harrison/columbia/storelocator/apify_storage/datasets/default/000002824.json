@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Tlc For Bikes",
+  "street_address": "8480 Honeycutt Rd # 126",
+  "city": "Raleigh",
+  "state": "NC",
+  "zip": "27615",
+  "country_code": "US",
+  "store_number": 109934,
+  "phone": "(919) 324-4966",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.89547588",
+  "longitude": "-78.62108129",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

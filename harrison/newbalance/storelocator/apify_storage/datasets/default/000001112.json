@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Winnipeg",
+  "street_address": "1731 Kenaston Blvd",
+  "city": "Winnipeg",
+  "state": "MB",
+  "zip": "R3Y1V5",
+  "country_code": "CA",
+  "store_number": 103795,
+  "phone": "(204) 275-2775",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.88225590",
+  "longitude": "-97.19865140",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

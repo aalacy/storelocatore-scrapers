@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Fleming Island Shopping Center",
+  "street_address": "5000 US Highway 17 Ste 11",
+  "city": "Fleming Island",
+  "state": "FL",
+  "zip": "32003-8223",
+  "country_code": "US",
+  "store_number": 2941,
+  "phone": "9042693600",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.1041,
+  "longitude": -81.7113,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

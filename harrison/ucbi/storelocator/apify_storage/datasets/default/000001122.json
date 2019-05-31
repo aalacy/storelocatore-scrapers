@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Plaza Midtown",
+  "street_address": "950 W Peachtree St NW",
+  "city": "Atlanta",
+  "state": "GA",
+  "zip": "30309-3846",
+  "country_code": "US",
+  "store_number": 3361,
+  "phone": "4042533544",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.779914,
+  "longitude": -84.388508,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:45 AM - 11:00 PM,Mon 6:45 AM - 11:00 PM,Tues 6:45 AM - 11:00 PM,Wed 6:45 AM - 11:00 PM,Thurs 6:45 AM - 11:00 PM,Fri 6:45 AM - 11:00 PM,Sat 6:45 AM - 11:00 PM,"
+}

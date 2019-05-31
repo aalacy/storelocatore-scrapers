@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "IRVINE SPECTRUM CENTER",
+  "street_address": "653 SPECTRUM CENTER DR",
+  "city": "IRVINE",
+  "state": "CA",
+  "zip": "92618",
+  "country_code": "US",
+  "store_number": "693",
+  "phone": "(949) 753-1968",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.669277,
+  "longitude": -117.76473,
+  "external_lat_long": false,
+  "hours_of_operation": "1#10:00 AM#09:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#10:00 PM|7#10:00 AM#10:00 PM"
+}

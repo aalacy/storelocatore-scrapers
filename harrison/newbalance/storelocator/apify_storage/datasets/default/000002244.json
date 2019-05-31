@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Babies in Bloom",
+  "street_address": "1948 Via Centre",
+  "city": "Vista",
+  "state": "CA",
+  "zip": "92081",
+  "country_code": "US",
+  "store_number": 36960,
+  "phone": "(760) 940-2229",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.18345437",
+  "longitude": "-117.28291922",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

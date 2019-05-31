@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Reeds Family Outdoor Outfitters",
+  "street_address": "522 Minnesota Ave W",
+  "city": "Walker",
+  "state": "MN",
+  "zip": "56484",
+  "country_code": "US",
+  "store_number": 18193,
+  "phone": "(800) 346-0019",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.10218772",
+  "longitude": "-94.58328155",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

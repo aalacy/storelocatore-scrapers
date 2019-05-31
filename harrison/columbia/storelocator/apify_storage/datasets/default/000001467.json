@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Nimes",
+  "street_address": "3 Avenue Jean Prouvé",
+  "city": "Nîmes",
+  "state": "",
+  "zip": "30900",
+  "country_code": "FR",
+  "store_number": 73017,
+  "phone": "04 66 57 40 36",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.81336718",
+  "longitude": "4.34697122",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

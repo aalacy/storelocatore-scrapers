@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "No. 289, Sec. 2, Huansi Road",
+  "city": "Fenyuan",
+  "state": "Changhua County",
+  "zip": "502",
+  "country_code": "US",
+  "store_number": 10037367,
+  "phone": "34947300",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 24.965211,
+  "longitude": 121.213518,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

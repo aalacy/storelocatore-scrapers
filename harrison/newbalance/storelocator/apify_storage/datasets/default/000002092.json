@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Blain's Farm & Fleet",
+  "street_address": "1400 W Main St",
+  "city": "Watertown",
+  "state": "WI",
+  "zip": "53094",
+  "country_code": "US",
+  "store_number": 52904,
+  "phone": "(920) 261-4910",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.19970778",
+  "longitude": "-88.76014543",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

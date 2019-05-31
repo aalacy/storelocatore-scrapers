@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Waynesburg",
+  "street_address": "10 E. Greene Street",
+  "city": "Waynesburg",
+  "state": "PA",
+  "zip": "15370",
+  "country_code": "US",
+  "store_number": "250",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "39.87477",
+  "longitude": "-80.08057",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

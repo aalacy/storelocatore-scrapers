@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Avenues Mall",
+  "street_address": "Central Market 3977, Road 4660",
+  "city": "Manama",
+  "state": null,
+  "country_code": "BH",
+  "store_number": "7995175",
+  "phone": "97317116293",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "26.246136",
+  "longitude": "50.585254",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

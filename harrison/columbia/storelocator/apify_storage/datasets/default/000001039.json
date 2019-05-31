@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Truro Mall",
+  "street_address": "245 Robie St Unit 109",
+  "city": "Truro",
+  "state": "NS",
+  "zip": "B2N5N6",
+  "country_code": "CA",
+  "store_number": 103770,
+  "phone": "(902) 895-3383",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.37028743",
+  "longitude": "-63.30304104",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

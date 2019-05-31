@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Cornegliano Laudense",
+  "street_address": "Via Codognino 12 (Fraz. Muzza)",
+  "city": "Cornegliano Laudense",
+  "state": "LO",
+  "zip": "26854",
+  "country_code": "IT",
+  "store_number": 144697,
+  "phone": "0371 699000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.28674198",
+  "longitude": "9.47264155",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1900,
+    "mon_time_open": 930,
+    "mon_time_close": 2000,
+    "tue_time_open": 930,
+    "tue_time_close": 2000,
+    "wed_time_open": 930,
+    "wed_time_close": 2000,
+    "thu_time_open": 930,
+    "thu_time_close": 2000,
+    "fri_time_open": 930,
+    "fri_time_close": 2000,
+    "sat_time_open": 930,
+    "sat_time_close": 2000
+  }
+}

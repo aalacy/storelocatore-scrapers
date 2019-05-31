@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rogan's Shoes - Janesville",
+  "street_address": "1221 Woodman Rd",
+  "city": "Janesville",
+  "state": "WI",
+  "zip": "53545",
+  "country_code": "US",
+  "store_number": 38896,
+  "phone": "(608) 754-7544",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.70065730",
+  "longitude": "-89.01162160",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

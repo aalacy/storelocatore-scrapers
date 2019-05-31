@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Marine Drive",
+  "street_address": "8125 Ontario St",
+  "city": "Vancouver",
+  "state": "BC",
+  "zip": "V5X0A7",
+  "country_code": "CA",
+  "store_number": 103773,
+  "phone": "(604) 235-5000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.21136420",
+  "longitude": "-123.10742250",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

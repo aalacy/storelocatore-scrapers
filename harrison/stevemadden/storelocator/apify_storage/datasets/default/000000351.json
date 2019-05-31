@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "The Great Mall Milpitas Outlet",
+  "street_address": "506 GREAT MALL DR.",
+  "city": "MILPITAS",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995644",
+  "phone": "408-514-0025",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.416700",
+  "longitude": "-121.898000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Sport",
+  "street_address": "Via Portuense n.2000",
+  "city": "Fiumicino",
+  "state": "RM",
+  "zip": "00054",
+  "country_code": "IT",
+  "store_number": 104416,
+  "phone": "06 4542 2595",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.77368442",
+  "longitude": "12.24720066",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 2200,
+    "mon_time_open": 1000,
+    "mon_time_close": 2200,
+    "tue_time_open": 1000,
+    "tue_time_close": 2200,
+    "wed_time_open": 1000,
+    "wed_time_close": 2200,
+    "thu_time_open": 1000,
+    "thu_time_close": 2200,
+    "fri_time_open": 1000,
+    "fri_time_close": 2200,
+    "sat_time_open": 1000,
+    "sat_time_close": 2200
+  }
+}

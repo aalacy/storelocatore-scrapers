@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Summit Bicycles",
+  "street_address": "2046 El Camino Real",
+  "city": "Santa Clara",
+  "state": "CA",
+  "zip": "95050",
+  "country_code": "US",
+  "store_number": 67860,
+  "phone": "(408) 261-2453",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.35008612",
+  "longitude": "-121.96183200",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Promenade",
+  "street_address": "1 Promenade Cir Unit 117-8",
+  "city": "Thornhill",
+  "state": "ON",
+  "zip": "L4J8G7",
+  "country_code": "CA",
+  "store_number": 103760,
+  "phone": "(905) 707-0557",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.80645920",
+  "longitude": "-79.45245710",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

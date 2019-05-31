@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cabela's",
+  "street_address": "391 N Cabela's Dr",
+  "city": "Farmington",
+  "state": "UT",
+  "zip": "84025",
+  "country_code": "US",
+  "store_number": 37653,
+  "phone": "(801) 939-3700",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.98645840",
+  "longitude": "-111.91201690",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Second Sole",
+  "street_address": "1245 N Hamilton Rd",
+  "city": "Gahanna",
+  "state": "OH",
+  "zip": "43230",
+  "country_code": "US",
+  "store_number": 16512,
+  "phone": "(614) 478-3361",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.05096562",
+  "longitude": "-82.86485136",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

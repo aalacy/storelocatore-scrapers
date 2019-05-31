@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Beaver Creek Fly Shop",
+  "street_address": "9720 Country Store Ln",
+  "city": "Hagerstown",
+  "state": "MD",
+  "zip": "21740",
+  "country_code": "US",
+  "store_number": 36648,
+  "phone": "(301) 393-9090",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.58312649",
+  "longitude": "-77.64303127",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

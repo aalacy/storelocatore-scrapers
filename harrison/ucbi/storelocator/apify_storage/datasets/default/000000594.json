@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "East Towne Center",
+  "street_address": "13900 County Road 455",
+  "city": "Clermont",
+  "state": "FL",
+  "zip": "34711-9052",
+  "country_code": "US",
+  "store_number": 2687,
+  "phone": "4078771545",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.548547,
+  "longitude": -81.681101,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Tailwaters Fly Fishing Co.",
+  "street_address": "1933 E Levee St",
+  "city": "Dallas",
+  "state": "TX",
+  "zip": "75207",
+  "country_code": "US",
+  "store_number": 617,
+  "phone": "(214) 219-2500",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.79195373",
+  "longitude": "-96.82971586",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

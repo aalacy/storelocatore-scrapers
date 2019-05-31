@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Mt. Airy Bicycle Company",
+  "street_address": "4540 Old National Pike",
+  "city": "Mt Airy",
+  "state": "MD",
+  "zip": "21771",
+  "country_code": "US",
+  "store_number": 35628,
+  "phone": "(410) 795-2929",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.35936449",
+  "longitude": "-77.16082126",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

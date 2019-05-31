@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Freeride Boardshop",
+  "street_address": "158 Main St",
+  "city": "Penticton",
+  "state": "BC",
+  "zip": "V2A5A4",
+  "country_code": "CA",
+  "store_number": 79476,
+  "phone": "(250) 487-7433",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.50081102",
+  "longitude": "-119.59319594",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

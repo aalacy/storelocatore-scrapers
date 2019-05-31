@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Parkway Centre",
+  "street_address": "7600 Schomburg Rd",
+  "city": "Columbus",
+  "state": "GA",
+  "zip": "31909-1833",
+  "country_code": "US",
+  "store_number": 3073,
+  "phone": "7065653260",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 32.55766,
+  "longitude": -84.904652,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Elliott's Boots Shoes Sandals",
+  "street_address": "706 N Campbell Station Rd",
+  "city": "Farragut",
+  "state": "TN",
+  "zip": "37934",
+  "country_code": "US",
+  "store_number": 99606,
+  "phone": "(865) 673-8520",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.89598500",
+  "longitude": "-84.17442680",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 930,
+    "mon_time_close": 1900,
+    "tue_time_open": 930,
+    "tue_time_close": 1900,
+    "wed_time_open": 930,
+    "wed_time_close": 1900,
+    "thu_time_open": 930,
+    "thu_time_close": 1900,
+    "fri_time_open": 930,
+    "fri_time_close": 1900,
+    "sat_time_open": 930,
+    "sat_time_close": 1900
+  }
+}

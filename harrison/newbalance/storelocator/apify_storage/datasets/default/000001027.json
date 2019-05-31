@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Strawberry Hill",
+  "street_address": "12101 72 Ave Unit 120",
+  "city": "Surrey",
+  "state": "BC",
+  "zip": "V3W2M1",
+  "country_code": "CA",
+  "store_number": 103756,
+  "phone": "(604) 572-7008",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.13564805",
+  "longitude": "-122.88629201",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

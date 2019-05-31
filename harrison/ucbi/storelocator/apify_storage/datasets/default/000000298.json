@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Homestead Towne Square",
+  "street_address": "891 N Homestead Blvd",
+  "city": "Homestead",
+  "state": "FL",
+  "zip": "33030-5024",
+  "country_code": "US",
+  "store_number": 2949,
+  "phone": "3052421500",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.478312,
+  "longitude": -80.462588,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

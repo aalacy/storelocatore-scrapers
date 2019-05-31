@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Midtown Center",
+  "street_address": "100 N Florida St",
+  "city": "Mobile",
+  "state": "AL",
+  "zip": "36607",
+  "country_code": "US",
+  "store_number": 3853,
+  "phone": "2514714860",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.69121,
+  "longitude": -88.099825,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

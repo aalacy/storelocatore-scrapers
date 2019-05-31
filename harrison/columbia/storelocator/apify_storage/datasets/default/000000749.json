@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Greenville",
+  "street_address": "1140 Woodruff Rd #501",
+  "city": "Greenville",
+  "state": "SC",
+  "zip": "29607",
+  "country_code": "US",
+  "store_number": 84782,
+  "phone": "(864) 288-0044",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.82651700",
+  "longitude": "-82.30179700",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 2000
+  }
+}

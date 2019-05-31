@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cutlery Mania",
+  "street_address": "1275 Bloomfield Ave Bldg. 9, Suite 80",
+  "city": "Fairfield",
+  "state": "NJ",
+  "zip": "07004",
+  "country_code": "US",
+  "store_number": 68497,
+  "phone": "(973) 287-6535",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.85846669",
+  "longitude": "-74.31663122",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Southeast Plaza Shopping Center",
+  "street_address": "884 Cypress Gardens Blvd",
+  "city": "Winter Haven",
+  "state": "FL",
+  "zip": "33880-4726",
+  "country_code": "US",
+  "store_number": 3499,
+  "phone": "8632910312",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.002724,
+  "longitude": -81.71615,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

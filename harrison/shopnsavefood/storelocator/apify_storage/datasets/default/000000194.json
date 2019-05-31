@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Pleasant Hills",
+  "street_address": "575 Old Clairton Rd",
+  "city": "Pleasant Hills",
+  "state": "PA",
+  "zip": "15236",
+  "country_code": "US",
+  "store_number": "228",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.3259741",
+  "longitude": "-79.9561947",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

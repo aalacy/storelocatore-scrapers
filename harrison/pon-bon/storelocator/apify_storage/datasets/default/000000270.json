@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "El Amal Building - Space 1, 282 Jesus T. Pinero Avenue",
+  "city": "Hato Rey",
+  "state": "PR",
+  "zip": "00936",
+  "country_code": "US",
+  "store_number": 10037290,
+  "phone": "(787) 763-4260",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 18.407241005257756,
+  "longitude": -66.06576545767211,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

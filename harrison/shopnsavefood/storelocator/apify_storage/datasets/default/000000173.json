@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Norwin Town Square",
+  "street_address": "12120 US Route 30",
+  "city": "North Huntingdon",
+  "state": "PA",
+  "zip": "15642",
+  "country_code": "US",
+  "store_number": "353",
+  "phone": "1149",
+  "location_type": {
+    "gas_station": "724-515-7941",
+    "active": "40.3316059",
+    "pump_perk": "-79.7439798"
+  },
+  "niacs_code": null,
+  "latitude": "Sun - Sat 7 AM - 10 PM",
+  "longitude": "724-515-2148",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

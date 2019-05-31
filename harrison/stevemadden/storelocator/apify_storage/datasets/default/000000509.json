@@ -1,0 +1,15 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "PEEL 22",
+  "street_address": "1021 St Catherine Street West",
+  "city": "Montréal",
+  "country_code": "CA",
+  "store_number": "7995458",
+  "phone": "514 282 8668",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.500408",
+  "longitude": "-73.572730",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

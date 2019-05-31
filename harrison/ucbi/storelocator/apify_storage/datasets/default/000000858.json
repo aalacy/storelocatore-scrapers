@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Bay Pointe Plaza",
+  "street_address": "5295 34th St S",
+  "city": "Saint Petersburg",
+  "state": "FL",
+  "zip": "33711-4517",
+  "country_code": "US",
+  "store_number": 3805,
+  "phone": "7278640079",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.720504,
+  "longitude": -82.680481,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

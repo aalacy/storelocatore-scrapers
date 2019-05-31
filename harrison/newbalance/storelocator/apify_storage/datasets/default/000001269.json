@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Nantes Orvault",
+  "street_address": "384 Route de Vannes",
+  "city": "Orvault",
+  "state": "",
+  "zip": "44700",
+  "country_code": "FR",
+  "store_number": 73019,
+  "phone": "02 40 59 02 16",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.25659774",
+  "longitude": "-1.63579268",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

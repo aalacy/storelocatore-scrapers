@@ -1,0 +1,15 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Market Mall",
+  "street_address": "3625 Shaganappi Trail N.W",
+  "city": "Calgary",
+  "country_code": "CA",
+  "store_number": "7995397",
+  "phone": "4032477449",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "51.082854",
+  "longitude": "-114.157360",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

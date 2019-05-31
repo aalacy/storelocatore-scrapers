@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Shoppes of Paradise Lakes",
+  "street_address": "16800 SW 88th St",
+  "city": "Miami",
+  "state": "FL",
+  "zip": "33196-5935",
+  "country_code": "US",
+  "store_number": 3080,
+  "phone": "3053825551",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.682601,
+  "longitude": -80.464745,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

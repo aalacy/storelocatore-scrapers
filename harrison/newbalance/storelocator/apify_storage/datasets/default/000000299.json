@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Confluence Running",
+  "street_address": "46 S Washington St",
+  "city": "Binghamton",
+  "state": "NY",
+  "zip": "13903",
+  "country_code": "US",
+  "store_number": 17906,
+  "phone": "(607) 217-4155",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.08991690",
+  "longitude": "-75.91421124",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

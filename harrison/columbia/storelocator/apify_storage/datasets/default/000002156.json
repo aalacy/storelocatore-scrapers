@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brooklyn Baby World",
+  "street_address": "7302 15th Ave",
+  "city": "Brooklyn",
+  "state": "NY",
+  "zip": "11228",
+  "country_code": "US",
+  "store_number": 25171,
+  "phone": "(718) 331-9498",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.61881665",
+  "longitude": "-74.00215121",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

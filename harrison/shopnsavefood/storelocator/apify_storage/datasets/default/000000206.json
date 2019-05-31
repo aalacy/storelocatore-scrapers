@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Rostraver",
+  "street_address": "600 Willowbrook Plaza",
+  "city": "Belle Vernon",
+  "state": "PA",
+  "zip": "15012",
+  "country_code": "US",
+  "store_number": "29",
+  "phone": "1053",
+  "location_type": {
+    "gas_station": "724-379-9000",
+    "active": "724-379-0133",
+    "pump_perk": "40.184775"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sat 6:00am-11:00pm",
+  "longitude": "Sun 7:00am-10:00pm",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

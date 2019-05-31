@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Seabreeze Shoppes",
+  "street_address": "900 NE Ocean Blvd",
+  "city": "Stuart",
+  "state": "FL",
+  "zip": "34996-1519",
+  "country_code": "US",
+  "store_number": 3063,
+  "phone": "7723340578",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.216686,
+  "longitude": -80.178162,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

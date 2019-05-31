@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Got Bikes?",
+  "street_address": "5859 Winfield Blvd",
+  "city": "San Jose",
+  "state": "CA",
+  "zip": "95123",
+  "country_code": "US",
+  "store_number": 128896,
+  "phone": "(408) 455-8074",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.24663961",
+  "longitude": "-121.86841320",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

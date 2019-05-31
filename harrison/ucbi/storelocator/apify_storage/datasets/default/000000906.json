@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Caladesi Shopping Center",
+  "street_address": "902 Curlew Rd",
+  "city": "Dunedin",
+  "state": "FL",
+  "zip": "34698-1901",
+  "country_code": "US",
+  "store_number": 3681,
+  "phone": "7277369047",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.050005,
+  "longitude": -82.778591,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

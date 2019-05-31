@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix GreenWise Market - Boca Village Square",
+  "street_address": "21230 Saint Andrews Blvd",
+  "city": "Boca Raton",
+  "state": "FL",
+  "zip": "33433-2435",
+  "country_code": "US",
+  "store_number": 3457,
+  "phone": "5615442422",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.362007,
+  "longitude": -80.135838,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

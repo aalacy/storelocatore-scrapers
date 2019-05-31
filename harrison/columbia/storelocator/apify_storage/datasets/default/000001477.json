@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rogan's Shoes - Waukesha",
+  "street_address": "120 E Sunset Dr #110",
+  "city": "Waukesha",
+  "state": "WI",
+  "zip": "53189",
+  "country_code": "US",
+  "store_number": 52887,
+  "phone": "(262) 522-2200",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.98966110",
+  "longitude": "-88.22545040",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

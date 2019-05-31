@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Escape Outdoors Bellevue Square",
+  "street_address": "1023 Bellevue Way SE",
+  "city": "Bellevue",
+  "state": "WA",
+  "zip": "98004",
+  "country_code": "US",
+  "store_number": 13661,
+  "phone": "(425) 453-7406",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.61943780",
+  "longitude": "-122.20171200",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1900,
+    "mon_time_open": 930,
+    "mon_time_close": 2130,
+    "tue_time_open": 930,
+    "tue_time_close": 2130,
+    "wed_time_open": 930,
+    "wed_time_close": 2130,
+    "thu_time_open": 930,
+    "thu_time_close": 2130,
+    "fri_time_open": 930,
+    "fri_time_close": 2130,
+    "sat_time_open": 930,
+    "sat_time_close": 2130
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "GREEN ACRES MALL",
+  "street_address": "1036 GREEN ACRES MALL",
+  "city": "VALLEY STREAM",
+  "state": "NY",
+  "zip": "11581",
+  "country_code": "US",
+  "store_number": "789",
+  "phone": "(516) 825-8275",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 40.6523,
+  "longitude": -73.71129,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#07:00 PM|2#10:00 AM#09:30 PM|3#10:00 AM#09:30 PM|4#10:00 AM#09:30 PM|5#10:00 AM#09:30 PM|6#10:00 AM#09:30 PM|7#10:00 AM#09:30 PM"
+}

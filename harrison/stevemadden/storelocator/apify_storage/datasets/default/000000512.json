@@ -1,0 +1,15 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Le Carrefour Laval",
+  "street_address": "3035 Boul. Le Carrefour",
+  "city": "Laval",
+  "country_code": "CA",
+  "store_number": "7995371",
+  "phone": "450-688-2505",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.568917",
+  "longitude": "-73.752437",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

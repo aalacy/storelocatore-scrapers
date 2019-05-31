@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Impulse Sports",
+  "street_address": "4151 Hazelbridge Way #2920",
+  "city": "Richmond",
+  "state": "BC",
+  "zip": "V6X4J7",
+  "country_code": "CA",
+  "store_number": 19893,
+  "phone": "(604) 295-6606",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.18381806",
+  "longitude": "-123.13356202",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1900,
+    "mon_time_open": 1100,
+    "mon_time_close": 1900,
+    "tue_time_open": 1100,
+    "tue_time_close": 1900,
+    "wed_time_open": 1100,
+    "wed_time_close": 1900,
+    "thu_time_open": 1100,
+    "thu_time_close": 2100,
+    "fri_time_open": 1100,
+    "fri_time_close": 2100,
+    "sat_time_open": 1100,
+    "sat_time_close": 2100
+  }
+}

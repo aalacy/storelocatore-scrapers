@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Virginia Center Marketplace",
+  "street_address": "10150 Brook Rd",
+  "city": "Glen Allen",
+  "state": "VA",
+  "zip": "23059-6514",
+  "country_code": "US",
+  "store_number": 3843,
+  "phone": "8042628190",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 37.6753,
+  "longitude": -77.4613,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

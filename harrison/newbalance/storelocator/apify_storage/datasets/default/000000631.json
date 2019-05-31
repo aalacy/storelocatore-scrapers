@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Angler's Covey",
+  "street_address": "295 S 21st St",
+  "city": "Colorado Springs",
+  "state": "CO",
+  "zip": "80904",
+  "country_code": "US",
+  "store_number": 17727,
+  "phone": "(719) 471-2984",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.84051636",
+  "longitude": "-104.85835172",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

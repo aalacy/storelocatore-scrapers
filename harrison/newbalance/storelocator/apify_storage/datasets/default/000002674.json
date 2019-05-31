@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Premier Pool & Spa",
+  "street_address": "2985 Water Tower Pl",
+  "city": "Chanhassen",
+  "state": "MN",
+  "zip": "55317",
+  "country_code": "US",
+  "store_number": 90425,
+  "phone": "(952) 368-6070",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.85772735",
+  "longitude": "-93.59587153",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

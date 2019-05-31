@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "New Castle",
+  "street_address": "1717 Wilmington Road",
+  "city": "New Castle",
+  "state": "PA",
+  "zip": "16105",
+  "country_code": "US",
+  "store_number": "201",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "41.02405",
+  "longitude": "-80.34544",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

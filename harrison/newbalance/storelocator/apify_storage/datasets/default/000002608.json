@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cap-it - Chilliwack",
+  "street_address": "44489 Yale Road West",
+  "city": "Chilliwack",
+  "state": "BC",
+  "zip": "V2R4H2",
+  "country_code": "CA",
+  "store_number": 32901,
+  "phone": "(604) 795-6688",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.14580519",
+  "longitude": "-121.99261999",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Centro Comercial Paseo Cancun",
+  "street_address": "Av. Andres Quintana Roo",
+  "city": "Cancun",
+  "state": null,
+  "country_code": "MX",
+  "store_number": "7995217",
+  "phone": "987654321",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "21.152586",
+  "longitude": "-86.845092",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Northern Lights Hearth-Sports",
+  "street_address": "639 Wilton Rd",
+  "city": "Farmington",
+  "state": "ME",
+  "zip": "04938",
+  "country_code": "US",
+  "store_number": 33845,
+  "phone": "(207) 778-6566",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.62781731",
+  "longitude": "-70.15786115",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

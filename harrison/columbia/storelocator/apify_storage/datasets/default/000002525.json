@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Southridge Mall",
+  "street_address": "1933 Regent St Unit #51",
+  "city": "Sudbury",
+  "state": "ON",
+  "zip": "P3E5R2",
+  "country_code": "CA",
+  "store_number": 103753,
+  "phone": "(705) 522-3389",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "46.44893761",
+  "longitude": "-81.00271327",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

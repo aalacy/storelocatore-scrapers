@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Silver Crossing",
+  "street_address": "1720 E Silver Star Rd",
+  "city": "Ocoee",
+  "state": "FL",
+  "zip": "34761-7014",
+  "country_code": "US",
+  "store_number": 3180,
+  "phone": "4075221808",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.575168,
+  "longitude": -81.516142,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

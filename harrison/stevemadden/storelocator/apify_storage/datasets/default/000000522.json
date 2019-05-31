@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "PORT TEL AVIV",
+  "street_address": "1 YORDEI HASIRA",
+  "city": "TEL AVIV",
+  "state": null,
+  "country_code": "IL",
+  "store_number": "7995467",
+  "phone": "35446375",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.075538",
+  "longitude": "34.860611",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

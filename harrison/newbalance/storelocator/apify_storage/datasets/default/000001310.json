@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Wild River Outfitters Inc",
+  "street_address": "3636 Virginia Beach Blvd #108",
+  "city": "Virginia Beach",
+  "state": "VA",
+  "zip": "23452",
+  "country_code": "US",
+  "store_number": 440,
+  "phone": "(757) 431-8566",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.84161604",
+  "longitude": "-76.09741247",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1600,
+    "mon_time_open": 1000,
+    "mon_time_close": 1700,
+    "tue_time_open": 1000,
+    "tue_time_close": 1700,
+    "wed_time_open": 1000,
+    "wed_time_close": 1700,
+    "thu_time_open": 1000,
+    "thu_time_close": 1700,
+    "fri_time_open": 1000,
+    "fri_time_close": 1700,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

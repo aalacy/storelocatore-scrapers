@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Highland Plaza",
+  "street_address": "3605 Sandy Plains Rd Ste 200",
+  "city": "Marietta",
+  "state": "GA",
+  "zip": "30066-3066",
+  "country_code": "US",
+  "store_number": 2691,
+  "phone": "7705786000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.038598,
+  "longitude": -84.463067,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

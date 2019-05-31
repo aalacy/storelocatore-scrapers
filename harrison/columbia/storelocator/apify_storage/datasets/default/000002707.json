@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "The Running Place",
+  "street_address": "3551 West Chester Pike",
+  "city": "Newtown Square",
+  "state": "PA",
+  "zip": "19073",
+  "country_code": "US",
+  "store_number": 19557,
+  "phone": "(610) 353-8826",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.98684655",
+  "longitude": "-75.39761235",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

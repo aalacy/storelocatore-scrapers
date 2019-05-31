@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "MEC South Edmonton Common",
+  "street_address": "1624 99 St NW",
+  "city": "Edmonton",
+  "state": "AB",
+  "zip": "T6N1M5",
+  "country_code": "CA",
+  "store_number": 58409,
+  "phone": "(780) 433-0293",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "53.44573876",
+  "longitude": "-113.48748186",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

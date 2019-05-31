@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Wuxi Parkson",
+  "street_address": "2F.No.127,Middle Renmin Road",
+  "city": "Wuxi",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995686",
+  "phone": "51082720721",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "31.566700",
+  "longitude": "120.300000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

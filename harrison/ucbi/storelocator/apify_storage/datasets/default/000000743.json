@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Venice Shopping Center",
+  "street_address": "535 Tamiami Trl S",
+  "city": "Venice",
+  "state": "FL",
+  "zip": "34285-2927",
+  "country_code": "US",
+  "store_number": 3219,
+  "phone": "9414843346",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.092075,
+  "longitude": -82.442461,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

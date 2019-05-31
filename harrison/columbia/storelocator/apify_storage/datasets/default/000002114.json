@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "ASICS International Market Place",
+  "street_address": "2330 Kalakaua Ave. Suite 173",
+  "city": "Honolulu",
+  "state": "HI",
+  "zip": "96815",
+  "country_code": "US",
+  "store_number": 66543,
+  "phone": "(808) 729-9471",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "21.27797349",
+  "longitude": "-157.82673259",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 2200,
+    "mon_time_open": 1000,
+    "mon_time_close": 2200,
+    "tue_time_open": 1000,
+    "tue_time_close": 2200,
+    "wed_time_open": 1000,
+    "wed_time_close": 2200,
+    "thu_time_open": 1000,
+    "thu_time_close": 2200,
+    "fri_time_open": 1000,
+    "fri_time_close": 2200,
+    "sat_time_open": 1000,
+    "sat_time_close": 2200
+  }
+}

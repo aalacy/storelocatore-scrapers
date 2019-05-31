@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Bicycle Sport Shop",
+  "street_address": "517 S Lamar Blvd",
+  "city": "Austin",
+  "state": "TX",
+  "zip": "78704",
+  "country_code": "US",
+  "store_number": 14798,
+  "phone": "(512) 477-3472",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.25961496",
+  "longitude": "-97.75816017",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

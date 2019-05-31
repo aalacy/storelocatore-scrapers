@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "YETI South Congress Store",
+  "street_address": "220 S Congress Ave",
+  "city": "Austin",
+  "state": "TX",
+  "zip": "78704",
+  "country_code": "US",
+  "store_number": 85722,
+  "phone": "(512) 640-7249",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.25935950",
+  "longitude": "-97.74634190",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 2000,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 2000
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Clayton - E Main St",
+  "street_address": "102 E Main St",
+  "city": "Clayton",
+  "state": "NC",
+  "zip": "27520",
+  "country_code": "US",
+  "store_number": 1480,
+  "phone": "9195532323",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.65302,
+  "longitude": -78.459338,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

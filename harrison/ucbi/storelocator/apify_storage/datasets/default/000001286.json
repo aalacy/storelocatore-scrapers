@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Pinnacle at Providence",
+  "street_address": "1660 Old Monrovia Rd NW",
+  "city": "Huntsville",
+  "state": "AL",
+  "zip": "35806",
+  "country_code": "US",
+  "store_number": 3859,
+  "phone": "2564305443",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.75797,
+  "longitude": -86.679565,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

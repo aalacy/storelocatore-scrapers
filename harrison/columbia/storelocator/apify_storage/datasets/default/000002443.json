@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Foot Solutions Sandy Springs",
+  "street_address": "6307 Roswell Rd",
+  "city": "Atlanta",
+  "state": "GA",
+  "zip": "30328",
+  "country_code": "US",
+  "store_number": 22950,
+  "phone": "(404) 252-8001",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.92715559",
+  "longitude": "-84.37851382",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Huntsville Place Mall",
+  "street_address": "70 King William St Unit B-02",
+  "city": "Huntsville",
+  "state": "ON",
+  "zip": "P1H1A5",
+  "country_code": "CA",
+  "store_number": 103650,
+  "phone": "(705) 788-1698",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.33518440",
+  "longitude": "-79.20669340",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "CLARKSBURG PREMIUM",
+  "street_address": "22705 Clarksburg Rd",
+  "city": "CLARKSBURG",
+  "state": "MD",
+  "country_code": "US",
+  "store_number": "7995239",
+  "phone": "301-540-1815",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.229600",
+  "longitude": "-77.286300",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

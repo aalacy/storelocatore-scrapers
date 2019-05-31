@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Oak Leaf Commons",
+  "street_address": "1075 Oakleaf Plantation Pkwy Ste 200",
+  "city": "Orange Park",
+  "state": "FL",
+  "zip": "32065-3627",
+  "country_code": "US",
+  "store_number": 3465,
+  "phone": "9042915108",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.161466,
+  "longitude": -81.835925,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

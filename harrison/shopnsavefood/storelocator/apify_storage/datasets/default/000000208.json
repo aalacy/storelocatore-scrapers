@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Route 66",
+  "street_address": "<Website>",
+  "city": "<Website>",
+  "state": "990 North Main Street ",
+  "zip": "Greensburg",
+  "country_code": "US",
+  "store_number": "53",
+  "phone": "1270",
+  "location_type": {
+    "gas_station": "Mon-Sat 7:00am-11:00pm",
+    "active": "Sun 8:00am-11:00pm",
+    "pump_perk": "724-834-5714"
+  },
+  "niacs_code": null,
+  "latitude": "PA",
+  "longitude": "15601",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

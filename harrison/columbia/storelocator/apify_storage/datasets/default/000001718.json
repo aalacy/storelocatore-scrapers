@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Summit Sports Brighton",
+  "street_address": "8180 Grand River Ave",
+  "city": "Brighton",
+  "state": "MI",
+  "zip": "48114",
+  "country_code": "US",
+  "store_number": 1769,
+  "phone": "(810) 227-6877",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.55348697",
+  "longitude": "-83.79152137",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

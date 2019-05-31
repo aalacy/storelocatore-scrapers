@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Woodland Center",
+  "street_address": "1950 N Highway 19",
+  "city": "Eustis",
+  "state": "FL",
+  "zip": "32726-6729",
+  "country_code": "US",
+  "store_number": 2946,
+  "phone": "3523574989",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.874245,
+  "longitude": -81.68942,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

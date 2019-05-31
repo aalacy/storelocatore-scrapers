@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Gearhead Outfitters",
+  "street_address": "231 S Main St",
+  "city": "Jonesboro",
+  "state": "AR",
+  "zip": "72401",
+  "country_code": "US",
+  "store_number": 467,
+  "phone": "(870) 336-2453",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.84095872",
+  "longitude": "-90.70511486",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

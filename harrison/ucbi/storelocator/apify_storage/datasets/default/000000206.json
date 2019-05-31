@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Pine Island Ridge Plaza",
+  "street_address": "8842 W State Road 84",
+  "city": "Davie",
+  "state": "FL",
+  "zip": "33324-4415",
+  "country_code": "US",
+  "store_number": 2787,
+  "phone": "9544724511",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.100747,
+  "longitude": -80.266708,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:45 AM - 10:00 PM,Mon 6:45 AM - 11:00 PM,Tues 6:45 AM - 11:00 PM,Wed 6:45 AM - 11:00 PM,Thurs 6:45 AM - 11:00 PM,Fri 6:45 AM - 11:00 PM,Sat 6:45 AM - 11:00 PM,"
+}

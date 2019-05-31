@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Magnolia Plaza",
+  "street_address": "2419 Thomas Dr",
+  "city": "Panama City",
+  "state": "FL",
+  "zip": "32408-5808",
+  "country_code": "US",
+  "store_number": 3469,
+  "phone": "8502364415",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.16029,
+  "longitude": -85.752151,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

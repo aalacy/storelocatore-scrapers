@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Village at Lee Branch",
+  "street_address": "410 Doug Baker Blvd",
+  "city": "Birmingham",
+  "state": "AL",
+  "zip": "35242-2682",
+  "country_code": "US",
+  "store_number": 3288,
+  "phone": "2059817415",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.407254,
+  "longitude": -86.66859,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:45 AM - 10:00 PM,Mon 6:45 AM - 10:00 PM,Tues 6:45 AM - 10:00 PM,Wed 6:45 AM - 10:00 PM,Thurs 6:45 AM - 10:00 PM,Fri 6:45 AM - 10:00 PM,Sat 6:45 AM - 10:00 PM,"
+}

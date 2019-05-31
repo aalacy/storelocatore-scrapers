@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Sheridan Plaza",
+  "street_address": "5211 Sheridan St",
+  "city": "Hollywood",
+  "state": "FL",
+  "zip": "33021-3344",
+  "country_code": "US",
+  "store_number": 2699,
+  "phone": "9549876331",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.034569,
+  "longitude": -80.197208,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

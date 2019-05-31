@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Tradehome Shoes",
+  "street_address": "2825 West Main St",
+  "city": "Bozeman",
+  "state": "MT",
+  "zip": "59718",
+  "country_code": "US",
+  "store_number": 39969,
+  "phone": "(406) 586-2301",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.68218748",
+  "longitude": "-111.08109182",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 2000
+  }
+}

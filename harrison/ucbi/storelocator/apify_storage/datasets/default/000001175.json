@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Wade Green Village",
+  "street_address": "4430 Wade Green Rd NW Ste 100",
+  "city": "Kennesaw",
+  "state": "GA",
+  "zip": "30144-1267",
+  "country_code": "US",
+  "store_number": 2742,
+  "phone": "7704194030",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.061768,
+  "longitude": -84.590519,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

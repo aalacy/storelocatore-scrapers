@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "CenterPoint Marina Mall",
+  "street_address": "CenterPoint Marina Mall",
+  "city": "Abu Dhabi",
+  "state": null,
+  "country_code": "AE",
+  "store_number": "7995210",
+  "phone": "5555555555",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "24.466667",
+  "longitude": "54.366667",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

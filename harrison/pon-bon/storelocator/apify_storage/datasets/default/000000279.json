@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Bonanza",
+  "street_address": "Vista Del Rio Shopping Center",
+  "city": "Humacao",
+  "state": "PR",
+  "zip": "00791",
+  "country_code": "US",
+  "store_number": 10037511,
+  "phone": "(787) 850-5520",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 18.14348115805968,
+  "longitude": -65.82585113128277,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

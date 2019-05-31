@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Sun Star City, Macau",
+  "street_address": "Rua de P.N. da Silva no.2A-4D",
+  "city": "Macau",
+  "state": null,
+  "country_code": "MO",
+  "store_number": "7995625",
+  "phone": "28356228",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "22.100000",
+  "longitude": "113.330000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

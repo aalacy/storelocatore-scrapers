@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "Carretera No. 3, Interseccion 194, Punta del Este Food Court",
+  "city": "Fajardo",
+  "state": "PR",
+  "zip": "00738",
+  "country_code": "US",
+  "store_number": 10037284,
+  "phone": "(787) 860-0385",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 18.34561419883733,
+  "longitude": -65.67161736990414,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

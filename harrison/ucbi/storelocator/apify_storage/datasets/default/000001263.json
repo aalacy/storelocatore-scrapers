@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Shoppes at Paradise Pointe",
+  "street_address": "251 Miracle Strip Pkwy SE",
+  "city": "Fort Walton Beach",
+  "state": "FL",
+  "zip": "32548-5853",
+  "country_code": "US",
+  "store_number": 3185,
+  "phone": "8507961841",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.404763,
+  "longitude": -86.603232,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

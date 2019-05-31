@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Willi's Ski & Snowboard Shop Monroeville",
+  "street_address": "4163 William Penn Hwy",
+  "city": "Monroeville",
+  "state": "PA",
+  "zip": "15146",
+  "country_code": "US",
+  "store_number": 13839,
+  "phone": "(412) 856-1230",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.43966256",
+  "longitude": "-79.76413069",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

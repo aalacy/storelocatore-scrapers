@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Sport",
+  "street_address": "Via Padova, n. 5",
+  "city": "Riva del Garda",
+  "state": "TN",
+  "zip": "38066",
+  "country_code": "IT",
+  "store_number": 76228,
+  "phone": "0464 018790",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.88275174",
+  "longitude": "10.85417784",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 2000,
+    "mon_time_open": 900,
+    "mon_time_close": 2000,
+    "tue_time_open": 900,
+    "tue_time_close": 2000,
+    "wed_time_open": 900,
+    "wed_time_close": 2000,
+    "thu_time_open": 900,
+    "thu_time_close": 2000,
+    "fri_time_open": 900,
+    "fri_time_close": 2000,
+    "sat_time_open": 900,
+    "sat_time_close": 2000
+  }
+}

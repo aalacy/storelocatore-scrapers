@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Delano True Value",
+  "street_address": "1005 Crossings Dr.",
+  "city": "Delano",
+  "state": "MN",
+  "zip": "55328",
+  "country_code": "US",
+  "store_number": 129384,
+  "phone": "(763) 972-7272",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.03673787",
+  "longitude": "-93.77315364",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

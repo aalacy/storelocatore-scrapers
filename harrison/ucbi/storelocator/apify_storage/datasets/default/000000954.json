@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Cashiers - Frank Allen Rd",
+  "street_address": "20 Frank Allen Rd",
+  "city": "Cashiers",
+  "state": "NC",
+  "zip": "28717",
+  "country_code": "US",
+  "store_number": 24,
+  "phone": "8287436600",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.111591,
+  "longitude": -83.099772,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

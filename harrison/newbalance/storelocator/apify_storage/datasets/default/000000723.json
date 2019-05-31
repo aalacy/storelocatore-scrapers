@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Norman",
+  "street_address": "2427 W Main St",
+  "city": "Norman",
+  "state": "OK",
+  "zip": "73069",
+  "country_code": "US",
+  "store_number": 22026,
+  "phone": "(405) 329-1863",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.22030910",
+  "longitude": "-97.47847920",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "5009 S. Scatterfield Road",
+  "city": "Anderson",
+  "state": "IN",
+  "zip": "46013",
+  "country_code": "US",
+  "store_number": 10037329,
+  "phone": "(765) 642-2720",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 40.06389147232839,
+  "longitude": -85.65358172883606,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

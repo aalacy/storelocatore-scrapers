@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "OASIS CENTRE",
+  "street_address": "Shop M504, Oasis Centre Mall",
+  "city": "Dubai",
+  "state": null,
+  "country_code": "AE",
+  "store_number": "7995437",
+  "phone": "04-515-4357",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "25.193905",
+  "longitude": "55.279062",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

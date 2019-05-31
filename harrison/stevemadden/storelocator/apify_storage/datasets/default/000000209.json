@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Pembroke Lakes Mall",
+  "street_address": "11401 Pines Blvd",
+  "city": "Pembroke Pines",
+  "state": "FL",
+  "country_code": "US",
+  "store_number": "7995459",
+  "phone": "954-442-1227",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "26.010600",
+  "longitude": "-80.304600",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Rosewood Shopping Center",
+  "street_address": "2800 Rosewood Dr",
+  "city": "Columbia",
+  "state": "SC",
+  "zip": "29205-3412",
+  "country_code": "US",
+  "store_number": 2707,
+  "phone": "8038068839",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.987236,
+  "longitude": -81.003211,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

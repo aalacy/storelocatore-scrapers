@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Jadabug's Kids Boutique",
+  "street_address": "78377 Highway 111",
+  "city": "La Quinta",
+  "state": "CA",
+  "zip": "92253",
+  "country_code": "US",
+  "store_number": 26574,
+  "phone": "(760) 347-7406",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.71468552",
+  "longitude": "-116.29687191",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

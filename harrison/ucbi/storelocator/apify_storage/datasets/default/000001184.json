@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Acworth",
+  "street_address": "3507 Baker Rd NW Ste 300",
+  "city": "Acworth",
+  "state": "GA",
+  "zip": "30101-3706",
+  "country_code": "US",
+  "store_number": 3022,
+  "phone": "7709174600",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.0746,
+  "longitude": -84.651801,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

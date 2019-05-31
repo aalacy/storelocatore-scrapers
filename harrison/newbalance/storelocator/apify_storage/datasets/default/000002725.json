@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Baby's & Kid's 1st",
+  "street_address": "27702 I-45 N",
+  "city": "Oak Ridge North",
+  "state": "TX",
+  "zip": "77385",
+  "country_code": "US",
+  "store_number": 26592,
+  "phone": "(281) 866-8700",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.16334494",
+  "longitude": "-95.44914156",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1300,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1800,
+    "tue_time_open": 1000,
+    "tue_time_close": 1800,
+    "wed_time_open": 1000,
+    "wed_time_close": 1800,
+    "thu_time_open": 1000,
+    "thu_time_close": 1800,
+    "fri_time_open": 1000,
+    "fri_time_close": 1800,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

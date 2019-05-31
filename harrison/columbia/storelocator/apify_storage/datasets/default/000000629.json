@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "REI - West Des Moines",
+  "street_address": "5901 Mills Civic Pkwy",
+  "city": "West Des Moines",
+  "state": "IA",
+  "zip": "50266",
+  "country_code": "US",
+  "store_number": 11498,
+  "phone": "(515) 221-1938",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.55980681",
+  "longitude": "-93.78601154",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 1000,
+    "sat_time_close": 2100
+  }
+}

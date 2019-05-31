@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Rivergate Shopping Center",
+  "street_address": "195 Tom Hill Sr Blvd",
+  "city": "Macon",
+  "state": "GA",
+  "zip": "31210-1816",
+  "country_code": "US",
+  "store_number": 2918,
+  "phone": "4787576520",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 32.897141,
+  "longitude": -83.687195,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

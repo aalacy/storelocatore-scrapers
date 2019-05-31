@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit West Des Moines",
+  "street_address": "1821 22nd St Ste 110",
+  "city": "West Des Moines",
+  "state": "IA",
+  "zip": "50266",
+  "country_code": "US",
+  "store_number": 68149,
+  "phone": "(515) 381-1696",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.59973520",
+  "longitude": "-93.73519940",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 900,
+    "mon_time_close": 2000,
+    "tue_time_open": 900,
+    "tue_time_close": 2000,
+    "wed_time_open": 900,
+    "wed_time_close": 2000,
+    "thu_time_open": 900,
+    "thu_time_close": 2000,
+    "fri_time_open": 900,
+    "fri_time_close": 2000,
+    "sat_time_open": 900,
+    "sat_time_close": 2000
+  }
+}

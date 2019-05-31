@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Spoken Bicycles",
+  "street_address": "1201 Central Ave",
+  "city": "Middletown",
+  "state": "OH",
+  "zip": "45044",
+  "country_code": "US",
+  "store_number": 143438,
+  "phone": "(513) 997-1230",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.51564743",
+  "longitude": "-84.40113828",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

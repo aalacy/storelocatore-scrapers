@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Qingdao Sunshine",
+  "street_address": "3F, No. 38, Middle Hongkong Rd",
+  "city": "Qingdao",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995471",
+  "phone": "53286677108",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "22.170000",
+  "longitude": "114.100000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

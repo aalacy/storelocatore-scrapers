@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Wrentham Village Premium",
+  "street_address": "1 Premium Outlets Blvd",
+  "city": "Wrentham",
+  "state": "MA",
+  "country_code": "US",
+  "store_number": "7995683",
+  "phone": "508-384-1432",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.038400",
+  "longitude": "-71.353400",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

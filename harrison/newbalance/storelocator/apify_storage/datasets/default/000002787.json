@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cumberland Run-Walk",
+  "street_address": "117 Trade Park Dr ",
+  "city": "Somerset",
+  "state": "KY",
+  "zip": "42503",
+  "country_code": "US",
+  "store_number": 22090,
+  "phone": "(606) 678-9864",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.08383608",
+  "longitude": "-84.61883139",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

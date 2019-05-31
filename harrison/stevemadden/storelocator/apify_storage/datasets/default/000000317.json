@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Nanjing Aqua City",
+  "street_address": "B1F,No.Jiankang Rd",
+  "city": "Nanjing",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995421",
+  "phone": "2582233801",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.300000",
+  "longitude": "118.460000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

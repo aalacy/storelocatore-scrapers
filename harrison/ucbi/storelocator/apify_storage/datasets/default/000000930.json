@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Greenville - West Broad St - Marriott ATM",
+  "street_address": "40 W Broad St",
+  "city": "Greenville",
+  "state": "SC",
+  "zip": "29601",
+  "country_code": "US",
+  "store_number": 1191,
+  "phone": "8642418450",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.847894,
+  "longitude": -82.401109,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

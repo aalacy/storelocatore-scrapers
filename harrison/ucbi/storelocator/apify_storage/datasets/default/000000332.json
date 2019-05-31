@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Driftwood Plaza",
+  "street_address": "3830 S Highway A1A",
+  "city": "Melbourne Beach",
+  "state": "FL",
+  "zip": "32951-3143",
+  "country_code": "US",
+  "store_number": 2938,
+  "phone": "3217253305",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.015511,
+  "longitude": -80.534907,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

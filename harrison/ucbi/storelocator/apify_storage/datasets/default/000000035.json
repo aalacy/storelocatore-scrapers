@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Garner - Glen Rd",
+  "street_address": "200 Glen Rd",
+  "city": "Garner",
+  "state": "NC",
+  "zip": "27529",
+  "country_code": "US",
+  "store_number": 1478,
+  "phone": "9196629005",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.608889,
+  "longitude": -78.567804,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

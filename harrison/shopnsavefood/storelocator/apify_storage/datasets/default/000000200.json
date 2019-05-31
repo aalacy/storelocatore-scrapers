@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Reedsville Express",
+  "street_address": "PO Box 680 ",
+  "city": "Reedsville",
+  "state": "WV",
+  "zip": "26547",
+  "country_code": "US",
+  "store_number": "99",
+  "phone": "1420",
+  "location_type": {
+    "gas_station": "304-864-5150",
+    "active": "304-864-6034",
+    "pump_perk": "39.512947"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sat 7am-830pm",
+  "longitude": "Mon-Sat 7am-830pm",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

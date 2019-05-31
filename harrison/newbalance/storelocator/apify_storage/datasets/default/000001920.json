@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Bonney Lake",
+  "street_address": "19685 WA-410",
+  "city": "Bonney Lake",
+  "state": "WA",
+  "zip": "98391",
+  "country_code": "US",
+  "store_number": 16544,
+  "phone": "(253) 862-8890",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.16965761",
+  "longitude": "-122.16601987",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

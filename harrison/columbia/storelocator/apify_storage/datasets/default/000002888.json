@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Biketek Pittsburgh",
+  "street_address": "5842 Forbes Ave",
+  "city": "Pittsburgh",
+  "state": "PA",
+  "zip": "15217",
+  "country_code": "US",
+  "store_number": 35003,
+  "phone": "(412) 521-6448",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.43785036",
+  "longitude": "-79.92126493",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

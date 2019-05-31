@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "The Mountain Air",
+  "street_address": "667 Marsh St",
+  "city": "San Luis Obispo",
+  "state": "CA",
+  "zip": "93401",
+  "country_code": "US",
+  "store_number": 1811,
+  "phone": "(805) 543-1676",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.27738578",
+  "longitude": "-120.66363198",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

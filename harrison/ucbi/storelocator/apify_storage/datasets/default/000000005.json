@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at First Flight Square",
+  "street_address": "1530 N Croatan Hwy",
+  "city": "Kill Devil Hills",
+  "state": "NC",
+  "zip": "27948",
+  "country_code": "US",
+  "store_number": 3860,
+  "phone": "2522555006",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 36.027591,
+  "longitude": -75.670387,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

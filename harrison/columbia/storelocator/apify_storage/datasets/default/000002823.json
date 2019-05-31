@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Summit Bicycles - Palo Alto",
+  "street_address": "392 South California Ave",
+  "city": "Palo Alto",
+  "state": "CA",
+  "zip": "94306",
+  "country_code": "US",
+  "store_number": 109674,
+  "phone": "(650) 304-0035",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.42675800",
+  "longitude": "-122.14490300",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

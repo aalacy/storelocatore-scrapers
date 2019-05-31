@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "BEIJING JoyCity Chaobei",
+  "street_address": "2F-57-58, north Chaoyang Rd",
+  "city": "Beijing",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995191",
+  "phone": "1085519315",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.550000",
+  "longitude": "116.250000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

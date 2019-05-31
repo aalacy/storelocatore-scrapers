@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Tradehome Shoes",
+  "street_address": "1681 3rd Ave W",
+  "city": "Dickinson",
+  "state": "ND",
+  "zip": "58601",
+  "country_code": "US",
+  "store_number": 38847,
+  "phone": "(701) 227-4425",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "46.90108768",
+  "longitude": "-102.79216168",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2130,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

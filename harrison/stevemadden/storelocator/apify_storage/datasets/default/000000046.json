@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Terra Mall",
+  "street_address": "TRES RIOS CARTAGO",
+  "city": "SAN JOSE",
+  "state": null,
+  "country_code": "CR",
+  "store_number": "7995641",
+  "phone": "987654321",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "9.908558",
+  "longitude": "-83.987587",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

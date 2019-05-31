@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Key Plaza Shopping Center",
+  "street_address": "1112 Key Plaza",
+  "city": "Key West",
+  "state": "FL",
+  "zip": "33040-4076",
+  "country_code": "US",
+  "store_number": 3712,
+  "phone": "3052958045",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 24.566024,
+  "longitude": -81.770475,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

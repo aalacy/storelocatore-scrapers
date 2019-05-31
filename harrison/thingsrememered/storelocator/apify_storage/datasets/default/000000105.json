@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "THE MALL AT ROBINSON",
+  "street_address": "100 ROBINSON CENTRE DR",
+  "city": "PITTSBURGH",
+  "state": "PA",
+  "zip": "15205",
+  "country_code": "US",
+  "store_number": "643",
+  "phone": "(412) 787-1775",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 40.435326,
+  "longitude": -80.07468,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:30 PM|7#10:00 AM#09:30 PM"
+}

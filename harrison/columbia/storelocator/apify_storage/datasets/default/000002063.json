@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Baby Earth",
+  "street_address": "759 NE Greenwood Avenue",
+  "city": "Bend",
+  "state": "OR",
+  "zip": "97701",
+  "country_code": "US",
+  "store_number": 24720,
+  "phone": "(541) 389-3549",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.05991503",
+  "longitude": "-121.29409964",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

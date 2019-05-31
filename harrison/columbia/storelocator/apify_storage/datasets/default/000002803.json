@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Birkenstock - Bend Shoe Co.",
+  "street_address": "836 NW Wall St",
+  "city": "Bend",
+  "state": "OR",
+  "zip": "97703",
+  "country_code": "US",
+  "store_number": 66643,
+  "phone": "(541) 389-4688",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.05872185",
+  "longitude": "-121.31419876",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

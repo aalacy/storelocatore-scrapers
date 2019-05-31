@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Lakewood Ranch Shopping Center",
+  "street_address": "8330 Market St",
+  "city": "Bradenton",
+  "state": "FL",
+  "zip": "34202-5137",
+  "country_code": "US",
+  "store_number": 3129,
+  "phone": "9419076600",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.390551,
+  "longitude": -82.4434,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

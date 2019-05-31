@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cap-it - Vernon",
+  "street_address": "220 - 2801 35 Avenue",
+  "city": "Vernon",
+  "state": "BC",
+  "zip": "V1T2S7",
+  "country_code": "CA",
+  "store_number": 96471,
+  "phone": "(778) 475-8148",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "50.26783824",
+  "longitude": "-119.26902195",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

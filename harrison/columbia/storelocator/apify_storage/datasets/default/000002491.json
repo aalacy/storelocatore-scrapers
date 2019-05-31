@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Duranglers Flies and Supplies",
+  "street_address": "923 Main Ave",
+  "city": "Durango",
+  "state": "CO",
+  "zip": "81301",
+  "country_code": "US",
+  "store_number": 18021,
+  "phone": "(970) 385-4081",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.27387611",
+  "longitude": "-107.88066177",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

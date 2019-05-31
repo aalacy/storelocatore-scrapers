@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Madisonville - Hwy 411",
+  "street_address": "4519 Highway 411",
+  "city": "Madisonville",
+  "state": "TN",
+  "zip": "37354",
+  "country_code": "US",
+  "store_number": 69,
+  "phone": "4234425484",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.514415,
+  "longitude": -84.36029,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Roseville",
+  "street_address": "1850 Douglas Blvd # 418",
+  "city": "Roseville",
+  "state": "CA",
+  "zip": "95661",
+  "country_code": "US",
+  "store_number": 17969,
+  "phone": "(916) 783-4558",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.74363477",
+  "longitude": "-121.25619867",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

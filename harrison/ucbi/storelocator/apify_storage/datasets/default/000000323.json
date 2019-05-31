@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "South Point",
+  "street_address": "4145 9th St SW",
+  "city": "Vero Beach",
+  "state": "FL",
+  "zip": "32968-4804",
+  "country_code": "US",
+  "store_number": 3303,
+  "phone": "7722996235",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.585854,
+  "longitude": -80.428964,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

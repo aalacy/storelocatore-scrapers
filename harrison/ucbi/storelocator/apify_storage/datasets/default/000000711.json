@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Valrico Commons",
+  "street_address": "1971 E State Road 60",
+  "city": "Valrico",
+  "state": "FL",
+  "zip": "33594-3603",
+  "country_code": "US",
+  "store_number": 3560,
+  "phone": "8136574041",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.936397,
+  "longitude": -82.253844,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

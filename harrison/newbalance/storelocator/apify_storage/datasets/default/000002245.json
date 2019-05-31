@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Adventure Clothing",
+  "street_address": "560 Yates St",
+  "city": "Victoria",
+  "state": "BC",
+  "zip": "V8W1K8",
+  "country_code": "CA",
+  "store_number": 45703,
+  "phone": "(250) 590-6381",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.42674793",
+  "longitude": "-123.36833202",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1730,
+    "tue_time_open": 1000,
+    "tue_time_close": 1730,
+    "wed_time_open": 1000,
+    "wed_time_close": 1730,
+    "thu_time_open": 1000,
+    "thu_time_close": 1730,
+    "fri_time_open": 1000,
+    "fri_time_close": 1730,
+    "sat_time_open": 1000,
+    "sat_time_close": 1730
+  }
+}

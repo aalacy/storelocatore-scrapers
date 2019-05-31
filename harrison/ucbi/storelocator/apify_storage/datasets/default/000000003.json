@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Lenoir City - 16239 Highway 70 E",
+  "street_address": "16239 Highway 70 E",
+  "city": "Lenoir City",
+  "state": "TN",
+  "zip": "37772",
+  "country_code": "US",
+  "store_number": 3878,
+  "phone": "8659882230",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 0,
+  "longitude": 0,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

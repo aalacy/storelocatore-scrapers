@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Warrensburg",
+  "street_address": "213 N Holden St",
+  "city": "Warrensburg",
+  "state": "MO",
+  "zip": "64093",
+  "country_code": "US",
+  "store_number": 21997,
+  "phone": "(660) 747-5922",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.76464600",
+  "longitude": "-93.74004900",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

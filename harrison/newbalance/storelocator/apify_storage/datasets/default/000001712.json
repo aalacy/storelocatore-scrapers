@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Evergreen Mountain Sports",
+  "street_address": "10875 US Hwy 285 d101",
+  "city": "Conifer",
+  "state": "CO",
+  "zip": "80433",
+  "country_code": "US",
+  "store_number": 121028,
+  "phone": "(303) 674-5100",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.51899647",
+  "longitude": "-105.30651725",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1600,
+    "mon_time_open": 1000,
+    "mon_time_close": 1800,
+    "tue_time_open": 1000,
+    "tue_time_close": 1800,
+    "wed_time_open": 1000,
+    "wed_time_close": 1800,
+    "thu_time_open": 1000,
+    "thu_time_close": 1800,
+    "fri_time_open": 1000,
+    "fri_time_close": 1800,
+    "sat_time_open": 900,
+    "sat_time_close": 1800
+  }
+}

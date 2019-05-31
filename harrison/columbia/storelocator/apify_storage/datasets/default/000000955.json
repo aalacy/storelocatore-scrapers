@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Woodward",
+  "street_address": "2427 Oklahoma Ave",
+  "city": "Woodward",
+  "state": "OK",
+  "zip": "73801",
+  "country_code": "US",
+  "store_number": 21977,
+  "phone": "(580) 256-7228",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.43359692",
+  "longitude": "-99.41116288",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

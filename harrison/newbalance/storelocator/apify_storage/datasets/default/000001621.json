@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Tuckaseegee Fly Shop",
+  "street_address": "3 Depot St",
+  "city": "Bryson City",
+  "state": "NC",
+  "zip": "28713",
+  "country_code": "US",
+  "store_number": 36678,
+  "phone": "(828) 488-3333",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.43075805",
+  "longitude": "-83.44711367",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

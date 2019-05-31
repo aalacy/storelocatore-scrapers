@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "TRUMBULL SHOPPING PARK",
+  "street_address": "5065 MAIN ST",
+  "city": "TRUMBULL",
+  "state": "CT",
+  "zip": "06611",
+  "country_code": "US",
+  "store_number": "544",
+  "phone": "(203) 374-8934",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 41.255154,
+  "longitude": -73.20793,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

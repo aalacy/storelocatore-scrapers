@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Florida Warehouse",
+  "street_address": "1174 NW 163 Dr",
+  "city": "Miami",
+  "state": "FL",
+  "country_code": "US",
+  "store_number": "7995291",
+  "phone": "305-830-1957",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "25.935490",
+  "longitude": "-80.214010",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

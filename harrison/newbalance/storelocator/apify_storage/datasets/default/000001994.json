@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Pedestrian Shops",
+  "street_address": "2368 15th St",
+  "city": "Denver",
+  "state": "CO",
+  "zip": "80202",
+  "country_code": "US",
+  "store_number": 138232,
+  "phone": "(720) 532-1084",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.75665136",
+  "longitude": "-105.00917205",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

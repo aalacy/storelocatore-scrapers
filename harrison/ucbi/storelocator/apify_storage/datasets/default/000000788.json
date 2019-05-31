@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Esplanade At Butler Plaza",
+  "street_address": "3100 SW 35th Blvd",
+  "city": "Gainesville",
+  "state": "FL",
+  "zip": "32608-2415",
+  "country_code": "US",
+  "store_number": 3101,
+  "phone": "3523674324",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 29.625058,
+  "longitude": -82.379172,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

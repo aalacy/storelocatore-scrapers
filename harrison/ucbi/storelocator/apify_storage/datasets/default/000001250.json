@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Dalraida Commons",
+  "street_address": "4045 Atlanta Hwy",
+  "city": "Montgomery",
+  "state": "AL",
+  "zip": "36109-2920",
+  "country_code": "US",
+  "store_number": 3326,
+  "phone": "3342607782",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 32.383579,
+  "longitude": -86.24181,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

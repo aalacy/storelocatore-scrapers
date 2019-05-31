@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Alico Commons",
+  "street_address": "16980 Alico Mission Way Ste 403",
+  "city": "Fort Myers",
+  "state": "FL",
+  "zip": "33908-4851",
+  "country_code": "US",
+  "store_number": 3547,
+  "phone": "2394890134",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.492395,
+  "longitude": -81.849266,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

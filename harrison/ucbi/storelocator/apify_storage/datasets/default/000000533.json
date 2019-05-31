@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Richmond Hill Plantation",
+  "street_address": "12800 Highway 144",
+  "city": "Richmond Hill",
+  "state": "GA",
+  "zip": "31324-7343",
+  "country_code": "US",
+  "store_number": 3452,
+  "phone": "9124591171",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 31.909521,
+  "longitude": -81.278741,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

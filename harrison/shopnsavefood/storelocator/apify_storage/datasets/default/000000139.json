@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Millvale",
+  "street_address": "1329 Babcock Blvd",
+  "city": "Millvale",
+  "state": "PA",
+  "zip": "15209",
+  "country_code": "US",
+  "store_number": "188",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.4957371",
+  "longitude": "-79.9768987",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

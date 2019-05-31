@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Orlando International Prem. Outlet",
+  "street_address": "4953 International Drive",
+  "city": "Orlando",
+  "state": "FL",
+  "country_code": "US",
+  "store_number": "7995442",
+  "phone": "407-355-7390",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "28.474675",
+  "longitude": "-81.451862",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

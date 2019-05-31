@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "iRun Texas",
+  "street_address": "20079 Stone Oak Pkwy Suite 3120",
+  "city": "San Antonio",
+  "state": "TX",
+  "zip": "78258",
+  "country_code": "US",
+  "store_number": 16045,
+  "phone": "(210) 494-7869",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "29.64270486",
+  "longitude": "-98.48881161",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

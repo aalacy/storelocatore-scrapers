@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance shop Orléans",
+  "street_address": "20 Rue Jeanne d'Arc",
+  "city": "Orléans",
+  "state": "",
+  "zip": "45000",
+  "country_code": "FR",
+  "store_number": 73018,
+  "phone": "02 38 54 29 64",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.90177785",
+  "longitude": "1.90669312",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

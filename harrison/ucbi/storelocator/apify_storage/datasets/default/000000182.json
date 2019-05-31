@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Shoppes at Andros Isle",
+  "street_address": "8989 Okeechobee Blvd",
+  "city": "West Palm Beach",
+  "state": "FL",
+  "zip": "33411-1826",
+  "country_code": "US",
+  "store_number": 3076,
+  "phone": "5617922113",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.710563,
+  "longitude": -80.183953,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

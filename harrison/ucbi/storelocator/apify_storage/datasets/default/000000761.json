@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Plaza at Palmer Ranch",
+  "street_address": "8409 S Tamiami Trl",
+  "city": "Sarasota",
+  "state": "FL",
+  "zip": "34238-2937",
+  "country_code": "US",
+  "store_number": 2868,
+  "phone": "9419254778",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.228443,
+  "longitude": -82.491403,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

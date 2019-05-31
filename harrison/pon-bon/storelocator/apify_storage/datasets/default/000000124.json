@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "2861 Wilder Road",
+  "city": "Bay City",
+  "state": "MI",
+  "zip": "48706",
+  "country_code": "US",
+  "store_number": 10037344,
+  "phone": "(989) 671-3506",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 43.624496417270784,
+  "longitude": -83.93637944616029,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Greenville - West Washington St - Corporate Office",
+  "street_address": "900 E Main St",
+  "city": "Laurens",
+  "state": "SC",
+  "zip": "29360",
+  "country_code": "US",
+  "store_number": 1465,
+  "phone": "8008222651",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.492964,
+  "longitude": -81.984898,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

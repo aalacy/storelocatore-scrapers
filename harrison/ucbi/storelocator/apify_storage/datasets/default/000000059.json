@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Fifth Avenue Shops",
+  "street_address": "1968 NE 5th Ave",
+  "city": "Boca Raton",
+  "state": "FL",
+  "zip": "33431-7702",
+  "country_code": "US",
+  "store_number": 3725,
+  "phone": "5617509476",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.36859,
+  "longitude": -80.076255,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

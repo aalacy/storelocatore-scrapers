@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sporting Life Bikes & Boards",
+  "street_address": "2454 Yonge St",
+  "city": "Toronto",
+  "state": "ON",
+  "zip": "M4P2H5",
+  "country_code": "CA",
+  "store_number": 33378,
+  "phone": "(416) 485-4440",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.71101716",
+  "longitude": "-79.39954130",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 930,
+    "mon_time_close": 2100,
+    "tue_time_open": 930,
+    "tue_time_close": 2100,
+    "wed_time_open": 930,
+    "wed_time_close": 2100,
+    "thu_time_open": 930,
+    "thu_time_close": 2100,
+    "fri_time_open": 930,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 1800
+  }
+}

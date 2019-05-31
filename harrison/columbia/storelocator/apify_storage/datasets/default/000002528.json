@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Magic Beans - Cambridge",
+  "street_address": "361 Huron Ave",
+  "city": "Cambridge",
+  "state": "MA",
+  "zip": "02138",
+  "country_code": "US",
+  "store_number": 36546,
+  "phone": "(617) 300-0171",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.38135694",
+  "longitude": "-71.13868117",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

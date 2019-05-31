@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Houdemont",
+  "street_address": "10 Avenue des Érables",
+  "city": "Houdemont",
+  "state": "",
+  "zip": "54180",
+  "country_code": "FR",
+  "store_number": 87435,
+  "phone": "03 83 44 65 09",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.64379698",
+  "longitude": "6.18705101",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

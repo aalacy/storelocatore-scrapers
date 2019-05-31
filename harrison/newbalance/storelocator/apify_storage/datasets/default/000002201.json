@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "BikeSource Charlotte",
+  "street_address": "4301-A Park Road",
+  "city": "Charlotte",
+  "state": "NC",
+  "zip": "28209",
+  "country_code": "US",
+  "store_number": 16602,
+  "phone": "(704) 525-8410",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.17314576",
+  "longitude": "-80.85020132",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

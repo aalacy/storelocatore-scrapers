@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Run Hub Northwest",
+  "street_address": "515 High St",
+  "city": "Eugene",
+  "state": "OR",
+  "zip": "97401",
+  "country_code": "US",
+  "store_number": 19478,
+  "phone": "(541) 344-1239",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.05395722",
+  "longitude": "-123.08793202",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

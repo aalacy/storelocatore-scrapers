@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Villages of Amelia",
+  "street_address": "463855 State Road 200",
+  "city": "Yulee",
+  "state": "FL",
+  "zip": "32097-3639",
+  "country_code": "US",
+  "store_number": 3674,
+  "phone": "9042612400",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.627926,
+  "longitude": -81.545529,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

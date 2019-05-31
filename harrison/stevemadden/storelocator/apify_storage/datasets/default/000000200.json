@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Collins Avenue",
+  "street_address": "635 Collins Avenue",
+  "city": "Miami Beach",
+  "state": "FL",
+  "country_code": "US",
+  "store_number": "7995240",
+  "phone": "305-534-1102",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "25.776100",
+  "longitude": "-80.132400",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

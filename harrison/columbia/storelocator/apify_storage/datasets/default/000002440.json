@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Blain's Farm & Fleet",
+  "street_address": "4140 Columbus St",
+  "city": "Ottawa",
+  "state": "IL",
+  "zip": "61350",
+  "country_code": "US",
+  "store_number": 52630,
+  "phone": "(815) 433-4536",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.38137678",
+  "longitude": "-88.83352146",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 1800,
+    "mon_time_open": 700,
+    "mon_time_close": 2100,
+    "tue_time_open": 700,
+    "tue_time_close": 2100,
+    "wed_time_open": 700,
+    "wed_time_close": 2100,
+    "thu_time_open": 700,
+    "thu_time_close": 2100,
+    "fri_time_open": 700,
+    "fri_time_close": 2100,
+    "sat_time_open": 700,
+    "sat_time_close": 2000
+  }
+}

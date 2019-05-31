@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Manning Town Centre",
+  "street_address": "15530 37 St NW",
+  "city": "Edmonton",
+  "state": "AB",
+  "zip": "T5Y0S5",
+  "country_code": "CA",
+  "store_number": 103625,
+  "phone": "(780) 472-1881",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "53.61682878",
+  "longitude": "-113.40021186",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

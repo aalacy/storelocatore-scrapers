@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Bradley Park Square",
+  "street_address": "1639 Bradley Park Dr Ste 600",
+  "city": "Columbus",
+  "state": "GA",
+  "zip": "31904-3625",
+  "country_code": "US",
+  "store_number": 2921,
+  "phone": "7065713420",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 32.53442,
+  "longitude": -84.966855,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

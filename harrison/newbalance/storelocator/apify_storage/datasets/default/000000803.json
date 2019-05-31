@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Worthington",
+  "street_address": "324 10th St",
+  "city": "Worthington",
+  "state": "MN",
+  "zip": "56187",
+  "country_code": "US",
+  "store_number": 23884,
+  "phone": "(507) 376-4160",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.61971467",
+  "longitude": "-95.59615663",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

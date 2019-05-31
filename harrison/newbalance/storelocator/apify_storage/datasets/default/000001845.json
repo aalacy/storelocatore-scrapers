@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Tulsa KingsPointe Village",
+  "street_address": "5968 S Yale Ave",
+  "city": "Tulsa",
+  "state": "OK",
+  "zip": "74135",
+  "country_code": "US",
+  "store_number": 17988,
+  "phone": "(918) 492-3338",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.07663515",
+  "longitude": "-95.92233111",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

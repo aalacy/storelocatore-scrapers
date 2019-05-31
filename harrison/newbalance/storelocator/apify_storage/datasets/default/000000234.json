@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Easton Outdoor Company",
+  "street_address": "230 Northampton Street",
+  "city": "Easton",
+  "state": "PA",
+  "zip": "18042",
+  "country_code": "US",
+  "store_number": 11470,
+  "phone": "(610) 829-1000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.69097667",
+  "longitude": "-75.20794123",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

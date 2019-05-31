@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Shoppes at Woolbright",
+  "street_address": "10935 S Jog Rd",
+  "city": "Boynton Beach",
+  "state": "FL",
+  "zip": "33437-3921",
+  "country_code": "US",
+  "store_number": 3534,
+  "phone": "5617312900",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.514564,
+  "longitude": -80.149742,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

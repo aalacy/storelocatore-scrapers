@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Waxbergs Walk Shoppe",
+  "street_address": "7013 Dempster St",
+  "city": "Niles",
+  "state": "IL",
+  "zip": "60714",
+  "country_code": "US",
+  "store_number": 22219,
+  "phone": "(847) 965-3338",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.04079903",
+  "longitude": "-87.80201137",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

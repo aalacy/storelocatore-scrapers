@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "Embarcadero Food Court, Plaza Rio Hondo",
+  "city": "Bayamon",
+  "state": "PR",
+  "zip": "00957",
+  "country_code": "US",
+  "store_number": 10037291,
+  "phone": "(787) 641-7040",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 18.422652463016313,
+  "longitude": -66.16150481349183,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

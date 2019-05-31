@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "ARTECHSKI",
+  "street_address": "1088 NH Rt 4a",
+  "city": "Enfield",
+  "state": "NH",
+  "zip": "03748",
+  "country_code": "US",
+  "store_number": 23938,
+  "phone": "(603) 636-7547",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.58767141",
+  "longitude": "-72.10971181",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

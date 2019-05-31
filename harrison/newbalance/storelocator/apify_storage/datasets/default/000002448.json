@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "ASICS Outlet Rehoboth",
+  "street_address": "35016 Midway Outlet Dr #304",
+  "city": "Rehoboth Beach",
+  "state": "DE",
+  "zip": "19971",
+  "country_code": "US",
+  "store_number": 62120,
+  "phone": "(302) 645-7080",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.73368635",
+  "longitude": "-75.13993123",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 1000,
+    "sat_time_close": 2100
+  }
+}

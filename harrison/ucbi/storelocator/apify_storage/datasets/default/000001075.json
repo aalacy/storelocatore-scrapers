@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Centre on Hugh Howell",
+  "street_address": "4422 Hugh Howell Rd",
+  "city": "Tucker",
+  "state": "GA",
+  "zip": "30084-4915",
+  "country_code": "US",
+  "store_number": 2979,
+  "phone": "7706213180",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.852029,
+  "longitude": -84.205953,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

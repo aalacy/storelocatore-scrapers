@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Footwear etc.",
+  "street_address": "1177 Lincoln Ave",
+  "city": "San Jose",
+  "state": "CA",
+  "zip": "95125",
+  "country_code": "US",
+  "store_number": 25897,
+  "phone": "(408) 998-1122",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.30695611",
+  "longitude": "-121.90052200",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 930,
+    "mon_time_close": 1900,
+    "tue_time_open": 930,
+    "tue_time_close": 1900,
+    "wed_time_open": 930,
+    "wed_time_close": 1900,
+    "thu_time_open": 930,
+    "thu_time_close": 1900,
+    "fri_time_open": 930,
+    "fri_time_close": 1900,
+    "sat_time_open": 930,
+    "sat_time_close": 1800
+  }
+}

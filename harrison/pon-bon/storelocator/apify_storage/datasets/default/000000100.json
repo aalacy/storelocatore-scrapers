@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "127 U.S. Highway 68 East",
+  "city": "Benton",
+  "state": "KY",
+  "zip": "42025",
+  "country_code": "US",
+  "store_number": 10037316,
+  "phone": "(270) 527-3308",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 36.924579,
+  "longitude": -88.34148,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

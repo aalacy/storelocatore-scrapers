@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Shoppes at Redstone Square",
+  "street_address": "2286 Zierdt Rd",
+  "city": "Huntsville",
+  "state": "AL",
+  "zip": "35824",
+  "country_code": "US",
+  "store_number": 3868,
+  "phone": "2567743888",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.647767,
+  "longitude": -86.720133,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

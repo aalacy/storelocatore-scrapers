@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "DG Bicycles",
+  "street_address": "1488 E 86th St",
+  "city": "Indianapolis",
+  "state": "IN",
+  "zip": "46240",
+  "country_code": "US",
+  "store_number": 78161,
+  "phone": "(317) 257-2453",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.91365395",
+  "longitude": "-86.13414112",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

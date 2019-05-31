@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Dearest Diapers",
+  "street_address": "945 Roseville Pkwy #140",
+  "city": "Roseville",
+  "state": "CA",
+  "zip": "95678",
+  "country_code": "US",
+  "store_number": 51492,
+  "phone": "(916) 741-0930",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.78514150",
+  "longitude": "-121.29415160",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

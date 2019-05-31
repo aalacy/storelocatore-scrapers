@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Marketplace at Pelican Bay",
+  "street_address": "8833 Tamiami Trl N",
+  "city": "Naples",
+  "state": "FL",
+  "zip": "34108-2565",
+  "country_code": "US",
+  "store_number": 3607,
+  "phone": "2395960403",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.248915,
+  "longitude": -81.803005,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "FLORENCE MALL",
+  "street_address": "2152 FLORENCE MALL",
+  "city": "FLORENCE",
+  "state": "KY",
+  "zip": "41042",
+  "country_code": "US",
+  "store_number": "146",
+  "phone": "(859) 371-9670",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 38.988476,
+  "longitude": -84.64683,
+  "external_lat_long": false,
+  "hours_of_operation": "1#12:00 PM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Silver Bow Fly Shop",
+  "street_address": "13210 E Indiana Avenue ",
+  "city": "Spokane",
+  "state": "WA",
+  "zip": "99216",
+  "country_code": "US",
+  "store_number": 18217,
+  "phone": "(509) 924-9998",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.67465781",
+  "longitude": "-117.22716192",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1600,
+    "mon_time_open": 930,
+    "mon_time_close": 1800,
+    "tue_time_open": 930,
+    "tue_time_close": 1800,
+    "wed_time_open": 930,
+    "wed_time_close": 1800,
+    "thu_time_open": 930,
+    "thu_time_close": 1800,
+    "fri_time_open": 930,
+    "fri_time_close": 1800,
+    "sat_time_open": 900,
+    "sat_time_close": 1700
+  }
+}

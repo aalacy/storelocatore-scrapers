@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Chickasaw Trails",
+  "street_address": "2300 S Chickasaw Trl",
+  "city": "Orlando",
+  "state": "FL",
+  "zip": "32825-8416",
+  "country_code": "US",
+  "store_number": 2913,
+  "phone": "4072778936",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.510815,
+  "longitude": -81.270744,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

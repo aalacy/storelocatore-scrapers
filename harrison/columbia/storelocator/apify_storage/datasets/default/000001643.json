@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Saint Brieuc",
+  "street_address": "2 Rue Claude Sautet",
+  "city": "Trégueux",
+  "state": "",
+  "zip": "22950",
+  "country_code": "FR",
+  "store_number": 73024,
+  "phone": "02 96 78 52 23",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.49179449",
+  "longitude": "-2.75848452",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

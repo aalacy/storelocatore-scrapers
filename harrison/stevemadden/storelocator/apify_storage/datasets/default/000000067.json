@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Robinson's Magnolia",
+  "street_address": "Upper Ground Robinson's",
+  "city": "Quezon",
+  "state": null,
+  "country_code": "PH",
+  "store_number": "7995486",
+  "phone": "6327209677",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "14.031391",
+  "longitude": "122.113091",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "North 40 Outfitters",
+  "street_address": "170 E Kathleen Ave",
+  "city": "Coeur d'Alene",
+  "state": "ID",
+  "zip": "83815",
+  "country_code": "US",
+  "store_number": 13746,
+  "phone": "(208) 666-0506",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.71466782",
+  "longitude": "-116.78449191",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

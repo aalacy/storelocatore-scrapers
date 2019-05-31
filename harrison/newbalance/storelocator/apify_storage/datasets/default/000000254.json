@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Salomon Store Salzburg",
+  "street_address": "Europark Salzburg Europastr.1 -Top 54",
+  "city": "Salzburg",
+  "state": "",
+  "zip": "5018",
+  "country_code": "AT",
+  "store_number": 80461,
+  "phone": "0662 42274511",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.81578341",
+  "longitude": "13.00521309",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

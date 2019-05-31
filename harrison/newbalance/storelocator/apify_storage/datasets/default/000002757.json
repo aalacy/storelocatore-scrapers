@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "The Hub",
+  "street_address": "3751 Clyde Morris",
+  "city": "Port Orange",
+  "state": "FL",
+  "zip": "32129",
+  "country_code": "US",
+  "store_number": 109857,
+  "phone": "(386) 310-3032",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "29.14424477",
+  "longitude": "-81.03443133",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

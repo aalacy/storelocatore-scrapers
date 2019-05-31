@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Village at Mulberry Park",
+  "street_address": "831 Auburn Rd",
+  "city": "Dacula",
+  "state": "GA",
+  "zip": "30019-5434",
+  "country_code": "US",
+  "store_number": 3474,
+  "phone": "7706822421",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.030959,
+  "longitude": -83.887027,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

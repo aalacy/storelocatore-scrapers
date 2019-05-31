@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Gloucester Premium Outlets",
+  "street_address": "100 Premium Outlets Drive",
+  "city": "Blackwood",
+  "state": "NJ",
+  "country_code": "US",
+  "store_number": "7995308",
+  "phone": "856-302-4532",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.785803",
+  "longitude": "-75.050740",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

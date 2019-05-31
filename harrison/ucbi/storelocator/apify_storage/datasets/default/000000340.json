@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Shoppes of Palm Bay",
+  "street_address": "1150 Malabar Rd SE Ste 120",
+  "city": "Palm Bay",
+  "state": "FL",
+  "zip": "32907-3239",
+  "country_code": "US",
+  "store_number": 2881,
+  "phone": "3217273654",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.996926,
+  "longitude": -80.636241,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

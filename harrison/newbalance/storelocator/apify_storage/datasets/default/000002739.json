@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Meridian Cycles",
+  "street_address": "830 Main St",
+  "city": "Meridian",
+  "state": "ID",
+  "zip": "83642",
+  "country_code": "US",
+  "store_number": 108812,
+  "phone": "(208) 884-3115",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.61164715",
+  "longitude": "-116.39129191",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

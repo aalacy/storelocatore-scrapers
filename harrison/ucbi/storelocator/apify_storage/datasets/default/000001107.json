@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Marketplace at Birmingham Village",
+  "street_address": "980 Birmingham Rd Ste 100",
+  "city": "Alpharetta",
+  "state": "GA",
+  "zip": "30004-4418",
+  "country_code": "US",
+  "store_number": 3360,
+  "phone": "7707515543",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.167373,
+  "longitude": -84.330806,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Trowbridge Crossing",
+  "street_address": "7525 Roswell Rd",
+  "city": "Sandy Springs",
+  "state": "GA",
+  "zip": "30350-8500",
+  "country_code": "US",
+  "store_number": 3069,
+  "phone": "6784438980",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.961,
+  "longitude": -84.363825,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

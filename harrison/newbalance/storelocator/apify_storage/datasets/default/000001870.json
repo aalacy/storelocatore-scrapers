@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Pacers Running",
+  "street_address": "1821 14th St NW",
+  "city": "Washington",
+  "state": "DC",
+  "zip": "20009",
+  "country_code": "US",
+  "store_number": 22380,
+  "phone": "(202) 506-2029",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.91474638",
+  "longitude": "-77.03152126",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

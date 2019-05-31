@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "AJMAN CITY CENTRE",
+  "street_address": "GROUND LEVEL AJMAN,UAE",
+  "city": "AJMAN",
+  "state": null,
+  "country_code": "AE",
+  "store_number": "7995150",
+  "phone": "97167415635",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "25.403023",
+  "longitude": "55.491797",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

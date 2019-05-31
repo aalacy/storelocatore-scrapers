@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Homestead Shopping Plaza",
+  "street_address": "1324 Homestead Rd N",
+  "city": "Lehigh Acres",
+  "state": "FL",
+  "zip": "33936-6016",
+  "country_code": "US",
+  "store_number": 3710,
+  "phone": "2393682241",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.609504,
+  "longitude": -81.650579,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

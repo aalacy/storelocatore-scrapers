@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "940 Wisconsin Dells Parkway",
+  "city": "Wisconsin Dells",
+  "state": "WI",
+  "zip": "53965",
+  "country_code": "US",
+  "store_number": 10037352,
+  "phone": "(608) 253-3705",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 43.580163,
+  "longitude": -89.780135,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

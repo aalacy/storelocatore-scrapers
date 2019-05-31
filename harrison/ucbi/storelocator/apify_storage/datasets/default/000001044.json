@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Sugar Hill Corners",
+  "street_address": "5885 Cumming Hwy",
+  "city": "Sugar Hill",
+  "state": "GA",
+  "zip": "30518-5765",
+  "country_code": "US",
+  "store_number": 3024,
+  "phone": "7706148860",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.118865,
+  "longitude": -84.074955,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Farmington",
+  "street_address": "124 W Main St",
+  "city": "Farmington",
+  "state": "NM",
+  "zip": "87401",
+  "country_code": "US",
+  "store_number": 21984,
+  "phone": "(505) 327-9330",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.72960177",
+  "longitude": "-108.20617729",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

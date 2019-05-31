@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Palm Beach Outlets",
+  "street_address": "1741 Palm Beach Lakes Blvd",
+  "city": "West Palm Beach",
+  "state": "FL",
+  "country_code": "US",
+  "store_number": "7995454",
+  "phone": "561-683-3675",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "26.723900",
+  "longitude": "-80.084800",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

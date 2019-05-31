@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Spokes Etc.",
+  "street_address": "224 Maple Ave E",
+  "city": "Vienna",
+  "state": "VA",
+  "zip": "22180",
+  "country_code": "US",
+  "store_number": 16988,
+  "phone": "(703) 281-2004",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.90419637",
+  "longitude": "-77.26223127",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

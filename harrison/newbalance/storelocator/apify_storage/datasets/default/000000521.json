@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "SCHEELS ALL SPORTS",
+  "street_address": "800 Kirkwood Mall",
+  "city": "Bismarck",
+  "state": "ND",
+  "zip": "58504",
+  "country_code": "US",
+  "store_number": 10990,
+  "phone": "(701) 255-7255",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "46.79780767",
+  "longitude": "-100.78459165",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1800,
+    "mon_time_open": 930,
+    "mon_time_close": 2100,
+    "tue_time_open": 930,
+    "tue_time_close": 2100,
+    "wed_time_open": 930,
+    "wed_time_close": 2100,
+    "thu_time_open": 930,
+    "thu_time_close": 2100,
+    "fri_time_open": 930,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 1900
+  }
+}

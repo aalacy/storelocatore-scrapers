@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sportsman's Emporium",
+  "street_address": "821 Green Bag Road",
+  "city": "Morgantown",
+  "state": "WV",
+  "zip": "26508",
+  "country_code": "US",
+  "store_number": 46284,
+  "phone": "(304) 225-2697",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.61162649",
+  "longitude": "-79.93577131",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "iRun Texas",
+  "street_address": "22111 I-10 #1107A",
+  "city": "San Antonio",
+  "state": "TX",
+  "zip": "78257",
+  "country_code": "US",
+  "store_number": 16044,
+  "phone": "(210) 698-7869",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "29.62455485",
+  "longitude": "-98.60914162",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

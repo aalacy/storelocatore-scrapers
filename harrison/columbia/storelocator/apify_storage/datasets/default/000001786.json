@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet PDX - Portland",
+  "street_address": "2258 NW Raleigh St",
+  "city": "Portland",
+  "state": "OR",
+  "zip": "97210",
+  "country_code": "US",
+  "store_number": 7171,
+  "phone": "(503) 525-2122",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.53374603",
+  "longitude": "-122.69720103",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

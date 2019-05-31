@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Whitby",
+  "street_address": "320 Taunton Rd E",
+  "city": "Whitby",
+  "state": "ON",
+  "zip": "L1R0H4",
+  "country_code": "CA",
+  "store_number": 103786,
+  "phone": "(905) 655-9195",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.91905910",
+  "longitude": "-78.94323840",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

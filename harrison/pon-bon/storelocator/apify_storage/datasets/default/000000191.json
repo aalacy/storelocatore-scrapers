@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "11470 S. Preston Highway",
+  "city": "Louisville",
+  "state": "KY",
+  "zip": "40229",
+  "country_code": "US",
+  "store_number": 10037312,
+  "phone": "(502) 964-6117",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 38.085248832582,
+  "longitude": -85.66839285706044,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

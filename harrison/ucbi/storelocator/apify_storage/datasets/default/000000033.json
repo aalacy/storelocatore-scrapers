@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Shoppes at Heritage Village",
+  "street_address": "1030 Forestville Rd",
+  "city": "Wake Forest",
+  "state": "NC",
+  "zip": "27587",
+  "country_code": "US",
+  "store_number": 3778,
+  "phone": "9195566671",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.946227,
+  "longitude": -78.506883,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

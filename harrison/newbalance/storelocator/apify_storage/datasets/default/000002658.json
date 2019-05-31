@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Stouffville",
+  "street_address": "1010 Hoover Park Dr unit 3",
+  "city": "Whitchurch-Stouffville",
+  "state": "ON",
+  "zip": "L4A0K2",
+  "country_code": "CA",
+  "store_number": 103787,
+  "phone": "(905) 640-3919",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.95701720",
+  "longitude": "-79.27782130",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

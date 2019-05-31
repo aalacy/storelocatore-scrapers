@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Yonge Street",
+  "street_address": "2529 Yonge St",
+  "city": "Toronto",
+  "state": "ON",
+  "zip": "M4P2H9",
+  "country_code": "CA",
+  "store_number": 103769,
+  "phone": "(416) 932-9604",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.71292810",
+  "longitude": "-79.39923230",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

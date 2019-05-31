@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "ScoutTech Camping & Travel Outfitters",
+  "street_address": "2201 Bostock Crescent",
+  "city": "Mississauga",
+  "state": "ON",
+  "zip": "L5J3S8",
+  "country_code": "CA",
+  "store_number": 3827,
+  "phone": "(905) 828-9262",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.51277129",
+  "longitude": "-79.64131305",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

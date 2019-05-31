@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Fuquay-Varina - N Judd Pkwy NE",
+  "street_address": "325 N Judd Pkwy NE",
+  "city": "Fuquay Varina",
+  "state": "NC",
+  "zip": "27526",
+  "country_code": "US",
+  "store_number": 1475,
+  "phone": "9195673434",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.58852,
+  "longitude": -78.780982,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

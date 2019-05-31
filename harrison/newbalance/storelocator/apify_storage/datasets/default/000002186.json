@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Great Northern Cycle & Ski",
+  "street_address": "328 Central Ave",
+  "city": "Whitefish",
+  "state": "MT",
+  "zip": "59937",
+  "country_code": "US",
+  "store_number": 66664,
+  "phone": "(406) 862-5321",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.40909793",
+  "longitude": "-114.33706187",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

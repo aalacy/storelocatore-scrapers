@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "REI - Houston",
+  "street_address": "7538 Westheimer Rd",
+  "city": "Houston",
+  "state": "TX",
+  "zip": "77063",
+  "country_code": "US",
+  "store_number": 11139,
+  "phone": "(713) 353-2582",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "29.73987487",
+  "longitude": "-95.50227156",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 2000
+  }
+}

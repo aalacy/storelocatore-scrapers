@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "CHANDLER FASHION CENTER",
+  "street_address": "3111 W CHANDLER BLVD",
+  "city": "CHANDLER",
+  "state": "AZ",
+  "zip": "85226",
+  "country_code": "US",
+  "store_number": "432",
+  "phone": "(480) 855-0871",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.30877,
+  "longitude": -111.9214,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

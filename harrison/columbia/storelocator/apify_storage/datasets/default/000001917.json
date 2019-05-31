@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Potomac River Running - Burke",
+  "street_address": "5715 Burke Centre Pkwy",
+  "city": "Burke",
+  "state": "VA",
+  "zip": "22015",
+  "country_code": "US",
+  "store_number": 14491,
+  "phone": "(703) 978-0500",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.79873636",
+  "longitude": "-77.32123127",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

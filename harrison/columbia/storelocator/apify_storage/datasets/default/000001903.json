@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Modesto",
+  "street_address": "1427 Standiford Ave a",
+  "city": "Modesto",
+  "state": "CA",
+  "zip": "95350",
+  "country_code": "US",
+  "store_number": 19087,
+  "phone": "(209) 549-9323",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.68961751",
+  "longitude": "-121.01619827",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

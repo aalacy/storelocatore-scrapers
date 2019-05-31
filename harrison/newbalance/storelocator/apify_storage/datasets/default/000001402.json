@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Woodland Travel Center",
+  "street_address": "5190 Plainfield Ave NE",
+  "city": "Grand Rapids",
+  "state": "MI",
+  "zip": "49525",
+  "country_code": "US",
+  "store_number": 38395,
+  "phone": "(616) 363-9038",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.05415705",
+  "longitude": "-85.59033140",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

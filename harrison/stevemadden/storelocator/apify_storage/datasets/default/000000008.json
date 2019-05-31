@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "SEYHAN/ADANA",
+  "street_address": "CEMAL PASA MAH. 63005 SK.",
+  "city": "ADANA",
+  "state": null,
+  "country_code": "TR",
+  "store_number": "7995510",
+  "phone": "7034182400",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "-66.916667",
+  "longitude": "105.850000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

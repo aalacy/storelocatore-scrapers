@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Boulder Running Company - Greenwood Village",
+  "street_address": "8545 E Arapahoe Rd",
+  "city": "Greenwood Village",
+  "state": "CO",
+  "zip": "80112",
+  "country_code": "US",
+  "store_number": 22856,
+  "phone": "(303) 770-5131",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.59646649",
+  "longitude": "-104.89162917",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 800,
+    "sat_time_close": 1900
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "REI - Bend",
+  "street_address": "380 SW Powerhouse Dr",
+  "city": "Bend",
+  "state": "OR",
+  "zip": "97702",
+  "country_code": "US",
+  "store_number": 11034,
+  "phone": "(541) 385-0594",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.04632722",
+  "longitude": "-121.31506199",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 2000
+  }
+}

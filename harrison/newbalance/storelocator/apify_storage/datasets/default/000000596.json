@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "SCHEELS ALL SPORTS",
+  "street_address": "1225 Eglin St",
+  "city": "Rapid City",
+  "state": "SD",
+  "zip": "57701",
+  "country_code": "US",
+  "store_number": 11011,
+  "phone": "(605) 342-9033",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.09713722",
+  "longitude": "-103.18455169",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 900,
+    "mon_time_close": 2100,
+    "tue_time_open": 900,
+    "tue_time_close": 2100,
+    "wed_time_open": 900,
+    "wed_time_close": 2100,
+    "thu_time_open": 900,
+    "thu_time_close": 2100,
+    "fri_time_open": 900,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 2100
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "603 Martin Luther King Highway",
+  "city": "Maysville",
+  "state": "KY",
+  "zip": "41056",
+  "country_code": "US",
+  "store_number": 10037314,
+  "phone": "(606) 759-7166",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 38.63287157733423,
+  "longitude": -83.79626148436375,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

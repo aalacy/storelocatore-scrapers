@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Tuscawilla Bend Shopping Center",
+  "street_address": "2100 Winter Springs Blvd",
+  "city": "Oviedo",
+  "state": "FL",
+  "zip": "32765-9342",
+  "country_code": "US",
+  "store_number": 2933,
+  "phone": "4073669740",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.669367,
+  "longitude": -81.225833,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

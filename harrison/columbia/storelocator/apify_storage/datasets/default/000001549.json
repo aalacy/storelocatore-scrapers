@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Seasons",
+  "street_address": "7240 Kingston Pike",
+  "city": "Knoxville",
+  "state": "TN",
+  "zip": "37919",
+  "country_code": "US",
+  "store_number": 22477,
+  "phone": "(865) 584-1512",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.92909589",
+  "longitude": "-84.02973138",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 1000,
+    "sat_time_close": 2100
+  }
+}

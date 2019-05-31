@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Milton Crossroads",
+  "street_address": "1150 Steeles Ave E",
+  "city": "Milton",
+  "state": "ON",
+  "zip": "L9T6C8",
+  "country_code": "CA",
+  "store_number": 103679,
+  "phone": "(905) 693-8546",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.54063713",
+  "longitude": "-79.87276131",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

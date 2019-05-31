@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet San Diego",
+  "street_address": "5980 Village Way",
+  "city": "San Diego",
+  "state": "CA",
+  "zip": "92130",
+  "country_code": "US",
+  "store_number": 36941,
+  "phone": "(858) 793-5335",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.96205401",
+  "longitude": "-117.18991920",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

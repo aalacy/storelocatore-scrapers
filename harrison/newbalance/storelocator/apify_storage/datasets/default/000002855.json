@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Never Ending Cycles",
+  "street_address": "1060 E Schaumburg Rd",
+  "city": "Streamwood",
+  "state": "IL",
+  "zip": "60107",
+  "country_code": "US",
+  "store_number": 108940,
+  "phone": "(630) 882-0822",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.03105740",
+  "longitude": "-88.15494780",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

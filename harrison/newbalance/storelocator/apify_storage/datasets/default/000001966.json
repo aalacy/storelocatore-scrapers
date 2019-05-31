@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sound Runner - Glastonbury",
+  "street_address": "63 Hebron Ave",
+  "city": "Glastonbury",
+  "state": "CT",
+  "zip": "06033",
+  "country_code": "US",
+  "store_number": 22488,
+  "phone": "(860) 430-6712",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.71368343",
+  "longitude": "-72.60711190",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

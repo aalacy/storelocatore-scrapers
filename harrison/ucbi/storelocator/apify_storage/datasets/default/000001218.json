@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Hurricane Creek",
+  "street_address": "8644 E Brainerd Rd",
+  "city": "Chattanooga",
+  "state": "TN",
+  "zip": "37421-8325",
+  "country_code": "US",
+  "store_number": 3461,
+  "phone": "4232961903",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.999166,
+  "longitude": -85.134035,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

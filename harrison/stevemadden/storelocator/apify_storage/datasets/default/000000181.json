@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Dubai Festival City Mall",
+  "street_address": "Dubai Festival City Mall",
+  "city": "Dubai",
+  "state": null,
+  "country_code": "AE",
+  "store_number": "7995267",
+  "phone": "04-232-6152",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "25.222620",
+  "longitude": "55.354699",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

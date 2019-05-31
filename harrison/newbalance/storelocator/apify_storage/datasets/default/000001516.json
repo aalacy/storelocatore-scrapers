@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Magasin Latulippe",
+  "street_address": "637 Rue Saint-Vallier O",
+  "city": "Québec",
+  "state": "QC",
+  "zip": "G1N1C6",
+  "country_code": "CA",
+  "store_number": 19930,
+  "phone": "(418) 529-0024",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "46.80993767",
+  "longitude": "-71.24474117",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1700,
+    "mon_time_open": 830,
+    "mon_time_close": 1730,
+    "tue_time_open": 830,
+    "tue_time_close": 1730,
+    "wed_time_open": 830,
+    "wed_time_close": 2100,
+    "thu_time_open": 830,
+    "thu_time_close": 2100,
+    "fri_time_open": 830,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 1700
+  }
+}

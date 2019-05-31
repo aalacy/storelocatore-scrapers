@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Monterey Bay Kayaks - Monterey",
+  "street_address": "693 Del Monte Ave",
+  "city": "Monterey",
+  "state": "CA",
+  "zip": "93940",
+  "country_code": "US",
+  "store_number": 20642,
+  "phone": "(831) 373-5357",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.60051810",
+  "longitude": "-121.88822320",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

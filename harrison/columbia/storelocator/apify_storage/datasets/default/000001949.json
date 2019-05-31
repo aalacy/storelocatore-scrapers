@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Hoboken",
+  "street_address": "604 Washington St",
+  "city": "Hoboken",
+  "state": "NJ",
+  "zip": "07030",
+  "country_code": "US",
+  "store_number": 19125,
+  "phone": "(201) 533-1200",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.74366755",
+  "longitude": "-74.02912129",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

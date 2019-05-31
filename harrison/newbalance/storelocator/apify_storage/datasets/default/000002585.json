@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Napoli",
+  "street_address": "Via Alessandro Scarlatti, 80/100",
+  "city": "Napoli",
+  "state": "NA",
+  "zip": "80129",
+  "country_code": "IT",
+  "store_number": 144716,
+  "phone": "081 556 2187",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.84366919",
+  "longitude": "14.23223318",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 2030,
+    "mon_time_open": 1000,
+    "mon_time_close": 2030,
+    "tue_time_open": 1000,
+    "tue_time_close": 2030,
+    "wed_time_open": 1000,
+    "wed_time_close": 2030,
+    "thu_time_open": 1000,
+    "thu_time_close": 2030,
+    "fri_time_open": 1000,
+    "fri_time_close": 2030,
+    "sat_time_open": 1000,
+    "sat_time_close": 2100
+  }
+}

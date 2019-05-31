@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Steve Madden Fourways Shopping Cent",
+  "street_address": "Shop G020 Corner Willem Nicol",
+  "city": "Johannesburg",
+  "state": null,
+  "country_code": "ZA",
+  "store_number": "7995612",
+  "phone": "(011) 467 3216",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "-26.091883",
+  "longitude": "28.125239",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

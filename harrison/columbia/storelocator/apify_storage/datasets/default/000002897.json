@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Bicycle Sport Shop",
+  "street_address": "9900 W Parmer Ln",
+  "city": "Austin",
+  "state": "TX",
+  "zip": "78717",
+  "country_code": "US",
+  "store_number": 16586,
+  "phone": "(512) 637-6890",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.48657499",
+  "longitude": "-97.77009160",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

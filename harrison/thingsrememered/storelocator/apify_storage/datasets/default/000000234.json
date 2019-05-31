@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "CIELO VISTA MALL",
+  "street_address": "8401 GATEWAY BLVD W",
+  "city": "EL PASO",
+  "state": "TX",
+  "zip": "79925",
+  "country_code": "US",
+  "store_number": "415",
+  "phone": "(915) 771-9225",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 31.780632,
+  "longitude": -106.36569,
+  "external_lat_long": false,
+  "hours_of_operation": "1#12:00 PM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

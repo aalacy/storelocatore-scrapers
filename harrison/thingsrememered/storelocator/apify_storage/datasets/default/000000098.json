@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "ST. CHARLES TOWNE CENTER",
+  "street_address": "11110 MALL CIR",
+  "city": "WALDORF",
+  "state": "MD",
+  "zip": "20603",
+  "country_code": "US",
+  "store_number": "605",
+  "phone": "(301) 932-4790",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 38.629337,
+  "longitude": -76.96751,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

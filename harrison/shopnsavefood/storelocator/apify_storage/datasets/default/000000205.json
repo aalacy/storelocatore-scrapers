@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Ross's Fifth Ave",
+  "street_address": "815 Fifth Avenue",
+  "city": "McKeesport",
+  "state": "PA",
+  "zip": "15132",
+  "country_code": "US",
+  "store_number": "64",
+  "phone": "1038",
+  "location_type": {
+    "gas_station": "412-672-5972",
+    "active": "40.354099",
+    "pump_perk": "-79.856443"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sun 7:00am-9:00pm",
+  "longitude": "412-672-7820",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

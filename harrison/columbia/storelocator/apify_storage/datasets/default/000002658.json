@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Runnings",
+  "street_address": "2003 3rd Ave W",
+  "city": "Dickinson",
+  "state": "ND",
+  "zip": "58601",
+  "country_code": "US",
+  "store_number": 40921,
+  "phone": "(701) 483-1226",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "46.90435768",
+  "longitude": "-102.78973168",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

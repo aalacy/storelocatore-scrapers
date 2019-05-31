@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "ION ORCHARD",
+  "street_address": "2 Orchard Turn",
+  "city": "Singapore",
+  "state": null,
+  "country_code": "SG",
+  "store_number": "7995339",
+  "phone": "6565098322",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "1.304169",
+  "longitude": "103.831722",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

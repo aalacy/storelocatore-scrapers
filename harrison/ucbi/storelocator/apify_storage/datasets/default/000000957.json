@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Sylva - Asheville Hwy ATM",
+  "street_address": "57 Asheville Hwy",
+  "city": "Sylva",
+  "state": "NC",
+  "zip": "28779",
+  "country_code": "US",
+  "store_number": 1207,
+  "phone": "8286319166",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.375539,
+  "longitude": -83.213449,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

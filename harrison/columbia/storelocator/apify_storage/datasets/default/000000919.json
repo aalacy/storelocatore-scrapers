@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Play Stores Inc.",
+  "street_address": "1950 Harvey Ave #101",
+  "city": "Kelowna",
+  "state": "BC",
+  "zip": "V1Y8J8",
+  "country_code": "CA",
+  "store_number": 21659,
+  "phone": "(250) 762-9023",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.88263817",
+  "longitude": "-119.45199196",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

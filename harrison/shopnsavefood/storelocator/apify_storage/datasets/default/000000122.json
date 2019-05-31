@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Leechburg",
+  "street_address": "265 Market Street",
+  "city": "Leechburg",
+  "state": "PA",
+  "zip": "15656",
+  "country_code": "US",
+  "store_number": "180",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.63896",
+  "longitude": "-79.61096",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

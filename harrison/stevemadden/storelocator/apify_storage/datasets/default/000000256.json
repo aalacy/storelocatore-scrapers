@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Barton Creek Square",
+  "street_address": "2901 Capitol of Texas Hwy",
+  "city": "Austin",
+  "state": "TX",
+  "country_code": "US",
+  "store_number": "7995184",
+  "phone": "512-732-0778",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.257800",
+  "longitude": "-97.807060",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

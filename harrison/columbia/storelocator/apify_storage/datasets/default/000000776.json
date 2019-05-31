@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Sacramento",
+  "street_address": "2311 J St",
+  "city": "Sacramento",
+  "state": "CA",
+  "zip": "95816",
+  "country_code": "US",
+  "store_number": 17982,
+  "phone": "(916) 442-3338",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.57563203",
+  "longitude": "-121.47519903",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

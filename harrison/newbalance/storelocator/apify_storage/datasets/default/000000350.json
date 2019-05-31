@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Salomon Store Toulouse",
+  "street_address": "68 Rue de la Pomme",
+  "city": "Toulouse",
+  "state": "",
+  "zip": "31000",
+  "country_code": "FR",
+  "store_number": 94012,
+  "phone": "09 65 20 27 65",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.60371440",
+  "longitude": "1.44482367",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

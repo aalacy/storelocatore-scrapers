@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Plant City Crossing",
+  "street_address": "2515 Thonotosassa Rd",
+  "city": "Plant City",
+  "state": "FL",
+  "zip": "33563-1464",
+  "country_code": "US",
+  "store_number": 3210,
+  "phone": "8137196933",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.02394,
+  "longitude": -82.150423,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

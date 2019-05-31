@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Schererville",
+  "street_address": "635 US-30",
+  "city": "Schererville",
+  "state": "IN",
+  "zip": "46375",
+  "country_code": "US",
+  "store_number": 17990,
+  "phone": "(219) 864-1000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.48167963",
+  "longitude": "-87.43514325",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

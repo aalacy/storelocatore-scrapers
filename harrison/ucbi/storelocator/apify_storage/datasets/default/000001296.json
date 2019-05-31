@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Crossings",
+  "street_address": "2324 Lebanon Pike",
+  "city": "Nashville",
+  "state": "TN",
+  "zip": "37214-2411",
+  "country_code": "US",
+  "store_number": 3693,
+  "phone": "6158842665",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 36.170834,
+  "longitude": -86.683871,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

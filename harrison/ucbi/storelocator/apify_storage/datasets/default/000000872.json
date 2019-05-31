@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Bayside Bridge Plaza",
+  "street_address": "1520 N McMullen Booth Rd",
+  "city": "Clearwater",
+  "state": "FL",
+  "zip": "33759-2594",
+  "country_code": "US",
+  "store_number": 2852,
+  "phone": "7277254900",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.979994,
+  "longitude": -82.710846,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

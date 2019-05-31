@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet High Point",
+  "street_address": "5870 Samet Dr #107",
+  "city": "High Point",
+  "state": "NC",
+  "zip": "27265",
+  "country_code": "US",
+  "store_number": 13384,
+  "phone": "(336) 858-5580",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.03659042",
+  "longitude": "-79.96113101",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

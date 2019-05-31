@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Runnings",
+  "street_address": "411 Potter St",
+  "city": "Red Wing",
+  "state": "MN",
+  "zip": "55066",
+  "country_code": "US",
+  "store_number": 97199,
+  "phone": "(651) 388-7161",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.56623730",
+  "longitude": "-92.52985152",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

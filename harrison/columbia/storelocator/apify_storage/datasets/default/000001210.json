@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cascade Rack",
+  "street_address": "507 N W Colorado Avenue",
+  "city": "Bend",
+  "state": "OR",
+  "zip": "97701",
+  "country_code": "US",
+  "store_number": 32923,
+  "phone": "(541) 241-6255",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.05209722",
+  "longitude": "-121.31440199",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

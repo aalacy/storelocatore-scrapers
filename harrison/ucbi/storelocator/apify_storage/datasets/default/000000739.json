@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Shoppes at New Tampa",
+  "street_address": "1920 County Road 581",
+  "city": "Wesley Chapel",
+  "state": "FL",
+  "zip": "33544-9262",
+  "country_code": "US",
+  "store_number": 2676,
+  "phone": "8139944566",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.184634,
+  "longitude": -82.350746,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Valhalla Pure Outfitters New Denver",
+  "street_address": "430 6 Ave",
+  "city": "New Denver",
+  "state": "BC",
+  "zip": "V0G1S0",
+  "country_code": "CA",
+  "store_number": 10796,
+  "phone": "(250) 358-7755",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.99168191",
+  "longitude": "-117.37251923",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

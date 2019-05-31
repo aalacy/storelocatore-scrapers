@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "FASHION CTR AT PENTAGON CITY",
+  "street_address": "1100 S HAYES ST",
+  "city": "ARLINGTON",
+  "state": "VA",
+  "zip": "22202",
+  "country_code": "US",
+  "store_number": "725",
+  "phone": "(703) 415-3737",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 38.8589,
+  "longitude": -77.0567,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:30 PM|3#10:00 AM#09:30 PM|4#10:00 AM#09:30 PM|5#10:00 AM#09:30 PM|6#10:00 AM#09:30 PM|7#10:00 AM#09:30 PM"
+}

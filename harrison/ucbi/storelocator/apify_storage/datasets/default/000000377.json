@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Ormond Beach Mall",
+  "street_address": "1258 Ocean Shore Blvd",
+  "city": "Ormond Beach",
+  "state": "FL",
+  "zip": "32176-3620",
+  "country_code": "US",
+  "store_number": 3573,
+  "phone": "3864419839",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 29.324163,
+  "longitude": -81.056893,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

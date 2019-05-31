@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Shoppes of Sweetwater",
+  "street_address": "3883 Wekiva Springs Rd",
+  "city": "Longwood",
+  "state": "FL",
+  "zip": "32779-3362",
+  "country_code": "US",
+  "store_number": 3275,
+  "phone": "4077881804",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.706471,
+  "longitude": -81.444487,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

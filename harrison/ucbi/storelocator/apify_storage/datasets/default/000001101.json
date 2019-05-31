@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Oglethorpe Crossing",
+  "street_address": "3435 Ashford Dunwoody Rd NE",
+  "city": "Brookhaven",
+  "state": "GA",
+  "zip": "30319-2546",
+  "country_code": "US",
+  "store_number": 3029,
+  "phone": "7702165050",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.890465,
+  "longitude": -84.3245,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

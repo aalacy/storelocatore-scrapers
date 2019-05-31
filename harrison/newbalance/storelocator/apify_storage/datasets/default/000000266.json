@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Salt Lake Running Company",
+  "street_address": "2454 S 700 E",
+  "city": "Salt Lake City",
+  "state": "UT",
+  "zip": "84106",
+  "country_code": "US",
+  "store_number": 14480,
+  "phone": "(801) 484-9144",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.71786671",
+  "longitude": "-111.87171183",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

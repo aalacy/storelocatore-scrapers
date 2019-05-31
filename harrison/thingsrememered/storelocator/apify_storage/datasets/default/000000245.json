@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "MIDLAND PARK MALL",
+  "street_address": "4511 N MIDKIFF RD",
+  "city": "MIDLAND",
+  "state": "TX",
+  "zip": "79705",
+  "country_code": "US",
+  "store_number": "470",
+  "phone": "(432) 699-1174",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 32.030846,
+  "longitude": -102.090164,
+  "external_lat_long": false,
+  "hours_of_operation": "1#12:00 PM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

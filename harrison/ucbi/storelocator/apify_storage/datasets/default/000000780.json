@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Spartanburg - East Main St",
+  "street_address": "449 E Main Street",
+  "city": "Spartanburg",
+  "state": "SC",
+  "zip": "29306",
+  "country_code": "US",
+  "store_number": 1238,
+  "phone": "8645915200",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.952013,
+  "longitude": -81.92227,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

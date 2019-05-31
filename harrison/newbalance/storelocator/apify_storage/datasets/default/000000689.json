@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Salomon Store Megaoutdoor",
+  "street_address": "Józefa Kałuży 1 ",
+  "city": "Kraków",
+  "state": "",
+  "zip": "30-111",
+  "country_code": "PL",
+  "store_number": 148310,
+  "phone": "12 423 61 88",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "50.05882015",
+  "longitude": "19.92232640",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Tallahassee",
+  "street_address": "1817 Thomasville Rd #510",
+  "city": "Tallahassee",
+  "state": "FL",
+  "zip": "32303",
+  "country_code": "US",
+  "store_number": 98160,
+  "phone": "(850) 727-8011",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.46321840",
+  "longitude": "-84.27022220",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

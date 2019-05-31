@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Salomon Store Paris",
+  "street_address": "129 Boulevard Saint-Germain",
+  "city": "Paris",
+  "state": "",
+  "zip": "75006",
+  "country_code": "FR",
+  "store_number": 126145,
+  "phone": "0142024605",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.85280041",
+  "longitude": "2.33622383",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

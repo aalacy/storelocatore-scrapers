@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Charleston - Orleans Rd",
+  "street_address": "946 Orleans Rd",
+  "city": "Charleston",
+  "state": "SC",
+  "zip": "29407",
+  "country_code": "US",
+  "store_number": 1266,
+  "phone": "8432841199",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 32.798755,
+  "longitude": -80.028331,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

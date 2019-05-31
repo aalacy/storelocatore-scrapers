@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "1585 N. State Street",
+  "city": "Greenfield",
+  "state": "IN",
+  "zip": "46140",
+  "country_code": "US",
+  "store_number": 10037327,
+  "phone": "(317) 462-7055",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 39.80638279033197,
+  "longitude": -85.76879961448475,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

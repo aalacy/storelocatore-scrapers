@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet San Antonio",
+  "street_address": "7322 Jones Maltsberger Rd #152",
+  "city": "San Antonio",
+  "state": "TX",
+  "zip": "78209",
+  "country_code": "US",
+  "store_number": 19079,
+  "phone": "(210) 805-0845",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "29.49772574",
+  "longitude": "-98.48042142",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Valhalla Pure Outfitters Canmore",
+  "street_address": "726 8 St",
+  "city": "Canmore",
+  "state": "AB",
+  "zip": "T1W2B6",
+  "country_code": "CA",
+  "store_number": 10747,
+  "phone": "(403) 678-5610",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "51.08948371",
+  "longitude": "-115.35991890",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 930,
+    "mon_time_close": 1800,
+    "tue_time_open": 930,
+    "tue_time_close": 1800,
+    "wed_time_open": 930,
+    "wed_time_close": 1800,
+    "thu_time_open": 930,
+    "thu_time_close": 1800,
+    "fri_time_open": 930,
+    "fri_time_close": 2100,
+    "sat_time_open": 930,
+    "sat_time_close": 2100
+  }
+}

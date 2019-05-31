@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Miami River",
+  "street_address": "311 SW 7th St",
+  "city": "Miami",
+  "state": "FL",
+  "zip": "33130-2917",
+  "country_code": "US",
+  "store_number": 2700,
+  "phone": "3058609477",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.767454,
+  "longitude": -80.199415,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

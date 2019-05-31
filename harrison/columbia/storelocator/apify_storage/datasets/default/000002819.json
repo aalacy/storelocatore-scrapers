@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Peloton Cycles",
+  "street_address": "1981 Jessup Dr",
+  "city": "Fort Collins",
+  "state": "CO",
+  "zip": "80525",
+  "country_code": "US",
+  "store_number": 136038,
+  "phone": "(970) 449-5595",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.56166456",
+  "longitude": "-105.03817209",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Olde Village Publix",
+  "street_address": "55 N Indiana Ave",
+  "city": "Englewood",
+  "state": "FL",
+  "zip": "34223-2944",
+  "country_code": "US",
+  "store_number": 3156,
+  "phone": "9414735441",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.963068,
+  "longitude": -82.351579,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

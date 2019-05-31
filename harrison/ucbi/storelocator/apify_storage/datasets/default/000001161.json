@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Ellijay - Industrial Blvd",
+  "street_address": "558 Industrial Blvd",
+  "city": "Ellijay",
+  "state": "GA",
+  "zip": "30540",
+  "country_code": "US",
+  "store_number": 45,
+  "phone": "7066355411",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.685601,
+  "longitude": -84.485832,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

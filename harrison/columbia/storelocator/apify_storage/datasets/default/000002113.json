@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Gander Mall",
+  "street_address": "132 Bennett Dr Unit 9",
+  "city": "Gander",
+  "state": "NL",
+  "zip": "A1V2H2",
+  "country_code": "CA",
+  "store_number": 103637,
+  "phone": "(709) 651-2282",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.95163710",
+  "longitude": "-54.60301300",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

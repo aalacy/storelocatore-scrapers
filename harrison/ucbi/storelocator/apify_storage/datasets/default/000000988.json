@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Gainesville - Jesse Jewell Pkwy",
+  "street_address": "351 Jesse Jewell Pkwy SW",
+  "city": "Gainesville",
+  "state": "GA",
+  "zip": "30501",
+  "country_code": "US",
+  "store_number": 53,
+  "phone": "7705313191",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.29539,
+  "longitude": -83.827165,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

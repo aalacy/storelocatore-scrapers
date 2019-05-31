@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Rivercrest Commons Shopping Center",
+  "street_address": "11460 S US Highway 301",
+  "city": "Riverview",
+  "state": "FL",
+  "zip": "33569",
+  "country_code": "US",
+  "store_number": 3787,
+  "phone": "8136719121",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.8338,
+  "longitude": -82.327287,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

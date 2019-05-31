@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Grinnell",
+  "street_address": "937 Main St",
+  "city": "Grinnell",
+  "state": "IA",
+  "zip": "50112",
+  "country_code": "US",
+  "store_number": 22019,
+  "phone": "(641) 236-4804",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.74456839",
+  "longitude": "-92.72615192",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

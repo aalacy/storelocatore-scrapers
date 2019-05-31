@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Crossroads at Royal Palm Beach",
+  "street_address": "1180 Royal Palm Beach Blvd",
+  "city": "Royal Palm Beach",
+  "state": "FL",
+  "zip": "33411-1671",
+  "country_code": "US",
+  "store_number": 2838,
+  "phone": "5617904802",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.707742,
+  "longitude": -80.226961,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "ORLAND SQUARE",
+  "street_address": "156 ORLAND SQUARE DR",
+  "city": "ORLAND PARK",
+  "state": "IL",
+  "zip": "60462",
+  "country_code": "US",
+  "store_number": "164",
+  "phone": "(708) 403-0299",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 41.621155,
+  "longitude": -87.84172,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

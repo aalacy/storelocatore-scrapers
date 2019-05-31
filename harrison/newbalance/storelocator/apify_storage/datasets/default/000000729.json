@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Middleton",
+  "street_address": "8440 Old Sauk Rd",
+  "city": "Middleton",
+  "state": "WI",
+  "zip": "53562",
+  "country_code": "US",
+  "store_number": 17944,
+  "phone": "(608) 833-9999",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.07528700",
+  "longitude": "-89.52923950",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

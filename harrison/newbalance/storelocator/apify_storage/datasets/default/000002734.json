@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Shore Brake Cyclery",
+  "street_address": "3801 Long Beach Blvd",
+  "city": "Beach Haven",
+  "state": "NJ",
+  "zip": "08008",
+  "country_code": "US",
+  "store_number": 132866,
+  "phone": "(609) 342-0480",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.65134000",
+  "longitude": "-74.18868500",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

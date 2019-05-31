@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Runner's High",
+  "street_address": "454 Main St",
+  "city": "Metuchen",
+  "state": "NJ",
+  "zip": "08840",
+  "country_code": "US",
+  "store_number": 22426,
+  "phone": "(732) 549-9440",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.54296664",
+  "longitude": "-74.36205122",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1600,
+    "mon_time_open": 1100,
+    "mon_time_close": 1800,
+    "tue_time_open": 1100,
+    "tue_time_close": 1900,
+    "wed_time_open": 1100,
+    "wed_time_close": 1800,
+    "thu_time_open": 1100,
+    "thu_time_close": 1900,
+    "fri_time_open": 1100,
+    "fri_time_close": 1800,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

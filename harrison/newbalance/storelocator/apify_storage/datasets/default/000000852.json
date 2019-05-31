@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Buckhead",
+  "street_address": "3255 Peachtree Rd NE",
+  "city": "Atlanta",
+  "state": "GA",
+  "zip": "30305",
+  "country_code": "US",
+  "store_number": 84847,
+  "phone": "(404) 467-1312",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.84321554",
+  "longitude": "-84.37072138",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 2000
+  }
+}

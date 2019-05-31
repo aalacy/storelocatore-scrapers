@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Edmonton City Centre",
+  "street_address": "10205 101 St NW Unit #124",
+  "city": "Edmonton",
+  "state": "AB",
+  "zip": "T5J2Y9",
+  "country_code": "CA",
+  "store_number": 103622,
+  "phone": "(780) 426-7801",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "53.54368877",
+  "longitude": "-113.49336186",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

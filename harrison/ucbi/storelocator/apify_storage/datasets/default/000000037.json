@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Myrtle Beach - Professional Dr",
+  "street_address": "1312 Professional Dr",
+  "city": "Myrtle Beach",
+  "state": "SC",
+  "zip": "29577",
+  "country_code": "US",
+  "store_number": 1270,
+  "phone": "8434292002",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.730203,
+  "longitude": -78.859643,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

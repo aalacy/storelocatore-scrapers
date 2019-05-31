@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "High Point Town Center",
+  "street_address": "2451 Cobbs Ford Rd",
+  "city": "Prattville",
+  "state": "AL",
+  "zip": "36066-7763",
+  "country_code": "US",
+  "store_number": 3520,
+  "phone": "3342850227",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 32.456977,
+  "longitude": -86.39594,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

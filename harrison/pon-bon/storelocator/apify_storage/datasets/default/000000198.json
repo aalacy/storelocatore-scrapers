@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "1301 E. Pickard",
+  "city": "Mount Pleasant",
+  "state": "MI",
+  "zip": "48858",
+  "country_code": "US",
+  "store_number": 10037345,
+  "phone": "(989) 773-4427",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 43.6123213419825,
+  "longitude": -84.76156531104505,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

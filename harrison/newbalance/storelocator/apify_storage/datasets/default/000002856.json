@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "College Cycles Bicycle Shop",
+  "street_address": "361 Oakland Ave",
+  "city": "Rock Hill",
+  "state": "SC",
+  "zip": "29730",
+  "country_code": "US",
+  "store_number": 44431,
+  "phone": "(803) 329-0992",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.93491700",
+  "longitude": "-81.02687800",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

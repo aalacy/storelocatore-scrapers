@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Fort Collins",
+  "street_address": "3500 S College Ave",
+  "city": "Fort Collins",
+  "state": "CO",
+  "zip": "80525",
+  "country_code": "US",
+  "store_number": 22031,
+  "phone": "(970) 226-1776",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.53942000",
+  "longitude": "-105.07524800",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 930,
+    "mon_time_close": 2000,
+    "tue_time_open": 930,
+    "tue_time_close": 2000,
+    "wed_time_open": 930,
+    "wed_time_close": 2000,
+    "thu_time_open": 930,
+    "thu_time_close": 2000,
+    "fri_time_open": 930,
+    "fri_time_close": 2000,
+    "sat_time_open": 930,
+    "sat_time_close": 1800
+  }
+}

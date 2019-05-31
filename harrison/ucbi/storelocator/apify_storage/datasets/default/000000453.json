@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Colonial Towne Park Center",
+  "street_address": "870 Village Oak Ln",
+  "city": "Lake Mary",
+  "state": "FL",
+  "zip": "32746-4766",
+  "country_code": "US",
+  "store_number": 3585,
+  "phone": "4078041950",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.78777,
+  "longitude": -81.357206,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

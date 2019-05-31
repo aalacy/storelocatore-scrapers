@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Twelve Oaks Plaza",
+  "street_address": "7290 55th Ave E",
+  "city": "Bradenton",
+  "state": "FL",
+  "zip": "34203-8002",
+  "country_code": "US",
+  "store_number": 2932,
+  "phone": "9417278808",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.441647,
+  "longitude": -82.464644,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Bonanza",
+  "street_address": "725 Main St.",
+  "city": "Presque Isle",
+  "state": "ME",
+  "zip": "04769",
+  "country_code": "US",
+  "store_number": 10037536,
+  "phone": "(207) 764-3601",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 46.69305107570959,
+  "longitude": -68.01305494101246,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

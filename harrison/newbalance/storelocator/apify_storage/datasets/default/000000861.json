@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Lubbock",
+  "street_address": "5027 Milwaukee Ave, suite 300",
+  "city": "Lubbock",
+  "state": "TX",
+  "zip": "79407",
+  "country_code": "US",
+  "store_number": 84854,
+  "phone": "(806) 791-0082",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.54542390",
+  "longitude": "-101.95534090",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

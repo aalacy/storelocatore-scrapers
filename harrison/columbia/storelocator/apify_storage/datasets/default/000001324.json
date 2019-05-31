@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Atmosphere - Summit Shopping Centre",
+  "street_address": "1180 Columbia St W #105",
+  "city": "Kamloops",
+  "state": "BC",
+  "zip": "V2C6R6",
+  "country_code": "CA",
+  "store_number": 19682,
+  "phone": "(250) 434-1220",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "50.66583010",
+  "longitude": "-120.35519719",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

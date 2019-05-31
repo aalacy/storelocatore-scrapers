@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Fashion Valley",
+  "street_address": "7007 Friars Rd.",
+  "city": "San Diego",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995284",
+  "phone": "619-209-5844",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.767500",
+  "longitude": "-117.166000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

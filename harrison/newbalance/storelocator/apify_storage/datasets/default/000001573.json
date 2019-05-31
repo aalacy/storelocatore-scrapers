@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Action Sports",
+  "street_address": "9500 Brimhall Rd # 400",
+  "city": "Bakersfield",
+  "state": "CA",
+  "zip": "93312",
+  "country_code": "US",
+  "store_number": 14608,
+  "phone": "(661) 833-4000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.37033580",
+  "longitude": "-119.10959195",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

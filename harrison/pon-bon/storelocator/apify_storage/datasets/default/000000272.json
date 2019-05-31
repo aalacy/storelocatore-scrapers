@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "Hamed Centre Electra Street",
+  "city": "Abu Dhabi",
+  "state": "Abu Dhabi",
+  "zip": "",
+  "country_code": "US",
+  "store_number": 10037368,
+  "phone": "26393375",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 24.485126944086456,
+  "longitude": 54.36265145767209,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

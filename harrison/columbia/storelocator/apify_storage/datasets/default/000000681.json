@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Outdoor Experience",
+  "street_address": "314 N First Ave",
+  "city": "Sandpoint",
+  "state": "ID",
+  "zip": "83864",
+  "country_code": "US",
+  "store_number": 45733,
+  "phone": "(208) 263-6028",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.27550791",
+  "longitude": "-116.54719095",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1700,
+    "mon_time_open": 900,
+    "mon_time_close": 1800,
+    "tue_time_open": 900,
+    "tue_time_close": 1800,
+    "wed_time_open": 900,
+    "wed_time_close": 1800,
+    "thu_time_open": 900,
+    "thu_time_close": 1800,
+    "fri_time_open": 900,
+    "fri_time_close": 1800,
+    "sat_time_open": 900,
+    "sat_time_close": 1800
+  }
+}

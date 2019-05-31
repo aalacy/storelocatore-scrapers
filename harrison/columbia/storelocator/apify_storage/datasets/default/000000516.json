@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Smoky Mountain Trader",
+  "street_address": "18 W Jarrard St",
+  "city": "Cleveland",
+  "state": "GA",
+  "zip": "30528",
+  "country_code": "US",
+  "store_number": 34580,
+  "phone": "(706) 865-7296",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.59762567",
+  "longitude": "-83.76377137",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

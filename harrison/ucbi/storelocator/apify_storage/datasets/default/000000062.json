@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Boca Valley Plaza",
+  "street_address": "7431 N Federal Hwy",
+  "city": "Boca Raton",
+  "state": "FL",
+  "zip": "33487-1601",
+  "country_code": "US",
+  "store_number": 2841,
+  "phone": "5612419700",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.415659,
+  "longitude": -80.076212,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

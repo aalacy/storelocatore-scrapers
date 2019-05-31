@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Emory Commons",
+  "street_address": "2155 N Decatur Rd",
+  "city": "Decatur",
+  "state": "GA",
+  "zip": "30033-5307",
+  "country_code": "US",
+  "store_number": 3143,
+  "phone": "4046386015",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.789767,
+  "longitude": -84.304416,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

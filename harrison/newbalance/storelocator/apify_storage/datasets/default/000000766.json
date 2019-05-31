@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Jacksonville",
+  "street_address": "10095 Beach Blvd #500",
+  "city": "Jacksonville",
+  "state": "FL",
+  "zip": "32246",
+  "country_code": "US",
+  "store_number": 84791,
+  "phone": "(904) 620-0483",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.28744962",
+  "longitude": "-81.55151134",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

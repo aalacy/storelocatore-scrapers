@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Granada Plaza",
+  "street_address": "1491 Main St",
+  "city": "Dunedin",
+  "state": "FL",
+  "zip": "34698-4612",
+  "country_code": "US",
+  "store_number": 2834,
+  "phone": "7277369284",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.018327,
+  "longitude": -82.76209,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

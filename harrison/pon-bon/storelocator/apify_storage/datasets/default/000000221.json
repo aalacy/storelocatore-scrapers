@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "2nd Floor, No. 68, Hsin Hu 2nd Road",
+  "city": "Taipei City",
+  "state": "Taiwan",
+  "zip": "114",
+  "country_code": "US",
+  "store_number": 10037361,
+  "phone": "227932493",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 25.061921847469844,
+  "longitude": 121.5771015812038,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Norfolk",
+  "street_address": "803 S 13th St",
+  "city": "Norfolk",
+  "state": "NE",
+  "zip": "68701",
+  "country_code": "US",
+  "store_number": 22016,
+  "phone": "(402) 371-0932",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.02447930",
+  "longitude": "-97.42590160",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 930,
+    "mon_time_close": 1900,
+    "tue_time_open": 930,
+    "tue_time_close": 1900,
+    "wed_time_open": 930,
+    "wed_time_close": 1900,
+    "thu_time_open": 930,
+    "thu_time_close": 1900,
+    "fri_time_open": 930,
+    "fri_time_close": 1900,
+    "sat_time_open": 930,
+    "sat_time_close": 1700
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Chase Cyclery",
+  "street_address": "133 N Main St",
+  "city": "Andover",
+  "state": "ME",
+  "zip": "04216",
+  "country_code": "US",
+  "store_number": 35059,
+  "phone": "(207) 392-3732",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.66579400",
+  "longitude": "-70.79970600",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

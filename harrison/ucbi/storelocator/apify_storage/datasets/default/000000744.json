@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Lakewood Walk",
+  "street_address": "11205 E State Road 70",
+  "city": "Bradenton",
+  "state": "FL",
+  "zip": "34202-9404",
+  "country_code": "US",
+  "store_number": 3451,
+  "phone": "9417274180",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.434522,
+  "longitude": -82.430372,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

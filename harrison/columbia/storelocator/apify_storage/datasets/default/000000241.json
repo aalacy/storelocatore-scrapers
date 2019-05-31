@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Barrabes Esquí y Montaña (Zaragoza)",
+  "street_address": "Calle Pedro María Ric, 12",
+  "city": "Zaragoza",
+  "state": "Zaragoza",
+  "zip": "50008",
+  "country_code": "ES",
+  "store_number": 69283,
+  "phone": "976 90 00 59",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.64568232",
+  "longitude": "-0.88374145",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

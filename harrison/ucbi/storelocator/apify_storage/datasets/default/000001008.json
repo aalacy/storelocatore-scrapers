@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Vineyard Center",
+  "street_address": "6615 Mahan Dr",
+  "city": "Tallahassee",
+  "state": "FL",
+  "zip": "32308-1400",
+  "country_code": "US",
+  "store_number": 3269,
+  "phone": "8508784899",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.479983,
+  "longitude": -84.167055,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

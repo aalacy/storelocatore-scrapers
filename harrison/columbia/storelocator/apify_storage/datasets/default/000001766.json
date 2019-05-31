@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Big Dog Running Company",
+  "street_address": "1200 Broadway",
+  "city": "Columbus",
+  "state": "GA",
+  "zip": "31901",
+  "country_code": "US",
+  "store_number": 36114,
+  "phone": "(706) 322-2786",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.46885320",
+  "longitude": "-84.99281393",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

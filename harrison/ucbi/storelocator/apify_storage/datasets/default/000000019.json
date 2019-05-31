@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Cosner's Corner",
+  "street_address": "9601 Jefferson Davis Hwy",
+  "city": "Fredericksburg",
+  "state": "VA",
+  "zip": "22407",
+  "country_code": "US",
+  "store_number": 3870,
+  "phone": "5408986801",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 38.218928,
+  "longitude": -77.506892,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

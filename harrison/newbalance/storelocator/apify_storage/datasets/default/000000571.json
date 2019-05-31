@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Bob Ward's Missoula",
+  "street_address": "3015 Paxson St",
+  "city": "Missoula",
+  "state": "MT",
+  "zip": "59801",
+  "country_code": "US",
+  "store_number": 83513,
+  "phone": "(406) 728-3220",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "46.84289767",
+  "longitude": "-114.03128187",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 900,
+    "mon_time_close": 2000,
+    "tue_time_open": 900,
+    "tue_time_close": 2000,
+    "wed_time_open": 900,
+    "wed_time_close": 2000,
+    "thu_time_open": 900,
+    "thu_time_close": 2000,
+    "fri_time_open": 900,
+    "fri_time_close": 2100,
+    "sat_time_open": 800,
+    "sat_time_close": 1900
+  }
+}

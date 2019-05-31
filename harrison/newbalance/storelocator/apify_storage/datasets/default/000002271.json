@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Sport",
+  "street_address": "Via Crea, 10/A",
+  "city": "Grugliasco",
+  "state": "TO",
+  "zip": "10095",
+  "country_code": "IT",
+  "store_number": 75906,
+  "phone": "011 422 3001",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.05869370",
+  "longitude": "7.61384610",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 2200,
+    "mon_time_open": 900,
+    "mon_time_close": 2200,
+    "tue_time_open": 900,
+    "tue_time_close": 2200,
+    "wed_time_open": 900,
+    "wed_time_close": 2200,
+    "thu_time_open": 900,
+    "thu_time_close": 2200,
+    "fri_time_open": 900,
+    "fri_time_close": 2200,
+    "sat_time_open": 900,
+    "sat_time_close": 2200
+  }
+}

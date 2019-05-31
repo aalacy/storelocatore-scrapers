@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "327 Clifty Drive",
+  "city": "Madison",
+  "state": "IN",
+  "zip": "47250",
+  "country_code": "US",
+  "store_number": 10037336,
+  "phone": "(812) 265-2055",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 38.77444420902692,
+  "longitude": -85.39313216980162,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

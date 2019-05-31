@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Westchase",
+  "street_address": "12139 W Linebaugh Ave",
+  "city": "Tampa",
+  "state": "FL",
+  "zip": "33626-1732",
+  "country_code": "US",
+  "store_number": 3051,
+  "phone": "8138140737",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.057122,
+  "longitude": -82.624833,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

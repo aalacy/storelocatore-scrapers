@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "SM - Bangalore PMC",
+  "street_address": "Phoenix Market City",
+  "city": "Karnataka",
+  "state": null,
+  "country_code": "IN",
+  "store_number": "7995552",
+  "phone": "5555555555",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "12.997349",
+  "longitude": "77.696736",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

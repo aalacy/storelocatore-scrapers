@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "JackRabbit - Ridgewood",
+  "street_address": "258 E Ridgewood Ave",
+  "city": "Ridgewood",
+  "state": "NJ",
+  "zip": "07450",
+  "country_code": "US",
+  "store_number": 22877,
+  "phone": "(201) 670-1828",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.97856714",
+  "longitude": "-74.11357121",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

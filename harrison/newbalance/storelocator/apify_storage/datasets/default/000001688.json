@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "The Fish & Bone, Boston MA",
+  "street_address": "217 Newbury St",
+  "city": "Boston",
+  "state": "MA",
+  "zip": "02116",
+  "country_code": "US",
+  "store_number": 55061,
+  "phone": "(857) 753-4176",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.34994694",
+  "longitude": "-71.08121116",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

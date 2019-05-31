@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Fury's Ferry Plaza",
+  "street_address": "403 Furys Ferry Rd",
+  "city": "Martinez",
+  "state": "GA",
+  "zip": "30907-9038",
+  "country_code": "US",
+  "store_number": 2970,
+  "phone": "7066503360",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.530166,
+  "longitude": -82.073022,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

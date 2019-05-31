@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "South Highlands Shopping Center",
+  "street_address": "586 US 27 N",
+  "city": "Lake Placid",
+  "state": "FL",
+  "zip": "33852",
+  "country_code": "US",
+  "store_number": 3811,
+  "phone": "8636992081",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.302873,
+  "longitude": -81.360157,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

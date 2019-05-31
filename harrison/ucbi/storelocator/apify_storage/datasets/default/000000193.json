@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Groves at Royal Palms",
+  "street_address": "127 S State Road 7",
+  "city": "Royal Palm Beach",
+  "state": "FL",
+  "zip": "33414-4338",
+  "country_code": "US",
+  "store_number": 3347,
+  "phone": "5616151705",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.67549,
+  "longitude": -80.205595,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

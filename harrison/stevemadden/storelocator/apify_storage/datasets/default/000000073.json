@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Shangri-La Plaza Mall",
+  "street_address": "2nd Level, Shangri-La Plaza",
+  "city": "Mandaluyong",
+  "state": null,
+  "country_code": "PH",
+  "store_number": "7995528",
+  "phone": "6326314039",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "14.579444",
+  "longitude": "121.035917",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

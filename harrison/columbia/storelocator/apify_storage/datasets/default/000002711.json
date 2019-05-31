@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Tonquin Trading",
+  "street_address": "737 Broadway St",
+  "city": "Seaside",
+  "state": "OR",
+  "zip": "97138",
+  "country_code": "US",
+  "store_number": 41440,
+  "phone": "(503) 739-7234",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.99290754",
+  "longitude": "-123.92211203",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

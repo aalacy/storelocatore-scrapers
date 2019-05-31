@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Terra Alta",
+  "street_address": "PO Box 107, Rt 7 W",
+  "city": "Terra Alta",
+  "state": "WV",
+  "zip": "26764",
+  "country_code": "US",
+  "store_number": "105",
+  "phone": "1070",
+  "location_type": {
+    "gas_station": "304-789-5881",
+    "active": "39.44481",
+    "pump_perk": "-79.533892"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sun 8:00am-9:00pm",
+  "longitude": "304-789-5880",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

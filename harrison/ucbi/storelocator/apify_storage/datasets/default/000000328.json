@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Riverwalk Shopping Center",
+  "street_address": "13435 US Highway 1",
+  "city": "Sebastian",
+  "state": "FL",
+  "zip": "32958-3757",
+  "country_code": "US",
+  "store_number": 2802,
+  "phone": "7725895110",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.838484,
+  "longitude": -80.487049,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

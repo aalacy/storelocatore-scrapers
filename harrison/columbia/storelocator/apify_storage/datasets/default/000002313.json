@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "ASICS Outlet Palm Beach",
+  "street_address": "1781 Palm Beach Lakes Blvd W221",
+  "city": "West Palm Beach",
+  "state": "FL",
+  "zip": "33401",
+  "country_code": "US",
+  "store_number": 62193,
+  "phone": "(561) 687-3029",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "26.72514379",
+  "longitude": "-80.08782131",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1900,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 1000,
+    "sat_time_close": 2100
+  }
+}

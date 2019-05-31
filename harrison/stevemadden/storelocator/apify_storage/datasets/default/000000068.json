@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Mall of Asia",
+  "street_address": "Main Mall, 2nd Floor (MM286)",
+  "city": "Pasay",
+  "state": null,
+  "country_code": "PH",
+  "store_number": "7995391",
+  "phone": "6325560465",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "14.537752",
+  "longitude": "121.001379",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Downtown Stuart Shopping Center",
+  "street_address": "746 SW Federal Hwy",
+  "city": "Stuart",
+  "state": "FL",
+  "zip": "34994-2937",
+  "country_code": "US",
+  "store_number": 3168,
+  "phone": "7722213922",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.191218,
+  "longitude": -80.256514,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

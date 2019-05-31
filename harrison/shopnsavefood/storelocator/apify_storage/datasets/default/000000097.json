@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Handy Mart #21",
+  "street_address": "8153 John Mosby Hwy",
+  "city": "Boyce",
+  "state": "VA",
+  "zip": "22620",
+  "country_code": "US",
+  "store_number": "335",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "false",
+    "pump_perk": "false"
+  },
+  "niacs_code": null,
+  "latitude": "39.082226",
+  "longitude": "-78.083824",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

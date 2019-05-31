@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Coastal Farm & Ranch",
+  "street_address": "2865 NE Hogan Dr",
+  "city": "Gresham",
+  "state": "OR",
+  "zip": "97030",
+  "country_code": "US",
+  "store_number": 24044,
+  "phone": "(503) 674-5337",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.51767330",
+  "longitude": "-122.41355610",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

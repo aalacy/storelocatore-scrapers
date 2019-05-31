@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Coastal Farm & Ranch",
+  "street_address": "2200 W 6th Street",
+  "city": "Eugene",
+  "state": "OR",
+  "zip": "97402",
+  "country_code": "US",
+  "store_number": 24042,
+  "phone": "(541) 687-5810",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.05356722",
+  "longitude": "-123.12602202",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

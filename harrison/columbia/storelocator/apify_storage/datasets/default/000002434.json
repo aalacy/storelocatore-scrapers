@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "DF Sport Specialist",
+  "street_address": "Via Industria 1",
+  "city": "Grancia",
+  "state": "",
+  "zip": "6916",
+  "country_code": "IT",
+  "store_number": 75973,
+  "phone": "091 994 40 30",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.96837234",
+  "longitude": "8.92692471",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

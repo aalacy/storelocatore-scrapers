@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Geaux Run by Fleet Feet",
+  "street_address": "906 Harding St",
+  "city": "Lafayette",
+  "state": "LA",
+  "zip": "70503",
+  "country_code": "US",
+  "store_number": 18658,
+  "phone": "(337) 706-8763",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.20749492",
+  "longitude": "-92.01615076",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

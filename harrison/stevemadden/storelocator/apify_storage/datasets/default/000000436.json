@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Tysons Corner",
+  "street_address": "1961 Chain Bridge Rd",
+  "city": "McLean",
+  "state": "VA",
+  "country_code": "US",
+  "store_number": "7995667",
+  "phone": "703-506-6780",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.918000",
+  "longitude": "-77.221800",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

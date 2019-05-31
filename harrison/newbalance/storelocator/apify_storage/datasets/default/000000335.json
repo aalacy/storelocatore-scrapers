@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Al's Sporting Goods",
+  "street_address": "1075 N Main St #120",
+  "city": "Logan",
+  "state": "UT",
+  "zip": "84341",
+  "country_code": "US",
+  "store_number": 1163,
+  "phone": "(435) 752-5151",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.75156841",
+  "longitude": "-111.83634183",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

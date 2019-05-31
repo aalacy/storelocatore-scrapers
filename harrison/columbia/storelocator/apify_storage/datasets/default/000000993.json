@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit North Platte",
+  "street_address": "502 N Dewey St",
+  "city": "North Platte",
+  "state": "NE",
+  "zip": "69101",
+  "country_code": "US",
+  "store_number": 22008,
+  "phone": "(308) 532-2094",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.13751700",
+  "longitude": "-100.76198400",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

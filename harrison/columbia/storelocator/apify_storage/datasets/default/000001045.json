@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Saint-Mitre-les-Remparts",
+  "street_address": "24 rue des Saladelles",
+  "city": "Saint-Mitre-les-Remparts",
+  "state": "",
+  "zip": "13920",
+  "country_code": "FR",
+  "store_number": 87448,
+  "phone": "04 42 43 06 77",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.43877712",
+  "longitude": "5.03926826",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

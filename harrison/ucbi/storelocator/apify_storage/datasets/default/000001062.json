@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Dawsonville Downtown",
+  "street_address": "109 Highway 53 W",
+  "city": "Dawsonville",
+  "state": "GA",
+  "zip": "30534",
+  "country_code": "US",
+  "store_number": 43,
+  "phone": "7062653232",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.420936,
+  "longitude": -84.121079,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

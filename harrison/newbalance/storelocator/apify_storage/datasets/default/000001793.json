@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Bartlesville",
+  "street_address": "506 SE Washington Blvd",
+  "city": "Bartlesville",
+  "state": "OK",
+  "zip": "74006",
+  "country_code": "US",
+  "store_number": 22027,
+  "phone": "(918) 333-5889",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.74930380",
+  "longitude": "-95.93436190",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

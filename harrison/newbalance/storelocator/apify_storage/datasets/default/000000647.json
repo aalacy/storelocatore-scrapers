@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sports Basement Bryant St.",
+  "street_address": "1590 Bryant St",
+  "city": "San Francisco",
+  "state": "CA",
+  "zip": "94103",
+  "country_code": "US",
+  "store_number": 13824,
+  "phone": "(415) 575-3001",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.76761878",
+  "longitude": "-122.41120056",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 800,
+    "sun_time_close": 2000,
+    "mon_time_open": 900,
+    "mon_time_close": 2100,
+    "tue_time_open": 900,
+    "tue_time_close": 2100,
+    "wed_time_open": 900,
+    "wed_time_close": 2100,
+    "thu_time_open": 900,
+    "thu_time_close": 2100,
+    "fri_time_open": 900,
+    "fri_time_close": 2100,
+    "sat_time_open": 800,
+    "sat_time_close": 2000
+  }
+}

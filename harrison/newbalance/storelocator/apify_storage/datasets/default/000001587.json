@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Kiddles Sports",
+  "street_address": "258 Market Square",
+  "city": "Lake Forest",
+  "state": "IL",
+  "zip": "60045",
+  "country_code": "US",
+  "store_number": 17812,
+  "phone": "(847) 234-0025",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.25260692",
+  "longitude": "-87.84095144",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

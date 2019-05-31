@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Monterey",
+  "street_address": "472 Alvarado St",
+  "city": "Monterey",
+  "state": "CA",
+  "zip": "93940",
+  "country_code": "US",
+  "store_number": 19080,
+  "phone": "(831) 372-5664",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.59831913",
+  "longitude": "-121.89484315",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

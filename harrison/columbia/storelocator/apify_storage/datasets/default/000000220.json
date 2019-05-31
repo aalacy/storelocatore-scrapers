@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Casual Adventure Outfitters",
+  "street_address": "3451 Washington Blvd",
+  "city": "Arlington",
+  "state": "VA",
+  "zip": "22201",
+  "country_code": "US",
+  "store_number": 377,
+  "phone": "(703) 527-0600",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.88632637",
+  "longitude": "-77.10267126",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 930,
+    "mon_time_close": 2000,
+    "tue_time_open": 930,
+    "tue_time_close": 2000,
+    "wed_time_open": 930,
+    "wed_time_close": 2000,
+    "thu_time_open": 930,
+    "thu_time_close": 2000,
+    "fri_time_open": 930,
+    "fri_time_close": 2000,
+    "sat_time_open": 930,
+    "sat_time_close": 1800
+  }
+}

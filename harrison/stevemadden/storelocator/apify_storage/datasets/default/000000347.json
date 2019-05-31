@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Desert Hills",
+  "street_address": "48650 Seminole Dr.",
+  "city": "Cabazon",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995253",
+  "phone": "951-849-4035",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.928347",
+  "longitude": "-116.813651",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

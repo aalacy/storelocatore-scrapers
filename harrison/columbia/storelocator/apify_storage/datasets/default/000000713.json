@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Fort Myers",
+  "street_address": "1900 Trailwinds Dr",
+  "city": "Fort Myers",
+  "state": "FL",
+  "zip": "33907",
+  "country_code": "US",
+  "store_number": 85765,
+  "phone": "(239) 939-2099",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "26.56813680",
+  "longitude": "-81.87044580",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

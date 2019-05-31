@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix In Atlantic Station",
+  "street_address": "1380 Atlantic Dr NW Ste 14135",
+  "city": "Atlanta",
+  "state": "GA",
+  "zip": "30363-1144",
+  "country_code": "US",
+  "store_number": 3311,
+  "phone": "4048735055",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.792823,
+  "longitude": -84.398008,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

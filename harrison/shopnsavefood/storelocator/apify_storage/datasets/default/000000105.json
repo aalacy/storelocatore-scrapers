@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Horseheads Jubilee",
+  "street_address": "www.horseheadsjubilee.com",
+  "city": "2898 Westinghouse Road",
+  "state": "Horseheads",
+  "zip": "NY",
+  "country_code": "US",
+  "store_number": "56",
+  "phone": "1096",
+  "location_type": {
+    "gas_station": "607-796-2191",
+    "active": "42.176079",
+    "pump_perk": "-76.836319"
+  },
+  "niacs_code": null,
+  "latitude": "14845",
+  "longitude": "Mon-Sun 6am-11pm",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

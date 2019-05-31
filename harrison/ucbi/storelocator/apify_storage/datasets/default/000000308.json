@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Taylor Creek Commons",
+  "street_address": "1851 N US Highway 1",
+  "city": "Fort Pierce",
+  "state": "FL",
+  "zip": "34946-1406",
+  "country_code": "US",
+  "store_number": 3401,
+  "phone": "7724295420",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.468831,
+  "longitude": -80.335131,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:30 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 6:30 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Fayetteville - Jeff Davis Dr",
+  "street_address": "525 N Jeff Davis Dr",
+  "city": "Fayetteville",
+  "state": "GA",
+  "zip": "30214",
+  "country_code": "US",
+  "store_number": 50,
+  "phone": "7704614365",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.457656,
+  "longitude": -84.449771,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

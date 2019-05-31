@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Bikes & Moore Inc.",
+  "street_address": "200 Sivley Rd",
+  "city": "Hopkinsville",
+  "state": "KY",
+  "zip": "42240",
+  "country_code": "US",
+  "store_number": 107322,
+  "phone": "(270) 885-0613",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.82826790",
+  "longitude": "-87.47663850",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

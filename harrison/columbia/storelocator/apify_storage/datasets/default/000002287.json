@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Hip Baby Gear",
+  "street_address": "118 Washington St",
+  "city": "Marblehead",
+  "state": "MA",
+  "zip": "01945",
+  "country_code": "US",
+  "store_number": 38194,
+  "phone": "(781) 631-5556",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.50482696",
+  "longitude": "-70.84973116",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

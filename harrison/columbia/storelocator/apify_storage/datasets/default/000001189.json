@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Incycle Bicycles",
+  "street_address": "175 S Fair Oaks Ave",
+  "city": "Pasadena",
+  "state": "CA",
+  "zip": "91105",
+  "country_code": "US",
+  "store_number": 16748,
+  "phone": "(626) 577-0440",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.14271559",
+  "longitude": "-118.15075194",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

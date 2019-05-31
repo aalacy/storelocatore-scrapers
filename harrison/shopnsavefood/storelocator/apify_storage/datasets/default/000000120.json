@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Lawrenceville",
+  "street_address": "450 56th Street ",
+  "city": "Pittsburgh",
+  "state": "PA",
+  "zip": "15201",
+  "country_code": "US",
+  "store_number": "89",
+  "phone": "2406",
+  "location_type": {
+    "gas_station": "412-784-8732",
+    "active": "40.48438",
+    "pump_perk": "-79.947574"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sun 7:00-10:00",
+  "longitude": "412-784-8701",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

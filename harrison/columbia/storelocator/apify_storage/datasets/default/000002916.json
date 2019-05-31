@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Grizzly Cycles, LLC",
+  "street_address": "2305 Alta Vista Dr",
+  "city": "Bakersfield",
+  "state": "CA",
+  "zip": "93305",
+  "country_code": "US",
+  "store_number": 148445,
+  "phone": "(661) 742-1287",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.39357989",
+  "longitude": "-118.99388319",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

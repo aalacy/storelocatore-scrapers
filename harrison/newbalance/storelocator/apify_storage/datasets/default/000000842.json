@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Tucson",
+  "street_address": "7607 N Oracle Rd #121",
+  "city": "Oro Valley",
+  "state": "AZ",
+  "zip": "85704",
+  "country_code": "US",
+  "store_number": 21096,
+  "phone": "(520) 219-2323",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.34495530",
+  "longitude": "-110.97769182",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

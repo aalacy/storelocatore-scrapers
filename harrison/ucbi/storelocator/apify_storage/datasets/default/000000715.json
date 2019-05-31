@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Merchants Crossing",
+  "street_address": "1500 Placida Rd Ste C",
+  "city": "Englewood",
+  "state": "FL",
+  "zip": "34223-4951",
+  "country_code": "US",
+  "store_number": 2862,
+  "phone": "9414758823",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.936868,
+  "longitude": -82.338771,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

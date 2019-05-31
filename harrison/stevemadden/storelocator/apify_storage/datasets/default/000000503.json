@@ -1,0 +1,15 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Polo Park Shopping Centre",
+  "street_address": "1485 Portage Ave. Store # L123",
+  "city": "Winnipeg",
+  "country_code": "CA",
+  "store_number": "7995465",
+  "phone": "204-775-0260",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.883900",
+  "longitude": "-97.198800",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

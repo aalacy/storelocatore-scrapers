@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Fort Worth",
+  "street_address": "4601 West Fwy #304",
+  "city": "Fort Worth",
+  "state": "TX",
+  "zip": "76107",
+  "country_code": "US",
+  "store_number": 84880,
+  "phone": "(817) 737-8454",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.73156990",
+  "longitude": "-97.38843940",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

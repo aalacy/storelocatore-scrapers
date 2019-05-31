@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Lake Fredrica Shopping Center",
+  "street_address": "4042 S Semoran Blvd",
+  "city": "Orlando",
+  "state": "FL",
+  "zip": "32822",
+  "country_code": "US",
+  "store_number": 3766,
+  "phone": "4072773871",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.503136,
+  "longitude": -81.311637,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Clayton - Hwy 441",
+  "street_address": "516 US Hwy 441 S",
+  "city": "Clayton",
+  "state": "GA",
+  "zip": "30525",
+  "country_code": "US",
+  "store_number": 28,
+  "phone": "7067827100",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.871168,
+  "longitude": -83.400944,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

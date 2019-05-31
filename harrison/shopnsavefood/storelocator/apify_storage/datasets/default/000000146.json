@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Mt. Lebanon",
+  "street_address": "1630 Cochran Road",
+  "city": "Pittsburgh",
+  "state": "PA",
+  "zip": "15220",
+  "country_code": "US",
+  "store_number": "191",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.3904987",
+  "longitude": "-80.0587845",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

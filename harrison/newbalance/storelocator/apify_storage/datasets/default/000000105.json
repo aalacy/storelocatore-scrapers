@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Tri-State Outfitters - Moscow",
+  "street_address": "1104 Pullman Rd",
+  "city": "Moscow",
+  "state": "ID",
+  "zip": "83843",
+  "country_code": "US",
+  "store_number": 14314,
+  "phone": "(208) 882-4555",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "46.73281766",
+  "longitude": "-117.01709192",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 800,
+    "mon_time_close": 2000,
+    "tue_time_open": 800,
+    "tue_time_close": 2000,
+    "wed_time_open": 800,
+    "wed_time_close": 2000,
+    "thu_time_open": 800,
+    "thu_time_close": 2000,
+    "fri_time_open": 800,
+    "fri_time_close": 2000,
+    "sat_time_open": 800,
+    "sat_time_close": 2000
+  }
+}

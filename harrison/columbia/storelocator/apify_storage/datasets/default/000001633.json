@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Gateway",
+  "street_address": "800 15 St E",
+  "city": "Prince Albert",
+  "state": "SK",
+  "zip": "S6V8E3",
+  "country_code": "CA",
+  "store_number": 103716,
+  "phone": "(306) 922-5791",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "53.20065390",
+  "longitude": "-105.73098190",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Ames",
+  "street_address": "306 Main St",
+  "city": "Ames",
+  "state": "IA",
+  "zip": "50010",
+  "country_code": "US",
+  "store_number": 23548,
+  "phone": "(515) 232-6633",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.02481630",
+  "longitude": "-93.61413780",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

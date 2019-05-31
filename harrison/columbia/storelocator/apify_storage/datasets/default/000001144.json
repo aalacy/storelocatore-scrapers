@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Runners Fit",
+  "street_address": "7419 Spout Springs Rd #103",
+  "city": "Flowery Branch",
+  "state": "GA",
+  "zip": "30542",
+  "country_code": "US",
+  "store_number": 19492,
+  "phone": "(770) 967-9755",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.10805559",
+  "longitude": "-83.87250137",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

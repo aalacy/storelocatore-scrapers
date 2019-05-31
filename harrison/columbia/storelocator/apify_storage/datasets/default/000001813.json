@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Tri Sport Junction",
+  "street_address": "7568 Main St b",
+  "city": "Sykesville",
+  "state": "MD",
+  "zip": "21784",
+  "country_code": "US",
+  "store_number": 50466,
+  "phone": "(410) 549-1704",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.36514645",
+  "longitude": "-76.96945126",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

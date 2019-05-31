@@ -1,0 +1,15 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Montreal Ste-Catherine",
+  "street_address": "1340 Ste-Catherine Ouest",
+  "city": "Montreal",
+  "country_code": "CA",
+  "store_number": "7995414",
+  "phone": "514-875-1340",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.497367",
+  "longitude": "-73.575181",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

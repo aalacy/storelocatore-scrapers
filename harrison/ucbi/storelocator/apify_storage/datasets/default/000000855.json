@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Carillon Town Center",
+  "street_address": "120 Carillon Pkwy",
+  "city": "Saint Petersburg",
+  "state": "FL",
+  "zip": "33716-1201",
+  "country_code": "US",
+  "store_number": 2738,
+  "phone": "7275401660",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.893223,
+  "longitude": -82.662154,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

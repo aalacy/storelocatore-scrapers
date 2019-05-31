@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "THE MALL AT ROCKINGHAM PARK",
+  "street_address": "99 ROCKINGHAM PK BLVD",
+  "city": "SALEM",
+  "state": "NH",
+  "zip": "03079",
+  "country_code": "US",
+  "store_number": "621",
+  "phone": "(603) 894-1282",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 42.791103,
+  "longitude": -71.21931,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

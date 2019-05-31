@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Danform Shoes Shelburne",
+  "street_address": "3310 Shelburne Rd",
+  "city": "Shelburne",
+  "state": "VT",
+  "zip": "05482",
+  "country_code": "US",
+  "store_number": 22101,
+  "phone": "(802) 985-3483",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.40807728",
+  "longitude": "-73.21676120",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

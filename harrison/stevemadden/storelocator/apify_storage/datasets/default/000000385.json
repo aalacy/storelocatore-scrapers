@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "New Beijing Sanlitun",
+  "street_address": "SLG57,No19 SanLiTun Rd",
+  "city": "Beijing",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995427",
+  "phone": "1064167215",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.925500",
+  "longitude": "116.441600",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

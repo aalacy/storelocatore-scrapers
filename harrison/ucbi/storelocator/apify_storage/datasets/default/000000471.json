@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Savannah - White Bluff",
+  "street_address": "8201 White Bluff Rd",
+  "city": "Savannah",
+  "state": "GA",
+  "zip": "31406",
+  "country_code": "US",
+  "store_number": 92,
+  "phone": "9122325884",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 32.000194,
+  "longitude": -81.12228,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

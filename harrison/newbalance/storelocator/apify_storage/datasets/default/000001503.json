@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Tri-State Outfitters - Moses Lake",
+  "street_address": "1224 S Pioneer Way",
+  "city": "Moses Lake",
+  "state": "WA",
+  "zip": "98837",
+  "country_code": "US",
+  "store_number": 14317,
+  "phone": "(509) 765-9338",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.11691772",
+  "longitude": "-119.26563195",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 900,
+    "mon_time_close": 1900,
+    "tue_time_open": 900,
+    "tue_time_close": 1900,
+    "wed_time_open": 900,
+    "wed_time_close": 1900,
+    "thu_time_open": 900,
+    "thu_time_close": 1900,
+    "fri_time_open": 900,
+    "fri_time_close": 1900,
+    "sat_time_open": 900,
+    "sat_time_close": 1900
+  }
+}

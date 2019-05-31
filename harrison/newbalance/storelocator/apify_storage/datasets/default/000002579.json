@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Runnings",
+  "street_address": "403 Washington St",
+  "city": "Claremont",
+  "state": "NH",
+  "zip": "03743",
+  "country_code": "US",
+  "store_number": 63232,
+  "phone": "(603) 542-1574",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.36067104",
+  "longitude": "-72.31551185",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

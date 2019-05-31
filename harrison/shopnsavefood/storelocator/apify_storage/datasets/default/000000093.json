@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Handy Mart #18",
+  "street_address": "1462 N. Fredrick Pike",
+  "city": "Winchester",
+  "state": "VA",
+  "zip": "22603",
+  "country_code": "US",
+  "store_number": "338",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "false",
+    "pump_perk": "false"
+  },
+  "niacs_code": null,
+  "latitude": "39.210364",
+  "longitude": "-78.177820",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit McPherson",
+  "street_address": "118 N Main St",
+  "city": "McPherson",
+  "state": "KS",
+  "zip": "67460",
+  "country_code": "US",
+  "store_number": 36163,
+  "phone": "(620) 241-3963",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.37014800",
+  "longitude": "-97.66648100",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

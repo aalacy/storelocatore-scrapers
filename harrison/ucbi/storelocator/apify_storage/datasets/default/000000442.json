@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Southgate Shopping Center",
+  "street_address": "2848 US 27 S Ste 107",
+  "city": "Sebring",
+  "state": "FL",
+  "zip": "33870-5016",
+  "country_code": "US",
+  "store_number": 3781,
+  "phone": "8633148746",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.473521,
+  "longitude": -81.444413,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

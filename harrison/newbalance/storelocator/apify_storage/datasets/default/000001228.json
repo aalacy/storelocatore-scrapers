@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Cranbrook",
+  "street_address": "2100 Willowbrook Dr",
+  "city": "Cranbrook",
+  "state": "BC",
+  "zip": "V1C7H2",
+  "country_code": "CA",
+  "store_number": 103615,
+  "phone": "(250) 426-5090",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.53092812",
+  "longitude": "-115.75122190",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

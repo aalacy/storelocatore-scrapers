@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Schuler Shoes: Wayzata",
+  "street_address": "1175 Wayzata Blvd E",
+  "city": "Wayzata",
+  "state": "MN",
+  "zip": "55391",
+  "country_code": "US",
+  "store_number": 20315,
+  "phone": "(952) 345-0021",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.97070737",
+  "longitude": "-93.48107153",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1800,
+    "mon_time_open": 930,
+    "mon_time_close": 2000,
+    "tue_time_open": 930,
+    "tue_time_close": 2000,
+    "wed_time_open": 930,
+    "wed_time_close": 2000,
+    "thu_time_open": 930,
+    "thu_time_close": 2000,
+    "fri_time_open": 930,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

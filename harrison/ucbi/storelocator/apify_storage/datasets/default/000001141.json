@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Loudon - Mulberry St",
+  "street_address": "817 Mulberry St",
+  "city": "Loudon",
+  "state": "TN",
+  "zip": "37774",
+  "country_code": "US",
+  "store_number": 1221,
+  "phone": "8659882220",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.734794,
+  "longitude": -84.345385,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

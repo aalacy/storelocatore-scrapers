@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Greenville - Haywood Rd",
+  "street_address": "470 Haywood Rd",
+  "city": "Greenville",
+  "state": "SC",
+  "zip": "29607",
+  "country_code": "US",
+  "store_number": 1230,
+  "phone": "8642557971",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.843937,
+  "longitude": -82.340958,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Las Americas Premium Outlets",
+  "street_address": "4345 Camino De La Plaza",
+  "city": "San Diego",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995367",
+  "phone": "619-690-9761",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.543800",
+  "longitude": "-117.040000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

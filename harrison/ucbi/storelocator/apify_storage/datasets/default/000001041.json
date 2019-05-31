@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "GreenWise Market on Gaines",
+  "street_address": "625 W Gaines St",
+  "city": "Tallahassee",
+  "state": "FL",
+  "zip": "32304",
+  "country_code": "US",
+  "store_number": 3830,
+  "phone": "8505771915",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.434778,
+  "longitude": -84.29152,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

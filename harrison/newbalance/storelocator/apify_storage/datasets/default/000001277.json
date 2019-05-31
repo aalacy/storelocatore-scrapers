@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Appomattox River Company - Ashland",
+  "street_address": "10180 Lakeridge Pkwy #113",
+  "city": "Ashland",
+  "state": "VA",
+  "zip": "23005",
+  "country_code": "US",
+  "store_number": 31574,
+  "phone": "(804) 897-1556",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.68557617",
+  "longitude": "-77.45631127",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

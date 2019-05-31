@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "DF Sport Specialist",
+  "street_address": "Via Palmanova, 65",
+  "city": "Milano",
+  "state": "MI",
+  "zip": "20132",
+  "country_code": "IT",
+  "store_number": 75974,
+  "phone": "02 2897 0877",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.49674542",
+  "longitude": "9.23603151",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 930,
+    "sun_time_close": 1930,
+    "mon_time_open": 1500,
+    "mon_time_close": 2000,
+    "tue_time_open": 930,
+    "tue_time_close": 2000,
+    "wed_time_open": 930,
+    "wed_time_close": 2000,
+    "thu_time_open": 930,
+    "thu_time_close": 2000,
+    "fri_time_open": 930,
+    "fri_time_close": 2000,
+    "sat_time_open": 930,
+    "sat_time_close": 2000
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Active Laufshop",
+  "street_address": "Ludgeripl. 11",
+  "city": "Münster",
+  "state": "",
+  "zip": "48151",
+  "country_code": "DE",
+  "store_number": 74867,
+  "phone": "0251 524034",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "51.95685125",
+  "longitude": "7.62528125",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

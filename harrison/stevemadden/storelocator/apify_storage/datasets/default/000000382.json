@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Beijing Shin Kong Place",
+  "street_address": "1F,No 87,Jianguo Rd",
+  "city": "Beijing",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995194",
+  "phone": "1065331274",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.550000",
+  "longitude": "116.230000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

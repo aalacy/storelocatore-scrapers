@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Apex",
+  "street_address": "16560 N Nebraska Ave",
+  "city": "Lutz",
+  "state": "FL",
+  "zip": "33549-6172",
+  "country_code": "US",
+  "store_number": 3246,
+  "phone": "8132645590",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.106124,
+  "longitude": -82.459334,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

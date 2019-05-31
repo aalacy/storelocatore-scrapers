@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "Al-Saudan, Al-Azizia - Alghan, Salwan Road",
+  "city": "Doha",
+  "state": "Qatar",
+  "zip": "",
+  "country_code": "US",
+  "store_number": 10037364,
+  "phone": "44583006",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 25.240928,
+  "longitude": 51.456375,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

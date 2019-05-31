@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Tampa",
+  "street_address": "13234 N Dale Mabry Hwy",
+  "city": "Tampa",
+  "state": "FL",
+  "zip": "33618",
+  "country_code": "US",
+  "store_number": 84800,
+  "phone": "(813) 265-4859",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "28.06824599",
+  "longitude": "-82.50613518",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1900
+  }
+}

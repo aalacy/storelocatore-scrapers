@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sprague's Sports",
+  "street_address": "345 W 32nd St",
+  "city": "Yuma",
+  "state": "AZ",
+  "zip": "85364",
+  "country_code": "US",
+  "store_number": 65174,
+  "phone": "(928) 726-0022",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.66812535",
+  "longitude": "-114.62281188",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

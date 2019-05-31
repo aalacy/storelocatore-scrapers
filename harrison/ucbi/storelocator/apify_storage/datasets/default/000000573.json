@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Village Shoppes",
+  "street_address": "7883 Village Center N",
+  "city": "Sherrills Ford",
+  "state": "NC",
+  "zip": "28673",
+  "country_code": "US",
+  "store_number": 3837,
+  "phone": "8284782644",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.583135,
+  "longitude": -80.990741,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "All Kinds of Fast - Phoenixville",
+  "street_address": "214 Bridge St",
+  "city": "Phoenixville",
+  "state": "PA",
+  "zip": "19460",
+  "country_code": "US",
+  "store_number": 16419,
+  "phone": "(484) 924-9203",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.13371658",
+  "longitude": "-75.51672124",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1600,
+    "mon_time_open": 1100,
+    "mon_time_close": 1900,
+    "tue_time_open": 1100,
+    "tue_time_close": 1900,
+    "wed_time_open": 1100,
+    "wed_time_close": 1800,
+    "thu_time_open": 1100,
+    "thu_time_close": 1900,
+    "fri_time_open": 1100,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

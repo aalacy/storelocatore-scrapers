@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Running Zgz",
+  "street_address": "Calle Ricla, 2",
+  "city": "Zaragoza",
+  "state": "",
+  "zip": "50005",
+  "country_code": "ES",
+  "store_number": 104292,
+  "phone": "976 22 14 28",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.64571500",
+  "longitude": "-0.89083700",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

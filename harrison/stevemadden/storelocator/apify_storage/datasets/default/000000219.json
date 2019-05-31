@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Al-Rashid Mall",
+  "street_address": "Firas Ibn an Nadr Street",
+  "city": "Dammam",
+  "state": null,
+  "country_code": "SA",
+  "store_number": "7995157",
+  "phone": "5555555555",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "26.291231",
+  "longitude": "50.181322",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Black Diamond Bicycles & Rental",
+  "street_address": "540 W Union St suite g",
+  "city": "Athens",
+  "state": "OH",
+  "zip": "45701",
+  "country_code": "US",
+  "store_number": 128934,
+  "phone": "(740) 249-4045",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.33164440",
+  "longitude": "-82.12413455",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

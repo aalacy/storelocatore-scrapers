@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Orlando Vineland Premium Outlets",
+  "street_address": "8200 Vineland Ave.",
+  "city": "Orlando",
+  "state": "FL",
+  "country_code": "US",
+  "store_number": "7995443",
+  "phone": "407-238-4553",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "28.386700",
+  "longitude": "-81.494100",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

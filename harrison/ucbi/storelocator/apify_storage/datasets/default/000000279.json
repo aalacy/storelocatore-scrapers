@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Crossings Shopping Village",
+  "street_address": "13001 SW 112th St",
+  "city": "Miami",
+  "state": "FL",
+  "zip": "33186-4601",
+  "country_code": "US",
+  "store_number": 2779,
+  "phone": "3053850601",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 25.664943,
+  "longitude": -80.406653,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

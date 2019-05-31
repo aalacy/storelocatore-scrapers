@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Northgate Shopping Center",
+  "street_address": "299 E International Speedway Blvd",
+  "city": "DeLand",
+  "state": "FL",
+  "zip": "32724-2339",
+  "country_code": "US",
+  "store_number": 3711,
+  "phone": "3867347112",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 29.05645,
+  "longitude": -81.300899,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

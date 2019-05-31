@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "SOLARA BICYCLES",
+  "street_address": "60 WESTBROOK STREET",
+  "city": "NEW BEDFORD",
+  "state": "MA",
+  "zip": "02740",
+  "country_code": "US",
+  "store_number": 145271,
+  "phone": "(774) 206-9173",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.62168192",
+  "longitude": "-70.94611624",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Dawson Crossroads",
+  "street_address": "145 Forest Blvd Ste 100",
+  "city": "Dawsonville",
+  "state": "GA",
+  "zip": "30534",
+  "country_code": "US",
+  "store_number": 3806,
+  "phone": "7062164220",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.352067,
+  "longitude": -84.044827,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

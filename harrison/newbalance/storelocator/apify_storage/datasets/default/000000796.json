@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Marathon Sports - Fleet Feet Sports Minneapolis",
+  "street_address": "2312 W 50th St",
+  "city": "Minneapolis",
+  "state": "MN",
+  "zip": "55410",
+  "country_code": "US",
+  "store_number": 17994,
+  "phone": "(612) 920-2606",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.91258736",
+  "longitude": "-93.30921529",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 900,
+    "mon_time_close": 2000,
+    "tue_time_open": 900,
+    "tue_time_close": 2000,
+    "wed_time_open": 900,
+    "wed_time_close": 2000,
+    "thu_time_open": 900,
+    "thu_time_close": 2000,
+    "fri_time_open": 900,
+    "fri_time_close": 1900,
+    "sat_time_open": 900,
+    "sat_time_close": 1800
+  }
+}

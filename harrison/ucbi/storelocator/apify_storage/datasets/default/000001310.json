@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Trace Crossing",
+  "street_address": "2543 John Hawkins Pkwy",
+  "city": "Hoover",
+  "state": "AL",
+  "zip": "35244-3533",
+  "country_code": "US",
+  "store_number": 3251,
+  "phone": "2059828506",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.355821,
+  "longitude": -86.842682,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:30 AM - 10:00 PM,Mon 6:30 AM - 10:00 PM,Tues 6:30 AM - 10:00 PM,Wed 6:30 AM - 10:00 PM,Thurs 6:30 AM - 10:00 PM,Fri 6:30 AM - 10:00 PM,Sat 6:30 AM - 10:00 PM,"
+}

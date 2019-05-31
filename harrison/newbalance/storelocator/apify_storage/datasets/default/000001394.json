@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Capital City Luggage",
+  "street_address": "1337 Wellington St W",
+  "city": "Ottawa",
+  "state": "ON",
+  "zip": "K1Y3B8",
+  "country_code": "CA",
+  "store_number": 25681,
+  "phone": "(613) 725-3313",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.39862000",
+  "longitude": "-75.73761600",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Cherry Creek",
+  "street_address": "156 Steele St",
+  "city": "Denver",
+  "state": "CO",
+  "zip": "80206",
+  "country_code": "US",
+  "store_number": 84882,
+  "phone": "(720) 390-7999",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.71865075",
+  "longitude": "-104.94955172",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1900
+  }
+}

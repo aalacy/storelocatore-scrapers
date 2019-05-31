@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Footwear etc.",
+  "street_address": "20690 Stevens Creek Blvd",
+  "city": "Cupertino",
+  "state": "CA",
+  "zip": "95014",
+  "country_code": "US",
+  "store_number": 25790,
+  "phone": "(408) 255-1122",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.32206115",
+  "longitude": "-122.03516200",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1800,
+    "mon_time_open": 930,
+    "mon_time_close": 1900,
+    "tue_time_open": 930,
+    "tue_time_close": 1900,
+    "wed_time_open": 930,
+    "wed_time_close": 1900,
+    "thu_time_open": 930,
+    "thu_time_close": 1900,
+    "fri_time_open": 930,
+    "fri_time_close": 1900,
+    "sat_time_open": 930,
+    "sat_time_close": 1800
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Lucky Feet Shoes",
+  "street_address": "46660 Washington St #6",
+  "city": "La Quinta",
+  "state": "CA",
+  "zip": "92253",
+  "country_code": "US",
+  "store_number": 35996,
+  "phone": "(760) 444-4154",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.70985523",
+  "longitude": "-116.29351905",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1800,
+    "tue_time_open": 1000,
+    "tue_time_close": 1800,
+    "wed_time_open": 1000,
+    "wed_time_close": 1800,
+    "thu_time_open": 1000,
+    "thu_time_close": 1800,
+    "fri_time_open": 1000,
+    "fri_time_close": 1800,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

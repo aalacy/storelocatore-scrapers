@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Chengdu Lotte",
+  "street_address": "LG1,Lotte Department Store,No.",
+  "city": "Chengdu",
+  "state": null,
+  "country_code": "CN",
+  "store_number": "7995229",
+  "phone": "028-65188673",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.572270",
+  "longitude": "104.066540",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

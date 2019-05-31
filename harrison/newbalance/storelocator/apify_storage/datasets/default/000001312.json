@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Salomon Store Chamonix ",
+  "street_address": "306 Rue du Dr Paccard",
+  "city": "Chamonix-Mont-Blanc",
+  "state": "",
+  "zip": "74400",
+  "country_code": "FR",
+  "store_number": 85272,
+  "phone": "04 50 53 15 12",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.92075237",
+  "longitude": "6.86711251",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 830,
+    "sun_time_close": 1930,
+    "mon_time_open": 830,
+    "mon_time_close": 1930,
+    "tue_time_open": 830,
+    "tue_time_close": 1930,
+    "wed_time_open": 830,
+    "wed_time_close": 1930,
+    "thu_time_open": 830,
+    "thu_time_close": 1930,
+    "fri_time_open": 830,
+    "fri_time_close": 1930,
+    "sat_time_open": 830,
+    "sat_time_close": 1930
+  }
+}

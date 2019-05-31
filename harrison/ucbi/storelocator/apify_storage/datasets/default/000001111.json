@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Blue Ridge - Ingles",
+  "street_address": "5679 Appalachian Hwy",
+  "city": "Blue Ridge",
+  "state": "GA",
+  "zip": "30513",
+  "country_code": "US",
+  "store_number": 11,
+  "phone": "7066326001",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.878744,
+  "longitude": -84.299517,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

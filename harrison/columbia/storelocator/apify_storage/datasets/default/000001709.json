@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Escape Route Alpine Demo Centre",
+  "street_address": "7-4433 Sundial Pl",
+  "city": "Whistler",
+  "state": "BC",
+  "zip": "V0N1B4",
+  "country_code": "CA",
+  "store_number": 83383,
+  "phone": "(604) 962-3228",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "50.11496821",
+  "longitude": "-122.95473201",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 800,
+    "sun_time_close": 2000,
+    "mon_time_open": 800,
+    "mon_time_close": 2000,
+    "tue_time_open": 800,
+    "tue_time_close": 2000,
+    "wed_time_open": 800,
+    "wed_time_close": 2000,
+    "thu_time_open": 800,
+    "thu_time_close": 2000,
+    "fri_time_open": 800,
+    "fri_time_close": 2000,
+    "sat_time_open": 800,
+    "sat_time_close": 2000
+  }
+}

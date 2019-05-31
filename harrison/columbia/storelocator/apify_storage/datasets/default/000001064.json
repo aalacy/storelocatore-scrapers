@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Atmosphere - Prince George",
+  "street_address": "1600 15th Ave #195",
+  "city": "Prince George",
+  "state": "BC",
+  "zip": "V2L3X3",
+  "country_code": "CA",
+  "store_number": 17405,
+  "phone": "(250) 563-9914",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "53.90997883",
+  "longitude": "-122.75817201",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

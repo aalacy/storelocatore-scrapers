@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Blairsville - Hwy 515 - Corporate Office",
+  "street_address": "125 Highway 515 E",
+  "city": "Blairsville",
+  "state": "GA",
+  "zip": "30512",
+  "country_code": "US",
+  "store_number": 1195,
+  "phone": "8008222651",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.879606,
+  "longitude": -83.9585,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

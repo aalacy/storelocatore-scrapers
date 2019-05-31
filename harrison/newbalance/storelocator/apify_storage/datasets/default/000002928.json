@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Boardtown Bikes",
+  "street_address": "200 S Montgomery St",
+  "city": "Starkville",
+  "state": "MS",
+  "zip": "39759",
+  "country_code": "US",
+  "store_number": 37867,
+  "phone": "(662) 324-1200",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "33.46209548",
+  "longitude": "-88.81115146",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

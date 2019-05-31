@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "N. Martinsburg Exxon",
+  "street_address": "823 Warm Springs Rd.",
+  "city": "Martinsburg",
+  "state": "WV",
+  "zip": "25401",
+  "country_code": "US",
+  "store_number": "323",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "false",
+    "pump_perk": "false"
+  },
+  "niacs_code": null,
+  "latitude": "39.490707",
+  "longitude": "-77.958022",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

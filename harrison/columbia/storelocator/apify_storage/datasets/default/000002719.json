@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Monterey Bay Kayaks - Elkhorn Slough",
+  "street_address": "2390 Highway 1",
+  "city": "Moss Landing (North Harbor)",
+  "state": "CA",
+  "zip": "95039",
+  "country_code": "US",
+  "store_number": 26861,
+  "phone": "(831) 373-5357",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.81246031",
+  "longitude": "-121.78661995",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 1800,
+    "mon_time_open": 900,
+    "mon_time_close": 1800,
+    "tue_time_open": 900,
+    "tue_time_close": 1800,
+    "wed_time_open": 900,
+    "wed_time_close": 1800,
+    "thu_time_open": 900,
+    "thu_time_close": 1800,
+    "fri_time_open": 900,
+    "fri_time_close": 1800,
+    "sat_time_open": 900,
+    "sat_time_close": 1800
+  }
+}

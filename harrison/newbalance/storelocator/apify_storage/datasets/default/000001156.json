@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Purple Moose Sock Company",
+  "street_address": "1018 Dundas St.",
+  "city": "London",
+  "state": "ON",
+  "zip": "N5W3A3",
+  "country_code": "CA",
+  "store_number": 41020,
+  "phone": "(519) 697-7775",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.98713704",
+  "longitude": "-81.22217133",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Arc'teryx Denver ",
+  "street_address": "250 Columbine Street Suite 110",
+  "city": "Denver",
+  "state": "CO",
+  "zip": "80206",
+  "country_code": "US",
+  "store_number": 37176,
+  "phone": "(303) 993-5913",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.72017651",
+  "longitude": "-104.95669172",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 2000
+  }
+}

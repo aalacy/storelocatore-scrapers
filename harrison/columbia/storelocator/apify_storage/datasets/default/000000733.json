@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Durham",
+  "street_address": "6807 Fayetteville Rd.  #120, Renaissance Center at Southpoint",
+  "city": "Durham",
+  "state": "NC",
+  "zip": "27713",
+  "country_code": "US",
+  "store_number": 34847,
+  "phone": "(919) 484-9500",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.90469588",
+  "longitude": "-78.93543129",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 2000
+  }
+}

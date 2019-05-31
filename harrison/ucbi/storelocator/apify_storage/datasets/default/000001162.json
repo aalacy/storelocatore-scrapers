@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Marietta - Cherokee St",
+  "street_address": "200 Cherokee St NE",
+  "city": "Marietta",
+  "state": "GA",
+  "zip": "30060",
+  "country_code": "US",
+  "store_number": 70,
+  "phone": "7704242000",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.956625,
+  "longitude": -84.548721,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

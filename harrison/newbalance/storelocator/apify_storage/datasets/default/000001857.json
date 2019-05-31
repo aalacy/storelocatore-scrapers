@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Go Far Shop",
+  "street_address": "2005 Pearl St",
+  "city": "Boulder",
+  "state": "CO",
+  "zip": "80302",
+  "country_code": "US",
+  "store_number": 66128,
+  "phone": "(720) 428-8965",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.02036557",
+  "longitude": "-105.26941725",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Bellini Baby and Teen Furniture",
+  "street_address": "2980 N Federal Hwy",
+  "city": "Boca Raton",
+  "state": "FL",
+  "zip": "33431",
+  "country_code": "US",
+  "store_number": 38159,
+  "phone": "(561) 392-7444",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "26.37837432",
+  "longitude": "-80.07594131",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1600,
+    "mon_time_open": 1000,
+    "mon_time_close": 1800,
+    "tue_time_open": 1000,
+    "tue_time_close": 1800,
+    "wed_time_open": 1000,
+    "wed_time_close": 1800,
+    "thu_time_open": 1000,
+    "thu_time_close": 1800,
+    "fri_time_open": 1000,
+    "fri_time_close": 1800,
+    "sat_time_open": 1000,
+    "sat_time_close": 1800
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Jonquil Plaza",
+  "street_address": "2955 Atlanta Rd SE",
+  "city": "Smyrna",
+  "state": "GA",
+  "zip": "30080",
+  "country_code": "US",
+  "store_number": 3538,
+  "phone": "7703191123",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.880794,
+  "longitude": -84.512381,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

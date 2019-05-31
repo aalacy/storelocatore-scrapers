@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet South County",
+  "street_address": "12494 Tesson Ferry Rd",
+  "city": "St. Louis",
+  "state": "MO",
+  "zip": "63128",
+  "country_code": "US",
+  "store_number": 17979,
+  "phone": "(855) 588-2786",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.50871738",
+  "longitude": "-90.37654378",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

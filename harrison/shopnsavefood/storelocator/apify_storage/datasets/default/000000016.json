@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "BFS - Clarksburg",
+  "street_address": "106 Wilsonburg Rd",
+  "city": "Clarksburg",
+  "state": "WV",
+  "zip": "26301",
+  "country_code": "US",
+  "store_number": "348",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "false",
+    "pump_perk": "false"
+  },
+  "niacs_code": null,
+  "latitude": "39.2864039",
+  "longitude": "-80.3834048",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

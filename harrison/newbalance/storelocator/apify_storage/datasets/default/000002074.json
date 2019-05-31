@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Saint Bernard Domain Northside",
+  "street_address": "3200 Palm Way #170",
+  "city": "Austin",
+  "state": "TX",
+  "zip": "78758",
+  "country_code": "US",
+  "store_number": 65116,
+  "phone": "(512) 710-3710",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.40302498",
+  "longitude": "-97.72300160",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Weston Lakes Plaza",
+  "street_address": "294 Indian Trace",
+  "city": "Weston",
+  "state": "FL",
+  "zip": "33326-4509",
+  "country_code": "US",
+  "store_number": 3013,
+  "phone": "9543844190",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.11808,
+  "longitude": -80.391644,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:30 AM - 10:00 PM,Mon 6:30 AM - 11:00 PM,Tues 6:30 AM - 11:00 PM,Wed 6:30 AM - 11:00 PM,Thurs 6:30 AM - 11:00 PM,Fri 6:30 AM - 11:00 PM,Sat 6:30 AM - 11:00 PM,"
+}

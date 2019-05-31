@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Turnpike Comfort Footwear",
+  "street_address": "184-20 Union Tpke",
+  "city": "Fresh Meadows",
+  "state": "NY",
+  "zip": "11366",
+  "country_code": "US",
+  "store_number": 41139,
+  "phone": "(718) 454-5870",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.72803667",
+  "longitude": "-73.78373121",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

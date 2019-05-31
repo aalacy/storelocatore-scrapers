@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "621 S Mitchell",
+  "city": "Cadillac",
+  "state": "MI",
+  "zip": "49601",
+  "country_code": "US",
+  "store_number": 10037348,
+  "phone": "(231) 779-3151",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 44.24518561561013,
+  "longitude": -85.396047233648,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

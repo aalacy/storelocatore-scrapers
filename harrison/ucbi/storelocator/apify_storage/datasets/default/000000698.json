@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Gulf Cove",
+  "street_address": "13435 S McCall Rd",
+  "city": "Port Charlotte",
+  "state": "FL",
+  "zip": "33981-6422",
+  "country_code": "US",
+  "store_number": 3196,
+  "phone": "9416970279",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.931718,
+  "longitude": -82.223463,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

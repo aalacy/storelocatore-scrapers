@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Coastal Farm & Ranch",
+  "street_address": "1776 Avalon St",
+  "city": "Klamath Falls",
+  "state": "OR",
+  "zip": "97603",
+  "country_code": "US",
+  "store_number": 35715,
+  "phone": "(541) 882-5548",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.21279692",
+  "longitude": "-121.75461995",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

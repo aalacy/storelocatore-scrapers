@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Idaho Mountain Touring",
+  "street_address": "1310 W Main St",
+  "city": "Boise",
+  "state": "ID",
+  "zip": "83702",
+  "country_code": "US",
+  "store_number": 390,
+  "phone": "(208) 336-3854",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.61901715",
+  "longitude": "-116.20949190",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 930,
+    "mon_time_close": 1800,
+    "tue_time_open": 930,
+    "tue_time_close": 1800,
+    "wed_time_open": 930,
+    "wed_time_close": 1800,
+    "thu_time_open": 930,
+    "thu_time_close": 1800,
+    "fri_time_open": 930,
+    "fri_time_close": 1800,
+    "sat_time_open": 900,
+    "sat_time_close": 1800
+  }
+}

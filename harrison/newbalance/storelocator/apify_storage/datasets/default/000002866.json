@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Clemmons Bicycle",
+  "street_address": "2703 Lewisville-Clemmons Rd",
+  "city": "Clemmons",
+  "state": "NC",
+  "zip": "27012",
+  "country_code": "US",
+  "store_number": 107677,
+  "phone": "(336) 766-5564",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.02350110",
+  "longitude": "-80.38128720",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

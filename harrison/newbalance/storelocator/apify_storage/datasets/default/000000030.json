@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rogan's Shoes - Fond du Lac",
+  "street_address": "568 N Rolling Meadows Dr",
+  "city": "Fond du Lac",
+  "state": "WI",
+  "zip": "54937",
+  "country_code": "US",
+  "store_number": 38894,
+  "phone": "(920) 922-3553",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.79234860",
+  "longitude": "-88.48750420",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Albuquerque",
+  "street_address": "5901-R Wyoming Blvd NE",
+  "city": "Albuquerque",
+  "state": "NM",
+  "zip": "87109",
+  "country_code": "US",
+  "store_number": 19127,
+  "phone": "(505) 299-8922",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.14657585",
+  "longitude": "-106.55617458",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

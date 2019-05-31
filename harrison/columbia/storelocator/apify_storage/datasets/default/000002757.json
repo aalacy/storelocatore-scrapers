@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Middletown Fitness & Cycling",
+  "street_address": "11519 Shelbyville Rd",
+  "city": "Louisville",
+  "state": "KY",
+  "zip": "40243",
+  "country_code": "US",
+  "store_number": 108832,
+  "phone": "(502) 384-0770",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.24600627",
+  "longitude": "-85.54277140",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

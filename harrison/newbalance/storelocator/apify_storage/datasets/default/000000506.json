@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "SCHEELS ALL SPORTS",
+  "street_address": "1200 10th Ave S",
+  "city": "Great Falls",
+  "state": "MT",
+  "zip": "59405",
+  "country_code": "US",
+  "store_number": 10999,
+  "phone": "(406) 453-7666",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.49262778",
+  "longitude": "-111.28886182",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 900,
+    "mon_time_close": 2100,
+    "tue_time_open": 900,
+    "tue_time_close": 2100,
+    "wed_time_open": 900,
+    "wed_time_close": 2100,
+    "thu_time_open": 900,
+    "thu_time_close": 2100,
+    "fri_time_open": 900,
+    "fri_time_close": 2100,
+    "sat_time_open": 900,
+    "sat_time_close": 1900
+  }
+}

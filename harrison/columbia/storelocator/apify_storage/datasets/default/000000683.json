@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Half-Moon Outfitters",
+  "street_address": "15 E Broughton St",
+  "city": "Savannah",
+  "state": "GA",
+  "zip": "31401",
+  "country_code": "US",
+  "store_number": 20,
+  "phone": "(912) 201-9393",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "32.07854526",
+  "longitude": "-81.09130133",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 1000,
+    "sat_time_close": 1900
+  }
+}

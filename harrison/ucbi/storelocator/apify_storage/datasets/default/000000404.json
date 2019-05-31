@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Shoppes at Hanfield Village",
+  "street_address": "5132 Old Charlotte Hwy",
+  "city": "Monroe",
+  "state": "NC",
+  "zip": "28110",
+  "country_code": "US",
+  "store_number": 3816,
+  "phone": "7042896598",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.047384,
+  "longitude": -80.643045,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

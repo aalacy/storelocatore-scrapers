@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rogan's Shoes - Appleton West",
+  "street_address": "1035 Mutual Way",
+  "city": "Appleton",
+  "state": "WI",
+  "zip": "54913",
+  "country_code": "US",
+  "store_number": 38892,
+  "phone": "(920) 954-8200",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.25604430",
+  "longitude": "-88.34791930",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Decatur IL",
+  "street_address": "1090 W Wood St",
+  "city": "Decatur",
+  "state": "IL",
+  "zip": "62522",
+  "country_code": "US",
+  "store_number": 19055,
+  "phone": "(217) 330-9904",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.84016143",
+  "longitude": "-88.97229629",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

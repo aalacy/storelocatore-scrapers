@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Magic Beans - Norwell",
+  "street_address": "45 Pond St",
+  "city": "Norwell",
+  "state": "MA",
+  "zip": "02061",
+  "country_code": "US",
+  "store_number": 36544,
+  "phone": "(781) 561-7637",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.17072691",
+  "longitude": "-70.88523116",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

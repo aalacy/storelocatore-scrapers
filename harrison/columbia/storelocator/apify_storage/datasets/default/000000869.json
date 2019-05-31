@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Second Sole",
+  "street_address": "4667 Dressler Rd NW",
+  "city": "Canton",
+  "state": "OH",
+  "zip": "44718",
+  "country_code": "US",
+  "store_number": 16510,
+  "phone": "(330) 649-9870",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.84919669",
+  "longitude": "-81.43578133",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

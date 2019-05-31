@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cain Park Bicycle",
+  "street_address": "1904 Lee Rd",
+  "city": "Cleveland",
+  "state": "OH",
+  "zip": "44118",
+  "country_code": "US",
+  "store_number": 129223,
+  "phone": "(216) 320-0209",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.50768006",
+  "longitude": "-81.56513364",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

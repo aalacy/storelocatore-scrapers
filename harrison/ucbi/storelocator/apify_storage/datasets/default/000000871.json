@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Spruce Pine - Summit Ave",
+  "street_address": "800 Summit Ave",
+  "city": "Spruce Pine",
+  "state": "NC",
+  "zip": "28777",
+  "country_code": "US",
+  "store_number": 94,
+  "phone": "8287668880",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.906033,
+  "longitude": -82.073264,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Rice Creek Village",
+  "street_address": "4611 Hard Scrabble Rd",
+  "city": "Columbia",
+  "state": "SC",
+  "zip": "29229-8584",
+  "country_code": "US",
+  "store_number": 3241,
+  "phone": "8036998131",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.153267,
+  "longitude": -80.913295,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

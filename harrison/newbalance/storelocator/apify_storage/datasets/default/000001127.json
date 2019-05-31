@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "TroutHunter",
+  "street_address": "3327 Highway 20",
+  "city": "Island Park",
+  "state": "ID",
+  "zip": "83429",
+  "country_code": "US",
+  "store_number": 15402,
+  "phone": "(208) 558-9900",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.36072681",
+  "longitude": "-111.40441183",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 1700,
+    "mon_time_open": 900,
+    "mon_time_close": 1700,
+    "tue_time_open": 900,
+    "tue_time_close": 1700,
+    "wed_time_open": 900,
+    "wed_time_close": 1700,
+    "thu_time_open": 900,
+    "thu_time_close": 1700,
+    "fri_time_open": 900,
+    "fri_time_close": 1700,
+    "sat_time_open": 900,
+    "sat_time_close": 1700
+  }
+}

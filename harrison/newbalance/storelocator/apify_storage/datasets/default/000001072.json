@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Rodez",
+  "street_address": "17 Place du Bourg",
+  "city": "Rodez",
+  "state": "",
+  "zip": "12000",
+  "country_code": "FR",
+  "store_number": 73023,
+  "phone": "05 81 37 41 06",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.34863727",
+  "longitude": "2.57621422",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

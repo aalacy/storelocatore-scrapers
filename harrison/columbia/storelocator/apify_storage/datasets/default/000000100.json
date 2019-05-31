@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Striders - Ogden",
+  "street_address": "1937 Washington Blvd",
+  "city": "Ogden",
+  "state": "UT",
+  "zip": "84401",
+  "country_code": "US",
+  "store_number": 22377,
+  "phone": "(801) 621-1444",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.23246756",
+  "longitude": "-111.97051835",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

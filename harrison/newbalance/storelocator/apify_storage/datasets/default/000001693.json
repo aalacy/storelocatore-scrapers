@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Endurance Shop Perigueux",
+  "street_address": "Boulevard de l'Horizon",
+  "city": "Marsac-sur-l'Isle",
+  "state": "",
+  "zip": "24430",
+  "country_code": "FR",
+  "store_number": 73021,
+  "phone": "05 53 13 31 15",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.19774052",
+  "longitude": "0.66343109",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

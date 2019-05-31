@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Canton - Riverstone Blvd",
+  "street_address": "2215 Riverstone Blvd",
+  "city": "Canton",
+  "state": "GA",
+  "zip": "30114",
+  "country_code": "US",
+  "store_number": 21,
+  "phone": "7704796700",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.255271,
+  "longitude": -84.47574,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Murphy - Peachtree St",
+  "street_address": "116 Peachtree St",
+  "city": "Murphy",
+  "state": "NC",
+  "zip": "28906",
+  "country_code": "US",
+  "store_number": 76,
+  "phone": "8288379291",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.086058,
+  "longitude": -84.033149,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

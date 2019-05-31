@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Deliberate Dynamics, Inc.",
+  "street_address": "3096 Davis Dr. Suite B",
+  "city": "South Salt Lake",
+  "state": "UT",
+  "zip": "84115",
+  "country_code": "US",
+  "store_number": 38042,
+  "phone": "(801) 783-3517",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.70381667",
+  "longitude": "-111.90466183",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

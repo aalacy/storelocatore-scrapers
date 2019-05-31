@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Aardvark Sports Shop",
+  "street_address": "559 Main Street",
+  "city": "Bethlehem",
+  "state": "PA",
+  "zip": "18018",
+  "country_code": "US",
+  "store_number": 18608,
+  "phone": "(610) 866-8300",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.62201666",
+  "longitude": "-75.38240124",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 2000
+  }
+}

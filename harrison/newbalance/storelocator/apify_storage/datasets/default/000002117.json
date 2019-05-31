@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Comfy Soles",
+  "street_address": "13740 Beach Blvd #404",
+  "city": "Jacksonville",
+  "state": "FL",
+  "zip": "32224",
+  "country_code": "US",
+  "store_number": 22070,
+  "phone": "(904) 223-5595",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.28483496",
+  "longitude": "-81.45635133",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

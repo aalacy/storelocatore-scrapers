@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "New Balance Dayton",
+  "street_address": "304 E Stroop Rd",
+  "city": "Dayton",
+  "state": "OH",
+  "zip": "45429",
+  "country_code": "US",
+  "store_number": 84875,
+  "phone": "(937) 293-1991",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.68929650",
+  "longitude": "-84.16764138",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 2100,
+    "tue_time_open": 1000,
+    "tue_time_close": 2100,
+    "wed_time_open": 1000,
+    "wed_time_close": 2100,
+    "thu_time_open": 1000,
+    "thu_time_close": 2100,
+    "fri_time_open": 1000,
+    "fri_time_close": 2100,
+    "sat_time_open": 1000,
+    "sat_time_close": 2100
+  }
+}

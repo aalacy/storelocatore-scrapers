@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Erik's - Bike Board Ski",
+  "street_address": "795 University Ave",
+  "city": "Madison",
+  "state": "WI",
+  "zip": "53715",
+  "country_code": "US",
+  "store_number": 35645,
+  "phone": "(608) 250-2701",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.07308706",
+  "longitude": "-89.39868146",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 900,
+    "mon_time_close": 2000,
+    "tue_time_open": 900,
+    "tue_time_close": 2000,
+    "wed_time_open": 900,
+    "wed_time_close": 2000,
+    "thu_time_open": 900,
+    "thu_time_close": 2000,
+    "fri_time_open": 900,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

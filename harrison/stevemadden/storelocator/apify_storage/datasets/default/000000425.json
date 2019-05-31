@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "A-BUG12149",
+  "street_address": "atlantic",
+  "city": "virginia",
+  "state": null,
+  "country_code": "TH",
+  "store_number": "7995148",
+  "phone": "7774445555",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.892708",
+  "longitude": "-75.990239",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

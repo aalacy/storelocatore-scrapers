@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Ramsey Outdoor Store",
+  "street_address": "281 NJ-10",
+  "city": "Succasunna",
+  "state": "NJ",
+  "zip": "07876",
+  "country_code": "US",
+  "store_number": 1982,
+  "phone": "(973) 584-7798",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.86819670",
+  "longitude": "-74.64906122",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1700,
+    "mon_time_open": 900,
+    "mon_time_close": 2130,
+    "tue_time_open": 900,
+    "tue_time_close": 2130,
+    "wed_time_open": 900,
+    "wed_time_close": 2130,
+    "thu_time_open": 900,
+    "thu_time_close": 2130,
+    "fri_time_open": 900,
+    "fri_time_close": 2130,
+    "sat_time_open": 900,
+    "sat_time_close": 2130
+  }
+}

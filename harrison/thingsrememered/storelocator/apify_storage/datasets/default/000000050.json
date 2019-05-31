@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "CROSSGATES MALL",
+  "street_address": "1 CROSSGATES MALL RD",
+  "city": "ALBANY",
+  "state": "NY",
+  "zip": "12203",
+  "country_code": "US",
+  "store_number": "376",
+  "phone": "(518) 456-4620",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 42.675056,
+  "longitude": -73.82201,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#06:00 PM|2#10:00 AM#09:30 PM|3#10:00 AM#09:30 PM|4#10:00 AM#09:30 PM|5#10:00 AM#09:30 PM|6#10:00 AM#09:30 PM|7#10:00 AM#09:30 PM"
+}

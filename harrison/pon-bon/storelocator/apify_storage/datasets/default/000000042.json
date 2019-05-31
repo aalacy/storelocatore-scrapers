@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "3734 State Rt. 13",
+  "city": "Pulaski",
+  "state": "NY",
+  "zip": "13142",
+  "country_code": "US",
+  "store_number": 10037294,
+  "phone": "(315) 298-4883",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 43.55477,
+  "longitude": -76.1114,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

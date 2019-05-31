@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "CORDOVA MALL",
+  "street_address": "5100 N 9TH  AVE",
+  "city": "PENSACOLA",
+  "state": "FL",
+  "zip": "32504",
+  "country_code": "US",
+  "store_number": "523",
+  "phone": "(850) 478-3243",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 30.488522,
+  "longitude": -87.1873,
+  "external_lat_long": false,
+  "hours_of_operation": "1#12:00 PM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

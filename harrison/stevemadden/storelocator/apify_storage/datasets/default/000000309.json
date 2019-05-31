@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "DAIMARU UMEDA",
+  "street_address": "3-1-1, UMEDA, KITA-kU, OSAKA-S",
+  "city": "Osaka",
+  "state": null,
+  "country_code": "JP",
+  "store_number": "7995247",
+  "phone": "81 66343 4321",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.693740",
+  "longitude": "135.502170",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

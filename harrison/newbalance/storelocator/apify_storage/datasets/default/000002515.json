@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Whole Earth Provision Co.",
+  "street_address": "1014 N Lamar Blvd",
+  "city": "Austin",
+  "state": "TX",
+  "zip": "78703",
+  "country_code": "US",
+  "store_number": 10808,
+  "phone": "(512) 476-1414",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "30.27576496",
+  "longitude": "-97.75248160",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1800,
+    "mon_time_open": 1000,
+    "mon_time_close": 2000,
+    "tue_time_open": 1000,
+    "tue_time_close": 2000,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 2000,
+    "sat_time_open": 1000,
+    "sat_time_close": 2000
+  }
+}

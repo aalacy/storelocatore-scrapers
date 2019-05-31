@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Rideau Centre",
+  "street_address": "50 Rideau St",
+  "city": "Ottawa",
+  "state": "ON",
+  "zip": "K1N9J7",
+  "country_code": "CA",
+  "store_number": 103709,
+  "phone": "(613) 860-9119",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.42561300",
+  "longitude": "-75.69255090",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

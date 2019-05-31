@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Rogan's Shoes - La Crosse",
+  "street_address": "1220 Crossing Meadows Dr Suite 230",
+  "city": "Onalaska",
+  "state": "WI",
+  "zip": "54650",
+  "country_code": "US",
+  "store_number": 38908,
+  "phone": "(608) 781-8315",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.86863120",
+  "longitude": "-91.21322160",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

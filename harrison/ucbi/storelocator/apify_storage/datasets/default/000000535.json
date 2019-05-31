@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Ovation",
+  "street_address": "7800 Lake Wilson Rd",
+  "city": "Davenport",
+  "state": "FL",
+  "zip": "33896-9605",
+  "country_code": "US",
+  "store_number": 3491,
+  "phone": "8634203152",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.257795,
+  "longitude": -81.591759,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

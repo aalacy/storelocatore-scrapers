@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Punxsy SHOP 'n Save",
+  "street_address": "201 North Hampton Ave",
+  "city": "Punxsutawney",
+  "state": "PA",
+  "zip": "15767",
+  "country_code": "US",
+  "store_number": "284",
+  "phone": "1544",
+  "location_type": {
+    "gas_station": "814-938-5960",
+    "active": "40.945635",
+    "pump_perk": "-78.967519"
+  },
+  "niacs_code": null,
+  "latitude": "24 hrs",
+  "longitude": "814-938-2820",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

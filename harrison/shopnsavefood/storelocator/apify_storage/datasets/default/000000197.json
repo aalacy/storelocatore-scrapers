@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Port Allegany",
+  "street_address": "50 West Mill Street",
+  "city": "Port Allegany",
+  "state": "PA",
+  "zip": "16743",
+  "country_code": "US",
+  "store_number": "98",
+  "phone": "1099",
+  "location_type": {
+    "gas_station": "-78.282373",
+    "active": "false",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "814-642-2034",
+  "longitude": "41.809852",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

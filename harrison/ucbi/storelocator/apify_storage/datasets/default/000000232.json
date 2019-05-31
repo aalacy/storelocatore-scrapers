@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Sawgrass Center",
+  "street_address": "5950 Coral Ridge Dr",
+  "city": "Coral Springs",
+  "state": "FL",
+  "zip": "33076-3300",
+  "country_code": "US",
+  "store_number": 3099,
+  "phone": "9547574405",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 26.305177,
+  "longitude": -80.28075,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

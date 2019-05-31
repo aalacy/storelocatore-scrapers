@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Action Sports",
+  "street_address": "324 W Main St",
+  "city": "Branford",
+  "state": "CT",
+  "zip": "06405",
+  "country_code": "US",
+  "store_number": 483,
+  "phone": "(203) 481-5511",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.27980676",
+  "longitude": "-72.85111194",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1800,
+    "tue_time_open": 1000,
+    "tue_time_close": 1800,
+    "wed_time_open": 1000,
+    "wed_time_close": 2000,
+    "thu_time_open": 1000,
+    "thu_time_close": 2000,
+    "fri_time_open": 1000,
+    "fri_time_close": 1800,
+    "sat_time_open": 1000,
+    "sat_time_close": 1700
+  }
+}

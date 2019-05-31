@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Tulsa Runner",
+  "street_address": "9708 Riverside Pkwy",
+  "city": "Tulsa",
+  "state": "OK",
+  "zip": "74137",
+  "country_code": "US",
+  "store_number": 19810,
+  "phone": "(918) 494-8800",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "36.02258590",
+  "longitude": "-95.95011157",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

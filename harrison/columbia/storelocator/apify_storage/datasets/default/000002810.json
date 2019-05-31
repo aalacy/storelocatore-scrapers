@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Firth & Wilson Transport Cycles",
+  "street_address": "1315 N Howard St",
+  "city": "Philadelphia",
+  "state": "PA",
+  "zip": "19122",
+  "country_code": "US",
+  "store_number": 147545,
+  "phone": "(215) 560-8541",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "39.97092465",
+  "longitude": "-75.13666512",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

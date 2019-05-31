@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Morsel Munk",
+  "street_address": "118 Main St",
+  "city": "Winsted",
+  "state": "CT",
+  "zip": "06098",
+  "country_code": "US",
+  "store_number": 18028,
+  "phone": "(860) 238-4466",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.92120000",
+  "longitude": "-73.06245200",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

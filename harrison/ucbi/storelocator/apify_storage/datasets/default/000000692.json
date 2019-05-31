@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Shoppes at Price Crossing",
+  "street_address": "1251 S Toledo Blade Blvd",
+  "city": "North Port",
+  "state": "FL",
+  "zip": "34288-2410",
+  "country_code": "US",
+  "store_number": 3476,
+  "phone": "9412405023",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.0669,
+  "longitude": -82.15889,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

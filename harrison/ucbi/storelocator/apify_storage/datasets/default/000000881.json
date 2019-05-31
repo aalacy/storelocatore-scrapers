@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at South Pasadena",
+  "street_address": "1075 Pasadena Ave S",
+  "city": "South Pasadena",
+  "state": "FL",
+  "zip": "33707-2037",
+  "country_code": "US",
+  "store_number": 3618,
+  "phone": "7273411790",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.76006,
+  "longitude": -82.737193,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

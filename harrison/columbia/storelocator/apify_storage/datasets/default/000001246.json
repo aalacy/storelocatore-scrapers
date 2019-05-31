@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Nencini Sport Terranuova",
+  "street_address": "Via Poggilupi, 812",
+  "city": "Terranuova Bracciolini",
+  "state": "AREZZO",
+  "zip": "52028",
+  "country_code": "IT",
+  "store_number": 76401,
+  "phone": "055 919 9129",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.55271356",
+  "longitude": "11.55218928",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1500,
+    "sun_time_close": 2000,
+    "mon_time_open": 930,
+    "mon_time_close": 2000,
+    "tue_time_open": 930,
+    "tue_time_close": 2000,
+    "wed_time_open": 930,
+    "wed_time_close": 2000,
+    "thu_time_open": 930,
+    "thu_time_close": 2000,
+    "fri_time_open": 930,
+    "fri_time_close": 2000,
+    "sat_time_open": 930,
+    "sat_time_close": 2000
+  }
+}

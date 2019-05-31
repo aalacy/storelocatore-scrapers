@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Waynesville - North Main St",
+  "street_address": "165 N Main St",
+  "city": "Waynesville",
+  "state": "NC",
+  "zip": "28786",
+  "country_code": "US",
+  "store_number": 106,
+  "phone": "8284520307",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.491971,
+  "longitude": -82.987198,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Bolivar",
+  "street_address": "455 Main Street",
+  "city": "Bolivar",
+  "state": "NY",
+  "zip": "14715",
+  "country_code": "US",
+  "store_number": "31",
+  "phone": "1086",
+  "location_type": {
+    "gas_station": "42.064109",
+    "active": "-78.16824",
+    "pump_perk": "false"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sun 7:00-9:00",
+  "longitude": "585-928-1708",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

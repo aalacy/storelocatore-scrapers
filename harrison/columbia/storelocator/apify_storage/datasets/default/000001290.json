@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Atmosphere - Thunder Bay",
+  "street_address": "787 Memorial Drive",
+  "city": "Thunder Bay",
+  "state": "ON",
+  "zip": "T1B1D1",
+  "country_code": "CA",
+  "store_number": 20102,
+  "phone": "(807) 346-6840",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.41140793",
+  "longitude": "-89.24013146",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

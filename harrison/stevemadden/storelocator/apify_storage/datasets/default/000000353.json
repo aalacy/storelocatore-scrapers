@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Grant Avenue",
+  "street_address": "33 Grant Avenue",
+  "city": "San Francisco",
+  "state": "CA",
+  "country_code": "US",
+  "store_number": "7995310",
+  "phone": "415-788-0267",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "37.787200",
+  "longitude": "-122.405000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Pendleton - South Mechanic St",
+  "street_address": "901 S Mechanic St",
+  "city": "Pendleton",
+  "state": "SC",
+  "zip": "29670",
+  "country_code": "US",
+  "store_number": 1250,
+  "phone": "8646462100",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.637699,
+  "longitude": -82.782051,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

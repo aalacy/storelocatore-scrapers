@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek Cottonwood",
+  "street_address": "45585 Luckakuck Way #99",
+  "city": "Chilliwack",
+  "state": "BC",
+  "zip": "V2R1A1",
+  "country_code": "CA",
+  "store_number": 103601,
+  "phone": "(604) 824-4877",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.14187805",
+  "longitude": "-121.96345200",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

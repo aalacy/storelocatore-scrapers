@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "St. Pete Running Company",
+  "street_address": "6986 22nd Ave N",
+  "city": "St. Petersburg",
+  "state": "FL",
+  "zip": "33710",
+  "country_code": "US",
+  "store_number": 19791,
+  "phone": "(727) 800-5043",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "27.79086146",
+  "longitude": "-82.73586014",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

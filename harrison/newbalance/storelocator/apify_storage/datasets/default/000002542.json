@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fisherman's Marine & Outdoor",
+  "street_address": "10355 SW Cascade Ave",
+  "city": "Tigard",
+  "state": "OR",
+  "zip": "97223",
+  "country_code": "US",
+  "store_number": 68564,
+  "phone": "(503) 549-5061",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.44522745",
+  "longitude": "-122.78400201",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

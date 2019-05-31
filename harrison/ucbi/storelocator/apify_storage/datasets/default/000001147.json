@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Centre at Woodstock",
+  "street_address": "12165 Highway 92",
+  "city": "Woodstock",
+  "state": "GA",
+  "zip": "30188-4298",
+  "country_code": "US",
+  "store_number": 3060,
+  "phone": "7705171600",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.089661,
+  "longitude": -84.483986,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

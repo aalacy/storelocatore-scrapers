@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brinkmann Hardware",
+  "street_address": "125 Montauk Hwy",
+  "city": "Blue Point",
+  "state": "NY",
+  "zip": "11715",
+  "country_code": "US",
+  "store_number": 88628,
+  "phone": "(631) 363-2116",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.75695290",
+  "longitude": "-73.03491760",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 1800,
+    "mon_time_open": 800,
+    "mon_time_close": 2000,
+    "tue_time_open": 800,
+    "tue_time_close": 2000,
+    "wed_time_open": 800,
+    "wed_time_close": 2000,
+    "thu_time_open": 800,
+    "thu_time_close": 2000,
+    "fri_time_open": 800,
+    "fri_time_close": 2000,
+    "sat_time_open": 800,
+    "sat_time_close": 2000
+  }
+}

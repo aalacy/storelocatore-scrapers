@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Shops at Southline",
+  "street_address": "2222 South Blvd",
+  "city": "Charlotte",
+  "state": "NC",
+  "zip": "28203-6581",
+  "country_code": "US",
+  "store_number": 3719,
+  "phone": "7043732122",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.206656,
+  "longitude": -80.862544,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 6:30 AM - 11:00 PM,Mon 6:30 AM - 11:00 PM,Tues 6:30 AM - 11:00 PM,Wed 6:30 AM - 11:00 PM,Thurs 6:30 AM - 11:00 PM,Fri 6:30 AM - 11:00 PM,Sat 6:30 AM - 11:00 PM,"
+}

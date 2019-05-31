@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "REI - Yonkers",
+  "street_address": "49 Fitzgerald Street",
+  "city": "Yonkers",
+  "state": "NY",
+  "zip": "10710",
+  "country_code": "US",
+  "store_number": 11130,
+  "phone": "(914) 410-9500",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.96624671",
+  "longitude": "-73.85673121",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1900,
+    "mon_time_open": 1000,
+    "mon_time_close": 2130,
+    "tue_time_open": 1000,
+    "tue_time_close": 2130,
+    "wed_time_open": 1000,
+    "wed_time_close": 2130,
+    "thu_time_open": 1000,
+    "thu_time_close": 2130,
+    "fri_time_open": 1000,
+    "fri_time_close": 2130,
+    "sat_time_open": 1000,
+    "sat_time_close": 2130
+  }
+}

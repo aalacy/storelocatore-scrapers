@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Lanier Commons",
+  "street_address": "3480 Keith Bridge Rd",
+  "city": "Cumming",
+  "state": "GA",
+  "zip": "30041-5568",
+  "country_code": "US",
+  "store_number": 2696,
+  "phone": "6784550610",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.258144,
+  "longitude": -84.0711,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

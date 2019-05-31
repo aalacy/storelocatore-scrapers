@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Kavu - Seattle (Ballard)",
+  "street_address": "5419 Ballard Ave NW",
+  "city": "Seattle",
+  "state": "WA",
+  "zip": "98107",
+  "country_code": "US",
+  "store_number": 45734,
+  "phone": "(206) 783-0060",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.66785781",
+  "longitude": "-122.38556201",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

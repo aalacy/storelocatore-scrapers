@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Pittsburgh, Oakland",
+  "street_address": "195 North Craig Street",
+  "city": "Pittsburgh",
+  "state": "PA",
+  "zip": "15213",
+  "country_code": "US",
+  "store_number": "221",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.449451",
+  "longitude": "-79.9509173",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

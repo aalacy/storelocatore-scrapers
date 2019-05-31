@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Treasure Coast Plaza",
+  "street_address": "415 21st St",
+  "city": "Vero Beach",
+  "state": "FL",
+  "zip": "32960-5455",
+  "country_code": "US",
+  "store_number": 3448,
+  "phone": "7725620391",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 27.638434,
+  "longitude": -80.382956,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Shoppes at Deer Creek",
+  "street_address": "4300 Chapel Hill Rd",
+  "city": "Douglasville",
+  "state": "GA",
+  "zip": "30135-4200",
+  "country_code": "US",
+  "store_number": 3437,
+  "phone": "7705775133",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.689066,
+  "longitude": -84.714895,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

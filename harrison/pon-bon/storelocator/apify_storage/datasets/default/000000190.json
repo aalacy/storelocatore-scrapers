@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "1117 Canton Road, N.W.",
+  "city": "Carrollton",
+  "state": "OH",
+  "zip": "44615",
+  "country_code": "US",
+  "store_number": 10037321,
+  "phone": "(330) 627-5082",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 40.58793004398837,
+  "longitude": -81.09302710613201,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

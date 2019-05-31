@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Publix at Landstar",
+  "street_address": "13850 Landstar Blvd",
+  "city": "Orlando",
+  "state": "FL",
+  "zip": "32824-5526",
+  "country_code": "US",
+  "store_number": 3400,
+  "phone": "4078566040",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.36263,
+  "longitude": -81.367259,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

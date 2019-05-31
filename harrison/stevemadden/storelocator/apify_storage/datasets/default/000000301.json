@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "SOGO YOKOHAMA",
+  "street_address": "2-18-1 TAKASHIMA, YOKOHAMA-SH",
+  "city": "Kanagawa",
+  "state": null,
+  "country_code": "JP",
+  "store_number": "7995569",
+  "phone": "81 45 465 5885",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.447510",
+  "longitude": "139.642340",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

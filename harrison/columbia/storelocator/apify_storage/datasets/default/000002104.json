@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Blossom Baby",
+  "street_address": "3381 NW Bucklin Hill Rd",
+  "city": "Silverdale",
+  "state": "WA",
+  "zip": "98383",
+  "country_code": "US",
+  "store_number": 135745,
+  "phone": "(360) 204-5888",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.65078070",
+  "longitude": "-122.69520102",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

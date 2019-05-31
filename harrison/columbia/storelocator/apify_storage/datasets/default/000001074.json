@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "INTERSPORT Eisert",
+  "street_address": "Sedanstraße 1",
+  "city": "Erlangen",
+  "state": "",
+  "zip": "91052",
+  "country_code": "DE",
+  "store_number": 74155,
+  "phone": "09131 812800",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "49.59081250",
+  "longitude": "11.00518031",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

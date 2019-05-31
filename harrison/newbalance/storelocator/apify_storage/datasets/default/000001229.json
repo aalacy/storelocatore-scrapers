@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Orlando Ace Hardware",
+  "street_address": "2218 S Orange Ave",
+  "city": "Orlando",
+  "state": "FL",
+  "zip": "32806",
+  "country_code": "US",
+  "store_number": 122695,
+  "phone": "(407) 422-7766",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "28.51646722",
+  "longitude": "-81.37613333",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 600,
+    "sun_time_close": 1800,
+    "mon_time_open": 600,
+    "mon_time_close": 2000,
+    "tue_time_open": 600,
+    "tue_time_close": 2000,
+    "wed_time_open": 600,
+    "wed_time_close": 2000,
+    "thu_time_open": 600,
+    "thu_time_close": 2000,
+    "fri_time_open": 600,
+    "fri_time_close": 2000,
+    "sat_time_open": 600,
+    "sat_time_close": 1900
+  }
+}

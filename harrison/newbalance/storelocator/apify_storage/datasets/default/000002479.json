@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Sarzana",
+  "street_address": "S.S. 62 Variante della CISA N.59",
+  "city": "Sarzana",
+  "state": "SP",
+  "zip": "19038",
+  "country_code": "IT",
+  "store_number": 144751,
+  "phone": "0187 622936",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.12572296",
+  "longitude": "9.94325163",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1530,
+    "sun_time_close": 2000,
+    "mon_time_open": 1530,
+    "mon_time_close": 1930,
+    "tue_time_open": 930,
+    "tue_time_close": 1930,
+    "wed_time_open": 930,
+    "wed_time_close": 1930,
+    "thu_time_open": 930,
+    "thu_time_close": 1930,
+    "fri_time_open": 930,
+    "fri_time_close": 1930,
+    "sat_time_open": 930,
+    "sat_time_close": 2000
+  }
+}

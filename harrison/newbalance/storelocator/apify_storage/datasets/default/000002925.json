@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Zane's Cycles",
+  "street_address": "330 E Main St",
+  "city": "Branford",
+  "state": "CT",
+  "zip": "06405",
+  "country_code": "US",
+  "store_number": 14568,
+  "phone": "(203) 488-3244",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.29345677",
+  "longitude": "-72.78537119",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

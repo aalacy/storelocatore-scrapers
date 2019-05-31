@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "The Shoppes at Glen Lakes",
+  "street_address": "9595 Commercial Way",
+  "city": "Weeki Wachee",
+  "state": "FL",
+  "zip": "34613-3930",
+  "country_code": "US",
+  "store_number": 3493,
+  "phone": "3525965081",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 28.570306,
+  "longitude": -82.559942,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 9:00 PM,Mon 7:00 AM - 9:00 PM,Tues 7:00 AM - 9:00 PM,Wed 7:00 AM - 9:00 PM,Thurs 7:00 AM - 9:00 PM,Fri 7:00 AM - 9:00 PM,Sat 7:00 AM - 9:00 PM,"
+}

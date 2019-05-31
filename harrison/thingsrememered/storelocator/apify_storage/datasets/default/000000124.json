@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "GALLERIA AT ROSEVILLE",
+  "street_address": "1151 GALLERIA BLVD",
+  "city": "ROSEVILLE",
+  "state": "CA",
+  "zip": "95678",
+  "country_code": "US",
+  "store_number": "731",
+  "phone": "(916) 788-0878",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 38.7648,
+  "longitude": -121.2869,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#07:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

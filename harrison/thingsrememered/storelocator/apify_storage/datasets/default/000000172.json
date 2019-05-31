@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "VOLUSIA MALL",
+  "street_address": "1700 W INTERNATIONAL SPEEDWAY BLVD",
+  "city": "DAYTONA BEACH",
+  "state": "FL",
+  "zip": "32114",
+  "country_code": "US",
+  "store_number": "977",
+  "phone": "(386) 253-1058",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 29.199661,
+  "longitude": -81.043724,
+  "external_lat_long": false,
+  "hours_of_operation": "1#12:00 PM#06:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

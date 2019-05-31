@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Jans Kamas Outlet",
+  "street_address": "138 W 280 S",
+  "city": "Kamas",
+  "state": "UT",
+  "zip": "84036",
+  "country_code": "US",
+  "store_number": 91074,
+  "phone": "(435) 783-6491",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.64300700",
+  "longitude": "-111.28073840",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

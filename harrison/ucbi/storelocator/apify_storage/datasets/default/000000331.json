@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "St. James Shopping Center",
+  "street_address": "208 Saint James Ave Ste C",
+  "city": "Goose Creek",
+  "state": "SC",
+  "zip": "29445-2994",
+  "country_code": "US",
+  "store_number": 2909,
+  "phone": "8435697920",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.006596,
+  "longitude": -80.042591,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 11:00 PM,Mon 7:00 AM - 11:00 PM,Tues 7:00 AM - 11:00 PM,Wed 7:00 AM - 11:00 PM,Thurs 7:00 AM - 11:00 PM,Fri 7:00 AM - 11:00 PM,Sat 7:00 AM - 11:00 PM,"
+}

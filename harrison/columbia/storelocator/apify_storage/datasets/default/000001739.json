@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "AQ Outdoors / Aquabatics Calgary",
+  "street_address": "8435 Bowfort Rd NW #300",
+  "city": "Calgary",
+  "state": "AB",
+  "zip": "T3B2V2",
+  "country_code": "CA",
+  "store_number": 31575,
+  "phone": "(403) 288-9283",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "51.08457837",
+  "longitude": "-114.20963187",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1700,
+    "mon_time_open": 1000,
+    "mon_time_close": 1830,
+    "tue_time_open": 1000,
+    "tue_time_close": 1830,
+    "wed_time_open": 1000,
+    "wed_time_close": 1830,
+    "thu_time_open": 1000,
+    "thu_time_close": 1830,
+    "fri_time_open": 1000,
+    "fri_time_close": 1830,
+    "sat_time_open": 900,
+    "sat_time_close": 1700
+  }
+}

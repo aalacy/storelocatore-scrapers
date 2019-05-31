@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Sarasota",
+  "street_address": "711 S Osprey Ave #1",
+  "city": "Sarasota",
+  "state": "FL",
+  "zip": "34236",
+  "country_code": "US",
+  "store_number": 19128,
+  "phone": "(941) 894-3338",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "27.32944777",
+  "longitude": "-82.53413522",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1100,
+    "sun_time_close": 1600,
+    "mon_time_open": 1000,
+    "mon_time_close": 1900,
+    "tue_time_open": 1000,
+    "tue_time_close": 1900,
+    "wed_time_open": 1000,
+    "wed_time_close": 1900,
+    "thu_time_open": 1000,
+    "thu_time_close": 1900,
+    "fri_time_open": 1000,
+    "fri_time_close": 1900,
+    "sat_time_open": 800,
+    "sat_time_close": 1900
+  }
+}

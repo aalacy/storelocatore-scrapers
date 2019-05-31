@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Bonanza",
+  "street_address": "574 Susquehanna Blvd.",
+  "city": "Hazle Township",
+  "state": "PA",
+  "zip": "18202",
+  "country_code": "US",
+  "store_number": 10037534,
+  "phone": "(570) 454-8767",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 40.98046009776614,
+  "longitude": -76.01808316992322,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://locations.pon-bon.com/",
+  "location_name": "Ponderosa",
+  "street_address": "2727 Veterans Avenue",
+  "city": "Vandalia",
+  "state": "IL",
+  "zip": "62471",
+  "country_code": "US",
+  "store_number": 10037353,
+  "phone": "(618) 283-4559",
+  "location_type": "main",
+  "niacs_code": null,
+  "latitude": 38.969607,
+  "longitude": -89.129342,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

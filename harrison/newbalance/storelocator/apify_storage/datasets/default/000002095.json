@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Zens Toyland (formerly Wooden Toy)",
+  "street_address": "1275 Silas Deane Hwy",
+  "city": "Wethersfield",
+  "state": "CT",
+  "zip": "06109",
+  "country_code": "US",
+  "store_number": 144508,
+  "phone": "(860) 529-1945",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "41.68654868",
+  "longitude": "-72.65631190",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

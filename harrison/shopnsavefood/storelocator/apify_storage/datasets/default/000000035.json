@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Burhans Blvd. Exxon",
+  "street_address": "301 N. Burhans Blvd.",
+  "city": "Hagerstown",
+  "state": "MD",
+  "zip": "21741",
+  "country_code": "US",
+  "store_number": "327",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "false",
+    "pump_perk": "false"
+  },
+  "niacs_code": null,
+  "latitude": "39.649420",
+  "longitude": "-77.724219",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Adventure Apparel",
+  "street_address": "11124 Old Seward Hwy #600",
+  "city": "Anchorage",
+  "state": "AK",
+  "zip": "99515",
+  "country_code": "US",
+  "store_number": 11468,
+  "phone": "(907) 222-6633",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "61.12066100",
+  "longitude": "-149.86395246",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

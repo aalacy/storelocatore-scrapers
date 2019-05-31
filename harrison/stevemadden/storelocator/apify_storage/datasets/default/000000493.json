@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "Carousel",
+  "street_address": "9090 Carousel Center",
+  "city": "Syracuse",
+  "state": "NY",
+  "country_code": "US",
+  "store_number": "7995209",
+  "phone": "315-466-0200",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "43.066900",
+  "longitude": "-76.170600",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Grafton Express",
+  "street_address": "57 Maple Avenue",
+  "city": "Grafton",
+  "state": "WV",
+  "zip": "26354",
+  "country_code": "US",
+  "store_number": "50",
+  "phone": "1081",
+  "location_type": {
+    "gas_station": "39.337617",
+    "active": "-80.024006",
+    "pump_perk": "false"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sun 7am-9pm",
+  "longitude": "304-265-2070",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

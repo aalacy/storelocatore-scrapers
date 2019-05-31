@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Strand's Ski Shop Inc",
+  "street_address": "1 W Boylston Dr",
+  "city": "Worcester",
+  "state": "MA",
+  "zip": "01606",
+  "country_code": "US",
+  "store_number": 41238,
+  "phone": "(508) 852-4333",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "42.29511693",
+  "longitude": "-71.80464118",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

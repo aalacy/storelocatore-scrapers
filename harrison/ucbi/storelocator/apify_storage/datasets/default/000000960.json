@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Cherokee - Hwy 441",
+  "street_address": "3273 US Hwy 441 N",
+  "city": "Whittier",
+  "state": "NC",
+  "zip": "28789",
+  "country_code": "US",
+  "store_number": 26,
+  "phone": "8284973734",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.456017,
+  "longitude": -83.311074,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

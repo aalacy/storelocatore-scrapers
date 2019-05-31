@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Upper St. Clair",
+  "street_address": "127 McMurray Road",
+  "city": "Pittsburgh",
+  "state": "PA",
+  "zip": "15241",
+  "country_code": "US",
+  "store_number": "243",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.3265301",
+  "longitude": "-80.0655327",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

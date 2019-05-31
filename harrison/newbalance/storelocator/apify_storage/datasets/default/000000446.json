@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "North 40 Outfitters",
+  "street_address": "15228 N Newport Hwy",
+  "city": "Mead",
+  "state": "WA",
+  "zip": "99021",
+  "country_code": "US",
+  "store_number": 13749,
+  "phone": "(509) 465-8100",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "47.79499783",
+  "longitude": "-117.34941923",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

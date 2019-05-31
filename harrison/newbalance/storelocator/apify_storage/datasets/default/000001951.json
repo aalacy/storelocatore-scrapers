@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Fleet Feet Chattanooga",
+  "street_address": "307 Manufacturers Rd #105",
+  "city": "Chattanooga",
+  "state": "TN",
+  "zip": "37405",
+  "country_code": "US",
+  "store_number": 36535,
+  "phone": "(423) 771-7996",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "35.06257446",
+  "longitude": "-85.31413978",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

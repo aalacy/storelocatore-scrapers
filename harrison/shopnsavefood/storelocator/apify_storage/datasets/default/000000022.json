@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "BFS - South Fairmont SNS White Hall",
+  "street_address": "9615 Mall Loop",
+  "city": "Fairmont",
+  "state": "WV",
+  "zip": "26301",
+  "country_code": "US",
+  "store_number": "272",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "39.429370",
+  "longitude": "-80.187752",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

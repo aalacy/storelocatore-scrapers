@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Wallace - E Main St",
+  "street_address": "406 E Main St",
+  "city": "Wallace",
+  "state": "NC",
+  "zip": "28466",
+  "country_code": "US",
+  "store_number": 1476,
+  "phone": "9102859300",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.735979,
+  "longitude": -77.99068,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Aliquippa, Hopewell",
+  "street_address": "2046 Brodhead - 5 Points Intersection",
+  "city": "Aliquippa",
+  "state": "PA",
+  "zip": "15001",
+  "country_code": "US",
+  "store_number": "127",
+  "phone": "0",
+  "location_type": {
+    "gas_station": "true",
+    "active": "true",
+    "pump_perk": "true"
+  },
+  "niacs_code": null,
+  "latitude": "40.5693741",
+  "longitude": "-80.2594466",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

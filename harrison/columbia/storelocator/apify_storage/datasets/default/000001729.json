@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Front Range Anglers",
+  "street_address": "2344 Pearl St",
+  "city": "Boulder",
+  "state": "CO",
+  "zip": "80302",
+  "country_code": "US",
+  "store_number": 36597,
+  "phone": "(303) 494-1375",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.02079656",
+  "longitude": "-105.26440172",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1000,
+    "sun_time_close": 1600,
+    "mon_time_open": 700,
+    "mon_time_close": 1800,
+    "tue_time_open": 700,
+    "tue_time_close": 1800,
+    "wed_time_open": 700,
+    "wed_time_close": 1800,
+    "thu_time_open": 700,
+    "thu_time_close": 1800,
+    "fri_time_open": 700,
+    "fri_time_close": 1800,
+    "sat_time_open": 700,
+    "sat_time_close": 1700
+  }
+}

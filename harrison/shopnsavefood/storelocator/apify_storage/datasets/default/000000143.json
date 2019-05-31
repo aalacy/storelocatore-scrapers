@@ -1,0 +1,21 @@
+{
+  "locator_domain": "https://www.shopnsavefood.com/",
+  "location_name": "Moorefield Express",
+  "street_address": "Route 220 N MainSt",
+  "city": "Moorefield",
+  "state": "WV",
+  "zip": "26836",
+  "country_code": "US",
+  "store_number": "66",
+  "phone": "1439",
+  "location_type": {
+    "gas_station": "304-538-6396",
+    "active": "304-538-2955",
+    "pump_perk": "39.072595"
+  },
+  "niacs_code": null,
+  "latitude": "Mon-Sat 8:00am-9:00pm",
+  "longitude": "Sun 9:00am-8:00pm",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

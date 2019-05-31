@@ -1,0 +1,16 @@
+{
+  "locator_domain": "https://stores.boldapps.net/",
+  "location_name": "DNEPROPETROVSK",
+  "street_address": "KARL MARX AVENUE 50, 3RD FLOOR",
+  "city": "Dniepropetrovsk",
+  "state": null,
+  "country_code": "UA",
+  "store_number": "7995259",
+  "phone": "3.81E+11",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "48.270000",
+  "longitude": "34.580000",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

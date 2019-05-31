@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.thingsremembered.com/",
+  "location_name": "VALLEY PLAZA",
+  "street_address": "2701 MING AVE",
+  "city": "BAKERSFIELD",
+  "state": "CA",
+  "zip": "93304",
+  "country_code": "US",
+  "store_number": "902",
+  "phone": "(661) 831-4625",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.338818,
+  "longitude": -119.02295,
+  "external_lat_long": false,
+  "hours_of_operation": "1#11:00 AM#07:00 PM|2#10:00 AM#09:00 PM|3#10:00 AM#09:00 PM|4#10:00 AM#09:00 PM|5#10:00 AM#09:00 PM|6#10:00 AM#09:00 PM|7#10:00 AM#09:00 PM"
+}

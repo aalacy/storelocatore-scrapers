@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Sport Chek New North Bay Mall",
+  "street_address": "850 McKeown Ave #6",
+  "city": "North Bay",
+  "state": "ON",
+  "zip": "P1B8M1",
+  "country_code": "CA",
+  "store_number": 103696,
+  "phone": "(705) 840-5007",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "46.33148759",
+  "longitude": "-79.47331302",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

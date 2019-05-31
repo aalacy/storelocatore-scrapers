@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Rome - Mt Berry",
+  "street_address": "2760 Martha Berry Hwy NE",
+  "city": "Rome",
+  "state": "GA",
+  "zip": "30165",
+  "country_code": "US",
+  "store_number": 88,
+  "phone": "7063782225",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.301268,
+  "longitude": -85.174545,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

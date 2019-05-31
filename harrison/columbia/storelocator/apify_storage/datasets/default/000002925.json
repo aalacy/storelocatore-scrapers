@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Ridgewood Cycle Shop",
+  "street_address": "35 N Broad St",
+  "city": "Ridgewood",
+  "state": "NJ",
+  "zip": "07450",
+  "country_code": "US",
+  "store_number": 33507,
+  "phone": "(201) 444-2553",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "40.98057671",
+  "longitude": "-74.11981121",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

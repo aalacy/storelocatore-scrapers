@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Weaverville Plaza",
+  "street_address": "165 Weaver Blvd",
+  "city": "Weaverville",
+  "state": "NC",
+  "zip": "28787",
+  "country_code": "US",
+  "store_number": 3810,
+  "phone": "8286581020",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 35.705736,
+  "longitude": -82.569039,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

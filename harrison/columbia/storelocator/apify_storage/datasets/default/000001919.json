@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Pacers Running",
+  "street_address": "10420 North St",
+  "city": "Fairfax",
+  "state": "VA",
+  "zip": "22030",
+  "country_code": "US",
+  "store_number": 14494,
+  "phone": "(703) 537-0630",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "38.84720636",
+  "longitude": "-77.30552127",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

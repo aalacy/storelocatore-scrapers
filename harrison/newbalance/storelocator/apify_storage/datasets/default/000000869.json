@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Brown's Shoe Fit Ada",
+  "street_address": "820 Arlington Center",
+  "city": "Ada",
+  "state": "OK",
+  "zip": "74820",
+  "country_code": "US",
+  "store_number": 92797,
+  "phone": "(580) 332-1464",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "34.78347200",
+  "longitude": "-96.65075100",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 1200,
+    "sun_time_close": 1600,
+    "mon_time_open": 900,
+    "mon_time_close": 1900,
+    "tue_time_open": 900,
+    "tue_time_close": 1900,
+    "wed_time_open": 900,
+    "wed_time_close": 1900,
+    "thu_time_open": 900,
+    "thu_time_close": 1900,
+    "fri_time_open": 900,
+    "fri_time_close": 1900,
+    "sat_time_open": 900,
+    "sat_time_close": 1900
+  }
+}

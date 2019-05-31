@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Young Harris - College St - Student Center ATM",
+  "street_address": "1 College St",
+  "city": "Young Harris",
+  "state": "GA",
+  "zip": "30582",
+  "country_code": "US",
+  "store_number": 1212,
+  "phone": "8008222651",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 34.932579,
+  "longitude": -83.846489,
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.ucbi.com/",
+  "location_name": "Gervais Place",
+  "street_address": "501 Gervais St",
+  "city": "Columbia",
+  "state": "SC",
+  "zip": "29201-3045",
+  "country_code": "US",
+  "store_number": 3395,
+  "phone": "8032554351",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": 33.998269,
+  "longitude": -81.044505,
+  "external_lat_long": false,
+  "hours_of_operation": "Sun 7:00 AM - 10:00 PM,Mon 7:00 AM - 10:00 PM,Tues 7:00 AM - 10:00 PM,Wed 7:00 AM - 10:00 PM,Thurs 7:00 AM - 10:00 PM,Fri 7:00 AM - 10:00 PM,Sat 7:00 AM - 10:00 PM,"
+}

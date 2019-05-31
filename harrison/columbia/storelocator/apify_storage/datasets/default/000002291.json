@@ -1,0 +1,17 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Runnings",
+  "street_address": "3061 Dakota Ave S",
+  "city": "Huron",
+  "state": "SD",
+  "zip": "57350",
+  "country_code": "US",
+  "store_number": 63230,
+  "phone": "(605) 352-1448",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "44.33137263",
+  "longitude": "-98.21441609",
+  "external_lat_long": false,
+  "hours_of_operation": null
+}

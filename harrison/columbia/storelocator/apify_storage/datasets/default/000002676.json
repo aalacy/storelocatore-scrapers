@@ -1,0 +1,32 @@
+{
+  "locator_domain": "https://www.columbia.com/",
+  "location_name": "Cisalfa Thiene",
+  "street_address": "Via del Terziario, 2/4/6",
+  "city": "Thiene",
+  "state": "VI",
+  "zip": "36016",
+  "country_code": "IT",
+  "store_number": 144756,
+  "phone": "0445 386400",
+  "location_type": null,
+  "niacs_code": null,
+  "latitude": "45.69174861",
+  "longitude": "11.48091881",
+  "external_lat_long": false,
+  "hours_of_operation": {
+    "sun_time_open": 900,
+    "sun_time_close": 2000,
+    "mon_time_open": 830,
+    "mon_time_close": 2100,
+    "tue_time_open": 830,
+    "tue_time_close": 2100,
+    "wed_time_open": 830,
+    "wed_time_close": 2100,
+    "thu_time_open": 830,
+    "thu_time_close": 2100,
+    "fri_time_open": 830,
+    "fri_time_close": 2100,
+    "sat_time_open": 830,
+    "sat_time_close": 2100
+  }
+}
