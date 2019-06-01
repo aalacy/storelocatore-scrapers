@@ -2,12 +2,13 @@ const Apify = require('apify');
 const rp = require('request-promise-native');
 const { xml2json, parseData } = require('./tools');
 
-const storeurl =
-  'https://www.shopnsavefood.com/DesktopModules/StoreLocator/API/StoreWebAPI.asmx/GetAllStores';
+const storeurl = 'https://www.shopnsavefood.com/DesktopModules/StoreLocator/API/StoreWebAPI.asmx/GetAllStores';
 
 Apify.main(async () => {
   const requestList = new Apify.RequestList({
-    sources: [{ url: storeurl }],
+    sources: [
+      { url: storeurl },
+    ],
   });
   await requestList.initialize();
 
@@ -20,6 +21,7 @@ Apify.main(async () => {
       // The data is nested so define data to this new object
       const data = json.ArrayOfStore.Store;
 
+      /* eslint-disable no-restricted-syntax */
       for await (const obj of data) {
         await Apify.pushData(parseData(obj));
       }

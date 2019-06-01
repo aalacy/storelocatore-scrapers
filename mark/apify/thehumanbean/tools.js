@@ -1,4 +1,5 @@
 const noDataLabel = 'NO-DATA';
+const { statesLowerCase } = require('./states');
 
 // Leaves only digits for the phone number
 const formatPhoneNumber = (string) => {
@@ -12,67 +13,39 @@ const formatPhoneNumber = (string) => {
   return number;
 };
 
-const parseGoogleMapsUrl = (string) => {
-  if (typeof (string) !== 'string') {
-    return undefined;
-  }
-  const a = string.match(/(?=)([-]?[\d]*\.[\d]*),([-]?[\d]*\.[\d]*)(?=&)/g);
-  const s = a[0];
-  const o = s.split(',');
-  return {
-    latitude: o[0],
-    longitude: o[1],
-  };
-};
-
-const formatStreetAddress = (string1, string2) => {
-  if (typeof (string2) === 'string') {
-    if (string2.length === 0) {
-      return string1;
-    }
-    return `${string1}, ${string2}`;
-  }
-  return string1;
-};
-
-const parseAddress = (a) => {
-  if (typeof (a) !== 'string') {
-    return undefined;
-  }
-  const r = {};
-  const c = a.indexOf(',');
-  r.city = a.slice(0, c);
-  const f = a.substring(c + 2);
-  const s = f.lastIndexOf(' ');
-  r.state = f.slice(0, s);
-  r.zip = f.substring(s + 1);
-  return r;
-};
-
-const checkLocationType = (url) => {
-  if (url.includes('branch')) {
-    return 'Branch';
-  }
-  if (url.includes('office')) {
-    return 'Office';
-  }
-  if (url.includes('atm')) {
-    return 'ATM';
+const formatHours = (string) => {
+  if (string) {
+    return string.replace(/(?:\r\n|\r|\n)/g, ', ');
   }
   return undefined;
 };
 
-const checkHours = (string) => {
-  if (string.length === 0) {
-    return noDataLabel;
+const parseAddress = (string) => {
+  if (string) {
+    // const removeSpaces = string.replace(/\s/g, '');
+    const addressOnly = string.substring((string.indexOf('BEAN') + 4), string.length);
+    const addressArray = addressOnly.split(',');
+    const streetAddress = addressArray[0].trim();
+    const addressLocality = addressArray[1].trim();
+    const endAddress = addressArray[2];
+    const zip = endAddress.substring(addressArray[2].search(/[0-9]/), addressArray[2].length);
+    const addressEnd = addressArray[2].split(/[0-9]/);
+    const stateName = addressEnd[0].trim();
+    const addressRegion = statesLowerCase[stateName.toLowerCase()];
+    return {
+      streetAddress,
+      addressLocality,
+      addressRegion,
+      zip,
+    };
   }
-  return string;
+  return undefined;
 };
 
 // Simply receives data from the scrape, then formats it.
 const formatData = ({
   // If any data points are undefined / null, return 'NO-DATA'
-  locator_domain,
+  locator_domain: locator_domain = noDataLabel,
   location_name: location_name = noDataLabel,
   street_address: street_address = noDataLabel,
   city: city = noDataLabel,
@@ -101,14 +74,12 @@ const formatData = ({
   naics_code: naics,
   latitude,
   longitude,
-  hours_of_operation: checkHours(hours_of_operation),
+  hours_of_operation,
 });
 
 module.exports = {
   formatPhoneNumber,
-  parseGoogleMapsUrl,
-  formatStreetAddress,
+  formatHours,
   parseAddress,
-  checkLocationType,
   formatData,
 };
