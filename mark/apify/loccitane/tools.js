@@ -12,61 +12,22 @@ const formatPhoneNumber = (string) => {
   return number;
 };
 
-const parseGoogleMapsUrl = (string) => {
-  if (typeof (string) !== 'string') {
+const formatGeoString = (string) => {
+  if (string === '') {
     return undefined;
   }
-  const a = string.match(/(?=)([-]?[\d]*\.[\d]*),([-]?[\d]*\.[\d]*)(?=&)/g);
-  const s = a[0];
-  const o = s.split(',');
-  return {
-    latitude: o[0],
-    longitude: o[1],
-  };
+  const geoArray = string.split(',');
+  return { latitude: geoArray[0], longitude: geoArray[1] };
 };
 
-const formatStreetAddress = (string1, string2) => {
-  if (typeof (string2) === 'string') {
-    if (string2.length === 0) {
-      return string1;
+const removeEmptyStrings = (poi) => {
+  const objectShallowCopy = Object.assign({}, poi);
+  Object.entries(objectShallowCopy).forEach(([key, val]) => {
+    if (val === '') {
+      objectShallowCopy[key] = undefined;
     }
-    return `${string1}, ${string2}`;
-  }
-  return string1;
-};
-
-const parseAddress = (a) => {
-  if (typeof (a) !== 'string') {
-    return undefined;
-  }
-  const r = {};
-  const c = a.indexOf(',');
-  r.city = a.slice(0, c);
-  const f = a.substring(c + 2);
-  const s = f.lastIndexOf(' ');
-  r.state = f.slice(0, s);
-  r.zip = f.substring(s + 1);
-  return r;
-};
-
-const checkLocationType = (url) => {
-  if (url.includes('branch')) {
-    return 'Branch';
-  }
-  if (url.includes('office')) {
-    return 'Office';
-  }
-  if (url.includes('atm')) {
-    return 'ATM';
-  }
-  return undefined;
-};
-
-const checkHours = (string) => {
-  if (string.length === 0) {
-    return noDataLabel;
-  }
-  return string;
+  });
+  return objectShallowCopy;
 };
 
 // Simply receives data from the scrape, then formats it.
@@ -82,7 +43,7 @@ const formatData = ({
   store_number: store_number = noDataLabel,
   phone: phone = noDataLabel,
   location_type: location_type = noDataLabel,
-  naics = noDataLabel,
+  naics: naics = noDataLabel,
   latitude: latitude = noDataLabel,
   longitude: longitude = noDataLabel,
   hours_of_operation: hours_of_operation = noDataLabel,
@@ -101,14 +62,12 @@ const formatData = ({
   naics_code: naics,
   latitude,
   longitude,
-  hours_of_operation: checkHours(hours_of_operation),
+  hours_of_operation,
 });
 
 module.exports = {
   formatPhoneNumber,
-  parseGoogleMapsUrl,
-  formatStreetAddress,
-  parseAddress,
-  checkLocationType,
+  formatGeoString,
+  removeEmptyStrings,
   formatData,
 };
