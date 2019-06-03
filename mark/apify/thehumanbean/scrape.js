@@ -53,7 +53,7 @@ Apify.main(async () => {
 
       const storeObject = JSON.parse(fixedData);
 
-      // Some sites have emptry ld-json strings, so we have to parse the page for info
+      // Some sites have empty ld-json strings, so we have to parse the page for info
       if (storeObject.address.streetAddress.length < 2) {
         const titleSelector = 'body > div > div > div > div > div > div > div > div > div > div > div > h1 > span';
         await page.waitForSelector(titleSelector);
