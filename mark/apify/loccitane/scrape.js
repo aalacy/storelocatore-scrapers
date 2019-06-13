@@ -6,14 +6,14 @@ const {
 /*
 Warning: You will be faced with the message below.
 I believe its from their datadome's service (anti-bot) software.
-" There are various possible explanations for this:
+"There are various possible explanations for this:
  you are browsing and clicking at a speed much faster than expected of a human being,
  something is preventing Javascript from working on your computer,
  there is a robot on the same network (IP) as you!!!"
 
- The current settings enable you to sufficient time to click the verification images
- as a regular user to bypass the block. I've dialed it down a bit to give sufficient time,
-  so it will work upon image verification.
+The current settings provide sufficient time to click the verification images
+as a regular user to bypass the block. I've dialed it down a bit to give sufficient time,
+so you can click images for verification.
 */
 
 const loccitaneUS = 'https://usa.loccitane.com/doc/GlobalCache/OCC/SiteMaps/Sitemap_Stores_82.xml';
@@ -83,8 +83,8 @@ Apify.main(async () => {
     gotoFunction: async ({
       request, page,
     }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'load',
-    }),
+        timeout: 0, waitUntil: 'load',
+      }),
     handlePageTimeoutSecs: 400,
   });
   await crawler.run();
