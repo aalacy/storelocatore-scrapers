@@ -69,5 +69,5 @@ const Apify = require('apify');
   // await mkdirp.sync(dirpath);
   // await csv.toDisk(dirpath+ 'stores.csv', { bom: false });
   // console.log("Created "+dirpath+'stores.csv');
-  Apify.pushData(stores);
+  await Apify.pushData(stores);
 })();
