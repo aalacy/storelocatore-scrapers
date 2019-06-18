@@ -33,4 +33,6 @@ RUN npm i puppeteer \
 # Run everything after as non-privileged user.
 USER pptruser
 
+WORKDIR /home/pptruser
+
 CMD npm start
