@@ -22,7 +22,7 @@ const Apify = require('apify');
 
   const browser = await puppeteer.launch({
     headless: false,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    args: [],
     defaultViewport: { width: 1920, height: 1080 },
   });
 
