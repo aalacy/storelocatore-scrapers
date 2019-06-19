@@ -1,4 +1,4 @@
-import csv
+import os, csv, requests
 from pdb import set_trace as bp
 
 def xpath(hxt, query_string):
@@ -24,6 +24,14 @@ class DataMixin(object):
 
     def is_ca_province(self, province):
         return province in self.ca_provinces_codes
+
+    def get_geo(self, address):
+        params = {'address': address, 'key': os.environ['GOOGLE_API_KEY']}
+        r = requests.get('https://maps.googleapis.com/maps/api/geocode/json', params=params)
+        if r.status_code == 200:
+            location = r.json()['results'][0]['geometry']['location']
+            return location
+        return None
     
 
 class Base(DataMixin):
