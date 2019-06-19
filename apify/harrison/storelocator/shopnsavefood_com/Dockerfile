@@ -24,5 +24,6 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
 COPY . ./
 
 RUN npm install
+RUN npm install puppeteer
 
 CMD npm start

@@ -85,3 +85,7 @@ typings/
 
 #DS-Store
 .DS_Store
+
+# Apify
+apify_storage
+apify_docker_storage
