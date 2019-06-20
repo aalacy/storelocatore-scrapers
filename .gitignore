@@ -89,3 +89,9 @@ typings/
 # Apify
 apify_storage
 apify_docker_storage
+
+# Python
+*.pyc
+
+# Temporary
+*.swp
