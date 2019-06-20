@@ -4,7 +4,9 @@ from pdb import set_trace as bp
 def xpath(hxt, query_string):
     hxp = hxt.xpath(query_string)
     if hxp:
-        return hxp[0].encode('ascii', 'ignore')
+        if hasattr(hxp[0], 'encode'):
+            return hxp[0].encode('ascii', 'ignore')
+        return hxp[0]
     return None
 
 def query_params(url):
