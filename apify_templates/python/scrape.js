@@ -5,15 +5,15 @@ const fs = require('fs-extra');
 const csv = util.promisify(require('csv-parse'));  
 const mapKeys = require('lodash.mapkeys');
 
-Apify.main(async () => {
+(async () => {
 	const exec = util.promisify(child_process.exec);
-	await exec('python shopnsavefood.py');
+	await exec('python bancorpsouth.py');
 
-	let data = await fs.readFile('shopnsavefood.csv');
+	let data = await fs.readFile('bancorpsouth.csv');
 	let parsed = await csv(data);
 	let header = parsed[0];
 	let translation = {...header}
 	let rows = parsed.slice(1);
 	let pois = rows.map((row) => mapKeys({...row}, (value, key) => { return translation[key]; } ));
 	await Apify.pushData(pois);
-});
+})();
