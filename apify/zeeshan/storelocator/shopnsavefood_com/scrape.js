@@ -7,9 +7,9 @@ const mapKeys = require('lodash.mapkeys');
 
 (async () => {
 	const exec = util.promisify(child_process.exec);
-	await exec('python bancorpsouth.py');
+	await exec('python shopnsavefood.py');
 
-	let data = await fs.readFile('bancorpsouth.csv');
+	let data = await fs.readFile('shopnsavefood.csv');
 	let parsed = await csv(data);
 	let header = parsed[0];
 	let translation = {...header}
