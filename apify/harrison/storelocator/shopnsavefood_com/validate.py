@@ -55,7 +55,7 @@ def is_us_zip(zip_code):
         return False
 
 def is_canada_zip(zip_code):
-    pattern = re.compile("/^[ABCEGHJ-NPRSTVXY][0-9][ABCEGHJ-NPRSTV-Z] [0-9][ABCEGHJ-NPRSTV-Z][0-9]$/")
+    pattern = re.compile("^[ABCEGHJ-NPRSTVXY][0-9][ABCEGHJ-NPRSTV-Z] [0-9][ABCEGHJ-NPRSTV-Z][0-9]$")
     return zip_code and pattern.match(zip_code)
 
 def is_us_state(state):

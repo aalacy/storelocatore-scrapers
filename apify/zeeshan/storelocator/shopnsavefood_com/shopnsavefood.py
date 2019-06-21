@@ -3,6 +3,8 @@ import requests
 from pdb import set_trace as bp
 
 class ShopnSaveFood(base.Base):
+
+    csv_filename = 'shopnsavefood.csv'
     domain_name = 'shopnsavefood.com'
     default_country = 'US'
     url = 'https://www.shopnsavefood.com/DesktopModules/StoreLocator/API/StoreWebAPI.asmx/GetAllStores'
