@@ -6,7 +6,7 @@ const csv = util.promisify(require('csv-parse'));
 const mapKeys = require('lodash.mapkeys');
 
 (async () => {
-	console.log("starting scrape...");
+	console.log("starting scrape.....");
 	const exec = util.promisify(child_process.exec);
 	await exec('python choicehotels.py');
 
