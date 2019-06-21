@@ -16,6 +16,7 @@ def query_params(url):
         return {}
 
 class DataMixin(object):
+    country_code_lookup = {'United States': 'US', 'Canada': 'CA'}
     us_states = ['alabama', 'alaska', 'arizona', 'arkansas', 'california', 'colorado', 'connecticut', 'delaware', 'florida', 'georgia', 'hawaii', 'idaho', 'illinois', 'indiana', 'iowa', 'kansas', 'kentucky', 'louisiana', 'maine', 'maryland', 'massachusetts', 'michigan', 'minnesota', 'mississippi', 'missouri', 'montana', 'nebraska', 'nevada', 'new hampshire', 'new jersey', 'new mexico', 'new york', 'north carolina', 'north dakota', 'ohio', 'oklahoma', 'oregon', 'pennsylvania', 'rhode island', 'south carolina', 'south dakota', 'tennessee', 'texas', 'utah', 'vermont', 'virginia', 'washington', 'west virginia', 'wisconsin', 'wyoming']
     us_states_codes = set(['AL', 'AK', 'AS', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'GU', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MH', 'MA', 'MI', 'FM', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'MP', 'OH', 'OK', 'OR', 'PW', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'VI', 'WA', 'WV', 'WI', 'WY'])
     ca_provinces = ['alberta', 'british columbia', 'manitoba', 'new brunswick', 'newfoundland and labrador', 'nova scotia', 'ontario', 'prince edward island', 'quebec', 'saskatchewan']
@@ -31,9 +32,10 @@ class DataMixin(object):
         params = {'address': address, 'key': os.environ['GOOGLE_API_KEY']}
         r = requests.get('https://maps.googleapis.com/maps/api/geocode/json', params=params)
         if r.status_code == 200:
-            location = r.json()['results'][0]['geometry']['location']
-            return location
-        return None
+            results = r.json().get('results', [])
+            if results:
+                return results[0].get('geometry', {}).get('location', {})
+        return {}
     
 
 class Base(DataMixin):
