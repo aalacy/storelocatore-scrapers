@@ -11,6 +11,7 @@ const mapKeys = require('lodash.mapkeys');
 
 	let data = await fs.readFile('choicehotels.csv');
 	let parsed = await csv(data);
+	console.log(`${parsed.count} rows parsed`);
 	let header = parsed[0];
 	let translation = {...header}
 	let rows = parsed.slice(1);
