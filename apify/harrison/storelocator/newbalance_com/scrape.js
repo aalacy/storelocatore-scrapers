@@ -44,6 +44,7 @@ async function scrape() {
         }
         stores.push(s);
     }
+    console.log(stores);
     return stores;
 
 }
