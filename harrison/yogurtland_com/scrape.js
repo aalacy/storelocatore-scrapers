@@ -39,7 +39,7 @@ async function get_location_data(url) {
         s.hours_of_operation = hours;
         return s
     } catch(err) {
-        //catches the out of country stores that have different layouts
+        //catches the 3 out of country stores that have different layouts
     }
 }
 

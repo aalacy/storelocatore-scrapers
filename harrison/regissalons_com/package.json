@@ -1,7 +1,7 @@
 {
-  "name": "acfp_com",
+  "name": "regissalons_com",
   "version": "1.0.0",
-  "description": "ACFP Store Locations Scraper",
+  "description": "Regis Salons Store Locations Scraper",
   "main": "scrape.js",
   "scripts": {
     "start": "node scrape.js"
