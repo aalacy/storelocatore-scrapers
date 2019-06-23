@@ -1,7 +1,7 @@
 {
-  "name": "thejerkeyoutlet_com",
+  "name": "yogurtland_com",
   "version": "1.0.0",
-  "description": "The Jerkey Outlet Store Locations Scraper",
+  "description": "Yogurt Land Store Locations Scraper",
   "main": "scrape.js",
   "scripts": {
     "start": "node scrape.js"
@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "apify": "^0.14.15",
-    "puppeteer": "^1.18.0"
+    "axios": "^0.19.0",
+    "cheerio": "^1.0.0-rc.3"
   }
 }
