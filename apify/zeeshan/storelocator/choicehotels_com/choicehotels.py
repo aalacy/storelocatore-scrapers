@@ -78,7 +78,7 @@ class ChoiceHotels(base.Base):
         
         for state in self.us_states:
             payload['placeName'] = state
-            request = requests.post(self.url, data=payload, headers=self.headers, proxies=proxySettings)
+            request = requests.post(self.url, data=payload, headers=self.headers, proxies=self.proxySettings)
             print ("request status code: {}".format(request.status_code))
             if request.status_code == 200:
                 print("got a 200")
