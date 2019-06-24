@@ -6,10 +6,12 @@ const csv = util.promisify(require('csv-parse'));
 const mapKeys = require('lodash.mapkeys');
 
 (async () => {
+	console.log("starting scrape.....");
 	const exec = util.promisify(child_process.exec);
-	await exec('python bancorpsouth.py');
-
-	let data = await fs.readFile('bancorpsouth.csv');
+	const { stdout, stderr } = await exec('python choicehotels.py');
+	console.log('stdout:', stdout);
+  console.log('stderr:', stderr);
+	let data = await fs.readFile('choicehotels.csv');
 	let parsed = await csv(data);
 	let header = parsed[0];
 	let translation = {...header}

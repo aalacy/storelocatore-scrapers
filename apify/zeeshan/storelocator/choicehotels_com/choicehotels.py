@@ -74,6 +74,7 @@ class ChoiceHotels(base.Base):
             payload['placeName'] = state
             request = requests.post(self.url, data=payload, headers=self.headers)
             if request.status_code == 200:
+                print("got a 200")
                 obj = request.json()
                 for hotel in obj.get('hotels', []):
                     row = self._map_data(hotel)
