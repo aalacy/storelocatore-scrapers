@@ -8,7 +8,10 @@ const mapKeys = require('lodash.mapkeys');
 (async () => {
 	console.log("starting scrape.....");
 	const exec = util.promisify(child_process.exec);
-	await exec('python choicehotels.py');
+	const pythonScraper = await exec('python choicehotels.py');
+	pythonScraper.stdout.on('data', function(data) {
+		console.log(data);
+	});
 
 	let data = await fs.readFile('choicehotels.csv');
 	let parsed = await csv(data);

@@ -81,5 +81,6 @@ class ChoiceHotels(base.Base):
             
 
 if __name__ == '__main__':
+    print("running choicehotels.py")
     ch = ChoiceHotels()
     ch.run()
