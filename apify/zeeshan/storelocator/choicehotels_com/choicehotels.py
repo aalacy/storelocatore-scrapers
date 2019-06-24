@@ -71,8 +71,10 @@ class ChoiceHotels(base.Base):
         }
         
         for state in self.us_states:
+            print ("state = {}".format(state))
             payload['placeName'] = state
             request = requests.post(self.url, data=payload, headers=self.headers)
+            print ("request status code: {}".format(request.status_code))
             if request.status_code == 200:
                 print("got a 200")
                 obj = request.json()
