@@ -8,9 +8,9 @@ const mapKeys = require('lodash.mapkeys');
 (async () => {
 	console.log("starting scrape.....");
 	const exec = util.promisify(child_process.exec);
-	const pythonScraper = await exec('python choicehotels.py');
-	pythonScraper.stdout.pipe(process.stdout);
-
+	const { stdout, stderr } = await exec('python choicehotels.py');
+	console.log('stdout:', stdout);
+  console.log('stderr:', stderr);
 	let data = await fs.readFile('choicehotels.csv');
 	let parsed = await csv(data);
 	console.log(`${parsed.count} rows parsed`);
