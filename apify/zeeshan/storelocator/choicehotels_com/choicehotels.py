@@ -1,10 +1,16 @@
 import base 
 import datetime
 import requests
+import os
 
 from pdb import set_trace as bp
 
 class ChoiceHotels(base.Base):
+
+    proxyPassword = os.environ["PROXY_PASSWORD"]
+    proxySettings = {
+        "http": "http://auto:{}@proxy.apify.com:8000/".format(proxyPassword)
+    }
 
     csv_filename = 'choicehotels.csv'
     domain_name = 'choicehotels.com'
@@ -71,9 +77,8 @@ class ChoiceHotels(base.Base):
         }
         
         for state in self.us_states:
-            print ("state = {}".format(state))
             payload['placeName'] = state
-            request = requests.post(self.url, data=payload, headers=self.headers)
+            request = requests.post(self.url, data=payload, headers=self.headers, proxies=proxySettings)
             print ("request status code: {}".format(request.status_code))
             if request.status_code == 200:
                 print("got a 200")
