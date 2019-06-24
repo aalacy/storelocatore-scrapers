@@ -30,7 +30,7 @@ class ChoiceHotels(base.Base):
         }
 
     def crawl(self):
-    
+        print ("in crawl")
         self.headers.update({
             'authority': 'www.choicehotels.com'
             ,'method': 'POST'
