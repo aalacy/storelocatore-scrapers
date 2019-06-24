@@ -10,7 +10,6 @@ const mapKeys = require('lodash.mapkeys');
 	await exec('python shopnsavefood.py');
 	let data = await fs.readFile('shopnsavefood.csv');
 	let parsed = await csv(data);
-
 	let header = parsed[0];
 	let translation = {...header}
 	let rows = parsed.slice(1);
