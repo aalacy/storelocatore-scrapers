@@ -3,6 +3,11 @@ import datetime
 import requests
 import os
 
+import json
+import six
+from six.moves.urllib import request, parse
+import ssl
+
 from pdb import set_trace as bp
 
 class ChoiceHotels(base.Base):
@@ -36,6 +41,45 @@ class ChoiceHotels(base.Base):
             ,'longitude': row.get('lon')
             ,'hours_of_operation': None
         }
+
+    def do_request(self):
+        today = datetime.datetime.now().strftime('%Y-%m-%d')
+        tomorrow = (datetime.datetime.now() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+        payload = {
+            'adults': 1
+            ,'checkInDate': today
+            ,'checkOutDate': tomorrow
+            ,'hotelSortOrder': 'RELEVANCE'
+            ,'include': 'amenity_groups, amenity_totals, rating, relative_media'
+            ,'lat': ''
+            ,'lon': ''
+            ,'minors': 0
+            ,'optimizeResponse': 'image_url'
+            ,'placeId': ''
+            ,'placeName': 'new york'
+            ,'placeType': ''
+            ,'platformType': 'MOBILE'
+            ,'preferredLocaleCode': 'en-us'
+            ,'ratePlanCode': 'RACK'
+            ,'ratePlans': 'RACK,PREPD,PROMO,FENCD'
+            ,'rateType': 'LOW_ALL'
+            ,'searchRadius': 100
+            ,'siteOpRelevanceSortMethod': 'ALGORITHM_B'
+        }
+        
+        proxy_handler = request.ProxyHandler({
+            'http': self.proxy_url,
+            'https': self.proxy_url,
+        })
+
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        httpHandler = request.HTTPSHandler(context=ctx)
+
+        opener = request.build_opener(httpHandler,proxy_handler)
+        opener.addheaders = self.headers.items()
+        return opener.open(self.url, data=parse.urlencode(payload).encode()).read()
 
     def crawl(self):
         print ("in crawl")
@@ -80,15 +124,15 @@ class ChoiceHotels(base.Base):
         
         for state in self.us_states:
             payload['placeName'] = state
-            print(self.proxy_settings)
-            request = requests.post(self.url, data=payload, headers=self.headers, proxies=self.proxy_settings)
-            print ("request status code: {}".format(request.status_code))
-            if request.status_code == 200:
-                print("got a 200")
-                obj = request.json()
-                for hotel in obj.get('hotels', []):
-                    row = self._map_data(hotel)
-                    yield row
+            print(self.do_request())
+            #request = requests.post(self.url, data=payload, headers=self.headers, proxies=self.proxy_settings)
+            #print ("request status code: {}".format(request.status_code))
+            #if request.status_code == 200:
+            #    print("got a 200")
+            #    obj = request.json()
+            #    for hotel in obj.get('hotels', []):
+            #        row = self._map_data(hotel)
+            #        yield row
             
 
 if __name__ == '__main__':
