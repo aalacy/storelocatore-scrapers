@@ -29,7 +29,7 @@ const requestPromise = require('request-promise');
 				store_number: "<MISSING>",
 				phone: "<MISSING>",
 				location_type: "<MISSING>",
-				latitude: -122.417774,
+				latitude: 37.773500,
 				longitude: -122.417774,
 				hours_of_operation: "<MISSING>",
 			};
