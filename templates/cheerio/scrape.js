@@ -28,7 +28,7 @@ const Apify = require('apify');
 				location_type: '<MISSING>',
         latitude: 37.773500,,
         longitude: -122.417774,
-				hours_of_operation: '<MISSING>',
+				hours_of_operation: '<MISSING>'
 			};
 
 			console.log("pushing data");
