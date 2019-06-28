@@ -26,7 +26,7 @@ const Apify = require('apify');
 				store_number: '<MISSING>',
 				phone: '<MISSING>',
 				location_type: '<MISSING>',
-        latitude: 37.773500,,
+        latitude: 37.773500,
         longitude: -122.417774,
 				hours_of_operation: '<MISSING>'
 			};
