@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN pip install -r requirements.txt
 
-ENV APIFY_LOCAL_STORAGE_DIR="apify_storage"
+#ENV APIFY_LOCAL_STORAGE_DIR="apify_storage"
 
 # Specify how to run the source code
 CMD npm start
