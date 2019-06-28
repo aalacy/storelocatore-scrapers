@@ -12,9 +12,6 @@ const Apify = require('apify');
 
 			// Begin scraper
 
-			console.log("running scraper");
-			console.log($('title').text());
-
 			const poi = {
         locator_domain: 'safegraph.com',
         location_name: $('title').text(),
@@ -30,8 +27,6 @@ const Apify = require('apify');
         longitude: -122.417774,
 				hours_of_operation: '<MISSING>'
 			};
-
-			console.log("pushing data");
 
 			await Apify.pushData([poi]);
 
