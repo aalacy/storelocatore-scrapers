@@ -12,6 +12,9 @@ const Apify = require('apify');
 
 			// Begin scraper
 
+			console.log("running scraper");
+			console.log($('title').text());
+
 			const poi = {
         locator_domain: 'safegraph.com',
         location_name: $('title').text(),
@@ -20,14 +23,16 @@ const Apify = require('apify');
         state: 'CA',
         zip: '94107',
         country_code: 'US',
-        store_number: null,
-        phone: null,
-        location_type: null,
-        naics_code: '518210',
-        latitude: -122.417774,
+				store_number: '<MISSING>',
+				phone: '<MISSING>',
+				location_type: '<MISSING>',
+        latitude: 37.773500,,
         longitude: -122.417774,
-        hours_of_operation: null,
-      };
+				hours_of_operation: '<MISSING>',
+			};
+
+			console.log("pushing data");
+
 			await Apify.pushData([poi]);
 
 			// End scraper
