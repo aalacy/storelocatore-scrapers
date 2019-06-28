@@ -29,7 +29,6 @@ const requestPromise = require('request-promise');
 				store_number: "<MISSING>",
 				phone: "<MISSING>",
 				location_type: "<MISSING>",
-				naics_code: '518210',
 				latitude: -122.417774,
 				longitude: -122.417774,
 				hours_of_operation: "<MISSING>",
