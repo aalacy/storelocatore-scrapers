@@ -15,6 +15,5 @@ USER root
 
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max_old_space_size=30000"
-ENV APIFY_LOCAL_STORAGE_DIR="apify_storage"
 
 CMD npm start
