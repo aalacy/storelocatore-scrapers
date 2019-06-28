@@ -1,6 +1,6 @@
 const Apify = require('apify');
 
-Apify.main(async () => {
+(async () => {
   const requestList = new Apify.RequestList({
     sources: [{ url: 'http://safegraph.com' }],
   });
@@ -9,10 +9,12 @@ Apify.main(async () => {
   const crawler = new Apify.CheerioCrawler({
     requestList,
     handlePageFunction: async ({ request, response, html, $ }) => {
-      // Replace this with your actual scrape
-      const poi = {
+
+			// Begin scraper
+
+			const poi = {
         locator_domain: 'safegraph.com',
-        location_name: 'safegraph',
+        location_name: $('title').text(),
         street_address: '1543 mission st',
         city: 'san francisco',
         state: 'CA',
@@ -26,9 +28,12 @@ Apify.main(async () => {
         longitude: -122.417774,
         hours_of_operation: null,
       };
-      Apify.pushData([poi]);
+			await Apify.pushData([poi]);
+
+			// End scraper
+
     },
   });
 
   await crawler.run();
-});
+})();
