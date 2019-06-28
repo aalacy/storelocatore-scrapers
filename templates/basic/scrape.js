@@ -1,34 +1,45 @@
 const Apify = require('apify');
+const requestPromise = require('request-promise');
 
-Apify.main(async () => {
-  const requestList = new Apify.RequestList({
-    sources: [{ url: 'http://safegraph.com' }],
-  });
-  await requestList.initialize();
+(async() => {
+	const requestList = new Apify.RequestList({
+		sources: [{ url: 'http://safegraph.com' }],
+	});
+	await requestList.initialize();
 
-  const crawler = new Apify.BasicCrawler({
-    requestList,
-    handleRequestFunction: async ({ request }) => {
-      // Replace this with your actual scrape
-      const poi = {
-        locator_domain: 'safegraph.com',
-        location_name: 'safegraph',
-        street_address: '1543 mission st',
-        city: 'san francisco',
-        state: 'CA',
-        zip: '94107',
-        country_code: 'US',
-        store_number: null,
-        phone: null,
-        location_type: null,
-        naics_code: '518210',
-        latitude: -122.417774,
-        longitude: -122.417774,
-        hours_of_operation: null,
-      };
-      await Apify.pushData([poi]);
-    },
-  });
+	const crawler = new Apify.BasicCrawler({
+		requestList,
+		handleRequestFunction: async ({ request }) => {
 
-  await crawler.run();
-});
+			// Begin scraper
+
+			const html = await requestPromise(request.url);
+			const urlStart = html.indexOf("data-wf-domain=") + 16
+			const fromUrlStart = html.substring(urlStart);
+			const safegraphUrl = fromUrlStart.substring(0, fromUrlStart.indexOf("\"")); 
+
+			const poi = {
+				locator_domain: safegraphUrl,
+				location_name: 'safegraph',
+				street_address: '1543 mission st',
+				city: 'san francisco',
+				state: 'CA',
+				zip: '94107',
+				country_code: 'US',
+				store_number: "<MISSING>",
+				phone: "<MISSING>",
+				location_type: "<MISSING>",
+				naics_code: '518210',
+				latitude: -122.417774,
+				longitude: -122.417774,
+				hours_of_operation: "<MISSING>",
+			};
+			await Apify.pushData([poi]);
+
+			// End scraper
+
+		},
+	});
+
+	await crawler.run();
+})();

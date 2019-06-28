@@ -9,7 +9,7 @@
 #  apify/actor-node-chrome-xvfb (Node.js 10 + Chrome + Xvfb on Debian)
 # For more information, see https://apify.com/docs/actor#base-images
 # Note that you can use any other image from Docker Hub.
-FROM apify/actor-node-chrome
+FROM node:10-alpine
 
 # Copy all files and directories with the source code
 COPY . ./
@@ -24,6 +24,12 @@ RUN npm --quiet set progress=false \
  && node --version \
  && echo "NPM version:" \
  && npm --version
+
+USER root
+
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max_old_space_size=30000"
+ENV APIFY_LOCAL_STORAGE_DIR="apify_storage"
 
 # Specify how to run the source code
 CMD npm start
