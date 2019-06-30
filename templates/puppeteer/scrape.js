@@ -16,18 +16,18 @@ Apify.main(async () => {
         state: 'CA',
         zip: '94107',
         country_code: 'US',
-        store_number: null,
-        phone: null,
-        location_type: null,
-        naics_code: '518210',
-        latitude: -122.417774,
+				store_number: '<MISSING>',
+				phone: '<MISSING>',
+				location_type: '<MISSING>',
+        latitude: 37.773500,
         longitude: -122.417774,
-        hours_of_operation: null,
+				hours_of_operation: '<MISSING>',
       };
-      Apify.pushData([poi]);
+      await Apify.pushData([poi]);
     },
     maxRequestsPerCrawl: 100,
-    maxConcurrency: 10,
+		maxConcurrency: 10,
+		launchPuppeteerOptions: {headless: true},
   });
 
   await crawler.run();
