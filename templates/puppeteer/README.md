@@ -1,4 +1,4 @@
-# How to write a Node.js scraper for SafeGraph using the Apify CheerioCrawler
+# How to write a Node.js scraper for SafeGraph using the Apify PuppeteerCrawler
 
 You can write your scraper in scrape.js between `// Begin scraper` and `// End scraper` comments. 
 
