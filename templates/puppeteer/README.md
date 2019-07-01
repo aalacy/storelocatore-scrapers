@@ -1,8 +1,12 @@
-# How to write a JavaScript scraper for SafeGraph using Apify and Puppeteer
+# How to write a Node.js scraper for SafeGraph using the Apify CheerioCrawler
 
-Please write your code inside scrape.js at the `// Replace this with your actual scrape` comment. Any URL passed to `requestQueue.addRequest` will be processed by your `handlePageFunction`.
+You can write your scraper in scrape.js between `// Begin scraper` and `// End scraper` comments. 
 
-Documentation on the PuppeteerCrawler: https://sdk.apify.com/docs/api/puppeteercrawler
+Your logic will run agianst every URL in the RequestQueue. See https://sdk.apify.com/docs/api/requestqueue
 
-Executing `apify run` should create an apify_storage directory with json objects for all of the POI you scraped. If you don't have the apify CLI, running `npm install` should install it. Documentation for the CLI is here: https://github.com/apifytech/apify-cli
+Documentation on using the PuppeteerCrawler: https://sdk.apify.com/docs/examples/puppeteercrawler
 
+Remember to update `package.json` with all dependencies needed to run your scraper.
+Please make sure that:
+* Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh
+* The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py

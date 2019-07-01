@@ -6,11 +6,15 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
-    handlePageFunction: async ({ request, page }) => {
-      // Replace this with your actual scrape
+		handlePageFunction: async ({ request, page }) => {
+
+			// Being scraper
+
+			const heading = await page.evaluate(() => document.querySelector('h1.heading-primary').innerText);
+
       const poi = {
         locator_domain: 'safegraph.com',
-        location_name: 'safegraph',
+        location_name: heading,
         street_address: '1543 mission st',
         city: 'san francisco',
         state: 'CA',
@@ -23,7 +27,11 @@ Apify.main(async () => {
         longitude: -122.417774,
 				hours_of_operation: '<MISSING>',
       };
-      await Apify.pushData([poi]);
+			
+			await Apify.pushData([poi]);
+
+			// End scraper
+
     },
     maxRequestsPerCrawl: 100,
 		maxConcurrency: 10,
