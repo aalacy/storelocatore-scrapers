@@ -1,6 +1,6 @@
 # How to write a Node.js scraper for SafeGraph using Selenium
 
-You can write your scraper in scrape.js between `// Begin scraper` and `// End scraper` comments. 
+You can start writing your scraper in scrape.js between `// Begin scraper` and `// End scraper` comments. 
 
 Based on https://apify.com/apify/example-selenium?section=source-code
 
