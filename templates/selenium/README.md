@@ -1,10 +1,10 @@
-# How to write a JavaScript scraper for SafeGraph using Apify and Selenium
+# How to write a Node.js scraper for SafeGraph using Selenium
 
-Please write your code inside scrape.js at the `// Replace this with your actual scrape` comment. 
+You can write your scraper in scrape.js between `// Begin scraper` and `// End scraper` comments. 
 
-Note that to use Selenium locally, you'll need to have the ChromeDriver in your path: http://chromedriver.chromium.org/
+Based on https://apify.com/apify/example-selenium?section=source-code
 
-Documentation on `launchWebDriver`: https://sdk.apify.com/docs/api/apify#module_Apify.launchWebDriver
-
-Executing `apify run` should create an apify_storage directory with json objects for all of the POI you scraped. If you don't have the apify CLI, running `npm install` should install it. Documentation for the CLI is here: https://github.com/apifytech/apify-cli
-
+Remember to update `package.json` with all dependencies needed to run your scraper.
+Please make sure that:
+* Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh
+* The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
