@@ -1,6 +1,6 @@
 # How to write a Node.js scraper for SafeGraph using the Apify BasicCrawler
 
-You can write your scraper in scrape.js between `// Begin scraper` and `// End scraper` comments. 
+You can start writing your scraper in scrape.js between `// Begin scraper` and `// End scraper` comments. 
 
 Your logic will run agianst every URL in the RequestList. Note that you can use a RequestQueue instead of a RequestList if this scrape requires URLs to be generated dynamically (https://sdk.apify.com/docs/api/requestqueue).
 
