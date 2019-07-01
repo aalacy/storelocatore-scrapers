@@ -3,13 +3,15 @@ const { Capabilities, Builder, By, until, logging } = require('selenium-webdrive
 const chrome = require('selenium-webdriver/chrome');
 
 Apify.main(async () => {
-  const webDriver = await Apify.launchWebDriver();
+  const webDriver = await Apify.launchWebDriver({headless: true, 'args': ['--headless', '--no-sandbox', '--disable-dev-shm-usage']});
 
   await webDriver.get('https://safegraph.com');
 
   const pois = await webDriver.executeScript(() => {
-    // Replace this with your actual scraper
-    const poi = {
+
+		// Begin scraper
+
+		const poi = {
       locator_domain: 'safegraph.com',
       location_name: 'safegraph',
       street_address: '1543 mission st',
@@ -17,16 +19,20 @@ Apify.main(async () => {
       state: 'CA',
       zip: '94107',
       country_code: 'US',
-      store_number: null,
-      phone: null,
-      location_type: null,
+			store_number: '<MISSING>',
+			phone: '<MISSING>',
+			location_type: '<MISSING>',
       naics_code: '518210',
       latitude: -122.417774,
       longitude: -122.417774,
-      hours_of_operation: null,
+			hours_of_operation: '<MISSING>',
     };
-    return [poi];
-  });
+		return [poi];
+		
+		// End scraper
+	
+	});
 
-  await Apify.pushData(pois);
+	await Apify.pushData(pois);
+
 });
