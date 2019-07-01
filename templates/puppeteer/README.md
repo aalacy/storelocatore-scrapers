@@ -1,6 +1,6 @@
 # How to write a Node.js scraper for SafeGraph using the Apify PuppeteerCrawler
 
-You can write your scraper in scrape.js between `// Begin scraper` and `// End scraper` comments. 
+You can start writing your scraper in scrape.js between `// Begin scraper` and `// End scraper` comments. 
 
 Your logic will run agianst every URL in the RequestQueue. See https://sdk.apify.com/docs/api/requestqueue
 
