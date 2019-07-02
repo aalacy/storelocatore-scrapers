@@ -37,13 +37,12 @@ class Ryans(base.Base):
             ,'state': state
             ,'zip': zip
             ,'country_code': self.default_country
-            ,'store_number': None
+            ,'store_number': '<MISSING>'
             ,'phone': phone
-            ,'location_type': None
-            ,'naics_code': None 
+            ,'location_type': '<MISSING>'
             ,'latitude': latitude
             ,'longitude': longitude
-            ,'hours_of_operation': None
+            ,'hours_of_operation': '<MISSING>'
         }
 
     def crawl(self):
