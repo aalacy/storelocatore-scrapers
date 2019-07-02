@@ -10,7 +10,7 @@ xpath = base.xpath
 
 class Ryans(base.Base):
 
-    csv_filename = 'ryans.csv'
+    csv_filename = 'data.csv'
     domain_name = 'ryans.com'
     url = 'http://ryans.com/index.php'
 
