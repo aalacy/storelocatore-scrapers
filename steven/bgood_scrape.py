@@ -5,8 +5,8 @@ import re
 
 # Location URL
 location_url = 'https://www.bgood.com/locations/'
-# output path of CSV
-output_path = 'C:/Users\spiscatelli\PycharmProjects\Code\Free Lance\SafeWork Scraping'
+# # output path of CSV
+# output_path = 'C:/Users\spiscatelli\PycharmProjects\Code\Free Lance\SafeWork Scraping'
 # file name of CSV output
 file_name = 'bgood_extract.csv'
 
@@ -177,5 +177,5 @@ soup = pull_content(location_url)
 # Extract contents and turn to df for export
 final_df = pull_data(soup)
 
-# write to csv
-final_df.to_csv(output_path + '/' + file_name,index=False)
+# # write to csv
+# final_df.to_csv(output_path + '/' + file_name,index=False)
