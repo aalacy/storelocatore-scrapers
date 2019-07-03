@@ -1,6 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
