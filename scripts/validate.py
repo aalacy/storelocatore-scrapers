@@ -8,7 +8,6 @@ import zipcodes
 import re
 import csv
 
-
 #### Utilities
 
 def touch(path):
