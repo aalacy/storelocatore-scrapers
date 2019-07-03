@@ -5,8 +5,8 @@ import re
 
 # Location URL
 location_url = 'https://www.aubonpain.com/stores/all-stores'
-# output path of CSV
-output_path = 'C:/Users\spiscatelli\PycharmProjects\Code\Free Lance\SafeWork Scraping'
+# # output path of CSV
+# output_path = 'C:/Users\spiscatelli\PycharmProjects\Code\Free Lance\SafeWork Scraping'
 # file name of CSV output
 file_name = 'aubonpain_extract.csv'
 
@@ -103,8 +103,8 @@ soup = pull_content(location_url)
 # Pull all stores and info
 final_df = pull_info(soup)
 
-# write to csv
-final_df.to_csv(output_path + '/' + file_name,index=False)
+# # write to csv
+# final_df.to_csv(output_path + '/' + file_name,index=False)
 
 
 
