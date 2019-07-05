@@ -6,7 +6,7 @@ import re
 # Location URL
 location_url = 'https://www.bgood.com/locations/'
 # output path of CSV
-output_path = 'C:/Users\spiscatelli\PycharmProjects\Code\Free Lance\SafeWork Scraping'
+output_path = os.path.dirname(os.path.realpath(__file__)
 # file name of CSV output
 file_name = 'bgood_extract.csv'
 
