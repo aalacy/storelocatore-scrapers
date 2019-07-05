@@ -1,12 +1,13 @@
-import pandas as pd
+#import pandas as pd
 from bs4 import BeautifulSoup as bs
 import requests as r
 import re
+import os
 
 # Location URL
 location_url = 'https://bigskyfitness.com/'
 # output path of CSV
-output_path = 'C:/Users\spiscatelli\PycharmProjects\Code\Free Lance\SafeWork Scraping'
+output_path = os.path.dirname(os.path.realpath(__file__)
 # file name of CSV output
 file_name = 'bigsky_extract.csv'
 
