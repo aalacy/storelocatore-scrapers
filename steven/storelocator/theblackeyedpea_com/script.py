@@ -21,7 +21,6 @@ def pull_info(content):
 
     store_data = []
     for store in location_data:
-        split_data = store.p.text.split('\n')
         street_add = re.findall('<p>(.*)<br/>',str(store))[0]
         city = re.findall('<br/>(.*), ',str(store))[0]
         state = re.findall(', ([A-Za-z]{2}) ',str(store))[0]
