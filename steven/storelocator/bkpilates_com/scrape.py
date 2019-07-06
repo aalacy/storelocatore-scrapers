@@ -8,7 +8,7 @@ location_url = 'http://www.bkpilates.com/'
 # output path of CSV
 output_path = os.path.dirname(os.path.realpath(__file__)
 # file name of CSV output
-file_name = 'bkpilates_extract.csv'
+file_name = 'data.csv'
 
 # Function pull webpage content
 def pull_content(url):
