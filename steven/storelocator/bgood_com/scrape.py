@@ -8,7 +8,7 @@ location_url = 'https://www.bgood.com/locations/'
 # output path of CSV
 output_path = os.path.dirname(os.path.realpath(__file__)
 # file name of CSV output
-file_name = 'bgood_extract.csv'
+file_name = 'data.csv'
 
 # Function pull webpage content in soup object
 def pull_content(url):
