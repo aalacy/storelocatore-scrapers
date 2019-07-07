@@ -1,4 +1,4 @@
-import pandas as pd
+)import pandas as pd
 from bs4 import BeautifulSoup as bs
 import requests as r
 import re
@@ -6,7 +6,7 @@ import re
 # Location URL
 location_url = 'https://www.blackeyedpeacolorado.com/index.php/locations'
 # output path of CSV
-output_path = os.path.dirname(os.path.realpath(__file__)
+output_path = os.path.dirname(os.path.realpath(__file__))
 # file name of CSV output
 file_name = 'data.csv'
 
