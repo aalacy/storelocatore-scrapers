@@ -2,6 +2,7 @@ import pandas as pd
 from bs4 import BeautifulSoup as bs
 import requests as r
 import re
+import os
 
 # Location URL
 location_url = 'https://www.aubonpain.com/stores/all-stores'
