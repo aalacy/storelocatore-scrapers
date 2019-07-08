@@ -4,8 +4,12 @@ const {
   formatLocationObject,
   formatObject,
   formatPhoneNumber,
-  formatData,
+  formatCountry,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -37,31 +41,44 @@ Apify.main(async () => {
         const locationObject = formatLocationObject(locationObjectRaw);
         const additionalInfoArray = allScripts.filter(e => e.includes('propertySearchCountry'));
         const additionalInfoString = additionalInfoArray[0];
-        const additionalInfoRaw = additionalInfoString.substring(additionalInfoString.indexOf('{'), additionalInfoString.indexOf(']}') + 2);
+        const additionalInfoRaw = additionalInfoString.substring(additionalInfoString.indexOf('{'), additionalInfoString.lastIndexOf(']}') + 2);
         const additionalInfoObject = formatObject(additionalInfoRaw);
 
-        const poi = {
-          locator_domain: 'hilton.com',
-          location_name: locationObject.name,
-          street_address: locationObject.address.streetAddress,
-          city: locationObject.address.addressLocality,
-          state: locationObject.address.addressRegion,
-          zip: locationObject.address.postalCode,
-          country_code: additionalInfoObject.page.attributes.propertySearchCountry,
-          store_number: undefined,
-          phone: formatPhoneNumber(locationObject.telephone),
-          location_type: additionalInfoObject.page.category.brand,
-          naics_code: undefined,
-          latitude: locationObject.geo.latitude,
-          longitude: locationObject.geo.longitude,
-          hours_of_operation: undefined,
-        };
-        await Apify.pushData(formatData(poi));
-        await page.waitFor(5000);
+        /* eslint-disable camelcase */
+        const country_code = formatCountry(additionalInfoObject.page.attributes.propertySearchCountry);
+        // Only get US and Canada hotels
+        if (country_code === 'US' || country_code === 'CA') {
+          const poiData = {
+            locator_domain: 'hilton.com',
+            location_name: locationObject.name,
+            street_address: locationObject.address.streetAddress,
+            city: locationObject.address.addressLocality,
+            state: locationObject.address.addressRegion,
+            zip: locationObject.address.postalCode,
+            country_code,
+            store_number: undefined,
+            phone: formatPhoneNumber(locationObject.telephone),
+            location_type: additionalInfoObject.page.category.brand,
+            latitude: locationObject.geo.latitude,
+            longitude: locationObject.geo.longitude,
+            hours_of_operation: undefined,
+          };
+          const poi = new Poi(poiData);
+          await Apify.pushData(poi);
+          await page.waitFor(5000);
+        } else {
+          // If the request is not CA or US check if there are still requests and if so, skip
+          if (!requestQueue.isEmpty) {
+            await requestQueue.fetchNextRequest();
+          }
+        }
       }
     },
     maxRequestsPerCrawl: 1000,
-    maxConcurrency: 10,
+    maxConcurrency: 3,
+    launchPuppeteerOptions: {
+      headless: true,
+    },
     gotoFunction: async ({
       request, page,
     }) => {

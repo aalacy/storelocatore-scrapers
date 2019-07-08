@@ -5,8 +5,11 @@ const {
   formatAddress,
   formatHours,
   parseGoogleMapsUrl,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestList = new Apify.RequestList({
@@ -16,7 +19,7 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestList,
-    handlePageFunction: async ({ request, page }) => {
+    handlePageFunction: async ({ page }) => {
       const allLocationDetails = await page.$$('.location-details');
       /* eslint-disable no-restricted-syntax */
       for await (const locationDetails of allLocationDetails) {
@@ -26,11 +29,11 @@ Apify.main(async () => {
         const googleMapsUrl = await locationDetails.$eval('a', a => a.getAttribute('href'));
         const addressBlock = formatAddress(addressRaw);
         const geo = parseGoogleMapsUrl(googleMapsUrl);
-        const poi = {
+        const poiData = {
           locator_domain: 'jalexanders.com',
           location_name: undefined,
           ...addressBlock,
-          country_code: 'US',
+          country_code: undefined,
           store_number: undefined,
           phone: formatPhoneNumber(phoneRaw),
           location_type: undefined,
@@ -38,16 +41,20 @@ Apify.main(async () => {
           ...geo,
           hours_of_operation: formatHours(hoursRaw),
         };
-        await Apify.pushData(formatData(poi));
+        const poi = new Poi(poiData);
+        await Apify.pushData(poi);
       }
     },
     maxRequestsPerCrawl: 1,
-    maxConcurrency: 4,
+    maxConcurrency: 1,
+    launchPuppeteerOptions: {
+      headless: true,
+    },
     gotoFunction: async ({
       request, page,
     }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'load',
-    }),
+        timeout: 0, waitUntil: 'load',
+      }),
   });
 
   await crawler.run();

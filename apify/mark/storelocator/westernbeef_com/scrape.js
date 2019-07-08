@@ -13,8 +13,11 @@ const {
   formatPhoneNumber,
   parseGoogleMapsUrl,
   formatHours,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -84,15 +87,16 @@ Apify.main(async () => {
           await googleIframe.waitForSelector(geoSelector);
           const geoTags = await googleIframe.$eval(geoSelector, a => a.getAttribute('href'));
           const latLong = parseGoogleMapsUrl(geoTags);
-          const poi = {
+          const poiData = {
             locator_domain: 'westernbeef.com',
             ...addressObject,
             phone: formatPhoneNumber(phoneRaw),
-            country_code: 'US',
+            country_code: undefined,
             ...latLong,
             hours_of_operation: formatHours(hoursRaw),
           };
-          await Apify.pushData(formatData(poi));
+          const poi = new Poi(poiData);
+          await Apify.pushData(poi);
         } else {
           await page.waitFor(2000);
           if (!requestQueue.isEmpty) {
@@ -103,7 +107,7 @@ Apify.main(async () => {
     },
     maxRequestsPerCrawl: 50,
     maxConcurrency: 1,
-    launchPuppeteerOptions: { headless: false, args: ['--disable-features=site-per-process'] },
+    launchPuppeteerOptions: { headless: true, args: ['--disable-features=site-per-process'] },
     gotoFunction: async ({
       request, page,
     }) => page.goto(request.url, {

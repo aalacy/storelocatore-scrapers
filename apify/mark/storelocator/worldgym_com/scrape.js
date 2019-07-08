@@ -5,8 +5,11 @@ const {
   formatPhoneNumber,
   formatAddress,
   formatHours,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -45,32 +48,33 @@ Apify.main(async () => {
         const hoursRaw = hoursArray.join(', ');
 
         const address = formatAddress(locationObject.Line1, locationObject.Line2);
-        const poi = {
+        const poiData = {
           locator_domain: 'worldgym_com',
           location_name: locationObject.LocationName,
           street_address: address,
           city: locationObject.City,
           state: locationObject.State,
           zip: locationObject.Postal,
-          country_code: 'US',
+          country_code: undefined,
           store_number: locationObject.LocationNumber,
           phone: formatPhoneNumber(locationObject.Phone),
           location_type: undefined,
-          naics_code: undefined,
           latitude: locationObject.Latitude,
           longitude: locationObject.Longitude,
           hours_of_operation: formatHours(hoursRaw),
         };
-        await Apify.pushData(formatData(poi));
+        const poi = new Poi(poiData);
+        await Apify.pushData(poi);
       }
     },
     maxRequestsPerCrawl: 3000,
-    maxConcurrency: 1,
+    maxConcurrency: 4,
+    launchPuppeteerOptions: { headless: true },
     gotoFunction: async ({
       request, page,
     }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'load',
-    }),
+        timeout: 0, waitUntil: 'load',
+      }),
   });
 
   await crawler.run();

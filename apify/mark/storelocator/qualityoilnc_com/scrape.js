@@ -28,11 +28,14 @@ Apify.main(async () => {
     },
     maxRequestsPerCrawl: 1,
     maxConcurrency: 1,
+    launchPuppeteerOptions: {
+      headless: true,
+    },
     gotoFunction: async ({
       request, page,
     }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'load',
-    }),
+        timeout: 0, waitUntil: 'load',
+      }),
   });
 
   await crawler.run();

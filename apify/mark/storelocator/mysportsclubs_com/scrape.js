@@ -9,8 +9,11 @@ const {
   formatAddress,
   formatHours,
   formatPhoneNumber,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -46,29 +49,32 @@ Apify.main(async () => {
             /* eslint-disable camelcase */
             const street_address = formatAddress(locationObject.address1, locationObject.address2);
             const hours_of_operation = formatHours(hourData[i]);
-            const poi = {
+            const poiData = {
               locator_domain: 'mysportsclubs.com',
               location_name: locationObject.name,
               street_address,
               city: locationObject.city,
               state: locationObject.state,
               zip: locationObject.postcode,
-              country_code: 'US',
+              country_code: undefined,
               store_number: undefined,
               phone: formatPhoneNumber(locationObject.phone_number),
               location_type: undefined,
-              naics_code: undefined,
               latitude: locationObject.latitude,
               longitude: locationObject.longitude,
               hours_of_operation,
             };
-            await Apify.pushData(formatData(poi));
+            const poi = new Poi(poiData);
+            await Apify.pushData(poi);
           }
         }
       }
     },
     maxRequestsPerCrawl: 5,
     maxConcurrency: 1,
+    launchPuppeteerOptions: {
+      headless: true,
+    },
     gotoFunction: async ({
       request, page,
     }) => {

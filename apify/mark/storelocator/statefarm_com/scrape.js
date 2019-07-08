@@ -21,6 +21,10 @@ const {
   formatData,
 } = require('./tools');
 
+const {
+  Poi,
+} = require('./Poi');
+
 Apify.main(async () => {
   // Cheerio crawler is unable to load .xml sites, so we preload the site.
   const siteMapUrl = 'https://static1.st8fm.com/en_US/pod_content/www/sitemap-agents.xml';
@@ -52,23 +56,24 @@ Apify.main(async () => {
       const longitude = await page.$eval(longitudeSelector, e => e.getAttribute('value'));
       const hours = await page.$eval(hourSelector, e => e.innerText);
 
-      const poi = {
+      const poiData = {
         locator_domain: 'statefarm.com',
         location_name,
         street_address,
         city,
         state,
         zip,
-        country_code: 'US',
+        country_code: undefined,
         phone: formatPhoneNumber(phone),
         latitude,
         longitude,
         hours_of_operation: formatHours(hours),
       };
-      await Apify.pushData(formatData(poi));
+      const poi = new Poi(poiData);
+      await Apify.pushData(poi);
     },
     launchPuppeteerOptions: {
-      useChrome: true,
+      headless: true
     },
     maxRequestsPerCrawl: 20000,
     minimumConcurrency: 1,

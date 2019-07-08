@@ -2,8 +2,11 @@ const Apify = require('apify');
 
 const {
   formatLocationString,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const locationUrl = 'https://completenutrition.com/pages/retail-stores';
@@ -20,20 +23,24 @@ Apify.main(async () => {
       /* eslint-disable no-restricted-syntax */
       for await (const locationString of locationStrings) {
         const formattedString = formatLocationString(locationString);
-        const poi = {
+        const poiData = {
           locator_domain: 'completenutrition.com',
           ...formattedString,
         };
-        await Apify.pushData(formatData(poi));
+        const poi = new Poi(poiData);
+        await Apify.pushData(poi);
       }
     },
     maxRequestsPerCrawl: 1,
     maxConcurrency: 1,
+    launchPuppeteerOptions: {
+      headless: true,
+    },
     gotoFunction: async ({
       request, page,
     }) => page.goto(request.url, {
-        timeout: 0, waitUntil: 'load',
-      }),
+      timeout: 0, waitUntil: 'load',
+    }),
   });
 
   await crawler.run();
