@@ -74,8 +74,10 @@ Apify.main(async () => {
 		handlePageTimeoutSecs: 300,
     gotoFunction: async ({
       request, page,
-    }) => {
-      await Apify.utils.puppeteer.hideWebDriver(page);
+		}) => {
+			console.log("hiding");
+			await Apify.utils.puppeteer.hideWebDriver(page);
+			console.log("hidden");
       await page.goto(request.url, {
         timeout: 0, waitUntil: 'load',
       });
