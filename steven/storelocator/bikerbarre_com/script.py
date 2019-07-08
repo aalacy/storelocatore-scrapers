@@ -8,8 +8,7 @@ import os
 location_url = 'https://bikerbarre.com/'
 
 # output path of CSV
-output_path = r'C:\Users\spiscatelli\PycharmProjects\Code\Free Lance\SafeWork Scraping\final_output_folders\storelocator\bikerbarre_com'
-#output_path = os.path.dirname(os.path.realpath(__file__))
+output_path = os.path.dirname(os.path.realpath(__file__))
 
 # file name of CSV output
 file_name = 'data.csv'
