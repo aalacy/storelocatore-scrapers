@@ -6,7 +6,6 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
