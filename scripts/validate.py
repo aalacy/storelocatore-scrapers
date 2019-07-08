@@ -36,7 +36,7 @@ def is_valid_phone_number(phone, country):
 def is_blank(field):
     if field in ['<MISSING>', '<INACCESSIBLE>']:
         return True
-    return bool(field)
+    return not bool(field)
 
 #### Country detection
 
