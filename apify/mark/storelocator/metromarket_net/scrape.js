@@ -1,4 +1,5 @@
 const Apify = require('apify');
+
 const {
   locationObjectSelector,
 } = require('./selectors');
@@ -6,8 +7,12 @@ const {
 const {
   formatObject,
   formatPhoneNumber,
-  formatData,
+  formatHours,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -38,23 +43,23 @@ Apify.main(async () => {
           const locationObjectRaw = await page.$eval(locationObjectSelector, s => s.innerText);
           const locationObject = formatObject(locationObjectRaw);
 
-          const poi = {
+          const poiData = {
             locator_domain: 'metromarket.net',
             location_name: locationObject.name,
             street_address: locationObject.address.streetAddress,
             city: locationObject.address.addressLocality,
             state: locationObject.address.addressRegion,
             zip: locationObject.address.postalCode,
-            country_code: 'US',
+            country_code: undefined,
             store_number: undefined,
             phone: formatPhoneNumber(locationObject.telephone),
             location_type: locationObject['@type'],
-            naics_code: undefined,
             latitude: locationObject.geo.latitude,
             longitude: locationObject.geo.longitude,
-            hours_of_operation: locationObject.openingHours,
+            hours_of_operation: formatHours(locationObject.openingHours),
           };
-          await Apify.pushData(formatData(poi));
+          const poi = new Poi(poiData);
+          await Apify.pushData(poi);
           await page.waitFor(5000);
         } else {
           await requestQueue.fetchNextRequest();
@@ -63,6 +68,9 @@ Apify.main(async () => {
     },
     maxRequestsPerCrawl: 100,
     maxConcurrency: 5,
+    launchPuppeteerOptions: {
+      headless: true,
+    },
     gotoFunction: async ({
       request, page,
     }) => {

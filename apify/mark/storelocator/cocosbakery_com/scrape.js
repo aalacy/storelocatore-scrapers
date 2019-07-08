@@ -1,4 +1,5 @@
 const Apify = require('apify');
+
 const {
   locationNameSelector,
   addressSelector,
@@ -12,8 +13,9 @@ const {
   formatAddress,
   formatHours,
   parseGoogleMapsUrl,
-  formatData,
 } = require('./tools');
+
+const { Poi } = require('./Poi');
 
 Apify.main(async () => {
   const locationUrl = 'https://www.cocosbakery.com/locations/';
@@ -37,7 +39,7 @@ Apify.main(async () => {
         const addressBlock = formatAddress(addressString);
         const latLong = parseGoogleMapsUrl(googleMapsUrl);
 
-        const poi = {
+        const poiData = {
           locator_domain: 'cocosbakery.com',
           location_name,
           ...addressBlock,
@@ -45,8 +47,12 @@ Apify.main(async () => {
           ...latLong,
           hours_of_operation: formatHours(hoursRaw),
         };
-        await Apify.pushData(formatData(poi));
+        const poi = new Poi(poiData);
+        await Apify.pushData(poi);
       }
+    },
+    launchPuppeteerOptions: {
+      headless: true,
     },
     maxRequestsPerCrawl: 1,
     maxConcurrency: 1,

@@ -14,8 +14,9 @@ const {
 const {
   formatHours,
   formatPhoneNumber,
-  formatData,
 } = require('./tools');
+
+const { Poi } = require('./Poi');
 
 Apify.main(async () => {
   // Cheerio crawler is unable to load .xml sites, so we preload the site.
@@ -55,23 +56,28 @@ Apify.main(async () => {
       const longitude = await page.$eval(longitudeSelector, e => e.getAttribute('content'));
       const hours = await page.$eval(hourSelector, e => e.getAttribute('content'));
 
-      const poi = {
+      const poiData = {
         locator_domain: 'dippindots.com',
         street_address,
         city,
         state,
         zip,
-        country_code: 'US',
+        country_code: undefined,
         phone: formatPhoneNumber(phone),
         latitude,
         longitude,
         hours_of_operation: formatHours(hours),
       };
-      await Apify.pushData(formatData(poi));
+
+      const poi = new Poi(poiData);
+      await Apify.pushData(poi);
     },
     maxRequestsPerCrawl: 300,
-    minimumConcurrency: 5,
-    maxConcurrency: 10,
+    minimumConcurrency: 3,
+    maxConcurrency: 5,
+    launchPuppeteerOptions: {
+      headless: true,
+    },
     gotoFunction: async ({
       request, page,
     }) => {

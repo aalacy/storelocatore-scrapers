@@ -16,8 +16,12 @@ const {
 const {
   formatHours,
   formatPhoneNumber,
-  formatData,
+  removeEmptyStringProperties,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   // Cheerio crawler is unable to load .xml sites, so we preload the site.
@@ -34,7 +38,7 @@ Apify.main(async () => {
   const crawler = new Apify.CheerioCrawler({
     requestList,
     handlePageFunction: async ({
-      request, response, html, $,
+      $,
     }) => {
       /* eslint-disable camelcase */
       const location_name = $(locationNameSelector).text();
@@ -46,23 +50,28 @@ Apify.main(async () => {
       const store_number = $(geoSelector).attr('data-store-id');
       const latitude = $(geoSelector).attr('data-latitude');
       const longitude = $(geoSelector).attr('data-longitude');
-      const hours = $(hourSelector).text();
+      const hours = $(hourSelector).children().first().text();
 
-      const poi = {
+      console.log(hours);
+
+      const poiData = {
         locator_domain: 'kumandgo.com',
         location_name,
         street_address,
         city,
         state,
         zip,
-        country_code: 'US',
+        country_code: undefined,
         store_number,
         phone: formatPhoneNumber(phone),
         latitude,
         longitude,
         hours_of_operation: formatHours(hours),
       };
-      await Apify.pushData(formatData(poi));
+
+      const cleanPoiData = removeEmptyStringProperties(poiData);
+      const poi = new Poi(cleanPoiData);
+      await Apify.pushData(poi);
     },
   });
 

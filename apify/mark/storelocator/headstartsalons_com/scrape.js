@@ -16,8 +16,11 @@ const {
 const {
   formatPhoneNumber,
   formatHours,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -58,35 +61,37 @@ Apify.main(async () => {
           const hoursRaw = await page.$eval(hourSelector, e => e.innerText);
           const hours_of_operation = formatHours(hoursRaw);
 
-          const poi = {
+          const poiData = {
             locator_domain: 'headstartsalons.com',
             location_name,
             street_address,
             city,
             state,
             zip,
-            country_code: 'US',
+            country_code: undefined,
             phone,
-            location_type: 'Salon',
+            location_type: undefined,
             latitude,
             longitude,
             hours_of_operation,
           };
-          await Apify.pushData(formatData(poi));
-        } else {
-          if (await requestQueue.isEmpty()) {
-            await requestQueue.fetchNextRequest();
-          }
+          const poi = new Poi(poiData);
+          await Apify.pushData(poi);
+        } else if (await requestQueue.isEmpty()) {
+          await requestQueue.fetchNextRequest();
         }
       }
     },
     maxRequestsPerCrawl: 3000,
     maxConcurrency: 10,
+    launchPuppeteerOptions: {
+      headless: true,
+    },
     gotoFunction: async ({
       request, page,
     }) => page.goto(request.url, {
-        timeout: 0, waitUntil: 'load',
-      }),
+      timeout: 0, waitUntil: 'load',
+    }),
   });
 
   await crawler.run();

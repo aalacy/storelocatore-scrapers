@@ -1,4 +1,5 @@
 const Apify = require('apify');
+
 const {
   locationNameSelector,
   addressSelector,
@@ -6,12 +7,16 @@ const {
   geoSelector,
   hourSelector,
 } = require('./selectors');
+
 const {
   formatAddress,
   formatPhoneNumber,
   parseGoogleMapsUrl,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 const qualityMartScrape = async (page) => {
   const contentId = '#panel621';
@@ -29,16 +34,17 @@ const qualityMartScrape = async (page) => {
       const hours = await content.$eval(hourSelector, e => e.innerText);
       const addressBlock = formatAddress(addressRaw);
       const latLong = parseGoogleMapsUrl(geoRaw);
-      const poi = {
+      const poiData = {
         locator_domain: 'qualityoilnc.com',
         location_name,
         ...addressBlock,
         phone: formatPhoneNumber(phoneRaw),
         location_type: 'Quality Mart',
         ...latLong,
-        hours,
+        hours_of_operation: hours,
       };
-      await Apify.pushData(formatData(poi));
+      const poi = new Poi(poiData);
+      await Apify.pushData(poi);
     }
   }
 };
@@ -58,7 +64,7 @@ const qualityPlusScrape = async (page) => {
       const geoRaw = await content.$eval(geoSelector, e => e.getAttribute('href'));
       const addressBlock = formatAddress(addressRaw);
       const latLong = parseGoogleMapsUrl(geoRaw);
-      const poi = {
+      const poiData = {
         locator_domain: 'qualityoilnc.com',
         location_name,
         ...addressBlock,
@@ -66,7 +72,8 @@ const qualityPlusScrape = async (page) => {
         location_type: 'Quality Plus',
         ...latLong,
       };
-      await Apify.pushData(formatData(poi));
+      const poi = new Poi(poiData);
+      await Apify.pushData(poi);
     }
   }
 };
@@ -86,7 +93,7 @@ const goGasScrape = async (page) => {
       const geoRaw = await content.$eval(geoSelector, e => e.getAttribute('href'));
       const addressBlock = formatAddress(addressRaw);
       const latLong = parseGoogleMapsUrl(geoRaw);
-      const poi = {
+      const poiData = {
         locator_domain: 'qualityoilnc.com',
         location_name,
         ...addressBlock,
@@ -94,7 +101,8 @@ const goGasScrape = async (page) => {
         location_type: 'GOGAS',
         ...latLong,
       };
-      await Apify.pushData(formatData(poi));
+      const poi = new Poi(poiData);
+      await Apify.pushData(poi);
     }
   }
 };
@@ -114,7 +122,7 @@ const hospitalityScrape = async (page) => {
       const geoRaw = await content.$eval(geoSelector, e => e.getAttribute('href'));
       const addressBlock = formatAddress(addressRaw);
       const latLong = parseGoogleMapsUrl(geoRaw);
-      const poi = {
+      const poiData = {
         locator_domain: 'qualityoilnc.com',
         location_name,
         ...addressBlock,
@@ -122,7 +130,8 @@ const hospitalityScrape = async (page) => {
         location_type: 'Quality Hospitality',
         ...latLong,
       };
-      await Apify.pushData(formatData(poi));
+      const poi = new Poi(poiData);
+      await Apify.pushData(poi);
     }
   }
 };
@@ -142,7 +151,7 @@ const serviceScrape = async (page) => {
       const geoRaw = await content.$eval(geoSelector, e => e.getAttribute('href'));
       const addressBlock = formatAddress(addressRaw);
       const latLong = parseGoogleMapsUrl(geoRaw);
-      const poi = {
+      const poiData = {
         locator_domain: 'qualityoilnc.com',
         location_name,
         ...addressBlock,
@@ -150,7 +159,8 @@ const serviceScrape = async (page) => {
         location_type: 'Service Station',
         ...latLong,
       };
-      await Apify.pushData(formatData(poi));
+      const poi = new Poi(poiData);
+      await Apify.pushData(poi);
     }
   }
 };
@@ -170,7 +180,7 @@ const tankLineScrape = async (page) => {
       const geoRaw = await content.$eval(geoSelector, e => e.getAttribute('href'));
       const addressBlock = formatAddress(addressRaw);
       const latLong = parseGoogleMapsUrl(geoRaw);
-      const poi = {
+      const poiData = {
         locator_domain: 'qualityoilnc.com',
         location_name,
         ...addressBlock,
@@ -178,7 +188,8 @@ const tankLineScrape = async (page) => {
         location_type: 'Reliable Tank Line',
         ...latLong,
       };
-      await Apify.pushData(formatData(poi));
+      const poi = new Poi(poiData);
+      await Apify.pushData(poi);
     }
   }
 };

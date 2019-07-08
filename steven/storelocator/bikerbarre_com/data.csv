@@ -1,0 +1,3 @@
+locator_domain,location_name,street_address,city,state,zip,country_code,store_number,phone,location_type,latitude,longitude,hours_of_operation
+https://bikerbarre.com/,Capitol Hill Studio,738 7th St. SE,Washington,DC,20003,US,<MISSING>,2027331009,<MISSING>,<MISSING>,<MISSING>,<INACCESSIBLE>
+https://bikerbarre.com/,Cabin John Studio,11325 Seven Locks Rd.,Potomac,MD,20854,US,<MISSING>,3016051090,<MISSING>,<MISSING>,<MISSING>,<INACCESSIBLE>

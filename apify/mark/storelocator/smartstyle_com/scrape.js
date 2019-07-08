@@ -17,8 +17,11 @@ const {
 const {
   formatHours,
   formatPhoneNumber,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   // Cheerio crawler is unable to load .xml sites, so we preload the site.
@@ -50,20 +53,20 @@ Apify.main(async () => {
       const longitude = $(longitudeSelector).attr('content');
       const hours = $(hourSelector).text();
 
-      const poi = {
+      const poiData = {
         locator_domain: 'smartstyle.com',
         location_name,
         street_address,
         city,
         state,
         zip,
-        country_code: 'US',
         phone: formatPhoneNumber(phone),
         latitude,
         longitude,
         hours_of_operation: formatHours(hours),
       };
-      await Apify.pushData(formatData(poi));
+      const poi = new Poi(poiData);
+      await Apify.pushData(poi);
     },
   });
 
