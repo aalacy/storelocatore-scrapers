@@ -9,8 +9,8 @@ import re
 location_url = 'http://myaroundtheclockfitness.com/gyms/'
 
 # output path of CSV
-#output_path = os.path.dirname(os.path.realpath(__file__))
-output_path = r'C:\Users\spiscatelli\PycharmProjects\Code\Free Lance\SafeWork Scraping\final_output_folders\storelocator\myaroundtheclockfitness_com'
+output_path = os.path.dirname(os.path.realpath(__file__))
+
 # file name of CSV output
 file_name = 'data.csv'
 
