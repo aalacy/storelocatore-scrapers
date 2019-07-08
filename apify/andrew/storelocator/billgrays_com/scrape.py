@@ -1,4 +1,13 @@
 import csv
+import os
+import json
+from selenium import webdriver
+
+MISSING = "<MISSING>"
+INACCESSIBLE = "<INACCESSIBLE>"
+BILL_GRAYS_STORE_LOCATOR_URL = "https://www.billgrays.com/index.cfm?Page=Bill%20Grays%20Locations"
+
+DRIVER = webdriver.Chrome(f'{os.path.dirname(os.path.abspath(__file__))}/chromedriver')
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -10,12 +19,25 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def fetch_stores():
+    DRIVER.get(BILL_GRAYS_STORE_LOCATOR_URL)
+    script_el = DRIVER.find_element_by_xpath("//script[@type='application/ld+json']")
+    script_dict = json.loads(script_el.get_attribute('innerHTML'))
+    stores = script_dict['@graph']
+    stores = stores[1:]
+    names = [store['name'] for store in stores]
+    import pdb; pdb.set_trace()
+    pass
+
 def fetch_data():
-    # Your scraper here
-    return [["safegraph.com", "SafeGraph", "1543 Mission St.", "San Francisco", "CA", "94103", "US", "<MISSING>", "(415) 966-1152", "Office", 37.773500, -122.417831, "mon-fri 9am-5pm"]]
+    data = []
+    data.extend(fetch_stores())
+    return data
 
 def scrape():
+    global DRIVER
     data = fetch_data()
+    DRIVER.quit()
     write_output(data)
 
 scrape()
