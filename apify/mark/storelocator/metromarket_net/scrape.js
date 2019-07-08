@@ -69,19 +69,9 @@ Apify.main(async () => {
     maxRequestsPerCrawl: 100,
     maxConcurrency: 5,
     launchPuppeteerOptions: {
-      headless: true,
-		},
-		handlePageTimeoutSecs: 300,
-    gotoFunction: async ({
-      request, page,
-		}) => {
-			console.log("hiding");
-			await Apify.utils.puppeteer.hideWebDriver(page);
-			console.log("hidden");
-      await page.goto(request.url, {
-        timeout: 0, waitUntil: 'load',
-      });
-    },
+			headless: true,
+			stealth: true
+		}
   });
 
   await crawler.run();
