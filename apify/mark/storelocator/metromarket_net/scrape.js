@@ -70,7 +70,8 @@ Apify.main(async () => {
     maxConcurrency: 5,
     launchPuppeteerOptions: {
       headless: true,
-    },
+		},
+		handlePageTimeoutSecs: 300,
     gotoFunction: async ({
       request, page,
     }) => {
