@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "apify": "^0.15",
+    "apify": "^0.13",
     "selenium-webdriver": "^3.6.0"
   },
   "devDependencies": {
