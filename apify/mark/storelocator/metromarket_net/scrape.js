@@ -15,16 +15,16 @@ const {
 } = require('./Poi');
 
 Apify.main(async () => {
-  const requestQueue = await Apify.openRequestQueue();
-  await requestQueue.addRequest({
+	const requestQueue = await Apify.openRequestQueue();
+	await requestQueue.addRequest({
 		url: 'https://www.metromarket.net/storelocator-sitemap.xml',
-    userData: {
-      urlType: 'initial',
-    },
-  });
+		userData: {
+			urlType: 'initial',
+		},
+	});
 
-  const crawler = new Apify.PuppeteerCrawler({
-    requestQueue,
+	const crawler = new Apify.PuppeteerCrawler({
+		requestQueue,
 		launchPuppeteerOptions: {
 			headless: true,
 			useChrome: true,
@@ -34,13 +34,13 @@ Apify.main(async () => {
 			if (request.userData.urlType === 'initial') {
 				await page.waitForSelector('span', { timeout: 0 });
 				const urls = await page.$$eval('span', se => se.map(s => s.innerText));
-        const locationUrls = urls.filter(e => e.match(/www.metromarket.net\/stores\/details\//))
+				const locationUrls = urls.filter(e => e.match(/www.metromarket.net\/stores\/details\//))
 					.map(e => ({ url: e, userData: { urlType: 'detail' } }));
 				/* eslint-disable no-restricted-syntax */
 				for (const url of locationUrls) {
 					await requestQueue.addRequest(url);
-        }
-      }
+				}
+			}
 			if (request.userData.urlType === 'detail') {
 				await page.waitForSelector('main', { timeout: 0 });
 				const locationObjectRaw = await page.$eval(locationObjectSelector, s => s.innerText);
@@ -67,7 +67,7 @@ Apify.main(async () => {
 		},
 		maxRequestsPerCrawl: 100,
 		maxConcurrency: 1,
-  });
+	});
 
-  await crawler.run();
+	await crawler.run();
 });
