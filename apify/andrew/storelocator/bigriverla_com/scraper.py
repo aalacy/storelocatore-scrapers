@@ -30,14 +30,19 @@ def fetch_data():
     data = []
     driver = webdriver.Chrome(f'{os.path.dirname(os.path.abspath(__file__))}/chromedriver')
     driver.get('https://www.bigriverla.com/')
+    # Fetch store urls from location menu
     store_els = driver.find_elements_by_css_selector('ul#menu-big-river-main-menu > li:nth-child(3) > ul > li > a')
     store_urls = [store_el.get_attribute('href') for store_el in store_els]
+    # Fetch data for each store url
     for store_url in store_urls:
         driver.get(store_url)
+        # Fetch address/phone elements
         location_name = driver.find_element_by_css_selector('h1.entry-title').text
         address_el, phone_el = driver.find_elements_by_css_selector('div.wpb_column:nth-of-type(1) div.wpb_column:nth-of-type(1) p')
+        # Parse address/phone elements
         street_address, city, state, zipcode = parse_address(address_el.text)
         phone = parse_phone(phone_el.text)
+        # Regex match for store number in store name
         store_number = re.findall(r'#(\d+)', location_name)[0]
         data.append([
             'https://www.bigriverla.com/',
