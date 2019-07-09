@@ -1,21 +1,3 @@
-const formatObject = (string) => {
-  const trimmedString = string.trim();
-  const jsonObject = JSON.parse(trimmedString);
-  return jsonObject;
-};
-
-const formatLocationObject = (string) => {
-  const trimmedString = string.trim();
-  const copyFrontDescription = trimmedString.substring(0, (trimmedString.indexOf('description') - 2));
-  const clipFrontDescription = trimmedString.substring(trimmedString.indexOf('description'), trimmedString.length);
-  const copyAfterDescription = clipFrontDescription.substring((clipFrontDescription.indexOf('openingHours') - 1), clipFrontDescription.length);
-  const removedDescription = copyFrontDescription + copyAfterDescription;
-  const fixedQuotation = removedDescription.replace(/'/g, '"').replace(/'/g, '"');
-  const replaceEndingComma = fixedQuotation.replace(/,([^,]*)$/, '$1');
-  const jsonObject = JSON.parse(replaceEndingComma);
-  return jsonObject;
-};
-
 const formatCountry = (string) => {
   if (string === 'USA') {
     return 'US';
@@ -40,9 +22,16 @@ const formatPhoneNumber = (string) => {
   return number;
 };
 
+const formatGeo = (string) => {
+  const splitGeoArray = string.split(';');
+  return {
+    latitude: splitGeoArray[0],
+    longitude: splitGeoArray[1],
+  };
+};
+
 module.exports = {
-  formatLocationObject,
-  formatObject,
   formatPhoneNumber,
   formatCountry,
+  formatGeo,
 };
