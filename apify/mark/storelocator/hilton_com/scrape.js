@@ -1,11 +1,22 @@
 const Apify = require('apify');
 
 const {
-  formatLocationObject,
-  formatObject,
   formatPhoneNumber,
   formatCountry,
+  formatGeo,
 } = require('./tools');
+
+const {
+  locationNameSelector,
+  streetAddressSelector,
+  citySelector,
+  stateSelector,
+  zipSelector,
+  countrySelector,
+  locationTypeSelector,
+  phoneSelector,
+  geoSelector,
+} = require('./selectors');
 
 const {
   Poi,
@@ -22,6 +33,20 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 1500,
+    maxConcurrency: 10,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
         await page.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
@@ -35,57 +60,40 @@ Apify.main(async () => {
         await page.waitFor(5000);
       }
       if (request.userData.urlType === 'detail') {
-        const allScripts = await page.$$eval('script', se => se.map(s => s.innerText));
-        const locationObjectArray = allScripts.filter(e => e.includes('latitude'));
-        const locationObjectRaw = locationObjectArray[0];
-        const locationObject = formatLocationObject(locationObjectRaw);
-        const additionalInfoArray = allScripts.filter(e => e.includes('propertySearchCountry'));
-        const additionalInfoString = additionalInfoArray[0];
-        const additionalInfoRaw = additionalInfoString.substring(additionalInfoString.indexOf('{'), additionalInfoString.lastIndexOf(']}') + 2);
-        const additionalInfoObject = formatObject(additionalInfoRaw);
-
         /* eslint-disable camelcase */
-        const country_code = formatCountry(additionalInfoObject.page.attributes.propertySearchCountry);
+        const countryRaw = await page.$eval(countrySelector, e => e.innerText);
+        const country_code = formatCountry(countryRaw);
         // Only get US and Canada hotels
         if (country_code === 'US' || country_code === 'CA') {
+          const location_name = await page.$eval(locationNameSelector, e => e.innerText);
+          const street_address = await page.$eval(streetAddressSelector, e => e.innerText);
+          const city = await page.$eval(citySelector, e => e.innerText);
+          const state = await page.$eval(stateSelector, e => e.innerText);
+          const zip = await page.$eval(zipSelector, e => e.innerText);
+          const location_type = await page.$eval(locationTypeSelector, e => e.innerText);
+          const phoneNumberRaw = await page.$eval(phoneSelector, e => e.innerText);
+          const phone = formatPhoneNumber(phoneNumberRaw);
+          const geoRaw = await page.$eval(geoSelector, e => e.content);
+          const latLong = formatGeo(geoRaw);
+
           const poiData = {
             locator_domain: 'hilton.com',
-            location_name: locationObject.name,
-            street_address: locationObject.address.streetAddress,
-            city: locationObject.address.addressLocality,
-            state: locationObject.address.addressRegion,
-            zip: locationObject.address.postalCode,
+            location_name,
+            street_address,
+            city,
+            state,
+            zip,
             country_code,
             store_number: undefined,
-            phone: formatPhoneNumber(locationObject.telephone),
-            location_type: additionalInfoObject.page.category.brand,
-            latitude: locationObject.geo.latitude,
-            longitude: locationObject.geo.longitude,
+            phone: formatPhoneNumber(phone),
+            location_type,
+            ...latLong,
             hours_of_operation: undefined,
           };
           const poi = new Poi(poiData);
           await Apify.pushData(poi);
-          await page.waitFor(5000);
-        } else {
-          // If the request is not CA or US check if there are still requests and if so, skip
-          if (!requestQueue.isEmpty) {
-            await requestQueue.fetchNextRequest();
-          }
         }
       }
-    },
-    maxRequestsPerCrawl: 1000,
-    maxConcurrency: 3,
-    launchPuppeteerOptions: {
-      headless: true,
-    },
-    gotoFunction: async ({
-      request, page,
-    }) => {
-      await Apify.utils.puppeteer.hideWebDriver(page);
-      await page.goto(request.url, {
-        timeout: 0, waitUntil: 'load',
-      });
     },
   });
 

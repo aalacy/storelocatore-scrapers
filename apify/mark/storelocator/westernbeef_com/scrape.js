@@ -97,11 +97,6 @@ Apify.main(async () => {
           };
           const poi = new Poi(poiData);
           await Apify.pushData(poi);
-        } else {
-          await page.waitFor(2000);
-          if (!requestQueue.isEmpty) {
-            await requestQueue.fetchNextRequest();
-          }
         }
       }
     },
@@ -111,8 +106,8 @@ Apify.main(async () => {
     gotoFunction: async ({
       request, page,
     }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'networkidle0',
-    }),
+        timeout: 0, waitUntil: 'networkidle0',
+      }),
   });
 
   await crawler.run();

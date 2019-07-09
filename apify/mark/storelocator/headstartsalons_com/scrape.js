@@ -33,6 +33,20 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 3000,
+    maxConcurrency: 10,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
         await page.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
@@ -77,21 +91,9 @@ Apify.main(async () => {
           };
           const poi = new Poi(poiData);
           await Apify.pushData(poi);
-        } else if (await requestQueue.isEmpty()) {
-          await requestQueue.fetchNextRequest();
         }
       }
     },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 10,
-    launchPuppeteerOptions: {
-      headless: true,
-    },
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'load',
-    }),
   });
 
   await crawler.run();
