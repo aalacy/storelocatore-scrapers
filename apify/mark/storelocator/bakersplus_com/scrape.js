@@ -27,13 +27,6 @@ Apify.main(async () => {
       useChrome: true,
       stealth: true,
     },
-    gotoFunction: async ({
-      request, page,
-    }) => {
-      await page.goto(request.url, {
-        timeout: 0, waitUntil: 'networkidle0',
-      });
-    },
     maxRequestsPerCrawl: 3000,
 		maxConcurrency: 10,
 		minConcurrency: 4,
