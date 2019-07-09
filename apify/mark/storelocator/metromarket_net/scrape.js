@@ -30,7 +30,13 @@ Apify.main(async () => {
       useChrome: true,
       stealth: true
     },
-    handlePageFunction: async ({ request, page }) => {
+		handlePageFunction: async ({ request, page }) => {
+			const isBlocked = await page.evaluate(() => {
+        return document.body.innerText.startsWith('Access Denied')
+      });
+      if (isBlocked) {
+        throw new Error("Page blocked");
+      }
       if (request.userData.urlType === 'initial') {
         await page.waitForSelector('span', { timeout: 0 });
         const urls = await page.$$eval('span', se => se.map(s => s.innerText));
