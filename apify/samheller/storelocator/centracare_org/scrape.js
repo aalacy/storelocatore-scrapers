@@ -10,7 +10,7 @@ Apify.main(async () => {
 
 async function scrape() {
   return await axios({method: "GET", url: url}).then((resp) => {
-    returnData = [];
+    returnData = [];  
     for (let entry of resp.data.CC_getlocs){returnData.push(mapData(entry));}
     return returnData;
   }).catch((e) => {handleError(e);})
@@ -50,41 +50,3 @@ function buildHours(e){
 function handleError(e){
   console.error("Error retrieving centracare.org locations: ", e);
 }
-/*
- {
-      "locid": 1,
-      "location_id": "C8AE7FC1-320E-475E-ADF9-03EEA445285A",
-      "location_name_display": "AdventHealth Centra Care Altamonte",
-      "location_name": "AdventHealth Centra Care Altamonte",
-      "address_line_1": "440 W Hwy 436",
-      "address_line_2": " ",
-      "city": "Altamonte Springs",
-      "state": "FL",
-      "zip": "32714",
-      "phone": "4077882000",
-      "fax": "4077882024",
-      "center": "3410",
-      "lat": 28.661294937134,
-      "lng": -81.39875793457,
-      "open_sun": "0800",
-      "open_mon": "0800",
-      "open_tue": "0800",
-      "open_wed": "0800",
-      "open_thu": "0800",
-      "open_fri": "0800",
-      "open_sat": "0800",
-      "close_sun": "1700",
-      "close_mon": "2000",
-      "close_tue": "2000",
-      "close_wed": "2000",
-      "close_thu": "2000",
-      "close_fri": "2000",
-      "close_sat": "1700",
-      "Active": 1,
-      "org_id": 1,
-      "loctype": "cc",
-      "work_start": "2019-07-09 08:00:00",
-      "work_end": "2019-07-09 20:00:00",
-      "is_holiday": 0
-    },
-    */
