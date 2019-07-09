@@ -43,4 +43,6 @@ RUN npm --quiet set progress=false \
  && echo "ChromeDriver version:" \
  && chromedriver --version
 
+RUN npm install puppeteer
+
 CMD npm start
