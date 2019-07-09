@@ -9,7 +9,7 @@
 #  apify/actor-node-chrome-xvfb (Node.js 10 + Chrome + Xvfb on Debian)
 # For more information, see https://apify.com/docs/actor#base-images
 # Note that you can use any other image from Docker Hub.
-FROM node:10-slim
+FROM node:10
 
 # Copy all files and directories with the source code
 COPY . ./
@@ -27,14 +27,20 @@ RUN npm --quiet set progress=false \
 
 USER root
 
-RUN apt-get update \
- && apt-get install -y python
+RUN apt update && apt upgrade -y \
+ && apt install build-essential -y \
+ && apt install libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev -y \
+ && apt install zlib1g -y \
+ && wget https://www.python.org/ftp/python/3.7.0/Python-3.7.0.tgz \
+ && tar -xzvf Python-3.7.0.tgz \
+ && cd Python-3.7.0 \
+ && ./configure \
+ && make && make install
 
-# Install pip
-RUN apt-get update && apt-get install -y \
-    python-pip
+RUN pip3 install -r requirements.txt
 
-RUN pip install -r requirements.txt
+RUN echo "Python3 version:" \
+  && python3 --version
 
 # Specify how to run the source code
 CMD npm start
