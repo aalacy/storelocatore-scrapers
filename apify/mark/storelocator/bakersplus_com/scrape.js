@@ -39,7 +39,6 @@ Apify.main(async () => {
 		minConcurrency: 4,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
-        await page.waitForSelector('span', { timeout: 0 });
         const urls = await page.$$eval('span', se => se.map(s => s.innerText));
         const locationUrls = urls.filter(e => e.match(/www.bakersplus.com\/stores\/details\//))
           .map(e => ({ url: e, userData: { urlType: 'detail' } }));
