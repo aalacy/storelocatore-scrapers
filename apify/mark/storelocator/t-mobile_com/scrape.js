@@ -94,7 +94,8 @@ Apify.main(async () => {
       }
     },
     maxRequestsPerCrawl: 6000,
-    maxConcurrency: 7,
+		maxConcurrency: 10,
+		handlePageTimeoutSecs: 300,
     gotoFunction: async ({
       request, page,
     }) => page.goto(request.url, {
