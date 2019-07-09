@@ -1,7 +1,7 @@
 import csv
 import os
 from selenium import webdriver
-from bs4 import BeautifulSoup
+import re
 
 MISSING = '<MISSING>'
 INACCESSIBLE = '<INACCESSIBLE>'
@@ -16,6 +16,16 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def parse_address(address):
+    _address = address.split('\n')[1:]
+    street_address = _address[0].replace(',', '')
+    city, _address = _address[1].split(',')
+    state, zip_code = _address.split()
+    return street_address, city, state, zip_code
+
+def parse_phone(phone):
+    return phone.split('\n')[-1]
+
 def fetch_data():
     data = []
     driver = webdriver.Chrome(f'{os.path.dirname(os.path.abspath(__file__))}/chromedriver')
@@ -25,16 +35,27 @@ def fetch_data():
     for store_url in store_urls:
         driver.get(store_url)
         location_name = driver.find_element_by_css_selector('h1.entry-title').text
-        address_el, phone_number_el = driver.find_elements_by_css_selector('div.wpb_column:nth-of-type(1) div.wpb_column:nth-of-type(1) p')
-        import pdb; pdb.set_trace();
+        address_el, phone_el = driver.find_elements_by_css_selector('div.wpb_column:nth-of-type(1) div.wpb_column:nth-of-type(1) p')
+        street_address, city, state, zipcode = parse_address(address_el.text)
+        phone = parse_phone(phone_el.text)
+        store_number = re.findall(r'#(\d+)', location_name)[0]
         data.append([
             'https://www.bigriverla.com/',
             location_name,
-
+            street_address,
+            city,
+            state,
+            zipcode,
+            'US',
+            store_number,
+            phone,
+            '<MISSING>',
+            '<MISSING>',
+            '<MISSING>',
+            '<MISSING>'
         ])
-
-    import pdb; pdb.set_trace()
-    return [["safegraph.com", "SafeGraph", "1543 Mission St.", "San Francisco", "CA", "94103", "US", "<MISSING>", "(415) 966-1152", "Office", 37.773500, -122.417831, "mon-fri 9am-5pm"]]
+    driver.quit()
+    return data
 
 def scrape():
     data = fetch_data()
