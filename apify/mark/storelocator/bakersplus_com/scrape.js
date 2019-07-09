@@ -35,14 +35,14 @@ Apify.main(async () => {
       });
     },
     maxRequestsPerCrawl: 3000,
-    maxConcurrency: 10,
+		maxConcurrency: 10,
+		minConcurrency: 4,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
-        await page.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
+        await page.waitForSelector('span', { timeout: 0 });
         const urls = await page.$$eval('span', se => se.map(s => s.innerText));
         const locationUrls = urls.filter(e => e.match(/www.bakersplus.com\/stores\/details\//))
           .map(e => ({ url: e, userData: { urlType: 'detail' } }));
-        await page.waitFor(5000);
         /* eslint-disable no-restricted-syntax */
         for await (const url of locationUrls) {
           await requestQueue.addRequest(url);
@@ -50,7 +50,7 @@ Apify.main(async () => {
       }
       if (request.userData.urlType === 'detail') {
         if (await page.$(locationObjectSelector) !== null) {
-          await page.waitForSelector(locationObjectSelector, { waitUntil: 'load', timeout: 0 });
+          await page.waitForSelector(locationObjectSelector, { timeout: 0 });
           const locationObjectRaw = await page.$eval(locationObjectSelector, s => s.innerText);
           const locationObject = formatObject(locationObjectRaw);
 
@@ -71,7 +71,6 @@ Apify.main(async () => {
           };
           const poi = new Poi(poiData);
           await Apify.pushData(poi);
-          await page.waitFor(2000);
         }
       }
     },
