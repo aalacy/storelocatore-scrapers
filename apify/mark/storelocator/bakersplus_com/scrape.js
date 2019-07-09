@@ -25,8 +25,7 @@ Apify.main(async () => {
     launchPuppeteerOptions: {
       headless: true,
       useChrome: true,
-			stealth: true,
-			useApifyProxy: true
+			stealth: true
     },
     maxRequestsPerCrawl: 3000,
 		maxConcurrency: 10,
