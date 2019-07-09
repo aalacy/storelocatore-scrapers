@@ -2,13 +2,12 @@ const Apify = require('apify');
 const { formatPhoneNumber, formatData } = require('./tools');
 
 Apify.main(async () => {
-  const browser = await Apify.launchPuppeteer({ headless: false });
+  const browser = await Apify.launchPuppeteer({ headless: true });
   const p = await browser.newPage();
   await p.goto('https://stores.chicos.com/en/sitemap.xml');
   await p.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
   const urls = await p.$$eval('span', se => se.map(s => s.innerText));
   const storeUrls = urls.filter(e => e.match(/stores.chicos.com\/s\//)).map(e => ({ url: e }));
-  await p.waitFor(5000);
 
   const requestList = new Apify.RequestList({
     sources: storeUrls,
@@ -17,8 +16,11 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestList,
-    handlePageFunction: async ({ page }) => {
-      await page.waitForSelector('head > script:nth-child(172)', { waitUntil: 'load', timeout: 0 });
+		launchPuppeteerOptions: {
+      headless: true,
+    },
+		handlePageFunction: async ({ page }) => {
+      await page.waitForSelector('head > script:nth-child(172)', { timeout: 0 });
       const scriptText = await page.$eval('head > script:nth-child(172)', s => s.innerText);
       const storeObject = JSON.parse(scriptText);
 
