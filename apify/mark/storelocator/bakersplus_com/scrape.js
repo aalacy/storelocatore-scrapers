@@ -31,8 +31,16 @@ Apify.main(async () => {
 		maxConcurrency: 10,
 		minConcurrency: 4,
     handlePageFunction: async ({ request, page }) => {
-      if (request.userData.urlType === 'initial') {
-        await page.waitForSelector('span', { timeout: 0 });
+			if (request.userData.urlType === 'initial') {
+
+				const body = await page.evaluate(() => {
+					return {
+						'body': document.body.innerText
+					};
+				});
+				console.log('body:', body);
+
+				await page.waitForSelector('span', { timeout: 0 });
         const urls = await page.$$eval('span', se => se.map(s => s.innerText));
         const locationUrls = urls.filter(e => e.match(/www.bakersplus.com\/stores\/details\//))
           .map(e => ({ url: e, userData: { urlType: 'detail' } }));
