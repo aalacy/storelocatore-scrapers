@@ -1,4 +1,5 @@
 const Apify = require('apify');
+const randomUA = require('modern-random-ua');
 
 const {
   locationObjectSelector,
@@ -25,7 +26,8 @@ Apify.main(async () => {
     launchPuppeteerOptions: {
       headless: true,
       useChrome: true,
-			stealth: true
+			stealth: true,
+			userAgent: randomUA.generate(),
     },
     maxRequestsPerCrawl: 3000,
 		maxConcurrency: 10,
