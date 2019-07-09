@@ -31,8 +31,13 @@ Apify.main(async () => {
 		maxConcurrency: 10,
 		minConcurrency: 4,
     handlePageFunction: async ({ request, page }) => {
+			const isBlocked = await page.evaluate(() => {
+				return document.body.innerText.startsWith('Access Denied')
+			});
+			if (isBlocked) {
+				throw new Error("Page blocked");
+			}
 			if (request.userData.urlType === 'initial') {
-
 				const body = await page.evaluate(() => {
 					return {
 						'body': document.body.innerText
