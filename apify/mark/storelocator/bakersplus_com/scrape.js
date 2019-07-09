@@ -50,8 +50,8 @@ Apify.main(async () => {
         }
       }
       if (request.userData.urlType === 'detail') {
+        await page.waitForSelector(locationObjectSelector, { timeout: 0 });
         if (await page.$(locationObjectSelector) !== null) {
-          await page.waitForSelector(locationObjectSelector, { timeout: 0 });
           const locationObjectRaw = await page.$eval(locationObjectSelector, s => s.innerText);
           const locationObject = formatObject(locationObjectRaw);
 
