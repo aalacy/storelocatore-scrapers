@@ -44,12 +44,12 @@ async function scrape(){
                                           zip=madd[2].trim().split(' ')[1];
                                       }
                                       var hour="Sunday : "+$('#open_hour table tbody tr').eq(0).find('td').eq(2).text()+
-                                               "Monday : "+$('#open_hour table tbody tr').eq(1).find('td').eq(2).text()+
-                                               "Tuesday : "+$('#open_hour table tbody tr').eq(2).find('td').eq(2).text()+
-                                               "Wednesday : "+ $('#open_hour table tbody tr').eq(3).find('td').eq(2).text()+
-                                               "Thurday : "+$('#open_hour table tbody tr').eq(4).find('td').eq(2).text()+
-                                               "Friday : "+$('#open_hour table tbody tr').eq(5).find('td').eq(2).text()+
-                                               "Saturday : "+$('#open_hour table tbody tr').eq(6).find('td').eq(2).text();
+                                               " , Monday : "+$('#open_hour table tbody tr').eq(1).find('td').eq(2).text()+
+                                               " , Tuesday : "+$('#open_hour table tbody tr').eq(2).find('td').eq(2).text()+
+                                               " , Wednesday : "+ $('#open_hour table tbody tr').eq(3).find('td').eq(2).text()+
+                                               " , Thurday : "+$('#open_hour table tbody tr').eq(4).find('td').eq(2).text()+
+                                               " , Friday : "+$('#open_hour table tbody tr').eq(5).find('td').eq(2).text()+
+                                               " , Saturday : "+$('#open_hour table tbody tr').eq(6).find('td').eq(2).text();
                                       var regexp = /^[0-9]+$/;
                                       if(zip.match(regexp))
                                         items.push({
