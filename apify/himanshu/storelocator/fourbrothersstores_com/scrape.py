@@ -11,7 +11,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
-            writer.writerow([unicode(s).encode("utf-8") for s in row])
+            writer.writerow(row)
 
 def fetch_data():
     base_url = "http://fourbrothersstores.com"

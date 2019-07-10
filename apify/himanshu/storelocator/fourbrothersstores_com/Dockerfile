@@ -10,6 +10,7 @@
 # For more information, see https://apify.com/docs/actor#base-images
 # Note that you can use any other image from Docker Hub.
 FROM node:10-slim
+ENV LANG C.UTF-8
 
 # Copy all files and directories with the source code
 COPY . ./
