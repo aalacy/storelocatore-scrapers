@@ -52,8 +52,6 @@ Apify.main(async () => {
       const longitude = $(geoSelector).attr('data-longitude');
       const hours = $(hourSelector).children().first().text();
 
-      console.log(hours);
-
       const poiData = {
         locator_domain: 'kumandgo.com',
         location_name,

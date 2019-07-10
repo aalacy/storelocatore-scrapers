@@ -1,7 +1,6 @@
 const Apify = require('apify');
 const cheerio = require('cheerio');
 const rp = require('request-promise-native');
-const randomUA = require('modern-random-ua');
 
 const {
   locationNameSelector,
@@ -18,7 +17,6 @@ const {
 const {
   formatHours,
   formatPhoneNumber,
-  formatData,
 } = require('./tools');
 
 const {
@@ -41,6 +39,20 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestList,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 3000,
+    maxConcurrency: 1,
     handlePageFunction: async ({
       page,
     }) => {
@@ -71,24 +83,6 @@ Apify.main(async () => {
       };
       const poi = new Poi(poiData);
       await Apify.pushData(poi);
-    },
-    launchPuppeteerOptions: {
-      headless: true
-    },
-    maxRequestsPerCrawl: 20000,
-    minimumConcurrency: 1,
-    maxConcurrency: 1,
-    gotoFunction: async ({
-      request, page,
-    }) => {
-      const cookies = await page.cookies(request.url);
-      await page.deleteCookie(...cookies);
-      const randomUserAgent = randomUA.generate();
-      await page.setUserAgent(randomUserAgent);
-      await Apify.utils.puppeteer.hideWebDriver(page);
-      await page.goto(request.url, {
-        timeout: 0, waitUntil: 'load',
-      });
     },
   });
 

@@ -26,6 +26,20 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 3000,
+    maxConcurrency: 10,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
         await enqueueRegionClubPages(page, requestQueue, request);
@@ -69,19 +83,6 @@ Apify.main(async () => {
           }
         }
       }
-    },
-    maxRequestsPerCrawl: 5,
-    maxConcurrency: 1,
-    launchPuppeteerOptions: {
-      headless: true,
-    },
-    gotoFunction: async ({
-      request, page,
-    }) => {
-      await Apify.utils.puppeteer.hideWebDriver(page);
-      await page.goto(request.url, {
-        timeout: 0, waitUntil: 'load',
-      });
     },
   });
 

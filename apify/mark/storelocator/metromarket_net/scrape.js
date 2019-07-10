@@ -25,60 +25,54 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
-    handlePageFunction: async ({ request, page }) => {
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true
+    },
+		handlePageFunction: async ({ request, page }) => {
+			const isBlocked = await page.evaluate(() => {
+        return document.body.innerText.startsWith('Access Denied')
+      });
+      if (isBlocked) {
+        throw new Error("Page blocked");
+      }
       if (request.userData.urlType === 'initial') {
-        await page.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
+        await page.waitForSelector('span', { timeout: 0 });
         const urls = await page.$$eval('span', se => se.map(s => s.innerText));
         const locationUrls = urls.filter(e => e.match(/www.metromarket.net\/stores\/details\//))
           .map(e => ({ url: e, userData: { urlType: 'detail' } }));
-        await page.waitFor(5000);
         /* eslint-disable no-restricted-syntax */
-        for await (const url of locationUrls) {
+        for (const url of locationUrls) {
           await requestQueue.addRequest(url);
         }
       }
       if (request.userData.urlType === 'detail') {
-        if (await page.$(locationObjectSelector) !== null) {
-          await page.waitForSelector(locationObjectSelector, { waitUntil: 'load', timeout: 0 });
-          const locationObjectRaw = await page.$eval(locationObjectSelector, s => s.innerText);
-          const locationObject = formatObject(locationObjectRaw);
+        await page.waitForSelector('main', { timeout: 0 });
+        const locationObjectRaw = await page.$eval(locationObjectSelector, s => s.innerText);
+        const locationObject = formatObject(locationObjectRaw);
 
-          const poiData = {
-            locator_domain: 'metromarket.net',
-            location_name: locationObject.name,
-            street_address: locationObject.address.streetAddress,
-            city: locationObject.address.addressLocality,
-            state: locationObject.address.addressRegion,
-            zip: locationObject.address.postalCode,
-            country_code: undefined,
-            store_number: undefined,
-            phone: formatPhoneNumber(locationObject.telephone),
-            location_type: locationObject['@type'],
-            latitude: locationObject.geo.latitude,
-            longitude: locationObject.geo.longitude,
-            hours_of_operation: formatHours(locationObject.openingHours),
-          };
-          const poi = new Poi(poiData);
-          await Apify.pushData(poi);
-          await page.waitFor(5000);
-        } else {
-          await requestQueue.fetchNextRequest();
-        }
+        const poiData = {
+          locator_domain: 'metromarket.net',
+          location_name: locationObject.name,
+          street_address: locationObject.address.streetAddress,
+          city: locationObject.address.addressLocality,
+          state: locationObject.address.addressRegion,
+          zip: locationObject.address.postalCode,
+          country_code: undefined,
+          store_number: undefined,
+          phone: formatPhoneNumber(locationObject.telephone),
+          location_type: locationObject['@type'],
+          latitude: locationObject.geo.latitude,
+          longitude: locationObject.geo.longitude,
+          hours_of_operation: formatHours(locationObject.openingHours),
+        };
+        const poi = new Poi(poiData);
+        await Apify.pushData(poi);
       }
     },
     maxRequestsPerCrawl: 100,
-    maxConcurrency: 5,
-    launchPuppeteerOptions: {
-      headless: true,
-    },
-    gotoFunction: async ({
-      request, page,
-    }) => {
-      await Apify.utils.puppeteer.hideWebDriver(page);
-      await page.goto(request.url, {
-        timeout: 0, waitUntil: 'load',
-      });
-    },
+    maxConcurrency: 4,
   });
 
   await crawler.run();

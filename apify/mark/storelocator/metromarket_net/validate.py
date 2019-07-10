@@ -6,6 +6,7 @@ import phonenumbers
 import us
 import zipcodes
 import re
+import csv
 
 #### Utilities
 
@@ -35,7 +36,7 @@ def is_valid_phone_number(phone, country):
 def is_blank(field):
     if field in ['<MISSING>', '<INACCESSIBLE>']:
         return True
-    return bool(field)
+    return not bool(field)
 
 #### Country detection
 
@@ -204,12 +205,18 @@ def validate(data):
     check_duplication(data)
 
 data = []
-json_dir_name = 'apify_docker_storage'
+data_location = sys.argv[1]
 debug = len(sys.argv) > 2 and sys.argv[2] == "DEBUG"
 
-for f_name in glob(os.path.join(json_dir_name, 'datasets/default', '*.json')):
-    with open(f_name) as json_file:
-        data.append(json.load(json_file))
+if data_location.endswith(".csv"):
+    with open(data_location) as csv_file:
+        reader = csv.DictReader(csv_file, skipinitialspace=True)
+        for row in reader:
+            data.append(row)
+else:
+    for f_name in glob(os.path.join(data_location, 'datasets/default', '*.json')):
+        with open(f_name) as json_file:
+            data.append(json.load(json_file))
 
 validate(data)
 if not debug:

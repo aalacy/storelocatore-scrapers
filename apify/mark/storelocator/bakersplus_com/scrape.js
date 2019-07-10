@@ -22,21 +22,41 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+			stealth: true
+    },
+    maxRequestsPerCrawl: 3000,
+		maxConcurrency: 10,
+		minConcurrency: 4,
     handlePageFunction: async ({ request, page }) => {
-      if (request.userData.urlType === 'initial') {
-        await page.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
+			const isBlocked = await page.evaluate(() => {
+				return document.body.innerText.startsWith('Access Denied')
+			});
+			if (isBlocked) {
+				throw new Error("Page blocked");
+			}
+			if (request.userData.urlType === 'initial') {
+				const body = await page.evaluate(() => {
+					return {
+						'body': document.body.innerText
+					};
+				});
+				console.log('body:', body);
+
+				await page.waitForSelector('span', { timeout: 0 });
         const urls = await page.$$eval('span', se => se.map(s => s.innerText));
         const locationUrls = urls.filter(e => e.match(/www.bakersplus.com\/stores\/details\//))
           .map(e => ({ url: e, userData: { urlType: 'detail' } }));
-        await page.waitFor(5000);
         /* eslint-disable no-restricted-syntax */
         for await (const url of locationUrls) {
           await requestQueue.addRequest(url);
         }
       }
       if (request.userData.urlType === 'detail') {
+        await page.waitForSelector(locationObjectSelector, { timeout: 0 });
         if (await page.$(locationObjectSelector) !== null) {
-          await page.waitForSelector(locationObjectSelector, { waitUntil: 'load', timeout: 0 });
           const locationObjectRaw = await page.$eval(locationObjectSelector, s => s.innerText);
           const locationObject = formatObject(locationObjectRaw);
 
@@ -55,27 +75,10 @@ Apify.main(async () => {
             longitude: locationObject.geo.longitude,
             hours_of_operation: locationObject.openingHours[0],
           };
-
           const poi = new Poi(poiData);
           await Apify.pushData(poi);
-          await page.waitFor(2000);
-        } else {
-          await requestQueue.fetchNextRequest();
         }
       }
-    },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 10,
-    launchPuppeteerOptions: {
-      headless: true,
-    },
-    gotoFunction: async ({
-      request, page,
-    }) => {
-      await Apify.utils.puppeteer.hideWebDriver(page);
-      await page.goto(request.url, {
-        timeout: 0, waitUntil: 'load',
-      });
     },
   });
 
