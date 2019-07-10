@@ -1,6 +1,7 @@
 import csv
 import os
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 import re
 
 def write_output(data):
@@ -25,7 +26,11 @@ def parse_phone(phone):
 
 def fetch_data():
     data = []
-    driver = webdriver.Chrome(f'{os.path.dirname(os.path.abspath(__file__))}/chromedriver')
+    options = Options() 
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    driver = webdriver.Chrome('/bin/chromedriver', chrome_options=options)
     driver.get('https://www.bigriverla.com/')
     # Fetch store urls from location menu
     store_els = driver.find_elements_by_css_selector('ul#menu-big-river-main-menu > li:nth-child(3) > ul > li > a')
