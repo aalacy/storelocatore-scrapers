@@ -2,7 +2,6 @@ const Apify = require('apify');
 const axios = require('axios');
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
-const _ = require('lodash');
 const parser = require('parse-address');
 
 Apify.main(async () => {
