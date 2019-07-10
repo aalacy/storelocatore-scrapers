@@ -58,8 +58,8 @@ def pull_info(content):
         # lat long url to parse
         try:
             raw_lat_long = href_data.find_all('div',{'class':'block-locations'})[1].iframe['src']
-            lat = re.search('!2d(.*)!3d', raw_lat_long).group(0).replace('!2d', '').replace('!3d', '')
-            long = re.search('!3d(.*)!3m2!', raw_lat_long).group(0).replace('!3d', '')[:7]
+            long = re.search('!2d(.*)!3d', raw_lat_long).group(0).replace('!2d', '').replace('!3d', '')
+            lat = re.search('!3d(.*)!3m2!', raw_lat_long).group(0).replace('!3d', '')[:7]
         except:
             lat = '<MISSING>'
             long = '<MISSING>'
