@@ -1,4 +1,4 @@
-# How to write a Python3 scraper for SafeGraph
+# How to write a Python3 + Selenium scraper for SafeGraph
 
 Please write your scraper such that running `scrape.py` produces a file `data.csv` containing the scraped data.
 
