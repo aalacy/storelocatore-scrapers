@@ -12,7 +12,6 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
-            print(row)
             writer.writerow(row)
 
 def fetch_data():
@@ -280,8 +279,15 @@ def fetch_data():
             store.append(store_object["name"])
             store.append(store_object["address"]+store_object["address2"])
             store.append(store_object["city"] if store_object["city"] != "" else "<MISSING>")
-            store.append(store_object["state"] if store_object["state"] != "" else "<MISSING>")
-            store.append(store_object["postal"] if store_object["postal"] != "" else "<MISSING>")
+            if store_object['postal'] == "ON L4E 3L6":
+                store.append(store_object["state"])
+                store.append(store_object["postal"][3:])
+            elif store_object["state"] == "76051":
+                store.append(store_object["postal"] if store_object["postal"] != "" else "<MISSING>")
+                store.append(store_object["state"] if store_object["state"] != "" else "<MISSING>")
+            else:
+                store.append(store_object["state"] if store_object["state"] != "" else "<MISSING>")
+                store.append(store_object["postal"] if store_object["postal"] != "" else "<MISSING>")
             store.append(country_codes[store_object["country"]])
             store.append("<MISSING>")
             store.append(store_object["phone"] if store_object["phone"] != "" else "<MISSING>")
@@ -290,7 +296,6 @@ def fetch_data():
             store.append(store_object["lng"] if store_object["lng"] != "" else "<MISSING>")
             store.append(store_object["hours1"] if store_object["hours1"] != "" else "<MISSING>")
             return_main_object.append(store)
-    print(return_main_object)
     return return_main_object
 
 def scrape():
