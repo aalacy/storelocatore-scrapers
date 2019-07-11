@@ -10,7 +10,7 @@ Apify.main(async () => {
 		requestQueue,
 		handlePageFunction: async ({ request, page }) => {
 
-			// Being scraper
+			// Begig scraper
 
 			const heading = await page.evaluate(() => document.querySelector('h1.heading-primary').innerText);
 
