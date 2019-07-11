@@ -1,21 +1,39 @@
 const Apify = require('apify');
-const child_process = require("child_process"); 
-const util = require('util');
-const fs = require('fs-extra');
-const csv = util.promisify(require('csv-parse'));  
-const mapKeys = require('lodash.mapkeys');
 
 (async () => {
-	console.log("starting scrape.....");
-	const exec = util.promisify(child_process.exec);
-	const { stdout, stderr } = await exec('python3 scrape.py');
-	console.log('stdout:', stdout);
-  console.log('stderr:', stderr);
-	let data = await fs.readFile('data.csv');
-	let parsed = await csv(data);
-	let header = parsed[0];
-	let translation = {...header}
-	let rows = parsed.slice(1);
-	let pois = rows.map((row) => mapKeys({...row}, (value, key) => { return translation[key]; } ));
-	await Apify.pushData(pois);
+  const requestList = new Apify.RequestList({
+    sources: [{ url: '"https://www.americasthrift.com/locations/' }],
+  });
+  await requestList.initialize();
+
+  const crawler = new Apify.CheerioCrawler({
+    requestList,
+    handlePageFunction: async ({ request, response, html, $ }) => {
+
+			// Begin scraper
+
+			const poi = {
+        locator_domain: '"https://www.americasthrift.com/locations/',
+        location_name: $('title').text(),
+        street_address: '218 Second St Sw',
+        city: 'Alabaster',
+        state: 'AL',
+        zip: '35007',
+        country_code: 'US',
+				store_number: '<MISSING>',
+				phone: '(205) 664-0777',
+				location_type: '<MISSING>',
+        latitude: 37.773500,
+        longitude: -122.417774,
+				hours_of_operation: 'mon-sat 7:30-9pm'
+			};
+
+			await Apify.pushData([poi]);
+
+			// End scraper
+
+    },
+  });
+
+  await crawler.run();
 })();
