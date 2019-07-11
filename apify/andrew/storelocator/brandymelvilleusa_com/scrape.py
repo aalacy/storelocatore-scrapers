@@ -32,10 +32,12 @@ def parse_state_results(state, country_code):
     stores = driver.find_elements_by_css_selector('div.accordion')
     for store in stores:
         location_name = store.find_element_by_css_selector('div.locations_name > p').text
+        # city cannot be found but it is equivalent to location_name
         city = location_name
         street_address = store.find_element_by_css_selector('div.locations_address > p').text
         phone = store.find_element_by_css_selector('div.locations_number > p').text
         hours_of_operation = store.find_element_by_css_selector('div.show_time').get_attribute('innerHTML')
+        # Uses google map url to fetch lat, lon
         google_url = store.find_element_by_css_selector('a').get_attribute('href')
         latitude, longitude = parse_google_url(google_url)
         state_data.append([
@@ -59,6 +61,7 @@ def fetch_data():
     data = []
     driver.get('https://www.brandymelvilleusa.com/locations')
     select_country_el = Select(driver.find_element_by_css_selector(".locations_area"))
+    # Iterate through US and Canada
     for country, country_code in [('United States', 'US'), ('Canada', 'CA')]:
         select_country_el.select_by_value(country)
         select_state_el = Select(driver.find_element_by_css_selector(".locations_state"))
@@ -66,6 +69,7 @@ def fetch_data():
             opt_state.text
             for opt_state in driver.find_elements_by_css_selector('select.locations_state > option')
         ]
+        # Iterate through available states
         for state in states:
             select_state_el.select_by_value(state)
             data.extend(
