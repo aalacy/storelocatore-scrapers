@@ -79,11 +79,17 @@ const parseLocationData = async ($, requestQueue) => {
     store.longitude = $('.coordinates meta[itemprop="longitude"]').attr('content');
     store.hours_of_operation = await getHours({$, hoursTitle: 'Store Hours'});
 
+    // the site loads data for the pharmacy location via ajax...
+    // we can call the same endpoint and use JSON.parse handlePageFunction. 
+
+    // find the pharmacy ID
     const pharmacyId = $('.js-PharmacyData').data('pharmacy-id');
     if (pharmacyId) {
+      // create a copy of the main store location object 
       const pharmacy =  Object.assign({}, store);
       pharmacy.location_type = 'Pharmacy';
 
+      // enqueue the request and pass the pre-populated object to fill in with the pharmacy-specific fields
       await requestQueue.addRequest({
         url: `https://local.acmemarkets.com/pharmacydata/${pharmacyId.toLowerCase()}.html`,
         userData: {
@@ -107,7 +113,9 @@ const parseLocationData = async ($, requestQueue) => {
   const handlePageFunction = async ({ request, response, html, $ }) => {
 
     if (request.userData.isPharmacyData) {
+      // grab the pre-populated pharmacy object attached to the request
       const locationData = request.userData.pharmacy;
+      // this request returns json
       const pharmacyData = JSON.parse(html);
       locationData.phone = pharmacyData.phones[0].number;
       locationData.hours_of_operation = JSON.stringify(pharmacyData.hours);
