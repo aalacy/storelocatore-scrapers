@@ -40,7 +40,7 @@ def fetch_data():
                 store.append(location_address[1])
                 store.append(location_address[2].split(",")[0])
                 store.append(location_address[2].split(",")[1].split(" ")[1])
-                store.append(location_address[2].split(",")[1].split(" ")[2])
+                store.append(location_address[2].split(",")[1].split(" ")[-1])
                 store.append("US")
                 store.append("<MISSING>")
                 store.append(contact_information[1])

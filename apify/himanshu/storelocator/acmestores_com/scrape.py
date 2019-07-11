@@ -37,9 +37,9 @@ def fetch_data():
             store.append(temp_address[2].split(" ")[1])
             store.append(temp_address[2].split(" ")[2])
             store.append("US")
-            store.append("<MISSING>")
-            store.append("Acme")
+            store.append(td[0].text.split("No. ")[1].split("-")[0])
             store.append(td[2].text)
+            store.append("Acme")
             geo_location = tr.find("a")["href"]
             if "&ll" in geo_location:
                 store.append(geo_location.split("&ll=")[1].split(",")[0])

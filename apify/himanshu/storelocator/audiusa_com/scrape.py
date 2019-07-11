@@ -37,18 +37,25 @@ def fetch_data():
                 store.append("US")  
                 store.append(current_store["id"])
                 store.append(current_store["phone"])
-                store.append("audi" + " " + current_store['departments'][0]["departmentCode"])
+                department_id = 0
+                open_hours = ""
+                for k in range(len(current_store["departments"])):
+                    if open_hours == "":
+                        for j in range(len(current_store["departments"][k]["hoursOfOperation"])):
+                            hoursOfOperation = current_store['departments'][k]["hoursOfOperation"]
+                            if hoursOfOperation[j]["closedIndicator"] == "N":
+                                open_hours = open_hours + hoursOfOperation[j]["name"] + " openTime " + hoursOfOperation[j]['hours'][0]["openTime"] + " closeTime " + hoursOfOperation[j]['hours'][0]["closeTime"] + " "
+                    if open_hours != "":
+                        department_id = k
+                        break
+                store.append("audi" + " " + current_store['departments'][k]["departmentCode"])
                 store.append(current_store["latitude"])
                 store.append(current_store["longitude"])
-                hoursOfOperation = current_store['departments'][0]["hoursOfOperation"]
-                open_hours = ""
-                for j in range(len(hoursOfOperation)):
-                    if hoursOfOperation[j]["closedIndicator"] == "N":
-                        open_hours = open_hours + hoursOfOperation[j]["name"] + " openTime " + hoursOfOperation[j]['hours'][0]["openTime"] + " closeTime " + hoursOfOperation[j]['hours'][0]["closeTime"] + " "
                 if open_hours== "":
-                    open_hours = "<MISSING>"
-                store.append(open_hours)
-                return_main_object.append(store)
+                    pass
+                else:
+                    store.append(open_hours)
+                    return_main_object.append(store)
     return return_main_object
 
 def scrape():
