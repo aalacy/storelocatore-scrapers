@@ -9,8 +9,7 @@ options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome('/bin/chromedriver', chrome_options=options)
-# driver = webdriver.Chrome('/usr/local/bin/chromedriver')
+driver = webdriver.Chrome('/bin/chromedriver', options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
