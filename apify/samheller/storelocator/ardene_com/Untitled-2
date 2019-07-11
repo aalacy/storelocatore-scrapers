@@ -1,0 +1,36 @@
+const Apify = require('apify');
+const puppeteer = require('puppeteer');
+
+Apify.main(async () => {
+  const data = await scrape();
+  formatted = [];
+  for (let d of data){
+    formatted.push({
+      locator_domain: 'ardene.com',
+      location_name: d.name,
+      street_address: d.address1 + " " + d.address2,
+      city: d.city,
+      state: d.stateCode,
+      zip: d.postalCode,
+      country_code: d.countryCode,
+      store_number: '<MISSING>',
+      phone: d.phone,
+      location_type: '<MISSING>',
+      latitude: d.location.lat,
+      longitude: d.location.lng,
+      hours_of_operation: d.storeHours,
+    });
+  }
+  await Apify.pushData(formatted);
+});
+
+async function scrape() {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto('https://www.ardene.com/us/en/stores/');
+  data = await page.evaluate("$.ajax({url: $('#google-map').data('updates-url'),data: {'distanceUnit': 'mi','maxDistance': 100000,'lat': '37.09024','lng': '-95.71289100000001','maxStores': 1000000},method: 'post',dataType: 'json',success: function success(response) {return response;}});");
+  await browser.close();
+  return data;
+}
+
+

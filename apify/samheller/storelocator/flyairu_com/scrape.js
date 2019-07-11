@@ -2,8 +2,6 @@ const Apify = require('apify');
 const axios = require('axios');
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
-const areaExtractRegex = RegExp(/(.*), (.*)([0-9]{5})/, 'gi')
-// const areaExtractRegex = RegExp(/(.*?), (.*?)/, 'gi')
 
 Apify.main(async () => {
   const links = await pageList();
