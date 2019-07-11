@@ -43,9 +43,10 @@ def pull_info(content):
 
 
         try:
-            # determine which piece of list state and city listed. Always one before phone number
+            # determine which piece of list contains state and zip. If it doesn't exist, go to except statement
             state_city_line = [(id, x) for id, x in enumerate(address_split, 0) if re.search('[A-Z]{2} \d{4,6}',str(x))][0][0]
-
+             
+            # use state_city_line to determine which pieces of list to include
             city = address_split[state_city_line].split(', ')[0]
 
             street_add = ' '.join([x for x in address_split[0:state_city_line]])
@@ -73,11 +74,12 @@ def pull_info(content):
         # This is so jenky, but works
         if 'Hours<' in str(store):
             hours = re.sub('</p>|\n|<p>','', re.sub('</h4>\n<p>',' ',re.findall('Hours</h4>(.*)(?:</p>|</span><br>|</p></div><div class="modules")',str(store).replace('\xa0<span>',' ').replace('\n',''))[0])).split('<')
-            # everyday is a small hack for hours that have a long string explanation
+            # everyday & dailyVisitors is a small hack for entries that should be 
             hours = [x.strip().replace('&amp;','&').split('>')[1].split(', everyday')[0].split(' dailyVisitors')[0] if '>' in x else x.split(', everyday')[0].split(' dailyVisitors')[0].strip() for x in hours]
             hours = ' '.join([x for x in hours if (((
                 ('p.m.' in x)
                 or ('pm' in x)
+                # Some hours refer only to psychiatry
                 or ('Psychiatry' in x)
                 or ('Hours' in x)
                 or (('24 hours' in x) & ('7' in x)))
