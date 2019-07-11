@@ -96,3 +96,5 @@ apify.json
 
 # Temporary
 *.swp
+
+data.csv

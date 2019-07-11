@@ -377,7 +377,7 @@ def check_values(data):
         check_latitude_and_longitude(row)
 
         if is_us(row):
-
+            
             check_us_state(row)
 
             check_us_zip(row)
