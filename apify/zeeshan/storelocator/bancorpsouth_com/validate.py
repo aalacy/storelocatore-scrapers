@@ -7,8 +7,6 @@ import us
 import zipcodes
 import re
 
-debug = True
-
 #### Utilities
 
 def touch(path):
@@ -34,10 +32,15 @@ def is_valid_phone_number(phone, country):
     except:
         return False
 
+def is_blank(field):
+    if field in ['<MISSING>', '<INACCESSIBLE>']:
+        return True
+    return bool(field)
+
 #### Country detection
 
 def fix_country(raw_country):
-    if not raw_country:
+    if is_blank(raw_country):
         return None
     normalized = raw_country.strip().lower()
     if normalized in ["us", "usa", "united states", "united states of america"]:
@@ -55,14 +58,14 @@ def is_us_zip(zip_code):
         return False
 
 def is_canada_zip(zip_code):
-    pattern = re.compile("/^[ABCEGHJ-NPRSTVXY][0-9][ABCEGHJ-NPRSTV-Z] [0-9][ABCEGHJ-NPRSTV-Z][0-9]$/")
+    pattern = re.compile("^[ABCEGHJ-NPRSTVXY][0-9][ABCEGHJ-NPRSTV-Z] [0-9][ABCEGHJ-NPRSTV-Z][0-9]$")
     return zip_code and pattern.match(zip_code)
 
 def is_us_state(state):
     return bool(us.states.lookup(state))
 
 def is_canada_state(state):
-    return state and state.strip().lower() in ['ab', 'alberta', 'bc', 'british columbia', 'mb', 'manitoba', 'nb', 'new brunswick', 'nl', 'newfoundland and labrador', 'nt', 'northwest territories', 'ns', 'nova scotia', 'nu', 'nunavut', 'on', 'ontario', 'pe', 'prince edward island', 'qc', 'quebec', 'sk', 'saskatchewan', 'yt', 'yukon']
+    return not is_blank(state) and state.strip().lower() in ['ab', 'alberta', 'bc', 'british columbia', 'mb', 'manitoba', 'nb', 'new brunswick', 'nl', 'newfoundland and labrador', 'nt', 'northwest territories', 'ns', 'nova scotia', 'nu', 'nunavut', 'on', 'ontario', 'pe', 'prince edward island', 'qc', 'quebec', 'sk', 'saskatchewan', 'yt', 'yukon']
 
 def is_us_phone(phone):
     try:
@@ -80,7 +83,7 @@ def is_us(row):
     country = fix_country(row["country_code"])
     if country == "us":
         return True
-    elif country:
+    elif not is_blank(country):
         return False
     elif row["zip"] and is_us_zip(row["zip"]):
         return True
@@ -94,7 +97,7 @@ def is_canada(row):
     country = fix_country(row["country_code"])
     if country == "ca":
         return True
-    elif country:
+    elif not is_blank(country):
         return False
     elif row["zip"] and is_canada_zip(row["zip"]):
         return True
@@ -108,7 +111,7 @@ def is_canada(row):
 
 def check_us_state(row):
     state = row["state"]
-    if state and not us.states.lookup(state.strip()):
+    if not is_blank(state) and not us.states.lookup(state.strip()):
         fail("invalid state: {}".format(state))
 
 def check_us_zip(row):
@@ -120,22 +123,22 @@ def check_us_zip(row):
 
 def check_us_phone(row):
     phone = row["phone"]
-    if phone and not is_valid_phone_number(phone, "US"):
+    if not is_blank(phone) and not is_valid_phone_number(phone, "US"):
         fail("invalid phone number: {}".format(phone))
 
 def check_canada_state(row):
     state = row["state"]
-    if state and not is_canada_state(state):
+    if not is_blank(state) and not is_canada_state(state):
         fail("invalid Canadian province/territory: {}".format(state))
 
 def check_canada_phone(row):
     phone = row["phone"]
-    if phone and not is_valid_phone_number(phone, "CA"):
+    if not is_blank(phone) and not is_valid_phone_number(phone, "CA"):
         fail("invalid Canadian phone number: {}".format(phone))
 
 def check_canada_zip(row):
     zip_code = row["zip"]
-    if zip_code and not is_canada_zip(zip_code):
+    if not is_blank(zip_code) and not is_canada_zip(zip_code):
         fail("invalid Canadian postal code: {}".format(zip_code))
 
 #### General Checks
@@ -143,11 +146,11 @@ def check_canada_zip(row):
 def check_latitude_and_longitude(row):
     latitude = row["latitude"]
     longitude = row["longitude"]
-    if not latitude and not longitude: 
+    if is_blank(latitude) and is_blank(longitude): 
         return
-    if latitude and not longitude:
+    if not is_blank(latitude) and is_blank(longitude):
         fail("latitude without corresponding longitude for row {}".format(row))
-    if longitude and not latitude:
+    if not is_blank(longitude) and is_blank(latitude):
         fail("longitude without corresponding latitude for row {}".format(row))
     if not is_number(latitude):
         fail("non-numeric latitude: {}".format(latitude))
@@ -202,6 +205,7 @@ def validate(data):
 
 data = []
 json_dir_name = sys.argv[1]
+debug = len(sys.argv) > 2 and sys.argv[2] == "DEBUG"
 
 for f_name in glob(os.path.join(json_dir_name, 'datasets/default', '*.json')):
     with open(f_name) as json_file:
