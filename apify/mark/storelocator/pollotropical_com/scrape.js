@@ -16,8 +16,11 @@ const {
   formatPhoneNumber,
   formatAddress,
   formatHours,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const dataStorage = await Apify.openKeyValueStore('tempData');
@@ -31,6 +34,20 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: false,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 3000,
+    maxConcurrency: 5,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
         // Check if the page shows the view all location element
@@ -58,11 +75,10 @@ Apify.main(async () => {
             locator_domain: 'pollotropical.com',
             location_name: name,
             ...address,
-            country_code: 'US',
+            country_code: undefined,
             store_number: undefined,
             phone,
-            location_type: 'Restaurant',
-            naics_code: undefined,
+            location_type: undefined,
           };
           await dataStorage.setValue(key, poi);
         }
@@ -78,7 +94,7 @@ Apify.main(async () => {
             urlType: 'detail',
           },
         });
-        await page.waitFor(7000);
+        await page.waitFor(5000);
       }
       if (request.userData.urlType === 'detail') {
         // Some pages have empty information for stores -> if they do skip them
@@ -100,23 +116,11 @@ Apify.main(async () => {
             };
             // Upload new
             await dataStorage.setValue(key, revisedStoreData);
-            await page.waitFor(5000);
-          }
-        } else {
-          await page.waitFor(5000);
-          if (!requestQueue.isEmpty) {
-            await requestQueue.fetchNextRequest();
+            await page.waitFor(1000);
           }
         }
       }
     },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 4,
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'load',
-    }),
   });
 
   await crawler.run();
@@ -124,7 +128,8 @@ Apify.main(async () => {
     await dataStorage.forEachKey(async (key) => {
       if (key) {
         const locationInfo = await dataStorage.getValue(key);
-        await Apify.pushData(formatData(locationInfo));
+        const poi = new Poi(locationInfo);
+        await Apify.pushData(poi);
       }
     });
   }

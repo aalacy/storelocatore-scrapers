@@ -3,12 +3,13 @@ const Apify = require('apify');
 const {
   formatPhoneNumber,
   formatHours,
-  formatData,
   parseAddress,
 } = require('./tools');
 
+const { Poi } = require('./Poi');
+
 Apify.main(async () => {
-  const browser = await Apify.launchPuppeteer({ headless: false });
+  const browser = await Apify.launchPuppeteer({ headless: true });
   const p = await browser.newPage();
   await p.goto('https://thehumanbean.com/sitemap/', { waitUntil: 'load', timeout: 0 });
   await p.waitFor(5000);
@@ -24,8 +25,21 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestList,
-    handlePageFunction: async ({ request, page }) => {
-      await page.waitFor(7000);
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 200,
+    maxConcurrency: 10,
+    handlePageFunction: async ({ page }) => {
       const dataSelector = 'body > div.site-container > div.site-inner > div > div > div > div > div > div > div > div > div > div > script';
       await page.waitForSelector(dataSelector);
       const storeData = await page.$eval(dataSelector, s => s.innerText);
@@ -65,7 +79,7 @@ Apify.main(async () => {
         storeObject.address.postalCode = addressInfo.zip;
       }
 
-      const poi = {
+      const poiData = {
         locator_domain: 'thehumanbean__com',
         location_name: undefined,
         street_address: storeObject.address.streetAddress,
@@ -76,22 +90,15 @@ Apify.main(async () => {
         store_number: undefined,
         phone: formatPhoneNumber(storeObject.telephone),
         location_type: storeObject['@type'],
-        naics_code: undefined,
         latitude: storeObject.geo.latitude,
         longitude: storeObject.geo.longitude,
         hours_of_operation: formatHours(hourData),
       };
 
-      await Apify.pushData(formatData(poi));
+      const poi = new Poi(poiData);
+
+      await Apify.pushData(poi);
     },
-    launchPuppeteerOptions: { headless: false },
-    maxRequestsPerCrawl: 100,
-    maxConcurrency: 1,
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-        timeout: 0, waitUntil: 'load',
-      }),
   });
 
   await crawler.run();

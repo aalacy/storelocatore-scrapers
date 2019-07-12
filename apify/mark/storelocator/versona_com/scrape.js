@@ -5,8 +5,9 @@ const {
   formatStreetAddress,
   formatPhoneNumber,
   formatHours,
-  formatData,
 } = require('./tools');
+
+const { Poi } = require('./Poi');
 
 Apify.main(async () => {
   const browser = await Apify.launchPuppeteer({ headless: true });
@@ -24,6 +25,20 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestList,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 100,
+    maxConcurrency: 10,
     handlePageFunction: async ({ request, page }) => {
       await page.waitForSelector('.mapAddress');
 
@@ -45,16 +60,14 @@ Apify.main(async () => {
         const cityStateObj = formatCityState(storeDetails[0]);
         const latLong = formatGeoLocation(geoLocation[index]);
 
-        const poi = {
+        const poiData = {
           locator_domain: 'shopversona__com',
           location_name: storeDetails[1],
           street_address: formatStreetAddress(storeDetails[2]),
           ...cityStateObj,
           zip: zipCodes[index],
-          country_code: 'US',
           store_number: undefined,
           phone: formatPhoneNumber(storeDetails[3]),
-          location_type: 'Store',
           naics_code: undefined,
           ...latLong,
           ...((storeDetails.length < 8) && { hours_of_operation: undefined }),
@@ -62,12 +75,10 @@ Apify.main(async () => {
             hours_of_operation: formatHours(storeDetails[5], storeDetails[6]),
           }),
         };
-        await Apify.pushData(formatData(poi));
+        const poi = new Poi(poiData);
+        await Apify.pushData(poi);
       }
     },
-    launchPuppeteerOptions: { headless: true },
-    maxRequestsPerCrawl: 100,
-    maxConcurrency: 10,
   });
 
   await crawler.run();

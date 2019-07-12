@@ -13,8 +13,9 @@ const {
   formatAddressLine1,
   formatAddressLine2,
   formatHours,
-  formatData,
 } = require('./tools');
+
+const { Poi } = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -27,6 +28,20 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 3000,
+    maxConcurrency: 10,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
         await Apify.utils.enqueueLinks({
@@ -52,30 +67,21 @@ Apify.main(async () => {
           const hoursRaw = await page.$eval(hourSelector, h => h.innerText);
 
           /* eslint-disable camelcase */
-          const poi = {
+          const poiData = {
             locator_domain: 'mybobs.com',
             location_name,
             street_address: formatAddressLine1(addressLine1),
             ...formatAddressLine2(addressLine2),
-            country_code: 'US',
+            country_code: undefined,
             phone: formatPhoneNumber(phoneNumber),
             hours_of_operation: formatHours(hoursRaw),
           };
-          await Apify.pushData(formatData(poi));
+          const poi = new Poi(poiData);
+          await Apify.pushData(poi);
           await page.waitFor(5000);
-        } else {
-          await page.waitFor(5000);
-          await requestQueue.fetchNextRequest();
         }
       }
     },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 4,
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'networkidle0',
-    }),
   });
 
   await crawler.run();

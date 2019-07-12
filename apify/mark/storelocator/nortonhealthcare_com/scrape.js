@@ -1,111 +1,76 @@
 const Apify = require('apify');
+const cheerio = require('cheerio');
+const rp = require('request-promise-native');
 
 const {
-  locationNameSelector,
-  checkAddressExists,
-  streetAddressSelector,
-  streetAddress2Selector,
-  citySelector,
-  stateSelector,
-  zipSelector,
-  phoneSelector,
-  mapButtonSelector,
-  linkSelector,
   hourSelector,
 } = require('./selectors');
 
 const {
+  formatObject,
+  formatName,
   formatPhoneNumber,
+  extractLocationType,
   formatHours,
-  parseGoogleMapsUrl,
-  formatData,
 } = require('./tools');
 
+const { Poi } = require('./Poi');
+
 Apify.main(async () => {
-  const requestQueue = await Apify.openRequestQueue();
-  await requestQueue.addRequest({
-    url: 'https://nortonhealthcare.com/sitemap-xml-location',
-    userData: {
-      urlType: 'initial',
-    },
+  const siteMapUrl = 'https://nortonhealthcare.com/hospital-sitemap.xml';
+  const xml = await rp(siteMapUrl);
+  const $c = cheerio.load(xml);
+  const urls = $c('loc').map((i, e) => ({ url: $c(e).text() })).toArray();
+
+  const requestList = new Apify.RequestList({
+    sources: urls,
   });
+  await requestList.initialize();
 
   const crawler = new Apify.PuppeteerCrawler({
-    requestQueue,
-    handlePageFunction: async ({ request, page }) => {
-      if (request.userData.urlType === 'initial') {
-        await page.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
-        const urls = await page.$$eval('span', se => se.map(s => s.innerText));
-        const locationUrls = urls.filter(e => e.match(/https:\/\/nortonhealthcare.com\/location\//))
-          .map(e => ({ url: e, userData: { urlType: 'detail' } }));
-        await page.waitFor(5000);
-        /* eslint-disable no-restricted-syntax */
-        for await (const url of locationUrls) {
-          await requestQueue.addRequest(url);
-        }
-      }
-      if (request.userData.urlType === 'detail') {
-        if (await page.$(checkAddressExists) !== null) {
-          await page.waitForSelector(locationNameSelector, { waitUntil: 'load', timeout: 0 });
-          /* eslint-disable camelcase */
-          const location_name = await page.$eval(locationNameSelector, e => e.innerText);
-          let street_address;
-          // Some addresses have two lines for the address
-          if (await page.$(streetAddress2Selector) !== null) {
-            const street1 = await page.$eval(streetAddressSelector, e => e.innerText);
-            await page.waitForSelector(streetAddress2Selector);
-            const street2 = await page.$eval(streetAddress2Selector, e => e.innerText);
-            street_address = `${street1}, ${street2}`;
-          }
-          if (await page.$(streetAddress2Selector) === null) {
-            street_address = await page.$eval(streetAddressSelector, e => e.innerText);
-          }
-          const city = await page.$eval(citySelector, e => e.innerText);
-          const state = await page.$eval(stateSelector, e => e.innerText);
-          const zip = await page.$eval(zipSelector, e => e.innerText);
-          const phoneNumberRaw = await page.$eval(phoneSelector, e => e.innerText);
-          const phone = formatPhoneNumber(phoneNumberRaw);
-          await page.click(mapButtonSelector);
-          await page.waitForSelector(linkSelector, { waitUntil: 'networkidle0', timeout: 0 });
-          const allHrefs = await page.$$eval('a', ae => ae.map(a => a.href));
-          let latLong;
-          const urlArray = allHrefs.filter(e => e.includes('https://maps.google.com/maps?ll='));
-          if (urlArray !== undefined || urlArray.length !== 0) {
-            const googleMapsUrl = urlArray[0];
-            latLong = parseGoogleMapsUrl(googleMapsUrl);
-          }
-          const hoursRaw = await page.$eval(hourSelector, e => e.innerText);
-          const hours_of_operation = formatHours(hoursRaw);
-
-          const poi = {
-            locator_domain: 'nortonhealthcare.com',
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            country_code: 'US',
-            phone,
-            ...latLong,
-            hours_of_operation,
-          };
-          await Apify.pushData(formatData(poi));
-          await page.waitFor(5000);
-        } else {
-          await page.waitFor(5000);
-          if (await requestQueue.isEmpty()) {
-            await requestQueue.fetchNextRequest();
-          }
-        }
-      }
+    requestList,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
     },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 1,
     gotoFunction: async ({
       request, page,
-    }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'load',
-    }),
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 550,
+    maxConcurrency: 10,
+    handlePageFunction: async ({ page }) => {
+      await page.waitForSelector('script', { timeout: 0, waitUntil: 'load' });
+      const allScripts = await page.$$eval('script', se => se.map(s => s.innerText));
+      const locationScriptArray = allScripts.filter(e => e.includes('GeoCoordinates'));
+      const locationScriptString = locationScriptArray[0];
+      const locationObjectPre = locationScriptString.substring('{', locationScriptString.length);
+      const locationObjectRaw = locationObjectPre.substring(0, (locationObjectPre.lastIndexOf('}') - 1));
+      const locationObject = formatObject(locationObjectRaw);
+      const hoursArray = await page.$$eval(hourSelector, se => se.map(e => e.innerText));
+
+      const poiData = {
+        locator_domain: 'nortonhealthcare.com',
+        location_name: formatName(locationObject.name),
+        street_address: locationObject.address.streetAddress,
+        city: locationObject.address.addressLocality,
+        state: locationObject.address.addressRegion,
+        zip: locationObject.address.postalCode,
+        country_code: locationObject.address.addressCountry,
+        store_number: undefined,
+        phone: formatPhoneNumber(locationObject.telephone),
+        location_type: extractLocationType(locationObject.url),
+        latitude: locationObject.geo.latitude,
+        longitude: locationObject.geo.longitude,
+        hours_of_operation: formatHours(hoursArray),
+      };
+      const poi = new Poi(poiData);
+      await Apify.pushData(poi);
+    },
   });
 
   await crawler.run();

@@ -20,8 +20,9 @@ const {
 const {
   formatPhoneNumber,
   formatHours,
-  formatData,
 } = require('./tools');
+
+const { Poi } = require('./Poi');
 
 Apify.main(async () => {
   const xml = await rp('https://www.sprint.com/locations/sitemap.xml');
@@ -36,9 +37,22 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestList,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 30000, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 10000,
+    maxConcurrency: 7,
     handlePageFunction: async ({ page }) => {
       if (await page.$(checkStoreExists) !== null) {
-        await page.waitForSelector(locationNameSelector, { waitUntil: 'load', timeout: 0 });
         /* eslint-disable camelcase */
         const location_name = await page.$eval(locationNameSelector, e => e.innerText);
         let street_address;
@@ -60,15 +74,13 @@ Apify.main(async () => {
         const phoneNumberRaw = await page.$eval(phoneSelector, p => p.innerText);
 
         const phone = formatPhoneNumber(phoneNumberRaw);
-        await page.waitForSelector(geoSelector, { waitUntil: 'load', timeout: 0 });
         const latitude = await page.$eval(geoSelector, e => e.dataset.lat);
         const longitude = await page.$eval(geoSelector, e => e.dataset.lon);
-        await page.waitForSelector(hourSelector);
         const hoursRaw = await page.$eval(hourSelector, h => h.innerText);
         const hours_of_operation = formatHours(hoursRaw);
 
-        const poi = {
-          locator_domain: 'tuesdaymorning.com',
+        const poiData = {
+          locator_domain: 'sprint.com',
           location_name,
           street_address,
           city,
@@ -76,27 +88,16 @@ Apify.main(async () => {
           zip,
           phone,
           country_code,
-          location_type: 'Store',
           latitude,
           longitude,
           hours_of_operation,
         };
-        await Apify.pushData(formatData(poi));
-        await page.waitFor(5000);
-      } else {
-        await page.waitFor(5000);
-        if (!requestList.isEmpty()) {
-          await requestList.fetchNextRequest();
-        }
+
+        const poi = new Poi(poiData);
+        await Apify.pushData(poi);
+        await page.waitFor(1000);
       }
     },
-    maxRequestsPerCrawl: 10000,
-    maxConcurrency: 7,
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'load',
-    }),
   });
 
   await crawler.run();

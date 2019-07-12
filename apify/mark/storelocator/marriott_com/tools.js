@@ -1,7 +1,6 @@
 const Apify = require('apify');
 const _ = require('lodash');
-
-const noDataLabel = 'NO-DATA';
+const { Poi } = require('./Poi');
 
 const getLastPage = (array) => {
   const paginationTags = array.map(a => a.replace(/\s/g, '').replace(/\D/g, '')).filter(e => e.length > 0).map(r => parseInt(r, 10));
@@ -21,41 +20,6 @@ const countryCodeCheck = (string) => {
   }
   return undefined;
 };
-
-// Simply receives data from the scrape, then formats it.
-const formatData = ({
-  // If any data points are undefined / null, return 'NO-DATA'
-  locator_domain: locator_domain = noDataLabel,
-  location_name: location_name = noDataLabel,
-  street_address: street_address = noDataLabel,
-  city: city = noDataLabel,
-  state: state = noDataLabel,
-  zip: zip = noDataLabel,
-  country_code: country_code = noDataLabel,
-  store_number: store_number = noDataLabel,
-  phone: phone = noDataLabel,
-  location_type: location_type = noDataLabel,
-  naics = noDataLabel,
-  latitude: latitude = noDataLabel,
-  longitude: longitude = noDataLabel,
-  hours_of_operation: hours_of_operation = noDataLabel,
-}) => ({
-  // Then set the label similar to the template and make adjustments if not labelled
-  locator_domain,
-  location_name,
-  street_address,
-  city,
-  state,
-  zip,
-  country_code,
-  store_number,
-  phone,
-  location_type,
-  naics_code: naics,
-  latitude,
-  longitude,
-  hours_of_operation,
-});
 
 async function pushDetail({ page }) {
   const outerPropertySelector = '.js-property-list-container > div';
@@ -79,7 +43,7 @@ async function pushDetail({ page }) {
 
   /* eslint-disable no-restricted-syntax */
   for await (const locationObject of dataResult) {
-    const poi = {
+    const poiData = {
       locator_domain: 'marriott.com__search__findHotels.mi',
       location_name: locationObject.hotelName,
       ...((locationObject.phoneNumber === '' || locationObject.phoneNumber === undefined) && { street_address: locationObject.address }),
@@ -91,13 +55,12 @@ async function pushDetail({ page }) {
       store_number: undefined,
       phone: formatPhoneNumber(locationObject.phoneNumber),
       location_type: locationObject.brand,
-      naics_code: undefined,
       latitude: locationObject.lat,
       longitude: locationObject.longitude,
       hours_of_operation: undefined,
     };
-
-    await Apify.pushData(formatData(poi));
+    const poi = new Poi(poiData);
+    await Apify.pushData(poi);
   }
 }
 
@@ -106,6 +69,5 @@ module.exports = {
   formatPhoneNumber,
   removeSpaces,
   countryCodeCheck,
-  formatData,
   pushDetail,
 };

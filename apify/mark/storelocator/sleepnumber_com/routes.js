@@ -3,7 +3,6 @@ const Apify = require('apify');
 const enqueueStatePages = async ({ page }, { requestQueue }) => Apify.utils.enqueueLinks({
   page,
   requestQueue,
-  selectors: '#main > div > div.StateList-container > div > div > div > div > div a',
   pseudoUrls: [
     'https://stores.sleepnumber.com/[[a-z]][[a-z]].html',
   ],
@@ -15,7 +14,6 @@ const enqueueStatePages = async ({ page }, { requestQueue }) => Apify.utils.enqu
 const enqueueCityPages = async ({ page }, { requestQueue }) => Apify.utils.enqueueLinks({
   page,
   requestQueue,
-  selectors: 'a',
   pseudoUrls: [
     'https://stores.sleepnumber.com/[[a-z]][[a-z]]/[(\\w|-)+].html',
   ],
@@ -27,9 +25,8 @@ const enqueueCityPages = async ({ page }, { requestQueue }) => Apify.utils.enque
 const enqueueDetailPages = async ({ page }, { requestQueue }) => Apify.utils.enqueueLinks({
   page,
   requestQueue,
-  selectors: 'a',
   pseudoUrls: [
-    'https://stores.sleepnumber.com/[[a-z]][[a-z]]/[.*]/[.*].html',
+    'https://stores.sleepnumber.com/[[a-z]][[a-z]]/[(\\w|-)+]/[(\\w|-)+].html',
   ],
   userData: {
     urlType: 'detail',

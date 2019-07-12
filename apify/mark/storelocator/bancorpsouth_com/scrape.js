@@ -3,9 +3,15 @@ const cheerio = require('cheerio');
 const rp = require('request-promise-native');
 const _ = require('underscore');
 const {
-  formatPhoneNumber, parseGoogleMapsUrl, formatStreetAddress,
-  parseAddress, checkLocationType, formatData,
+  formatPhoneNumber,
+  parseGoogleMapsUrl,
+  formatStreetAddress,
+  parseAddress,
+  checkLocationType,
 } = require('./tools');
+const {
+  Poi,
+} = require('./Poi');
 
 const { log } = Apify.utils;
 const bancorpSitemap = 'https://www.bancorpsouth.com/sitemap.xml';
@@ -46,24 +52,24 @@ Apify.main(async () => {
       const googleMapsUrl = await page.$eval('#google-map > div > div > div:nth-child(3) > a', e => e.getAttribute('href'));
       const coordinates = parseGoogleMapsUrl(googleMapsUrl);
 
-      const poi = {
+      const poiData = {
         locator_domain: 'bancorpsouth.com',
         location_name: locationName,
         street_address: formatStreetAddress(infoBlockLeftClean[0], infoBlockLeftClean[1]),
         ...cityStateZipObj,
-        country_code: 'US',
+        country_code: undefined,
         phone: formatPhoneNumber(infoBlockLeftClean[3]),
         location_type: checkLocationType(request.url),
         ...coordinates,
         hours_of_operation: infoBlockRightClean,
       };
-
-      await Apify.pushData(formatData(poi));
+      const poi = new Poi(poiData);
+      await Apify.pushData(poi);
     },
     launchPuppeteerOptions: { headless: true },
     maxRequestsPerCrawl: 500,
     maxConcurrency: 10,
-    maxRequestRetries: 3,
+    maxRequestRetries: 1,
     handlePageTimeoutSecs: 60,
     handleFailedRequestFunction: ({ request }) => {
       const details = _.pick(request, 'id', 'url', 'method', 'uniqueKey');

@@ -7,28 +7,26 @@ const {
 } = require('./routes');
 
 const {
-  locationInfoExists,
   locationNameSelector,
-  checkAddressSelector,
   streetSelector,
+  streetAddress2Selector,
   citySelector,
   stateSelector,
   zipSelector,
-  streetAddress2Selector,
-  cityAddress2Selector,
-  stateAddress2Selector,
-  zipAddress2Selector,
+  countrySelector,
   phoneSelector,
-  googleMapsUrlSelector,
+  latitudeSelector,
+  longitudeSelector,
   hourSelector,
 } = require('./selectors');
 
 const {
+  formatName,
   formatPhoneNumber,
   formatHours,
-  parseGoogleMapsUrl,
-  formatData,
 } = require('./tools');
+
+const { Poi } = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -41,6 +39,21 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 30000, waitUntil: 'load',
+      });
+    },
+    maxRequestsPerCrawl: 700,
+    maxConcurrency: 5,
+    maxRequestRetries: 2,
     handlePageFunction: async ({ request, page }) => {
       // Site has inner layers that also have details links
       if (request.userData.urlType === 'initial') {
@@ -58,68 +71,43 @@ Apify.main(async () => {
         await enqueueDetailPages({ page }, { requestQueue });
       }
       if (request.userData.urlType === 'detail') {
-        if (await page.$(locationInfoExists) !== null) {
-          await page.waitForSelector(locationNameSelector, { waitUntil: 'load', timeout: 0 });
-          /* eslint-disable camelcase */
-          const location_name = await page.$eval(locationNameSelector, e => e.innerText);
-          let street_address;
-          let city;
-          let state;
-          let zip;
-          const locationAddressElements = await page.$$eval(checkAddressSelector, h => h);
-          // Some addresses have two lines for the address
-          if (locationAddressElements.length === 4) {
-            const street1 = await page.$eval(streetSelector, e => e.innerText);
-            const street2 = await page.$eval(streetAddress2Selector, e => e.innerText);
-            street_address = `${street1}, ${street2}`;
-            city = await page.$eval(cityAddress2Selector, e => e.innerText);
-            state = await page.$eval(stateAddress2Selector, e => e.innerText);
-            zip = await page.$eval(zipAddress2Selector, e => e.innerText);
-          }
-          if (locationAddressElements.length === 3) {
-            street_address = await page.$eval(streetSelector, e => e.innerText);
-            city = await page.$eval(citySelector, e => e.innerText);
-            state = await page.$eval(stateSelector, e => e.innerText);
-            zip = await page.$eval(zipSelector, e => e.innerText);
-          }
-          const phoneNumberRaw = await page.$eval(phoneSelector, p => p.innerText);
-          const hoursRaw = await page.$eval(hourSelector, h => h.innerText);
-          const phone = formatPhoneNumber(phoneNumberRaw);
-          await page.waitForSelector(googleMapsUrlSelector, { waitUntil: 'load', timeout: 0 });
-          const googleMapsUrl = await page.$eval(googleMapsUrlSelector, e => e.href);
-          const latLong = parseGoogleMapsUrl(googleMapsUrl);
-          const hours_of_operation = formatHours(hoursRaw);
-
-          const poi = {
-            locator_domain: 'stores.sleepnumber.com',
-            location_name,
-            street_address,
-            city,
-            state,
-            zip,
-            phone,
-            country_code: 'US',
-            location_type: 'Store',
-            ...latLong,
-            hours_of_operation,
-          };
-          await Apify.pushData(formatData(poi));
-          await page.waitFor(5000);
-        } else {
-          await page.waitFor(5000);
-          if (!requestQueue.isEmpty) {
-            await requestQueue.fetchNextRequest();
-          }
+        /* eslint-disable camelcase */
+        const locationNameRaw = await page.$eval(locationNameSelector, e => e.innerText);
+        const location_name = formatName(locationNameRaw);
+        let street_address = await page.$eval(streetSelector, e => e.innerText);
+        if (await page.$(streetAddress2Selector) !== null) {
+          const streetAddress2 = await page.$eval(streetAddress2Selector, e => e.innerText);
+          street_address += `, ${streetAddress2}`;
         }
+        const city = await page.$eval(citySelector, e => e.innerText);
+        const state = await page.$eval(stateSelector, e => e.innerText);
+        const zip = await page.$eval(zipSelector, e => e.innerText);
+        const phoneNumberRaw = await page.$eval(phoneSelector, p => p.innerText);
+        const country_code = await page.$eval(countrySelector, e => e.innerText);
+        const phone = formatPhoneNumber(phoneNumberRaw);
+        const latitude = await page.$eval(latitudeSelector, e => e.getAttribute('content'));
+        const longitude = await page.$eval(longitudeSelector, e => e.getAttribute('content'));
+        const hoursRaw = await page.$eval(hourSelector, h => h.innerText);
+        const hours_of_operation = formatHours(hoursRaw);
+
+        const poiData = {
+          locator_domain: 'stores.sleepnumber.com',
+          location_name,
+          street_address,
+          city,
+          state,
+          zip,
+          country_code,
+          phone,
+          latitude,
+          longitude,
+          hours_of_operation,
+        };
+        const poi = new Poi(poiData);
+        await Apify.pushData(poi);
+        await page.waitFor(2000);
       }
     },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 3,
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'load',
-    }),
   });
 
   await crawler.run();

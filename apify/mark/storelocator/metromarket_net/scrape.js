@@ -30,8 +30,8 @@ Apify.main(async () => {
       useChrome: true,
       stealth: true
     },
-		handlePageFunction: async ({ request, page }) => {
-			const isBlocked = await page.evaluate(() => {
+    handlePageFunction: async ({ request, page }) => {
+      const isBlocked = await page.evaluate(() => {
         return document.body.innerText.startsWith('Access Denied')
       });
       if (isBlocked) {

@@ -3,8 +3,11 @@ const Apify = require('apify');
 const {
   formatObject,
   formatPhoneNumber,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -14,16 +17,32 @@ Apify.main(async () => {
       urlType: 'initial',
     },
   });
-
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
-    handlePageFunction: async ({ request, page }) => {
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 1800,
+    maxConcurrency: 10,
+    handlePageFunction: async ({
+      request, page, skipLinks,
+      skipOutput,
+    }) => {
       if (request.userData.urlType === 'initial') {
         await page.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
         const urls = await page.$$eval('span', se => se.map(s => s.innerText));
         const locationUrls = urls.filter(e => e.match(/local.firestonecompleteautocare.com\//))
           .map(e => ({ url: e, userData: { urlType: 'state' } }));
-        await page.waitFor(5000);
+        await page.waitFor(3000);
         /* eslint-disable no-restricted-syntax */
         for await (const url of locationUrls) {
           await requestQueue.addRequest(url);
@@ -34,7 +53,7 @@ Apify.main(async () => {
         const urls = await page.$$eval('span', se => se.map(s => s.innerText));
         const locationUrls = urls.filter(e => e.match(/https:\/\/local.firestonecompleteautocare.com\/(\w|-)+\/(\w|-)+\/(?=.*[0-9])(?=.*[a-z])([a-z0-9_-]+)\//))
           .map(e => ({ url: e, userData: { urlType: 'detail' } }));
-        await page.waitFor(5000);
+        await page.waitFor(3000);
         /* eslint-disable no-restricted-syntax */
         for await (const url of locationUrls) {
           await requestQueue.addRequest(url);
@@ -48,7 +67,14 @@ Apify.main(async () => {
           if (indexContainingLocation !== -1) {
             const locationObjectRaw = allScripts[indexContainingLocation];
             const locationObject = formatObject(locationObjectRaw);
-            const poi = {
+            const hoursArray = locationObject.openingHoursSpecification;
+            const hoursArrayFix = hoursArray.map((e) => {
+              const dayOfWeek = e.dayOfWeek.replace('http://schema.org/', '');
+              return `${dayOfWeek} ${e.opens}: ${e.closes}`;
+            });
+            /* eslint-disable camelcase */
+            const hours_of_operation = hoursArrayFix.join(', ');
+            const poiData = {
               locator_domain: 'firestonecompleteautocare.com',
               location_name: locationObject.name,
               street_address: locationObject.address.streetAddress,
@@ -59,34 +85,22 @@ Apify.main(async () => {
               store_number: locationObject.branchCode,
               phone: formatPhoneNumber(locationObject.telephone),
               location_type: locationObject['@type'],
-              naics_code: undefined,
               latitude: locationObject.geo.latitude,
               longitude: locationObject.geo.longitude,
-              hours_of_operation: locationObject.openingHoursSpecification,
+              hours_of_operation,
             };
-            await Apify.pushData(formatData(poi));
-            await page.waitFor(7000);
+            const poi = new Poi(poiData);
+            await Apify.pushData(poi);
           } else {
-            await page.waitFor(5000);
-            if (requestQueue.isEmpty()) {
-              await requestQueue.fetchNextRequest();
-            }
+            await skipOutput();
+            await skipLinks();
           }
         } else {
-          await page.waitFor(5000);
-          if (requestQueue.isEmpty()) {
-            await requestQueue.fetchNextRequest();
-          }
+          await skipOutput();
+          await skipLinks();
         }
       }
     },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 3,
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'networkidle0',
-    }),
   });
 
   await crawler.run();

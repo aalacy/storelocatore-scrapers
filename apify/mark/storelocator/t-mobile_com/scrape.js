@@ -12,8 +12,9 @@ const {
   formatAddressOneLine,
   formatPhoneNumber,
   formatHours,
-  formatData,
 } = require('./tools');
+
+const { Poi } = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -26,6 +27,20 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 6000,
+    maxConcurrency: 10,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
         await page.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
@@ -40,8 +55,7 @@ Apify.main(async () => {
       }
       if (request.userData.urlType === 'detail') {
         if (await page.$('#schemaDataID') !== null) {
-          let poi;
-          await page.waitForSelector('#schemaDataID');
+          let poiData;
           const locationObjectRaw = await page.$eval('#schemaDataID', e => e.innerText);
           // Means no JSON - ld formatted data so pull without
           if (locationObjectRaw === '' || locationObjectRaw.length === 0) {
@@ -51,7 +65,7 @@ Apify.main(async () => {
             const phoneRaw = await page.$eval(phoneSelector, e => e.innerText);
             const address = formatAddressOneLine(addressRaw);
             const phone = formatPhoneNumber(phoneRaw);
-            poi = {
+            poiData = {
               locator_domain: 't-mobile.com',
               location_name,
               ...address,
@@ -66,7 +80,7 @@ Apify.main(async () => {
               const hoursRaw = await page.$eval(hoursSelector, e => e.innerText);
               hours_of_operation = formatHours(hoursRaw);
             }
-            poi = {
+            poiData = {
               locator_domain: 't-mobile.com',
               location_name: locationObject.name,
               street_address: locationObject.address.streetAddress,
@@ -77,31 +91,17 @@ Apify.main(async () => {
               store_number: locationObject.branchCode,
               phone: formatPhoneNumber(locationObject.telephone),
               location_type: locationObject['@type'],
-              naics_code: undefined,
               latitude: locationObject.geo.latitude,
               longitude: locationObject.geo.longitude,
               hours_of_operation,
             };
           }
-          await Apify.pushData(formatData(poi));
-          await page.waitFor(7000);
-        } else {
-          await page.waitFor(5000);
-          if (requestQueue.isEmpty()) {
-            await requestQueue.fetchNextRequest();
-          }
+          const poi = new Poi(poiData);
+          await Apify.pushData(poi);
+          await page.waitFor(3000);
         }
       }
     },
-    maxRequestsPerCrawl: 6000,
-		maxConcurrency: 10,
-		minConcurrency: 6,
-		handlePageTimeoutSecs: 1200,
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'networkidle2',
-    }),
   });
 
   await crawler.run();

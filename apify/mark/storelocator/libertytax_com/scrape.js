@@ -14,8 +14,11 @@ const {
 const {
   formatPhoneNumber,
   formatHours,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -28,6 +31,29 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: false,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      // Get current cookies from the page for certain URL
+      const cookies = await page.cookies(request.url);
+      // And remove them
+      await page.deleteCookie(...cookies);
+      await page.setViewport({
+        width: 1920,
+        height: 1080,
+        deviceScaleFactor: 1,
+      });
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 3000,
+    maxConcurrency: 1,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
         await page.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
@@ -35,6 +61,7 @@ Apify.main(async () => {
         const locationUrls = urls.filter(e => e.match(/libertytax.com\/income-tax-preparation-locations\//))
           .map(e => ({ url: e, userData: { urlType: 'detail' } }));
         await page.waitFor(5000);
+        console.log(locationUrls.length);
         /* eslint-disable no-restricted-syntax */
         for await (const url of locationUrls) {
           await requestQueue.addRequest(url);
@@ -57,7 +84,7 @@ Apify.main(async () => {
           const longitude = await page.$eval(longitudeSelector, e => e.getAttribute('content'));
           const hours_of_operation = formatHours(hoursRaw);
 
-          const poi = {
+          const poiData = {
             locator_domain: 'libertytax.com',
             location_name,
             street_address,
@@ -69,20 +96,11 @@ Apify.main(async () => {
             longitude,
             hours_of_operation,
           };
-          await Apify.pushData(formatData(poi));
-          await page.waitFor(5000);
-        } else {
-          await requestQueue.fetchNextRequest();
+          const poi = new Poi(poiData);
+          await Apify.pushData(poi);
         }
       }
     },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 3,
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'load',
-    }),
   });
 
   await crawler.run();

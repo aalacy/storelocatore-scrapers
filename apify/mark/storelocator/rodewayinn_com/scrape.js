@@ -1,6 +1,8 @@
 const Apify = require('apify');
 const _ = require('underscore');
-const { formatPhoneNumber, formatData } = require('./tools');
+const { formatPhoneNumber } = require('./tools');
+
+const { Poi } = require('./Poi');
 
 // For test purposes
 // const { data } = require('./testurls');
@@ -47,6 +49,22 @@ Apify.main(async () => {
   /* eslint-disable no-unused-vars */
   const crawler = new Apify.PuppeteerCrawler({
     requestList,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 700,
+    maxConcurrency: 10,
+    maxRequestRetries: 1,
+    handlePageTimeoutSecs: 60,
     handlePageFunction: async ({ request, page }) => {
       // Choice Hotels redirects to a new page if a hotel is not on their map (incomplete listing)
       // We're checking to make sure we aren't redirected to a generic hotel search page
@@ -64,7 +82,7 @@ Apify.main(async () => {
         const phone = await page.$eval('#property > div > div > div > section > div.contact > span:nth-child(2)', e => e.innerText);
         const latitude = await page.$eval('#property > div > div > div > section > div:nth-child(2) > span', e => e.getAttribute('content'));
         const longitude = await page.$eval('#property > div > div > div > section > div:nth-child(2) > span > span', e => e.getAttribute('content'));
-        const poi = {
+        const poiData = {
           locator_domain: 'choicehotels.com__rodeway-inn',
           location_name: locationName,
           street_address: streetAddress,
@@ -73,27 +91,19 @@ Apify.main(async () => {
           zip,
           country_code: country,
           phone: formatPhoneNumber(phone),
-          location_type: 'Hotel',
+          location_type: undefined,
           latitude,
           longitude,
         };
-        await Apify.pushData(formatData(poi));
+        const poi = new Poi(poiData);
+        await Apify.pushData(poi);
       }
     },
-    launchPuppeteerOptions: { headless: true },
-    maxRequestsPerCrawl: 700,
-    maxConcurrency: 10,
-    maxRequestRetries: 1,
-    handlePageTimeoutSecs: 60,
+
     handleFailedRequestFunction: ({ request }) => {
       const details = _.pick(request, 'id', 'url', 'method', 'uniqueKey');
       log.error('Rodeway Inn Crawler: Request failed and reached maximum retries', { errorDetails: details });
     },
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-        timeout: 0, waitUntil: 'networkidle0',
-      }),
   });
 
   await crawler.run();

@@ -6,8 +6,12 @@ const {
 const {
   formatObject,
   formatPhoneNumber,
-  formatData,
+  extractHourString,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -20,7 +24,23 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
-    handlePageFunction: async ({ request, page }) => {
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 3000,
+    maxConcurrency: 10,
+    handlePageFunction: async ({
+      request, page, skipOutput,
+    }) => {
       if (request.userData.urlType === 'initial') {
         await page.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
         const urls = await page.$$eval('span', se => se.map(s => s.innerText));
@@ -38,38 +58,27 @@ Apify.main(async () => {
           const locationObjectRaw = await page.$eval(locationObjectSelector, s => s.innerText);
           const locationObject = formatObject(locationObjectRaw);
 
-          const poi = {
+          const poiData = {
             locator_domain: 'fredmeyer.com',
             location_name: locationObject.name,
             street_address: locationObject.address.streetAddress,
             city: locationObject.address.addressLocality,
             state: locationObject.address.addressRegion,
             zip: locationObject.address.postalCode,
-            country_code: 'US',
+            country_code: undefined,
             store_number: undefined,
             phone: formatPhoneNumber(locationObject.telephone),
             location_type: locationObject['@type'],
-            naics_code: undefined,
             latitude: locationObject.geo.latitude,
             longitude: locationObject.geo.longitude,
-            hours_of_operation: locationObject.openingHours,
+            hours_of_operation: extractHourString(locationObject.openingHours),
           };
-          await Apify.pushData(formatData(poi));
-          await page.waitFor(10000);
+          const poi = new Poi(poiData);
+          await Apify.pushData(poi);
         } else {
-          await requestQueue.fetchNextRequest();
+          await skipOutput();
         }
       }
-    },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 1,
-    gotoFunction: async ({
-      request, page,
-    }) => {
-      await Apify.utils.puppeteer.hideWebDriver(page);
-      await page.goto(request.url, {
-        timeout: 0, waitUntil: 'load',
-      });
     },
   });
 
