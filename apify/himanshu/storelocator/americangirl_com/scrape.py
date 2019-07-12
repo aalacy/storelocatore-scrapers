@@ -31,22 +31,31 @@ def fetch_data():
             store = []
             store.append("https://www.americangirl.com")
             store.append(name)
-            store.append(store_data["locationName"].split(",")[-3])
-            store.append(store_data["locationName"].split(",")[-2])
-            store.append(store_data["locationName"].split(",")[-1].split(" ")[1])
-            store.append(store_data["locationName"].split(",")[-1].split(" ")[-1])
+            if len(store_data["locationName"].split(",")) == 2 and "New York" in store_data["locationName"]:
+                store.append(store_data["locationName"].split("New York")[0])
+                store.append("New York")
+                store.append(store_data["locationName"].split(",")[-1].split(" ")[1])
+                store.append(store_data["locationName"].split(",")[-1].split(" ")[-1])
+            else:
+                store.append(store_data["locationName"].split(",")[-3])
+                store.append(store_data["locationName"].split(",")[-2])
+                store.append(store_data["locationName"].split(",")[-1].split(" ")[1])
+                store.append(store_data["locationName"].split(",")[-1].split(" ")[-1])
             store.append("US")
             store.append("<MISSING>")
-            phone = location_soup.find_all("b")[2].text[:-1]
-            if phone == "Make a reservatio":
-                phone = location_soup.find_all("b")[3].text[:-1]
+            if len(location_soup.find_all("b")) < 3:
+                phone = "<MISSING>"
+            else:
+                phone = location_soup.find_all("b")[2].text[:-1]
+                if phone == "Make a reservatio":
+                    phone = location_soup.find_all("b")[3].text[:-1]
             store.append(phone)
             store.append("americangirl")
             store.append(store_data["lattitude"])
             store.append(store_data["longitude"])
             store.append(" ".join(hours))
             return_main_object.append(store)
-        except:
+        except Exception as e:
                 pass
     return return_main_object
 
