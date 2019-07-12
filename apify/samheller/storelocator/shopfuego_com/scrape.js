@@ -84,7 +84,9 @@ async function pageList(){
     dom = new JSDOM(resp.data);
     links = [];
     for (let l of dom.window.document.querySelectorAll('td > a')){
-      links.push({url: "http://shopfuego.com" + l.getAttribute('href')})
+      href = l.getAttribute('href');
+      if (!href.startsWith('http')){href = "http://shopfuego.com" + href;}
+      links.push({url: href})
     }
     return links;
   })

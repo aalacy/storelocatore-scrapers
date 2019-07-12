@@ -19,7 +19,7 @@ Apify.main(async () => {
           street_address: d.address1 + " " + d.address2,
           city: fixCity(d.city),
           state: fixState(d.stateCode),
-          zip: d.postalCode,
+          zip: d.postalCode.trim(),
           country_code: d.countryCode,
           store_number: '<MISSING>',
           phone: d.phone,
