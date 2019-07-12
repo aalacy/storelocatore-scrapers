@@ -1,4 +1,4 @@
-const noDataLabel = 'NO-DATA';
+const parser = require('parse-address');
 
 const formatPhoneNumber = (string) => {
   if (!string) {
@@ -14,6 +14,30 @@ const formatPhoneNumber = (string) => {
   return number;
 };
 
+const formatStreetAddress = (string) => {
+  if (!string) {
+    return undefined;
+  }
+  return string.trim().replace(/\n/g, '').replace(/\s\s+/g, '');
+};
+
+const dirtyParse = (string) => {
+  const trimmedString = string.trim();
+  const street_address = trimmedString.substring(0, (trimmedString.indexOf('<br>') - 1));
+  const removeStreetAddress = trimmedString.substring((trimmedString.indexOf('<br>') + 4), trimmedString.length);
+  const city = removeStreetAddress.substring(0, removeStreetAddress.indexOf(',')).trim();
+  const removeCity = removeStreetAddress.substring((removeStreetAddress.indexOf(',') + 2), removeStreetAddress.length);
+  const zipStartChar = removeCity.match(/\d/)[0];
+  const state = removeCity.substring(0, removeCity.indexOf(zipStartChar)).trim();
+  const zip = removeCity.substring(removeCity.indexOf(zipStartChar), removeCity.length).trim();
+  return {
+    street_address,
+    city,
+    state,
+    zip,
+  };
+};
+
 const formatAddress = (string) => {
   if (!string) {
     return {
@@ -24,13 +48,21 @@ const formatAddress = (string) => {
     };
   }
   const trimmedString = string.trim();
-  /* eslint-disable camelcase */
-  const street_address = trimmedString.substring(0, (trimmedString.indexOf('<br>') - 1));
-  const city = trimmedString.substring((trimmedString.indexOf('<br>') + 4), trimmedString.indexOf(',')).trim();
-  const frontOfCityIndex = trimmedString.indexOf(city) + city.length + 2;
-  const state = trimmedString.substring(frontOfCityIndex, (frontOfCityIndex + 3)).trim();
-  const frontOfStateIndex = trimmedString.indexOf(state) + state.length + 1;
-  const zip = trimmedString.substring(frontOfStateIndex, trimmedString.length).trim();
+  const removeBr = trimmedString.replace(/\s<br>/g, ',');
+  const removeSpaces = removeBr.replace(/\n/g, '').replace(/\t/g, '').replace(/\s\s+/g, ' ');
+  const addressObject = parser.parseAddress(removeSpaces);
+
+  // Sometimes parse-address fails, so do our own simple parse
+  if (!addressObject) {
+    return dirtyParse(string);
+  }
+
+  const streetAddressRaw = string.substring(0, string.indexOf('<br>'));
+  const street_address = formatStreetAddress(streetAddressRaw);
+  const { city } = addressObject;
+  const { state } = addressObject;
+  const { zip } = addressObject;
+
   return {
     street_address,
     city,
@@ -48,44 +80,14 @@ const formatHours = (string) => {
   return hoursRemovedEndBreak;
 };
 
-// Simply receives data from the scrape, then formats it.
-const formatData = ({
-  // If any data points are undefined / null, return 'NO-DATA'
-  locator_domain: locator_domain = noDataLabel,
-  location_name: location_name = noDataLabel,
-  street_address: street_address = noDataLabel,
-  city: city = noDataLabel,
-  state: state = noDataLabel,
-  zip: zip = noDataLabel,
-  country_code: country_code = noDataLabel,
-  store_number: store_number = noDataLabel,
-  phone: phone = noDataLabel,
-  location_type: location_type = noDataLabel,
-  naics = noDataLabel,
-  latitude: latitude = noDataLabel,
-  longitude: longitude = noDataLabel,
-  hours_of_operation: hours_of_operation = noDataLabel,
-}) => ({
-  // Then set the label similar to the template and make adjustments if not labelled
-  locator_domain,
-  location_name,
-  street_address,
-  city,
-  state,
-  zip,
-  country_code,
-  store_number,
-  phone,
-  location_type,
-  naics_code: naics,
-  latitude,
-  longitude,
-  hours_of_operation,
-});
+const removeEmptyStringProperties = object => Object.keys(object).reduce((acc, key) => {
+  acc[key] = object[key] === '' ? undefined
+    : object[key]; return acc;
+}, {});
 
 module.exports = {
   formatPhoneNumber,
   formatAddress,
   formatHours,
-  formatData,
+  removeEmptyStringProperties,
 };

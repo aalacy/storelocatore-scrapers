@@ -22,8 +22,11 @@ const {
 const {
   formatPhoneNumber,
   formatHours,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -36,7 +39,21 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
-    handlePageFunction: async ({ request, page }) => {
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 3000,
+    maxConcurrency: 10,
+    handlePageFunction: async ({ request, page, skipOutput }) => {
       // Site has inner layers that also have details links
       if (request.userData.urlType === 'initial') {
         await page.waitFor(5000);
@@ -77,7 +94,7 @@ Apify.main(async () => {
           const phone = formatPhoneNumber(phoneNumberRaw);
           const hours_of_operation = formatHours(hoursRaw);
 
-          const poi = {
+          const poiData = {
             locator_domain: 'haircuttery.com',
             location_name,
             street_address,
@@ -85,27 +102,17 @@ Apify.main(async () => {
             state,
             zip,
             phone,
-            country_code: 'US',
-            location_type: 'Salon',
+            country_code: undefined,
+            location_type: undefined,
             hours_of_operation,
           };
-          await Apify.pushData(formatData(poi));
-          await page.waitFor(5000);
+          const poi = new Poi(poiData);
+          await Apify.pushData(poi);
         } else {
-          await page.waitFor(5000);
-          if (!requestQueue.isEmpty) {
-            await requestQueue.fetchNextRequest();
-          }
+          await skipOutput();
         }
       }
     },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 3,
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'load',
-    }),
   });
 
   await crawler.run();

@@ -16,6 +16,21 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 100,
+    maxConcurrency: 1,
+    maxRequestRetries: 4,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
         const canadaTabSelector = '.tile-directory-result > div:nth-child(5) > h3 > a';
@@ -52,19 +67,9 @@ Apify.main(async () => {
             await page.waitForSelector(nextPageSelector, { waitUntil: 'load', timeout: 0 });
             await page.click(nextPageSelector);
           }
-          if (currentPage === totalPages.length) {
-            await requestQueue.fetchNextRequest();
-          }
         }
       }
     },
-    maxRequestsPerCrawl: 100,
-    maxConcurrency: 1,
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'load',
-    }),
   });
 
   await crawler.run();

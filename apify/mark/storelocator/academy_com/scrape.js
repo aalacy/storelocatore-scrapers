@@ -24,8 +24,11 @@ const {
 const {
   formatPhoneNumber,
   formatHours,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -92,7 +95,7 @@ Apify.main(async () => {
             street_address = 'Coming Soon';
           }
 
-          const poi = {
+          const poiData = {
             locator_domain: 'academy.com',
             location_name,
             street_address,
@@ -101,28 +104,25 @@ Apify.main(async () => {
             zip,
             phone,
             country_code,
-            location_type: 'Store',
             latitude,
             longitude,
             hours_of_operation,
           };
-          await Apify.pushData(formatData(poi));
-          await page.waitFor(5000);
-        } else {
-          await page.waitFor(5000);
-          if (!requestQueue.isEmpty) {
-            await requestQueue.fetchNextRequest();
-          }
+          const poi = new Poi(poiData);
+          await Apify.pushData(poi);
         }
       }
     },
     maxRequestsPerCrawl: 3000,
-    maxConcurrency: 5,
+    maxConcurrency: 10,
+    launchPuppeteerOptions: {
+      headless: true,
+    },
     gotoFunction: async ({
       request, page,
     }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'load',
-    }),
+        timeout: 0, waitUntil: 'networkidle0',
+      }),
   });
 
   await crawler.run();

@@ -2,7 +2,12 @@ const Apify = require('apify');
 const cheerio = require('cheerio');
 const rp = require('request-promise-native');
 const _ = require('underscore');
-const { formatData } = require('./tools');
+const {
+  formatPhoneNumber,
+  extractHourString,
+} = require('./tools');
+
+const { Poi } = require('./Poi');
 
 const { log } = Apify.utils;
 const verizonurl = 'https://www.verizonwireless.com/sitemap_storelocator.xml?intcmp=vzwdom';
@@ -23,8 +28,8 @@ Apify.main(async () => {
   const crawler = new Apify.CheerioCrawler({
     requestList,
     minConcurrency: 1,
-    maxConcurrency: 5,
-    maxRequestRetries: 3,
+    maxConcurrency: 10,
+    maxRequestRetries: 2,
     handlePageTimeoutSecs: 60,
     handleFailedRequestFunction: ({ request }) => {
       const details = _.pick(request, 'id', 'url', 'method', 'uniqueKey');
@@ -37,10 +42,25 @@ Apify.main(async () => {
       // Only push data for pages Verizon has
       if (pageTitle !== 'Page is not currently available') {
         const dataSubset = $('#storeLocator > script:nth-child(10)').html();
-        const dataSubsetObject = JSON.parse(dataSubset);
+        const locationObject = JSON.parse(dataSubset);
         const storeName = $('#storeLocator > div > div > div.store-info-details > h1').text();
-        const preFormatData = { location_name: storeName, ...dataSubsetObject };
-        await Apify.pushData(formatData(preFormatData));
+
+        const poiData = {
+          locator_domain: 'verizonwireless.com',
+          location_name: storeName,
+          street_address: locationObject.address.streetAddress,
+          city: locationObject.address.addressLocality,
+          state: locationObject.address.addressRegion,
+          zip: locationObject.address.postalCode,
+          country_code: locationObject.address.addressCountry,
+          store_number: undefined,
+          phone: formatPhoneNumber(locationObject.telephone),
+          latitude: locationObject.geo.latitude,
+          longitude: locationObject.geo.longitude,
+          hours_of_operation: extractHourString(locationObject.openingHoursSpecification[0].dayOfWeek),
+        };
+        const poi = new Poi(poiData);
+        await Apify.pushData(poi);
       }
     },
   });

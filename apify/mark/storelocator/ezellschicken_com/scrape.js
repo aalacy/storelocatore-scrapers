@@ -7,8 +7,11 @@ const {
 const {
   formatLocationObject,
   parseGoogleUrl,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -39,20 +42,24 @@ Apify.main(async () => {
         for await (const [i, locationInfo] of allStoreInfos.entries()) {
           const poiNoGeo = formatLocationObject(locationInfo);
           const poiWithGeo = parseGoogleUrl(googleMapUrls[i]);
-          const poi = {
+          const poiData = {
             locator_domain: 'ezellschicken.com',
-            country_code: 'US',
-            location_type: 'Restaurant',
+            country_code: undefined,
+            location_type: undefined,
             ...poiNoGeo,
             ...poiWithGeo,
           };
-          await Apify.pushData(formatData(poi));
+          const poi = new Poi(poiData);
+          await Apify.pushData(poi);
         }
-        await page.waitFor(5000);
+        await page.waitFor(1000);
       }
     },
     maxRequestsPerCrawl: 3000,
     maxConcurrency: 4,
+    launchPuppeteerOptions: {
+      headless: true,
+    },
     gotoFunction: async ({
       request, page,
     }) => page.goto(request.url, {

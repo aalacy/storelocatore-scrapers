@@ -11,8 +11,9 @@ const {
   formatPhoneNumber,
   formatStreetAddress,
   formatHours,
-  formatData,
 } = require('./tools');
+
+const { Poi } = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -24,6 +25,20 @@ Apify.main(async () => {
   });
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 50,
+    maxConcurrency: 10,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
         await Apify.utils.enqueueLinks({
@@ -52,22 +67,20 @@ Apify.main(async () => {
         /* eslint-disable camelcase */
         const hours_of_operation = formatHours(hoursRaw);
 
-        if (locationObjectRaw[0] === '') {
-          await requestQueue.fetchNextRequest();
-        } else {
+        if (locationObjectRaw[0] !== '') {
           const locationObjectRawItem = locationObjectRaw[0];
           const locationObjectRemoveEncoding = decodeEntities(locationObjectRawItem);
           const locationObject = formatObject(locationObjectRemoveEncoding);
           const street_address = formatStreetAddress(locationObject.address.streetAddress, locationObject.address.postalCode);
 
-          const poi = {
+          const poiData = {
             locator_domain: 'sullivanssteakhouse.com',
             location_name: locationObject.name,
             street_address,
             city: locationObject.address.addressLocality,
             state: locationObject.address.addressRegion,
             zip: locationObject.address.postalCode,
-            country_code: 'US',
+            country_code: undefined,
             store_number: undefined,
             phone: formatPhoneNumber(locationObject.telephone),
             location_type: locationObject['@type'],
@@ -76,14 +89,12 @@ Apify.main(async () => {
             longitude: locationObject.geo.longitude,
             hours_of_operation,
           };
-          await Apify.pushData(formatData(poi));
-          await page.waitFor(5000);
+          const poi = new Poi(poiData);
+          await Apify.pushData(poi);
+          await page.waitFor(1000);
         }
-        await page.waitFor(5000);
       }
     },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 1,
   });
 
   await crawler.run();

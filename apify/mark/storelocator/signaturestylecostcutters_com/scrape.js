@@ -16,8 +16,9 @@ const {
 const {
   formatPhoneNumber,
   formatHours,
-  formatData,
 } = require('./tools');
+
+const { Poi } = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -30,6 +31,20 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 1000,
+    maxConcurrency: 10,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
         await page.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
@@ -58,37 +73,24 @@ Apify.main(async () => {
           const hoursRaw = await page.$eval(hourSelector, e => e.innerText);
           const hours_of_operation = formatHours(hoursRaw);
 
-          const poi = {
+          const poiData = {
             locator_domain: 'signaturestyle.com',
             location_name,
             street_address,
             city,
             state,
             zip,
-            country_code: 'US',
             phone,
-            location_type: 'Salon',
             latitude,
             longitude,
             hours_of_operation,
           };
-          await Apify.pushData(formatData(poi));
-          await page.waitFor(5000);
-        } else {
-          await page.waitFor(5000);
-          if (await requestQueue.isEmpty()) {
-            await requestQueue.fetchNextRequest();
-          }
+          const poi = new Poi(poiData);
+          await Apify.pushData(poi);
+          await page.waitFor(2000);
         }
       }
     },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 4,
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'load',
-    }),
   });
 
   await crawler.run();

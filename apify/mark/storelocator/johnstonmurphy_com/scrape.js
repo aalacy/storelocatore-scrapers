@@ -6,7 +6,6 @@ const {
   storeKey,
   parseGoogleMapsUrl,
   pullFromPage,
-  formatData,
 } = require('./tools');
 
 const {
@@ -23,6 +22,10 @@ const {
   canadaLocationRequest,
 } = require('./requests');
 
+const {
+  Poi,
+} = require('./Poi');
+
 Apify.main(async () => {
   // Opening a key value store until end before we format results
   const dataStorage = await Apify.openKeyValueStore('poidata');
@@ -32,6 +35,20 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 1000,
+    maxConcurrency: 4,
     handlePageFunction: async ({ request, page }) => {
       // Storing data to be adjusted later after going into detail pages
       const stores = createStorageObject(request, page, dataStorage, storeSelector, 'Store');
@@ -40,7 +57,6 @@ Apify.main(async () => {
 
       // If its the initial request, then pull poi from the page
       if (request.userData.urlType === 'initial') {
-        await page.waitFor(7000);
         await pullFromPage(stores);
         await pullFromPage(factories);
         await pullFromPage(departments);
@@ -60,7 +76,7 @@ Apify.main(async () => {
         console.log(`Adding ${enqueued.length} to the queue.`);
       }
       if (request.userData.urlType === 'detail') {
-        await page.waitFor(5000);
+        await page.waitFor(2000);
         const storeID = getStoreID(request.url);
         // Get the address + location name to create a key
         await page.waitForSelector(detailStoreName, { waitUntil: 'load', timeout: 0 });
@@ -89,8 +105,6 @@ Apify.main(async () => {
       // After pulling store info from page, check for links and check links for store detail
       // We need to retrieve lat/long from these sources + store number
     },
-    maxRequestsPerCrawl: 1000,
-    maxConcurrency: 2,
   });
 
   await crawler.run();
@@ -98,7 +112,8 @@ Apify.main(async () => {
     await dataStorage.forEachKey(async (key) => {
       if (key) {
         const storeInfo = await dataStorage.getValue(key);
-        await Apify.pushData(formatData(storeInfo));
+        const poi = new Poi(storeInfo);
+        await Apify.pushData(poi);
       }
     });
   }

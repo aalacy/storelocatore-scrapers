@@ -15,8 +15,9 @@ const {
   formatAddress,
   formatHours,
   parseGoogleMapsUrl,
-  formatData,
 } = require('./tools');
+
+const { Poi } = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -29,6 +30,20 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 20000,
+    maxConcurrency: 10,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
         await page.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
@@ -69,31 +84,23 @@ Apify.main(async () => {
             const googleMapsUrl = await page.$eval(googleMapsUrlSelector, a => a.href);
             const latLong = parseGoogleMapsUrl(googleMapsUrl);
 
-            const poi = {
+            const poiData = {
               locator_domain: 'safelite.com',
               location_name,
               street_address,
               ...cityStateZip,
-              country_code: 'US',
+              country_code: undefined,
               phone,
               ...latLong,
               hours_of_operation,
             };
-
-            await Apify.pushData(formatData(poi));
-            await page.waitFor(5000);
-          } else { // This statement makes sure the store selector is not a mobile van
-            await page.waitFor(5000);
-            await requestQueue.fetchNextRequest();
+            const poi = new Poi(poiData);
+            await Apify.pushData(poi);
+            await page.waitFor(2000);
           }
-        } else { // This statement determines if a store selector exists
-          await page.waitFor(5000);
-          await requestQueue.fetchNextRequest();
         }
       }
     },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 4,
   });
 
   await crawler.run();

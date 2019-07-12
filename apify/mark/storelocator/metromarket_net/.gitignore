@@ -8,4 +8,3 @@ package-lock.json
 # in the Git repo, but in this boilerplate we keep the `INPUT.json`
 # file in Git for documentation purposes.
 apify_storage
-

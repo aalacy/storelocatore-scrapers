@@ -1,20 +1,11 @@
 const Apify = require('apify');
 const {
-  formatPhoneNumber, formatGeoString, removeEmptyStrings, formatData,
+  formatPhoneNumber, formatGeoString, removeEmptyStrings,
 } = require('./tools');
 
-/*
-Warning: You will be faced with the message below.
-I believe its from their datadome's service (anti-bot) software.
-"There are various possible explanations for this:
- you are browsing and clicking at a speed much faster than expected of a human being,
- something is preventing Javascript from working on your computer,
- there is a robot on the same network (IP) as you!!!"
-
-The current settings provide sufficient time to click the verification images
-as a regular user to bypass the block. I've dialed it down a bit to give sufficient time,
-so you can click images for verification.
-*/
+const {
+  Poi,
+} = require('./Poi');
 
 const loccitaneUS = 'https://usa.loccitane.com/doc/GlobalCache/OCC/SiteMaps/Sitemap_Stores_82.xml';
 const loccitaneCA = 'https://ca.loccitane.com/doc/GlobalCache/OCC/SiteMaps/Sitemap_Stores_19.xml';
@@ -49,7 +40,21 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestList,
-    handlePageFunction: async ({ request, page }) => {
+    launchPuppeteerOptions: {
+      headless: false,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 600,
+    maxConcurrency: 1,
+    handlePageFunction: async ({ page }) => {
       await page.setJavaScriptEnabled(true);
       await page.waitForSelector('#content > script:nth-child(3)', { waitUntil: 'networkIdle0', timeout: 0 });
       const scriptText = await page.$eval('#content > script:nth-child(3)', s => s.innerText);
@@ -57,7 +62,7 @@ Apify.main(async () => {
 
       const storeObject = JSON.parse(stringObject);
 
-      const poi = {
+      const poiData = {
         locator_domain: 'loccitane.com',
         location_name: storeObject.Name,
         street_address: storeObject.Address1,
@@ -73,19 +78,11 @@ Apify.main(async () => {
         ...formatGeoString(storeObject.Latlong),
         hours_of_operation: storeObject.RegularOpeningHours,
       };
-
-      const formattedPoi = formatData((removeEmptyStrings(poi)));
-      await Apify.pushData(formattedPoi);
-      await page.waitFor(7000);
+      const cleanPoiData = removeEmptyStrings(poiData);
+      const poi = new Poi(cleanPoiData);
+      await Apify.pushData(poi);
+      await page.waitFor(5000);
     },
-    maxRequestsPerCrawl: 500,
-    maxConcurrency: 1,
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-        timeout: 0, waitUntil: 'load',
-      }),
-    handlePageTimeoutSecs: 400,
   });
   await crawler.run();
 });

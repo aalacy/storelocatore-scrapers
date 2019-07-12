@@ -10,11 +10,16 @@ const {
   formatPhoneNumber,
   formatAddress,
   formatHours,
-  formatData,
+  removeEmptyStringProperties,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
+
   await requestQueue.addRequest({
     url: 'https://www.homegoods.com/sitemap.xml',
     userData: {
@@ -24,6 +29,21 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 3000,
+    maxConcurrency: 10,
+    maxRequestRetries: 1,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
         await page.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
@@ -40,7 +60,6 @@ Apify.main(async () => {
         await page.waitForSelector(locationNameSelector, { waitUntil: 'load', timeout: 0 });
         /* eslint-disable camelcase */
         const location_name = await page.$eval(locationNameSelector, h => h.innerText);
-        await page.waitFor(1000);
         const addressRaw = await page.$eval(addressSelector, a => a.innerHTML);
         const phoneNumberRaw = await page.$eval(phoneSelector, p => p.innerText);
         const hoursRaw = await page.$eval(hourSelector, h => h.innerHTML);
@@ -48,19 +67,18 @@ Apify.main(async () => {
         const phone = formatPhoneNumber(phoneNumberRaw);
         const hours_of_operation = formatHours(hoursRaw);
 
-        const poi = {
+        const poiData = {
           locator_domain: 'homegoods.com',
           location_name,
           ...address,
           phone,
           hours_of_operation,
         };
-        await Apify.pushData(formatData(poi));
-        await page.waitFor(5000);
+        const cleanPoiData = removeEmptyStringProperties(poiData);
+        const poi = new Poi(cleanPoiData);
+        await Apify.pushData(poi);
       }
     },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 4,
   });
 
   await crawler.run();

@@ -1,31 +1,25 @@
-const locationInfoExists = '#main > div > div:nth-child(1) > div > div.Location-bannerImage > div > div > div.hidden-xs > div:nth-child(1) > div > div.c-location-info';
-const locationNameSelector = '#location-name > div.Location-nameGeomodifier';
-const checkAddressSelector = '#main > div > div:nth-child(1) > div > div.Location-bannerImage > div > div > div.hidden-xs > div:nth-child(1) > div > div.c-location-info > div.c-location-info-address > address > div.c-AddressRow';
-const streetSelector = '#main > div > div:nth-child(1) > div > div.Location-bannerImage > div > div > div.hidden-xs > div:nth-child(1) > div > div.c-location-info > div.c-location-info-address > address > div:nth-child(1) > span';
-const streetAddress2Selector = '#main > div > div:nth-child(1) > div > div.Location-bannerImage > div > div > div.hidden-xs > div:nth-child(1) > div > div.c-location-info > div.c-location-info-address > address > div:nth-child(2) > span';
-const cityAddress2Selector = '#main > div > div:nth-child(1) > div > div.Location-bannerImage > div > div > div.hidden-xs > div:nth-child(1) > div > div.c-location-info > div.c-location-info-address > address > div:nth-child(3) > span.c-address-city';
-const stateAddress2Selector = '#main > div > div:nth-child(1) > div > div.Location-bannerImage > div > div > div.hidden-xs > div:nth-child(1) > div > div.c-location-info > div.c-location-info-address > address > div:nth-child(3) > abbr';
-const zipAddress2Selector = '#main > div > div:nth-child(1) > div > div.Location-bannerImage > div > div > div.hidden-xs > div:nth-child(1) > div > div.c-location-info > div.c-location-info-address > address > div:nth-child(3) > span.c-address-postal-code';
-const citySelector = '#main > div > div:nth-child(1) > div > div.Location-bannerImage > div > div > div.hidden-xs > div:nth-child(1) > div > div.c-location-info > div.c-location-info-address > address > div:nth-child(2) > span.c-address-city';
-const stateSelector = '#main > div > div:nth-child(1) > div > div.Location-bannerImage > div > div > div.hidden-xs > div:nth-child(1) > div > div.c-location-info > div.c-location-info-address > address > div:nth-child(2) > abbr';
-const zipSelector = '#main > div > div:nth-child(1) > div > div.Location-bannerImage > div > div > div.hidden-xs > div:nth-child(1) > div > div.c-location-info > div.c-location-info-address > address > div:nth-child(2) > span.c-address-postal-code';
-const phoneSelector = '#telephone';
-const hourSelector = '#main > div > div:nth-child(1) > div > div.Location-bannerImage > div > div > div.hidden-xs > div:nth-child(3) > div > div > div > table > tbody';
-const googleMapsUrlSelector = '#dir-map > div > div > div:nth-child(3) > a';
+const locationNameSelector = '.Core-name';
+const streetSelector = '.c-address-street-1';
+const streetAddress2Selector = '.c-address-street-2';
+const citySelector = '.c-address-city';
+const stateSelector = '.c-address-state';
+const zipSelector = '.c-address-postal-code';
+const countrySelector = '.c-address-country-name';
+const phoneSelector = 'div[itemprop="telephone"]';
+const hourSelector = '.c-hours-details';
+const latitudeSelector = 'meta[itemprop="latitude"]';
+const longitudeSelector = 'meta[itemprop="longitude"]';
 
 module.exports = {
-  locationInfoExists,
   locationNameSelector,
-  checkAddressSelector,
   streetSelector,
+  streetAddress2Selector,
   citySelector,
   stateSelector,
   zipSelector,
-  streetAddress2Selector,
-  cityAddress2Selector,
-  stateAddress2Selector,
-  zipAddress2Selector,
+  countrySelector,
   phoneSelector,
-  googleMapsUrlSelector,
+  latitudeSelector,
+  longitudeSelector,
   hourSelector,
 };

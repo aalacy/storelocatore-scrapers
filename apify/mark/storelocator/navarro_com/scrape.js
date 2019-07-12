@@ -6,8 +6,9 @@ const {
 const {
   formatGeoLocation,
   formatInfoBlock,
-  formatData,
 } = require('./tools');
+
+const { Poi } = require('./Poi');
 
 Apify.main(async () => {
   const baseUrl = 'http://www.navarro.com/';
@@ -21,6 +22,20 @@ Apify.main(async () => {
   });
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 0, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 10,
+    maxConcurrency: 1,
     handlePageFunction: async ({ request, page }) => {
       await page.waitForSelector(locationInfoSelector);
       const allPageInfo = await page.$$eval(locationInfoSelector, le => le.map(l => l.innerText));
@@ -41,14 +56,15 @@ Apify.main(async () => {
       for await (const [i, locationInfo] of allPageInfo.entries()) {
         const latLong = formatGeoLocation(geoLocs[i]);
         const primaryInfo = formatInfoBlock(locationInfo);
-        const poi = {
+        const poiData = {
           locator_domain: 'navarro.com',
           ...primaryInfo,
-          country_code: 'US',
-          location_type: 'Store',
+          country_code: undefined,
+          location_type: undefined,
           ...latLong,
         };
-        await Apify.pushData(formatData(poi));
+        const poi = new Poi(poiData);
+        await Apify.pushData(poi);
       }
 
       // The next button can change locations so we find all buttons and look for next
@@ -71,13 +87,6 @@ Apify.main(async () => {
         });
       }
     },
-    maxRequestsPerCrawl: 100,
-    maxConcurrency: 4,
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-      timeout: 0, waitUntil: 'networkidle0',
-    }),
   });
 
   await crawler.run();

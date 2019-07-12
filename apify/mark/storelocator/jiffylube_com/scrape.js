@@ -15,8 +15,11 @@ const {
   formatAddressLine2,
   getGeo,
   formatHours,
-  formatData,
 } = require('./tools');
+
+const {
+  Poi,
+} = require('./Poi');
 
 Apify.main(async () => {
   const requestQueue = await Apify.openRequestQueue();
@@ -29,6 +32,20 @@ Apify.main(async () => {
 
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
+    launchPuppeteerOptions: {
+      headless: true,
+      useChrome: true,
+      stealth: true,
+    },
+    gotoFunction: async ({
+      request, page,
+    }) => {
+      await page.goto(request.url, {
+        timeout: 30000, waitUntil: 'networkidle0',
+      });
+    },
+    maxRequestsPerCrawl: 2114,
+    maxConcurrency: 10,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
         await page.waitForSelector('span', { waitUntil: 'load', timeout: 0 });
@@ -43,7 +60,6 @@ Apify.main(async () => {
       }
       if (request.userData.urlType === 'detail') {
         if (await page.$(locationExistsSelector) !== null) {
-          await page.waitForSelector(locationNameSelector, { waitUntil: 'load', timeout: 0 });
           /* eslint-disable camelcase */
           const location_name = await page.$eval(locationNameSelector, h => h.getAttribute('aria-label'));
           const store_number = await page.$eval(locationNumberSelector, e => e.innerText);
@@ -58,35 +74,23 @@ Apify.main(async () => {
           const phone = formatPhoneNumber(phoneNumberRaw);
           const hours_of_operation = formatHours(hoursRaw);
 
-          const poi = {
+          const poiData = {
             locator_domain: 'jiffylube.com',
             location_name,
             street_address,
             ...cityStateZip,
-            country_code: 'US',
+            country_code: undefined,
             store_number,
             phone,
             location_type: 'Service Center',
             ...latLong,
             hours_of_operation,
           };
-          await Apify.pushData(formatData(poi));
-          await page.waitFor(5000);
-        } else {
-          await page.waitFor(5000);
-          if (!requestQueue.isEmpty()) {
-            await requestQueue.fetchNextRequest();
-          }
+          const poi = new Poi(poiData);
+          await Apify.pushData(poi);
         }
       }
     },
-    maxRequestsPerCrawl: 3000,
-    maxConcurrency: 3,
-    gotoFunction: async ({
-      request, page,
-    }) => page.goto(request.url, {
-        timeout: 0, waitUntil: 'load',
-      }),
   });
 
   await crawler.run();

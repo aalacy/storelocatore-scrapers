@@ -30,29 +30,32 @@ def fetch_data():
                 store = []
                 store.append("https://foodkingcostplus.com")
                 store.append(store_data["icon_data"]["title"])
+                cleanr = re.compile('<.*?>')
                 try:
                     store_address_details = []
-                    store_address_details.append(store_data["address"].split(",")[0])
-                    store_address_details.append(store_data["address"].split(",")[1])
-                    store_address_details.append(store_data["address"].split(",")[2].split(" ")[1])
-                    store_address_details.append(store_data["address"].split(",")[2].split(" ")[2])
+                    store_address_details.append(re.sub(cleanr, '', store_data["address"].split(",")[0]))
+                    store_address_details.append(re.sub(cleanr, '', store_data["address"].split(",")[1]))
+                    store_address_details.append(re.sub(cleanr, '', store_data["address"].split(",")[2].split(" ")[1]))
+                    store_address_details.append(re.sub(cleanr, '', store_data["address"].split(",")[2].split(" ")[2]))
                     store.extend(store_address_details)
                 except:
                     store_address_details = []
-                    store_address_details.append(store_data["description"].split("<p>")[1].split("</p>")[0].split(",")[0])
-                    store_address_details.append(store_data["description"].split("<p>")[1].split("</p>")[0].split(",")[1])
-                    store_address_details.append(store_data["description"].split("<p>")[1].split("</p>")[0].split(",")[2].split(" ")[1])
-                    store_address_details.append(store_data["description"].split("<p>")[1].split("</p>")[0].split(",")[2].split(" ")[2])
+                    store_address_details.append(re.sub(cleanr, '', store_data["description"].split("<p>")[1].split("</p>")[0].split(",")[0]))
+                    store_address_details.append(re.sub(cleanr, '', store_data["description"].split("<p>")[1].split("</p>")[0].split(",")[1]))
+                    store_address_details.append(re.sub(cleanr, '', store_data["description"].split("<p>")[1].split("</p>")[0].split(",")[2].split(" ")[1]))
+                    store_address_details.append(re.sub(cleanr, '', store_data["description"].split("<p>")[1].split("</p>")[0].split(",")[2].split(" ")[2]))
                     store.extend(store_address_details)
                 store.append("US")
                 store.append(store_data["id"])
-                store.append(store_data["description"].split("Phone:")[1].split("</p>")[0].strip().split("</div>")[0])
+                store.append(re.sub(cleanr, '', store_data["description"].split("Phone:")[1].split("</p>")[0].strip().split("</div>")[0]))
                 store.append("food king costplus")
                 store.append(store_data["position"]["coord_y"])
                 store.append(store_data["position"]["coord_x"])
                 store.append(store_data["description"].split("Store Hours:")[1].split("</p>")[0].strip().split("</div>")[0].split("<br")[0])
                 if len(store[-1].split(">")) >= 2 and "</span>" in store[-1]:
                     store[-1] = store[-1].split(">")[1].split("</span>")[0]
+                store[-1] = re.sub(cleanr, '', store[-1])
+                store[-1] = store[-1].split("</span")[0]
                 return_main_object.append(store)
     return return_main_object
 
