@@ -121,7 +121,6 @@ async function handleEdgeCase(row){
   } 
 
   if (row[0].trim() == 'Chandler Phoenix Premium Outlets'){
-    console.log("phoenix", row);
     fixed = {};
     fixed.locationName = row[0].trim();
     fixed.phone = row[4].replace('Phone: ', "");
@@ -131,7 +130,6 @@ async function handleEdgeCase(row){
     area = area[1].trim().split(' ');
     fixed.state = area[0];
     fixed.zip = area[1];
-    console.log("Fixed", fixed);
   }
  
   await Apify.pushData([{
