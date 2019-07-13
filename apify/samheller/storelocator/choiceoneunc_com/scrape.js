@@ -1,6 +1,6 @@
 const Apify = require('apify');
 const axios = require('axios');
-const jsdom = require("jsdom");
+const jsdom = require('jsdom');
 const { JSDOM } = jsdom;
 
 Apify.main(async () => {
@@ -41,7 +41,6 @@ async function scrape(){
      return data;
   })
 }
-
 
 function sanitize(textRow){
   sane = [];
