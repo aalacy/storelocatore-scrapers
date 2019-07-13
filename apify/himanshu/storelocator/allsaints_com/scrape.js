@@ -22,7 +22,7 @@ async function scrape(){
                         var hour="<MISSING>";
                         if(item.opening_hours.Monday[0].open!=null){
                            hour= "Monday : "+item.opening_hours.Monday[0].open+" - "+item.opening_hours.Monday[0].close;
-                           hour+= " Thursday : "+item.opening_hours.Thursday[0].open+" - "+item.opening_hours.Thursday[0].close;
+                           hour+= " Tuesday : "+item.opening_hours.Tuesday[0].open+" - "+item.opening_hours.Tuesday[0].close;
                            hour+= " Wednesday : "+item.opening_hours.Wednesday[0].open+" - "+item.opening_hours.Wednesday[0].close;
                            hour+= " Thursday : "+item.opening_hours.Thursday[0].open+" - "+item.opening_hours.Thursday[0].close;
                            hour+= " Friday : "+item.opening_hours.Friday[0].open+" - "+item.opening_hours.Friday[0].close;
