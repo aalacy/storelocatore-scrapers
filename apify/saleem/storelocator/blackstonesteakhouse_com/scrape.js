@@ -26,8 +26,8 @@ async function scrape() {
         const rawAddress = $('li', location_element).text();
         const {groups: addressParts} = rawAddress.match(/(?<street_address>.+)\n(?<city>.+),\s(?<state>[A-Z]{2})\s(?<zip>\d+)\n.*\s(?<phone>\D?(\d{3})\D?\D?(\d{3})\D?(\d{4}))/);
 
-        const directionsLink = $('a:contains(Directions)').attr('href');
-        const {groups: {lat, long}} = directionsLink.match(/\@(?<lat>[-?\d\.]*)\,(?<long>[-?\d\.]*)/);
+        const directionsLink = $('a:contains(Directions)', location_element).attr('href');
+        const {groups: {lat, long}} = directionsLink.match(/\@(?<lat>[-?\d\.]*)\,(?<long>[-?\d\.]*)/) || {groups:{lat:'<MISSING>', long:'<MISSING>'}};
 
         records.push({
           locator_domain: 'blackstonesteakhouse.com',
