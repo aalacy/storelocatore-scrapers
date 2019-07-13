@@ -98,4 +98,4 @@ apify.json
 *.swp
 
 data.csv
-.vscode/*
+.vscode/
