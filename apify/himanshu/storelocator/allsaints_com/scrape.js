@@ -22,15 +22,25 @@ async function scrape(){
                         var hour="<MISSING>";
                         if(item.opening_hours.Monday[0].open!=null){
                            hour= "Monday : "+item.opening_hours.Monday[0].open+" - "+item.opening_hours.Monday[0].close;
-                           hour+= "Thursday : "+item.opening_hours.Thursday[0].open+" - "+item.opening_hours.Thursday[0].close;
-                           hour+= "Wednesday : "+item.opening_hours.Wednesday[0].open+" - "+item.opening_hours.Wednesday[0].close;
-                           hour+= "Thursday : "+item.opening_hours.Thursday[0].open+" - "+item.opening_hours.Thursday[0].close;
-                           hour+= "Friday : "+item.opening_hours.Friday[0].open+" - "+item.opening_hours.Friday[0].close;
-                           hour+= "Saturday : "+item.opening_hours.Saturday[0].open+" - "+item.opening_hours.Saturday[0].close;
-                           hour+= "Sunday : "+item.opening_hours.Sunday[0].open+" - "+item.opening_hours.Sunday[0].close;
+                           hour+= " Tuesday : "+item.opening_hours.Tuesday[0].open+" - "+item.opening_hours.Tuesday[0].close;
+                           hour+= " Wednesday : "+item.opening_hours.Wednesday[0].open+" - "+item.opening_hours.Wednesday[0].close;
+                           hour+= " Thursday : "+item.opening_hours.Thursday[0].open+" - "+item.opening_hours.Thursday[0].close;
+                           hour+= " Friday : "+item.opening_hours.Friday[0].open+" - "+item.opening_hours.Friday[0].close;
+                           hour+= " Saturday : "+item.opening_hours.Saturday[0].open+" - "+item.opening_hours.Saturday[0].close;
+                           if(item.opening_hours.Sunday[0].open && item.opening_hours.Sunday[0].close){
+                            hour+= " Sunday : "+item.opening_hours.Sunday[0].open+" - "+item.opening_hours.Sunday[0].close;
+                           }
+                           else{
+                            hour+= " Sunday : closed";
+                           }
                         }
                         item.opening_hours
-                        var address=item.address_line1+' '+item.address_line2+' '+item.address_line3;
+                        var address=item.address_line1;
+                        if(item.address_line2 && item.address_line2!=null)
+                          address+=' '+item.address_line2;
+                        if(item.address_line3 && item.address_line3!=null)  
+                          address+=' '+item.address_line3;
+                        
                         address=address.trim();
                         var country=await getCode(item.country);
                         if(item.country=="USA"){
