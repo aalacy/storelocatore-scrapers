@@ -8,7 +8,7 @@ from pdb import set_trace as bp
 
 class ShopVersona(base.Base):
 
-    csv_filename = 'shopversona.csv'
+    csv_filename = 'data.csv'
     domain_name = 'shopversona.com'
     url = 'https://www.shopversona.com/versonastores.cfm'
 
