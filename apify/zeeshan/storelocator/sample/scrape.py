@@ -10,7 +10,7 @@ xpath = base.xpath
 
 class Name(base.Base):
 
-    csv_filename = '.csv'
+    csv_filename = 'data.csv'
     domain_name = '.com'
     url = ''
 
