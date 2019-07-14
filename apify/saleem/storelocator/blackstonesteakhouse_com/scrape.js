@@ -15,7 +15,10 @@ async function scrape() {
     if (!error && response.statusCode == 200) {
       var $ = cheerio.load(html);
       
+      // NOTES:
       // individual locations are encapsulated in .et_pb_text1, .et_pb_text2, etc.
+      // third location appears to have been added later and does not match conventions with other locations
+      // it's Directions link is also minified so does not contain latitude/longitude data
       var location_index = 1;
       var location_element;
       while ((location_element = $(`.et_pb_text_${location_index}`)).length > 0) {
