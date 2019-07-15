@@ -11,8 +11,8 @@ async function scrape() {
 
   // Begin scraper
   var records = [];
-  await request('https://blackstonesteakhouse.com/locations/', function (error, response, html) {
-    if (!error && response.statusCode == 200) {
+  await request('https://blackstonesteakhouse.com/locations/')
+    .then(async function (html) {
       var $ = cheerio.load(html);
       
       // NOTES:
@@ -50,11 +50,7 @@ async function scrape() {
         
         location_index++;
       }
-    }
-    else {
-      throw 'Invalid response from address.'
-    }
-  });
+    });
   return records;
 	// End scraper
 
