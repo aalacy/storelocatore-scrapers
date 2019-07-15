@@ -11,11 +11,14 @@ async function scrape() {
 
   // Begin scraper
   var records = [];
-  await request('https://blackstonesteakhouse.com/locations/', function (error, response, html) {
-    if (!error && response.statusCode == 200) {
+  await request('https://blackstonesteakhouse.com/locations/')
+    .then(async function (html) {
       var $ = cheerio.load(html);
       
+      // NOTES:
       // individual locations are encapsulated in .et_pb_text1, .et_pb_text2, etc.
+      // third location appears to have been added later and does not match conventions with other locations
+      // it's Directions link is also minified so does not contain latitude/longitude data
       var location_index = 1;
       var location_element;
       while ((location_element = $(`.et_pb_text_${location_index}`)).length > 0) {
@@ -26,8 +29,8 @@ async function scrape() {
         const rawAddress = $('li', location_element).text();
         const {groups: addressParts} = rawAddress.match(/(?<street_address>.+)\n(?<city>.+),\s(?<state>[A-Z]{2})\s(?<zip>\d+)\n.*\s(?<phone>\D?(\d{3})\D?\D?(\d{3})\D?(\d{4}))/);
 
-        const directionsLink = $('a:contains(Directions)').attr('href');
-        const {groups: {lat, long}} = directionsLink.match(/\@(?<lat>[-?\d\.]*)\,(?<long>[-?\d\.]*)/);
+        const directionsLink = $('a:contains(Directions)', location_element).attr('href');
+        const {groups: {lat, long}} = directionsLink.match(/\@(?<lat>[-?\d\.]*)\,(?<long>[-?\d\.]*)/) || {groups:{lat:'<MISSING>', long:'<MISSING>'}};
 
         records.push({
           locator_domain: 'blackstonesteakhouse.com',
@@ -47,11 +50,7 @@ async function scrape() {
         
         location_index++;
       }
-    }
-    else {
-      throw 'Invalid response from address.'
-    }
-  });
+    });
   return records;
 	// End scraper
 
