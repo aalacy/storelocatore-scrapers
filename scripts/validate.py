@@ -120,7 +120,7 @@ def check_us_zip(row):
     if is_blank(zip_code):
         return
     try:
-        zipcodes.matching(str(zip_code)):
+        zipcodes.matching(str(zip_code))
     except:
         fail("invalid zip code: {}".format(zip_code)) 
 
