@@ -8,12 +8,7 @@ Apify.main(async () => {
   const links = await pageList();
   const requestList = new Apify.RequestList({sources: links});
   await requestList.initialize();
-  /*
-   * Exceptions Needing Handling: 
-https://www.corelifeeatery.com/locations/latham-ny-2/
-https://www.corelifeeatery.com/locations/maumee-oh-2/
-   *
-   */
+
   const crawler = new Apify.BasicCrawler({
     requestList,
     handleRequestFunction: async ({request}) => {
@@ -26,20 +21,18 @@ https://www.corelifeeatery.com/locations/maumee-oh-2/
         .pop()
       latlon = latLonFromLink(entry.querySelector('a').getAttribute('href'));
       address = entry.querySelector('p:nth-child(2)').textContent.split("\n");
-      if (address.length == 5){
-        address = [address[0], address[2], address[3], address[4]]
-      }
+      address = handleEdgeCases(address, store);
       area = parseArea(address[1]);
       hours = entry.querySelector('p:nth-child(5)').textContent;
 
-      // Apify.pushData([{
-      console.log([{
+
+      Apify.pushData([{
         locator_domain: 'corelifeeatery.com',
         location_name: store,
         street_address: address[0],
         city: area.city,
         state: area.state,
-        zip: area.zip,
+        zip: fixZip(area.zip, store),
         country_code: 'US',
         store_number: '<MISSING>',
         phone: address.pop().replace('Phone:', '').trim(),
@@ -52,8 +45,6 @@ https://www.corelifeeatery.com/locations/maumee-oh-2/
   })
   await crawler.run()
 });
-
-
 
 async function pageList(){
   return await axios({
@@ -97,4 +88,44 @@ function sanitize(textRow){
     if (s !== ''){sane.push(s);}
   }
   return sane;
+}
+
+function handleEdgeCases(address){
+  //Edge case with Unit prefix to address
+  if (address[1].startsWith('Unit')){
+    return [address[0] + " " + address[1], address[2], '', address[3]]
+  }
+  
+  if (address.length == 3){
+    return [address[0], address[1], '', address[2]]
+  }
+  
+  //Edge case where address and location name are reversed
+  if (address[1].match(/^[0-9]/) !== null){
+    return [address[1], address[2], address[0], address[3]]
+  }
+
+  //Edge case with extra data in the address map
+  if (address.length == 5){
+    return [address[0], address[2], address[3], address[4]]
+  }
+
+  //Super sparse edgecase
+  if (address.length == 2){
+    return [address[0], '<MISSING>', address[1], '<MISSING>', '<MISSING>']
+  }
+
+  return address;
+}
+
+
+function fixZip(zip, store){
+  //3 pages with weird parsing errors manually handling zipcodes
+  switch (store){
+    case 'webster-ny-2' : zip = 14580; break;
+    case 'lancaster-pa-2' : zip = 17601; break;
+    case 'syracuse-ny-2' : zip = 13212; break;
+    default: break;
+  }
+  return Number(zip);
 }
