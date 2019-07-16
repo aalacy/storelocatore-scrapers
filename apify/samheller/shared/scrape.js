@@ -2,22 +2,15 @@ const Apify = require('apify');
 const axios = require('axios');
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
-const requestPromise = require('request-promise');
 
 Apify.main(async () => {
-  const links = await pageList();
-  const requestList = new Apify.RequestList({sources: links});
-  await requestList.initialize();
-
-  const crawler = new Apify.BasicCrawler({
-    requestList,
-    handleRequestFunction: async ({request}) => {
-      const html = await requestPromise(request.url);
-      dom = getDom(html);
-    }
-  })
-  await crawler.run();
+  const data = await scrape();
+  await Apify.pushData(data);
 });
+
+async function scrape(){
+  
+}
 
 async function pageList(){
   return await axios({
