@@ -15,8 +15,14 @@ def touch(path):
 
 if __name__ == "__main__":
     data = []
-    data_location = sys.argv[1]
-    debug = len(sys.argv) > 2 and sys.argv[2] == "DEBUG"
+
+    try:
+        data_location = sys.argv[2]
+    except IndexError:
+        print("Please include a data location!")
+        exit(0)
+
+    debug = len(sys.argv) > 3 and sys.argv[3] == "DEBUG"
 
     if data_location.endswith(".csv"):
         with open(data_location) as csv_file:
