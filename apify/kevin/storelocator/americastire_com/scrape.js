@@ -17,6 +17,20 @@ const parseJsonResponse = async (page) => {
   return json;
 }
 
+const formatHours = (hours) => {
+  const formattedDays = hours.weekDayOpeningList.map(day => {
+    let formatted = '';
+    formatted = `${day.weekDay}: `;
+    if (day.closed) { 
+      formatted += 'Closed';
+    } else {
+      formatted += `${day.openingTime.formattedHour} - ${day.closingTime.formattedHour}`;
+    }
+    return formatted;
+  });
+  return formattedDays.join(', ')
+}
+
 const parseLocation = (store) => {
   const location = {
     locator_domain: 'americastire.com',
@@ -31,7 +45,7 @@ const parseLocation = (store) => {
     location_type: store.type,
     latitude: store.geoPoint.latitude,
     longitude: store.geoPoint.longitude,
-    hours_of_operation: JSON.stringify(store.openingHours)
+    hours_of_operation: formatHours(store.openingHours)
   };
   return location;
 }
