@@ -6,6 +6,12 @@ Your logic will run agianst every URL in the RequestQueue. See https://sdk.apify
 
 Documentation on using the PuppeteerCrawler: https://sdk.apify.com/docs/examples/puppeteercrawler
 
+Apify test account information:
+Token: iZH7QL3aoPb3wvq9TdkJFRDLC
+
+Running the crawler with proxy enabled:
+`apify init && USE_PROXY=true APIFY_PROXY_PASSWORD=XbAAL4ZhCkWkGFTD3HHTuTgHb apify run --purge`
+
 Remember to update `package.json` with all dependencies needed to run your scraper.
 Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh

@@ -12,6 +12,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","raw_address"])
         # Body
         for row in data:
+            print(row)
             writer.writerow(row)
 
 def fetch_data():
@@ -47,7 +48,7 @@ def fetch_data():
             location_details[0] = location_details[0].split("Location")[1].replace("\n","")
         store = []
         store.append("https://www.dylanscandybar.com")
-        store.append(name)
+        store.append(name.replace("\u2003"," "))
         store.append("<INACCESSIBLE>")
         store.append("<INACCESSIBLE>")
         store.append("<INACCESSIBLE>")
