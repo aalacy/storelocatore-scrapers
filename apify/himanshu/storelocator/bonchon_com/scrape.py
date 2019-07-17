@@ -55,6 +55,8 @@ def fetch_data():
                     store[-2] = store_data['title'].split(",")[-1]
                 if "#" in store[-1]:
                     store[-1] = store_data['address'].split(",")[-1].split(" ")[-1].strip()
+                if store[-2] == "":
+                    store[-2] = store[1].split(",")[1]
                 store.append("US")
                 store.append("<MISSING>")
                 phone = location_soup.find("div",{"class":"store-phone"}).text.strip()
@@ -65,7 +67,7 @@ def fetch_data():
                 store.append(store_data["lat"])
                 store.append(store_data["lng"])
                 store.append(hours if hours != "" else "<MISSING>")
-                store.append(store_data["address_entered"])
+                store.append(store_data["address_entered"].replace("\ufeff",""))
                 return_main_object.append(store)
     return return_main_object
 

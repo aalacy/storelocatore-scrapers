@@ -37,7 +37,7 @@ def fetch_data():
                     for scr in script:
                         if "var overview_lat" in scr.text:
                             link1="https://www.wyndhamhotels.com/BWSServices/services/search/property/search?propertyId="+scr.text.split('"')[1]+"&isOverviewNeeded=true&isAmenitiesNeeded=true&channelId=tab&language=en-us"
-                            r1 = requests.get(link1).json();
+                            r1 = requests.get(link1).json()
                             if "properties" in r1:
                                 for d in r1['properties']:
                                     hour=d['checkInTime']+'-'+d['checkOutTime']
@@ -82,7 +82,7 @@ def fetch_data():
                 for scr in script:
                     if "var overview_lat" in scr.text:
                         link1="https://www.wyndhamhotels.com/BWSServices/services/search/property/search?propertyId="+scr.text.split('"')[1]+"&isOverviewNeeded=true&isAmenitiesNeeded=true&channelId=tab&language=en-us"
-                        r1 = requests.get(link1).json();
+                        r1 = requests.get(link1).json()
                         if "properties" in r1:
                             for d in r1['properties']:
                                 hour=d['checkInTime']+'-'+d['checkOutTime']
@@ -116,6 +116,6 @@ def fetch_data():
 
 def scrape():
     data = fetch_data()
-    # write_output(data)
+    write_output(data)
 
 scrape()

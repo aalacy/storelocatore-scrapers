@@ -7,7 +7,7 @@ from pdb import set_trace as bp
 
 class BassettFurniture(base.Base):
 
-    csv_filename = 'bassettfurniture.csv'
+    csv_filename = 'data.csv'
     domain_name = 'bassettfurniture.com'
     url = 'https://bassett.brickworksoftware.com/locations_search'
 

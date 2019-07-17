@@ -19,7 +19,7 @@ class ChoiceHotels(base.Base):
         "https": proxy_url
     }
 
-    csv_filename = 'choicehotels.csv'
+    csv_filename = 'data.csv'
     domain_name = 'choicehotels.com'
     url = 'https://www.choicehotels.com/webapi/location/hotels'
 

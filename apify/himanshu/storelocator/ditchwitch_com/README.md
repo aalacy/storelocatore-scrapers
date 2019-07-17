@@ -8,4 +8,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-There are some invalid zip codes on this site
+There are some invalid phone numbers on this site

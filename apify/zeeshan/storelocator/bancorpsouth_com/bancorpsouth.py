@@ -7,7 +7,7 @@ from pdb import set_trace as bp
 
 class BancorpSouth(base.Base):
 
-    csv_filename = 'bancorpsouth.csv'
+    csv_filename = 'data.csv'
     domain_name = 'www.bancorpsouth.com'
     default_country = 'US'
     state = None
