@@ -33,8 +33,12 @@ def fetch_data():
                 store.append(store_data['title'])
                 store.append(store_data["address"].split(",")[0])
                 store.append(store_data["address"].split(",")[-3])
-                store.append(store_data["address"].split(",")[-2])
-                store.append("<MISSING>")
+                if len(store_data["address"].split(",")[-2].split(" ")) > 2:
+                    store.append(store_data["address"].split(",")[-2].split(" ")[-2])
+                    store.append(store_data["address"].split(",")[-2].split(" ")[-1])
+                else:
+                    store.append(store_data["address"].split(",")[-2])
+                    store.append("<MISSING>")
                 store.append("US")
                 store.append(key)
                 store.append("<MISSING>")

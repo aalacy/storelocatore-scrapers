@@ -117,9 +117,10 @@ def check_us_state(row):
 
 def check_us_zip(row):
     zip_code = row["zip"]
+    if is_blank(zip_code):
+        return
     try:
-        if not is_blank(zip_code) and not zipcodes.matching(str(zip_code)):
-            fail("invalid zip code: {}".format(zip_code)) 
+        zipcodes.matching(str(zip_code))
     except:
         fail("invalid zip code: {}".format(zip_code)) 
 

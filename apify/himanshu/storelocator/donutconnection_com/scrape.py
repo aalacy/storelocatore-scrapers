@@ -23,7 +23,7 @@ def fetch_data():
         store = []
         store.append("https://donutconnection.com")
         store.append(store_data['name'])
-        store.append(store_data["street"])
+        store.append(store_data["street"] if store_data["street"] != "" else "<MISSING>")
         store.append(store_data['city'])
         store.append(store_data['state'])
         store.append(store_data["zip"].strip())

@@ -33,7 +33,7 @@ def fetch_data():
             store.append(store_data["postal_code"].strip())
         store.append("US")
         store.append(store_data["id"])
-        store.append(store_data['phone'])
+        store.append(store_data['phone'] if store_data["phone"] != "" else "<MISSING>")
         store.append("food market")
         store.append(store_data["lat"])
         store.append(store_data["lng"])

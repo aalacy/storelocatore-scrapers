@@ -23,8 +23,14 @@ def fetch_data():
         store = []
         store.append("https://www.rosesdiscountstores.com")
         store.append(store_data["name"])
-        store.append(store_data["address1"]+ store_data["address2"])
-        store.append(store_data["city"])
+        if store_data["address1"] == "":
+            store.append(store_data["address"].split(",")[0])
+        else:
+            store.append(store_data["address1"]+ store_data["address2"])
+        if store_data["city"] == "":
+            store.append(store_data["address"].split(",")[1])
+        else:
+            store.append(store_data["city"])
         store.append(store_data["region"])
         store.append(store_data["postcode"] if store_data["postcode"] != "" else store_data["address"].split(",")[-2].split(" ")[-1])
         if len(store[-1]) <= 3 or len(store[-1]) >=7:
@@ -45,7 +51,7 @@ def fetch_data():
             hours = "mon 9 am to 6 pm tue 9 am to 6 pm wed 9 am to 6 pm thurs 9 am to 6 pm fri 9 am sat 6 am to 9pm sun 12 am to 6 pm"
         else:
             hours = store_data["hours"]
-        store.append(hours if hours != "" or hours != None else "<MISSING>")
+        store.append(hours if hours != "" and hours != None else "<MISSING>")
         return_main_object.append(store)
     return return_main_object
 
