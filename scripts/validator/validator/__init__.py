@@ -3,4 +3,4 @@
 # We use this to remember which version of the package is run over any given crawl.
 #
 __version__ = '0.1'
-from .validate import validate
+from .validator import validate

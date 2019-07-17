@@ -13,7 +13,7 @@ def touch(path):
         os.utime(path, None)
 
 
-if __name__ == "__name__":
+if __name__ == "__main__":
     data = []
     data_location = sys.argv[1]
     debug = len(sys.argv) > 2 and sys.argv[2] == "DEBUG"
