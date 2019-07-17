@@ -6,6 +6,7 @@ from lxml import (html, etree,)
 
 from pdb import set_trace as bp
 
+
 xpath = base.xpath
 
 class Atb(base.Base):
@@ -15,6 +16,9 @@ class Atb(base.Base):
     url = 'https://www.atb.com/_vti_bin/lists.asmx'
 
     def map_data(self, row):
+        hours_of_operation = xpath(row, './/@ows_hours')
+        clean_re = re.compile('<.*?>')
+        hours_of_operation = re.sub(clean_re, '', hours_of_operation)
         return {
             'locator_domain': self.domain_name
             ,'location_name': xpath(row, './/@ows_title')
@@ -29,7 +33,7 @@ class Atb(base.Base):
             ,'naics_code': None
             ,'latitude': xpath(row, './/@ows_lat')
             ,'longitude': xpath(row, './/@ows_long')
-            ,'hours_of_operation': xpath(row, './/@ows_hours')
+            ,'hours_of_operation': hours_of_operation
         }
 
     def crawl(self):
