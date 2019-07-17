@@ -35,6 +35,12 @@ class Whywaitintheer(base.Base):
             phone = re.findall(r'[0-9]{3}-[0-9]{3}-[0-9]{4}', phone[0])
             phone = phone[0] if phone else None
 
+        hours_of_operation = row.xpath('//h2[contains(text(), "Phone and Hours")]/following-sibling::p[1]//text()')
+        if hours_of_operation:
+            hours_of_operation = ' '.join(hours_of_operation)
+            hours_of_operation = re.sub('\s+', ' ', hours_of_operation)
+            hours_of_operation = hours_of_operation.split('Hours: ')[-1].encode('ascii', 'ignore')
+
         name = row.xpath('//h1//text()')
         name = name[0] if name else None
         name = name.encode('ascii', 'ignore')
@@ -53,7 +59,7 @@ class Whywaitintheer(base.Base):
             ,'naics_code': None 
             ,'latitude': None
             ,'longitude': None
-            ,'hours_of_operation': None
+            ,'hours_of_operation': hours_of_operation
         }
 
     def crawl(self):
