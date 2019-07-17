@@ -65,7 +65,9 @@ const parseLocation = async ($) => {
       case 1: 
         const cityStateZip = $(li).text();
         Object.assign(location, parseCityStateZip(cityStateZip));
-        Object.assign(location, parseLatLong($(li).find('a').attr('href')));
+        
+        // the lat long values from the maps url aren't correct. we'll set to <MISSING> instead.
+        //Object.assign(location, parseLatLong($(li).find('a').attr('href')));
         break;
       case 2: 
         location.phone = $(li).text().replace('tel. ', '');
@@ -101,7 +103,6 @@ const parseLocation = async ($) => {
   const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)' + 
     ' Chrome/75.0.3770.100 Safari/537.36'
   
-
   const requestQueue = await Apify.openRequestQueue();
   await requestQueue.addRequest({ 
     url: branchesUrl, 
