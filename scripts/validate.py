@@ -1,1 +1,1 @@
-print("Validate")
+print("Please run validation now via: `python validator -m [DATA LOCATION] [DEBUG]`")
