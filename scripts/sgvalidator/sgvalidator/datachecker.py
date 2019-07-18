@@ -1,4 +1,5 @@
 from .validatorutils import *
+from .fillratechecker import FillRateChecker
 from .trashvaluechecker import TrashValueChecker
 from .countrydetector import CountryDetector
 from .countrychecker import CountryChecker
@@ -14,6 +15,7 @@ class DataChecker:
         self.check_schema()
         self.check_country_specific_values()
         self.check_for_trash_values()
+        self.check_for_fill_rate() # doesn't cause anything to fail, just prints warning messages
 
     def check_schema(self):
         print(termcolor.colored("Validating output schema...", "blue"))
@@ -79,4 +81,7 @@ class DataChecker:
             res = TrashValueChecker.findTrashValues(row)
             if res is not None:
                 ValidatorUtils.fail("Row {} contains trash value: {}".format(row, res), self.debug)
+
+    def check_for_fill_rate(self):
+        FillRateChecker.checkFillRate(self.data)
 
