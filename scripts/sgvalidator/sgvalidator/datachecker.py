@@ -15,7 +15,7 @@ class DataChecker:
         self.check_schema()
         self.check_country_specific_values()
         self.check_for_trash_values()
-        self.check_for_fill_rate() # doesn't cause anything to fail, just prints warning messages
+        self.check_for_fill_rate()  # doesn't cause anything to fail, just prints warning messages
 
     def check_schema(self):
         print(termcolor.colored("Validating output schema...", "blue"))

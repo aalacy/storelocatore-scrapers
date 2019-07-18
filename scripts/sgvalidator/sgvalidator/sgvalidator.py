@@ -7,7 +7,7 @@ from .validatorutils import ValidatorUtils
 from .datachecker import DataChecker
 
 # make sure this is the same as in setup.py
-VERSION = "1.0"
+VERSION = "1.1"
 SUCCESS_FILEPATH = './SUCCESS'
 
 

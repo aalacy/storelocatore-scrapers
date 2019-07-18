@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='sgvalidator',
-    version="1.0",
+    version="1.1",
     author="noah",
     author_email="info@safegraph.com",
     packages=find_packages(),
