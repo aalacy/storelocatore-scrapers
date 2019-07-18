@@ -40,18 +40,17 @@ def fetch_data():
                 department_id = 0
                 open_hours = ""
                 for k in range(len(current_store["departments"])):
-                    if open_hours == "":
+                    if current_store["departments"][k]["departmentCode"] == "SALES":
                         for j in range(len(current_store["departments"][k]["hoursOfOperation"])):
                             hoursOfOperation = current_store['departments'][k]["hoursOfOperation"]
                             if hoursOfOperation[j]["closedIndicator"] == "N":
                                 open_hours = open_hours + hoursOfOperation[j]["name"] + " openTime " + hoursOfOperation[j]['hours'][0]["openTime"] + " closeTime " + hoursOfOperation[j]['hours'][0]["closeTime"] + " "
-                    if open_hours != "":
                         department_id = k
                         break
                 store.append("audi" + " " + current_store['departments'][k]["departmentCode"])
                 store.append(current_store["latitude"])
                 store.append(current_store["longitude"])
-                if open_hours== "":
+                if open_hours == "":
                     pass
                 else:
                     store.append(open_hours)

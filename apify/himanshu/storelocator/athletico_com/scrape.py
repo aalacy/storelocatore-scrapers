@@ -39,14 +39,16 @@ def fetch_data():
                 store.append(location_soup.find("h1",{"class": "innerPage"}).text)
                 store.append(location_address[1])
                 store.append(location_address[2].split(",")[0])
+                if store[-1] == "":
+                    store[-1] = store[1]
                 store.append(location_address[2].split(",")[1].split(" ")[1])
                 store.append(location_address[2].split(",")[1].split(" ")[-1])
                 store.append("US")
                 store.append("<MISSING>")
                 store.append(contact_information[1])
                 store.append("ATHLETICO PHYSICAL THERAPY")
-                store.append("<MISSING>")
-                store.append("<MISSING>")
+                store.append("<INACCESSIBLE>")
+                store.append("<INACCESSIBLE>")
                 store.append(' '.join(list(location_soup.find("table").stripped_strings)))
                 return_main_object.append(store)
     return return_main_object

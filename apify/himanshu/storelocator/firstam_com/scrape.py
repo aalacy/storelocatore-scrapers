@@ -24,6 +24,8 @@ def fetch_data():
         store = []
         store.append("https://www.firstam.com")
         store.append(store_data['officeName'])
+        if store_data["officeAddressLine1"] == None:
+            continue
         store.append(store_data["officeAddressLine1"] + store_data["officeAddressLine2"] if store_data["officeAddressLine2"] != None else store_data["officeAddressLine1"])
         store.append(store_data['officeCity'])
         store.append(store_data['officeState'])
@@ -31,9 +33,9 @@ def fetch_data():
         store.append("US")
         store.append(store_data['officeId'])
         store.append(store_data['officePhoneAreaCode'] + " " + store_data['officePhoneNumber'] if store_data['officePhoneAreaCode'] != None else "<MISSING>")
-        store.append(store_data['companyName'])
-        store.append(store_data["officeLatitude"])
-        store.append(store_data["officeLongitude"])
+        store.append(store_data['companyName'] if store_data['companyName'] != None else store[1])
+        store.append(store_data["officeLatitude"] if store_data["officeLatitude"] != None else "<MISSING>")
+        store.append(store_data["officeLongitude"] if store_data["officeLongitude"] != None else "<MISSING>")
         store.append("<MISSING>")
         return_main_object.append(store)
     return return_main_object

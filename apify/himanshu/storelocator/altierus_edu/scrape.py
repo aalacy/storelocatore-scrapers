@@ -38,8 +38,8 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(phone)
         store.append("altierus")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
+        store.append("<INACCESSIBLE>")
+        store.append("<INACCESSIBLE>")
         store.append(hours)
         return_main_object.append(store)
     return return_main_object

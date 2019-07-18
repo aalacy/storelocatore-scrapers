@@ -26,29 +26,33 @@ def fetch_data():
             location_link = locations.find("a")['href']
             location_request = requests.get(base_url + location_link)
             location_soup = BeautifulSoup(location_request.text,"lxml")
-            store = []
-            location_name = location_soup.find("div",{"class": "title"}).text
-            location_address = list(location_soup.find("div",{"class": "address"}).stripped_strings)
-            location_phone =  location_soup.find("div",{"class": "phone"}).text
-            location_hours =  location_soup.find("div",{"class": "hours"}).text
-            location_type = "Academy bank " + list(location_soup.find("div",{"class": "type"}).stripped_strings)[0]
-            location_geo = location_soup.find("div",{"class": "directions"}).find("a")["href"]
-            location_latitude = location_geo.split("&saddr=")[1].split(",")[0]
-            location_longitude = location_geo.split("&saddr=")[1].split(",")[1]
-            store.append("https://www.academybank.com")
-            store.append(location_name)
-            store.append(location_address[0])
-            store.append(location_address[1])
-            store.append(location_address[3])
-            store.append(location_address[4])
-            store.append("US")
-            store.append("<MISSING>")
-            store.append(location_phone)
-            store.append(location_type)
-            store.append(location_latitude)
-            store.append(location_longitude)
-            store.append(location_hours)
-            return_main_object.append(store)
+            for li in location_soup.find("ol").find_all("li",recusive=False):
+                store = []
+                location_name = li.find("div",{"class": "title"}).text
+                location_address = list(li.find("div",{"class": "address"}).stripped_strings)
+                if li.find("div",{"class":"phone"}) != None:
+                    location_phone =  li.find("div",{"class": "phone"}).text
+                else:
+                    location_phone =  "<MISSING>"
+                location_hours =  li.find("div",{"class": "hours"}).text
+                location_type = "Academy bank " + list(li.find("div",{"class": "type"}).stripped_strings)[0]
+                location_geo = li.find("div",{"class": "directions"}).find("a")["href"]
+                location_latitude = location_geo.split("&saddr=")[1].split(",")[0]
+                location_longitude = location_geo.split("&saddr=")[1].split(",")[1]
+                store.append("https://www.academybank.com")
+                store.append(location_name)
+                store.append(location_address[0])
+                store.append(location_address[1])
+                store.append(location_address[3])
+                store.append(location_address[4])
+                store.append("US")
+                store.append("<MISSING>")
+                store.append(location_phone)
+                store.append(location_type)
+                store.append(location_latitude)
+                store.append(location_longitude)
+                store.append(location_hours.replace("\n"," "))
+                return_main_object.append(store)
     return return_main_object
 
 def scrape():
