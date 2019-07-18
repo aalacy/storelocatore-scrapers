@@ -33,9 +33,15 @@ def fetch_data():
             for semi_semi_parts in semi_parts.find_all("p",{"class": "local-address"}):
                 temp_storeaddresss = list(semi_semi_parts.stripped_strings)
                 street_address = temp_storeaddresss[0]
-                city = temp_storeaddresss[1].split(",")[0]
-                state = temp_storeaddresss[1].split(",")[1].split(" ")[1]
-                store_zip = temp_storeaddresss[1].split(",")[1].split(" ")[2]
+                st=temp_storeaddresss[1].split(",")[1].split(" ")
+                if len(st)==3:
+                    city = temp_storeaddresss[1].split(",")[0]
+                    state = temp_storeaddresss[1].split(",")[1].split(" ")[1]
+                    store_zip = temp_storeaddresss[1].split(",")[1].split(" ")[2]
+                else:
+                    city = temp_storeaddresss[1].split(",")[0].split(" ")[0]
+                    state = temp_storeaddresss[1].split(",")[0].split(" ")[1]
+                    store_zip = st[-1]
                 phone = temp_storeaddresss[2]
             return_object.append("https://www.54thstreetgrill.com")
             return_object.append(location_name)

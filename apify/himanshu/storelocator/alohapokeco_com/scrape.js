@@ -22,7 +22,7 @@ async function scrape(){
                     zip:item.zip,
                     country_code: 'US',
                     store_number:item.id,
-                    phone:item.phone,
+                    phone:item.phone.trim()?item.phone:"<MISSING>",
                     location_type: 'alohapokeco',
                     latitude: item.lat,
                     longitude: item.lng,

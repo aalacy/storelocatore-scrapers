@@ -31,9 +31,15 @@ def fetch_data():
         store.append("US")
         store.append(r[i]['id'])
         store.append(r[i]['phone_number'])
-        store.append(r[i]['location_type'])
-        store.append(r[i]['latitude'])
-        store.append(r[i]['longitude'])
+        store.append('dailysstores')
+        if r[i]['latitude']:
+            store.append(r[i]['latitude'])
+        else:
+            store.append("<MISSING>")
+        if r[i]['longitude']:
+                store.append(r[i]['longitude'])
+        else:
+            store.append("<MISSING>")
         store.append("<MISSING>")
         return_main_object.append(store)
     return return_main_object
