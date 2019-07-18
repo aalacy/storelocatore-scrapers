@@ -1,6 +1,9 @@
 import sys
+import subprocess
 import sgvalidator
 
+# force an install/upgrade of the sgvalidator package
+subprocess.call([sys.executable, "-m", "pip", "install", "--upgrade",  "sgvalidator"])
 data_location = None
 
 try:
@@ -10,4 +13,4 @@ except IndexError:
     exit(0)
 
 debug = len(sys.argv) > 2 and sys.argv[2] == "DEBUG"
-sgvalidator.validate(data_location, debug)
+sgvalidator.validate(data_location, debug=debug)

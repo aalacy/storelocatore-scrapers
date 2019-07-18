@@ -1,9 +1,8 @@
-import validator
 from setuptools import setup, find_packages
 
 setup(
     name='sgvalidator',
-    version=validator.__version__,
+    version="1.0",
     author="noah",
     author_email="info@safegraph.com",
     packages=find_packages(),

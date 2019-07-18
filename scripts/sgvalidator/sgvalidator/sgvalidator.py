@@ -2,20 +2,21 @@ import os
 import csv
 import json
 import termcolor
-import validator
 from glob import glob
 from .datachecker import DataChecker
 
+# make sure this is the same as in setup.py
+VERSION = "1.0"
 SUCCESS_FILEPATH = './SUCCESS'
 
 
-def validate(data_location, debug):
+def validate(data_location, debug=False):
     data = _readDataFromLocation(data_location)
     _validate(data, debug)
     if not debug:
         _touch(SUCCESS_FILEPATH)
         with open(SUCCESS_FILEPATH, 'a') as f:
-            f.write(validator.__version__)
+            f.write(VERSION)
 
 
 def _readDataFromLocation(data_location):
