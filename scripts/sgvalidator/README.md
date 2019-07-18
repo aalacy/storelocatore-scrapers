@@ -1,15 +1,21 @@
-To run tests:
+#### To run tests:
 
 `python setup.py test`
 
-After a change is made, just run: 
+#### To upload to PyPi 
 
-`[sudo] pip install validator/`
+Run the upload script via:
 
-Note: the "/" is *very* important and pip won't override past installs unless you include it!
+`sh upload_to_pypi.sh`
 
-Make sure you've activated a [virtualenv](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/), 
+You'll be prompted for our PyPi username and password, which you can get from Noah if you don't already have it. 
+
+Make sure you've activated a [virtualenv](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/) when you run `pip install`, 
 or else this package will be installed globally.
+
+Then, once you're ready to install, just run:
+
+`pip install sgvalidator` 
 
 ### ToDo:
 * Failing on empty dir
