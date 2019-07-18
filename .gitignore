@@ -111,6 +111,7 @@ data.csv
 .idea/**/tasks.xml
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
+.idea/vcs.xml
 .idea/**/shelf
 
 # Sensitive or high-churn files
