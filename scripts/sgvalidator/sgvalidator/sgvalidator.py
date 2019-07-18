@@ -3,6 +3,7 @@ import csv
 import json
 import termcolor
 from glob import glob
+from .validatorutils import ValidatorUtils
 from .datachecker import DataChecker
 
 # make sure this is the same as in setup.py
@@ -11,7 +12,7 @@ SUCCESS_FILEPATH = './SUCCESS'
 
 
 def validate(data_location, debug=False):
-    data = _readDataFromLocation(data_location)
+    data = _readDataFromLocation(data_location, debug)
     _validate(data, debug)
     if not debug:
         _touch(SUCCESS_FILEPATH)
@@ -19,7 +20,7 @@ def validate(data_location, debug=False):
             f.write(VERSION)
 
 
-def _readDataFromLocation(data_location):
+def _readDataFromLocation(data_location, debug):
     data = []
     if data_location.endswith(".csv"):
         with open(data_location) as csv_file:
@@ -30,6 +31,9 @@ def _readDataFromLocation(data_location):
         for f_name in glob(os.path.join(data_location, 'datasets/default', '*.json')):
             with open(f_name) as json_file:
                 data.append(json.load(json_file))
+
+    if len(data) == 0:
+        ValidatorUtils.fail("Data location {} doesn't exist or dataset is empty!".format(data_location), debug)
 
     return data
 

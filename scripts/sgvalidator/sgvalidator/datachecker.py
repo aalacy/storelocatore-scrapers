@@ -1,4 +1,5 @@
 from .validatorutils import *
+from .trashvaluechecker import TrashValueChecker
 from .countrydetector import CountryDetector
 from .countrychecker import CountryChecker
 
@@ -11,7 +12,8 @@ class DataChecker:
     def check_data(self):
         self.check_duplication()
         self.check_schema()
-        self.check_values()
+        self.check_country_specific_values()
+        self.check_for_trash_values()
 
     def check_schema(self):
         print(termcolor.colored("Validating output schema...", "blue"))
@@ -39,7 +41,7 @@ class DataChecker:
                 keys.add(key)
         if not self.debug: print(termcolor.colored("No duplicates found...", "green"))
 
-    def check_values(self):
+    def check_country_specific_values(self):
         country_checker = CountryChecker(self.debug)
         print(termcolor.colored("Checking for data quality issues...", "blue"))
         for row in self.data:
@@ -71,3 +73,10 @@ class DataChecker:
             ValidatorUtils.fail("non-numeric longitude: {}".format(longitude), self.debug)
         elif not (-180.0 <= float(longitude) <= 180.0):
             ValidatorUtils.fail("longitude out of range: {}".format(longitude), self.debug)
+
+    def check_for_trash_values(self):
+        for row in self.data:
+            res = TrashValueChecker.findTrashValues(row)
+            if res is not None:
+                ValidatorUtils.fail("Row {} contains trash value: {}".format(row, res), self.debug)
+

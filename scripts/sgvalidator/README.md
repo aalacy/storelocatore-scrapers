@@ -17,8 +17,6 @@ Then, once you're ready to install, just run:
 `pip install sgvalidator` 
 
 ### ToDo:
-* Failing on empty dir
-* Values that contain "null"
 * Maybe using pandas in the data checker?
 * sometimes you see “San Francisco null” or null in every street address
 * Html snippets - “chicago <span”
