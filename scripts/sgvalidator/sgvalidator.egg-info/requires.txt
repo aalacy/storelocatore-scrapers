@@ -1,0 +1,5 @@
+termcolor==1.1.0
+phonenumbers==8.10.13
+zipcodes==1.0.5
+us==1.0.0
+pandas
