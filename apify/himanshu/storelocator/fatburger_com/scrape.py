@@ -32,7 +32,10 @@ def fetch_data():
             store.append(store_data["postalCode"] if store_data["postalCode"] != None else "<MISSING>")
             store.append(store_data["country"])
             store.append(store_data["id"])
-            store.append(store_data["phone"])
+            if store_data["phone"]:
+                store.append(store_data["phone"])
+            else:
+                store.append("<MISSING>")
             store.append("fast frame")
             store.append(store_data["latitude"])
             store.append(store_data["longitude"])
