@@ -10,8 +10,7 @@ Run the upload script via:
 
 You'll be prompted for our PyPi username and password, which you can get from Noah if you don't already have it. 
 
-Make sure you've activated a [virtualenv](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/) when you run `pip install`, 
-or else this package will be installed globally.
+Make sure you've activated a [virtualenv](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/) when you run `pip install`, or else this package will be installed globally.
 
 Then, once you're ready to install, just run:
 

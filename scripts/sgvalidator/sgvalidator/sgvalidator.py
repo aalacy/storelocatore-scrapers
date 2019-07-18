@@ -39,6 +39,6 @@ def _touch(path):
 
 
 def _validate(data, debug):
-    print(termcolor.colored("Validating data...", "green"))
+    print(termcolor.colored("Validating data with DEBUG = {}".format(debug), "green"))
     checks = DataChecker(data, debug)
     checks.check_data()
