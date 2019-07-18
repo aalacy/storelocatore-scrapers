@@ -12,12 +12,22 @@ async function scrape() {
   // Begin scraper
   const rootAddress = 'https://www.drinkblenders.com/blendersland/';
   const records = [];
-  await request(rootAddress)
+  await request({
+    url: rootAddress,
+    headers: {
+      'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.1 Safari/605.1.15"
+    }
+  })
     .then(async function (html) {
+      console.log(html);
       let $ = cheerio.load(html);
 
       // location hours is the same across locations and given in the footer of the page
-      const [hours_of_operation] = $('h3:contains(Store Hours)').next().text().match(/[A-Za-z][\S\s]*PM/);
+      let hoursHeader = $('h3:contains(Store Hours)');
+      if (hoursHeader.length !== 1) {
+        throw 'Either the page is down, the crawler is being blocked, or modification of the page structure has made the crawler obsolete.'
+      }
+      const [hours_of_operation] = hoursHeader.next().text().match(/[A-Za-z][\S\s]*PM/);
 
       // most symantic approach to grabbing individual locations
       // is by names, h4. However, there is one empty h4 that must
