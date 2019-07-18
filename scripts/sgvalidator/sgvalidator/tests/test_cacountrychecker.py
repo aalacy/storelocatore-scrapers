@@ -1,7 +1,7 @@
 from unittest import TestCase
 from ..countrychecker import CountryChecker
 
-country_checker = CountryChecker(debug=False)
+country_checker = CountryChecker(None, debug=False)
 
 
 class TestCaCountryChecker(TestCase):

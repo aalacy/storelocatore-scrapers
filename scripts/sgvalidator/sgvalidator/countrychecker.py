@@ -1,11 +1,30 @@
 import us
+import termcolor
 from .validatorutils import ValidatorUtils
 from .countrydetector import CountryDetector
+from .coordinateschecker import CoordinatesChecker
 
 
 class CountryChecker:
-    def __init__(self, debug):
+    def __init__(self, data, debug):
+        self.data = data
         self.debug = debug
+
+    def check(self):
+        print(termcolor.colored("Checking for data quality issues...", "blue"))
+        coordinatesChecker = CoordinatesChecker(self.debug)
+        for index, row in self.data.iterrows():
+            coordinatesChecker.check_latitude_and_longitude(row)
+            if CountryDetector.is_us(row):
+                self.check_us_state(row)
+                self.check_us_zip(row)
+                self.check_us_phone(row)
+            elif CountryDetector.is_canada(row):
+                self.check_canada_state(row)
+                self.check_canada_zip(row)
+                self.check_canada_phone(row)
+        if not self.debug:
+            print(termcolor.colored("No data quality issues found...", "green"))
 
     def check_us_state(self, row):
         state = row["state"]

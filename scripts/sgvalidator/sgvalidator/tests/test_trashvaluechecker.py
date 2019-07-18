@@ -26,21 +26,13 @@ class TestTrashValueChecker(TestCase):
 
         exampleRowBad1 = getExampleRow()
         exampleRowBad1["store_number"] = exampleRowBad1["store_number"] + " null"
+        exampleRowBad1["longitude"] = "<MISSING>"
 
         exampleRowBad2 = getExampleRow()
         exampleRowBad2["phone"] = exampleRowBad2["phone"] + " <span>"
         exampleRowBad2["longitude"] = "null " + exampleRowBad2["longitude"]
         exampleRowBad2["zip"] = "null"
 
-        resGood = TrashValueChecker.findTrashValues(exampleRowGood)
-        self.assertIsNone(resGood)
-
-        resBad1 = TrashValueChecker.findTrashValues(exampleRowBad1)
-        self.assertEqual(resBad1, {"store_number": exampleRowBad1["store_number"]})
-
-        resBad2 = TrashValueChecker.findTrashValues(exampleRowBad2)
-        self.assertEqual(resBad2, {
-            "phone": exampleRowBad2["phone"],
-            "longitude": exampleRowBad2["longitude"],
-            "zip": exampleRowBad2["zip"]
-        })
+        self.assertFalse(TrashValueChecker.findTrashValuesInner(exampleRowGood))
+        self.assertTrue(TrashValueChecker.findTrashValuesInner(exampleRowBad1))
+        self.assertTrue(TrashValueChecker.findTrashValuesInner(exampleRowBad2))
