@@ -8,4 +8,8 @@ python3 setup.py sdist bdist_wheel
 python3 -m twine upload dist/*
 =======
 python3 -m twine upload dist/*
+<<<<<<< HEAD
 >>>>>>> 8a8bd7cbad467e4179c5c9c89d99052ec72fa90d
+=======
+>>>>>>> origin/master
+>>>>>>> graham_branch

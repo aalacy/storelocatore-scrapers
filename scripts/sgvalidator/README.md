@@ -22,4 +22,8 @@ Then, once you're ready to install, just run:
 * For counts: hardcode a list of counts by brand_id using M&M and then check counts against that (raw ingest counts, not post pipeline counts)
 =======
 * For counts: hardcode a list of counts by brand_id using M&M and then check counts against that (raw ingest counts, not post pipeline counts)
+<<<<<<< HEAD
 >>>>>>> 8a8bd7cbad467e4179c5c9c89d99052ec72fa90d
+=======
+>>>>>>> origin/master
+>>>>>>> graham_branch

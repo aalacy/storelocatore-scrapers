@@ -13,6 +13,18 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+## helper to catch duplicates
+def validator(all_store_data):
+    addresses = []
+    all_store_data_clean = []
+    for data in all_store_data:
+        if data[2] not in addresses:
+            all_store_data_clean.append(data)
+            addresses.append(data[2])
+    return all_store_data_clean
+            
+            
+
 def fetch_data():
     locator_domain = 'https://prengerfoods.com/'
     ext = 'Home/Locations'
@@ -74,7 +86,6 @@ def fetch_data():
             hours = items[4].split('</b>')[1].strip()
         else:
             hours = items[5].split('</b>')[1].split('</p>')[0].strip()
-            print('hours = ' + hours)
             
             
         # done parsing, lets push it to an array
@@ -89,7 +100,7 @@ def fetch_data():
 
 
     
-    return all_store_data
+    return validator(all_store_data)
 
 def scrape():
     data = fetch_data()
