@@ -18,7 +18,7 @@ class SchemaChecker(AbstractChecker):
         if len(requiredColsNotInData) > 0:
             # debug = False because we need to fail no matter what if the schema is wrong
             ValidatorUtils.fail("Data does not contain the following required columns {}.\n"
-                                "Failing because the remainder of the checks won't be able to complete."
+                                "Failing because the remainder of the checks won't be able to complete.\n"
                                 .format(requiredColsNotInData), debug=False)
 
         # todo - transition this to pandas

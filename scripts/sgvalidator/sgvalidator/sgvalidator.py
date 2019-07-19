@@ -14,8 +14,12 @@ from .validator_utils import ValidatorUtils
 from .data_checker import DataChecker
 
 # make sure this is the same as in setup.py
+<<<<<<< HEAD
 VERSION = "1.6"
 >>>>>>> origin/master
+=======
+VERSION = "0.0.8"
+>>>>>>> 8a8bd7cbad467e4179c5c9c89d99052ec72fa90d
 SUCCESS_FILEPATH = './SUCCESS'
 
 
