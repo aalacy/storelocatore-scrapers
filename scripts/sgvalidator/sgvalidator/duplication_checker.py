@@ -33,7 +33,7 @@ class DuplicationChecker(AbstractChecker):
         resUnfiltered["num_addrs"] = resUnfiltered["street_address"].apply(len)
         res = resUnfiltered[resUnfiltered["num_addrs"] > 1]
         if len(res) > 0:
-            ValidatorUtils.fail("Found {} <lat, lng> pair(s) that belong to multiple addresses. Examples: \n {}"
+            ValidatorUtils.fail("Found {} <lat, lng> pair(s) that belong to multiple addresses. Examples:\n{}\n"
                                 .format(len(res), res.head(10)), self.debug)
         return res
 
@@ -41,7 +41,7 @@ class DuplicationChecker(AbstractChecker):
         duplicateRows = self.getDuplicateRows(self.data, self.identityKeys)
         debugExamples = duplicateRows[self.identityKeys].head(10)
         if len(duplicateRows) > 0:
-            ValidatorUtils.fail("Found {} duplicate rows in data. Examples: \n {}"
+            ValidatorUtils.fail("Found {} duplicate rows in data. Examples:\n{}\n"
                                 .format(len(duplicateRows), debugExamples), self.debug)
         return duplicateRows
 
@@ -54,6 +54,6 @@ class DuplicationChecker(AbstractChecker):
         res = resUnfiltered[resUnfiltered["latitude"] > 1]
         if len(res) > 0:
             message = "WARNING: We found {} cases where a single address has multiple <lat, lngs>. Are you sure you" \
-                      " scraped correct? Examples:\n{}".format(len(res), res.head(10))
+                      " scraped correctly? Examples:\n{}\n".format(len(res), res.head(10))
             print(termcolor.colored(message, "yellow"))
         return res

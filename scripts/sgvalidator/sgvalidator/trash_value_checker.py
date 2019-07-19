@@ -21,7 +21,7 @@ class TrashValueChecker(AbstractChecker):
         res = TrashValueChecker.findTrashValues(self.data)
         debugExamples = res.head(10)
         if len(res) > 0:
-            ValidatorUtils.fail("Found {} rows with trash data (e.g. nulls, HTML tags, etc.). Examples: \n {}"
+            ValidatorUtils.fail("Found {} rows with trash data (e.g. nulls, HTML tags, etc.). Examples:\n{}\n"
                                 .format(len(res), debugExamples), self.debug)
         else:
             print(termcolor.colored("No trash values found...", "green"))

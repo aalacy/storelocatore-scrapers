@@ -23,7 +23,7 @@ class FillRateChecker(AbstractChecker):
         concerningColsWithPercentages = mask[mask > FillRateChecker.PERC_CUTOFF]
         if len(concerningColsWithPercentages) > 0:
             message = "WARNING: {} columns have a high percentage (> {}%) of {}. " \
-                      "Are you sure you scraped correctly?\n{}"\
+                      "Are you sure you scraped correctly?\n{}\n"\
                 .format(len(concerningColsWithPercentages), FillRateChecker.PERC_CUTOFF, desc,
                         concerningColsWithPercentages)
             print(termcolor.colored(message, "yellow"))
