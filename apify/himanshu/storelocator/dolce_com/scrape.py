@@ -42,7 +42,7 @@ def fetch_data():
                                 for d in r1['properties']:
                                     hour=d['checkInTime']+'-'+d['checkOutTime']
                     store = []
-                    store.append("https://www.wyndhamhotels.com")
+                    store.append("https://www.wyndhamhotels.com/dolce")
                     store.append(mainadd['name'])
                     store.append(mainadd['address']['streetAddress'])
                     store.append(city)
@@ -87,7 +87,7 @@ def fetch_data():
                             for d in r1['properties']:
                                 hour=d['checkInTime']+'-'+d['checkOutTime']
                 store = []
-                store.append("https://www.wyndhamhotels.com")
+                store.append("https://www.wyndhamhotels.com/dolce")
                 store.append(mainadd['name'])
                 store.append(mainadd['address']['streetAddress'])
                 store.append(city)

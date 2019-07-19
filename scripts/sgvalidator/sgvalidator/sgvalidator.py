@@ -3,11 +3,19 @@ import csv
 import json
 import termcolor
 from glob import glob
+<<<<<<< HEAD
 from .validatorutils import ValidatorUtils
 from .datachecker import DataChecker
 
 # make sure this is the same as in setup.py
 VERSION = "1.4"
+=======
+from .validator_utils import ValidatorUtils
+from .data_checker import DataChecker
+
+# make sure this is the same as in setup.py
+VERSION = "1.6"
+>>>>>>> origin/master
 SUCCESS_FILEPATH = './SUCCESS'
 
 

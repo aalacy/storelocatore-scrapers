@@ -28,7 +28,7 @@ def fetch_data():
             ard=list(mainadd[j].stripped_strings)
             if ard!=[]:
                 store = []
-                store.append("https://www.eatonapothecary.com")
+                store.append("http://eatonapothecary.com")
                 store.append(name[j].text.strip())
                 store.append(re.sub(' +', ' ',ard[0]).replace('\r\n',' '))
                 store.append(name[j].text.strip())

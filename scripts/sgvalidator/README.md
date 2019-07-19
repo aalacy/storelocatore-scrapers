@@ -18,4 +18,8 @@ Then, once you're ready to install, just run:
 
 ### ToDo:
 * Maybe using pandas in the data checker?
+<<<<<<< HEAD
 * For counts: hardcode a list of counts by brand_id using M&M and then check counts against that (raw ingest counts, not post pipeline counts)
+=======
+* For counts: hardcode a list of counts by brand_id using M&M and then check counts against that (raw ingest counts, not post pipeline counts)
+>>>>>>> origin/master

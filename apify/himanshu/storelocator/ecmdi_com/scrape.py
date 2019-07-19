@@ -15,8 +15,14 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    headers = {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36",
+        "upgrade-insecure-requests": "1",
+        "Referer": "https://www.ecmdi.com/"
+        }
     base_url = "https://www.ecmdi.com"
-    r = requests.get("https://www.ecmdi.com/storelocator/index/storeSearch/?lat=40.7226698&lng=-73.51818329999998&radius=12000")
+    r = requests.get("https://www.ecmdi.com/storelocator/index/storeSearch/?lat=40.7226698&lng=-73.51818329999998&radius=12000",headers=headers)
+    print(r.text)
     data = r.json()["stores"]
     return_main_object = []
     for i in range(len(data)):
