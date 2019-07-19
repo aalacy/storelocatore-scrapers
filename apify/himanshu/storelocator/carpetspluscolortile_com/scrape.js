@@ -22,7 +22,7 @@ async function scrape(){
                     var longitude = obj.lng;
                     var lattitude = obj.lat;
                     var hour_temp =  obj.hours;
-                    if(hour_temp != null){
+                    if(hour_temp){
                         var hour = hour_temp.toString().replace(/<[^>]+>/g, '') ;
                     } 
                     else{
