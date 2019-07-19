@@ -37,7 +37,7 @@ def fetch_data():
         if(country=="United States"):
             country="US"
         store = []
-        store.append("https://www.earthbar.com")
+        store.append("https://earthbar.com/")
         store.append(store_name)
         store.append(address)
         store.append(city)
