@@ -15,7 +15,6 @@ class DuplicationChecker(AbstractChecker):
         print(termcolor.colored("Checking for duplicate rows in the data...", "blue"))
         identityDuplicates = self.checkForIdentityDuplicates()
         latLngDuplicates = self.checkLatLngsWithMultipleAddresses()
-        self.warnIfSameAddrHasMultipleLatLngs()
         if len(identityDuplicates) == 0 and len(latLngDuplicates) == 0:
             print(termcolor.colored("No duplicates found...", "green"))
 
@@ -29,7 +28,7 @@ class DuplicationChecker(AbstractChecker):
         So, a better strategy here is to group by <lat, lng> and see how many difference addresses belong to each
         one. If the number greater than 1, something is wrong.
         """
-        resUnfiltered = self.data.groupby(self.latLngKeys)["street_address"].apply(set).reset_index()
+        resUnfiltered = self.data.groupby(self.latLngKeys)["street_address"].apply(list).reset_index()
         resUnfiltered["num_addrs"] = resUnfiltered["street_address"].apply(len)
         res = resUnfiltered[resUnfiltered["num_addrs"] > 1]
         if len(res) > 0:
@@ -38,6 +37,7 @@ class DuplicationChecker(AbstractChecker):
         return res
 
     def checkForIdentityDuplicates(self):
+        print(termcolor.colored("Checking for duplicate rows in the data...", "blue"))
         duplicateRows = self.getDuplicateRows(self.data, self.identityKeys)
         debugExamples = duplicateRows[self.identityKeys].head(10)
         if len(duplicateRows) > 0:
@@ -48,14 +48,3 @@ class DuplicationChecker(AbstractChecker):
     @staticmethod
     def getDuplicateRows(df, keys):
         return df[df.duplicated(subset=keys)]
-
-    def warnIfSameAddrHasMultipleLatLngs(self):
-        resUnfiltered = self.data.groupby(["street_address"])[["latitude", "longitude"]].nunique().reset_index()
-        res = resUnfiltered[resUnfiltered["latitude"] > 1]
-        if len(res) > 0:
-            message = "WARNING: We found {} cases where a single address has multiple <lat, lngs>. Are you sure you" \
-                      " scraped correct? Examples:\n{}".format(len(res), res.head(10))
-            print(termcolor.colored(message, "yellow"))
-        return res
-
-

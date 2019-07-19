@@ -16,7 +16,6 @@ class SchemaChecker(AbstractChecker):
         print(termcolor.colored("Validating output schema...", "blue"))
         requiredColsNotInData = self.getRequiredColumnsThatArentInData()
         if len(requiredColsNotInData) > 0:
-            # debug = False because we need to fail no matter what if the schema is wrong
             ValidatorUtils.fail("Data does not contain the following required columns {}.\n"
                                 "Failing because the remainder of the checks won't be able to complete."
                                 .format(requiredColsNotInData), debug=False)
