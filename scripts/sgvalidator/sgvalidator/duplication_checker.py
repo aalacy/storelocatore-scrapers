@@ -32,6 +32,7 @@ class DuplicationChecker(AbstractChecker):
         resUnfiltered = self.data.groupby(self.latLngKeys)["street_address"].apply(set).reset_index()
         resUnfiltered["num_addrs"] = resUnfiltered["street_address"].apply(len)
         res = resUnfiltered[resUnfiltered["num_addrs"] > 1]
+        res.rename(columns={"latitude": "same_lat_count", "longitude": "same_lng_count"}, inplace=True)
         if len(res) > 0:
             ValidatorUtils.fail("Found {} <lat, lng> pair(s) that belong to multiple addresses. Examples:\n{}\n"
                                 .format(len(res), res.head(10)), self.debug)
