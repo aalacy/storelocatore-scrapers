@@ -8,7 +8,7 @@ class ValidatorUtils:
         if debug:
             print(termcolor.colored(message, "red"))
         else:
-            raise AssertionError(message)
+            raise AssertionError(termcolor.colored(message, "red"))
 
     @staticmethod
     def is_number(s):
