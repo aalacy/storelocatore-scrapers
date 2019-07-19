@@ -15,7 +15,14 @@ class ValueVillage(base.Base):
     seen = set()
 
     def _map_data(self, row):
+
         hxt = html.fromstring(row.get('info', ''))
+
+        location_type = None
+        link = xpath(hxt, './/a[1]/@href')
+        if link:
+            link = link.split('/')[-1]
+            location_type = '-'.join(link.split('-')[:-1])
 
         csz = xpath(hxt, '//div[@class="csz"]//text()') # Abbotsford, BC V2T 1V6 
         city, region_zip = csz.split(',')
@@ -39,7 +46,7 @@ class ValueVillage(base.Base):
             ,'country_code': country_code
             ,'store_number': row.get('locationId')
             ,'phone': xpath(hxt, '//div[@class="phone"]//text()')
-            ,'location_type': None
+            ,'location_type': location_type
             ,'naics_code': None 
             ,'latitude': row.get('lat')
             ,'longitude': row.get('lng')

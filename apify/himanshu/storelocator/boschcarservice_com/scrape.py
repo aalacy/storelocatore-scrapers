@@ -24,7 +24,7 @@ def fetch_data():
         store = []
         store.append("https://am.boschcarservice.com")
         store.append(store_data["LocationName"])
-        store.append(store_data["Address"]["Address1"])
+        store.append(store_data["Address"]["Address2"]  + " " + store_data["Address"]["Address1"] if "Address2" in  store_data["Address"] and store_data["Address"]["Address2"] != None else store_data["Address"]["Address1"])
         store.append(store_data["Address"]["City"])
         store.append(store_data["Address"]["State"])
         store.append(store_data["Address"]["PostalCode"])

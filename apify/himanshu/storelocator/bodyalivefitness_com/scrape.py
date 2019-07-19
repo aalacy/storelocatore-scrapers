@@ -49,8 +49,8 @@ def fetch_data():
         else:
             store.append(location_details[2])
         store.append("body alive")
-        store.append(location_soup.find("iframe")["src"].split("!2d")[1].split("!")[0])
         store.append(location_soup.find("iframe")["src"].split("!3d")[1].split("!")[0])
+        store.append(location_soup.find("iframe")["src"].split("!2d")[1].split("!")[0])
         store.append("<INACCESSIBLE>")
         return_main_object.append(store)
     return return_main_object

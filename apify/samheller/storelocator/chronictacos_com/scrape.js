@@ -10,6 +10,7 @@ Apify.main(async () => {
 });
 
 async function scrape(url, countryCode) {
+  // console.log("Retrieving url", url)
   return await axios({
     method: 'GET',
     url: 'https://www.chronictacos.com/locations'
@@ -18,12 +19,26 @@ async function scrape(url, countryCode) {
       rows = document.querySelectorAll('.span4');
       for (let row of rows){        
         if (row.querySelector('.fp-el') == null){continue;}
-        try {
-          addr = dataMassage(row.querySelector('.fp-el').innerHTML.split('<br>'));
-          area = parseArea(striptags(addr[1]));
-        } catch (e) {
-          console.log(e);
+        addr = dataMassage(row.querySelector('.fp-el').innerHTML.split('<br>'));
+        if (addr[1] == undefined){
+          addrRow = row.querySelectorAll('.fp-el')
+          addr = [];
+          for (let ar of addrRow){
+            addr.push(ar.textContent)
+          }
         }
+
+        if (addr[1].startsWith('(919)')){
+          tmp = addr[0].split(',');
+          addr = [tmp[0], tmp[1].trim() + "," + tmp[2], addr[1]]
+        }
+
+        try {
+          area = parseArea(striptags(addr[1]));
+        } catch (e){
+          console.log('failed parsing', addr);
+        }
+        
         
 
         // await Apify.pushData([{
@@ -48,6 +63,7 @@ async function scrape(url, countryCode) {
 }
 
 function parseArea(area){
+  console.log(area);
   parsed = {city: '', state: '', zip: ''};
   area = area.split(',');
   parsed.city = area[0];
@@ -59,7 +75,7 @@ function parseArea(area){
 
 function dataMassage(d){
   if (d[0].startsWith('420')){
-    b = strd[0].split('Birmingham')
+    b = d[0].split('Birmingham')
     return [striptags(b[0]), 'Birmingham ' + striptags(b[1]), striptags(d[1])];
   }
 
