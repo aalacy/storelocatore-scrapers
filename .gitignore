@@ -98,7 +98,7 @@ apify_docker_storage
 apify.json
 
 # Python
-*.pyc
+#*.pyc
 
 # Temporary
 *.swp
