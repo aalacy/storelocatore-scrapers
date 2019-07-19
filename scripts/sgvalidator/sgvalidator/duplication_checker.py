@@ -50,12 +50,10 @@ class DuplicationChecker(AbstractChecker):
         return df[df.duplicated(subset=keys)]
 
     def warnIfSameAddrHasMultipleLatLngs(self):
-        resUnfiltered = self.data.groupby(["street_address"])[["latitude", "longitude"]].nunique().reset_index()
+        resUnfiltered = self.data.groupby(["street_address"])[self.latLngKeys].nunique().reset_index()
         res = resUnfiltered[resUnfiltered["latitude"] > 1]
         if len(res) > 0:
             message = "WARNING: We found {} cases where a single address has multiple <lat, lngs>. Are you sure you" \
                       " scraped correct? Examples:\n{}".format(len(res), res.head(10))
             print(termcolor.colored(message, "yellow"))
         return res
-
-
