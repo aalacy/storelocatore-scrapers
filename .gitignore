@@ -99,6 +99,7 @@ apify.json
 
 # Python
 #*.pyc
+__pycache__/
 
 # Temporary
 *.swp

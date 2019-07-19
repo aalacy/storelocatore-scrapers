@@ -12,8 +12,8 @@ class DataChecker:
         self.data = pd.DataFrame(data)
         self.debug = debug
         self.checkers = {
-            DuplicationChecker(self.data, self.debug),
             SchemaChecker(self.data, self.rawData, self.debug),  # todo - move this off of raw data
+            DuplicationChecker(self.data, self.debug),
             CountryChecker(self.data, self.debug),
             TrashValueChecker(self.data, self.debug),
             FillRateChecker(self.data)
