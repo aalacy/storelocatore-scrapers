@@ -15,7 +15,10 @@ class TestDuplicationChecker(TestCase):
             nonDebugChecker.check()
 
     def testCheckLatLngDuplication(self):
-        print(debugChecker.checkLatLngsWithMultipleAddresses())
         self.assertTrue(len(debugChecker.checkLatLngsWithMultipleAddresses() == 1))
         with self.assertRaises(AssertionError):
             nonDebugChecker.check()
+
+    def testWarnIfSameAddrHasMultipleLatLngs(self):
+        res = debugChecker.warnIfSameAddrHasMultipleLatLngs()
+        self.assertTrue(len(res) == 2)

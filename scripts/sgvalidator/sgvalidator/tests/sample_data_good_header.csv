@@ -2,6 +2,6 @@ locator_domain,location_name,street_address,city,state,zip,country_code,store_nu
 example.com,example,1543 Mission St,San Francisco,CA,94103,US,10,2149260428,ATM,37.868692,-122.814205,24/7
 example.com,example,1543 Mission St,San Francisco,CA,94103,US,10,2149260428,ATM,37.768692,-122.414205,24/7
 example123.com,example123,1374 Mission St,San Francisco,CA,94103,US,10,2149260428,ATM,37.768692,-122.414205,24/7
-example123.com,example123,1374 Mission St,San Francisco,CA,94103,US,10,2149260428,ATM,37.768692,-122.414205,24/7
+example123.com,example123,1374 Mission St,San Francisco,CA,94103,US,10,2149260428,ATM,34.768692,-122.414205,24/7
 example123.com,example123,1375 Mission St,San Francisco,CA,94103,US,10,2149260428,ATM,37.768692,-122.414205,24/7
 example123.com,example123,1375 Mission St,San Francisco,CA,94103,US,10,2149260428,ATM,37.768692,-122.414205,24/7
