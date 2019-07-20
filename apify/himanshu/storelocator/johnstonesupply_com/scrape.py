@@ -39,7 +39,10 @@ def fetch_data():
             store.append(address)
             store.append(city)
             store.append(state)
-            store.append(zip)
+            if zip:
+                store.append(zip)
+            else:
+                 store.append('<MISSING>')
             store.append('US')  
             store.append("#"+loc[0].split('#')[-1].strip())
             store.append(phone.replace('(HEAT)',''))
