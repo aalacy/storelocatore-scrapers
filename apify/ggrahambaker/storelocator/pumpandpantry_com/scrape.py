@@ -1,7 +1,6 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
-import re
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,7 +20,7 @@ def fetch_data():
     to_scrape = locator_domain + ext
     page = requests.get(to_scrape)
     assert page.status_code == 200
-
+    print(to_scrape)
     soup = BeautifulSoup(page.content, 'html.parser')
     stores = soup.find('table')
 
@@ -32,7 +31,6 @@ def fetch_data():
         cols = row.find_all('td')
         if len(cols) > 0:
             store_number = cols[0].text
-
                 
             id_arr.append(store_number)
             
@@ -61,19 +59,20 @@ def fetch_data():
         # store_number, phone, location_type, latitude, longitude, hours_of_operation
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                      store_number, phone_number, location_type, lat, long, hours ]
+
         all_store_data.append(store_data)
 
 
         
-        to_del = 100000
-        for i, store in enumerate(all_store_data):
-            #print(store[7])
-            if store[7] in id_arr:
-                to_del = i
-            else:
-                id_arr.append(store[7])
-            
-        del all_store_data[to_del]
+    to_del = 100000
+    for i, store in enumerate(all_store_data):
+        #print(store[7])
+        if store[7] in id_arr:
+            to_del = i
+        else:
+            id_arr.append(store[7])
+        
+    del all_store_data[to_del]
 
 
 

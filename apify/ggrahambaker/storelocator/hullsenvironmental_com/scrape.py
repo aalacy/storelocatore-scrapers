@@ -1,7 +1,7 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
-import re
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -96,7 +96,7 @@ def fetch_data():
 
 
     ## case 3
-    location_name = case_3[0]
+    location_name = case_3[0].text
     info = case_3[1].text.split('\n')
     street_address = info[0]
     address_other = info[1].split(',')

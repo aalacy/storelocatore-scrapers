@@ -1,7 +1,6 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
-import re
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -88,43 +87,43 @@ def fetch_data():
         all_store_data.append(store_data)
 
 
-        ## extra info in 1 col
-        ps = div[2].find_all('p')
+    ## extra info in 1 col
+    ps = div[2].find_all('p')
 
-        for p in ps[:-2]:
-            brs = p.find_all('br')
-            street_address = brs[0].previousSibling.replace(',', '')
-            location_name = street_address 
-            if len(brs) == 3:
-                addy_info = brs[1].previousSibling.split(',')
-                city = addy_info[0]
-                
-                addy_info2 = addy_info[1].split(' ')
-                state = addy_info2[1]
-                zip_code = addy_info2[2]
-                phone_number = brs[2].previousSibling
-            else:
-                street_address += brs[1].previousSibling.replace(',', '')
-                addy_info = brs[2].previousSibling.split(',')
-                city = addy_info[0].strip()
-                
-                addy_info2 = addy_info[1].split(' ')
-                state = addy_info2[1]
-                zip_code = addy_info2[2]
-                phone_number = brs[3].previousSibling
-
-
-            location_type = 'loa fitness for women'
+    for p in ps[:-2]:
+        brs = p.find_all('br')
+        street_address = brs[0].previousSibling.replace(',', '')
+        location_name = street_address 
+        if len(brs) == 3:
+            addy_info = brs[1].previousSibling.split(',')
+            city = addy_info[0]
             
-            country_code = 'US'
-            store_number = '<MISSING>'
-            lat = '<MISSING>'
-            longit = '<MISSING>'
-            hours = '<MISSING>'
+            addy_info2 = addy_info[1].split(' ')
+            state = addy_info2[1]
+            zip_code = addy_info2[2]
+            phone_number = brs[2].previousSibling
+        else:
+            street_address += brs[1].previousSibling.replace(',', '')
+            addy_info = brs[2].previousSibling.split(',')
+            city = addy_info[0].strip()
+            
+            addy_info2 = addy_info[1].split(' ')
+            state = addy_info2[1]
+            zip_code = addy_info2[2]
+            phone_number = brs[3].previousSibling
 
-            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                         store_number, phone_number, location_type, lat, longit, hours ]
-            all_store_data.append(store_data)
+
+        location_type = 'loa fitness for women'
+        
+        country_code = 'US'
+        store_number = '<MISSING>'
+        lat = '<MISSING>'
+        longit = '<MISSING>'
+        hours = '<MISSING>'
+
+        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                     store_number, phone_number, location_type, lat, longit, hours ]
+        all_store_data.append(store_data)
     
     return all_store_data
 

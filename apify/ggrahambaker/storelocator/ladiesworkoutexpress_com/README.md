@@ -8,7 +8,8 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-# site to scrape: http://pumpandpantry.com/locations/all_locations.php
+# site to scrape: http://ladiesworkoutexpress.com/findAClub.asp
+
 
 ● You noticed that the site uses anti-scraping mechanisms such as Captchas, IP address checks, etc.
 ● You couldn’t get validation to pass due to the site itself having bad data.

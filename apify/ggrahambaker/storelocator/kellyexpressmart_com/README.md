@@ -11,4 +11,5 @@ need to give it a user header to let you scrape!
     headers = {'User-Agent': 
                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
 
+site to scrape = https://kellyexpressmart.com/our-locations/
 

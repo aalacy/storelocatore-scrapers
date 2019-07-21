@@ -8,14 +8,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-# site to scrape: http://pumpandpantry.com/locations/all_locations.php
-
-● You noticed that the site uses anti-scraping mechanisms such as Captchas, IP address checks, etc.
-● You couldn’t get validation to pass due to the site itself having bad data.
-● The scraper takes a long time to run (an estimated runtime would be appreciated in this
-case)
-● You did something custom such as using an alternate scraping framework (feel free to
-document things like this at top-level under your ​username​ directory).
-● Anything else you think would help a future maintainer.
-
-
+# site to scrape: 'https://inlineartofexercise.com/'
