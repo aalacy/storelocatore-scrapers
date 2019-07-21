@@ -66,7 +66,7 @@ def parse_bank_branch(branch_link, branch_text):
 
 def write_to_file(bank_branch_list):
 
-     with open('amerisbank.csv', 'w') as csvfile:
+     with open('data.csv', 'w') as csvfile:
         field_names = ["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"]
 
         writer = csv.DictWriter(csvfile, fieldnames=field_names)
