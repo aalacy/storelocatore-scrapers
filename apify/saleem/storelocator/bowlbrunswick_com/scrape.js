@@ -1,6 +1,5 @@
 const Apify = require('apify');
 const request = require('request-promise');
-const cheerio = require('cheerio');
 
 
 Apify.main(async () => {
