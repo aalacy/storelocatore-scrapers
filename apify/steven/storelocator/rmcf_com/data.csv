@@ -1,0 +1,278 @@
+locator_domain,location_name,street_address,city,state,zip,country_code,store_number,phone,location_type,latitude,longitude,hours_of_operation,co_brand
+https://www.rmcf.com/NC/Aberdeen60006,"Aberdeen, NC (Cold Stone / RMCF)",11088 US Highway 15/501,Aberdeen,NC,28315,US,60006,9106929440,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/NY/Albany60092,"Albany, NY (Cold Stone / RMCF)",1475 Western Avenue,Albany,NY,12203,US,60092,5185142003,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/NM/Albuquerque50012,"Albuquerque, NM (Coronado)",6600 Menaul Blvd. Suite D-1,Albuquerque,NM,87110,US,50012,5058720478,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NM/Albuquerque50832,"Albuquerque, NM (Cottonwood)","10000 Coors Blvd., Suite B5",Albuquerque,NM,87114,US,50832,5053691775,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/Allen50597,"Allen, TX",820 W. Stacy Road Suite 628 (Allen Premium Outlets),Allen,TX,75013,US,50597,9726781480,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MI/AllenPark50708,"Allen Park, MI",3116 Fairlane Drive,Allen Park,MI,48101,US,50708,3133596600,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Alpine50450,"Alpine, CA","5001 Willows Rd., Suite 301",Alpine,CA,91901,US,50450,6196598104,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/AmericanFork60026,"American Fork, UT (Cold Stone / RMCF)",456 East State Rd.,American Fork,UT,84003,US,60026,8017637540,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/ID/Ammon60075,"Ammon, ID (Cold Stone / RMCF)",2019 South 25th East,Ammon,ID,83406,US,60075,2085223347,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/IA/Ankeny60120,"Ankeny, IA (Cold Stone / RMCF)","1631 SW Main Street, Suite 102, The District - Building 2,",Ankeny,IA,50023,US,60120,5152645565,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/NC/Asheville60008,"Asheville, NC (Cold Stone / RMCF)","30 Town Square Blvd, Ste 150",Asheville,NC,28803,US,60008,8286503013,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/OR/Ashland50424,"Ashland, OR",33 E. Main St.,Ashland,OR,97520,US,50424,5414826757,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MI/AuburnHills50403,"Auburn Hills, MI","4350 Baldwin Road, Suite 712",Auburn Hills,MI,48326,US,50403,2483329772,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/IL/Aurora50624,"Aurora, IL","1650 Premium Outlets Blvd., Sp. 1279",Aurora,IL,60502,US,50624,6302369700,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Aurora50681,"Aurora, CO (Southlands)","6240 S. Main St., Ste 102",Aurora,CO,80016,US,50681,3036801969,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Aurora50683,"Aurora, CO (Aurora Mall)","14200 E. Alameda, Space VC-09",Aurora,CO,80012,US,50683,3033411943,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MI/BirchRun50574,"Birch Run, MI","8825 Market Place Drive, Suite 425",Birch Run,MI,48415,US,50574,9896244784,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MN/Bloomington50139,"Bloomington, MN",128 E Broadway,Bloomington,MN,55425,US,50139,9524442852,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/ID/Boise70019,"Boise, ID (Aspen Leaf / RMCF)",127 So Broadway Avenue,Boise,ID,83702,US,70019,2083433648,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Aspen Leaf
+https://www.rmcf.com/LA/BossierCity50892,"Bossier City, LA",711 Horseshoe Boulevard,Bossier City,LA,71111,US,50892,3187414304,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Boulder50490,"Boulder, CO",1300 Pearl Street,Boulder,CO,80302,US,50490,3034448455,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/Bountiful60080,"Bountiful, UT (Cold Stone / RMCF)","273 W. 500 South, Suite 2",Bountiful,UT,84010,US,60080,8012942750,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/MO/Branson50674,"Branson, MO",403 Branson Landing Blvd.,Branson,MO,65616,US,50674,4173377623,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Brea50718,"Brea, CA",1044A Brea Mall,Brea,CA,92821,US,50718,7142561835,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Breckenridge50188,"Breckenridge,CO",226 Main St. G4. Reliance Pl.,Breckenridge,CO,80424,US,50188,9704532094,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Brentwood50747,"Brentwood, CA","2485 Sand Creek Road, Ste 136",Brentwood,CA,94513,US,50747,9255133384,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Broomfield50530,"Broomfield, CO","1 W. Flatiron Circle, #1074",Broomfield,CO,80021,US,50530,3036351037,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/WA/Burlington50228,"Burlington, WA",444 Fashion Way,Burlington,WA,98233,US,50228,3607572577,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MD/California60122,"California, MD (Cold Stone / RMCF)","44980 St. Andrews Church Road, Unit D",California,MD,20619,US,60122,2402378296,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/Camarillo50341,"Camarillo, CA","740 Ventura Blvd., Ste. 400",Camarillo,CA,93010,US,50341,8054451150,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/Canutillo50752,"Canutillo, TX",7051 S Desert Blvd E-505,Canutillo,TX,79902,US,50752,9158773435,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/IN/Carmel60093,"Carmel, IN","14550 Clay Terrace Blvd., Suite 105",Carmel,IN,46032,US,60093,3175697170,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/NC/Cary50959,"Cary, NC","302 Colonades Way, Suite #203",Cary,NC,27518,US,50959,9842328325,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/WY/Casper60061,"Casper, WY (Cold Stone / RMCF)","939 East 2nd Street, # 700",Casper,WY,82601,US,60061,3072373960,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CO/CastleRock50554,"Castle Rock, CO",5050 Factory Shops Blvd. #820,Castle Rock,CO,80108,US,50554,3039558160,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NC/Charlotte50682,"Charlotte, NC","6801 Northlake Mall Drive, Ste 185",Charlotte,NC,28216,US,50682,7045994553,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NC/Charlotte50714,"Charlotte (airport), NC",5501 Josh Birmingham Parkway,Charlotte,NC,28208,US,50714,7043594367,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TN/Chattanooga60112,"Chattanooga, TN (Cold Stone/RMCF)","100 Chestmut Streeet, Suite A",Chattanooga,TN,37402,US,60112,4232670888,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/IL/Chicago50790,"Chicago, IL","Terminal 1, Gate B-14",Chicago,IL,60666,US,50790,7738943480,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/IL/Chicago50791,"Chicago, IL","Terminal 3, Upper Level, Space #T3H.U.33.B, Gate H-5",Chicago,IL,60666,US,50791,7736865858,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/ChulaVista50711,"Chula Vista, CA",2015 Birch Rd. #909,Chula Vista,CA,91915,US,50711,6192166360,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/CitrusHeights60056,"Citrus Heights, CA (Cold Stone / RMCF)",6105 Sunrise Boulevard,Citrus Heights,CA,95610,US,60056,9165369555,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/UT/Clinton50104,"Clinton, UT (Cold Stone / RMCF)",1917 W 1800 N Suite A5,Clinton,UT,84015,US,50104,8014440701,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/MI/ClintonTownship50858,"Clinton Township, MI","17420 Hall Road, Space 1108",Clinton Township,MI,48038,US,50858,5868681108,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/FL/CoconutCreek60009,"Coconut Creek, FL (Cold Stone / RMCF)","4425 Lyons Road, Ste F-105 Promenade at Coconut Creek",Coconut Creek,FL,33073,US,60009,9549779555,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CO/ColoradoSprings50553,"Colorado Springs, CO (Citadel)","750 Citadel Drive E., Space #1016",Colorado Springs,CO,80909,US,50553,7195912254,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/ColoradoSprings50602,"Colorado Springs, CO (Briargate)","1605 Briargate Pkwy, Suite 111",Colorado Springs,CO,80920,US,50602,7195930089,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/ColoradoSprings50572,"Colorado Springs, CO (Chapel Hills)","1710 Briargate Blvd., Space 185",Colorado Springs,CO,80920,US,50572,7195907623,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/ColoradoSprings50552,"Colorado Springs, CO (Old Town)",2431 W. Colorado Ave.,Colorado Springs,CO,80904,US,50552,7196354131,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MD/Columbia60105,"Columbia, MD",10101 Twin Rivers Road,Columbia,MD,21044,US,60105,4435455041,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/OH/Columbus50528,"Columbus, OH","1500 Polaris Pkwy, Suite 2022",Columbus,OH,43240,US,50528,6148850577,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Commerce50673,"Commerce, CA","100 Citadel Drive, Suite 442",Commerce,CA,90040,US,50673,3238879703,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NC/Concord50516,"Concord, NC","8111 Concord Mills Blvd., Suite 424",Concord,NC,28027,US,50516,7049791044,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Concord50741,"Concord,CA","278 Sun Valley Mall, Space D-135",Concord,CA,94520,US,50741,9258253030,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Corona50716,"Corona, CA",2785 Cabot Dr. #105,Corona,CA,92883,US,50716,9512777555,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Cortez60007,"Cortez, CO (Cold Stone / RMCF)",215 S. Sligo #5,Cortez,CO,81321,US,60007,9705652725,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CO/CrestedButte50300,"Crested Butte, CO",P.O. Box 2941 314 Elk Ave.,Crested Butte,CO,81224,US,50300,9703490933,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MO/CreveCoeur60106,"Creve Coeur, MO Cold Stone",12416 Olive Boulevard,Creve Coeur,MO,63141,US,60106,3145763945,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/IN/CrownPoint60052,"Crown Point, IN (Cold Stone / RMCF)",11 West 112th Avenue,Crown Point,IN,46307,US,60052,2196639010,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/WI/Delafield50820,"Delafield, WI",807 Genesee Street,Delafield,WI,53018,US,50820,2626467778,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Denver50153,"Denver (DIA), CO ",8900 Pena Blvd. Concourse B-52,Denver,CO,80249,US,50153,3033426825,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Denver60085,"Denver, CO (Cold Stone / RMCF)","6300 Hampden Avenue, Building 1, Suite E",Denver,CO,80222,US,60085,3037595454,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CO/Denver50771,"Denver, CO (Pavilions)","500 16th Street, Ste 118",Denver,CO,80202,US,50771,3036295500,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Denver50122,"Denver, CO (Writer Square)","1512 Larimer St., Space #44-R",Denver,CO,80202,US,50122,3036231887,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MI/Detroit60101,"Detroit (Greektown), MI",510 Monroe Street,Detroit,MI,48226,US,60101,3139642715,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/KS/DodgeCity60077,"Dodge City, KS (Cold Stone / RMCF)",2019 Central Avenue,Dodge City,KS,67801,US,60077,6203717223,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/UT/Draper70039,"Draper, UT",241 East 12300 South,Draper,UT,84020,US,70039,8014954123,<MISSING>,<MISSING>,<MISSING>,<MISSING>,U-Swirl
+https://www.rmcf.com/OH/Dublin60071,"Dublin, OH (Cold Stone / RMCF)",7038 Hospital Drive,Dublin,OH,43016,US,60071,6147180333,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/Dublin60004,"Dublin, CA (Cold Stone / RMCF)","4920 Dublin Blvd., Suite 340",Dublin,CA,94568,US,60004,9258751333,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/MN/Duluth50533,"Duluth, MN","395 S. Lake Ave., Suite 4",Duluth,MN,55802,US,50533,2187221700,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MN/Duluth50650,"Duluth, MN (Miller Hill)",1600 Miller Trunk Highway Space K-109,Duluth,MN,55811,US,50650,2187220912,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Durango00001,"Durango, CO",561 Main Ave.,Durango,CO,81301,US,00001,9702591408,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/IL/Edwardsville60035,"Edwardsville, IL (Cold Stone / RMCF)","2100 Troy Road, Suite 101",Edwardsville,IL,62025,US,60035,6186551480,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/ElCentro60016,"El Centro, CA (Cold Stone / RMCF)",2049 N. Imperial Ave. Suite A,El Centro,CA,92243,US,60016,7603533633,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/TX/ElPaso50904,"El Paso Fountains at Farah, TX",8889 Gateway Blvd. West Suite #1302,El Paso,TX,79925,US,50904,9152395009,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/PA/Erie50955,"Erie, PA",5800 Peach Street #275,Erie,PA,16565,US,50955,8148641160,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/EstesPark50378,"Estes Park, CO","517 Big Thompson Ave., Box 3544",Estes Park,CO,80517,US,50378,9705866601,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/OR/Eugene50724,"Eugene, OR",261 Valley River Center,Eugene,OR,97401,US,50724,5413431260,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/IN/Evansville60067,"Evansville, IN (Cold Stone / RMCF)",6401 E. Lloyd Expressway,Evansville,IN,47715,US,60067,8124372653,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/OH/Fairlawn60099,"Fairlawn, OH (Cold Stone / RMCF)","3900 Medina Road, Suite G",Fairlawn,OH,44333,US,60099,3306654466,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/NM/Farmington50961,"Farmington, NM",4601 East Main Street Suite 690,Farmington,NM,87402,US,50961,5056753295,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NJ/Flemington60089,"Flemington, NJ (Cold Stone / RMCF)",325 Route 202 South,Flemington,NJ,08822,US,60089,9087880770,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/Folsom50437,"Folsom, CA","13000 Folsom Blvd., Suite 809",Folsom,CA,95630,US,50437,9169854832,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/FortCollins50454,"Fort Collins, CO",Foothills Mall 215 East Foothills Blvd ,Fort Collins,CO,80525,US,50454,9702265550,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/KY/Frankfurt60094,"Frankfurt, KY (Cold Stone / RMCF)",671 E. Main Street,Frankfurt,KY,40601,US,60094,5023193726,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/Fresno50695,"Fresno, CA ( Fashion Fair)","639 E. Shaw Avenue, Space 167",Fresno,CA,93710,US,50695,5592283150,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/Frisco50569,"Frisco, TX","2809 Preston Road, Suite 1250",Frisco,TX,75034,US,50569,9723774050,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MD/Gaithersburg60034,"Gaithersburg, MD (Cold Stone / RMCF)",84 Main Street,Gaithersburg,MD,20878,US,60034,3015900009,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/IL/Galena50127,"Galena, IL",207 South Main St.,Galena,IL,61036,US,50127,8157773200,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/Galveston50248,"Galveston,TX","2217 Strand, Ste 103",Galveston,TX,77550,US,50248,4097624340,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/IL/Geneva50776,"Geneva, IL","1308 Commons Drive, Ste 5020",Geneva,IL,60134,US,50776,6302081484,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/AZ/Gilbert60116,"Gilbert, AZ (Cold Stone/RMCF)","1877 E. Williams Field Road, Suite 105",Gilbert,AZ,85295,US,60116,4803076990,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/MD/Glenarden60119,"Glenarden, MD (CSC)",Coming Soon!,Glenarden,MD,20721,US,60119,3013243888,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/AZ/Glendale60109,"Glendale, AZ (Cold  Stone/RMCF)","20022 N. 67th Avenue, Suite 102",Glendale,AZ,85308,US,60109,6235669400,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/AZ/Glendale50600,"Glendale, AZ",7700 W. Arrowhead Town Center #102,Glendale,AZ,85308,US,50600,6239790677,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/Grapevine50307,"Grapevine, TX","3000 Grapevine Mills Pkwy, Ste. 258 ",Grapevine,TX,76051,US,50307,9727246868,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NC/Greensboro60046,"Greensboro, NC (Cold Stone / RMCF)",1626 Highwoods Blvd,Greensboro,NC,27410,US,60046,3362920321,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/PA/GroveCity50458,"Grove City, PA","1911 Leesburg - Grove City Road, Suite 750",Grove City,PA,16127,US,50458,7247485116,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NJ/Hackettstown60019,"Hackettstown, NJ (Cold Stone / RMCF)",1930 Route 57,Hackettstown,NJ,07840,US,60019,9088509901,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/Hanford60081,"Hanford, CA (Cold Stone / RMCF)","186 N. 12th Avenue, Suite 111",Hanford,CA,93230,US,60081,5595839000,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/NV/Henderson50616,"Henderson, NV (Montelago Village)","20 Via Bel Canto, #100",Henderson,NV,89011,US,50616,7025471000,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/OR/Hillsboro60029,"Hillsboro, OR (Cold Stone / RMCF)",2227 NW 185th Avenue,Hillsboro,OR,97124,US,60029,5036458959,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/TX/Houston50944,"Houston, TX Wm. P. Hobby International Airport","Wm. P. Hobby Int. Airport, Central Terminal",Houston,TX,77061,US,50944,3466005163,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/Houston50811,"Houston, TX George Bush Intercontinental Airport I ","3100 Terminal Rd, Terminal C",Houston,TX,77032,US,50811,8328516979,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/Houston50954,"Houston, TX George Bush Intercontinental Airport II","George Bush Airport, 3100 Terminal Road",Houston,TX,77032,US,50954,8328516979,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/Houston50785,"Houston, TX (Memorial City)","303 Memorial City, Suite 850",Houston,TX,77024,US,50785,8323582626,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/OH/Hudson60037,"Hudson, OH (Cold Stone / RMCF)",48 Park Lane,Hudson,OH,44236,US,60037,3306552990,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/WI/Hudson60040,"Hudson, WI (Cold Stone / RMCF)",1005 Pearson Drive,Hudson,WI,54016,US,60040,7153819899,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/WV/Huntington60118,"Huntington, WV CSC",10 Pullman Square,Huntington,WV,25701,US,60118,3045226640,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/HuntingtonBeach50710,"Huntington Beach, CA (Bella Terra)","7777 Edinger Avenue, Suite 178",Huntington Beach,CA,92647,US,50710,7149013107,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/HuntingtonBeach50149,"Huntington Beach, CA","200 Main St., Suite 106",Huntington Beach,CA,92648,US,50149,7149690795,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Indio50948,"Fantasy Springs Resort Casino - Indio, CA",84245 Indio Springs Parkway,Indio,CA,92203,US,50948,7602385607,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/IA/IowaCity70005,"Iowa City, IA (Aspen Leaf / RMCF) ",125 South Dubuque Street,Iowa City,IA,52240,US,70005,3193519720,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Aspen Leaf
+https://www.rmcf.com/CA/Irvine50440,"Irvine, CA",617 Spectrum Center Drive,Irvine,CA,92618,US,50440,9494500999,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MO/JeffersonCity60028,"Jefferson City, MO (Cold Stone / RMCF)",610 Wildwood Drive,Jefferson City,MO,65109,US,60028,5736362653,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/OH/Jeffersonville50459,"Jeffersonville, OH",8205 Factory Shops Blvd.,Jeffersonville,OH,43128,US,50459,7409489174,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MO/KansasCity50433,"Kansas City, MO (Union Station)"," 30 W. Pershing, Suite 130 Union Station",Kansas City,MO,64108,US,50433,8164212571,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/KS/KansasCity50701,"Kansas City, KS","1837 Village West Pkwy, Suite 127",Kansas City,KS,66111,US,50701,9132585692,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/IL/LaGrange50578,"La Grange,IL ",50-B La Grange Rd.,La Grange,IL,60525,US,50578,7083526487,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NE/LaVista60115,"La Vista, NE ","12746 Westport Parkway, Suite 2107",La Vista,NE,68138,US,60115,4029052897,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/LagunaBeach50036,"Laguna Beach, CA ",248 South Coast Highway,Laguna Beach,CA,92651,US,50036,9494973799,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/LakeArrowhead50376,"Lake Arrowhead, CA ","28200 Hwy. 189, Suite C-200",Lake Arrowhead,CA,92352,US,50376,9093374909,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Lakewood50941,"Belmar Shopping Center (Lakewood, CO)",Belmar Shopping Center,Lakewood,CO,80226,US,50941,3039220748,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Lakewood60103,"Lakewood, CO (Cold Stone Creamery/RMCF",14239 W. Colfax Avenue,Lakewood,CO,80401,US,60103,3032159364,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/NV/LasVegas70032,"Las Vegas, NV (U-Swirl / RMCF)",305  Avenue N. Nellis,Las Vegas,NV,89110,US,70032,7024531500,<MISSING>,<MISSING>,<MISSING>,<MISSING>,U-Swirl
+https://www.rmcf.com/NV/LasVegas50840,"Las Vegas, NV (Fremont)",220 E. Fremont Street,Las Vegas,NV,89101,US,50840,7023801072,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NV/LasVegas50801,"Las Vegas, NV (Orleans Hotel )",Orleans Hotel 4500 W. Tropicana Ave.,Las Vegas,NV,89103,US,50801,7023621886,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NV/LasVegas70042,"Las Vegas, NV (Cheyenne Corp. Ctr.) U-Swirl/RMCF",7660 W. Cheyenne Avenue,Las Vegas,NV,89129,US,70042,7029120900,<MISSING>,<MISSING>,<MISSING>,<MISSING>,U-Swirl
+https://www.rmcf.com/NV/LasVegas70023,"Las Vegas, NV (U-Swirl / RMCF)",9795 W. Charleston Blvd. #101,Las Vegas,NV,89117,US,70023,7024791352,<MISSING>,<MISSING>,<MISSING>,<MISSING>,U-Swirl
+https://www.rmcf.com/NV/Laughlin50484,"Laughlin, NV ","1955 South Casino Dr., Ste 338",Laughlin,NV,89029,US,50484,7022980513,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/KS/Lawrence60049,"Lawrence, KS (Cold Stone / RMCF)","647 Massachusetts Street, Suite 101B",Lawrence,KS,66044,US,60049,7858430990,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/UT/Layton60023,"Layton, UT (Cold Stone / RMCF)","936 N. Main Street, Suite D",Layton,UT,84041,US,60023,8014440701,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/WA/Leavenworth50145,"Leavenworth, WA",636 Front St.,Leavenworth,WA,98826,US,50145,5095486525,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/Lehi50864,"Lehi, UT",3700 N. Cabelas Boulevard Space 252,Lehi,UT,84043,US,50864,8019011323,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/KY/Lexington60088,"Lexington, KY (Cold Stone / RMCF)","2337 Sir Barton Way, Suite 110",Lexington,KY,40506,US,60088,8592802264,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/KY/Lexington60102,"Lexington, KY 2 (Cold Stone / RMCF)","3801 Mall Road, Suite 110",Lexington,KY,40503,US,60102,6176456837,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/IL/Libertyville50556,"Libertyville, IL",541 N Milwaukee Avenue,Libertyville,IL,60048,US,50556,8473676703,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Littleton50544,"Littleton, CO","8501 W. Bowles Ave., Space 2015",Littleton,CO,80123,US,50544,3039721644,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Lodi50648,"Lodi, CA","115 S. School St., Suite 4",Lodi,CA,95240,US,50648,2093398275,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/Logan60051,"Logan, UT (Cold Stone / RMCF)","505 East, 1400 North, Suite # 140",Logan,UT,84341,US,60051,4357533339,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/LongBeach50309,"Long Beach, CA","419 Shoreline Village Dr., Suite F",Long Beach,CA,90802,US,50309,5624365901,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NJ/LongBranch50620,"Long Branch, NJ",56 Centennial Drive,Long Branch,NJ,07740,US,50620,7322227623,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Longmont60042,"Longmont, CO (Cold Stone / RMCF)","1087 S Hover Road, Unit B",Longmont,CO,80501,US,60042,3036825680,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/KY/Louisville60083,"Louisville, KY (Cold Stone / RMCF)",2015 S. Hurstbourne Parkway,Louisville,KY,40220,US,60083,5024997750,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CO/Loveland50455,"Loveland, CO",5669 McWhinney Blvd.,Loveland,CO,80538,US,50455,9705930106,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/Lubbock70037,"Lubbock, TX",6616 Milwaukee Avenue,Lubbock,TX,79424,US,70037,8069939866,<MISSING>,<MISSING>,<MISSING>,<MISSING>,U-Swirl
+https://www.rmcf.com/OH/Lyndhurst50763,"Lyndhurst, OH",25369 Cedar Road,Lyndhurst,OH,44124,US,50763,2163817625,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Mammoth50610,"Mammoth, CA","6201 Minaret Rd, Space #213",Mammoth,CA,93546,US,50610,7609346962,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/MammothLakes50009,"Mammoth Lakes, CA","437 Old Mammoth Road, Space N-1",Mammoth Lakes,CA,93546,US,50009,7609346269,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/KS/Manhattan60044,"Manhattan, KS (Cold Stone / RMCF)",1225 Moro Street,Manhattan,KS,66502,US,60044,7855395336,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/Manteca50712,"Manteca, CA",303 E. Yosemite Ave.,Manteca,CA,95336,US,50712,2098236500,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NC/Matthews50881,"Matthews, NC",921 Park Center Drive,Matthews,NC,28105,US,50881,7044439150,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/McAllen50946,"McAllen, TX, La Plaza Mall","2200 S. 10th Street, Suite C-75",McAllen,TX,78503,US,50946,9562175937,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/McAllen50755,"McAllen, TX","3300 W Expressway 83, Ste 170",McAllen,TX,78501,US,50755,9566313800,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/Mercedes50734,"Mercedes, TX","5001 E Expressway 83, Ste 331",Mercedes,TX,78570,US,50734,9565657725,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/OH/Miamisburg60025,"Miamisburg, OH (Cold Stone/RMCF)",3700 Rigby Road,Miamisburg,OH,45342,US,60025,9372475658,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/Milpitas50655,"Milpitas, CA",170 Great Mall Drive,Milpitas,CA,95035,US,50655,4089427211,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/FL/MiramarBeach50247,"Miramar Beach, FL",10562  Hwy. 98 West #117,Miramar Beach,FL,32550,US,50247,8506549777,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Modesto60055,"Modesto, CA (Cold Stone / RMCF)","3401 Dale Rd., Suie Q12A",Modesto,CA,95356,US,60055,2095775500,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/Montclair50621,"Montclair, CA",2103 Montclair Plaza Lane,Montclair,CA,91763,US,50621,9096269660,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Monterey50346,"Monterey, CA",647 Cannery Row,Monterey,CA,93940,US,50346,8313721065,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/Murray50856,"Murray, UT",6117 South State Street,Murray,UT,84107,US,50856,8012811415,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/Murray60108,"Murray, UT (Cold Stone / RMCF)",5287 South State Street,Murray,UT,84107,US,60108,8012700801,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/IL/Naperville50672,"Naperville, IL (Crossings)","2835 Showplace Dr., Ste 111",Naperville,IL,60564,US,50672,6309042462,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TN/Nashville50453,"Nashville, TN",348 Opry Mills Drive,Nashville,TN,37214,US,50453,6159441953,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/FL/NewPortRitchey60114,"New Port Ritchey, FL CSC","10710 State Road 54, Suite 103",New Port Ritchey,FL,34655,US,60114,7278169696,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/WA/NorthBend50240,"North Bend, WA","561 S. Fork Ave. SW, Ste. H",North Bend,WA,98045,US,50240,4258311818,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/OH/NorthCanton60059,"North Canton, OH (Cold Stone / RMCF)",4966 Portage NW,North Canton,OH,44720,US,60059,3304943600,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/NV/NorthLasVegas70022,"North Las Vegas, NV (U-Swirl / RMCF)",6592 N. Decatur Blvd. #101,North Las Vegas,NV,89131,US,70022,7026297960,<MISSING>,<MISSING>,<MISSING>,<MISSING>,U-Swirl
+https://www.rmcf.com/IL/Northfield50115,"Northfield, IL","300 Happ Rd., Ste 114",Northfield,IL,60093,US,50115,8474465001,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/Ogden60098,"Ogden, UT (Cold Stone / RMCF)","175 S. 25th Street, Suite 100",Ogden,UT,84401,US,60098,8016106946,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/KS/Olathe60047,"Olathe, KS (Cold Stone / RMCF)",14941 West 119th Street,Olathe,KS,66062,US,60047,9137824815,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/NE/Omaha60045,"Omaha, NE (Cold Stone / RMCF)",3220 Farnam Street #2107,Omaha,NE,68131,US,60045,4023591719,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/Ontario50332,"Ontario, CA","One Mills Circle, Ste. 809",Ontario,CA,91764,US,50332,9099809248,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Orange50308,"Orange, CA (The Outlets)","20 City Blvd. West, Suite A-215",Orange,CA,92868,US,50308,7143851777,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/FL/Orlando60022,"Orlando, FL (Cold Stone / RMCF)","8001 S. Orange Blossom Trail, Rm #714",Orlando,FL,32809,US,60022,4076132568,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/FL/Orlando60086,"Orlando, FL (Cold Stone / RMCF)",8145 Internaional Drive Suite 545,Orlando,FL,32819,US,60086,4079300936,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/MO/OsageBeach50167,"Osage Beach, MO","4540 Osage Beach Parkway, M7",Osage Beach,MO,65065,US,50167,5733480880,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MS/Oxford50838,"Oxford, MS","2305 W Jackson Ave., Ste 204",Oxford,MS,38655,US,50838,6622362911,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Palmdale60111,"Palmdale, CA (Cold Stone / RMCF)","1201 W. Avenue P., Suite A",Palmdale,CA,93551,US,60111,6612742650,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/UT/ParkCity50215,"Park City, UT (Main St.)",510 Main Street,Park City,UT,84060,US,50215,4356490997,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/ParkCity50214,"Park City, UT (Resort)",1385 Lowell Ave.,Park City,UT,84060,US,50214,4356492235,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MS/Pearl70025,"Pearl, MS (U-Swirl / RMCF)",200 Bass Pro Drive Suite 420,Pearl,MS,39208,US,70025,6013981842,<MISSING>,<MISSING>,<MISSING>,<MISSING>,U-Swirl
+https://www.rmcf.com/IL/Peoria50551,"Peoria, IL (Metro Center)","4700 No. University St., Suite 21",Peoria,IL,61614,US,50551,3096892892,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/AZ/Peoria60010,"Peoria, AZ (Lake Pleasant)",9918 W. Happy Valley Parkway,Peoria,AZ,85383,US,60010,6235661400,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/Petaluma50195,"Petaluma, CA",2200 Petaluma Boulevard North # 410,Petaluma,CA,94952,US,50195,7077816800,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/AZ/Phoenix50486,"Phoenix, AZ (Outlets at Anthem)","4250 Anthem Way, Suite 485",Phoenix,AZ,85027,US,50486,6234659716,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/AZ/Phoenix50890,"Phoenix, AZ (Norterra)",The Shops at Norterra  2510 W. Happy Valley Rd STE 1250,Phoenix,AZ,85085-1881,US,50890,6235182138,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/OH/Pickerington60041,"Pickerington, OH (Cold Stone / RMCF)",1718 Hill Road North ,Pickerington,OH,43147,US,60041,6148689801,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/PismoBeach50209,"Pismo Beach, CA",333 Five Cities Dr.,Pismo Beach,CA,93449,US,50209,8057732149,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NY/Pleasantville60027,"Pleasantville, NY (Cold Stone / RMCF)",64 Washington Avenue,Pleasantville,NY,10570,US,60027,9144094959,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/MI/Portage60113,"Portage, MI (Cold Stone/RMCF)",6800 S. Westnedge Avenue,Portage,MI,49002,US,60113,2693274674,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/UT/Price60066,"Price, UT (Cold Stone / RMCF)",1191 E. Main Street ,Price,UT,84501,US,60066,4356132653,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/UT/Provo50678,"Provo, UT","4801 N. University Ave., Suite 140",Provo,UT,84604,US,50678,8012240511,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/WA/Puyallup60107,"Puyallup, WA (Cold Stone/RMCF)",COMING SOON,Puyallup,WA,98373,US,60107,2538452000,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/NC/Raleigh50680,"Raleigh, NC","8521 Brier Creek Pkwy, Ste 103",Raleigh,NC,27616,US,50680,9198068992,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/RanchoCucamonga50593,"Rancho Cucamonga, CA",12545 N. Mainstreet,Rancho Cucamonga,CA,91739,US,50593,9094630203,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/RanchoMirage50615,"Rancho Mirage, CA","71-800 Highway 111, Sp. A-142",Rancho Mirage,CA,92270,US,50615,7603462929,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/SD/RapidCity50871,"Rapid City, SD",507 6th Street,Rapid City,SD,57701,US,50871,6057164700,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Redlands50739,"Redlands, CA","10060 Alabama St., Ste C",Redlands,CA,92374,US,50739,9097987700,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/RedondoBeach50522,"Redondo Beach, CA","1815 Hawthorne Blvd., # 342",Redondo Beach,CA,90278,US,50522,3102141585,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NV/Reno50772,"Reno, NV","5100 Mae Anne Ave., Suite 101",Reno,NV,89523,US,50772,7757871212,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/ID/Rexburg50945,"Rexburg, ID","175 West, 2nd South, Suite 105",Rexburg,ID,83440,US,50945,2087010067,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MS/Ridgeland50846,"Ridgeland, MS","1065 Highland Colony Parkway, Suite G",Ridgeland,MS,39157,US,50846,6017075139,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NJ/Rockaway60060,"Rockaway, NJ (Cold Stone / RMCF)",321 Mt. Hope Ave,Rockaway,NJ,07866,US,60060,9735378200,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/TX/Rockwall50770,"Rockwall, TX","2091 Summer Lee Drive, Ste 103",Rockwall,TX,75032,US,50770,2147713500,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/AR/Rogers50750,"Rogers, AR","2203 Promenade Blvd., Ste 8108",Rogers,AR,72758,US,50750,4798996700,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/IL/Rosemont60084,"Rosemont, IL (Cold Stone / RMCF)",7080 Mannheim Road,Rosemont,IL,60018,US,60084,8478246670,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/MI/Roseville60070,"Roseville, MI (Cold Stone / RMCF)",31961 Gratiot Avenue,Roseville,MI,48197,US,60070,5862942013,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/TX/RoundRock50700,"Round Rock, TX",4401 N. Hwy 35 #743,Round Rock,TX,78664,US,50700,5128689730,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Sacramento50028,"Sacramento, CA",1039 2nd Street,Sacramento,CA,95814,US,50028,9164488801,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/OR/Salem50536,"Salem, OR","401 Center Street NE, Suite 285",Salem,OR,97301,US,50536,5033718400,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/SaltLakeCity50565,"Salt Lake City, UT (Gateway)",The Gateway 158 So. Rio Grand St.,Salt Lake City,UT,84101,US,50565,8014560683,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/SaltLakeCity50685,"Salt Lake City, UT (Airport Terminal 1)","776 N. Terminal Drive, Space 1 (Airport Terminal 1)",Salt Lake City,UT,84116,US,50685,8015313582,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/SaltLakeCity50845,"Salt Lake City, UT (Airport Terminal 2)","776 N. Terminal Dr., Terminal 2, D Concourse (Airport Terminal 2)",Salt Lake City,UT,84116,US,50845,8015313572,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/SanAntonio50072,"San Antonio, TX",522 River Walk St.,San Antonio,TX,78205,US,50072,2102272626,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/SanAntonio60038,"San Antonio, TX (Cold Stone / RMCF)","17503 LaCantera Pkwy., Ste 101",San Antonio,TX,78257,US,60038,2105612776,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/SanClemente50725,"San Clemente, CA ",101 W. Avenida Vista Hermosa Suite 612,San Clemente,CA,92672,US,50725,9494417728,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/SanDiego60065,"San Diego, CA (Cold Stone / RMCF)","4705 Clairmont Dr., Ste B",San Diego,CA,92117,US,60065,8582705552,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/SanJuanCapistrano50952,"San Juan Capistrano, CA","31876 Del Obispo, Suite 5",San Juan Capistrano,CA,92675,US,50952,9494964457,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/SanLuisObispo50335,"San Luis Obispo, CA",848 Higuera St.,San Luis Obispo,CA,93401-3601,US,50335,8055412221,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/SanMarcos50493,"San Marcos, TX","4015 South Interstate 35, Suite 835",San Marcos,TX,78666,US,50493,5123929780,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/SanMarcos60033,"San Marcos, TX (Cold Stone / RMCF)","708 Center Drive, #101",San Marcos,CA,92069,US,60033,7607437735,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/UT/Sandy60068,"Sandy,  UT (Cold Stone / RMCF)",9335 South State Street,Sandy,UT,84070,US,60068,8018784888,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/SantaAna50934,Santa Ana  ,Main Place Mall,Santa Ana,CA,92705,US,50934,7147233655,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/SantaRosa50807,"Santa Rosa, CA",1056 Santa Rosa Plaza,Santa Rosa,CA,95401,US,50807,7075452722,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/SaratogaSprings60087,"Saratoga Springs, UT",1376 North Redwood Road,Saratoga Springs,UT,84045,US,60087,8013418470,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/IL/Schaumburg60124,"Schaumburg, IL (Cold Stone/RMCF)","5 Woodfield Mall, Suite E-102",Schaumburg,IL,60173,US,60124,8476190799,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/AZ/Scottsdale50913,Scottsdale Shops at OdySea," 9500 E. Via de Ventura, Suite D201",Scottsdale,AZ,85256,US,50913,4804346071,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/AZ/Scottsdale70040,"Scottsdale, AZ", 13610 N. Scottsdale Road,Scottsdale,AZ,85254,US,70040,4806633097,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Yogurtini
+https://www.rmcf.com/AZ/Scottsdale50577,"Scottsdale, AZ","7014 Camelback Rd., Ste.  2200",Scottsdale,AZ,85251,US,50577,4809701707,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/WA/Seattle50435,"Seattle, WA (Pike Place)",1419 First Ave.,Seattle,WA,98101,US,50435,2062629581,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/AZ/Sedona50575,"Sedona, AZ","270 N. Highway 89A, Suite 2",Sedona,AZ,86336,US,50575,9282823383,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Silverthorne50445,"Silverthorne, CO","247-A Rainbow Drive, G-250",Silverthorne,CO,80498,US,50445,9702622462,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Solvang50032,"Solvang, CA",1655 Copenhagen Dr.,Solvang,CA,93463,US,50032,8056888823,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NY/Somers60078,"Somers, NY (Cold Stone / RMCF)",80 Route 6,Somers,NY,10505,US,60078,9146210201,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/UT/SouthJordan60091,"South Jordan, UT (Cold Stone / RMCF)",10493 South Redwood Road,South Jordan,UT,84095,US,60091,8014461095,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/SouthLakeTahoe50753,"South Lake Tahoe, CA","1001 Heavenly Village Way, Unit 30B",South Lake Tahoe,CA,96150,US,50753,7753392040,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/SpanishFork60076,"Spanish Fork, UT (Cold Stone / RMCF)",320 N. Main,Spanish Fork,UT,84660,US,60076,8017942558,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/WA/Spokane50841,"Spokane, WA (Riverpark Square)","808 West Main, Suite 147",Spokane,WA,99201,US,50841,5094739202,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/WA/SpokaneValley50795,"Spokane Valley, WA",1330 N. Argonne Road Suite C,Spokane Valley,WA,99212,US,50795,5099277623,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/StGeorge50363,"St George, UT","250 Red Cliffs Dr, Space 20",St George,UT,84790,US,50363,4356524327,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/FL/St.Augustine50420,"St. Augustine, FL","500 Outlet Mall Blvd., Space #290 St. Augustine Outlets",St. Augustine,FL,32095,US,50420,9048271545,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MO/St.Charles70027,"St. Charles, MO (U-Swirl / RMCF)","1520 S. Fifth Street, Space 105",St. Charles,MO,63303,US,70027,6367573356,<MISSING>,<MISSING>,<MISSING>,<MISSING>,U-Swirl
+https://www.rmcf.com/MO/St.Joseph50857,"St. Joseph, MO",3715 Frederick Ave. Unit B,St. Joseph,MO,64506-3018,US,50857,8162338500,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MN/St.Paul50637,Minneapolis-St. Paul Int'l Airport,4300 Glumack Dr. LT-2360,St. Paul,MN,55111,US,50637,6127269133,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/SteamboatSprings50666,"Steamboat Springs, CO",624 Lincoln Avenue,Steamboat Springs,CO,80487,US,50666,9708703048,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/OK/Stillwater50814,"Stillwater, OK",714 S. Main Street,Stillwater,OK,74074,US,50814,4055332977,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NM/Taos50464,"Taos, NM",112 S Plaza,Taos,NM,87571,US,50464,5757588855,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Temecula50826,"Temecula, CA",40820 Winchester Road,Temecula,CA,92591,US,50826,9512962990,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/AZ/Tempe50923,"Tempe (Marketplace), AZ",2000 E. Rio Salado Parkway,Tempe,AZ,85281,US,50923,4802848724,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/AZ/Tempe50423,"Tempe, AZ",5000 Arizona Mills Circle #454,Tempe,AZ,85282,US,50423,4807567366,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/Terrell50535,"Terrell, TX","301 Tanger Dr. , Suite 201",Terrell,TX,75160,US,50535,9725639999,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/TX/TheWoodlands70036,"The Woodlands, TX (U-Swirl / RMCF)","26400 Kuykendahl, Bldg C, Suite 110",The Woodlands,TX,77389,US,70036,8326398760,<MISSING>,<MISSING>,<MISSING>,<MISSING>,U-Swirl
+https://www.rmcf.com/NH/Tilton50478,"Tilton, NH","120 Laconia Road, Suite 200",Tilton,NH,03276,US,50478,6032867663,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/Tooele60053,"Tooele, UT (Cold Stone / RMCF)","1197 North Main Street, Suite E",Tooele,UT,84024,US,60053,4352280120,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/Tracy60003,"Tracy, CA (Cold Stone / RMCF)","1859 West 11th St., Ste C6",Tracy,CA,95376,US,60003,2098327461,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/OR/Troutdale50258,"Troutdale, OR","450 NW 257th Ave., Space 336",Troutdale,OR,97060,US,50258,5036657237,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/MI/Troy50409,"Troy, MI","2800 W. Big Beaver Rd., Space N-124",Troy,MI,48084-1454,US,50409,2488161454,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/WA/Tulalip50676,"Tulalip, WA","10600 Quilceda Blvd., Ste 622",Tulalip,WA,98271,US,50676,3607162400,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Tulare50413,"Tulare, CA","1413 Retherford Street, D163",Tulare,CA,93274,US,50413,5596871081,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/OK/Tulsa50831,"Tulsa, OK",10114 S. Sheridan Road,Tulsa,OK,74133,US,50831,9182997623,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/ID/TwinFalls60069,"Twin Falls, ID (Cold Stone / RMCF)",799 Cheney Drive Space A,Twin Falls,ID,83338,US,60069,2087364656,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/Vacaville50502,"Vacaville, CA","131 Nut Tree Road, Suite D",Vacaville,CA,95687,US,50502,7074531041,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Vail50392,"Vail, CO",158 Gore Creek Drive,Vail,CO,81657,US,50392,9704767623,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/IN/Valparaiso60064,"Valparaiso, IN (Cold Stone / RMCF)",71 Silhavy Road Suite 161,Valparaiso,IN,46383,US,60064,2194763430,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/MS/Vicksburg50828,"Vicksburg, MS",4000 S. Frontage Road,Vicksburg,MS,39180,US,50828,6014560202,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CA/Victorville50629,"Victorville, CA","14400 Bear Valley Rd., Suite 801",Victorville,CA,92392,US,50629,7609621000,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NY/Webster60011,"Webster, NY (Cold Stone / RMCF)","1028 Ridge Road, Ste 127",Webster,NY,14580,US,60011,5856456445,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/CA/WestCovina50633,"West Covina, CA",1030 Plaza Dr.,West Covina,CA,91790,US,50633,6264727878,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/UT/WestJordan60036,"West Jordan, UT (Cold Stone / RMCF)",3781 W Center Park Dr,West Jordan,UT,84084,US,60036,8012803054,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/OH/Westlake50788,"Westlake, OH",204 Crocker Park Blvd.,Westlake,OH,44145,US,50788,4408992526,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/CO/Westminster50780,"Westminster, CO",14647 Delaware St. #1200,Westminster,CO,80023,US,50780,3039203400,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/KS/Wichita60079,"Wichita, KS (Cold Stone / RMCF)","2441 N. Maize Road, Suite 216",Wichita,KS,67205,US,60079,3167294245,<MISSING>,<MISSING>,<MISSING>,<MISSING>,Cold Stone Creamery
+https://www.rmcf.com/IA/Williamsburg50513,"Williamsburg, IA",1991 OâDonnell Road Suite #102A,Williamsburg,IA,52361,US,50513,3196682931,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/NC/Winston-Salem50962,"Winston-Salem, NC","Hanes Mall, 3320 Silas Creek Parkway, Space AU 572",Winston-Salem,NC,27103,US,50962,3367606297,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
+https://www.rmcf.com/OR/Woodburn50443,"Woodburn, OR","1001 Arney Road, Suite 409",Woodburn,OR,97071,US,50443,5039810008,<MISSING>,<MISSING>,<MISSING>,<MISSING>,N/A
