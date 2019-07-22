@@ -13,14 +13,15 @@ file_name = 'data.csv'
 
 # Function pull webpage content
 def pull_content(url):
-    soup = bs(r.get(url).content,'html.parser')
+    # Added verify = false to stop https error
+    soup = bs(r.get(url, verify=False).content,'html.parser')
     return soup
 
 # Pull out fields and turn to dataframe
 def pull_info(content):
     # Empty list for store data
     store_list = []
-    # pull out store information
+    # pull out store i Added verify = false to stop https errornformation
     sdata = [x for x in soup.body.find_all('div', {'class': 'loc-box text-center'})]
     # Loop through the  (such a small amount of data loop is fine)
     for store in sdata:
