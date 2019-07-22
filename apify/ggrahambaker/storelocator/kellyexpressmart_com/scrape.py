@@ -24,7 +24,6 @@ def fetch_data():
 
 
     to_scrape = locator_domain + ext
-    print(to_scrape)
     page = requests.get(to_scrape, headers = headers)
     assert page.status_code == 200
 
@@ -79,6 +78,16 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                      store_number, phone_number, location_type, lat, longit, hours ]
         all_store_data.append(store_data)
+
+        # add geo points
+        geo = soup.find_all('div', {'class': 'lmm-geo-tags geo'})
+        for g in geo:
+            for data in all_store_data:
+                if g.text[:5] in data[2]:
+                    data[10] = g.find('span',{'class': 'latitude'}).text
+                    data[11] = g.find('span',{'class': 'longitude'}).text
+                    continue
+                    
 
 
     return all_store_data

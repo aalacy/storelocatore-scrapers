@@ -20,8 +20,15 @@ def fetch_data():
     to_scrape = locator_domain + ext
     page = requests.get(to_scrape)
     assert page.status_code == 200
-    print(to_scrape)
+
     soup = BeautifulSoup(page.content, 'html.parser')
+    ## get the hours
+    stores = soup.find_all('td', {'width': '175'})
+    hours_arr = []
+    for st in stores:
+        hours_arr.append(st.text)
+
+
     stores = soup.find('table')
 
     all_store_data = []
@@ -51,6 +58,8 @@ def fetch_data():
         long = '<MISSING>'
         hours = '<MISSING>'
         
+
+            
         
         
         # done parsing, lets push it to an array
@@ -62,8 +71,10 @@ def fetch_data():
 
         all_store_data.append(store_data)
 
-
-        
+    ## put the hours back in
+    for i, data in enumerate(all_store_data):
+        data[-1] = hours_arr[i]
+         
     to_del = 100000
     for i, store in enumerate(all_store_data):
         #print(store[7])
