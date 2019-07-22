@@ -35,7 +35,8 @@ def fetch_data():
     stores = soup.find_all('p', class_='contact_details') 
 
     all_store_data = []
-    for store in stores:
+    ## there are duplicates on bottom of page
+    for store in stores[:8]:
         store_pretty = store.prettify()
         
         items = store_pretty.split('<br')
@@ -78,9 +79,9 @@ def fetch_data():
         phone_number = items[3][phone_cut:].strip()
         
         location_type = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
-        
+        lat = store.findNext('div')['data-lat']
+        longit = store.findNext('div')['data-lng'] 
+    
         ## check for 'style', they will be in 4!
         if 'style' in items[4]:
             hours = items[4].split('</b>')[1].strip()
