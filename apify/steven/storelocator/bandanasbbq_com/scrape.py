@@ -67,9 +67,13 @@ def pull_info(content):
         # Concatenate all parts of list prior to city state for street address
         street_add = ' '.join([x for x in address_split[0:state_city_line] if x != ''])
 
-        lat = '<MISSING>'
-
-        long = '<MISSING>'
+        try:
+            raw_lat_long = pull_content(store.a['href']).iframe['src']
+            long = re.search('!2d(.*)!3d', raw_lat_long).group(0).replace('!2d', '').replace('!3d', '')
+            lat = re.search('!3d(.*)!3m2!', raw_lat_long).group(0).replace('!3d', '')[:7]
+        except:
+            lat = '<MISSING>'
+            long = '<MISSING>'
 
 
 
