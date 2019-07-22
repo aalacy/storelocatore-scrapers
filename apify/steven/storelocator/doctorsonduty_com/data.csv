@@ -1,0 +1,10 @@
+locator_domain,location_name,street_address,city,state,zip,country_code,store_number,phone,location_type,latitude,longitude,hours_of_operation
+http://doctorsonduty.com/locations/,APTOS,6800 Soquel Drive,Aptos,CA,95003,US,<MISSING>,8316623611,<MISSING>,<MISSING>,<MISSING>,Monday-Friday 8am-6pm; Closed Saturday & Sunday.
+http://doctorsonduty.com/locations/,HARDEN URGENT CARE,1756 North Main St,Salinas,CA,93906,US,<MISSING>,8314438200,<MISSING>,<MISSING>,<MISSING>,Monday-Friday 8am-7pm; Closed Saturday & Sunday.
+http://doctorsonduty.com/locations/,MARINA,3130 Del Monte Blvd,Marina,CA,93933,US,<MISSING>,8318833330,<MISSING>,<MISSING>,<MISSING>,Monday-Friday 8am-6pm; Closed Saturday&Sunday
+http://doctorsonduty.com/locations/,MONTEREY,501 Lighthouse Ave,Monterey,CA,93940,US,<MISSING>,8316490770,<MISSING>,<MISSING>,<MISSING>,Monday-Friday 8am-8pm; Saturday & Sunday 8am-6pm
+http://doctorsonduty.com/locations/,SALINAS - SOUTH MAIN,1212 South Main St,Salinas,CA,93901,US,<MISSING>,8314227777,<MISSING>,<MISSING>,<MISSING>,Monday-Friday 8am to 10pm; Saturday-Sunday 8am to 8pm.
+http://doctorsonduty.com/locations/,SALINAS URGENT CARE,558 Abbott St,Salinas,CA,93901,US,<MISSING>,8317557880,<MISSING>,<MISSING>,<MISSING>,Monday-Friday 7am-6pm; Closed Saturday & Sunday.
+http://doctorsonduty.com/locations/,SANTA CRUZ,615 Ocean St,Santa Cruz,CA,95060,US,<MISSING>,8314257991,<MISSING>,<MISSING>,<MISSING>,Monday-Friday 7am-8pm; Saturday & Sunday 7am-4pm
+http://doctorsonduty.com/locations/,SEASIDE,1513 Fremont Blvd,e E1Seaside,CA,93955,US,<MISSING>,8318991910,<MISSING>,<MISSING>,<MISSING>,Monday-Friday 8am-7pm; Closed Saturday& Sunday
+http://doctorsonduty.com/locations/,WATSONVILLE,1505 Main St,Watsonville,CA,95076,US,<MISSING>,8317221444,<MISSING>,<MISSING>,<MISSING>,Monday-Friday 7am-7pm; Saturday & Sunday 7am-4pm
