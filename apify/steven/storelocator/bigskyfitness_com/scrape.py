@@ -19,8 +19,9 @@ def pull_content(url):
 def pull_info(content):
 
     # pull out list of locations hrefs
-    location_urls = list(set([x.a['href'] for x in content.find_all('li', {'class':'menu-item menu-item-type-post_type menu-item-object-page'})
-                     if 'schedules' not in x.a['href']]))
+    location_urls = [x.a['href'] for x in content.find_all('ul', {'class':'sub-menu'})[0] if x!='\n']
+    # Some are missing url prefix
+    location_urls = ['https://bigskyfitness.com' + x if 'com' not in x else x for x in location_urls]
 
     store_data = []
     # loop through each href
@@ -93,10 +94,10 @@ def pull_info(content):
     return final_df
 
 # Pull URL Content
-soup = pull_content(location_url)
+content = pull_content(location_url)
 
 # Pull all stores and info
-final_df = pull_info(soup)
+final_df = pull_info(content)
 
 # write to csv
 final_df.to_csv(output_path + '/' + file_name,index=False)
