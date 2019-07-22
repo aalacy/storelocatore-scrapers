@@ -59,9 +59,16 @@ def pull_info(content):
         hours = 'Monday - Sunday: 12AM - 12 PM'
 
         # Location data missing
-        lat = '<MISSING>'
-        long = '<MISSING>'
+        # "latitude":"26.4929194","longitude":"-81.84976410000002"
 
+        try:
+            raw_lat_long = str(store.find_all('section',{'id':'content'}))
+            raw_lat_long = re.search('"latitude":".*","longitude":".*"',raw_lat_long).group(0).split(',')
+            lat = raw_lat_long[0].split('"')[3]
+            long = raw_lat_long[1].split('"')[3]
+        except:
+            lat = '<MISSING>'
+            long = '<MISSING>'
 
 
         temp_data = [
@@ -151,3 +158,5 @@ final_df = pull_info(content)
 # write to csv
 
 final_df.to_csv(output_path + '/' + file_name,index=False)
+
+
