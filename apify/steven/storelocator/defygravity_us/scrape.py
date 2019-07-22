@@ -37,6 +37,8 @@ def pull_info(content):
 
     for href in store_hrefs:
 
+        print(href)
+
         store = pull_content(href)
 
         store_name = re.sub('(\r|\n|\t)','',str(store.title.text)).split(',')[0].split('|')[0].split(':')[0].strip()
@@ -57,7 +59,7 @@ def pull_info(content):
             phone = ''.join([x for x in store.find_all('ul')[2].a['href'] if x.isnumeric()])
 
             # hours
-            hours = str(store.find_all('ul')[4].find_all('p')[1]).replace('<br/>\n', '').replace('<p>', '').replace(
+            hours = str([x for x in store.find_all('ul') if 'pm' in str(x)][0].find_all('p')[1]).replace('<br/>\n', '').replace('<p>', '').replace(
                 '</p>', '')
             hours = hours if 'pm' in hours else '<MISSING>'
 
@@ -77,7 +79,7 @@ def pull_info(content):
                 phone = ''.join([x for x in store.find_all('ul')[2].a['href'] if x.isnumeric()])
 
                 # hours
-                hours = str(store.find_all('ul')[7].find_all('p')[1]).replace('<br/>\n', '').replace('<p>', '').replace(
+                hours = str([x for x in store.find_all('ul') if 'pm' in str(x)][0].find_all('p')[1]).replace('<br/>\n', '').replace('<p>', '').replace(
                     '</p>', '')
                 hours = hours if 'pm' in hours else '<MISSING>'
 
@@ -216,14 +218,11 @@ def pull_info(content):
 
 # Pull URL Content
 
-soup = pull_content(location_url)
+content = pull_content(location_url)
 
 # Pull all stores and info
 
-final_df = pull_info(soup)
-
-
+final_df = pull_info(content)
 
 # write to csv
-
 final_df.to_csv(output_path + '/' + file_name,index=False)
