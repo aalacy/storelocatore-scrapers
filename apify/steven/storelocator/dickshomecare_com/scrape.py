@@ -78,8 +78,14 @@ def pull_info(content):
         # hours
         hours = re.search('<p>Hours:(.*)</p></div>',str(store)).group(0).replace('<p>Hours: ','').replace('</p></div>','').replace('<br/>',',')
 
-        lat = '<MISSING>'
-        long = '<MISSING>'
+        try:
+            raw_lat_long = store.iframe['src']
+            long = re.search('!2d(.*)!3d', raw_lat_long).group(0).replace('!2d', '').replace('!3d', '')
+            lat = re.search('!3d(.*)!3m2!', raw_lat_long).group(0).replace('!3d', '')[:7]
+        except:
+            lat = '<MISSING>'
+            long = '<MISSING>'
+
 
 
 
@@ -162,16 +168,14 @@ def pull_info(content):
 
 # Pull URL Content
 
-soup = pull_content(location_url)
+content = pull_content(location_url)
 
 
 
 # Pull all stores and info
 
-final_df = pull_info(soup)
-
+final_df = pull_info(content)
 
 
 # write to csv
-
 final_df.to_csv(output_path + '/' + file_name,index=False)
