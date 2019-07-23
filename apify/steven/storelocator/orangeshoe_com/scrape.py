@@ -3,10 +3,11 @@ from bs4 import BeautifulSoup as bs
 import requests as r
 import os
 import re
+import json
 
 
 # Location URL
-location_url = 'https://www.ride-indoorcycling.com/studios/'
+location_url = 'https://www.orangeshoe.com'
 
 # output path of CSV
 output_path = os.path.dirname(os.path.realpath(__file__))
@@ -16,54 +17,61 @@ file_name = 'data.csv'
 
 
 # Function pull webpage content
-
 def pull_content(url):
 
     soup = bs(r.get(url).content,'html.parser')
 
     return soup
 
+# Turns java script object into json string
+def pull_json(string):
+    string = re.sub('(\n|\r)','',string).strip()
+    pattern = re.compile(r"(\{.*?\}        \})")
+    script = re.findall(pattern,string)[0]
+    data = json.loads(script)
+    return data
+
 def pull_info(content):
 
     # list of store hrefs
-    stores = content.find_all('div',{'class':'info'})
+    store_hrefs = [location_url + x.a['href'] for x in content.find_all('li',{'class':'studioListing'})]
 
     store_data = []
 
-    for store in stores:
+    for href in store_hrefs:
 
-        store_name = store.h5.text.strip()
+        href_data = pull_content(href)
 
-        store_type = '<MISSING>'
+        json_string = href_data.find_all('script',{'type':'application/ld+json'})[0]
 
-        try:
-            street_add = store.a.text.strip().split(',')[0]
-            city = store.a.text.strip().split(',')[1].strip().title()
-            state = store.a.text.strip().split(',')[2].strip().split(' ')[0]
-            zip = store.a.text.strip().split(',')[2].strip().split(' ')[1]
-        except:
-            # One of the entries is missing a comma, so add it in
-            street_add_raw = store.a.text.replace('Houston,',',Houston,')
-            street_add = street_add_raw.split(',')[0].strip()
-            city = street_add_raw.strip().split(',')[1].strip().title()
-            state = street_add_raw.strip().split(',')[2].strip().split(' ')[0]
-            zip = street_add_raw.strip().split(',')[2].strip().split(' ')[1]
+        store = pull_json(str(json_string))
+
+        store_name = href_data.find_all('span',{'class':'location'})[0].text
+
+        store_type = store['@type']
+
+        street_add = store['address']['streetAddress']
+
+        city = store['address']['addressLocality']
+
+        state = store['address']['addressRegion']
+
+        zip = store['address']['postalCode']
 
         # Always comes line after state/zip
-        phone = ''.join([x for x in store.find('a',{'class':'locTel'}).text if x.isnumeric()])
+        phone = ''.join([x for x in store['telephone'] if x.isnumeric()])
 
         # hours
-        hours = ''
-        hours = hours if 'PM' in hours else '<MISSING>'
+        hours = '; '.join([x['dayOfWeek'][0] +': ' + x['closes'] for x in store['openingHoursSpecification']])
 
-        # lat long url to parse
-        lat = '<MISSING>'
-        long = '<MISSING>'
+        lat = store['geo']['latitude']
+        long = store['geo']['longitude']
+
 
 
         temp_data = [
 
-            location_url,
+            href,
 
             store_name,
 
@@ -136,13 +144,10 @@ def pull_info(content):
 
 
 # Pull URL Content
-
 content = pull_content(location_url)
 
 # Pull all stores and info
-
 final_df = pull_info(content)
-
 
 # write to csv
 final_df.to_csv(output_path + '/' + file_name,index=False)

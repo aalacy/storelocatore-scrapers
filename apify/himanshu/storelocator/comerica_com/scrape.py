@@ -27,7 +27,7 @@ def fetch_data():
                 store = []
                 store.append(base_url)
                 store.append('Comerica Bank ATM')
-                store.append(val['location']['street']+' '+val['location']['additional'])
+                store.append(val['location']['street']+' '+val['location']['additional'].strip())
                 store.append(val['location']['city'])
                 store.append(val['location']['province'])
                 if val['location']['postal_code'] != None:
