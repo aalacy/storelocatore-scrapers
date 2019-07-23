@@ -18,7 +18,7 @@ const parseCityStateZip = str => {
   return returnObj;
 };
 
-const parseLocation = (div, $) => {
+const parseLocation = (div, $, storesArray) => {
   
   const loc = {
     locator_domain: 'lassus.com',
@@ -70,6 +70,10 @@ const parseLocation = (div, $) => {
   Object.assign(loc, parseCityStateZip(cityStateZip));
 
   loc.phone = $addressAndPhoneTextNodes.eq(2).text().trim();
+
+  const storeObj = storesArray.find(store => store.store_number === loc.store_number);
+  loc.latitude = storeObj.latitude;
+  loc.longitude = storeObj.longitude;
 
   $hours = $div
     .find('div.modal-body > div.row > div')
@@ -127,13 +131,17 @@ const parseLocation = (div, $) => {
   const handlePageFunction = async ({ request, response, html, $ }) => {
     console.log(`Got ${request.url}`);
 
+    let storesScript = $('div#body-content').next('script').text().trim();
+    storesScript = storesScript.replace('var stores = ', '');
+    const storesArray = JSON.parse(storesScript);
+
     const $locationDivs = $('div.single-location');
 
     console.log(`>>> found ${$locationDivs.length} total locations`);
 
     $locationDivs.each(async (i, div) => {
       
-      const loc = parseLocation(div, $);
+      const loc = parseLocation(div, $, storesArray);
       console.log(loc.location_name);
       await Apify.pushData(loc);
 
