@@ -1,0 +1,89 @@
+locator_domain,location_name,street_address,city,state,zip,country_code,store_number,phone,location_type,latitude,longitude,hours_of_operation
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,8500 Henry Avenue,Philadelphia,PA,19128,US,1422,2154825750,<MISSING>,40.062807,-75.235298,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,124 Woodcutter Street,Exton,PA,19341,US,1467,6103632760,<MISSING>,40.022863,-75.629219,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,2111 State Hill Rd,Wyomissing,PA,19610,US,1468,6103789100,<MISSING>,40.339258,-75.977925,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,484 2nd Street Pike,Southampton,PA,18966,US,1473,2153225680,<MISSING>,40.169466,-75.046437,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,494 East Main St.,Middletown,DE,19709,US,1482,3023763772,<MISSING>,39.450135,-75.697978,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,584 Centerville Rd,Lancaster,PA,17601,US,1503,7174593039,<MISSING>,40.055773,-76.399881,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,341 W. Main St.,Freehold,NJ,07728,US,1504,7324620275,<MISSING>,40.244097,-74.29987,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,175 Route 130,Cinnaminson,NJ,08077,US,1511,8568291629,<MISSING>,39.991125,-75.006285,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,11845 West Broad St,Henrico,VA,23233,US,1547,8043647141,<MISSING>,37.653716,-77.623317,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,7000 Forest Ave,Henrico,VA,23230,US,1548,8042887141,<MISSING>,37.603379,-77.525181,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,206 Fox Hunt Drive,Bear,DE,19701,US,1575,3028344437,<MISSING>,39.607828,-75.713209,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1520 Route 38,Hainesport,NJ,08036,US,1576,6097028100,<MISSING>,39.980682,-74.807409,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,443 S. Broad St.,Lansdale,PA,19446,US,1584,2153619800,<MISSING>,40.235524,-75.288646,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,360 North Oxford Valley Road,Langhorne,PA,19047,US,1587,2152699644,<MISSING>,40.182663,-74.869627,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,111 C Garden Golf Blvd,North Wales,PA,19454,US,1588,2153688886,<MISSING>,40.233675,-75.237925,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,957 Highway 33,Hamilton Square,NJ,08690,US,1591,6098902410,<MISSING>,40.22765,-74.668989,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,638 Hilltop West Shopping Center,Virginia Beach,VA,23451,US,1620,7579611222,<MISSING>,36.852341,-76.020887,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,2350 Lincoln Highway East,Lancaster,PA,17602,US,1621,7173979999,<MISSING>,40.023952,-76.208752,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,3506 Capital City Mall Drive,Camp Hill,PA,17011,US,1622,7177614470,<MISSING>,40.222631,-76.932502,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,Routes 30 & 100,Exton,PA,19341,US,1627,6103635025,<MISSING>,40.03248,-75.622917,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,3131 Route 38,Mt. Laurel,NJ,08054,US,1639,8564390100,<MISSING>,39.970906,-74.880089,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,988 B Lititz Pike,Lititz,PA,17543,US,1647,7176271144,<MISSING>,40.131488,-76.308842,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,<MISSING>,Newark,DE,19713,US,1648,3027380515,<MISSING>,39.686032,-75.68321,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,4567 Kirkwood Highway,Wilmington,DE,19808,US,1649,3025436495,<MISSING>,39.725002,-75.657334,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,2136 State Highway 35 South,Holmdel,NJ,07733,US,1650,7326713388,<MISSING>,40.412069,-74.145819,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,2804 S Eagle Road,Newtown,PA,18940,US,1654,2158606511,<MISSING>,40.233912,-74.941493,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,2300 Gary Farms Blvd.,Bowling Green,KY,42104,US,1655,2705991160,<MISSING>,36.956742,-86.4317,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,215 Campus Drive,College Park,MD,20742,US,1674,3013140947,<MISSING>,38.98703,-76.940065,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,31 Jenners Village Center,West Grove,PA,19390,US,1681,6108698500,<MISSING>,39.823597,-75.874925,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,3601 Regent Blvd,Irving,TX,75063,US,1723,9725141807,<MISSING>,32.921046,-96.996274,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1625 Chestnut St.,Philadelphia,PA,19103,US,1724,2159639099,<MISSING>,39.951571,-75.168004,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1135 Willowbrook Blvd,Wayne,NJ,07470,US,1726,9732370000,<MISSING>,40.887259,-74.254597,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,"2737 B, N. Salisbury Blvd.",Salisbury,MD,21801,US,1728,4105726170,<MISSING>,38.418673,-75.564469,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1405 S. Salisbury Blvd.,Salisbury,MD,21804,US,1729,4437364005,<MISSING>,38.340434,-75.605255,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,4127 Concord Pike,Wilmington,DE,19803,US,1734,3024771987,<MISSING>,39.811214,-75.549059,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,2104 Street Road,Bensalem,PA,19020,US,1746,2156395401,<MISSING>,40.099098,-74.948819,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,2508 Welsh Road,Philadelphia,PA,19152,US,1747,2156760320,<MISSING>,40.073,-75.034966,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,3849 South Delsea Drive,Vineland,NJ,08360,US,1748,8563274600,<MISSING>,39.429937,-75.037576,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,232 Christiana Mall Road,Newark,DE,19702,US,1753,3027383530,<MISSING>,39.67773,-75.652182,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1321B Fairview Blvd.,Delran,NJ,08075,US,1754,8562555040,<MISSING>,40.01831,-74.945099,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,663 Haddon Ave.,Collingswood,NJ,08108,US,1755,8568587799,<MISSING>,39.916726,-75.069853,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1628 Route 23 North,Wayne,NJ,07470,US,1757,9736281687,<MISSING>,40.939483,-74.269047,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1211 N DuPont Hwy,Dover,DE,19901,US,1764,3027477224,<MISSING>,39.189313,-75.539361,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,200 W. Ridge Pike,Conshohocken,PA,19428,US,1769,6108255212,<MISSING>,40.096058,-75.28748,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,Willow Grove Park Mall,Willow Grove,PA,19090,US,1770,2156576565,<MISSING>,40.140159,-75.123594,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,319 North Avenue,Garwood,NJ,07027,US,1773,9082320999,<MISSING>,40.652948,-74.324186,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,68 West Jimmie Leeds Road,Galloway,NJ,08205,US,1775,6092416494,<MISSING>,39.475641,-74.541319,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,693 Berlin Crosskeys Rd,Sicklerville,NJ,08081,US,1776,8567400505,<MISSING>,39.727505,-75.014758,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,314 Horsham Rd,Horsham,PA,19044,US,1777,2157738229,<MISSING>,40.181989,-75.133577,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1311 Route 37 West,Toms River,NJ,08755,US,1778,7325058200,<MISSING>,39.981765,-74.256717,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,872 W Street Rd,Warminster,PA,18974,US,1779,2154440752,<MISSING>,40.157936,-75.01467,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,4371 W Swamp Rd,Doylestown,PA,18902,US,1780,2153457878,<MISSING>,40.332556,-75.136604,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,95 East Germantown Pike,Norriton,PA,19401,US,1781,6103821517,<MISSING>,40.139035,-75.308078,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,3215 Schoenersville Rd,Bethlehem,PA,18017,US,1782,6102644444,<MISSING>,40.656787,-75.418289,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,2419 MacArthur Rd,Whitehall,PA,18052,US,1783,6104345400,<MISSING>,40.642578,-75.490375,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,3561 Palisades Center Dr,West Nyack,NY,10994,US,1784,8453588033,<MISSING>,41.098986,-73.955081,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,400 Common Way,Bridgewater,NJ,08807,US,1785,9085263155,<MISSING>,40.586387,-74.619913,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1484 Blackwood-Clementon Road,Clementon,NJ,08021,US,1791,8563095010,<MISSING>,39.802884,-75.04163,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,Sawmill Plaza,Cherry Hill,NJ,08034,US,1792,8567959799,<MISSING>,39.909542,-75.002685,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,"1218S Bridford Parkway, Store 42",Greensboro,NC,27407,US,1793,3362928686,<MISSING>,36.056537,-79.904446,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,241 S. Route 73,Marlton,NJ,08053,US,1794,8563960011,<MISSING>,39.895954,-74.929877,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,914 N. Route 73,Marlton,NJ,08053,US,1798,8565961991,<MISSING>,39.907057,-74.937089,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,159 East Swedesford Road,Wayne,PA,19087,US,1799,6106885755,<MISSING>,40.073365,-75.434046,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1991 Sproul Rd,Broomall,PA,19008,US,1811,6103599926,<MISSING>,39.959474,-75.35512,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,707 Neshaminy Mall,Bensalem,PA,19020,US,1812,2153966828,<MISSING>,40.138794,-74.95535,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,115 E. Street Rd.,Feasterville,PA,19053,US,1814,2672885730,<MISSING>,40.147207,-74.999198,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1495 Voorhees Town Center,Voorhees,NJ,08043,US,1823,8567722948,<MISSING>,39.849765,-75.002093,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,"30 Falcon Road, Suite 1200-5",Hillsborough,NJ,08844,US,1824,9088740022,<MISSING>,40.519032,-74.629704,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1692 Clements Bridge Road,Deptford,NJ,80896,US,1825,8562025418,<MISSING>,39.833891,-75.102099,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1348 Centennial Avenue,Piscataway,NJ,08854,US,1826,7324650055,<MISSING>,40.55109,-74.436945,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,2000 Route 38,Cherry Hill,NJ,08002,US,1829,8566652772,<MISSING>,39.94086,-75.025702,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,542 Shoppes Boulevard,North Brunswick,NJ,<MISSING>,US,1833,7325431997,<MISSING>,40.461137,-74.456707,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,400 W. Rte 38,Moorestown,NJ,08057,US,1837,8562736668,<MISSING>,39.944551,-74.963159,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,30 Route 17 North,East Rutherford,NJ,07073,US,1840,2019398886,<MISSING>,40.831347,-74.089102,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,3812A Easton-Nazareth Highway,Easton,PA,18045,US,1841,6107590220,<MISSING>,40.718479,-75.28901,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,8500 Essington Ave,Philadelphia,PA,19153,US,1858,2153651995,<MISSING>,39.876059,-75.242984,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,2484 Briarcliff Rd NE,Atlanta,GA,30329,US,1864,4047481350,<MISSING>,33.828019,-84.331819,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,406 Suncrest Towne Centre Drive,Morgantown,WV,26505,US,1869,3042919494,<MISSING>,39.652964,-79.941152,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,2946 ISLAND AVE,Philadelphia,PA,19153,US,1877,2159214564,<MISSING>,39.899771,-75.241525,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1403 N. Cedar Crest Blvd.,Allentown,PA,18104,US,1931,6104370400,<MISSING>,40.611977,-75.531768,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,2955 Market St.,Philadelphia,PA,19104,US,1932,2152222277,<MISSING>,39.95575,-75.181989,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,444 HURFFVILE CROSS KEYS ROAD,Sewell,NJ,08080,US,1946,8565536325,<MISSING>,39.734715,-75.068438,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,791 Delsea Drive,Glassboro,NJ,08028,US,1987,8568632200,<MISSING>,39.722162,-75.116112,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1540 N. Main St.,Warrington,PA,18976,US,2030,2674835700,<MISSING>,40.231675,-75.136539,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,116 Walker Ave,West Berlin,NJ,08901,US,2031,8562106161,<MISSING>,39.806533,-74.937355,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,757 huntingdon pike,huntingdon valley,PA,19006,US,2037,2152775628,<MISSING>,40.08753,-75.092705,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,717 Eden Way N.,Chesapeake,VA,23320,US,2245,7574104385,<MISSING>,36.772012,-76.236732,<MISSING>
+https://saladworks.com/api/locations?mealperiodId=58&orderChannelId=55,Saladworks,1575 N 52nd St 400,Philadelphia,PA,19131,US,2290,2679695340,<MISSING>,39.978066,-75.223787,<MISSING>
