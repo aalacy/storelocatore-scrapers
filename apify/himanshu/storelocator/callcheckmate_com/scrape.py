@@ -20,11 +20,16 @@ def fetch_data():
     soup=BeautifulSoup(r.text ,"lxml")
     return_main_object = []
     op=soup.find('select',{"class":"lcation_stats"}).find_all('option')
+
     for atag in op:
         if atag['value']:
             r1 = requests.get(base_url+"/"+atag['value'].lower()+"/all_locations.php")
             soup1=BeautifulSoup(r1.text ,"lxml")
             main=soup1.find('div',{"id":'locationSelect'}).find_all('div',{"class":"add_box"})
+            for script in soup1.find_all('script', type="text/javascript"):
+                if "var locations" in script.text:
+                    data=eval(script.text.split(' var locations = ')[1].split('  ];')[0]+"]")
+            i=0
             for detail in main:
                 loc=list(detail.stripped_strings)
                 name=loc[0]
@@ -45,9 +50,10 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append(phone)
                 store.append("callcheckmate")
-                store.append("<MISSING>")
-                store.append("<MISSING>")
+                store.append(data[i][-4])
+                store.append(data[i][-3])
                 store.append(hour)
+                i=i+1
                 return_main_object.append(store)
     return return_main_object
 

@@ -22,18 +22,17 @@ def fetch_data():
     main=soup.find_all('script')
     for script in main:
         if "var storeList" in script.text:
-            print(len(json.loads(script.text.split('var storeList =')[1].split('//]]>')[0],strict=False)))
             for data in json.loads(script.text.split('var storeList =')[1].split('//]]>')[0],strict=False):
                 store=[]
                 store.append(base_url)
-                store.append(data['Name'])
-                store.append(data['AddressLine1'])
-                store.append(data['City'])
-                store.append(data['StateProvince'])
-                store.append(data['ZipPostalCode'])
+                store.append(data['Name'].strip())
+                store.append(data['AddressLine1'].strip())
+                store.append(data['City'].strip())
+                store.append(data['StateProvince'].strip())
+                store.append(data['ZipPostalCode'].strip())
                 store.append("CA")
                 store.append(data['StoreID'])
-                store.append(data['Phone'])
+                store.append(data['Phone'].strip())
                 store.append("liquordepot")
                 store.append(data['Latitude'])
                 store.append(data['Longitude'])
@@ -43,6 +42,6 @@ def fetch_data():
 
 def scrape():
     data = fetch_data()
-    # write_output(data)
+    write_output(data)
 
 scrape()
