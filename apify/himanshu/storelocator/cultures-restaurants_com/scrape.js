@@ -8,9 +8,16 @@ const mapKeys = require('lodash.mapkeys');
 (async () => {
 	console.log("starting scrape.....");
 	const exec = util.promisify(child_process.exec);
-	const { stdout, stderr } = await exec('python scrape.py');
+	let err, stdout, stderr;
+	try {
+		({ err, stdout, stderr } = await exec('python scrape.py'));
+	} catch(err) {
+		console.log("error executing python scraper!");
+		process.exit(1);
+	}
 	console.log('stdout:', stdout);
-  console.log('stderr:', stderr);
+	console.log('stderr:', stderr);
+
 	let data = await fs.readFile('data.csv');
 	let parsed = await csv(data);
 	let header = parsed[0];
