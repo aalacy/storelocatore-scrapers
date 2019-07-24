@@ -4,9 +4,6 @@ const { formatPhoneNumber } = require('./tools');
 
 const { Poi } = require('./Poi');
 
-// For test purposes
-// const { data } = require('./testurls');
-
 const { log } = Apify.utils;
 
 Apify.main(async () => {
