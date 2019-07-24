@@ -30,6 +30,10 @@ def fetch_data():
         print(links[i])
         location_request = requests.get(links[i],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
+        for script in location_soup.find_all("script"):
+            if "google.maps.LatLng" in script.text:
+                geo_location = script.text.split("google.maps.LatLng(")[1].split(")")[0]
+        print(geo_location)
         name = location_soup.find("h1",{"class":"entry-title"}).text
         location_details = location_soup.find_all("div",{"class":'wpb_content_element'})[0:3]
         location_address = list(location_details[0].stripped_strings)
@@ -59,8 +63,8 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(phone[-1] if phone[-1] != "Phone Number" else "<MISSING>")
         store.append("cross roads")
-        store.append("<INACCESSIBLE>")
-        store.append("<INACCESSIBLE>")
+        store.append(geo_location.split(",")[0])
+        store.append(geo_location.split(",")[1])
         hours = ""
         hours = hours + " ".join(store_hours)[2:]
         store.append(hours if hours != "" else "<MISSING>")
