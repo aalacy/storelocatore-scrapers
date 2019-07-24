@@ -102,5 +102,6 @@ Apify.main(async () => {
       log.error('Rodeway Inn Crawler: Request failed and reached maximum retries', { errorDetails: details });
     },
   });
-  await crawler.run();
+
+	await crawler.run();
 });
