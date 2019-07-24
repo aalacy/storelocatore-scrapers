@@ -18,6 +18,7 @@ def fetch_data():
     base_url = "https://embassysuites3.hilton.com/en_US/es/ajax/cache/regions.json"
     r = requests.get(base_url).json()
     return_main_object = []
+    output=[]
     for region in r['region']:
         base_url1 = "https://embassysuites3.hilton.com/en_US/es/ajax/cache/regionHotels.json?regionId="+str(region['id'])+"&subregionId=null&hotelStatus=null"
         r1 = requests.get(base_url1).json()
@@ -47,6 +48,9 @@ def fetch_data():
             store.append(hotel['lat'])
             store.append(hotel['lng'])
             store.append("<MISSING>")
+            if hotel['lat'] in output:
+                continue
+            output.append(hotel['lat'])
             return_main_object.append(store)
     return return_main_object
 
