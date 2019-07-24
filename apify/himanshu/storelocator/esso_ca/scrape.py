@@ -15,7 +15,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    base_url = "https://www.esso.ca/en/api/v1/Retail/retailstation/GetStationsByBoundingBox?Latitude1=43.59095959842186&Latitude2=43.71516218425329&Longitude1=-79.21297023681643&Longitude2=-79.55285976318362"
+    base_url = "https://www.esso.ca/en/api/v1/Retail/retailstation/GetStationsByBoundingBox?Latitude1=42.33101154942549&Latitude2=44.32863702824465&Longitude1=-77.42391536621096&Longitude2=-82.86214778808596"
     r = requests.get(base_url).json()
     return_main_object = []
     for esso in r:

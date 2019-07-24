@@ -16,7 +16,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://fcer.com"
-    r = requests.get(base_url+"/locations/houston-map")
+    r = requests.get(base_url+"/locations")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     main = soup.find('section',{"class":"metro_map"}).find_all('section',{"class":"metro_location"})

@@ -15,7 +15,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    base_url = "https://www.exxon.com/en/api/v1/Retail/retailstation/GetStationsByBoundingBox?Latitude1=29.68507035418724&Latitude2=29.83409224215476&Longitude1=-95.22254028454591&Longitude2=-95.53307571545412"
+    base_url = "https://www.exxon.com/en/api/v1/Retail/retailstation/GetStationsByBoundingBox?Latitude1=16.698659791445607&Latitude2=36.22597707315531&Longitude1=-76.07080544996313&Longitude2=-119.57666482496313"
     r = requests.get(base_url).json()
     return_main_object = []
     for location in r:
