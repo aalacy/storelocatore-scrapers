@@ -1,0 +1,1 @@
+Was created using Puppeteer rather than Cheerio Crawler because it is difficult to scrape iframes with jquery / Cheerio.
