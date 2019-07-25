@@ -14,6 +14,7 @@ const {
   extractLocationInfo,
   formatPhoneNumber,
   formatHours,
+  storeKey,
 } = require('./tools');
 
 const {
@@ -24,6 +25,7 @@ const locationSitemap = 'https://globalpetfoods.com/portal/store-locations-sitem
 
 Apify.main(async () => {
   // Get list of urls from store locator sitemap
+  const dataStorage = await Apify.openKeyValueStore('poidata');
   const xml = await rp(locationSitemap);
   const $c = cheerio.load(xml);
   const allurls = $c('loc').map((i, e) => ({ url: $c(e).text() })).toArray();
@@ -53,14 +55,22 @@ Apify.main(async () => {
         phone: formatPhoneNumber(phoneRaw),
         hours_of_operation: formatHours(hours),
       };
-      const poi = new Poi(poiData);
-      await Apify.pushData(poi);
+      const key = storeKey(poiData.street_address);
+      await dataStorage.setValue(key, poiData);
     },
     minConcurrency: 5,
     maxConcurrency: 20,
     maxRequestRetries: 1,
     handlePageTimeoutSecs: 60,
   });
-
   await crawler.run();
+  if (requestList.isFinished()) {
+    await dataStorage.forEachKey(async (key) => {
+      if (key) {
+        const storeInfo = await dataStorage.getValue(key);
+        const poi = new Poi(storeInfo);
+        await Apify.pushData(poi);
+      }
+    });
+  }
 });
