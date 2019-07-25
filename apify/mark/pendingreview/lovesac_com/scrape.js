@@ -49,6 +49,7 @@ Apify.main(async () => {
       const state = await page.$eval(stateSelector, e => e.innerText);
       const zip = await page.$eval(zipSelector, e => e.innerText);
       const phone = await page.$eval(phoneSelector, e => e.innerText);
+      await page.waitForSelector(geoUrlSelector, { waitUntil: 'load', timeout: 10000 });
       const geoUrl = await page.$eval(geoUrlSelector, e => e.getAttribute('href'));
       const hours = await page.$$eval(hourSelector, se => se.map(e => e.getAttribute('datetime')));
       const hours_of_operation = hours.join(', ');

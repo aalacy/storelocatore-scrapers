@@ -9,6 +9,7 @@ const {
   stateSelector,
   addressBlockSelector,
   phoneSelector,
+  geoUrlSelector,
   hourSelector,
 } = require('./selectors');
 
@@ -16,6 +17,7 @@ const {
   formatLocationName,
   extractZipCode,
   formatPhoneNumber,
+  parseGoogleMapsUrl,
   formatHours,
 } = require('./tools');
 
@@ -51,7 +53,10 @@ Apify.main(async () => {
       const addressBlock = await page.$eval(addressBlockSelector, e => e.innerText);
       const zip = extractZipCode(addressBlock);
       const phoneRaw = await page.$eval(phoneSelector, e => e.innerText);
+      const geoUrl = await page.$eval(geoUrlSelector, e => e.getAttribute('href'));
       const hoursRaw = await page.$eval(hourSelector, e => e.innerText);
+
+      const latLong = parseGoogleMapsUrl(geoUrl);
 
       const poiData = {
         locator_domain: 'gatewayacademy.com',
@@ -61,6 +66,7 @@ Apify.main(async () => {
         state,
         ...zip,
         phone: formatPhoneNumber(phoneRaw),
+        ...latLong,
         hours_of_operation: formatHours(hoursRaw),
       };
 

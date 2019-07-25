@@ -1,6 +1,8 @@
 const parser = require('parse-address');
 const decode = require('decode-html');
 
+var text = "15257 N Scottsdale Rd, Suite F1-125, Scottsdale, AZ 85254";
+
 const formatLocationName = (string) => {
   const removedNewLine = string.replace(/\n/g, '');
   return removedNewLine.trim();
@@ -8,7 +10,7 @@ const formatLocationName = (string) => {
 
 const createGenericAddress = (stringHTML) => {
   const rawString = decode(stringHTML);
-  const genericAddress = rawString.replace('<br>', ', ').replace(/\s\s+/g, ' ');
+  const genericAddress = rawString.replace(/<br>/g, ', ').replace(/\s\s+/g, ' ');
   return genericAddress;
 };
 
@@ -29,7 +31,7 @@ const extractLocationInfo = (genericAddress) => {
   let zip;
   if (parsed) {
     ({ state, city, zip } = parsed);
-    street_address = genericAddress.substring(0, (genericAddress.indexOf(city) - 2));
+    street_address = genericAddress.substring(0, (genericAddress.lastIndexOf(city) - 2));
   }
   if (!parsed) {
     const zipRaw = genericAddress.match(/[0-9]{5}$/);
