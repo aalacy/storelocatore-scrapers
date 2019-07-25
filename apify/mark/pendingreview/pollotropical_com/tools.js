@@ -1,5 +1,7 @@
 const getDataKey = string => string.replace(/#/g, '!').replace(/\s/g, '');
 
+const getStoreNumber = string => string.replace(/\D+/g, '');
+
 const formatPhoneNumber = (string) => {
   if (!string) {
     return undefined;
@@ -71,6 +73,7 @@ const formatHours = (string) => {
 
 module.exports = {
   getDataKey,
+  getStoreNumber,
   formatPhoneNumber,
   formatAddress,
   formatHours,

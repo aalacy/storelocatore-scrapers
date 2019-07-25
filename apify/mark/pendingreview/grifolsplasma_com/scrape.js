@@ -47,6 +47,7 @@ Apify.main(async () => {
       const streetAddress = await page.$eval(streetAddressSelector, e => e.innerText);
       const cityStateZip = await page.$eval(cityStateZipSelector, e => e.innerText);
       const phone = await page.$eval(phoneSelector, e => e.innerText);
+      await page.waitForSelector(geoUrlSelector, { waitUntil: 'load', timeout: 10000 });
       const googleMapsUrl = await page.$eval(geoUrlSelector, e => e.getAttribute('href'));
       const hoursArrayRaw = await page.$$eval(hourSelector, se => se.map(e => e.innerText));
       const hoursArrayClean = hoursArrayRaw.map(e => e.replace(/\n/g, '').replace(/\t/g, ''));

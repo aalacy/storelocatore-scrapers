@@ -13,6 +13,7 @@ const {
 
 const {
   getDataKey,
+  getStoreNumber,
   formatPhoneNumber,
   formatAddress,
   formatHours,
@@ -35,7 +36,7 @@ Apify.main(async () => {
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
     launchPuppeteerOptions: {
-      headless: true,
+      headless: false,
       useChrome: true,
       stealth: true,
     },
@@ -75,6 +76,7 @@ Apify.main(async () => {
           const poiData = {
             locator_domain: 'pollotropical.com',
             location_name: name,
+            store_number: getStoreNumber(name),
             ...address,
             phone: phoneNumber,
           };

@@ -61,8 +61,18 @@ const formatHours = (string) => {
   return hoursChangeNewLines;
 };
 
+const storeKey = (address) => {
+  if (!address) {
+    const newKey = 'noKey';
+    return newKey;
+  }
+  const key = address.replace(/[^A-Z0-9]/ig, '').substring(0, 7).toLowerCase();
+  return key;
+};
+
 module.exports = {
   extractLocationInfo,
   formatPhoneNumber,
   formatHours,
+  storeKey,
 };

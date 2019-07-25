@@ -1,6 +1,8 @@
 const Apify = require('apify');
 
 const {
+  millerPaintDealersCheckbox,
+  millerPaintStoresCheckbox,
   locationElementSelector,
   locationNameSelector,
   addressBlockSelector,
@@ -26,9 +28,13 @@ Apify.main(async () => {
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
     handlePageFunction: async ({ page }) => {
-      const locationElement = await page.$$(locationElementSelector);
+      await page.waitForSelector(millerPaintStoresCheckbox);
+      await page.click(millerPaintStoresCheckbox);
+      await page.waitFor(1000);
+      await page.$$(locationElementSelector, { waitUntil: 'networkidle0', timeout: 5000 });
+      const locationElementDealer = await page.$$(locationElementSelector);
       /* eslint-disable no-restricted-syntax */
-      for await (const v of locationElement) {
+      for await (const v of locationElementDealer) {
         /* eslint-disable camelcase */
         const location_name = await v.$eval(locationNameSelector, e => e.innerText);
         const addressStringRaw = await v.$eval(addressBlockSelector, e => e.innerHTML);
@@ -41,10 +47,40 @@ Apify.main(async () => {
         if (await v.$(hourSelector) !== null) {
           hours_of_operation = await v.$eval(hourSelector, e => e.innerText);
         }
-
         const poiData = {
           locator_domain: 'millerpaint.com',
           location_name,
+          location_type: 'Dealer',
+          ...addressBlock,
+          phone,
+          hours_of_operation,
+        };
+        const key = storeKey(poiData.street_address);
+        await dataStorage.setValue(key, poiData);
+      }
+      await page.click(millerPaintStoresCheckbox);
+      await page.click(millerPaintDealersCheckbox);
+      await page.waitFor(1000);
+      await page.$$(locationElementSelector, { waitUntil: 'networkidle0', timeout: 5000 });
+      const locationElementStore = await page.$$(locationElementSelector);
+      /* eslint-disable no-restricted-syntax */
+      for await (const v of locationElementStore) {
+        /* eslint-disable camelcase */
+        const location_name = await v.$eval(locationNameSelector, e => e.innerText);
+        const addressStringRaw = await v.$eval(addressBlockSelector, e => e.innerHTML);
+        const addressBlock = extractLocationInfo(addressStringRaw);
+        let phone;
+        let hours_of_operation;
+        if (await v.$(phoneSelector) !== null) {
+          phone = await v.$eval(phoneSelector, e => e.innerText);
+        }
+        if (await v.$(hourSelector) !== null) {
+          hours_of_operation = await v.$eval(hourSelector, e => e.innerText);
+        }
+        const poiData = {
+          locator_domain: 'millerpaint.com',
+          location_name,
+          location_type: 'Store',
           ...addressBlock,
           phone,
           hours_of_operation,
@@ -56,7 +92,7 @@ Apify.main(async () => {
     maxRequestsPerCrawl: 1,
     maxConcurrency: 1,
     launchPuppeteerOptions: {
-      headless: true,
+      headless: false,
       stealth: true,
       useChrome: true,
       useApifyProxy: !!useProxy,

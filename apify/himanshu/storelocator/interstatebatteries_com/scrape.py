@@ -29,6 +29,7 @@ def fetch_data():
                 for script in soup1.find_all('script'):
                     if "localstoreinfo" in script.text:
                         country=json.loads(script.text.split('localstoreinfo = ')[1].replace(";",''))['Country']
+                print(soup1.find('div',{"id":"couponModal"}))
                 adr=soup1.find('div',{"id":"couponModal"}).find('input',{"name":"locationAddress1"})['value'].strip()
                 city=soup1.find('div',{"id":"couponModal"}).find('input',{"name":"locationCity"})['value'].strip()
                 state=soup1.find('div',{"id":"couponModal"}).find('input',{"name":"locationState"})['value'].strip()
