@@ -22,7 +22,7 @@ def fetch_data():
     main=soup.find_all("script",{"type":"text/javascript"})
     for script in main:
         if re.search('var map_data',script.text):
-            data=script.text.split('var map_data = ')[1].split(';')[0]
+            data=script.text.split('var map_data = ')[1].split('};')[0]+"}"
             m=json.loads(data)['offices']
             for val in m:
                 store = []
