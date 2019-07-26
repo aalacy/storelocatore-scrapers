@@ -14,7 +14,7 @@ def write_output(data):
             writer.writerow(row)
 
 
-#helper for getting address
+# helper for getting address
 def addy_extractor(src):
     arr = src.split(',')
     city = arr[0]
@@ -22,7 +22,7 @@ def addy_extractor(src):
     if len(prov_zip) == 3:
         state = prov_zip[1]
         zip_code = prov_zip[2]
-    
+
     return city, state, zip_code
 
 
@@ -38,11 +38,10 @@ def fetch_data():
     stores = soup.find_all('div', {'class': 'locations'})
     all_store_data = []
 
-
-    for store in stores:    
+    for store in stores:
         location_name = store.find('a').text
         phone_number = store.find_all('a', {'title': 'Phone'})[0].text
-        
+
         brs = store.find_all('br')
         street_address = brs[0].nextSibling.strip()
         city, state, zip_code = addy_extractor(brs[1].nextSibling.strip())
@@ -56,23 +55,24 @@ def fetch_data():
                 hours += ' CLOSED WEEKENDS'
             else:
                 hours += ' ' + hr_brs[5].previousSibling.strip()
-            
-            
+
         country_code = 'US'
         location_type = '<MISSING>'
         store_number = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
-        
+
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                     store_number, phone_number, location_type, lat, longit, hours ]
-        
+                      store_number, phone_number, location_type, lat, longit, hours]
+
         all_store_data.append(store_data)
-        
+
     return all_store_data
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
