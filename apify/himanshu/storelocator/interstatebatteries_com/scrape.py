@@ -29,39 +29,39 @@ def fetch_data():
                 for script in soup1.find_all('script'):
                     if "localstoreinfo" in script.text:
                         country=json.loads(script.text.split('localstoreinfo = ')[1].replace(";",''))['Country']
-                print(soup1.find('div',{"id":"couponModal"}))
-                adr=soup1.find('div',{"id":"couponModal"}).find('input',{"name":"locationAddress1"})['value'].strip()
-                city=soup1.find('div',{"id":"couponModal"}).find('input',{"name":"locationCity"})['value'].strip()
-                state=soup1.find('div',{"id":"couponModal"}).find('input',{"name":"locationState"})['value'].strip()
-                zip=soup1.find('div',{"id":"couponModal"}).find('input',{"name":"locationPostalCode"})['value'].strip()
-                phone=soup1.find('div',{"id":"couponModal"}).find('input',{"name":"locationPhone"})['value'].strip()
-                hour=list(soup1.find('div',{"class":"store-hours"}).stripped_strings)
-                del hour[0]
-                store=[]
-                store.append("https://interstatebatteries.com")
-                store.append(soup1.find('ol',{"class":"breadcrumb"}).find('a',{"href":dt['href']}).text.strip())
-                store.append(adr)
-                store.append(city)
-                store.append(state)
-                store.append(zip)
-                if country=="USA":
-                    if len(zip.replace(' ',''))==6:
+                if soup1.find('div',{"id":"couponModal"})!=None:
+                    adr=soup1.find('div',{"id":"couponModal"}).find('input',{"name":"locationAddress1"})['value'].strip()
+                    city=soup1.find('div',{"id":"couponModal"}).find('input',{"name":"locationCity"})['value'].strip()
+                    state=soup1.find('div',{"id":"couponModal"}).find('input',{"name":"locationState"})['value'].strip()
+                    zip=soup1.find('div',{"id":"couponModal"}).find('input',{"name":"locationPostalCode"})['value'].strip()
+                    phone=soup1.find('div',{"id":"couponModal"}).find('input',{"name":"locationPhone"})['value'].strip()
+                    hour=list(soup1.find('div',{"class":"store-hours"}).stripped_strings)
+                    del hour[0]
+                    store=[]
+                    store.append("https://interstatebatteries.com")
+                    store.append(soup1.find('ol',{"class":"breadcrumb"}).find('a',{"href":dt['href']}).text.strip())
+                    store.append(adr)
+                    store.append(city)
+                    store.append(state)
+                    store.append(zip)
+                    if country=="USA":
+                        if len(zip.replace(' ',''))==6:
+                            store.append('CA')
+                        else:
+                            store.append('US')
+                    elif country=="CAN":
                         store.append('CA')
+                    elif country:
+                        store.append(country)
                     else:
-                        store.append('US')
-                elif country=="CAN":
-                    store.append('CA')
-                elif country:
-                    store.append(country)
-                else:
+                        store.append("<MISSING>")
                     store.append("<MISSING>")
-                store.append("<MISSING>")
-                store.append(phone)
-                store.append("interstatebatteries")
-                store.append("<MISSING>")
-                store.append("<MISSING>")
-                store.append(" ".join(hour))
-                return_main_object.append(store)
+                    store.append(phone)
+                    store.append("interstatebatteries")
+                    store.append("<MISSING>")
+                    store.append("<MISSING>")
+                    store.append(" ".join(hour))
+                    return_main_object.append(store)
     return return_main_object
 
 def scrape():
