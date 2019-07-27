@@ -24,7 +24,7 @@ def parse_address(address):
     phone = address[2]
     city, _address = address[1].split(',')
     state, zipcode = _address.split()
-    return remove_non_ascii_characters(street_address), city, state, zipcode, phone
+    return street_address, city, state, zipcode, phone
 
 def fetch_data():
     data = []
