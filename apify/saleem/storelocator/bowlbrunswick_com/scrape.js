@@ -16,8 +16,7 @@ async function scrape() {
       return JSON.parse(json).forEach(location => {
         // Check US vs. Canada. Canada has the province in the city and state is blank
         if (location.state === "") {
-          // if a Canada location, we need to manipulate a little....
-          [location.state] = location.city.match(/(?<=\,\s).{2}$/) || ["<INACCESSIBLE>"];
+          [location.state] = location.city.match(/(?<=\,\s).{2,3}$/);
           [location.city] = location.city.match(/.*(?=\,)/);
           location.country_code = 'CA';
         }
