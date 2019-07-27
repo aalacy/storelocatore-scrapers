@@ -4,7 +4,6 @@ import re
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
-from bs4 import BeautifulSoup
 
 options = Options() 
 options.add_argument('--headless')
@@ -130,7 +129,6 @@ def determine_country_code(state):
 def fetch_data():
     data = []
     driver.get(BASE_URL)
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
     stores = driver.find_elements_by_css_selector('div[class*="search_panel"]')
     for store in stores:
         location_name = store.find_element_by_css_selector('a.white_chunk_text').text
