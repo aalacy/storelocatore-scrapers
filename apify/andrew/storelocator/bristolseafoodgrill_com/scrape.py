@@ -22,8 +22,17 @@ def parse_address(address):
         city, state, zip_code = [item.strip() for item in address.split(',')]
     return city, state, zip_code
 
-def remove_non_ascii_characters(phone):
-    return ''.join([i if ord(i) < 128 else ' ' for i in phone])
+def remove_non_ascii_characters(string):
+    return ''.join([i if ord(i) < 128 else ' ' for i in string])
+
+def convert_geo(geo):
+    geo = [
+        item.replace('\'', '').replace('"', '')
+        for item in remove_non_ascii_characters(geo).split()
+    ]
+    geo = "-".join(geo[:-1])+geo[-1]
+    multiplier = 1 if geo[-1] in ['N', 'E'] else -1
+    return multiplier * sum(float(x) / 60 ** n for n, x in enumerate(geo[:-1].split('-')))
 
 def fetch_data():
     data = []
@@ -43,6 +52,10 @@ def fetch_data():
         phone = soup.select_one('div.restaurantAddress > p.bc1RegularLargeDark:nth-of-type(3)').text
         country_code = 'US'
         hours_of_operation = remove_non_ascii_characters(soup.select_one('div.bc1RegularLargeDark.hours').text)
+        lat, lon = [
+            p.text
+            for p in soup.select('div.locationCoordinates p')
+        ][2:]
         data.append([
             BASE_URL,
             location_name,
@@ -54,8 +67,8 @@ def fetch_data():
             '<MISSING>',
             phone,
             '<MISSING>',
-            '<MISSING>',
-            '<MISSING>',
+            convert_geo(lat),
+            convert_geo(lon),
             hours_of_operation
         ])
     return data
