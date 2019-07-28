@@ -26,6 +26,11 @@ def parse_address(address):
     state, zipcode = _address.split()
     return street_address, city, state, zipcode, phone
 
+def parse_geo(url):
+    lon = re.findall(r'2d{1}(-?\d*.{1}\d*)!{1}', url)[0]
+    lat = re.findall(r'3d{1}(-?\d*.{1}\d*)!{1}', url)[0]
+    return lat, lon
+
 def fetch_data():
     data = []
     res = requests.get('https://www.certifiedoil.com/Locations.aspx')
@@ -75,6 +80,13 @@ def fetch_data():
                 if len(item)
             ]
             street_address, city, state, zipcode, phone = parse_address(address)
+            try:
+                lat, lon = parse_geo(soup.select_one('span > iframe')['src'])
+            except TypeError:
+                lat, lon = '<MISSING>', '<MISSING>'
+            # Incorrect iFrames on website for these store numbers
+            if store_number in ['281', '202']:
+                lat, lon = '<INACCESSIBLE>', '<INACCESSIBLE>'
             data.append([
                 BASE_URL,
                 location_name,
@@ -86,8 +98,8 @@ def fetch_data():
                 store_number,
                 phone,
                 '<MISSING>',
-                '<MISSING>',
-                '<MISSING>',
+                lat,
+                lon,
                 hours_of_operation
             ])
     return data
