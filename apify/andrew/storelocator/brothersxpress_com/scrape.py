@@ -44,6 +44,8 @@ def fetch_data():
             for td in store.select('td')
         ]
         street_address, city, state, zipcode = parse_address(address)
+        phone = remove_duplicate_white_spaces(phone)
+        if 'Coming Soon' in phone: continue
         data.append([
             BASE_URL,
             remove_duplicate_white_spaces(location_name),
@@ -53,7 +55,7 @@ def fetch_data():
             zipcode,
             'US',
             store_number,
-            remove_duplicate_white_spaces(phone),
+            phone,
             '<MISSING>',
             '<MISSING>',
             '<MISSING>',
