@@ -71,6 +71,8 @@ def fetch_data():
         # Iterate through available states
         for state in states:
             select_state_el.select_by_value(state)
+            if 'Washington DC' in state:
+                state = 'Maryland'
             data.extend(
                 parse_state_results(state, country_code)
             )
