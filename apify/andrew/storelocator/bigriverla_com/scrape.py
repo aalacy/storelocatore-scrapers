@@ -24,12 +24,18 @@ def parse_address(address):
 def parse_phone(phone):
     return phone.split('\n')[-1]
 
+def parse_geo(url):
+    lon = re.findall(r'2d{1}(-?\d*.{1}\d*)!{1}', url)[0]
+    lat = re.findall(r'3d{1}(-?\d*.{1}\d*)!{1}', url)[0]
+    return lat, lon
+
 def fetch_data():
     data = []
     options = Options() 
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    # driver = webdriver.Chrome('/usr/local/bin/chromedriver', chrome_options=options)
     driver = webdriver.Chrome('/bin/chromedriver', chrome_options=options)
     driver.get('https://www.bigriverla.com/')
     # Fetch store urls from location menu
@@ -46,6 +52,7 @@ def fetch_data():
         phone = parse_phone(phone_el.text)
         # Regex match for store number in store name
         store_number = re.findall(r'#(\d+)', location_name)[0]
+        lat, lon = parse_geo(driver.find_element_by_css_selector('iframe').get_attribute('src'))
         data.append([
             'https://www.bigriverla.com/',
             location_name,
@@ -57,8 +64,8 @@ def fetch_data():
             store_number,
             phone,
             '<MISSING>',
-            '<MISSING>',
-            '<MISSING>',
+            lat,
+            lon,
             '<MISSING>'
         ])
     driver.quit()
