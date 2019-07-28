@@ -100,6 +100,13 @@ def write_output(data):
 def remove_duplicate_white_spaces(string):
     return " ".join(string.split())
 
+def parse_geo(geo):
+    lat, lon = [
+        item
+        for item in geo.split(', ')
+    ]
+    return lat, lon
+
 def parse_address(address, country_code):
     street_address, address = address.split('\n\n')
     _address, phone = address.split('\n')
@@ -146,6 +153,7 @@ def fetch_data():
         ])
         if not len(hours_of_operation):
             hours_of_operation = '<MISSING>'
+        lat, lon = parse_geo(store.find_element_by_css_selector('meta[name="geo.position"]').get_attribute('content'))
         data.append([
             'https://www.bubbagump.com/',
             location_name,
@@ -157,8 +165,8 @@ def fetch_data():
             '<MISSING>',
             address['phone'],
             '<MISSING>',
-            '<MISSING>',
-            '<MISSING>',
+            lat,
+            lon,
             hours_of_operation
         ])
     driver.quit()
