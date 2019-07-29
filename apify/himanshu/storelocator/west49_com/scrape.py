@@ -31,13 +31,16 @@ def fetch_data():
         for hr in loc['open_hours']:
             hour+=hr['day']+":"+hr['open_time']+"-"+hr['close_time']
         address=loc['address']['line1']
+        state="<MISSING>"
+        if loc['address']['state_code']:
+            state=loc['address']['state_code'].strip()
         if loc['address']['line2']:
             address+=" "+loc['address']['line2']
         store.append(base_url)
         store.append(loc['address']['name'].strip())
         store.append(address.strip())
         store.append(loc['address']['city'].strip())
-        store.append(str(loc['address']['state']).strip())
+        store.append(state)
         store.append(loc['address']['zip'].strip())
         store.append(country.strip())
         store.append(loc['store_code'])
