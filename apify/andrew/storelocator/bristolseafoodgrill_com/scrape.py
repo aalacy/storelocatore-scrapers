@@ -1,6 +1,7 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
+import json
 
 BASE_URL = 'https://bristolseafoodgrill.com'
 
@@ -24,6 +25,9 @@ def parse_address(address):
 
 def remove_non_ascii_characters(string):
     return ''.join([i if ord(i) < 128 else ' ' for i in string])
+
+def fetch_geo(data):
+    return data['geo']['latitude'], data['geo']['longitude']
 
 def convert_geo(geo):
     geo = [
@@ -52,10 +56,14 @@ def fetch_data():
         phone = soup.select_one('div.restaurantAddress > p.bc1RegularLargeDark:nth-of-type(3)').text
         country_code = 'US'
         hours_of_operation = remove_non_ascii_characters(soup.select_one('div.bc1RegularLargeDark.hours').text)
-        lat, lon = [
-            p.text
-            for p in soup.select('div.locationCoordinates p')
-        ][2:]
+        try:
+            lat, lon = fetch_geo(json.loads(soup.select_one("script[type*='application']").text))
+        except:
+            geo = [
+                p.text
+                for p in soup.select('div.locationCoordinates p')
+            ][2:]
+            lat, lon = [convert_geo(item) for item in geo]
         data.append([
             BASE_URL,
             location_name,
@@ -67,8 +75,8 @@ def fetch_data():
             '<MISSING>',
             phone,
             '<MISSING>',
-            convert_geo(lat),
-            convert_geo(lon),
+            lat,
+            lon,
             hours_of_operation
         ])
     return data
