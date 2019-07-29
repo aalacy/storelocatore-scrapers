@@ -16,6 +16,7 @@ def write_output(data):
 def fetch_data():
     base_url = "https://www.athletico.com"
     r = requests.get(base_url + "/locations")
+    print("1")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for states in soup.find_all("div",{"class": "four columns serviceCard"}):
@@ -25,9 +26,11 @@ def fetch_data():
         for table in state_soup.find_all("tbody"):
             for link in table.find_all("a"):
                 if link["href"][0] == "/":
+                    print(base_url + link["href"])
                     location_request = requests.get(base_url + link["href"])
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                 else:
+                    print(link["href"])
                     location_request = requests.get(link["href"])
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                 contact_information = list(location_soup.find("div",{"id": "contactInfo"}).stripped_strings)
