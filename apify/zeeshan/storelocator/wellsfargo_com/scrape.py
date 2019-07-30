@@ -14,6 +14,7 @@ class WellsFargo(base.Base):
     csv_filename = 'data.csv'
     domain_name = 'wellsfargo.com'
     url = 'https://www.wellsfargo.com/locator'
+    seen = set()
 
     def map_data(self, row):
         return {
@@ -97,8 +98,14 @@ class WellsFargo(base.Base):
 
                         data = data_request.json().get('searchResults', [])
 
-                        for result in data:
-                            yield result
+                        for row in data:
+
+                            store_number = row.get('branchCode')
+                            if store_number in self.seen: continue
+                            else: self.seen.add(store_number)
+
+                            yield row
+
 
 if __name__ == '__main__':
     wf = WellsFargo()

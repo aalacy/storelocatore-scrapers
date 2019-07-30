@@ -69,9 +69,12 @@ class Uhaul(base.Base):
                 for location in locations:
                     
                     address = xpath(location, './/a[@class="address-link"]//@rel')
+
+                    if address is None: continue
+
                     if address in self.seen: continue
                     else: self.seen.add(address)
-                        
+                    
                     location.attrib['city'] = data.city
                     location.attrib['state'] = data.state
                     location.attrib['zip'] = data.code

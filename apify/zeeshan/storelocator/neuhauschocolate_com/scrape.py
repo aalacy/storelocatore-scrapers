@@ -28,7 +28,7 @@ class NeuhausChocolate(base.Base):
             try:
                 city, state_zip = region.split(',')
                 state, zipcode = state_zip.strip().split(' ')
-            except ValueError:
+            except (ValueError, TypeError,):
                 pass
 
         geo = {}
@@ -38,23 +38,29 @@ class NeuhausChocolate(base.Base):
             if _geo:
                 geo.update(_geo)
 
-        hours_of_operation = [xpath(row, './/p/text()[preceding-sibling::br[%d]]' % i) for i in (10,11)]
+        hours_of_operation = [str(xpath(row, './/p/text()[preceding-sibling::br[%d]]' % i)) for i in (10,11)]
         if any(hours_of_operation):
-            hours_of_operation = ', '.join(hours_of_operation)
+            try:
+                hours_of_operation = ', '.join(hours_of_operation)
+            except:
+                bp()
             hours_of_operation = re.sub(r'\s+', '', hours_of_operation)
         else:
             hours_of_operation = ''
+
+        phone = re.findall(r'\d+-\d+-\d+', etree.tostring(row))
+        phone = phone[0] if phone else None
 
         return {
             'locator_domain': self.domain_name
             ,'location_name': xpath(row, './/h3/text()[preceding-sibling::br]')
             ,'street_address': street_address
             ,'city': city
-            ,'state': row.get('data-state')
+            ,'state': state
             ,'zip': zipcode
             ,'country_code': self.default_country
             ,'store_number': None
-            ,'phone': xpath(row, './/p/text()[preceding-sibling::br]')
+            ,'phone': phone
             ,'location_type': None
             ,'naics_code': None
             ,'latitude': geo.get('lat')

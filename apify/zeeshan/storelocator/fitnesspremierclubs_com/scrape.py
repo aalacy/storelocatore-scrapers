@@ -13,6 +13,7 @@ class FitnessPremierClubs(base.Base):
     csv_filename = 'data.csv'
     domain_name = 'fitnesspremierclubs.com'
     url = 'https://www.fitnesspremierclubs.com'
+    seen = set()
 
     def map_data(self, row):
         street_address, city, state, zipcode = row.get('address1'), row.get('city'), row.get('state'), row.get('zip', '').strip()
@@ -27,7 +28,7 @@ class FitnessPremierClubs(base.Base):
             ,'zip': zipcode
             ,'country_code': row.get('country', '')
             ,'store_number': row.get('number', '')
-            ,'phone': row.get('phone', '')
+            ,'phone': row.get('phone', '').replace(' Ext.', '')
             ,'location_type': None
             ,'naics_code': None
             ,'latitude': geo.get('lat', '')
@@ -61,6 +62,10 @@ class FitnessPremierClubs(base.Base):
                         if club_request.status_code == 200:
                             rows = club_request.json()
                             for row in rows:
+                                store_number = row.get('number', '')
+                                if store_number in self.seen:
+                                    continue
+                                self.seen.add(store_number)
                                 yield row
 
 
