@@ -53,7 +53,7 @@ def fetch_data():
         store.append("waterway")
         store.append("<MISSING>")
         store.append("<MISSING>")
-        store.append(hour if hour != "" else "<MISSING>")
+        store.append(hour if hour else "<MISSING>")
         if zip not in output:
             output.append(zip)
             return_main_object.append(store)
