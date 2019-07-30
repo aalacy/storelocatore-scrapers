@@ -17,7 +17,7 @@ class FarmerBoys(base.Base):
     def map_data(self, row):
         return {
             'locator_domain': self.domain_name
-            ,'location_name': row.get('restaurant_name', '<MISSING>')
+            ,'location_name': re.sub('<[^<]+?>', '', row.get('restaurant_name', ''))
             ,'street_address': row.get('location_address1', '<MISSING>')
             ,'city': row.get('location_city', '<MISSING>')
             ,'state': row.get('location_state', '<MISSING>')
@@ -29,7 +29,7 @@ class FarmerBoys(base.Base):
             ,'naics_code': '<MISSING>'
             ,'latitude': row.get('geo_latitude', '<MISSING>')
             ,'longitude': row.get('geo_longitude', '<MISSING>')
-            ,'hours_of_operation': row.get('store_hours', '<MISSING>')
+            ,'hours_of_operation': re.sub('<[^<]+?>', '', row.get('store_hours', ''))
         }
 
     def crawl(self):

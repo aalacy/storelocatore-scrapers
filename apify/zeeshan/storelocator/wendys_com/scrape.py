@@ -24,10 +24,10 @@ class Wendys(base.Base):
             ,'street_address': row.get('address1', '')
             ,'city': row.get('city', '')
             ,'state': row.get('state', '')
-            ,'zip': row.get('postal', '')
+            ,'zip': row.get('postal', '') if len(row.get('postal', '')) <= 6 else None
             ,'country_code': row.get('country', '')
             ,'store_number': row.get('id', '')
-            ,'phone': row.get('phone', '')
+            ,'phone': row.get('phone', '') if len(row.get('phone', '')) >= 10 else None
             ,'location_type': row.get('utcOffset', '')
             ,'naics_code': None
             ,'latitude': row.get('lat', '')
