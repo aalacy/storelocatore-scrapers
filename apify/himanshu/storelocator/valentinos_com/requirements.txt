@@ -1,3 +1,7 @@
-lxml==3.6.4
+<<<<<<< HEAD
+lxml==4.3.4
+=======
+lxml=4.3.4
+>>>>>>> ab4f02b88c77e4bc91d05dfd732837fb57a3d494
 requests==2.11.1
 beautifulsoup4==4.7.1
