@@ -59,7 +59,7 @@ async function scrape(){
                                     raw_address:address,
                                     city:city?city:"<INACCESSIBLE>",
                                     state:state?state:"<INACCESSIBLE>",
-                                    zip:zip?zip:"<INACCESSIBLE>",
+                                    zip:zip?zip:"<ESSIBLE>",
                                     country_code: 'US',
                                     store_number:item.storelocator_id,
                                     phone:item.phone,
