@@ -13,5 +13,9 @@ locator_domain = 'https://www.perfectlooksalons.com/'
 
 ext_arr = ['/family-haircare/alaska/', 'family-haircare/arizona/', 'family-haircare/idaho/', 'family-haircare/oregon/', 'family-haircare/washington/']
 
+lat/long are located in javascript object on each page. 
+CMS.Maps.Initialize(---- lat/long coords----)
+
+this should take a while because it has to go do each locations home page and pull hours from it!
 
 

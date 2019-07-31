@@ -13,4 +13,6 @@ Please make sure that:
 ext = 'salonlocator/default.asp?state=all&city=BROWNSVILLE'
 ext2 = 'salonlocator/default.asp?state=all&city=CORPUS CHRISTI'
 
-only 2 locations, need to go to each page seperately 
+only 2 locations, need to go to each page separately 
+
+lat / long not accessible, they are in a javascript object on the page. 

@@ -13,12 +13,26 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+# gets hours from link
+def get_hours(url):
+    page = requests.get(url)
+    assert page.status_code == 200
+    soup = BeautifulSoup(page.content, 'html.parser')
+
+    hours = soup.find_all('p')[0].text.replace('Store Hours:', '').replace('\n', ' ').strip()
+    return hours
+
+
 ## generalize scraping for each url
 def scrape_url(page, all_store_data, locator_domain):
     soup = BeautifulSoup(page.content, 'html.parser')
     stores = soup.find_all('div', {'class': 'location-content'})
     for store in stores:
         location_name = store.find('a').text.strip()
+        new_link = store.find('a')['href'][1:]
+
+        hours = get_hours(locator_domain + new_link)
+
         addy_info = store.find('p').text.strip().split('\n')
     
         street_address = addy_info[0].strip()
@@ -32,9 +46,8 @@ def scrape_url(page, all_store_data, locator_domain):
         
         country_code = 'US'
         location_type = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
-        hours = '<MISSING>'
+        lat = '<INACCESSIBLE>'
+        longit = '<INACCESSIBLE>'
         store_number = '<MISSING>'
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                          store_number, phone_number, location_type, lat, longit, hours ]

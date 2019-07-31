@@ -51,7 +51,6 @@ def fetch_data():
     spans = wrapper.find_elements_by_name('leftLocation')
 
     for span in spans:
-        #print(span.find_element_by_css_selector('div.location_header').text)
         split_cont = span.text.split('\n')
         location_name = split_cont[0]
         street_address = split_cont[1]
