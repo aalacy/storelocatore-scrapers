@@ -32,9 +32,11 @@ class DataMixin(object):
         r = requests.get('https://maps.googleapis.com/maps/api/geocode/json', params=params)
         if r.status_code == 200:
             if r.json()['results']:
-                location = r.json()['results'][0]['geometry']['location']
-                return location
-        return None
+                try: 
+                    r.json()['results'][0]['geometry']['location']
+                except:
+                    pass
+        return {}
     
 
 class Base(DataMixin):

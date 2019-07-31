@@ -32,7 +32,7 @@ class PakMail(base.Base):
         phone = phone[0] if phone else ''
 
         address = '%s, %s, %s %s' % (street_address, city, state, zipcode)
-        geo = self.get_geo(address)
+        geo = self.get_geo(address) or {}
 
         return {
             'locator_domain': self.domain_name
