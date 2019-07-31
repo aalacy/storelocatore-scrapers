@@ -63,7 +63,7 @@ class Acura(base.Base):
             })
             request = session.get(self.url, params=query_params)
             if request.status_code == 200:
-                locations = request.json().get('Dealers')
+                locations = request.json().get('Dealers', [])
                 for location in locations:
                     store_number = location.get('DealerNumber')
                     if store_number in self.seen: continue

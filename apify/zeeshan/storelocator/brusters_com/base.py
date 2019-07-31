@@ -31,8 +31,10 @@ class DataMixin(object):
         params = {'address': address, 'key': os.environ['GOOGLE_API_KEY']}
         r = requests.get('https://maps.googleapis.com/maps/api/geocode/json', params=params)
         if r.status_code == 200:
-            location = r.json()['results'][0]['geometry']['location']
-            return location
+            try:
+                return r.json()['results'][0]['geometry']['location']
+            except:
+                pass
         return None
     
 
