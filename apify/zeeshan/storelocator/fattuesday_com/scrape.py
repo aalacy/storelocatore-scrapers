@@ -17,19 +17,19 @@ class FatTuesday(base.Base):
     def map_data(self, row):
         return {
             'locator_domain': self.domain_name
-            ,'location_name': row.get('name', '')
-            ,'street_address': row.get('address', '')
-            ,'city': row.get('city', '')
-            ,'state': row.get('state', '')
-            ,'zip': row.get('zip', '')
-            ,'country_code': row.get('country', '')
-            ,'store_number': row.get('id', '')
-            ,'phone': row.get('phone', '')
-            ,'location_type': row.get('tags', '')
+            ,'location_name': row.get('name', '<MISSING>')
+            ,'street_address': row.get('address', '<MISSING>')
+            ,'city': row.get('city', '<MISSING>')
+            ,'state': row.get('state', '<MISSING>')
+            ,'zip': row.get('zip', '<MISSING>')
+            ,'country_code': row.get('country', '<MISSING>')
+            ,'store_number': row.get('id', '<MISSING>')
+            ,'phone': row.get('phone', '<MISSING>')
+            ,'location_type': row.get('tags', '<MISSING>')
             ,'naics_code': None
-            ,'latitude': row.get('lat', '')
-            ,'longitude': row.get('lng', '')
-            ,'hours_of_operation': row.get('hours', '').encode('ascii', 'ignore')
+            ,'latitude': row.get('lat', '<MISSING>')
+            ,'longitude': row.get('lng', '<MISSING>')
+            ,'hours_of_operation': row.get('hours', '<MISSING>').encode('ascii', 'ignore')
         }
 
     def crawl(self):
