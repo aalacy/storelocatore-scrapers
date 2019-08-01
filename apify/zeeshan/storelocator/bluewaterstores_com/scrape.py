@@ -23,13 +23,13 @@ class BlueWaterStores(base.Base):
             ,'state': row.get('state')
             ,'zip': row.get('zip')
             ,'country_code': self.default_country
-            ,'store_number': None
+            ,'store_number': '<MISSING>'
             ,'phone': row.get('phone')
-            ,'location_type': None
-            ,'naics_code': None
+            ,'location_type': '<MISSING>'
+            ,'naics_code': '<MISSING>'
             ,'latitude': row.get('lat')
             ,'longitude': row.get('lng')
-            ,'hours_of_operation': None
+            ,'hours_of_operation': '<MISSING>'
         }
 
     def crawl(self):
