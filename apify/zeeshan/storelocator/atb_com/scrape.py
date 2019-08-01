@@ -24,8 +24,11 @@ class Atb(base.Base):
         street_address = street_address.replace('Physical location - ', '')
         street_address = street_address.replace('Physical Location - ', '')
         street_address = street_address.replace('<br>', '')
+        street_address = street_address.replace('<br/>', '')
         street_address = street_address.replace('Mailing address - ', '')
         street_address = street_address.replace('Mailing Address - ', '')
+        street_address = re.sub(r'<.*?>', '', street_address)
+        street_address = re.sub(r'<.*?/>', '', street_address)
 
         return {
             'locator_domain': self.domain_name
