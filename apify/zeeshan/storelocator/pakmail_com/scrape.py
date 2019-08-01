@@ -46,8 +46,8 @@ class PakMail(base.Base):
             ,'phone': phone
             ,'location_type': None
             ,'naics_code': None
-            ,'latitude': geo.get('lat')
-            ,'longitude': geo.get('lng')
+            ,'latitude': geo.get('lat', '<INACCESSIBLE>')
+            ,'longitude': geo.get('lng', '<INACCESSIBLE>')
             ,'hours_of_operation': None
         }
 
