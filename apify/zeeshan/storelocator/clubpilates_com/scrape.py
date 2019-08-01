@@ -31,10 +31,10 @@ class ClubPilates(base.Base):
             ,'store_number': row.get('ID')
             ,'phone': row.get('phone') if len(row.get('phone')) >= 10 else None
             ,'location_type': row.get('type')
-            ,'naics_code': None
+            ,'naics_code': '<MISSING>'
             ,'latitude': row.get('lat')
             ,'longitude': row.get('lng')
-            ,'hours_of_operation': None
+            ,'hours_of_operation': '<MISSING>'
         }
 
     def crawl(self):
