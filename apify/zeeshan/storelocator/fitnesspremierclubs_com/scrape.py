@@ -29,11 +29,11 @@ class FitnessPremierClubs(base.Base):
             ,'country_code': row.get('country', '')
             ,'store_number': row.get('number', '')
             ,'phone': row.get('phone', '').replace(' Ext.', '')
-            ,'location_type': None
-            ,'naics_code': None
+            ,'location_type': '<MISSING>'
+            ,'naics_code': '<MISSING>'
             ,'latitude': geo.get('lat', '')
             ,'longitude': geo.get('lng', '')
-            ,'hours_of_operation': None
+            ,'hours_of_operation': '24/7'
         }
 
     def crawl(self):
