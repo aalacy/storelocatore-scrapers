@@ -31,7 +31,7 @@ class Sandellasusa(base.Base):
             city, _, state, zipcode = region[0]
 
         phone = re.findall(r'\d+-\d+-\d+', text)
-        phone = phone[0] if phone else None
+        phone = phone[0] if phone else '<MISSING>'
 
         address = '%s, %s' % (street_address, region)
         geo = {} # self.get_geo(address)
@@ -48,8 +48,8 @@ class Sandellasusa(base.Base):
             ,'phone': phone
             ,'location_type': '<MISSING>'
             ,'naics_code': '<MISSING>'
-            ,'latitude': geo.get('lat', '')
-            ,'longitude': geo.get('lng', '')
+            ,'latitude': geo.get('lat', '<MISSING>')
+            ,'longitude': geo.get('lng', '<MISSING>')
             ,'hours_of_operation': '<MISSING>'
         }
 

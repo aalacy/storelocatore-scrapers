@@ -29,7 +29,7 @@ class FarmerBoys(base.Base):
             ,'naics_code': '<MISSING>'
             ,'latitude': row.get('geo_latitude', '<MISSING>')
             ,'longitude': row.get('geo_longitude', '<MISSING>')
-            ,'hours_of_operation': re.sub('<[^<]+?>', '', row.get('store_hours', ''))
+            ,'hours_of_operation': re.sub('<[^<]+?>', ' ', row.get('store_hours', ''))
         }
 
     def crawl(self):
