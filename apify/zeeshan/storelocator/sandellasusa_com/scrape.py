@@ -19,18 +19,22 @@ class Sandellasusa(base.Base):
         text = etree.tostring(row)
 
         name = xpath(row, './/span//text()').strip()
-        street_address = xpath(row, './/p[3]//span/text()').strip()
+        
+        street_address = None
+        street_address = re.findall(r'([0-9]+) ([A-Z0-9a-z]+) ([A-Z0-9a-z]+)', text)
+        if street_address:
+            street_address = ' '.join(street_address[0])
 
         city, state, zipcode = None, None, None
-        region = re.findall(r'([A-Za-z]+), ([A-Z]+) ([0-9]+)', text)
+        region = re.findall(r'([A-Za-z]+)(,|) ([A-Z]+) ([0-9]+)', text)
         if region:
-            city, state, zipcode = region[0]
+            city, _, state, zipcode = region[0]
 
         phone = re.findall(r'\d+-\d+-\d+', text)
         phone = phone[0] if phone else None
 
         address = '%s, %s' % (street_address, region)
-        geo = self.get_geo(address)
+        geo = {} # self.get_geo(address)
 
         return {
             'locator_domain': self.domain_name
@@ -40,13 +44,13 @@ class Sandellasusa(base.Base):
             ,'state': state
             ,'zip': zipcode
             ,'country_code': self.default_country
-            ,'store_number': None
+            ,'store_number': '<MISSING>'
             ,'phone': phone
-            ,'location_type': None
-            ,'naics_code': None
+            ,'location_type': '<MISSING>'
+            ,'naics_code': '<MISSING>'
             ,'latitude': geo.get('lat', '')
             ,'longitude': geo.get('lng', '')
-            ,'hours_of_operation': None
+            ,'hours_of_operation': '<MISSING>'
         }
 
 
