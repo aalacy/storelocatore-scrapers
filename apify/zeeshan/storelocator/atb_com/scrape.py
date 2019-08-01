@@ -19,10 +19,15 @@ class Atb(base.Base):
         hours_of_operation = xpath(row, './/@ows_hours')
         clean_re = re.compile('<.*?>')
         hours_of_operation = re.sub(clean_re, '', hours_of_operation)
+
+        street_address = xpath(row, './/@ows_address')
+        if '317 Banff Avenue' in street_address:
+            street_address = '317 Banff Avenue'
+            
         return {
             'locator_domain': self.domain_name
             ,'location_name': xpath(row, './/@ows_title')
-            ,'street_address': xpath(row, './/@ows_address')
+            ,'street_address': 
             ,'city': xpath(row, './/@ows_city')
             ,'state': 'Alberta'
             ,'zip': xpath(row, './/@ows_postal')
