@@ -34,13 +34,13 @@ class FitnessConnection(base.Base):
             ,'state': state
             ,'zip': zipcode
             ,'country_code': self.default_country
-            ,'store_number': None
+            ,'store_number': '<MISSING>'
             ,'phone': xpath(row, './/span[@class="phone"]/text()')
-            ,'location_type': None
-            ,'naics_code': None
+            ,'location_type': '<MISSING>'
+            ,'naics_code': '<MISSING>'
             ,'latitude': geo.get('lat')
             ,'longitude': geo.get('lng')
-            ,'hours_of_operation': None
+            ,'hours_of_operation': '<INACCESSIBLE>'
         }
 
     def crawl(self):
