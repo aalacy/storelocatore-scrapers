@@ -23,7 +23,7 @@ class FarmerBoys(base.Base):
             ,'state': row.get('location_state', '<MISSING>')
             ,'zip': row.get('location_zip', '<MISSING>')
             ,'country_code': self.default_country
-            ,'store_number': row.get('corporate_location', '<MISSING>')
+            ,'store_number': row.get('restaurant_id', '<MISSING>')
             ,'phone': row.get('phone_primary', '<MISSING>')
             ,'location_type': '<MISSING>'
             ,'naics_code': '<MISSING>'
