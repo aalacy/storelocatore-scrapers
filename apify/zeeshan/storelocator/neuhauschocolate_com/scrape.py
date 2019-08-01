@@ -40,11 +40,8 @@ class NeuhausChocolate(base.Base):
 
         hours_of_operation = [str(xpath(row, './/p/text()[preceding-sibling::br[%d]]' % i)) for i in (10,11)]
         if any(hours_of_operation):
-            try:
-                hours_of_operation = ', '.join(hours_of_operation)
-            except:
-                bp()
-            hours_of_operation = re.sub(r'\s+', '', hours_of_operation)
+            hours_of_operation = ', '.join(hours_of_operation)
+            hours_of_operation = re.sub(r'\s+', ' ', hours_of_operation)
         else:
             hours_of_operation = ''
 
@@ -59,10 +56,10 @@ class NeuhausChocolate(base.Base):
             ,'state': state
             ,'zip': zipcode
             ,'country_code': self.default_country
-            ,'store_number': None
+            ,'store_number': '<MISSING>'
             ,'phone': phone
-            ,'location_type': None
-            ,'naics_code': None
+            ,'location_type': '<MISSING>'
+            ,'naics_code': '<MISSING>'
             ,'latitude': geo.get('lat')
             ,'longitude': geo.get('lng')
             ,'hours_of_operation': hours_of_operation or ''
