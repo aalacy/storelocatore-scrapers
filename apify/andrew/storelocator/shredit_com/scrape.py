@@ -73,6 +73,7 @@ def fetch_data():
             longitude,
             hours_of_operation
         ])
+    driver.quit()
     return data
 
 def scrape():
