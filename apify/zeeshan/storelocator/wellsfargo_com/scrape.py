@@ -25,7 +25,7 @@ class WellsFargo(base.Base):
             ,'state': row.get('state')
             ,'zip': row.get('postalcode')
             ,'country_code': self.default_country
-            ,'store_number': row.get('branchCode')
+            ,'store_number': row.get('locationType')
             ,'phone': row.get('phone')
             ,'location_type': row.get('ownerBankType')
             ,'naics_code': None
