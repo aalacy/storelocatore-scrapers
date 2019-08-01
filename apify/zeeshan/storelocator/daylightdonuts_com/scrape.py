@@ -27,8 +27,8 @@ class DaylightDonuts(base.Base):
             ,'country_code': self.default_country
             ,'store_number': row.get('id', '')
             ,'phone': row.get('phone', '')
-            ,'location_type': None
-            ,'naics_code': None
+            ,'location_type': '<MISSING>'
+            ,'naics_code': '<MISSING>'
             ,'latitude': row.get('lat', '')
             ,'longitude': row.get('lng', '')
             ,'hours_of_operation': hours
