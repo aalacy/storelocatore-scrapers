@@ -38,19 +38,19 @@ class Darimart(base.Base):
 
         return {
             'locator_domain': self.domain_name
-            ,'location_name': None
+            ,'location_name': '<MISSING>'
             ,'street_address': xpath(hxt, '//strong/text()')
             ,'city': city
             ,'state': state
             ,'zip': zipcode
             ,'country_code': self.default_country
-            ,'store_number': None
+            ,'store_number': '<MISSING>'
             ,'phone': phone
-            ,'location_type': None
+            ,'location_type': '<MISSING>'
             ,'naics_code': None
             ,'latitude': geo.get('lat')
             ,'longitude': geo.get('lng')
-            ,'hours_of_operation': None
+            ,'hours_of_operation': '<INACCESSIBLE>'
         }
 
     def crawl(self):
