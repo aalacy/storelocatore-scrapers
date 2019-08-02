@@ -15,28 +15,24 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    base_url = "https://www.rosesdiscountstores.com"
+    base_url = "https://www.superthrifty.com"
     return_main_object=[]
-    r = requests.get("https://api.zenlocator.com/v1/apps/app_vfde3mfb/locations/search?northeast=82.292271%2C90.127516&southwest=-57.393437%2C-180").json()
-    for loc in r['locations']:
-        name=loc['name'].strip()
+    r = requests.get(base_url+"/wp-admin/admin-ajax.php?action=store_search&lat=56.130366&lng=-106.34677099999999&max_results=25&search_radius=2000&autoload=1").json()
+    for loc in r:
+        name=loc['store'].replace('&#8217;','\'').strip()
+        address=loc['address'].strip()
         city=loc['city'].strip()
-        state=loc['region'].strip()
-        country=loc['countryCode'].strip()
-        st=loc['address'].split(',')[-2].strip().split(' ')
-        zip=''
-        if len(st)>1:
-            zip=st[-1].strip()
-        address=loc['address'].split(',')[0].strip()
-        phone=loc['contacts']['con_wg5rd22k']['text'].strip()
-        lat=loc['lat']
-        lng=loc['lng']
-        hour=''
-        if 'hours' in loc:
-            if 'hoursOfOperation' in loc['hours']:
-                for hr in loc['hours']['hoursOfOperation']:
-                    hour+=' '+hr+":"+loc['hours']['hoursOfOperation'][hr]
-        storeno=''
+        state=loc['state'].strip()
+        country=loc['country'].strip()
+        if country=="Canada":
+            country="CA"
+        zip=loc['zip'].strip()
+        phone=loc['phone'].strip()
+        lat=loc['lat'].strip()
+        lng=loc['lng'].strip()
+        cleanr = re.compile('<.*?>')
+        hour=re.sub(cleanr, '',loc['hours']).strip()
+        storeno=loc['id'].strip()
         store=[]
         store.append(base_url)
         store.append(name if name else "<MISSING>")
@@ -47,7 +43,7 @@ def fetch_data():
         store.append(country if country else "<MISSING>")
         store.append(storeno if storeno else "<MISSING>")
         store.append(phone if phone else "<MISSING>")
-        store.append("rosesdiscountstores")
+        store.append("superthrifty")
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
         store.append(hour if hour else "<MISSING>")
