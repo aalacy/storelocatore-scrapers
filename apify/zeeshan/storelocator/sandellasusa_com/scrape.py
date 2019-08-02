@@ -19,9 +19,11 @@ class Sandellasusa(base.Base):
         text = etree.tostring(row)
 
         name = xpath(row, './/span//text()').strip()
+
+        text = text.replace('&#8217;', "")
         
         street_address = None
-        street_address = re.findall(r'([0-9]+) ([A-Z0-9a-z]+) ([A-Z0-9a-z]+)', text)
+        street_address = re.findall(r'([0-9]+) ([ \.A-Z0-9a-z]+) ([A-Z0-9a-z]+)', text)
         if street_address:
             street_address = ' '.join(street_address[0])
 
