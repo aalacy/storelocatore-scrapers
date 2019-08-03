@@ -19,6 +19,7 @@ def fetch_data():
     r = requests.get("https://fusiontables.googleusercontent.com/embedviz?viz=CARD&q=select+*+from+1vpAly2VF-wmZjM8YJD9GD8hzZKkdkCBVu81lI-pb&tmplt=11&cpr=2")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
+    location_addresses = []
     for location in soup.find_all("td"):
         location_details = list(location.find("div",{"style":"height:170px"}).stripped_strings)
         if location.find("a") == None:
@@ -48,6 +49,9 @@ def fetch_data():
         store.append(geo_location.split("/")[-1].split(",")[0] if len(geo_location.split("/")) < 3 and len(geo_location.split("/")[-1].split(",")) > 1 else "<MISSING>")
         store.append(geo_location.split("/")[-1].split(",")[1] if len(geo_location.split("/")) < 3 and len(geo_location.split("/")[-1].split(",")) > 1 else "<MISSING>")
         store.append("<MISSING>")
+        if location_address in location_addresses:
+            continue
+        location_addresses.append(location_address)
         store.append(location_address)
         return_main_object.append(store)
     return return_main_object
