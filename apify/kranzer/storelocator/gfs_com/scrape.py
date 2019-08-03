@@ -1,46 +1,34 @@
-import csv
 import re
 import requests
 import json
 from w3lib.html import remove_tags
+import base
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
-def fetch_data():
+class Scrape(base.Spider):
     data = []
     locator_domain = "https://gfsstore.com/locations/"
     base_url = "https://gfsstore.com/"
-    r = requests.get(base_url+'stores_jsonp/?callback=jQuery112408348595095024478_1564832094867')
-    locations = json.loads(re.findall(r'.+?\((.+)\)', r.text)[0])
-    for location in locations:
-        l_ = []
-        l_.append(locator_domain)
-        l_.append(location['title'] or "<MISSING>")
-        l_.append(location['field_address'][0]['thoroughfare'] or "<MISSING>")
-        l_.append(location['field_address'][0]['locality'] or "<MISSING>")
-        l_.append(location['field_address'][0]['administrative_area'] or "<MISSING>")
-        l_.append(location['field_address'][0]['postal_code'] or "<MISSING>")
-        l_.append(location['field_address'][0]['country'] or "<MISSING>")
-        l_.append(location['nid'] or "<MISSING>")
-        l_.append(location['field_phone'][0]['safe_value'] or "<MISSING>")
-        l_.append(location['field_location_type'][0]['value'] or "<MISSING>")
-        l_.append(location['field_latitude'][0]['value'] or "<MISSING>")
-        l_.append(location['field_longitude'][0]['value'] or "<MISSING>")
-        l_.append(remove_tags(location['field_hours'][0]['safe_value'].replace('<br>', '; ')).strip() or "<MISSING>")
-        data.append(l_)
-    return data
+    def crawl(self):
+        r = requests.get(self.base_url+'stores_jsonp/?callback=jQuery112408348595095024478_1564832094867')
+        locations = json.loads(re.findall(r'.+?\((.+)\)', r.text)[0])
+        for location in locations:
+            item = base.Item(location)
+            item.add_value('locator_domain', self.locator_domain)
+            item.add_value('location_name', location['title'] or "<MISSING>")
+            item.add_value('street_address', location['field_address'][0]['thoroughfare'] or "<MISSING>")
+            item.add_value('city', location['field_address'][0]['locality'] or "<MISSING>")
+            item.add_value('state', location['field_address'][0]['administrative_area'] or "<MISSING>")
+            item.add_value('zip', location['field_address'][0]['postal_code'] or "<MISSING>")
+            item.add_value('country_code', location['field_address'][0]['country'] or "<MISSING>")
+            item.add_value('store_number', location['nid'] or "<MISSING>")
+            item.add_value('phone', location['field_phone'][0]['safe_value'] or "<MISSING>")
+            item.add_value('location_type', location['field_location_type'][0]['value'] or "<MISSING>")
+            item.add_value('latitude', location['field_latitude'][0]['value'] or "<MISSING>")
+            item.add_value('longitude', location['field_longitude'][0]['value'] or "<MISSING>")
+            item.add_value('hours_of_operation', remove_tags(location['field_hours'][0]['safe_value'].replace('<br>', '; ')).strip() or "<MISSING>")
+            yield item
 
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+if __name__ == '__main__':
+    s = Scrape()
+    s.run()
