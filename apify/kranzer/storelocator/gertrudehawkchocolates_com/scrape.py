@@ -17,11 +17,12 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.gertrudehawkchocolates.com/find-a-store"
-    cities = [x.get('value') for x in BeautifulSoup(requests.get(base_url).text, 'html.parser').find("select", {"name":"city"}).findAll('option') if x]
+    cities = list(set([x.get('value') for x in BeautifulSoup(requests.get(base_url).text, 'html.parser').find("select", {"name":"city"}).findAll('option') if x]))
     data = []
     for city in cities:
         city_url = base_url+"?state=&city={}&zip=&distance=5".format(city.replace(' ', '+'))
-        soup = BeautifulSoup(requests.get(city_url).text)
+        soup = BeautifulSoup(requests.get(city_url).text, 'html.parser')
+        index = 0
         for location in soup.findAll("div", {"class": "location-details"}):
             l_data = [remove_tags(s.replace('\r\n','')).rstrip().strip() for s in str(location.p).split('<br/>')]
             l_ = []
@@ -58,10 +59,17 @@ def fetch_data():
             else:
                 l_.append("<MISSING>")
             l_.append("<MISSING>")
-            l_.append("<MISSING>")
-            l_.append("<MISSING>")
+            script = ''.join([s.text for s in soup.findAll('script')]).replace('\r','').replace('\n','').replace('\t','')
+            try:
+                lat, lng = re.findall(r'newLatLng = new google\.maps\.LatLng\((?P<lat>.+?),(?P<lng>.+?)\);', script)[index]
+                l_.append(lat)
+                l_.append(lng)
+            except:
+                l_.append("<MISSING>")
+                l_.append("<MISSING>")
             l_.append("<MISSING>")
             data.append(l_)
+            index+=1
     return data
 
 
