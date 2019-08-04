@@ -9,5 +9,3 @@ Data contains malformed/invalid zip codes so validation is not passing:
             Invalid Canadian postal code: H3G1Z7
             Invalid Canadian postal code: L4L5X5
             Invalid Canadian postal code: T2P2Y9
-
-Also, failing POI counts because the number in the validator truthset is way off. Says there are only 24, when there are in fact 86.
