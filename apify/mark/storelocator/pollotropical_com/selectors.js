@@ -1,9 +1,9 @@
 const submitButton = '#LocationSearch > div > form > div > button';
 const viewAllLocationSelector = '#LocationSearch > div > button';
 
-const locationNameSelector = 'div.styles__StyledCardInfo-s1y7dfjk-1 > div > h3 > a';
-const addressSelector = 'div.styles__StyledCardInfo-s1y7dfjk-1 > p > a';
-const phoneSelector = 'div.styles__StyledCardInfo-s1y7dfjk-1.dubLAv > p';
+const locationNameSelector = 'div.styles__StyledCardInfo-s1y7dfjk-3.kgzgyQ > div > h3 > a';
+const addressSelector = 'div.styles__StyledCardInfo-s1y7dfjk-3.kgzgyQ > p > a';
+const phoneSelector = 'div.styles__StyledCardInfo-s1y7dfjk-3.kgzgyQ > p';
 
 const detailLocationNameSelector = '#ContentArea > div.Column12 > div > div.vcard > div > div.fn.org > h1';
 const detailhourSelector = '#available-business-hours-popover';
@@ -21,3 +21,8 @@ module.exports = {
   detailLatitudeSelector,
   detailLongitudeSelector,
 };
+
+/*
+'div.styles__StyledCardInfo-s1y7dfjk-3.kgzgyQ'
+ This field changes, so you may have to change again in future.
+*/
