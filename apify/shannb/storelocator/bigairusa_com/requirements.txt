@@ -1,2 +1,9 @@
-lxml==4.3.4
-requests==2.11.1
+requests
+bs4
+xlsxwriter
+phonenumbers
+us
+zipcodes
+re
+csv
+
