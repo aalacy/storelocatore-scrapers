@@ -40,40 +40,79 @@ def fetch_data():
         li_tags = block.find_all("li")
 
         for li in li_tags:
-            link = li.a.get('href')
-            soup = BeautifulSoup(requests.get(link).content, 'html.parser')
-            address = soup.find(class_="contact-info-container").find(class_="address")
-            
-            if address:
-                street_address = address.string.split(" I ")[0]
-                city = address.string.split(" I ")[1].split(", ")[0]
-                state = address.string.split(" I ")[1].split(", ")[1]
-                zip = address.string.split(" I ")[2]
-                country_code = "US"
-            else:
-                street_address = "<MISSING>"
-                city = "<MISSING>"
-                state = "<MISSING>"
-                zip = "<MISSING>"
-                country_code = "<MISSING>"
-            location_name = city
-
-            phone = soup.find(class_="phone")
-            locator_domain = link
-            
-            
-
-            hours_link = soup.find(id="menu-item-1105").a.get("href")
-            hours = BeautifulSoup(requests.get(hours_link).content, 'html.parser').find_all(class_="fusion-text")[1]
-
-            for i, child in enumerate(hours.find_all("li")):
-                if i ==0:
-                    hours_of_operation = child.get_text() 
-                else:
-                    hours_of_operation = hours_of_operation + ", " + child.get_text()
+            if li.a:
+                link = li.a.get('href')
+                soup = BeautifulSoup(requests.get(link).content, 'html.parser')
+                address = soup.find(class_="contact-info-container").find(class_="address")
                 
+                if address:
+                    address = address.get_text()
+                    if address.find(" I ") > -1:
+                        separator = " I "
+                    else:
+                        separator = " | "
 
-            location_list.append([locator_domain, location_name, street_address, city, state, zip, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+                    street_address = address.split(separator)[0]
+                    
+                    if len(address.split(separator)) > 1:
+                        city = address.split(separator)[1].split(", ")[0]
+                        state = address.split(separator)[1].split(", ")[1]
+                        zip = address.split(separator)[2]
+                    else:
+                        city = "<INACCESSIBLE>"
+                        state = "<INACCESSIBLE>"
+                        zip = "<INACCESSIBLE>"
+
+                    country_code = "US"
+                else:
+                    continue
+                    street_address = "<MISSING>"
+                    city = "<MISSING>"
+                    state = "<MISSING>"
+                    zip = "<MISSING>"
+                    country_code = "<MISSING>"
+                location_name = city
+
+                if soup.find(class_="phone") is None:
+                    phone = "<MISSING>"
+                else:
+                    phone = soup.find(class_="phone").get_text()
+
+                    if phone.find('•') > -1:
+                        phone = phone.split('•')[0]
+                
+                locator_domain = link
+
+                if soup.find(id="menu-item-1105"):
+                    hours_link = soup.find(id="menu-item-1105").a.get("href")
+                elif soup.find(id="menu-item-14"):
+                    hours_link = soup.find(id="menu-item-14").a.get("href")
+                elif soup.find(id="menu-item-21"):
+                    hours_link = soup.find(id="menu-item-21").a.get("href")
+                elif soup.find(id="menu-item-57"):
+                    hours_link = soup.find(id="menu-item-57").a.get("href")
+                elif soup.find(id="menu-item-1986"):
+                    hours_link = soup.find(id="menu-item-1986").a.get("href")
+                elif soup.find(id="menu-item-1902"):
+                    hours_link = soup.find(id="menu-item-1902").a.get("href")
+                elif soup.find(id="menu-item-1510"):
+                    hours_link = soup.find(id="menu-item-1510").a.get("href")
+                else:
+                    hours_link = None
+
+                
+                if hours_link:
+                    hours = BeautifulSoup(requests.get(hours_link).content, 'html.parser').find_all(class_="fusion-text")
+
+                    for listing in hours: 
+                        for i, child in enumerate(listing.find_all("li")):
+                            if i ==0:
+                                hours_of_operation = child.get_text() 
+                            else:
+                                hours_of_operation = hours_of_operation + ", " + child.get_text()
+                    
+
+                location_list.append([locator_domain, location_name, street_address, city, state, zip, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
     return location_list
 
 def scrape():
