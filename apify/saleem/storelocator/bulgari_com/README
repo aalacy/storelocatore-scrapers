@@ -1,0 +1,11 @@
+Data contains malformed/invalid zip codes so validation is not passing:
+            Invalid zip code: 2116
+            Invalid zip code: 7078
+            Invalid zip code: 7631
+            Invalid Canadian postal code: V7B1Y7
+            Invalid Canadian postal code: L5P1B2
+            Invalid Canadian postal code: M5R1C4
+            Invalid Canadian postal code: L5P1B2
+            Invalid Canadian postal code: H3G1Z7
+            Invalid Canadian postal code: L4L5X5
+            Invalid Canadian postal code: T2P2Y9

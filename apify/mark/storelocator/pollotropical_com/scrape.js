@@ -13,6 +13,7 @@ const {
 
 const {
   getDataKey,
+  getStoreNumber,
   formatPhoneNumber,
   formatAddress,
   formatHours,
@@ -43,21 +44,19 @@ Apify.main(async () => {
       request, page,
     }) => {
       await page.goto(request.url, {
-        timeout: 0, waitUntil: 'networkidle0',
+        timeout: 30000, waitUntil: 'networkidle0',
       });
     },
     maxRequestsPerCrawl: 3000,
-    maxConcurrency: 5,
+    maxConcurrency: 10,
     handlePageFunction: async ({ request, page }) => {
       if (request.userData.urlType === 'initial') {
         // Check if the page shows the view all location element
         if (await page.$(viewAllLocationSelector) === null) {
-          await page.waitFor('input[name=address]');
           await page.$eval('input[name=address]', el => el.value = 'United States');
-          await page.waitFor(5000);
           await page.click(submitButton);
+          await page.waitFor(10000);
         }
-        await page.waitForSelector(viewAllLocationSelector);
         await page.click(viewAllLocationSelector);
         await page.waitFor(10000);
         const locationNameRaw = await page.$$eval(locationNameSelector, le => le
@@ -69,20 +68,22 @@ Apify.main(async () => {
         /* eslint-disable no-restricted-syntax */
         for await (const [i, name] of locationNameRaw.entries()) {
           const address = formatAddress(addressRaw[i]);
-          const phone = formatPhoneNumber(phoneNumberRaw[i]);
+          const phoneStringRaw = phoneNumberRaw[i];
+          const phoneArrayRaw = phoneStringRaw.replace(/\n/g, ',').split(',');
+          const phoneArrayNumber = phoneArrayRaw.filter(e => e.match(/[0-9]{3}-[0-9]{4}/));
+          const phoneNumber = phoneArrayNumber[0];
           const key = getDataKey(name);
-          const poi = {
+          const poiData = {
             locator_domain: 'pollotropical.com',
             location_name: name,
+            store_number: getStoreNumber(name),
             ...address,
-            country_code: undefined,
-            store_number: undefined,
-            phone,
-            location_type: undefined,
+            phone: phoneNumber,
           };
-          await dataStorage.setValue(key, poi);
+          await dataStorage.setValue(key, poiData);
         }
         // Look deeper to find geolocation
+        await page.waitFor(5000);
         await Apify.utils.enqueueLinks({
           page,
           requestQueue,
@@ -94,7 +95,6 @@ Apify.main(async () => {
             urlType: 'detail',
           },
         });
-        await page.waitFor(5000);
       }
       if (request.userData.urlType === 'detail') {
         // Some pages have empty information for stores -> if they do skip them
@@ -116,7 +116,6 @@ Apify.main(async () => {
             };
             // Upload new
             await dataStorage.setValue(key, revisedStoreData);
-            await page.waitFor(1000);
           }
         }
       }
