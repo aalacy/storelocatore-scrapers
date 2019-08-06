@@ -49,20 +49,18 @@ class BarnesandNoble:
         return store_id
 
     def parse_address(self, store_data_1, store_data_2):
-        zip_code = store_data_2.strip()[-5:]
+        zip_code = store_data_2[-5:]
         state = store_data_2.split(",")[-1][0:-5].strip()
-        print(store_data_1)
-        print(store_data_2)
         city = '<MISSING>'
         address = '<MISSING>'
-        if any(char.isdigit() for char in store_data_1):
+        if not store_data_2[0].isdigit() and any(char.isdigit() for char in store_data_1):
             address = store_data_1
             city = store_data_2.split(',')[0].strip()
         else:
             try:
                 tagged = usaddress.tag(store_data_2)[0]
                 city = tagged['PlaceName'].strip()
-                address = store_data_2[0:store_data_2.index(city)-1].strip()
+                address = store_data_2[0:store_data_2.rfind(city)-1].strip()
             except:
                 print("exception tagging address: " + store_data_2)
 
@@ -73,9 +71,9 @@ class BarnesandNoble:
         text = etree.tostring(row)
         store_data = text.split('</a> ')[1].split('<br/>')[0:3]
 
-        phone = store_data[-1].strip()        
+        phone = store_data[-1].strip().replace(' (main)', '')       
         
-        parsed = self.parse_address(store_data[0], store_data[1])
+        parsed = self.parse_address(store_data[0].strip(), store_data[1].strip())
 
         return {
             'locator_domain': self.domain_name
@@ -114,7 +112,6 @@ class BarnesandNoble:
             yield unique_location
 
     def crawl_zip_code(self, code, session):
-        print(code)
         query_params = {
             'page': None
             ,'size': 100
