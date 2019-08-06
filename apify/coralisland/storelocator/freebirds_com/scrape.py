@@ -7,12 +7,15 @@ import json
 import time
 
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support import expected_conditions as EC
 
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument('--headless')
-chrome_options.add_argument('--no-sandbox')
-chrome_options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome('chromedriver', chrome_options=chrome_options)
+options = Options() 
+options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+# options.add_argument("--start-maximized")
+driver = webdriver.Chrome('chromedriver', options=options)
 
 
 base_url = 'https://freebirds.com'

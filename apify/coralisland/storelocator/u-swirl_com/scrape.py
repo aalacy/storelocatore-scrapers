@@ -27,7 +27,7 @@ def fetch_data():
     url = "https://www.u-swirl.com/find-a-location?page=1"
     session = requests.Session()
     request = session.get(url)
-    response = request.text.encode('ascii', 'ignore').encode("utf8")
+    response = request.text
     data = response.split('jQuery.extend(Drupal.settings,')[1].split('</script>')[0].strip()[:-2]
     store_list = json.loads(data)['gmap']['auto1map']['markers']
     for store in store_list:

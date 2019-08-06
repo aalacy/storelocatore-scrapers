@@ -6,15 +6,21 @@ from lxml import etree
 import json
 
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support import expected_conditions as EC
+
+options = Options() 
+options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+# options.add_argument("--start-maximized")
+driver = webdriver.Chrome('chromedriver', options=options)
 
 base_url = 'https://www.fruttabowls.com'
 
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument('--headless')
-chrome_options.add_argument('--no-sandbox')
-chrome_options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome('chromedriver', chrome_options=chrome_options)
 
+def validate(item):
+    return item.encode('ascii', 'ignore').encode("utf8").replace(u'\u202d', '').replace(u'\u202c', '').replace(u'\xa0', '').strip()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -45,7 +51,7 @@ def fetch_data():
         output.append(store['address']['postalCode']) #zipcode
         output.append('US') #country code
         output.append("<MISSING>") #store_number
-        output.append(store['telephone']) #phone
+        output.append(validate(store['telephone'])) #phone
         output.append(store['@type']) #location type
         output.append("<MISSING>") #latitude
         output.append("<MISSING>") #longitude

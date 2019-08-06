@@ -6,19 +6,22 @@ from lxml import etree
 import json
 
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support import expected_conditions as EC
+
+options = Options() 
+options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+# options.add_argument("--start-maximized")
+driver = webdriver.Chrome('chromedriver', options=options)
 
 base_url = 'https://www.extremepizza.com'
-
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument('--headless')
-chrome_options.add_argument('--no-sandbox')
-chrome_options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome('chromedriver', chrome_options=chrome_options)
 
 def validate(items):
     rets = []
     for item in items:
-        item = item.replace(u'\xa0', '').replace(u'\u2019', '').replace(u'\u202d', '').strip()
+        item = item.encode('ascii', 'ignore').encode("utf8").replace(u'\u202d', '').replace(u'\u202c', '').replace(u'\xa0', '').strip()
         if item != '':
             rets.append(item)
     return rets
@@ -34,7 +37,7 @@ def fetch_data():
     output_list = []
     url = "https://www.extremepizza.com/store-locator/"
     driver.get(url)
-    source = driver.page_source.encode('ascii', 'ignore').encode("utf8")
+    source = driver.page_source
     response = etree.HTML(source)
     try:
         temp = response.xpath('//script[@type="application/ld+json"]//text()')[0]
