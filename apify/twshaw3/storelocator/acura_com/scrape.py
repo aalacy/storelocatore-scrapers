@@ -10,7 +10,6 @@ class Acura:
     url = 'https://www.acura.com/platform/api/v1/dealer'
     seen = set()
     csv_fieldnames = ['locator_domain', 'location_name', 'street_address', 'city', 'state', 'zip', 'country_code', 'store_number', 'phone', 'location_type', 'latitude', 'longitude', 'hours_of_operation']
-    domain_name = ''
     default_country = 'US'
 
     def write_to_csv(self, rows):
