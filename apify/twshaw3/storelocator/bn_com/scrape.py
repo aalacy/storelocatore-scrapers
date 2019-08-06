@@ -1,3 +1,4 @@
+import usaddress
 import re 
 import requests
 import threading
@@ -9,7 +10,7 @@ from lxml import (html, etree,)
 
 class BarnesandNoble:
     csv_filename = ''
-    csv_fieldnames = ['locator_domain', 'location_name', 'street_address', 'city', 'state', 'zip', 'country_code', 'store_number', 'phone', 'location_type', 'naics_code', 'latitude', 'longitude', 'hours_of_operation']
+    csv_fieldnames = ['locator_domain', 'location_name', 'street_address', 'city', 'state', 'zip', 'country_code', 'store_number', 'phone', 'location_type', 'latitude', 'longitude', 'hours_of_operation']
     domain_name = ''
     default_country = 'US'
 
@@ -31,7 +32,6 @@ class BarnesandNoble:
         return None
 
     def get_zips(self):
-        import csv
         with open('zips.csv', 'rb') as f:
             reader = csv.reader(f)
             return list(reader)
@@ -48,36 +48,49 @@ class BarnesandNoble:
         store_id = store_id[0] if store_id else None
         return store_id
 
+    def parse_address(self, store_data_1, store_data_2):
+        zip_code = store_data_2.strip()[-5:]
+        state = store_data_2.split(",")[-1][0:-5].strip()
+        print(store_data_1)
+        print(store_data_2)
+        city = '<MISSING>'
+        address = '<MISSING>'
+        if any(char.isdigit() for char in store_data_1):
+            address = store_data_1
+            city = store_data_2.split(',')[0].strip()
+        else:
+            try:
+                tagged = usaddress.tag(store_data_2)[0]
+                city = tagged['PlaceName'].strip()
+                address = store_data_2[0:store_data_2.index(city)-1].strip()
+            except:
+                print("exception tagging address: " + store_data_2)
+
+        return { 'zip': zip_code, 'state': state, 'city': city, 'address': address }
+
     def map_data(self, row):
         
         text = etree.tostring(row)
+        store_data = text.split('</a> ')[1].split('<br/>')[0:3]
 
-        street_address = etree.tostring(self.xpath(row, './/h5[@class="nonoS"]//parent::*'))
-        if street_address:
-            street_address = street_address.split('</a> ')[-1]
-
-        phone = re.findall(r'\d{3}-\d{3}-\d{4}', text)
-        phone = phone[0] if phone else None
-
-        city, state, zip_code = row.get('city'), row.get('state'), row.get('zip')
-
-        address = '%s, %s, %s %s' % (street_address, city, state, zip_code)
+        phone = store_data[-1].strip()        
+        
+        parsed = self.parse_address(store_data[0], store_data[1])
 
         return {
             'locator_domain': self.domain_name
             ,'location_name': self.xpath(row, './/h5[@class="nonoS"]//text()')
-            ,'street_address': street_address
-            ,'city': city
-            ,'state': state
-            ,'zip': zip_code
+            ,'street_address': parsed['address']
+            ,'city': parsed['city']
+            ,'state': parsed['state']
+            ,'zip': parsed['zip']
             ,'country_code': self.default_country
             ,'store_number': self.get_store_id(row)
             ,'phone': phone
-            ,'location_type': None
-            ,'naics_code': None
-            ,'latitude': None
-            ,'longitude': None
-            ,'hours_of_operation': None
+            ,'location_type': '<MISSING>'
+            ,'latitude': '<MISSING>'
+            ,'longitude': '<MISSING>'
+            ,'hours_of_operation': '<MISSING>'
         }
 
     def crawl(self):
@@ -95,6 +108,7 @@ class BarnesandNoble:
         executor = ThreadPoolExecutor(max_workers=10)
         fs = [ executor.submit(self.crawl_zip_code, code, session) for code in self.get_zips() ]
         wait(fs)
+        executor.shutdown(wait=False)
 
         for unique_location in self.unique_locations:    
             yield unique_location
@@ -106,7 +120,7 @@ class BarnesandNoble:
             ,'size': 100
             ,'searchText': code
             ,'storeFilter': 'all'
-            ,'view': 'list'
+           ,'view': 'list'
             ,'v': 1
         }
         request = session.get(self.url, params=query_params)
@@ -118,10 +132,7 @@ class BarnesandNoble:
 
                 if store_id in self.seen: continue
                 else: self.seen.add(store_id)
-                        
-                location.attrib['city'] = ''#data.city
-                location.attrib['state'] = ''#data.state
-                location.attrib['zip'] = ''#data.code
+
                 self.unique_locations.append(location)
 
     def run(self):
