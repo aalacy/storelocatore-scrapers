@@ -35,9 +35,9 @@ def fetch_data():
         output.append("JEREMIAH'S ITALIAN ICE") #location type
         output.append(store['lat']) #latitude
         output.append(store['lng']) #longitude
-        if  store['weekday_hour_open']:
-            store_hours = 'SU-TH:' + store['weekday_hour_open'].upper() + '-' + store['weekday_hour_close'].upper() + ', '
-            store_hours += 'FR-SA:' + store['weekend_hour_open'].upper() + '-' + store['weekend_hour_close'].upper()
+        if  store['summer_weekday_hour_open']:
+            store_hours = 'SU-TH:' + store['summer_weekday_hour_open'].upper() + '-' + store['summer_weekday_hour_close'].upper() + ', '
+            store_hours += 'FR-SA:' + store['summer_weekend_hour_open'].upper() + '-' + store['summer_weekend_hour_close'].upper()
             output.append(store_hours) #opening hours        
             output_list.append(output)
     return output_list

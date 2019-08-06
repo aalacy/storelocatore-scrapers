@@ -4,6 +4,15 @@ import pdb
 import requests
 from lxml import etree
 import json
+import time
+
+from selenium import webdriver
+
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument('--headless')
+chrome_options.add_argument('--no-sandbox')
+chrome_options.add_argument('--disable-dev-shm-usage')
+driver = webdriver.Chrome('../chromedriver', chrome_options=chrome_options)
 
 
 base_url = 'https://freebirds.com'
@@ -20,8 +29,12 @@ def fetch_data():
     url = "https://freebirds.com/api/restaurants?includePrivate=false"
     session = requests.Session()
     request = session.get(url)
+    driver.get('https://freebirds.com/locations')
+    source = driver.page_source.encode('ascii', 'ignore').encode("utf8")
+    time.sleep(5)
+    store_hours = etree.HTML(source).xpath('.//div[@class="container m-auto location-cont"]')
     store_list = json.loads(request.text)['restaurants']
-    for store in store_list:
+    for idx, store in enumerate(store_list):
         output = []
         output.append(base_url) # url
         output.append(store['name']) #location name
@@ -35,7 +48,7 @@ def fetch_data():
         output.append('<Missing>') #location type
         output.append(store['latitude']) #latitude
         output.append(store['longitude']) #longitude
-        output.append('10:30 am-9:00 pm') #opening hours
+        output.append(''.join(store_hours[idx].xpath('.//strong//text()'))) #opening hours
         output_list.append(output)
     return output_list
 
