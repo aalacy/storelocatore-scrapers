@@ -58,7 +58,6 @@ def fetch_data():
 
     driver.implicitly_wait(15)
     table_wrapper = driver.find_elements_by_css_selector('div.table_wrapper')
-    print(len(table_wrapper))
     for wrap in table_wrapper:
         if done:
             break

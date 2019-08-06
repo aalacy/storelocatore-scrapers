@@ -38,7 +38,6 @@ def addy_extractor(src):
 
 
 def fetch_data():
-    data = []
     driver = get_driver()
     locator_domain = 'https://www.qcsupply.com/'
     ext = 'locations/'
