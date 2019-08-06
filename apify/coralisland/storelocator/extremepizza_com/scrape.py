@@ -39,27 +39,23 @@ def fetch_data():
     driver.get(url)
     source = driver.page_source
     response = etree.HTML(source)
-    try:
-        temp = response.xpath('//script[@type="application/ld+json"]//text()')[0]
-    except:
-        pass
-    store_hours = response.xpath('//div[@class="locationListItemHours"]')
-    store_list = json.loads(temp)['subOrganization']
-    for idx, store in enumerate(store_list):    
+    temp = '[' + source.split('locations: [')[1].split('apiKey:')[0].strip()[:-1]
+    store_list = json.loads(temp)
+    for store in store_list:
         output = []
         output.append(base_url) # url
-        output.append(store['address']['name']) #location name
-        output.append(store['address']['streetAddress']) #address
-        output.append(store['address']['addressLocality']) #city
-        output.append(store['address']['addressRegion']) #state
-        output.append(store['address']['postalCode']) #zipcode
+        output.append(store['name']) #location name
+        output.append(store['street']) #address
+        output.append(store['city']) #city
+        output.append(store['state']) #state
+        output.append(store['postal_code']) #zipcode
         output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(store['telephone']) #phone
-        output.append(store['@type']) #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
-        output.append(' '.join(store_hours[idx].xpath('.//text()')[1:])) #opening hours
+        output.append(str(store['id'])) #store_number
+        output.append(store['phone_number']) #phone
+        output.append('FoodEstablishment') #location type
+        output.append(str(store['lat'])) #latitude
+        output.append(str(store['lng'])) #longitude
+        output.append(' '.join(etree.HTML(store['hours']).xpath('.//text()')[1:])) #opening hours
         output_list.append(validate(output))
     return output_list
 

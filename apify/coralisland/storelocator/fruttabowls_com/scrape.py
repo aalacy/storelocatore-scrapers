@@ -19,8 +19,12 @@ driver = webdriver.Chrome('chromedriver', options=options)
 base_url = 'https://www.fruttabowls.com'
 
 
-def validate(item):
-    return item.encode('ascii', 'ignore').encode("utf8").replace(u'\u202d', '').replace(u'\u202c', '').replace(u'\xa0', '').strip()
+def validate_items(items):
+    rets = []
+    for item in items:
+        item = item.encode('ascii', 'ignore').encode("utf8").replace(u'\u202d', '').replace(u'\u202c', '').replace(u'\xa0', '').strip()
+        rets.append(item)
+    return rets
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -51,13 +55,13 @@ def fetch_data():
         output.append(store['address']['postalCode']) #zipcode
         output.append('US') #country code
         output.append("<MISSING>") #store_number
-        output.append(validate(store['telephone'])) #phone
+        output.append(store['telephone']) #phone
         output.append(store['@type']) #location type
         output.append("<MISSING>") #latitude
         output.append("<MISSING>") #longitude
         output.append(' '.join(store_hours[idx].xpath('.//text()'))) #opening hours
         print(output)
-        output_list.append(output)
+        output_list.append(validate_items(output))
     return output_list
 
 def scrape():

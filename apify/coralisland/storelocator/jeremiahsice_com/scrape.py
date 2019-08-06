@@ -30,7 +30,7 @@ def fetch_data():
         output.append(store['state']) #state
         output.append(store['zip']) #zipcode
         output.append('US') #country code
-        output.append('<Missing>') #store_number
+        output.append('<MISSING>') #store_number
         output.append(store['phone']) #phone
         output.append("JEREMIAH'S ITALIAN ICE") #location type
         output.append(store['lat']) #latitude

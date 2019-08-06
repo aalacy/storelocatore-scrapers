@@ -12,7 +12,7 @@ def validate(str):
     if '-' in ret:
         ret = ret.split('-')[0].strip()
     if ret == '':
-        return 'Missing'
+        return '<MISSING>'
     return ret
 
 def write_output(data):
@@ -40,12 +40,12 @@ def fetch_data():
         output.append(detail.xpath('.//span[@itemprop="addressRegion"]//text()')[0]) #state
         output.append(detail.xpath('.//span[@itemprop="postalCode"]//text()')[0]) #zipcode
         output.append('US') #country code
-        output.append('Missing') #store_number
+        output.append('<MISSING>') #store_number
         output.append(validate(detail.xpath('.//div[@class="views-field views-field-field-phone"]//text()'))) #phone
         output.append('Self-serve Yogurt Bar') #location type
         output.append(store['latitude']) #latitude
         output.append(store['longitude']) #longitude
-        output.append('<Missing>') #opening hours
+        output.append('<MISSING>') #opening hours
         output_list.append(output)
     return output_list
 

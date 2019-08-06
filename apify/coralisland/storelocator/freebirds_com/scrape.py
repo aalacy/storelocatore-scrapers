@@ -48,7 +48,7 @@ def fetch_data():
         output.append('US') #country code
         output.append(store['id']) #store_number
         output.append(store['telephone']) #phone
-        output.append('<Missing>') #location type
+        output.append('<MISSING>') #location type
         output.append(store['latitude']) #latitude
         output.append(store['longitude']) #longitude
         output.append(''.join(store_hours[idx].xpath('.//strong//text()'))) #opening hours

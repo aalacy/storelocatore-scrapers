@@ -38,13 +38,13 @@ def fetch_data():
         output.append(store['state']) #state
         output.append(store['zip']) #zipcode
         output.append('US') #country code
-        output.append('<Missing>') #store_number
-        output.append(store['phone'] if store['phone'] != 'N/A' else '<Missing>') #phone
+        output.append('<MISSING>') #store_number
+        output.append(store['phone'] if store['phone'] != 'N/A' else '<MISSING>') #phone
         output.append('Gyms') #location type
         output.append(store['lat']) #latitude
         output.append(store['lng']) #longitude
         link = base_url + store['url']
-        h_temp = '<Missing>'
+        h_temp = '<MISSING>'
         if link:
             data = etree.HTML(session.get(link).text)
             h_temp = ' '.join(eliminate_space(data.xpath('.//div[@class="club_hours_inner"]')[0].xpath('.//text()')))
