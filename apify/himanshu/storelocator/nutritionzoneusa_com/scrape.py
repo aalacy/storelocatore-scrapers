@@ -3,20 +3,20 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-​
-​
+
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-​
+
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
-​
-​
+
+
 def fetch_data():
     base_url = "https://www.nutritionzoneusa.com/Store-Locator"
     r = requests.get(base_url)
@@ -86,14 +86,14 @@ def fetch_data():
                     tem_var.append(new_words[4])
                     store_detail.append(tem_var)
                     
-​
+
                 elif len(street_address)==4:
                     street_address1 = street_address[0] +'' +street_address[1]
                     city =  street_address[2]
                     state_zip= street_address[3].split( )
                     state=state_zip[0]
                     zipcode = state_zip[1]
-​
+
                     phone = new_words[3]
                     tem_var.append(street_address1)
                     tem_var.append(city)
@@ -108,7 +108,7 @@ def fetch_data():
                     tem_var.append(new_words[4])
                     store_detail.append(tem_var)
                     
-​
+
             elif len(new_words)==9:
                 name = new_words[0]
                 store_name.append(name)
@@ -125,7 +125,7 @@ def fetch_data():
                     zipcode = city1.split(',')[1].split( )[1]
                 
                 phone1 = new_words[3]
-​
+
                 if "Phone" in phone1:
                     phone = new_words[4]
                     
@@ -133,7 +133,7 @@ def fetch_data():
                     phone =phone1
                
                 time = new_words[5] + ' '+ new_words[6] +' '+new_words[7]+' '+new_words[8]
-​
+
                 
                 tem_var.append(street_address1)
                 tem_var.append(city)
@@ -147,7 +147,7 @@ def fetch_data():
                 tem_var.append("<MISSING>")
                 tem_var.append(time)
                 store_detail.append(tem_var)
-​
+
             elif len(new_words)==4:
                 name = new_words[0]
                 store_name.append(name)
@@ -179,7 +179,7 @@ def fetch_data():
                 zipcode1=new_words[1].split(',')[1].split( )[1]
                 phone = new_words[3]
                 time = new_words[4]+' '+new_words[5]+' '+new_words[6]+' '+new_words[7]
-​
+
                 tem_var.append(street_address1)
                 tem_var.append(city1)
                 tem_var.append(state)
@@ -201,11 +201,11 @@ def fetch_data():
         return_main_object.append(store)
                   
     return return_main_object
-​
-​
+
+
 def scrape():
     data = fetch_data()
     write_output(data)
-​
-​
+
+
 scrape()
