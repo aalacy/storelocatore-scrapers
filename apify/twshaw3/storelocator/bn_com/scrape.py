@@ -5,6 +5,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
 import csv
+import sgzip
 
 from lxml import (html, etree,)
 
@@ -30,11 +31,6 @@ class BarnesandNoble:
                 return hxp[0].encode('ascii', 'ignore')
             return hxp[0]
         return None
-
-    def get_zips(self):
-        with open('zips.csv', 'rb') as f:
-            reader = csv.reader(f)
-            return list(reader)
 
     csv_filename = 'data.csv'
     domain_name = 'bn.com'
@@ -104,7 +100,7 @@ class BarnesandNoble:
 
         })
         executor = ThreadPoolExecutor(max_workers=10)
-        fs = [ executor.submit(self.crawl_zip_code, code, session) for code in self.get_zips() ]
+        fs = [ executor.submit(self.crawl_zip_code, code, session) for code in sgzip.for_radius(50) ]
         wait(fs)
         executor.shutdown(wait=False)
 
