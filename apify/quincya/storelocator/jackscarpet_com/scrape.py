@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
+import re
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,12 +23,11 @@ def fetch_data():
     req = requests.get(base_link, headers=headers)
 
     try:
-        base = BeautifulSoup(req.text,"lxml")
+        base = BeautifulSoup(req.text, 'html.parser')
     except (BaseException):
         print '[!] Error Occured. '
         print '[?] Check whether system is Online.'
     
-
     data = []
     locator_domain = "jackscarpet.com"
     location_name = base.find('h1').text.strip()
@@ -40,10 +40,24 @@ def fetch_data():
     store_number = "<MISSING>"
     phone = base.find('span', attrs={'id': 'phone-desktop'}).text.encode('utf-8').strip()
     location_type = location_name[:location_name.rfind(',')].strip()
-    latitude = "<INACCESSIBLE>"
-    longitude = "<INACCESSIBLE>"
-    hours_of_operation = base.find('ul', attrs={'style': 'list-style:none; font-size:14px; padding-left:15px;'}).text.encode('utf-8').strip()
+    hours_of_operation = base.find('ul', attrs={'style': 'list-style:none; font-size:14px; padding-left:15px;'}).get_text(separator=u' ').replace("\n"," ").replace("  "," ").encode('utf-8').strip()
+    re.sub(' +', ' ', hours_of_operation)
+    link = base.find('iframe')['src']
 
+    req = requests.get(link, headers=headers)
+
+    try:
+        base = BeautifulSoup(req.text,"lxml")
+    except (BaseException):
+        print '[!] Error Occured. '
+        print '[?] Check whether system is Online.'
+
+    base_str = str(base)
+    base_str = base_str[-508:-480]
+    start_point = base_str.find("[") + 1
+    latitude = base_str[start_point:base_str.find(",")]
+    longitude = base_str[base_str.find(",")+1:base_str.find(']]')]
+    
     data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
     return data

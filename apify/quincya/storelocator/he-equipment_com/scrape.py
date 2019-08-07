@@ -61,7 +61,7 @@ def fetch_data():
 		latitude = "<MISSING>"
 		longitude = "<MISSING>"
 		hours = base.find('div', attrs={'class': 'medium-3 columns locationInformation sidebarList'})
-		hours_of_operation = hours.findAll('p')[2].text.encode('utf-8').strip()
+		hours_of_operation = hours.findAll('p')[2].get_text(separator=u' ').encode('utf-8').strip()
 
 		data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 		print "Got page details"

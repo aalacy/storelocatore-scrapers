@@ -14,7 +14,7 @@ def write_output(data):
 
 def fetch_data():
 
-    base_link = "https://www.honeydewdonuts.com/locations/02762"
+    base_link = "https://www.honeydewdonuts.com/locations/"
 
     user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
     headers = {'User-Agent' : user_agent}
@@ -38,14 +38,42 @@ def fetch_data():
         city = raw_data[:raw_data.find(',')].strip()
         state = raw_data[raw_data.find(',')+1:raw_data.rfind(' ')].strip()
         zip_code = raw_data[raw_data.rfind(' ')+1:].strip()
+        try:
+            int(zip_code)
+        except:
+            zip_code = state[2:].strip()
+            state = state[:2].strip()
         country_code = "US"
         link = "https://www.honeydewdonuts.com" + item.find('a')['href']
         store_number = link[link.rfind("/")+1:]
         phone = item.findAll('div')[1].find('dd').text
+        if phone == "":
+            phone = "<MISSING>"
         location_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        link = "https://www.honeydewdonuts.com" + item.find('a')['href']
+
+        req = requests.get(link, headers=headers)
+
+        try:
+            base = BeautifulSoup(req.text,"lxml")
+        except (BaseException):
+            print '[!] Error Occured. '
+            print '[?] Check whether system is Online.'
+
+        full_page = str(base)
+        maps_point = full_page.rfind("maps.LatLng")
+        raw_gps = full_page[full_page.find("(",maps_point)+1:full_page.find(";",maps_point)-2]
+
+        latitude = raw_gps[:raw_gps.find(',')]
+        longitude = raw_gps[raw_gps.find(',')+1:]
+
+        if latitude == "":
+            latitude = "<MISSING>"
+        if longitude == "":
+            longitude = "<MISSING>"
+            
         hours_of_operation = "<MISSING>"
+        print "Got page details"
 
         data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 

@@ -43,7 +43,7 @@ async function scrape() {
 
         var addressParts = store.shopaddress.split(',')
             .filter(p => p != null && p.trim() != "");
-        var address1 = "<MISSING>", address2 = "<MISSING>", city = "<MISSING>", state = "<MISSING>", zip = store.zipcode || "<MISSING>";
+        var address1 = "<MISSING>", address2 = "", city = "<MISSING>", state = "<MISSING>", zip = store.zipcode || "<MISSING>";
         if(addressParts.length === 3) {
             address1 = addressParts[0];
             city = addressParts[1];
@@ -83,7 +83,7 @@ async function scrape() {
         return {
             locator_domain: 'muji.com',
             location_name: store.shopname,
-            street_address: address1 + " " + address2,
+            street_address: (address1 + " " + address2).trim(),
             city: city.trim(),
             state: state.trim(),
             zip: zip.trim(),

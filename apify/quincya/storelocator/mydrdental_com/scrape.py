@@ -68,7 +68,7 @@ def fetch_data():
         gps_link = new_base.find('a', attrs={'class': 'directions'})['href']
         latitude = gps_link[gps_link.find("=")+1:gps_link.find(",")].strip()
         longitude = gps_link[gps_link.find(",")+1:].strip()
-        hours_of_operation = new_base.find('ul', attrs={'class': 'loc_hours'}).text
+        hours_of_operation = new_base.find('ul', attrs={'class': 'loc_hours'}).get_text(separator=u' ').encode('utf-8').strip()
 
         data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
