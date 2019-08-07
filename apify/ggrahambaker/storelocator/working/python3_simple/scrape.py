@@ -1,4 +1,7 @@
 import csv
+import requests
+from bs4 import BeautifulSoup
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -12,7 +15,14 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    return [["safegraph.com", "SafeGraph", "1543 Mission St.", "San Francisco", "CA", "94103", "US", "<MISSING>", "(415) 966-1152", "Office", 37.773500, -122.417831, "mon-fri 9am-5pm"]]
+
+
+
+
+
+
+
+    return all_store_data
 
 def scrape():
     data = fetch_data()

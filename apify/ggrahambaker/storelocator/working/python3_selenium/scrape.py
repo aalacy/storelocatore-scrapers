@@ -2,14 +2,15 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import re
+
 
 def get_driver():
-    options = Options() 
+    options = Options()
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     return webdriver.Chrome('chromedriver', options=options)
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,35 +23,11 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    data = []
-    driver = get_driver()
+    # Your scraper here
 
-    # Begin scraper
-
-    driver.get('https://safegraph.com')
-    
-    location_name = driver.find_element_by_css_selector('h1.heading-primary').text    
-
-    data.append([
-        'https://safegraph.com',
-        location_name,
-        '1543 Mission Street',
-        'San Francisco',
-        'CA',
-        '94103',
-        'US',
-        '<MISSING>',
-        '<MISSING>',
-        '<MISSING>',
-        '<MISSING>',
-        '<MISSING>',
-        '<MISSING>'
-    ])
-    
-    # End scraper
 
     driver.quit()
-    return data
+    return all_store_data
 
 def scrape():
     data = fetch_data()
