@@ -30,7 +30,8 @@ def fetch_data():
     driver.get(locator_domain + ext)
 
     driver.find_element_by_xpath("//option[@value='US']").click()
-    driver.find_element_by_css_selector('button#dwfrm_storelocator_findByText').click()
+    element = driver.find_element_by_css_selector('button#dwfrm_storelocator_findByText')
+    driver.execute_script("arguments[0].click();", element)
 
     driver.implicitly_wait(10)
     i = 0
