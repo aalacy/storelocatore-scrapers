@@ -62,8 +62,10 @@ def fetch_data():
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
+        map = driver.find_element_by_css_selector('div#single-map')
+
+        lat = map.get_attribute('data-lat')
+        longit = map.get_attribute('data-lng')
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
