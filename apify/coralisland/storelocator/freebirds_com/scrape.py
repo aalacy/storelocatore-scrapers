@@ -8,6 +8,7 @@ import time
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 options = Options() 
@@ -15,7 +16,7 @@ options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 # options.add_argument("--start-maximized")
-driver = webdriver.Chrome('chromedriver', options=options)
+driver = webdriver.Chrome('../chromedriver', options=options)
 
 
 base_url = 'https://freebirds.com'
@@ -34,7 +35,9 @@ def fetch_data():
     request = session.get(url)
     driver.get('https://freebirds.com/locations')
     source = driver.page_source.encode('ascii', 'ignore').encode("utf8")
-    time.sleep(5)
+    time.sleep(15)
+    # bt_element_present = EC.presence_of_element_located((By.CLASS, 'row golden-links'))
+    # WebDriverWait(driver, 10).until(elements)
     store_hours = etree.HTML(source).xpath('.//div[@class="container m-auto location-cont"]')
     store_list = json.loads(request.text)['restaurants']
     for idx, store in enumerate(store_list):
