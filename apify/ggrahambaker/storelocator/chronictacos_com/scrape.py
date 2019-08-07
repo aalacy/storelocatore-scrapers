@@ -37,9 +37,74 @@ def fetch_data():
 
     all_store_data = []
     for div in divs:
-        p = div.find('p', {'class': 'fp-el'})
+        ps = div.find_all('p', {'class': 'fp-el'})
 
-        if p is not None:
+        if len(ps) is not 0:
+
+            if len(ps) == 2:
+                if '104 Stadium Drive' in ps[1].text:
+                    location_name = 'UNC CHAPEL HILL FOOTBALL'
+                    brs = ps[1].find_all('br')
+                    street_address = brs[0].previousSibling
+
+                    city, state, zip_code = addy_extractor(brs[1].previousSibling)
+
+                    phone_number = '<MISSING>'
+                    country_code = 'US'
+                    store_number = '<MISSING>'
+                    location_type = '<MISSING>'
+                    lat = '<MISSING>'
+                    longit = '<MISSING>'
+                    hours = '<MISSING>'
+                    store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                                  store_number, phone_number, location_type, lat, longit, hours]
+                    print(store_data)
+                    all_store_data.append(store_data)
+
+
+                elif '300 Skipper' in ps[1].text:
+                    location_name = 'UNC CHAPEL HILL BASKETBALL'
+                    brs = ps[1].find_all('br')
+                    street_address = brs[0].previousSibling
+
+                    city, state, zip_code = addy_extractor(brs[1].previousSibling)
+
+                    phone_number = '<MISSING>'
+                    country_code = 'US'
+                    store_number = '<MISSING>'
+                    location_type = '<MISSING>'
+                    lat = '<MISSING>'
+                    longit = '<MISSING>'
+                    hours = '<MISSING>'
+                    store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                                  store_number, phone_number, location_type, lat, longit, hours]
+                    print(store_data)
+                    all_store_data.append(store_data)
+
+
+                elif '235 Ridge Road' in ps[1].text:
+                    location_name = 'UNC CHAPEL HILL BASEBALL'
+                    brs = ps[1].find_all('br')
+                    street_address = brs[0].previousSibling
+
+                    city, state, zip_code = addy_extractor(brs[1].previousSibling)
+
+                    phone_number = '<MISSING>'
+                    country_code = 'US'
+                    store_number = '<MISSING>'
+                    location_type = '<MISSING>'
+                    lat = '<MISSING>'
+                    longit = '<MISSING>'
+                    hours = '<MISSING>'
+                    store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                                  store_number, phone_number, location_type, lat, longit, hours]
+                    print(store_data)
+                    all_store_data.append(store_data)
+
+
+
+            p = ps[0]
+
             brs = p.find_all('br')
             if len(brs) == 2:
                 street_address = brs[0].previousSibling.strip()
@@ -48,6 +113,7 @@ def fetch_data():
                     street_address = brs[1].previousSibling
                     location_name = street_address
                     city, state, zip_code = addy_extractor(brs[1].nextSibling)
+                    phone_number = '<MISSING>'
                 elif '3780 South Las Vegas Boulevard' in street_address:
                     city, state, zip_code = addy_extractor(brs[1].previousSibling)
                     phone_number = '<MISSING>'

@@ -37,9 +37,11 @@ def fetch_data():
     soup = BeautifulSoup(page.content, 'html.parser')
 
     divs = soup.find_all('div', {'class': 'margins'})
+    coords = soup.find_all('div', {'class': 'dooMapLatLong'})
 
     all_store_data = []
-    for div in divs:
+
+    for i, div in enumerate(divs):
         full = div.find('h4').text.strip()
 
         location_name = div.find('h4').text.strip().split(':')[1].strip()
@@ -56,8 +58,12 @@ def fetch_data():
 
         country_code = 'US'
         location_type = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
+
+        coord = coords[i].text.replace('\t', '').replace('\r', '')
+
+        split = coord.split(',')
+        lat = split[0]
+        longit = split[1]
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

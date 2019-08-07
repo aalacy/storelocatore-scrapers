@@ -1,0 +1,103 @@
+import csv
+import os
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import re
+
+def get_driver():
+    options = Options() 
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    return webdriver.Chrome('chromedriver', options=options)
+
+
+def addy_ext(addy):
+    address = addy.split(',')
+    city = address[0]
+    state_zip = address[1].strip().split(' ')
+    state = state_zip[0]
+    zip_code = state_zip[1]
+    return city, state, zip_code
+
+
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
+        # Header
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
+
+def fetch_data():
+    locator_domain = 'https://cleanjuice.com/'
+    ext = 'locations/'
+
+    driver = get_driver()
+    driver.get(locator_domain + ext)
+
+    main_div = driver.find_element_by_css_selector('div.et_pb_row.et_pb_row_2')
+    atags = main_div.find_elements_by_css_selector('a')
+    href_arr = []
+    for tag in atags:
+        href_arr.append(tag.get_attribute('href'))
+
+    all_store_data = []
+    for href in href_arr:
+        driver.implicitly_wait(10)
+        driver.get(href)
+        elements = driver.find_elements_by_css_selector('div.et_pb_column')
+        for element in elements:
+            content = element.text.split('\n')
+            if len(content) > 5:
+                location_name = content[0]
+                street_address = content[2]
+
+                if len(content[3].split(',')) == 3:
+                    temp_addy = content[3].split(',')
+                    street_address += ' ' + temp_addy[0]
+                    other_addy = temp_addy[1].strip() + ',' + temp_addy[2]
+
+                    city, state, zip_code = addy_ext(other_addy)
+                elif 'TX,' in content[3]:
+                    temp_addy = content[3].split(',')
+                    city_state = temp_addy[0].split(' ')
+                    city = city_state[0]
+                    state = city_state[1]
+                    zip_code = temp_addy[1].strip()
+
+                else:
+                    city, state, zip_code = addy_ext(content[3])
+
+                phone_number = content[4]
+                if 'COMING' in phone_number:
+                    phone_number = '<MISSING>'
+
+                hours_arr = content[5:-1]
+                hours = ''
+                for ele in hours_arr:
+                    hours += ele + ' '
+                hours = hours.strip()
+
+
+                country_code = 'US'
+                store_number = '<MISSING>'
+                location_type = '<MISSING>'
+                lat = '<MISSING>'
+                longit = '<MISSING>'
+
+                store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                              store_number, phone_number, location_type, lat, longit, hours]
+
+                all_store_data.append(store_data)
+
+    driver.quit()
+    return all_store_data
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()
