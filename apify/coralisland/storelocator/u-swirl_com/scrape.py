@@ -9,8 +9,6 @@ base_url = 'https://www.u-swirl.com'
 
 def validate(str):
     ret = ' '.join(str).strip();
-    if '-' in ret:
-        ret = ret.split('-')[0].strip()
     if ret == '':
         return '<MISSING>'
     return ret
