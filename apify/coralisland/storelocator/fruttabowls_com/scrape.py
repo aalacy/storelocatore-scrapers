@@ -23,8 +23,9 @@ def validate(items):
     rets = []
     for item in items:
         item = item.encode('ascii', 'ignore').encode("utf8").replace(u'\u202d', '').replace(u'\u202c', '').replace(u'\xa0', '').strip()
-        if item != '':
-            rets.append(item)
+        if item == '':
+            item = '<MISSING>'
+        rets.append(item)
     return rets
 
 def write_output(data):
@@ -56,7 +57,7 @@ def fetch_data():
         output.append('FoodEstablishment') #location type
         output.append(str(store['lat'])) #latitude
         output.append(str(store['lng'])) #longitude
-        output.append(' '.join(etree.HTML(store['hours']).xpath('.//text()')[1:])) #opening hours
+        output.append(' '.join(etree.HTML(store['hours']).xpath('.//text()'))) #opening hours
         output_list.append(validate(output))
     return output_list
 
