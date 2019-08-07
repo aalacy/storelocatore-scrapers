@@ -41,7 +41,7 @@ async function scrape() {
             location_type: store.category || name,
             latitude: parseFloat(store.latitude),
             longitude: parseFloat(store.longitude),
-            hours_of_operation: "<MISSING>",
+            hours_of_operation: "<INACCESSIBLE>",
         }
     });
 
