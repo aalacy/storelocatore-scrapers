@@ -1,6 +1,7 @@
 import re 
 import requests
 import csv
+import sgzip
 
 from lxml import (html, etree,)
 
@@ -21,11 +22,6 @@ class Acura:
                 if hasattr(self, 'map_data'):
                     row = self.map_data(row)
                 writer.writerow(row)
-
-    def get_zips(self):
-        with open('zips.csv', 'rb') as f:
-            reader = csv.reader(f)
-            return list(reader)
 
     def map_data(self, row):
         missing = '<MISSING>'
@@ -59,7 +55,7 @@ class Acura:
 
         previous_zip_code = 90001
 
-        for code in self.get_zips():
+        for code in sgzip.for_radius(200):
             print(code)
             previous_zip_code = code
             query_params = {
