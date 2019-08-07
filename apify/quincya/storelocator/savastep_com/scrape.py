@@ -65,7 +65,8 @@ def fetch_data():
             data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
             data_num = 1
             new_set = True
-
+            
+    return data
 
 def scrape():
     data = fetch_data()
