@@ -16,6 +16,12 @@ def write_output(data):
                 #Keep the trailing zeroes in zipcodes
                 rows = tuple("=\"" + str(r) + "\"" for r in row)
                 writer.writerow(rows)
+def get_driver():
+    options = Options() 
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def parse_geo(url):
     lon = re.findall(r'\+(--?[\d\.]*)', url)[0]
@@ -26,7 +32,7 @@ def fetch_data():
     #Variables
     data=[]; city=[]; zipcode=[]; state=[]; maps=[]; location_type=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
     #Driver
-    driver = webdriver.Chrome('chromedriver')
+    driver = get_driver()
     #Get site
     driver.get('https://www.berkshirebank.com/About/Let-Us-Help/Locations')
     #Close popup
