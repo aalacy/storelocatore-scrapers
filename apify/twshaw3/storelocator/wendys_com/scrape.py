@@ -2,16 +2,15 @@ import re
 import base
 import requests
 
-from zipdata import zipdata
+import sgzip
 
 from lxml import (html, etree,)
-
-from pdb import set_trace as bp
 
 xpath = base.xpath
 
 class Wendys(base.Base):
 
+    SEARCH_RADIUS = 100
     csv_filename = 'data.csv'
     domain_name = 'wendys.com'
     url = 'https://locationservices.wendys.com/LocationServices/rest/nearbyLocations'
@@ -45,15 +44,15 @@ class Wendys(base.Base):
             ,'Referer': 'https://find.wendys.com/'
             ,'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
         })
-        for data in zipdata:
+        for code in sgzip.for_radius(self.SEARCH_RADIUS):
             query_params = {
                 'lang': 'en'
                 ,'cntry': 'US'
                 ,'sourceCode': 'FIND.WENDYS'
                 ,'version': '5.22.0'
-                ,'address': data.code
-                ,'limit': 25
-                ,'radius': 20
+                ,'address': code
+                ,'limit': 2000
+                ,'radius': 150
             }
             r = session.get(self.url, params=query_params)
             if r.status_code == 200:
