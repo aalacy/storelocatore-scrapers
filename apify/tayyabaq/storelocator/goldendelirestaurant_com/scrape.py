@@ -3,7 +3,6 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re, time
-import pandas as pd
 import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -16,14 +15,19 @@ def write_output(data):
         # Body
         for row in data:
             if row:
-                #Keep the trailing zeroes in zipcodes
                 writer.writerow(row)
+def get_driver():
+    options = Options() 
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def fetch_data():
     #Variables
     data=[];address_stores=[]; city=[];street_address=[];zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
     #Driver
-    driver = webdriver.Chrome('chromedriver')
+    driver = get_driver()
     #Get site
     driver.get('http://www.goldendelirestaurant.com/locations/')
     time.sleep(6)
@@ -61,10 +65,5 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-    #Removing empty lines in csv
-    #df = pd.read_csv("data.csv", sep=",")
-    #df.drop_duplicates(subset =["location_name","street_address","city","state","zip","country_code","store_number","phone"]
-                     #,keep = False, inplace = True)
-    #df.to_csv("data.csv")
 
 scrape()
