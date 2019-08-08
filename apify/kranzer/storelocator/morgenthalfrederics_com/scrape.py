@@ -45,7 +45,11 @@ class Scrape(base.Spider):
                     i.add_value('street_address', cszc.get('address'))
                     i.add_value('city', cszc.get('city'))
                     i.add_value('state', cszc.get('state'))
-                    i.add_value('zip', cszc.get('zip'))
+                    zip = cszc.get('zip')
+                    if len(zip) == 4:
+                        i.add_value('zip', '0'+zip)
+                    else:
+                        i.add_value('zip', zip)
             except:
                 pass
             i.add_value('phone', result.get('phone','').strip())
