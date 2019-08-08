@@ -11,7 +11,7 @@ options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome('/bin/chromedriver', options=options)
+driver = webdriver.Chrome('chromedriver', options=options)
 
 BASE_URL = 'https://chebahut.com'
 MISSING = '<MISSING>'
