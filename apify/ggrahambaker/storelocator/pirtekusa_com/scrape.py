@@ -84,7 +84,7 @@ def fetch_data():
             
         phone_number = br[2].previousSibling
         
-        hours = '<MISSING>'
+        hours = '<INACCESSIBLE>'
         country_code = 'US'
         store_number = '<MISSING>'
         lat = '<MISSING>'

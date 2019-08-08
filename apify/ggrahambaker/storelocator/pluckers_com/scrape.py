@@ -79,7 +79,7 @@ def fetch_data():
         country_code = 'US'
         location_type = '<MISSING>'
         store_number = '<MISSING>'
-        hours = '<MISSING>'
+        hours = '<INACCESSIBLE>'
         lat = '<MISSING>'
         longit = '<MISSING>'
         

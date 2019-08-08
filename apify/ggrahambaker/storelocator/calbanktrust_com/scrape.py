@@ -59,8 +59,11 @@ def fetch_data():
             phone_number = divs[0].text.replace('Phone Number', '').strip()
             hours = ''
 
-            hours += divs[2].text.replace('Monday-Thursday Hours', '').strip() + ' '
-            hours += divs[-2].text.replace('Friday Hours', '').strip()
+            hours += divs[2].text.strip() + ' '
+            hours += divs[-2].text.strip()
+            if 'Email' in hours:
+                idx = hours.find('Email')
+                hours = hours[:idx]
 
             country_code = 'US'
             store_number = '<MISSING>'

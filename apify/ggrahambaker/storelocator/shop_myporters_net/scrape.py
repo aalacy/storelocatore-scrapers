@@ -9,7 +9,7 @@ def get_driver():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
+    return webdriver.Chrome('chromedriver', options=options)
 
 
 
@@ -52,13 +52,15 @@ def fetch_data():
         phone_number = line_arr[2].replace('Phone:', '').strip()
         if phone_number == '':
             phone_number = '<MISSING>'
-        hours = line_arr[3].replace('Hours: ', '')
 
+        hours = line_arr[3].replace('Hours: ', '')
+        if 'Ken Houston' in hours:
+            hours = line_arr[4].replace('Hours: ', '')
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
+        lat = '<INACCESSIBLE>'
+        longit = '<INACCESSIBLE>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

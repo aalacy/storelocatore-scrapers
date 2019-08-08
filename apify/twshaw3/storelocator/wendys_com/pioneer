@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<!--[if lt IE 8 ]>    <html lang="en-US" class="old-ie no-js"> <![endif]-->
+<!--[if (gt IE 7)|!(IE)]><!--> <html lang="en-US" class="no-js"> <!--<![endif]-->
+    <head>
+        <!-- Standard META -->
+        <meta charset="UTF-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <meta name="description" content="Welcome to the official website of Pioneer Supermarkets!  See our weekly ad, browse delicious recipes, or check out our many programs." />
+
+        <title>Locations | Pioneer Supermarkets</title>
+
+        <link rel="shortcut icon" type="image/x-icon" href="https://www.pioneersupermarkets.com/wp-content/themes/shoptocook-responsive-pioneersupermarkets-4/favicon.ico" />
+        <link rel="profile" href="https://gmpg.org/xfn/11" />
+        <link rel="pingback" href="https://www.pioneersupermarkets.com/xmlrpc.php" />
+
+        
+        
+
+
+
+<script type="text/javascript">
+	var template_dir = '/wp-content/themes/shoptocook-responsive-pioneersupermarkets/';
+	var $jq;
+
+	function addLoadEvent(func) {var oldonload = window.onload; if (typeof window.onload != 'function') {window.onload = func;} else {window.onload = function() {if (oldonload) {oldonload();} func();}}}
+
+    addLoadEvent(function() {$jq = jQuery.noConflict();});
+</script>
+
+
+
+        <!-- Facebook META -->
+        <meta property="og:site_name" content="Pioneer Supermarkets"/>
+        <meta property="og:url" content="https://www.pioneersupermarkets.com/locations/" />
+
+                        <meta property="og:title" content="Locations" />
+                <meta property="og:image" content="https://www.pioneersupermarkets.com/wp-content/themes/shoptocook-responsive-pioneersupermarkets-4/images/facebook-logo.png" />
+                <meta property="og:description" content="Welcome to the official website of Pioneer Supermarkets!  See our weekly ad, browse delicious recipes, or check out our many programs." />
+                <meta property="og:type" content="website" />
+                
+        <!--[if lt IE 9]>
+        <script src="https://www.pioneersupermarkets.com/wp-content/themes/shoptocook-responsive/js/html5.js" type="text/javascript"></script>
+        <![endif]-->
+        <script>
+            document.documentElement.className =
+                    document.documentElement.className.replace("no-js", "js");
+        </script>
+<!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-NP44X83');</script>
+    <!-- End Google Tag Manager --><meta name='google-site-verification' content='oIgnlu7Ob8AGcx-BSYu1OzmjwaUZU6bodk-gEhw-CY0'/><link rel='dns-prefetch' href='//fonts.googleapis.com' />
+<link rel='dns-prefetch' href='//s.w.org' />
+<link rel="alternate" type="application/rss+xml" title="Pioneer Supermarkets &raquo; Feed" href="https://www.pioneersupermarkets.com/feed/" />
+<link rel="alternate" type="application/rss+xml" title="Pioneer Supermarkets &raquo; Comments Feed" href="https://www.pioneersupermarkets.com/comments/feed/" />
+		<script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/12.0.0-1\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/12.0.0-1\/svg\/","svgExt":".svg","source":{"concatemoji":"https:\/\/www.pioneersupermarkets.com\/wp-includes\/js\/wp-emoji-release.min.js?ver=5.2.2"}};
+			!function(a,b,c){function d(a,b){var c=String.fromCharCode;l.clearRect(0,0,k.width,k.height),l.fillText(c.apply(this,a),0,0);var d=k.toDataURL();l.clearRect(0,0,k.width,k.height),l.fillText(c.apply(this,b),0,0);var e=k.toDataURL();return d===e}function e(a){var b;if(!l||!l.fillText)return!1;switch(l.textBaseline="top",l.font="600 32px Arial",a){case"flag":return!(b=d([55356,56826,55356,56819],[55356,56826,8203,55356,56819]))&&(b=d([55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447],[55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447]),!b);case"emoji":return b=d([55357,56424,55356,57342,8205,55358,56605,8205,55357,56424,55356,57340],[55357,56424,55356,57342,8203,55358,56605,8203,55357,56424,55356,57340]),!b}return!1}function f(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var g,h,i,j,k=b.createElement("canvas"),l=k.getContext&&k.getContext("2d");for(j=Array("flag","emoji"),c.supports={everything:!0,everythingExceptFlag:!0},i=0;i<j.length;i++)c.supports[j[i]]=e(j[i]),c.supports.everything=c.supports.everything&&c.supports[j[i]],"flag"!==j[i]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[j[i]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(h=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",h,!1),a.addEventListener("load",h,!1)):(a.attachEvent("onload",h),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),g=c.source||{},g.concatemoji?f(g.concatemoji):g.wpemoji&&g.twemoji&&(f(g.twemoji),f(g.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script>
+		<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+	<link rel='stylesheet' id='style.mangific-popup-css'  href='https://www.pioneersupermarkets.com/stc/plugins/magnific-popup/magnific-popup.css?ver=5.2.2' type='text/css' media='all' />
+<link rel='stylesheet' id='style.stc-popup-css'  href='https://www.pioneersupermarkets.com/stc/plugins/magnific-popup/stc-popup.css?ver=5.2.2' type='text/css' media='all' />
+<link rel='stylesheet' id='wp-block-library-css'  href='https://www.pioneersupermarkets.com/wp-includes/css/dist/block-library/style.min.css?ver=5.2.2' type='text/css' media='all' />
+<link rel='stylesheet' id='Amatic-font-css'  href='https://fonts.googleapis.com/css?family=Amatic+SC%3A400%2C700&#038;ver=5.2.2' type='text/css' media='all' />
+<link rel='stylesheet' id='shoptocook-responsive-style-css'  href='https://www.pioneersupermarkets.com/wp-content/themes/shoptocook-responsive/style.css?ver=5.2.2' type='text/css' media='all' />
+<link rel='stylesheet' id='expound-style-css'  href='https://www.pioneersupermarkets.com/wp-content/themes/shoptocook-responsive-pioneersupermarkets-4/style.css?ver=20140820' type='text/css' media='all' />
+<link rel='stylesheet' id='stc-open-sans-css'  href='//fonts.googleapis.com/css?family=Open+Sans&#038;ver=5.2.2' type='text/css' media='all' />
+<link rel='stylesheet' id='cyclone-template-style-dark-css'  href='https://www.pioneersupermarkets.com/wp-content/plugins/cyclone-slider-2/templates/dark/style.css?ver=2.10.1' type='text/css' media='all' />
+<link rel='stylesheet' id='cyclone-template-style-default-css'  href='https://www.pioneersupermarkets.com/wp-content/plugins/cyclone-slider-2/templates/default/style.css?ver=2.10.1' type='text/css' media='all' />
+<link rel='stylesheet' id='cyclone-template-style-standard-css'  href='https://www.pioneersupermarkets.com/wp-content/plugins/cyclone-slider-2/templates/standard/style.css?ver=2.10.1' type='text/css' media='all' />
+<link rel='stylesheet' id='cyclone-template-style-thumbnails-css'  href='https://www.pioneersupermarkets.com/wp-content/plugins/cyclone-slider-2/templates/thumbnails/style.css?ver=2.10.1' type='text/css' media='all' />
+<link rel='stylesheet' id='cyclone-template-style-dark-three-slide-css'  href='https://www.pioneersupermarkets.com/wp-content/cycloneslider/dark-three-slide/style.css?ver=2.10.1' type='text/css' media='all' />
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-includes/js/jquery/jquery.js?ver=1.12.4-wp'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.4.1'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/stc/plugins/history-1.8.0/jquery.history.js?ver=5.2.2'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/stc/plugins/magnific-popup/jquery.magnific-popup.min.js?ver=5.2.2'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/stc/includes/account.js?ver=5.2.2'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/stc/plugins/stc/stc.js?v=1.0.1&#038;ver=5.2.2'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-content/themes/shoptocook-responsive-pioneersupermarkets-4/js/tabs.js?ver=5.2.2'></script>
+<link rel='https://api.w.org/' href='https://www.pioneersupermarkets.com/wp-json/' />
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://www.pioneersupermarkets.com/xmlrpc.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://www.pioneersupermarkets.com/wp-includes/wlwmanifest.xml" /> 
+<meta name="generator" content="WordPress 5.2.2" />
+<link rel="canonical" href="https://www.pioneersupermarkets.com/locations/" />
+<link rel="alternate" type="application/json+oembed" href="https://www.pioneersupermarkets.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwww.pioneersupermarkets.com%2Flocations%2F" />
+<link rel="alternate" type="text/xml+oembed" href="https://www.pioneersupermarkets.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwww.pioneersupermarkets.com%2Flocations%2F&#038;format=xml" />
+<script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script><link rel="stylesheet" type="text/css" href="https://www.pioneersupermarkets.com/wp-content/themes/shoptocook-responsive-pioneersupermarkets-4/layout/layout.css"><style type='text/css'>.color-menu-primary, .menu-main-color { background-color: #ffffff; } .color-menu-secondary { background-color: #ffffff; } .color-menu-border { border-color: ; } .color-header-bg { background-color: #ffffff; } .color-footer-bg { background-color: #393939; } .color-aux-bg-1 { background-color: #ffffff; } .navigation-main, .navigation-main li { background-color: #ffffff; }.navigation-main .sub-menu li, .navigation-main .children li { background-color: #ffffff; border-bottom: 1px solid #000000; } .navigation-main .nav-menu a, .navigation-main .menu-toggle { color: #000000; } .navigation-main .nav-menu .current-menu-item, .navigation-main .nav-menu .current-menu-parent, .navigation-main .nav-menu .current-menu-ancestor { background-color: #ffffff; } .navigation-main .nav-menu .current-menu-item a:after, .navigation-main .nav-menu .current-menu-parent a:after, .navigation-main .nav-menu .current-menu-ancestor a:after { border-top-color: #ffffff; } .navigation-main .nav-menu li:hover, .menu-item-focused { background-color: #ffffff !important; } .navigation-main .nav-menu .current-menu-item:hover a:after, .navigation-main .nav-menu .current-menu-parent:hover a:after, .navigation-main .nav-menu .current-menu-ancestor:hover a:after { border-top-color: #ffffff; } .navigation-main a:focus { outline: 3px solid #e60f2b; } @media screen and (max-width: 600px) { .navigation-main.toggled .nav-menu li.current-menu-item, .navigation-main.toggled .nav-menu li.current-menu-parent, .navigation-main.toggled .nav-menu li.current-menu-ancestor { background-color: #ffffff; } .navigation-main.toggled .nav-menu > li { background-color: #ffffff; } }</style>		<style type="text/css">.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style>
+			<style type="text/css">
+	        .site-title a,
+        .site-title a:hover,
+        .site-description {
+			color: #3a3a3a;
+        }
+		</style>
+	<style type="text/css" id="custom-background-css">
+body.custom-background { background-color: #ffffff; }
+</style>
+	    </head>
+<body class="page-template-default page page-id-48 custom-background dwpb-cover-page expound-full-width">
+            <div class="hfeed site">
+        <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NP44X83"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+<div>
+    <div>
+        <div class="header-wrapper">
+                        <header id="masthead" class="site-header responsive relative" role="banner">
+                
+                <div class="nav_container">
+                    <nav id="site-navigation" class="navigation-main" role="navigation">
+                        <a class="skip-link screen-reader-text" href="#main">Skip to content</a>
+                        <div class="nav-primary-container-left"><ul id="menu-left-menu" class="menu nav-primary-left nav-menu"><li id="menu-item-255" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-255"><a href="https://www.pioneersupermarkets.com/weekly-ad/"><i class="fas fa-star"></i><span>Weekly Ad</span></a></li>
+<li id="menu-item-254" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-254"><a href="https://www.pioneersupermarkets.com/recipes/"><i class="fas fa-utensils"></i><span>Recipes</span></a></li>
+</ul></div>
+                        <div class="logo-container">
+                            <a href="https://www.pioneersupermarkets.com/" rel="home">
+                                <img class="site-branding" alt="Company Logo" src="https://www.pioneersupermarkets.com/wp-content/uploads/sites/110/2018/06/cropped-Pioneerlogo.png" title="Pioneer Supermarkets" />
+                            </a>
+                        </div>
+
+                        <div class="nav-primary-container-right"><ul id="menu-right-menu" class="menu nav-primary-right nav-menu"><li id="menu-item-257" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-257"><a href="https://www.pioneersupermarkets.com/coupons/"><i class="fas fa-tags"></i><span>Coupons</span></a></li>
+<li id="menu-item-256" class="menu-item menu-item-type-post_type menu-item-object-page current-menu-item page_item page-item-48 current_page_item menu-item-256"><a href="https://www.pioneersupermarkets.com/locations/"><i class="fas fa-map-marker-alt"></i><span>Stores</span></a></li>
+</ul></div>                    </nav><!-- #site-navigation -->
+                </div><!-- .nav_container -->
+            </header><!-- #masthead -->
+            <div class="header-background color-header-bg"></div>
+        </div><!-- .header-wrapper -->
+                <div class="main-wrapper color-aux-bg-1">
+                        <div id="main" class="site-main responsive">
+                                
+	<div id="primary" class="content-area">
+		<div id="content" class="site-content" role="main">
+
+			
+				
+<article id="post-48" class="post-48 page type-page status-publish hentry">
+	<div class="entry-content">
+		
+<div class="page-template-box">
+    <div class="locator-overlay-wrapper">
+        <div class="locator-overlay">
+            <div class="store-locator-search">
+                <h2 style="color: white;">Find Your Store</h2>
+                <form id="store-locator-search" name="store-locator-search">
+                    <label for="locator_search" style="display:none;">Search Zip or City, State</label>
+                    <input id="locator_search" name="addr" aria-label="Search Zip or City, State" placeholder="Enter Zip or City, State" type="text" value="">
+                    <button id="locator_submit">search</button>
+                </form>
+            </div>
+            <div class="store-list-wrapper">
+                <ul id="locator-store-list">
+                    <li id="store-item-740" class="locator-store-item" data-store="740"><h4 class="locator-store-name">Jersey City - M. Luther King Dr.</h4><p><span class="locator-address">320 M. Luther King Dr.</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">Jersey City, NJ 07305<br/><span class="locator-phone-title">Phone: </span><a href="tel:(201) 432-3929" class="locator-phonenumber">(201) 432-3929</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sat: 8am - 8pm<br />
+Sunday: 8am - 6pm<br />
+</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=7X8LW4OJ1KXAXPJEJ11H4COY1BG3YOXMNJBCNH" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Jersey+City+-+M.+Luther+King+Dr.%2C320+M.+Luther+King+Dr.+Jersey+City%2C+NJ+07305" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-727" class="locator-store-item" data-store="727"><h4 class="locator-store-name">New York - Columbus Ave</h4><p><span class="locator-address">289 Columbus Ave</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">New York, NY 10023<br/><span class="locator-phone-title">Phone: </span><a href="tel:(212) 874-9506" class="locator-phonenumber">(212) 874-9506</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sat: 8am - 9:45pm<br />
+Sunday: 9am - 9pm<br />
+</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=0IKUSRJI5A9GDHRO1XLDJQTYKTHYWJZLJOZBQR" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=New+York+-+Columbus+Ave%2C289+Columbus+Ave+New+York%2C+NY+10023" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a> | <a href='https://www.bad-adz.com/pioneer-signup-form' target='_blank'>Store Site</a></span></p><div class='social-links'></div></li><li id="store-item-735" class="locator-store-item" data-store="735"><h4 class="locator-store-name">New York - Lenox Ave</h4><p><span class="locator-address">380 Lenox Ave</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">New York, NY 10027<br/><span class="locator-phone-title">Phone: </span><a href="tel:(212) 427-4615" class="locator-phonenumber">(212) 427-4615</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sun: 7am - 12am<br />
+</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=1YNYEDZ8SVA4I3TCWTMP90T6V0MPQ8IMOLY30U" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=New+York+-+Lenox+Ave%2C380+Lenox+Ave+New+York%2C+NY+10027" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-739" class="locator-store-item" data-store="739"><h4 class="locator-store-name">New York - 7Th Ave</h4><p><span class="locator-address">2541 7Th Ave</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">New York, NY 10039<br/><span class="locator-phone-title">Phone: </span><a href="tel:(212) 862-0239" class="locator-phonenumber">(212) 862-0239</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sun: 7am - 9pm<br />
+</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=JALJJ4FEPICPRIDJG5B8O98P1MB2QCLZFEYGE4" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=New+York+-+7Th+Ave%2C2541+7Th+Ave+New+York%2C+NY+10039" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-840" class="locator-store-item" data-store="840"><h4 class="locator-store-name">Bronx - Featherbed Lane</h4><p><span class="locator-address">107 Featherbed Lane</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">Bronx, NY 10452<br/><span class="locator-phone-title">Phone: </span><a href="tel:(718) 299-0202" class="locator-phonenumber">(718) 299-0202</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sat: 7am - 10pm<br />
+Sunday: 7:30am - 9pm</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=49QMX1NRUZUWJDKH4OOI7NAS9WZ0U06OZF4OC2" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Bronx+-+Featherbed+Lane%2C107+Featherbed+Lane+Bronx%2C+NY+10452" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-709" class="locator-store-item" data-store="709"><h4 class="locator-store-name">Bronx - Woodycrest Ave</h4><p><span class="locator-address">1150-66 Woodycrest Ave</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">Bronx, NY 10452<br/><span class="locator-phone-title">Phone: </span><a href="tel:(718) 681-0686" class="locator-phonenumber">(718) 681-0686</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sat: 7:30am - 9pm<br />
+Sunday: 7:30am - 8pm<br />
+</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=MGJ1XZ0NW71OSC4SNZOBRHJ39SQEU5T4JU5ZS8" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Bronx+-+Woodycrest+Ave%2C1150-66+Woodycrest+Ave+Bronx%2C+NY+10452" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-715" class="locator-store-item" data-store="715"><h4 class="locator-store-name">Bronx - Jerome Avenue</h4><p><span class="locator-address">2262 Jerome Avenue</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">Bronx, NY 10453<br/><span class="locator-phone-title">Phone: </span><a href="tel:(718) 584-0326" class="locator-phonenumber">(718) 584-0326</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sat: 8am - 9pm<br />
+Sun: 8am - 7pm<br />
+</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=VYT12J6L35B3ZKCXGQWWCSCSEAMDKAYZCTNUTE" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Bronx+-+Jerome+Avenue%2C2262+Jerome+Avenue+Bronx%2C+NY+10453" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-1939" class="locator-store-item" data-store="1939"><h4 class="locator-store-name">Bronx - St. Anns Ave</h4><p><span class="locator-address">256 St. Anns Ave</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">bronx, NY 10454<br/><span class="locator-phone-title">Phone: </span><a href="tel:(718) 665-0140" class="locator-phonenumber">(718) 665-0140</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>7am to 9pm 7 days a week</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=PYT3YKL7P15FGKAXSZCXKOV27XJ2O63D89U8RK" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Bronx+-+St.+Anns+Ave%2C256+St.+Anns+Ave+bronx%2C+NY+10454" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-1916" class="locator-store-item" data-store="1916"><h4 class="locator-store-name">Bronx - Willis Ave</h4><p><span class="locator-address">250 Willis Avenue</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">Bronx, NY 10454<br/><span class="locator-phone-title">Phone: </span><a href="tel:(718) 585-7416" class="locator-phonenumber">(718) 585-7416</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sun: 7am - 9pm<br />
+<br />
+</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=8JJ0OOMJD3ZWCOB0F3MXEQZFLC8YXJ2ULJH7UH" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Bronx+-+Willis+Ave%2C250+Willis+Avenue+Bronx%2C+NY+10454" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-978" class="locator-store-item" data-store="978"><h4 class="locator-store-name">Bronx - Melrose Ave</h4><p><span class="locator-address">616 Melrose Ave</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">Bronx, NY 10455<br/><span class="locator-phone-title">Phone: </span><a href="tel:(718) 292-2735" class="locator-phonenumber">(718) 292-2735</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sat: 7:30am - 10pm<br />
+Sunday: 7:30am - 9pm</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=L2U6F2B6UN94O6Z58EZ2BIAJ0VH392PUDVG75T" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Bronx+-+Melrose+Ave%2C616+Melrose+Ave+Bronx%2C+NY+10455" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-825" class="locator-store-item" data-store="825"><h4 class="locator-store-name">Bronx - Ryer Ave</h4><p><span class="locator-address">2400 Ryer Ave</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">Bronx, NY 10458<br/><span class="locator-phone-title">Phone: </span><a href="tel:(718) 367-1800" class="locator-phonenumber">(718) 367-1800</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sat: 8am - 9pm<br />
+Sunday: 8am - 8pm</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=LJ89HYSFSPWZPHF218YMX8UQ69YQ3KW9VJ79UL" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Bronx+-+Ryer+Ave%2C2400+Ryer+Ave+Bronx%2C+NY+10458" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-731" class="locator-store-item" data-store="731"><h4 class="locator-store-name">Bronx - White Plains Road</h4><p><span class="locator-address">3035 White Plains Road</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">Bronx, NY 10467<br/><span class="locator-phone-title">Phone: </span><a href="tel:(718) 994-9813" class="locator-phonenumber">(718) 994-9813</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sat: 7am - 9:30pm<br />
+Sunday: 8am - 8pm<br />
+</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=ACLWVRW7LDBPSRXMJ38MFNFCIRX6048U6HNWFO" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Bronx+-+White+Plains+Road%2C3035+White+Plains+Road+Bronx%2C+NY+10467" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-734" class="locator-store-item" data-store="734"><h4 class="locator-store-name">Brooklyn - Broadway</h4><p><span class="locator-address">1657 Broadway</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">Brooklyn, NY 11207<br/><span class="locator-phone-title">Phone: </span><a href="tel:(718) 574-2520" class="locator-phonenumber">(718) 574-2520</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sat: 7:30am - 10pm<br />
+Sunday: 7:30am - 9pm<br />
+</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=WJ6YAZX6LZ89MC6J3WKFD63SRMHI8FYEJ76GA9" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Brooklyn+-+Broadway%2C1657+Broadway+Brooklyn%2C+NY+11207" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-979" class="locator-store-item" data-store="979"><h4 class="locator-store-name">Brooklyn - Fulton St.</h4><p><span class="locator-address">3461 Fulton St.</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">Brooklyn, NY 11208<br/><span class="locator-phone-title">Phone: </span><a href="tel:(718) 827-9611" class="locator-phonenumber">(718) 827-9611</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sat: 7:30am - 10pm<br />
+Sunday: 7:30am - 9pm</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=C77HX32G8925JIHZ3PZ64AVKGH394S7JYM4PJP" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Brooklyn+-+Fulton+St.%2C3461+Fulton+St.+Brooklyn%2C+NY+11208" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-714" class="locator-store-item" data-store="714"><h4 class="locator-store-name">Brooklyn - Fifth Ave</h4><p><span class="locator-address">5612 Fifth Ave</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">Brooklyn, NY 11220<br/><span class="locator-phone-title">Phone: </span><a href="tel:(718) 439-6144" class="locator-phonenumber">(718) 439-6144</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Sun-Thurs: 8am - 7pm<br />
+Fri-Sat: 8am - 8pm<br />
+</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=BTRX5OX1J4EP1CE1952UW6RCBIVJGRX2EEOBGP" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Brooklyn+-+Fifth+Ave%2C5612+Fifth+Ave+Brooklyn%2C+NY+11220" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-722" class="locator-store-item" data-store="722"><h4 class="locator-store-name">Brooklyn - Parkside Ave</h4><p><span class="locator-address">191-199 Parkside Ave</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">Brooklyn, NY 11226<br/><span class="locator-phone-title">Phone: </span><a href="tel:(718) 941-2777" class="locator-phonenumber">(718) 941-2777</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sat: 7:30am - 10pm<br />
+Sunday: 7:30am - 9pm<br />
+</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=ALEAWFCHDV0HIGSMSZO8KXPL5U2CQKA8VGO3R7" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Brooklyn+-+Parkside+Ave%2C191-199+Parkside+Ave+Brooklyn%2C+NY+11226" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-822" class="locator-store-item" data-store="822"><h4 class="locator-store-name">Corona - Northern Blvd</h4><p><span class="locator-address">102-09 Northern Blvd</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">Corona, NY 11368<br/><span class="locator-phone-title">Phone: </span><a href="tel:(718) 507-2828" class="locator-phonenumber">(718) 507-2828</a><br/><span class="locator-hours-title">Hours: </span><span class="locator-storehours"><br>Mon-Sat: 7am - 10pm<br />
+Sunday: 8am - 10pm</span><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=ZP9PY4D09FV2O17XYE8IZKSRXANL4WF7T47U1Z" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Corona+-+Northern+Blvd%2C102-09+Northern+Blvd+Corona%2C+NY+11368" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li><li id="store-item-1750" class="locator-store-item" data-store="1750"><h4 class="locator-store-name">Philadelphia - Oxford Ave</h4><p><span class="locator-address">5353 Oxford Ave</span><span class="store-distance" style="font-weight:bold;float:right;"></span><br/><span class="locator-storeinformation">Philadelphia, PA 19124<br/><span class="locator-phone-title">Phone: </span><a href="tel:(215) 289-8008" class="locator-phonenumber">(215) 289-8008</a><br/></span><span class="locator-links"><a href="/weekly-ad/?circularstoreidentifier=W2T9A4K2IL1VEURQSED2J00ER2QPFK26J5ZWI5" >Weekly Ad</a> | <a href="https://maps.google.com/maps?f=d&daddr=Philadelphia+-+Oxford+Ave%2C5353+Oxford+Ave+Philadelphia%2C+PA+19124" target="_blank">Directions</a> | <a href="javascript:void(0);" class="select-store">My Store</a></span></p><div class='social-links'></div></li>                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="gmap-locator"></div>
+<script>
+    jQuery(document).ready(function () {
+        S.mapManager.selected = null;
+        S.mapManager.defaultLat = 40.565342;
+        S.mapManager.defaultLon = -74.822591;
+        S.mapManager.defaultZoom = 9;
+S.mapManager.icon = 'https://www.pioneersupermarkets.com/wp-content/themes/shoptocook-responsive-pioneersupermarkets-4/images/marker.png';        var locations = [{"storeID":"740","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"271","circularGroupName":"41145 - Sun","name":"Jersey City - M. Luther King Dr.","storeNumber":"41145","address1":"320 M. Luther King Dr.","city":"Jersey City","state":"NJ","zipCode":"07305","phone":"2014323929","storeIdentifier":"7X8LW4OJ1KXAXPJEJ11H4COY1BG3YOXMNJBCNH","singleCircularFlag":"0","storeInfo":"320 Martin Luther King\nJersey City, NJ 07305\nPhone: <b>201-432-3929<\/b>","hourInfo":"Mon-Sat: 8am - 8pm\nSunday: 8am - 6pm\n","anchorTag":"NJ, Jersey City","email":"rolafood@verizon.com","latitude":40.709776,"longitude":-74.079836,"distance":-1},{"storeID":"727","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"274","circularGroupName":"71373 - Mon","name":"New York - Columbus Ave","storeNumber":"71373","address1":"289 Columbus Ave","city":"New York","state":"NY","zipCode":"10023","phone":"2128749506","storeIdentifier":"0IKUSRJI5A9GDHRO1XLDJQTYKTHYWJZLJOZBQR","singleCircularFlag":"0","storeInfo":"289 Columbus Ave\nNew York, NY 10023\nPhone: <b>212-874-9506<\/b>","hourInfo":"Mon-Sat: 8am - 9:45pm\nSunday: 9am - 9pm\n","anchorTag":"NY, New York","email":"smv855@aol.com","latitude":40.7784079,"longitude":-73.97804429999997,"distance":-1},{"storeID":"735","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"468","circularGroupName":"Lenox Ave. - Fri","name":"New York - Lenox Ave","storeNumber":"58123","address1":"380 Lenox Ave","city":"New York","state":"NY","zipCode":"10027","phone":"2124274615","storeIdentifier":"1YNYEDZ8SVA4I3TCWTMP90T6V0MPQ8IMOLY30U","singleCircularFlag":"0","storeInfo":"380 Lenox Ave.\nNew York, NY 10027\nPhone: <b>212-427-4615<\/b>","hourInfo":"Mon-Sun: 7am - 12am\n","anchorTag":"NY, New York","email":"pedro029@aol.com, pioneer380lenoxave@gmail.com","latitude":40.8102094,"longitude":-73.94315169999999,"distance":-1},{"storeID":"739","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"263","circularGroupName":"Default - Sun","name":"New York - 7Th Ave","storeNumber":"86819","address1":"2541 7Th Ave","city":"New York","state":"NY","zipCode":"10039","phone":"2128620239","storeIdentifier":"JALJJ4FEPICPRIDJG5B8O98P1MB2QCLZFEYGE4","singleCircularFlag":"0","storeInfo":"2541 7th Ave\nNew York, NY 10039\nPhone: <b>212-862-0239<\/b>","hourInfo":"Mon-Sun: 7am - 9pm\n","anchorTag":"NY, New York","latitude":40.822806,"longitude":-73.937949,"distance":-1},{"storeID":"840","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"721","circularGroupName":"53798 - Sun","name":"Bronx - Featherbed Lane","storeNumber":"53798","address1":"107 Featherbed Lane","city":"Bronx","state":"NY","zipCode":"10452","phone":"7182990202","storeIdentifier":"49QMX1NRUZUWJDKH4OOI7NAS9WZ0U06OZF4OC2","singleCircularFlag":"0","storeInfo":"107 Featherbed Lane\nBronx, NY 10452\nPhone: <b>718-299-0202<\/b>","hourInfo":"Mon-Sat: 7am - 10pm\nSunday: 7:30am - 9pm","anchorTag":"NY, Bronx","latitude":40.8463787,"longitude":-73.91852690000002,"distance":-1},{"storeID":"709","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"788","circularGroupName":"Woodycrest - FRI","name":"Bronx - Woodycrest Ave","storeNumber":"88864","address1":"1150-66 Woodycrest Ave","city":"Bronx","state":"NY","zipCode":"10452","phone":"7186810686","storeIdentifier":"MGJ1XZ0NW71OSC4SNZOBRHJ39SQEU5T4JU5ZS8","singleCircularFlag":"0","storeInfo":"1150-66 Woodycrest Ave.\nBronx, NY 10452\nPhone: <b>718-681-0686<\/b>","hourInfo":"Mon-Sat: 7:30am - 9pm\nSunday: 7:30am - 8pm\n","anchorTag":"NY, Bronx","latitude":40.8362197,"longitude":-73.92513489999999,"distance":-1},{"storeID":"715","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"469","circularGroupName":"Jerome Ave. - Fri","name":"Bronx - Jerome Avenue","storeNumber":"38554","address1":"2262 Jerome Avenue","city":"Bronx","state":"NY","zipCode":"10453","phone":"7185840326","storeIdentifier":"VYT12J6L35B3ZKCXGQWWCSCSEAMDKAYZCTNUTE","singleCircularFlag":"0","storeInfo":"2262 Jerome Ave.\nBronx, NY 10453\nPhone: <b>718-584-0326<\/b>","hourInfo":"Mon-Sat: 8am - 9pm\nSun: 8am - 7pm\n","anchorTag":"NY, Bronx","email":"mdlc83@hotmail.com","latitude":40.858217,"longitude":-73.90357890000001,"distance":-1},{"storeID":"1939","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"942","circularGroupName":"21527 - Sun","name":"Bronx - St. Anns Ave","storeNumber":"21527","address1":"256 St. Anns Ave","city":"bronx","state":"NY","zipCode":"10454","phone":"7186650140","storeIdentifier":"PYT3YKL7P15FGKAXSZCXKOV27XJ2O63D89U8RK","singleCircularFlag":"0","storeInfo":"256 St. Anns Ave\nBronx, NY 10454\nPhone: <b>718-665-0140<\/b>","hourInfo":"7am to 9pm 7 days a week","anchorTag":"NY, Bronx","latitude":40.8072264,"longitude":-73.91695629999998,"distance":-1},{"storeID":"1916","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"905","circularGroupName":"39925 - Sun","name":"Bronx - Willis Ave","storeNumber":"39925","address1":"250 Willis Avenue","city":"Bronx","state":"NY","zipCode":"10454","phone":"7185857416","storeIdentifier":"8JJ0OOMJD3ZWCOB0F3MXEQZFLC8YXJ2ULJH7UH","singleCircularFlag":"0","storeInfo":"250 Willis Ave\nBronx, NY 10454\nPhone: <b>718-585-7416<\/b>","hourInfo":"Mon-Sun: 7am - 9pm\n\n","anchorTag":"NY, Bronx","latitude":40.8091944,"longitude":-73.92261209999998,"distance":-1},{"storeID":"978","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"722","circularGroupName":"26016 - Fri (MELROSE)","name":"Bronx - Melrose Ave","storeNumber":"26016","address1":"616 Melrose Ave","city":"Bronx","state":"NY","zipCode":"10455","phone":"7182922735","storeIdentifier":"L2U6F2B6UN94O6Z58EZ2BIAJ0VH392PUDVG75T","singleCircularFlag":"0","storeInfo":"616 Melrose Ave\nBronx, NY 10455\nPhone: <b>718-292-2735<\/b>","hourInfo":"Mon-Sat: 7:30am - 10pm\nSunday: 7:30am - 9pm","anchorTag":"NY, Bronx","latitude":40.8177897,"longitude":-73.91676819999998,"distance":-1},{"storeID":"825","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"470","circularGroupName":"Ryer Ave. - Fri","name":"Bronx - Ryer Ave","storeNumber":"53760","address1":"2400 Ryer Ave","city":"Bronx","state":"NY","zipCode":"10458","phone":"7183671800","storeIdentifier":"LJ89HYSFSPWZPHF218YMX8UQ69YQ3KW9VJ79UL","singleCircularFlag":"0","storeInfo":"2400 Ryer Ave\nBronx, NY 10458\nPhone: <b>(718) 367-1800<\/b>","hourInfo":"Mon-Sat: 8am - 9pm\nSunday: 8am - 8pm","anchorTag":"NY, Bronx","latitude":40.85986700000001,"longitude":-73.89757500000002,"distance":-1},{"storeID":"731","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"268","circularGroupName":"29926 - Sun","name":"Bronx - White Plains Road","storeNumber":"29926","address1":"3035 White Plains Road","city":"Bronx","state":"NY","zipCode":"10467","phone":"7189949813","storeIdentifier":"ACLWVRW7LDBPSRXMJ38MFNFCIRX6048U6HNWFO","singleCircularFlag":"0","storeInfo":"3035 White Plains Road\nBronx, NY 10467\nPhone: <b>718-994-9813<\/b>","hourInfo":"Mon-Sat: 7am - 9:30pm\nSunday: 8am - 8pm\n","anchorTag":"NY, Bronx","latitude":40.8704962,"longitude":-73.8672186,"distance":-1},{"storeID":"734","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"720","circularGroupName":"10036 - Sun","name":"Brooklyn - Broadway","storeNumber":"10036","address1":"1657 Broadway","city":"Brooklyn","state":"NY","zipCode":"11207","phone":"7185742520","storeIdentifier":"WJ6YAZX6LZ89MC6J3WKFD63SRMHI8FYEJ76GA9","singleCircularFlag":"0","storeInfo":"1657 Broadway\nBrooklyn, NY 11207\nPhone: <b>718-574-2520<\/b>","hourInfo":"Mon-Sat: 7:30am - 10pm\nSunday: 7:30am - 9pm\n","anchorTag":"NY, Brooklyn","email":"pio1657@gmail.com, edvargas1119@yahoo.com","latitude":40.684668,"longitude":-73.91303299999998,"distance":-1},{"storeID":"979","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"789","circularGroupName":"SUPER FILTON - FRI","name":"Brooklyn - Fulton St.","storeNumber":"53871","address1":"3461 Fulton St.","city":"Brooklyn","state":"NY","zipCode":"11208","phone":"7188279611","storeIdentifier":"C77HX32G8925JIHZ3PZ64AVKGH394S7JYM4PJP","singleCircularFlag":"0","storeInfo":"3461 Fulton St\nBrooklyn, NY  11208\nPhone: <b>718-827-9611<\/b>","hourInfo":"Mon-Sat: 7:30am - 10pm\nSunday: 7:30am - 9pm","anchorTag":"NY, Brooklyn","latitude":40.68509600000001,"longitude":-73.86791800000003,"distance":-1},{"storeID":"714","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"269","circularGroupName":"53051 - Sun","name":"Brooklyn - Fifth Ave","storeNumber":"53051","address1":"5612 Fifth Ave","city":"Brooklyn","state":"NY","zipCode":"11220","phone":"7184396144","storeIdentifier":"BTRX5OX1J4EP1CE1952UW6RCBIVJGRX2EEOBGP","singleCircularFlag":"0","storeInfo":"5612 Fifth Avenue\nBrooklyn, NY 11220\nPhone: <b>718-439-6144<\/b>","hourInfo":"Sun-Thurs: 8am - 7pm\nFri-Sat: 8am - 8pm\n","anchorTag":"NY, Brooklyn","email":"efham19@yahoo.com","latitude":40.6414542,"longitude":-74.01413969999999,"distance":-1},{"storeID":"722","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"276","circularGroupName":"86579 - Fri","name":"Brooklyn - Parkside Ave","storeNumber":"86579","address1":"191-199 Parkside Ave","city":"Brooklyn","state":"NY","zipCode":"11226","phone":"7189412777","storeIdentifier":"ALEAWFCHDV0HIGSMSZO8KXPL5U2CQKA8VGO3R7","singleCircularFlag":"0","storeInfo":"191-199 Parkside Ave.\nBrooklyn, NY 11226\nPhone: <b>718-941-2777<\/b>","hourInfo":"Mon-Sat: 7:30am - 10pm\nSunday: 7:30am - 9pm\n","anchorTag":"NY, Brooklyn","latitude":40.6553088,"longitude":-73.96122980000001,"distance":-1},{"storeID":"822","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"443","circularGroupName":"86587 - Sun","name":"Corona - Northern Blvd","storeNumber":"86587","address1":"102-09 Northern Blvd","city":"Corona","state":"NY","zipCode":"11368","phone":"7185072828","storeIdentifier":"ZP9PY4D09FV2O17XYE8IZKSRXANL4WF7T47U1Z","singleCircularFlag":"0","storeInfo":"102-09 Northern Blvd\nCorona, NY 11368\nPhone: <b>718-507-2828<\/b>","hourInfo":"Mon-Sat: 7am - 10pm\nSunday: 8am - 10pm","anchorTag":"NY, Corona","latitude":40.7576324,"longitude":-73.86616400000003,"distance":-1},{"storeID":"1750","retailerID":"152","retailerName":"Pioneer Supermarkets","circularGroupID":"263","circularGroupName":"Default - Sun","name":"Philadelphia - Oxford Ave","storeNumber":"26063","address1":"5353 Oxford Ave","city":"Philadelphia","state":"PA","zipCode":"19124","phone":"2152898008","storeIdentifier":"W2T9A4K2IL1VEURQSED2J00ER2QPFK26J5ZWI5","singleCircularFlag":"0","storeInfo":"5353 Oxford Ave\nPhiladelphia, PA 19124\nPhone: <b>215-289-8008<\/b>","anchorTag":"PA, Philadelphia","latitude":40.0295668,"longitude":-75.08477219999997,"distance":-1}];
+        S.mapManager.initialize('gmap-locator', locations);
+        if (false) {
+            S.mapManager.selectItem();
+        }
+    });
+</script>
+
+			</div><!-- .entry-content -->
+</article><!-- #post-## -->
+
+				
+			
+		</div><!-- #content -->
+	</div><!-- #primary -->
+</div><!-- #main -->
+</div><!-- .main-wrapper -->
+</div><!-- .site-shadow -->
+</div><!-- .responsive -->
+
+<div class="footer-wrapper">
+    <div id="footer" class="responsive color-footer-bg"><!-- This is for the scrolling shopping list -->
+        <footer class="site-footer" role="contentinfo">
+            <div class="footer-column branding">
+                <div class="logo-container">
+                    <a href="https://www.pioneersupermarkets.com/" rel="home">
+                        <img class="site-branding" alt="Company Logo" src="https://www.pioneersupermarkets.com/wp-content/uploads/sites/110/2018/06/cropped-Pioneerlogo.png" title="Pioneer Supermarkets" />
+                    </a>
+                </div>
+                <span class="social-icons">
+                    <a href="https://www.facebook.com/pioneerspmkt" target="_blank"><i class="fab fa-facebook-square" aria-hidden="true" title="Pioneer Facebook"></i></a>
+                    <a href="https://twitter.com/pioneerspmkt" target="_blank"><i class="fab fa-twitter-square" aria-hidden="true" title="Pioneer Twitter"></i></a>
+                    <a href="https://www.instagram.com/pioneerspmkt/" target="_blank"><i class="fab fa-instagram" aria-hidden="true" title="Pioneer Instagram"></i></a>
+                </span>
+            </div>
+            <div class="footer-column line">
+                <div>
+                    <h2>Our Company</h2>
+                    <ul>
+                        <li><a href="https://www.pioneersupermarkets.com/locations/">Locations</a></li>
+                        <li><a href="https://www.pioneersupermarkets.com/contact-us/">Contact Us</a></li>
+                        <li><a href="https://www.asghq.com/" target="_blank">ASG Headquarters</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-column line">
+                <div>
+                    <h2>Our Website</h2>
+                    <ul>
+                        <li><a href="https://www.pioneersupermarkets.com/terms-conditions/">Terms and Conditions</a></li>
+                        <li><a href="https://www.pioneersupermarkets.com/privacy-policy/">Privacy Policy</a></li>
+                        <li><a href="https://www.pioneersupermarkets.com/accessibility/">Accessibility</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-column">
+                <div>
+                    <h2>Links</h2>
+                    <ul>
+                        <li><a href="https://www.pioneersupermarkets.com/weekly-ad/">Weekly Specials</a></li>
+                        <li><a href="https://www.pioneersupermarkets.com/my-shopping-list/">Shopping List</a></li>
+                        <li><a href="https://www.pioneersupermarkets.com/recipes/">Recipes</a></li>
+                    </ul>
+                </div>
+            </div>
+        </footer><!-- #colophon -->
+    </div>
+    <div class="footer-background color-footer-bg"></div>
+</div><!-- .footer-wrapper -->
+</div><!-- .site -->
+
+<link rel='stylesheet' id='locator-css-css'  href='https://www.pioneersupermarkets.com/wp-content/plugins/shoptocook-weeklyad/css/locator.css?ver=5.2.2' type='text/css' media='all' />
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-content/themes/shoptocook-responsive/js/navigation.js?ver=20120206'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-content/themes/shoptocook-responsive/js/skip-link-focus-fix.js?ver=20130115'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-content/plugins/cyclone-slider-2/libs/cycle2/jquery.cycle2.min.js?ver=2.10.1'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-content/plugins/cyclone-slider-2/libs/cycle2/jquery.cycle2.carousel.min.js?ver=2.10.1'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-content/plugins/cyclone-slider-2/libs/cycle2/jquery.cycle2.swipe.min.js?ver=2.10.1'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-content/plugins/cyclone-slider-2/libs/cycle2/jquery.cycle2.tile.min.js?ver=2.10.1'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-content/plugins/cyclone-slider-2/libs/cycle2/jquery.cycle2.video.min.js?ver=2.10.1'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-content/plugins/cyclone-slider-2/templates/dark/script.js?ver=2.10.1'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-content/plugins/cyclone-slider-2/templates/thumbnails/script.js?ver=2.10.1'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-content/cycloneslider/dark-three-slide/script.js?ver=2.10.1'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-content/plugins/cyclone-slider-2/js/client.js?ver=2.10.1'></script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-includes/js/wp-embed.min.js?ver=5.2.2'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var MyAjax = {"ajaxurl":"https:\/\/www.pioneersupermarkets.com\/wp-admin\/admin-ajax.php"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='https://www.pioneersupermarkets.com/wp-content/plugins/shoptocook-weeklyad/js/locator.js?ver=5.2.2'></script>
+<script type='text/javascript' src='https://maps.googleapis.com/maps/api/js?v=3&#038;key=AIzaSyAJ7NWxxyArSGBkHpvnfaXrVgSiZ_gKddQ&#038;ver=5.2.2'></script>
+
+<div id="adpopup"></div>
+<div id="adrecipelinkpopup"></div>
+<div id="adblackout"></div>
+<div id="adrecipe"></div>
+<div id="aditemadded"></div>
+
+
+<script>
+    var shoppingListBaseY = getObjYPos(document.getElementById("shoppinglistpadding"));
+    var shoppingListFooterY = getObjYPos(document.getElementById("footer"));
+    var yScroll = 0 - shoppingListBaseY;
+
+
+    function setShoppingListPadding() {
+        if (document.getElementById("shoppinglistbottomy") == null) {return;}
+
+        var tempYScroll = getScrollXY()[1] - shoppingListBaseY;
+        if (tempYScroll < 0) {tempYScroll = Math.floor(tempYScroll);} else {tempYScroll = Math.ceil(tempYScroll);}
+
+        var shoppingListBottomY = getObjYPos(document.getElementById("shoppinglistbottomy"));
+        var shoppingListTopY = getObjYPos(document.getElementById("shoppinglisttopy"));
+
+        if (tempYScroll != yScroll) {
+            var tempScroll = (tempYScroll - yScroll) / 8;
+
+            if (tempScroll < 0) {yScroll += Math.floor(tempScroll);} else {yScroll += Math.ceil(tempScroll);}
+
+            if (yScroll < -40) {
+                document.getElementById("shoppinglistpadding").innerHTML = "<div style=\"height: 0px; line-height: 0px;\"></div>";
+
+            } else if (((yScroll + 50) + shoppingListBaseY + (shoppingListBottomY - shoppingListTopY)) > (shoppingListFooterY - 20)) {
+                var yHeight = (shoppingListFooterY - 20) - (shoppingListBottomY - shoppingListTopY) - shoppingListBaseY;
+                document.getElementById("shoppinglistpadding").innerHTML = "<div style=\"height: " + yHeight + "px; line-height: " + yHeight + "px;\">&nbsp;</div>";
+
+            } else {
+                document.getElementById("shoppinglistpadding").innerHTML = "<div style=\"height: " + (yScroll + 50) + "px; line-height: " + (yScroll + 50) + "px;\">&nbsp;</div>";
+            }
+        }
+
+        setTimeout("setShoppingListPadding()", 10);
+    }
+
+    setShoppingListPadding();
+</script>
+
+
+
+    <script type="text/javascript">
+
+        var _gaq = _gaq || [];
+        _gaq.push(
+                ['_setAccount', 'UA-31031425-4'],
+                ['_trackPageview'],
+            ['aggregate._setAccount', 'UA-31031425-2'],
+                ['aggregate._trackPageview']
+                );
+
+        (function () {
+            var ga = document.createElement('script');
+            ga.type = 'text/javascript';
+            ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ga, s);
+        })();
+
+    </script>
+
+</body>
+</html>
