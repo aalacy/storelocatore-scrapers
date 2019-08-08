@@ -1,5 +1,4 @@
 import csv
-import re
 import time
 
 from geopy.geocoders import Nominatim
@@ -41,35 +40,45 @@ def write_output(data):
             writer.writerow(row)
 
 
-def parse_info(street_address, city_state_info):
+def parse_info(street_address, zip_code, country):
     geolocator = Nominatim(user_agent=USER_AGENT)
+
+    if country == "Canada":
+        from pypostalcode import PostalCodeDatabase
+
+        pcdb = PostalCodeDatabase()
+        pc = zip_code[:3]
+        try:
+            location = pcdb[pc]
+            city = location.city
+            state = location.province
+        except:
+            city = "<INACCESSIBLE>"
+            state = "<INACCESSIBLE>"
+    else:
+        import pgeocode
+
+        nomi = pgeocode.Nominatim("US")
+
+        try:
+            city = nomi.query_postal_code(zip_code).place_name
+            state = nomi.query_postal_code(zip_code).state_code
+        except:
+            city = "<INACCESSIBLE>"
+            state = "<INACCESSIBLE>"
 
     # Get long and lat
     try:
-        location = geolocator.geocode(f"{street_address}, {city_state_info}")
+        location = geolocator.geocode(f"{street_address}, {city}, {state}")
     except:
         location = None
 
     if location is not None:
-        location_info = location.raw["display_name"].split(",")
-
-        try:
-            city = location_info[-3]
-        except:
-            city = "<MISSING>"
-
-        try:
-            city = location_info[-5]
-        except:
-            city = "<MISSING>"
-
         longitude = location.longitude
         latitude = location.latitude
     else:
-        city = "<MISSING>"
-        state = "<MISSING>"
-        longitude = "<MISSING>"
-        latitude = "<MISSING>"
+        longitude = "<INACCESSIBLE>"
+        latitude = "<INACCESSIBLE>"
 
     return (city, state, longitude, latitude)
 
@@ -126,7 +135,7 @@ def fetch_data():
         else:
             zip_code = city_state_info[-5:]
 
-        city, state, longitude, latitude = parse_info(street_address, city_state_info)
+        city, state, longitude, latitude = parse_info(street_address, zip_code, country)
 
         # Hours not always present
         try:

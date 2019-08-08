@@ -1,12 +1,11 @@
 import csv
-import time
 
 from geopy.geocoders import Nominatim
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-COMPANY_URL = "https://drmarklynn.com/"
+COMPANY_URL = "http://carltoncards.com/"
 CHROME_DRIVER_PATH = "chromedriver"
 USER_AGENT = "SafeGraph"
 
@@ -40,56 +39,26 @@ def write_output(data):
             writer.writerow(row)
 
 
-def parse_info(item):
-    item = item.split("\n")
-    location_title = item[0]
-    address = item[1]
-    hours = "<MISSING>"
-    phone = item[3]
-    city = item[2].split(",")[0]
-    state = item[2].split(",")[1].strip().split(" ")[0]
-    zip_code = item[2].split(",")[1].strip().split(" ")[1]
-
-    return location_title, address, city, state, zip_code, phone, hours
-
-
-def get_long_lat(address, city, state):
+def parse_info(street_address, city, state):
     geolocator = Nominatim(user_agent=USER_AGENT)
+
+    # Get info
     try:
-        location = geolocator.geocode(f"{address}, {city}, {state}")
+        location = geolocator.geocode(f"{street_address}, {city}, {state}")
     except:
         location = None
 
     if location is not None:
-        return location.longitude, location.latitude
+        longitude = location.longitude
+        latitude = location.latitude
     else:
-        return "<MISSING>", "<MISSING>"
+        longitude = "<INACCESSIBLE>"
+        latitude = "<INACCESSIBLE>"
+
+    return longitude, latitude
 
 
 def fetch_data():
-    data = []
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = webdriver.Chrome(CHROME_DRIVER_PATH, options=options)
-    driver.get(COMPANY_URL)
-
-    # Fetch store urls from location menu
-    store_url = driver.find_elements_by_css_selector(
-        "ul.menu.fl-menu-horizontal.fl-toggle-arrows > li:nth-child(3) > a"
-    )[0].get_attribute("href")
-    driver.get(store_url)
-
-    # Loading
-    time.sleep(5)
-
-    # Get all listings
-    listings = [
-        address.text
-        for address in driver.find_elements_by_css_selector("div.address-text-wrap")
-    ]
-
     # store data
     locations_titles = []
     street_addresses = []
@@ -100,21 +69,49 @@ def fetch_data():
     hours = []
     longitude_list = []
     latitude_list = []
+    countries = []
+    data = []
 
-    for listing in listings:
-        location_title, address, city, state, zip_code, phone, hour = parse_info(
-            listing
-        )
-        longitude, latitude = get_long_lat(address, city, state)
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    driver = webdriver.Chrome(CHROME_DRIVER_PATH, options=options)
+    driver.get(COMPANY_URL)
+
+    # Fetch store urls from location menu
+    store_info_url = driver.find_elements_by_css_selector("div.store")
+
+    for store in store_info_url:
+        store = store.text.split("\n")
+        location_title = " ".join(store[:2])
+        street_address = store[2]
+        city = store[3].split(",")[0]
+        phone_number = store[4]
+        hour = " ".join(store[5:])
+
+        if len(store[3].split(",")) == 3:
+            state = store[3].split(",")[1]
+            zip_code = store[3].split(",")[2]
+            country = "Canada"
+        else:
+            state = store[3].split(",")[1].split(" ")[0]
+            zip_code = store[3].split(",")[1].split(" ")[1]
+            country = "US"
+
+        longitude, latitude = parse_info(street_address, city, state)
+
+        # Store information
         locations_titles.append(location_title)
-        street_addresses.append(address)
+        street_addresses.append(street_address)
         cities.append(city)
         states.append(state)
         zip_codes.append(zip_code)
-        phone_numbers.append(phone)
+        phone_numbers.append(phone_number)
         hours.append(hour)
         longitude_list.append(longitude)
         latitude_list.append(latitude)
+        countries.append(country)
 
     for (
         locations_title,
@@ -126,6 +123,7 @@ def fetch_data():
         latitude,
         longitude,
         hour,
+        country,
     ) in zip(
         locations_titles,
         street_addresses,
@@ -136,6 +134,7 @@ def fetch_data():
         latitude_list,
         longitude_list,
         hours,
+        countries,
     ):
         data.append(
             [
@@ -145,7 +144,7 @@ def fetch_data():
                 city,
                 state,
                 zipcode,
-                "US",
+                country,
                 "<MISSING>",
                 phone_number,
                 "<MISSING>",

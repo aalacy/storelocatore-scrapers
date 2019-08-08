@@ -50,6 +50,9 @@ def parse_info(street_address, city, state):
 
     geolocator = Nominatim(user_agent="")
 
+    # Only in Canada for now
+    country = "CA"
+
     # Get info
     try:
         location = geolocator.geocode(f"{street_address}, {city}, {state}")
@@ -59,11 +62,9 @@ def parse_info(street_address, city, state):
     if location is not None:
         longitude = location.longitude
         latitude = location.latitude
-        country = location.raw["display_name"].split(",")[-1]
     else:
-        longitude = "<MISSING>"
-        latitude = "<MISSING>"
-        country = "<MISSING>"
+        longitude = "<INACCESSIBLE>"
+        latitude = "<INACCESSIBLE>"
 
     return longitude, latitude, country
 

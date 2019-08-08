@@ -9,6 +9,7 @@ from selenium.webdriver.chrome.options import Options
 
 COMPANY_URL = "https://www.pridestaff.com"
 CHROME_DRIVER_PATH = "chromedriver"
+USER_AGENT = "SafeGraph"
 
 
 def write_output(data):
@@ -53,8 +54,8 @@ def parse_info(address):
         longitude = location.longitude
         latitude = location.latitude
     else:
-        longitude = "<MISSING>"
-        latitude = "<MISSING>"
+        longitude = "<INACCESSIBLE>"
+        latitude = "<INACCESSIBLE>"
 
     return longitude, latitude
 

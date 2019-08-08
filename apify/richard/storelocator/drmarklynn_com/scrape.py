@@ -1,13 +1,14 @@
 import csv
-import os
+import time
 
 from geopy.geocoders import Nominatim
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-COMPANY_URL = "https://www.pastosa.com/"
+COMPANY_URL = "https://drmarklynn.com/"
 CHROME_DRIVER_PATH = "chromedriver"
+USER_AGENT = "SafeGraph"
 
 
 def write_output(data):
@@ -39,64 +40,30 @@ def write_output(data):
             writer.writerow(row)
 
 
-def parse_address(driver):
-    addresses = [
-        address.text
-        for address in driver.find_elements_by_css_selector(
-            "div.locations-row__info-details.locations-row__info-details--address"
-        )
-    ]
-    street_address = []
-    city = []
-    state = []
-    zip = []
+def parse_info(item):
+    item = item.split("\n")
+    location_title = item[0]
+    address = item[1]
+    hours = "<MISSING>"
+    phone = item[3]
+    city = item[2].split(",")[0]
+    state = item[2].split(",")[1].strip().split(" ")[0]
+    zip_code = item[2].split(",")[1].strip().split(" ")[1]
 
-    for address in addresses:
-        address_split = address.split("\n")
-        street_address.append(address_split[0])
-        zip.append(address_split[1][-5:])
-        city.append(address_split[1][:-6].split(",")[0])
-        state.append(address_split[1][:-6].split(",")[1].strip())
-
-    return street_address, city, state, zip
-
-
-def parse_hours(driver):
-    hours_list = driver.find_elements_by_css_selector(
-        "div.col-xs-6.col-sm-12.col-lg-6.no-pad-right-xs.no-pad-right-lg"
-    )
-    hours_str = ""
-    for hour in hours_list:
-        hours_str += hour.text
-    hours = [hour.lstrip() for hour in hours_str.replace("\n", " ").split("Hours")[1:]]
-    return hours
-
-
-def parse_phone(driver):
-    phone = []
-    phone_list = driver.find_elements_by_css_selector(
-        "div.col-xs-6.col-sm-12.col-lg-6.no-pad-left-xs.no-pad-left-lg"
-    )
-    phone_str = ""
-    for phone in phone_list:
-        phone_str += phone.text
-    phone = [
-        phone.lstrip() for phone in phone_str.replace("\n", " ").split("Phone")[1:]
-    ]
-    return phone
+    return location_title, address, city, state, zip_code, phone, hours
 
 
 def get_long_lat(address, city, state):
-    geolocator = Nominatim(user_agent="specify_your_app_name_here")
+    geolocator = Nominatim(user_agent=USER_AGENT)
     try:
         location = geolocator.geocode(f"{address}, {city}, {state}")
     except:
-        location = ""
+        location = None
 
     if location is not None:
         return location.longitude, location.latitude
     else:
-        return "<MISSING>", "<MISSING>"
+        return "<INACCESSIBLE>", "<INACCESSIBLE>"
 
 
 def fetch_data():
@@ -110,39 +77,48 @@ def fetch_data():
 
     # Fetch store urls from location menu
     store_url = driver.find_elements_by_css_selector(
-        "ul.vnav.vnav--horizontal > li:nth-child(8) > a"
+        "ul.menu.fl-menu-horizontal.fl-toggle-arrows > li:nth-child(3) > a"
     )[0].get_attribute("href")
     driver.get(store_url)
 
-    # Fetch address/phone elements
-    locations_titles = [
-        titles.text
-        for titles in driver.find_elements_by_css_selector("h2.locations-row__title")
-    ]
-    locations_subtitles = [
-        subtitle.text
-        for subtitle in driver.find_elements_by_css_selector(
-            "p.locations-row__subtitle"
-        )
-    ]
-    street_addresses, cities, states, zip_codes = parse_address(driver)
-    hours = parse_hours(driver)
-    phone_numbers = parse_phone(driver)
+    # Loading
+    time.sleep(5)
 
-    # Get longitude and latitude
+    # Get all listings
+    listings = [
+        address.text
+        for address in driver.find_elements_by_css_selector("div.address-text-wrap")
+    ]
+
+    # store data
+    locations_titles = []
+    street_addresses = []
+    cities = []
+    states = []
+    zip_codes = []
+    phone_numbers = []
+    hours = []
     longitude_list = []
     latitude_list = []
-    for street_address, city, state in zip(street_addresses, cities, states):
-        longitude, latitude = get_long_lat(street_address, city, state)
+
+    for listing in listings:
+        location_title, address, city, state, zip_code, phone, hour = parse_info(
+            listing
+        )
+        longitude, latitude = get_long_lat(address, city, state)
+        locations_titles.append(location_title)
+        street_addresses.append(address)
+        cities.append(city)
+        states.append(state)
+        zip_codes.append(zip_code)
+        phone_numbers.append(phone)
+        hours.append(hour)
         longitude_list.append(longitude)
         latitude_list.append(latitude)
 
-    data = []
     for (
         locations_title,
-        locations_subtitle,
         street_address,
-        hour,
         city,
         state,
         zipcode,
@@ -152,9 +128,7 @@ def fetch_data():
         hour,
     ) in zip(
         locations_titles,
-        locations_subtitles,
         street_addresses,
-        hours,
         cities,
         states,
         zip_codes,
@@ -166,11 +140,11 @@ def fetch_data():
         data.append(
             [
                 COMPANY_URL,
-                locations_title + " " + locations_subtitle,
+                locations_title,
                 street_address,
                 city,
                 state,
-                zip,
+                zipcode,
                 "US",
                 "<MISSING>",
                 phone_number,

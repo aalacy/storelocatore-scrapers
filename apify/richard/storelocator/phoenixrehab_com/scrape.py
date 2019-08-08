@@ -7,7 +7,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-COMPANY_URL = "http://carltoncards.com/"
+COMPANY_URL = "https://www.phoenixrehab.com"
 CHROME_DRIVER_PATH = "chromedriver"
 USER_AGENT = "SafeGraph"
 
@@ -42,7 +42,17 @@ def write_output(data):
 
 
 def parse_info(street_address, city, state):
+    to_remove_list = re.findall(
+        "(Ste\s[a-zA-Z0-9]+)|(#[a-zA-Z0-9]+)|(Suite\s[a-zA-Z0-9]+)", street_address
+    )
+    if len(to_remove_list) > 0:
+        to_remove = "".join(to_remove_list[0])
+        street_address = street_address.replace(to_remove, "")
+
     geolocator = Nominatim(user_agent=USER_AGENT)
+
+    # Only in the USA for now
+    country = "US"
 
     # Get info
     try:
@@ -54,10 +64,10 @@ def parse_info(street_address, city, state):
         longitude = location.longitude
         latitude = location.latitude
     else:
-        longitude = "<MISSING>"
-        latitude = "<MISSING>"
+        longitude = "<INACCESSIBLE>"
+        latitude = "<INACCESSIBLE>"
 
-    return longitude, latitude
+    return longitude, latitude, country
 
 
 def fetch_data():
@@ -68,10 +78,10 @@ def fetch_data():
     states = []
     zip_codes = []
     phone_numbers = []
-    hours = []
     longitude_list = []
     latitude_list = []
     countries = []
+    hours = []
     data = []
 
     options = Options()
@@ -82,39 +92,72 @@ def fetch_data():
     driver.get(COMPANY_URL)
 
     # Fetch store urls from location menu
-    store_info_url = driver.find_elements_by_css_selector("div.store")
+    location_url = driver.find_element_by_css_selector(
+        "li.menu-item.menu-item-type-post_type.menu-item-object-page.menu-item-6426 > a"
+    ).get_attribute("href")
+    driver.get(location_url)
+    time.sleep(2)
 
-    for store in store_info_url:
-        store = store.text.split("\n")
-        location_title = " ".join(store[:2])
-        street_address = store[2]
-        city = store[3].split(",")[0]
-        phone_number = store[4]
-        hour = " ".join(store[5:])
+    # Get listings
+    listings = [
+        listing.text
+        for listing in driver.find_elements_by_css_selector(
+            "li.stockist-result.stockist-list-result"
+        )
+    ]
+    listing_urls = [
+        url.get_attribute("href")
+        for url in driver.find_elements_by_css_selector(
+            "div.stockist-result-website > a"
+        )
+    ]
 
-        if len(store[3].split(",")) == 3:
-            state = store[3].split(",")[1]
-            zip_code = store[3].split(",")[2]
-            country = "Canada"
-        else:
-            state = store[3].split(",")[1].split(" ")[0]
-            zip_code = store[3].split(",")[1].split(" ")[1]
-            country = "US"
+    for listing in listings:
+        listing = [
+            listing
+            for listing in listing.split("\n")
+            if listing
+            not in [
+                "Physical Therapy",
+                "Occupational Health",
+                "Athletic Training",
+                "VIEW LOCATION PAGE",
+                "Occupational Therapy",
+                "Athletic Training",
+                "Massage Therapy",
+                "Pilates",
+                "Chiropractic",
+            ]
+        ]
+        locations_title = listing[0]
+        phone_number = listing[-1]
+        street_address = " ".join(listing[1:-2])
+        city = listing[-2].split(",")[0]
+        state = listing[-2].split(",")[1].strip().split(" ")[0]
+        zip_code = listing[-2].split(",")[1].strip().split(" ")[1]
+        longitude, latitude, country = parse_info(
+            street_address.split("Suite")[0], city, state
+        )
 
-        longitude, latitude = parse_info(street_address, city, state)
-
-        # Store information
-        locations_titles.append(location_title)
+        locations_titles.append(locations_title)
         street_addresses.append(street_address)
+        phone_numbers.append(phone_number)
         cities.append(city)
         states.append(state)
         zip_codes.append(zip_code)
-        phone_numbers.append(phone_number)
-        hours.append(hour)
         longitude_list.append(longitude)
         latitude_list.append(latitude)
         countries.append(country)
 
+    # Get hours
+    for url in listing_urls:
+        driver.get(url)
+        time.sleep(0.5)
+        hours.append(
+            driver.find_element_by_class_name("col-md-7.pr-0.border-line-left").text
+        )
+
+    # Store data
     for (
         locations_title,
         street_address,
