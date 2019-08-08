@@ -31,7 +31,7 @@ def fetch_data():
     #Get site
     driver.get('http://www.goldendelirestaurant.com/locations/')
     time.sleep(6)
-    # Fetch stores location name and links
+    # Fetch stores
     hours = driver.find_elements_by_class_name("g1-list--empty")
     hours_of_operation=[hours[i].text for i in range(0,len(hours))]
     street = driver.find_elements_by_tag_name("h2")
