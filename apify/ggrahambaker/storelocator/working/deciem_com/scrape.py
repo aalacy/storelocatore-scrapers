@@ -41,7 +41,6 @@ def addy_extractor_canada(src):
     arr = src.split(',')
     city = arr[0]
     prov_zip = arr[1].strip().split(' ')
-    print(prov_zip)
     if len(prov_zip) == 4:
         state = prov_zip[0] + ' ' + prov_zip[1]
         zip_code = prov_zip[2] + ' ' + prov_zip[3]
