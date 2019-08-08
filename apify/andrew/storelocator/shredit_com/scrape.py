@@ -32,7 +32,8 @@ def clean(string, value):
 
 def fetch_data():
     data = []
-    driver.get('https://www.shredit.com/en-us/service-locations?search-location=')
+    driver.get('https://www.shredit.com/en-us/service-locations')
+    driver.refresh()
     WebDriverWait(driver, 60).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, "li[id*='branch']"))
     )
