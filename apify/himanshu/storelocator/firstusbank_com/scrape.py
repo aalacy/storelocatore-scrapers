@@ -18,28 +18,35 @@ def write_output(data):
 def fetch_data():
     header = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
     return_main_object = []
-    base_url = "http://williejewells.com/"
-    r = requests.get(base_url+'order-online-locations/',headers = header)
+    base_url = "https://firstusbank.com/"
+    location_url = base_url+'About/Locations'
+    r = requests.get(location_url,headers = header)
     soup = BeautifulSoup(r.text,"lxml")
-    db =  soup.find_all('div',{'class':'location-tile'})
-    for idx, val in enumerate(db):
+    temp = soup.find_all('div',{'class':'location'})
+    for target_list in temp:
         locator_domain = base_url
-        location_name = val.find('h2').text
-        street_address = val.find('address').text.split(',')[0]
-        city = val.find('address').text.split(',')[1].strip()
-        state = val.find('address').text.split(',')[2].strip().split(' ')[0]
-        zip = val.find('address').text.split(',')[2].strip().split(' ')[1]
-        store_number = '<MISSING>'
-        if val.find('p').find('a') != None:
-            phone = val.find('p').find('a').text.replace('Phone:','').strip()
+        location_name = target_list.find('h5',{'class':'location-title'}).text
+        ck = target_list.find('address').text.strip().split('\n')
+        
+        street_address = ck[0].strip()
+        city = ck[1].strip().split(',')[0]
+        state = ck[1].strip().split(',')[1].strip().split(' ')[0]
+        zip = ck[1].strip().split(',')[1].strip().split(' ')[1]
+        
+        if len(ck) == 3:
+            phone = ck[2].strip()
         else:
             phone = '<MISSING>'
-        country_code = 'USA'        
-        location_type = 'williejewells'
+        
+        country_code ='US'
+        store_number = '<MISSING>'
+
+        location_type = 'firstusbank'
         latitude = '<MISSING>'
         longitude = '<MISSING>'
-        hours_of_operation = '<MISSING>'
-        
+        hj = soup.find('div',{'id':'LocationsHeader'}).find_all('p',{'class':'header-item'})
+        hours_of_operation = hj[0].text + ',' +hj[1].text
+
         store=[]
         store.append(locator_domain if locator_domain else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
@@ -53,12 +60,13 @@ def fetch_data():
         store.append(location_type if location_type else '<MISSING>')
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
-        
+    
         store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
         return_main_object.append(store)
-    return return_main_object
-    
-        
+
+    return return_main_object            
+
+
 def scrape():
     data = fetch_data()  
     

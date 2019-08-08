@@ -18,27 +18,41 @@ def write_output(data):
 def fetch_data():
     header = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
     return_main_object = []
-    base_url = "http://williejewells.com/"
-    r = requests.get(base_url+'order-online-locations/',headers = header)
+    base_url = "https://www.homestarbank.com/"
+    r = requests.get(base_url+'locations/',headers = header)
     soup = BeautifulSoup(r.text,"lxml")
-    db =  soup.find_all('div',{'class':'location-tile'})
-    for idx, val in enumerate(db):
+    vk  = soup.find_all('div',{'itemprop':'branchOf'})
+    for target_list in vk:
+        
         locator_domain = base_url
-        location_name = val.find('h2').text
-        street_address = val.find('address').text.split(',')[0]
-        city = val.find('address').text.split(',')[1].strip()
-        state = val.find('address').text.split(',')[2].strip().split(' ')[0]
-        zip = val.find('address').text.split(',')[2].strip().split(' ')[1]
+        location_name =  target_list.find('h3',{'itemprop':'name'}).text
+        street_address = target_list.find('address').find('span',{'itemprop':'streetAddress'}).text 
+
+        if  target_list.find('address').find('span',{'itemprop':'addressLocality'}) != None:
+
+            city = target_list.find('address').find('span',{'itemprop':'addressLocality'}).text
+        if target_list.find('address').find('span',{'itemprop':'addressRegion'}) != None:
+            state = target_list.find('address').find('span',{'itemprop':'addressRegion'}).text
+        if target_list.find('address').find('span',{'itemprop':'postalCode'}) != None:
+            zip = target_list.find('address').find('span',{'itemprop':'postalCode'}).text
         store_number = '<MISSING>'
-        if val.find('p').find('a') != None:
-            phone = val.find('p').find('a').text.replace('Phone:','').strip()
-        else:
-            phone = '<MISSING>'
-        country_code = 'USA'        
-        location_type = 'williejewells'
+        if target_list.find('span',{'itemprop':'telephone'}) != None:
+
+            phone = target_list.find('span',{'itemprop':'telephone'}).text 
+
+     
+        country_code ='US'
+
+        location_type = 'homestarbank'
         latitude = '<MISSING>'
         longitude = '<MISSING>'
-        hours_of_operation = '<MISSING>'
+      
+        gb = []
+        expression_list = target_list.find_all('div',{'class':'col-sm-6'})
+        for target_list in expression_list:
+            gb.append(' '.join(list(target_list.stripped_strings)))
+            
+        hours_of_operation = ''.join(gb)
         
         store=[]
         store.append(locator_domain if locator_domain else '<MISSING>')
@@ -55,10 +69,13 @@ def fetch_data():
         store.append(longitude if longitude else '<MISSING>')
         
         store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-        return_main_object.append(store)
-    return return_main_object
-    
         
+        
+        return_main_object.append(store)   
+    return return_main_object            
+            
+            
+       
 def scrape():
     data = fetch_data()  
     
