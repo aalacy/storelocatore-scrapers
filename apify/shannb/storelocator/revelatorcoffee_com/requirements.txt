@@ -1,0 +1,9 @@
+requests
+bs4
+xlsxwriter
+phonenumbers
+us
+zipcodes
+re
+csv
+
