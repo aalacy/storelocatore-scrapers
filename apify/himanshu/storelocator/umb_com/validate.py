@@ -15,3 +15,5 @@ except IndexError:
 
 debug = len(sys.argv) > 2 and sys.argv[2] == "DEBUG"
 sgvalidator.validate(data_location, debug=debug)
+
+

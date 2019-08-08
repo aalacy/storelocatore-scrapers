@@ -41,7 +41,7 @@ def fetch_data():
     phone = base.find('span', attrs={'id': 'phone-desktop'}).text.encode('utf-8').strip()
     location_type = location_name[:location_name.rfind(',')].strip()
     hours_of_operation = base.find('ul', attrs={'style': 'list-style:none; font-size:14px; padding-left:15px;'}).get_text(separator=u' ').replace("\n"," ").replace("  "," ").encode('utf-8').strip()
-    re.sub(' +', ' ', hours_of_operation)
+    hours_of_operation = re.sub(' +', ' ', hours_of_operation)
     link = base.find('iframe')['src']
 
     req = requests.get(link, headers=headers)

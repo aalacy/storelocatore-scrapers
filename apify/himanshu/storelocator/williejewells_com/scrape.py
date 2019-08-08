@@ -3,18 +3,18 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-​
-​
+
+
 def write_output(data):
-    with open('williejewells.csv', mode='w') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-​
+
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
-​
+
 def fetch_data():
     header = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
     return_main_object = []
@@ -30,7 +30,10 @@ def fetch_data():
         state = val.find('address').text.split(',')[2].strip().split(' ')[0]
         zip = val.find('address').text.split(',')[2].strip().split(' ')[1]
         store_number = '<MISSING>'
-        phone = val.find('p').text.strip()
+        if val.find('p').find('a') != None:
+            phone = val.find('p').find('a').text.replace('Phone:','').strip()
+        else:
+            phone = '<MISSING>'
         country_code = 'USA'        
         location_type = 'williejewells'
         latitude = '<MISSING>'
@@ -60,5 +63,5 @@ def scrape():
     data = fetch_data()  
     
     write_output(data)
-​
+
 scrape()
