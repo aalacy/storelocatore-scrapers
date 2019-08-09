@@ -51,7 +51,7 @@ def fetch_data():
         street_address.append(tagged['AddressNumber']+" "+tagged['StreetName']+" "+tagged['StreetNamePostType'])
     for n in range(0,len(location_name)): 
         data.append([
-            'https://www.crayolaexperience.com',
+            'https://www.fridarestaurant.com',
             location_name[n],
             street_address[n],
             city[n],
