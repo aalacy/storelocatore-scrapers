@@ -42,21 +42,21 @@ class Scrape(base.Spider):
             address = result.get('streetaddress', '')
             parsed = usaddress.tag(address)[0]
             city = 'Bal Harbour' if 'Bal Harbour, FL' in address else parsed.get("PlaceName", '<MISSING>')
-            state = parsed['StateName'] 
-
+            state = parsed.get('StateName', '<MISSING>')
             zip_code = '<MISSING>'
             try:
                 zip_code = re.search(r' (\d{4,5}), US$', address).group(1)
             except:
                 zip_code = parsed.get('ZipCode', '<MISSING>')
+            country = 'US' if address.endswith('US') else parsed.get('CountryName', '<MISSING>')
             fixed_zip = '0{}'.format(zip_code) if len(zip_code) == 4 else zip_code
 
-            street = self.parse_street(address, city, state, zip_code)
+            street = self.parse_street(address, city, state, zip_code, country)
 
             i.add_value('city', city)
             i.add_value('state', state)
             i.add_value('zip', fixed_zip)
-            i.add_value('country_code', "US")
+            i.add_value('country_code', country)
             i.add_value('street_address', street)
             i.add_value('phone', result.get('phone','').strip())
             i.add_value('location_type', result.get('tags', '').strip())
@@ -65,9 +65,10 @@ class Scrape(base.Spider):
             i.add_value('store_number', result.get('id',''))
             yield i
 
-    def parse_street(self, address, city, state, zip_code):
+    def parse_street(self, address, city, state, zip_code, country):
         street = address
-        if street.endswith(', US'): street = street[0:-1*len(', US')].strip()
+        if street.endswith(country): street = street[0:-1*len(country)].strip()
+        if street.endswith(','): street = street[0:-1].strip()
         if street.endswith(zip_code): street = street[0:-1*len(zip_code)].strip()
         if street.endswith(state): street = street[0:-1*len(state)].strip()
         if street.endswith(','): street = street[0:-1].strip()
