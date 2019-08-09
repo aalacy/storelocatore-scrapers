@@ -1,0 +1,70 @@
+import requests
+from bs4 import BeautifulSoup
+import csv
+import re
+
+def write_output(data):
+	with open('data.csv', mode='w') as output_file:
+		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
+		# Header
+		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+		# Body
+		for row in data:
+			writer.writerow(row)
+
+def fetch_data():
+	
+	base_link = "https://rd-kitchen.com/"
+
+	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
+	headers = {'User-Agent' : user_agent}
+
+	req = requests.get(base_link, headers=headers)
+
+	try:
+		base = BeautifulSoup(req.text,"lxml")
+	except (BaseException):
+		print ('[!] Error Occured. ')
+		print ('[?] Check whether system is Online.')
+
+	items = base.find('div', attrs={'id': 'locations'}).ul
+	items = items.findAll('li')
+	data = []
+	for item in items:
+		link = "https://rd-kitchen.com" + item.a['href']
+
+		req = requests.get(link, headers=headers)
+
+		try:
+			base = BeautifulSoup(req.text,"lxml")
+		except (BaseException):
+			print ('[!] Error Occured. ')
+			print ('[?] Check whether system is Online.')
+
+	
+		locator_domain = "rd-kitchen.com"
+		location_name = base.find('h3').text.replace("Kitchen","Kitchen ").strip()
+		street_address = base.find('span', attrs={'itemprop': 'streetAddress'}).text
+		city = base.find('span', attrs={'itemprop': 'addressLocality'}).text
+		state = base.find('span', attrs={'itemprop': 'addressRegion'}).text
+		zip_code = base.find('span', attrs={'itemprop': 'postalCode'}).text
+		country_code = "US"
+		store_number = "<MISSING>"
+		phone = base.find('a', attrs={'class': 'phone'}).text
+		menu_item = base.find('div', attrs={'class': 'contact'})
+		location_type = menu_item.find('ul', attrs={'class': 'menus'}).get_text(separator=u' ').replace("\n"," ").replace("  "," ").strip()
+		hours_of_operation = base.find('div', attrs={'class': 'hours'}).get_text(separator=u' ').replace("\n"," ").replace("  "," ").strip()
+		hours_of_operation = re.sub(' +', ' ', hours_of_operation)
+		latitude = "<MISSING>"
+		longitude = "<MISSING>"
+
+		data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+
+	return data
+
+def scrape():
+	data = fetch_data()
+	write_output(data)
+
+scrape()
