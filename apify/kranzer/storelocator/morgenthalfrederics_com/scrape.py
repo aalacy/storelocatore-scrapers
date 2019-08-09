@@ -3,6 +3,7 @@ import re
 import base
 import requests, json
 from urllib.parse import urljoin
+import usaddress
 
 class Scrape(base.Spider):
 
@@ -38,20 +39,27 @@ class Scrape(base.Spider):
             if working:
                 i.add_value('hours_of_operation', working)
             i.add_value('location_name', result.get('name','').strip())
-
+            st = result.get('streetaddress', '')
+            addr = usaddress.parse(st)
+            city = ' '.join([city[0] for city in addr if city[1] == "PlaceName"]).replace(',','')
             try:
-                cszc = re.match(r'(?P<address>.+),(?P<city>.+?),\s(?P<state>[A-Z][A-Z])\s(?P<zip>\d+)?', result.get('streetaddress','')).groupdict()
-                if cszc:
-                    i.add_value('street_address', cszc.get('address'))
-                    i.add_value('city', cszc.get('city'))
-                    i.add_value('state', cszc.get('state'))
-                    zip = cszc.get('zip')
-                    if len(zip) == 4:
-                        i.add_value('zip', '0'+zip)
-                    else:
-                        i.add_value('zip', zip)
+                state = [state[0] for state in addr if state[1] == "StateName"][0].replace(',','')
+                if state == 'US':
+                    state = ''
             except:
-                pass
+                state = ''
+            try:
+                zip = [zip[0] for zip in addr if zip[1] == "ZipCode"][0].replace(',','')
+                if len(zip) == 4:
+                    zip = '0'+zip
+            except:
+                zip = ''
+            street = st.replace(', {}, {} {}, US'.format(city, state, zip), '')
+            i.add_value('city', city)
+            i.add_value('state', state)
+            i.add_value('zip', zip)
+            i.add_value('country_code', "US")
+            i.add_value('street_address', street)
             i.add_value('phone', result.get('phone','').strip())
             i.add_value('country_code', 'US')
             i.add_value('location_type', result.get('tags', '').strip())
