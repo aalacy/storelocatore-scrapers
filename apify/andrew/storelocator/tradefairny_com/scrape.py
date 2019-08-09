@@ -1,5 +1,6 @@
 import csv
 import re
+import usaddress
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -36,9 +37,17 @@ def parse_address(address):
             item.strip() for item in address.split(',')
         ]
     except:
+        city = []
         state = re.findall(r'[A-Z]{2}', address)[0]
-        street_address, city = [INACCESSIBLE]*2
-    return street_address, city, state, zipcode
+        for value, label in usaddress.parse(address):
+            if label == 'PlaceName':
+                city.append(value)
+        city = " ".join(city)
+        street_address = address.replace(state, '').replace(city, '')
+    return [
+        item.rstrip(',')
+        for item in [street_address, city, state, zipcode]
+    ]
 
 def fetch_data():
     data = []
