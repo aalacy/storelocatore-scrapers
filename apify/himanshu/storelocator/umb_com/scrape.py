@@ -21,9 +21,12 @@ def fetch_data():
     base_url = "https://locations.umb.com/"
     r = requests.get(base_url,headers = header)
     soup = BeautifulSoup(r.text,"lxml")
-    href = soup.find_all('div',{'class':'map-list-item'})
+    href = soup.find('div',{'class':'region-map-list'}).find_all('div',{'class':'map-list-item'})
     for target_list in href:
         href  = target_list.find('a')['href']
+
+      
+
         
         vr = requests.get(href,headers = header)
         soup = BeautifulSoup(vr.text,"lxml")
@@ -31,7 +34,10 @@ def fetch_data():
         
         
         for target_list in vk:
+    
+    
             link = target_list.find('a',{'class':'ga-link'})['href']
+           
 
             vr = requests.get(link,headers = header)
             soup = BeautifulSoup(vr.text,"lxml")
@@ -48,7 +54,7 @@ def fetch_data():
             store_number = '<MISSING>'
             phone = soup.find('div',{'class':'map-list-links'}).find('a',{'class':'phone'}).text
             country_code = 'US'
-            store_number = '<MISSING>'
+            
             location_type = 'umb'
             latitude = '<MISSING>'
             longitude = '<MISSING>'
