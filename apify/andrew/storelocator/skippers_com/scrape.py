@@ -1,5 +1,6 @@
 import csv
 import re
+import usaddress
 
 from constants import US_STATE_ABBREV
 
@@ -30,7 +31,9 @@ def write_output(data):
             writer.writerow(row)
 
 def remove_non_ascii_characters(string):
-    return ''.join([i if ord(i) < 128 else '' for i in string]).strip()
+    if not len(string):
+        return MISSING
+    return ''.join([i if ord(i) < 128 else '' for i in string]).strip().rstrip(',')
 
 def extract_inner_text(container, selector):
     return remove_non_ascii_characters(
@@ -41,17 +44,37 @@ def parse_google_maps_url(url):
     return re.findall(r'@(-?\d*.{1}\d*,-?\d*.{1}\d*)', url)[0].split(',')
 
 def parse_address(address, state):
+    city = ""
+    _address = address
     state_abbrev = US_STATE_ABBREV[state]
     address = address.replace(state_abbrev, '').replace(state, '')
     try:
         zipcode = re.findall(r' \d{5,}', address)[0]
     except:
+        # Some addresses have incomplete zipcodes with only 4 digits
+        address = re.sub(r' \d{4}','', address)
         zipcode = INACCESSIBLE
-    address = address.replace(zipcode, '').strip()
-    if address.count(',') >= 2:
-        street_address, city = address.split(',')[:2]
+    address = re.sub(r'(Hours .*)', '', address)
+    address = address.replace(zipcode, '')
+    address = ' '.join(address.split())
+    address = address.rstrip('.').rstrip(',').strip()
+    if address[-1] == ',':
+        address = address[:-1]
+    if len(address.split(',')) == 2:
+        street_address, city = address.split(',')
     else:
-        street_address, city = [INACCESSIBLE]*2
+        _city = []
+        for value, label in usaddress.parse(address):
+            if label == 'PlaceName':
+                _city.append(value)
+        city = " ".join(_city)
+    if not len(city):
+        city = address.split()[-1]
+    street_address = address.replace(city, '')
+    try:
+        street_address = street_address[:street_address.index(',')]
+    except ValueError:
+        pass
     return [
         remove_non_ascii_characters(item)
         for item in [street_address, city, zipcode]
