@@ -61,62 +61,80 @@ def fetch_data():
 			print ('[?] Check whether system is Online.')
 		
 		location_names = loc_base.findAll('div', attrs={'class': 'loc_link'})
-
+		locator_domain = "espressoroyalecoffee.com"
+		index = 0
 		for loc in location_names:
 			link = loc.a['href']
-			print ('Getting link: ' + link)
-			req = requests.get(link, headers=headers)
+			if link == "https://espressoroyalecoffee.com/":
+				location_name = loc_base.findAll('div', attrs={'class': 'location_address'})[index].text.strip()
+				print (location_name)
+				street_address = loc_base.findAll('div', attrs={'class': 'loc_street'})[index].text
+				raw_data = loc_base.findAll('div', attrs={'class': 'loc_city'})[index].text
+				city = raw_data[:raw_data.find(',')].strip()
+				state = raw_data[raw_data.find(',')+1:raw_data.rfind(' ')].strip()
+				zip_code = raw_data[raw_data.rfind(' ')+1:].strip()
+				country_code = "US"
+				store_number = "<MISSING>"
+				raw_phone = "<MISSING>"
+				phone = "<MISSING>"
+				location_type = "<MISSING>"
+				latitude = "<MISSING>"
+				longitude = "<MISSING>"
+				hours_of_operation = "<MISSING>"
+			else:
+				print ('Getting link: ' + link)
+				req = requests.get(link, headers=headers)
 
-			try:
-				new_base = BeautifulSoup(req.text,"lxml")
-			except (BaseException):
-				print ('[!] Error Occured. ')
-				print ('[?] Check whether system is Online.')
-
-			locator_domain = "espressoroyalecoffee.com"
-			heading = new_base.findAll('div', attrs={'class': 'row'})[1]
-			location_name = heading.find('h3').text
-			try:
-				street_address = new_base.find('div', attrs={'class': 'loc_street'}).text
-			except:
-				continue
-			raw_data = new_base.find('div', attrs={'class': 'loc_city'}).text
-			city = raw_data[:raw_data.find(',')].strip()
-			state = raw_data[raw_data.find(',')+1:raw_data.rfind(' ')].strip()
-			zip_code = raw_data[raw_data.rfind(' ')+1:].strip()
-			country_code = "US"
-			store_number = "<MISSING>"
-			raw_phone = new_base.find('div', attrs={'class': 'loc_phone'}).text
-			phone = re.findall("[[\d]{3}.[\d]{3}.[\d]{4}", raw_phone)[0]
-			location_type = "<MISSING>"
-			latitude = "<MISSING>"
-			longitude = "<MISSING>"
-			hours_of_operation = new_base.find('div', attrs={'class': 'loc_description'}).get_text(separator=u' ').replace("\n"," ").replace("\xa0","").strip()
-			hours_of_operation = re.sub(' +', ' ', hours_of_operation)
-
-			driver.get(link)
-			time.sleep(2)
-			try:
-				maps = driver.find_element_by_class_name('gm-style')
-				raw_gps = maps.find_element_by_tag_name('a').get_attribute('href')
-
-				latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
-				longitude = raw_gps[raw_gps.find(",")+1:raw_gps.find("&")].strip()
-			except:
 				try:
-					time.sleep(2)
+					new_base = BeautifulSoup(req.text,"lxml")
+				except (BaseException):
+					print ('[!] Error Occured. ')
+					print ('[?] Check whether system is Online.')
+
+				
+				heading = new_base.findAll('div', attrs={'class': 'row'})[1]
+				location_name = heading.find('h3').text
+				try:
+					street_address = new_base.find('div', attrs={'class': 'loc_street'}).text
+				except:
+					continue
+				raw_data = new_base.find('div', attrs={'class': 'loc_city'}).text
+				city = raw_data[:raw_data.find(',')].strip()
+				state = raw_data[raw_data.find(',')+1:raw_data.rfind(' ')].strip()
+				zip_code = raw_data[raw_data.rfind(' ')+1:].strip()
+				country_code = "US"
+				store_number = "<MISSING>"
+				raw_phone = new_base.find('div', attrs={'class': 'loc_phone'}).text
+				phone = re.findall("[[\d]{3}.[\d]{3}.[\d]{4}", raw_phone)[0]
+				location_type = "<MISSING>"
+				latitude = "<MISSING>"
+				longitude = "<MISSING>"
+				hours_of_operation = new_base.find('div', attrs={'class': 'loc_description'}).get_text(separator=u' ').replace("\n"," ").replace("\xa0","").strip()
+				hours_of_operation = re.sub(' +', ' ', hours_of_operation)
+
+				driver.get(link)
+				time.sleep(2)
+				try:
 					maps = driver.find_element_by_class_name('gm-style')
 					raw_gps = maps.find_element_by_tag_name('a').get_attribute('href')
 
 					latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
 					longitude = raw_gps[raw_gps.find(",")+1:raw_gps.find("&")].strip()
 				except:
-					latitude = "<INACCESSIBLE>"
-					longitude = "<INACCESSIBLE>"
+					try:
+						time.sleep(2)
+						maps = driver.find_element_by_class_name('gm-style')
+						raw_gps = maps.find_element_by_tag_name('a').get_attribute('href')
+
+						latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
+						longitude = raw_gps[raw_gps.find(",")+1:raw_gps.find("&")].strip()
+					except:
+						latitude = "<INACCESSIBLE>"
+						longitude = "<INACCESSIBLE>"
 
 			data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 			print ('Got page details')
-
+			index = index + 1
 	return data
 
 def scrape():
