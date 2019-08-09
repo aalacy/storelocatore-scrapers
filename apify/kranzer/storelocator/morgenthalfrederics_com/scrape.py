@@ -39,39 +39,42 @@ class Scrape(base.Spider):
             if working:
                 i.add_value('hours_of_operation', working)
             i.add_value('location_name', result.get('name','').strip())
-            st = result.get('streetaddress', '')
-            addr = usaddress.parse(st)
-            city = ' '.join([city[0] for city in addr if city[1] == "PlaceName"]).replace(',','')
+            address = result.get('streetaddress', '')
+            parsed = usaddress.tag(address)[0]
+            city = 'Bal Harbour' if 'Bal Harbour, FL' in address else parsed.get("PlaceName", '<MISSING>')
+            state = parsed['StateName'] 
+
+            zip_code = '<MISSING>'
             try:
-                state = [state[0] for state in addr if state[1] == "StateName"][0].replace(',','')
-                if state == 'US':
-                    state = ''
+                zip_code = re.search(r' (\d{4,5}), US$', address).group(1)
             except:
-                state = ''
-            zip_=""
-            try:
-                zip = [zip[0] for zip in addr if zip[1] == "ZipCode"][0].replace(',','')
-                if len(zip) == 4:
-                    zip_ = zip
-                    zip = '0'+zip
-            except:
-                zip = ''
-            if zip_:
-                street = st.replace(', {}, {} {}, US'.format(city, state, zip_), '')
-            else:
-                street = st.replace(', {}, {} {}, US'.format(city, state, zip), '')
+                zip_code = parsed.get('ZipCode', '<MISSING>')
+            fixed_zip = '0{}'.format(zip_code) if len(zip_code) == 4 else zip_code
+
+            street = self.parse_street(address, city, state, zip_code)
+
             i.add_value('city', city)
             i.add_value('state', state)
-            i.add_value('zip', zip)
+            i.add_value('zip', fixed_zip)
             i.add_value('country_code', "US")
             i.add_value('street_address', street)
             i.add_value('phone', result.get('phone','').strip())
-            i.add_value('country_code', 'US')
             i.add_value('location_type', result.get('tags', '').strip())
             i.add_value('latitude', result.get('loc_lat',''))
             i.add_value('longitude', result.get('loc_long',''))
             i.add_value('store_number', result.get('id',''))
             yield i
+
+    def parse_street(self, address, city, state, zip_code):
+        street = address
+        if street.endswith(', US'): street = street[0:-1*len(', US')].strip()
+        if street.endswith(zip_code): street = street[0:-1*len(zip_code)].strip()
+        if street.endswith(state): street = street[0:-1*len(state)].strip()
+        if street.endswith(','): street = street[0:-1].strip()
+        if street.endswith('Bal Harbour'): street = street[0:-1*len('Bal Harbour')].strip()
+        if street.endswith(city): street = street[0:-1*len(city)].strip()
+        if street.endswith(','): street = street[0:-1].strip()
+        return street
 
 if __name__ == '__main__':
     s = Scrape()
