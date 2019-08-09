@@ -48,13 +48,18 @@ class Scrape(base.Spider):
                     state = ''
             except:
                 state = ''
+            zip_=""
             try:
                 zip = [zip[0] for zip in addr if zip[1] == "ZipCode"][0].replace(',','')
                 if len(zip) == 4:
+                    zip_ = zip
                     zip = '0'+zip
             except:
                 zip = ''
-            street = st.replace(', {}, {} {}, US'.format(city, state, zip), '')
+            if zip_:
+                street = st.replace(', {}, {} {}, US'.format(city, state, zip_), '')
+            else:
+                street = st.replace(', {}, {} {}, US'.format(city, state, zip), '')
             i.add_value('city', city)
             i.add_value('state', state)
             i.add_value('zip', zip)
