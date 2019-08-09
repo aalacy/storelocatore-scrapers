@@ -3,6 +3,7 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re, time
+import usaddress
 
 def write_output(data):
     with open('data.csv', mode='wb') as output_file:
@@ -43,16 +44,11 @@ def fetch_data():
         lat,lon = parse_geo(stores[i].get_attribute('href'))
         latitude.append(lat)
         longitude.append(lon)
-        a=stores[i].text.split(".")
-        zipcode.append(re.findall("(\d{5})",stores[i].text)[0])
-        state.append(re.findall("([A-Z]{2})[,]?",stores[i].text)[0])
-        try:
-            street_address.append(a[0])
-            city.append(a[1].strip().split(",")[0])
-        except:
-            city.append('<INACCESSIBLE>')
-            street_address.append(stores[i].text.split(",")[0])
-    
+        tagged=usaddress.tag(stores[i].text)[0]
+        zipcode.append(tagged['ZipCode'])
+        state.append(tagged['StateName'])
+        city.append(tagged['PlaceName'])
+        street_address.append(tagged['AddressNumber']+" "+tagged['StreetName']+" "+tagged['StreetNamePostType'])
     for n in range(0,len(location_name)): 
         data.append([
             'https://www.fridarestaurant.com',
