@@ -1,6 +1,0 @@
-"locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
-"https://www.crayolaexperience.com","BEVERLY HILLS","236 S Beverly Dr","Beverly Hills","CA","90212","US","<MISSING>","(310) 278-7666","<MISSING>","34.0636633","-118.3991308","<INACCESSIBLE>"
-"https://www.crayolaexperience.com","WESTWOOD","10853 Lindbrook Dr Los Angeles, CA 90024","<INACCESSIBLE>","CA","10853","US","<MISSING>","(310) 209-0666","<MISSING>","34.0603511","-118.444835","<INACCESSIBLE>"
-"https://www.crayolaexperience.com","TORRANCE","10853 Lindbrook Dr Los Angeles","Torrance","CA","21438","US","<MISSING>","(310) 371-0666","<MISSING>","33.8339632","-118.3533789","<INACCESSIBLE>"
-"https://www.crayolaexperience.com","CERRITOS","21438 Hawthorne Blvd","Cerritos","CA","11169","US","<MISSING>","(562) 403-3666","<MISSING>","33.8657134","-118.0977669","<INACCESSIBLE>"
-"https://www.crayolaexperience.com","SHERMAN OAKS","11169 183rd St","Sherman Oaks CA","CA","15301","US","<MISSING>","(818) 501-9666","<MISSING>","34.1558946","-118.4676058","<INACCESSIBLE>"
