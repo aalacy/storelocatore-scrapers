@@ -75,8 +75,7 @@ def fetch_data():
 				zip_code = raw_data[raw_data.rfind(' ')+1:].strip()
 				country_code = "US"
 				store_number = "<MISSING>"
-				raw_phone = "<MISSING>"
-				phone = "<MISSING>"
+				phone = "217-351-9706"
 				location_type = "<MISSING>"
 				latitude = "<MISSING>"
 				longitude = "<MISSING>"
