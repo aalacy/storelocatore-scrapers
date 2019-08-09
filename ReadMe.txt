@@ -1,1 +1,0 @@
-To run this code Selenium will be required. As this website was dynamic.
