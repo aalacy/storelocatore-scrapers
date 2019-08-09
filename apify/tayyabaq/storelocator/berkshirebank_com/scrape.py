@@ -77,7 +77,7 @@ def fetch_data():
         driver.get('https://www.berkshirebank.com/About/Let-Us-Help/Locations')
     for n in range(0,len(location)): 
         data.append([
-            'https://www.barkanmethod.com/',
+            'https://www.berkshirebank.com/',
             location_name[n],
             street_address[n],
             city[n],
