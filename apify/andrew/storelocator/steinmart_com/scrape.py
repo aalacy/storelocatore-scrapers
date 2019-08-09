@@ -55,7 +55,7 @@ def fetch_data():
             zipcode = '0' + zipcode
         phone = address.get('phone')
         if not sum(c.isdigit() for c in phone) == 10:
-            continue
+            phone = INACCESSIBLE
         data.append([
             BASE_URL,
             store_data.get('name'),
