@@ -85,6 +85,10 @@ def fetch_data():
                 longit = coords[1]
             store_number = '<MISSING>'
 
+            phone_number = phone_number.replace('PITA', '7482')[:12]
+            if 'or' in phone_number:
+                phone_number = phone_number.split('or')[0]
+
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                           store_number, phone_number, location_type, lat, longit, hours]
             all_store_data.append(store_data)
