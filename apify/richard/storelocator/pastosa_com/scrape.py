@@ -1,6 +1,5 @@
 import csv
 
-from geopy.geocoders import Nominatim
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
@@ -84,19 +83,6 @@ def parse_phone(driver):
     return phone
 
 
-def get_long_lat(address, city, state):
-    geolocator = Nominatim(user_agent="specify_your_app_name_here")
-    try:
-        location = geolocator.geocode(f"{address}, {city}, {state}")
-    except:
-        location = ""
-
-    if location is not None:
-        return location.longitude, location.latitude
-    else:
-        return "<INACCESSIBLE>", "<INACCESSIBLE>"
-
-
 def fetch_data():
     data = []
     options = Options()
@@ -127,14 +113,6 @@ def fetch_data():
     hours = parse_hours(driver)
     phone_numbers = parse_phone(driver)
 
-    # Get longitude and latitude
-    longitude_list = []
-    latitude_list = []
-    for street_address, city, state in zip(street_addresses, cities, states):
-        longitude, latitude = get_long_lat(street_address, city, state)
-        longitude_list.append(longitude)
-        latitude_list.append(latitude)
-
     data = []
     for (
         locations_title,
@@ -145,8 +123,6 @@ def fetch_data():
         state,
         zipcode,
         phone_number,
-        latitude,
-        longitude,
     ) in zip(
         locations_titles,
         locations_subtitles,
@@ -156,8 +132,6 @@ def fetch_data():
         states,
         zip_codes,
         phone_numbers,
-        latitude_list,
-        longitude_list,
     ):
         data.append(
             [
@@ -171,8 +145,8 @@ def fetch_data():
                 "<MISSING>",
                 phone_number,
                 "<MISSING>",
-                latitude,
-                longitude,
+                "<MISSING>",
+                "<MISSING>",
                 hour,
             ]
         )

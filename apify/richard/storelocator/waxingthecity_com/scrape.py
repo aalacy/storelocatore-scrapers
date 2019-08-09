@@ -1,14 +1,12 @@
 import csv
-import time
+import re
 
-from geopy.geocoders import Nominatim
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
 COMPANY_URL = "https://www.waxingthecity.com/"
 CHROME_DRIVER_PATH = "chromedriver"
-USER_AGENT = "SafeGraph"
 
 
 def write_output(data):
@@ -56,40 +54,7 @@ def parse_info(item):
     return location_title, address, city, state, zip_code, phone, hours
 
 
-def get_long_lat(address, city, state):
-    geolocator = Nominatim(user_agent=USER_AGENT)
-    try:
-        location = geolocator.geocode(f"{address}, {city}, {state}")
-    except:
-        location = None
-
-    if location is not None:
-        return location.longitude, location.latitude
-    else:
-        return "<MISSING>", "<MISSING>"
-
-
 def fetch_data():
-    data = []
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = webdriver.Chrome(CHROME_DRIVER_PATH, options=options)
-    driver.get(COMPANY_URL)
-
-    # Fetch store urls from location menu
-    store_url = driver.find_elements_by_css_selector(
-        "ul.nav.navbar-nav.navbar-right > li:nth-child(2) > a"
-    )[0].get_attribute("href")
-    driver.get(store_url)
-
-    # Fetch address/phone elements
-    listings = [
-        address.text
-        for address in driver.find_elements_by_css_selector("div.col-xs-10")
-    ]
-
     # store data
     locations_titles = []
     street_addresses = []
@@ -100,21 +65,74 @@ def fetch_data():
     hours = []
     longitude_list = []
     latitude_list = []
+    data = []
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    driver = webdriver.Chrome(CHROME_DRIVER_PATH, options=options)
+    driver.get(COMPANY_URL)
 
-    for listing in listings:
-        location_title, address, city, state, zip_code, phone, hour = parse_info(
-            listing
-        )
-        longitude, latitude = get_long_lat(address, city, state)
-        locations_titles.append(location_title)
-        street_addresses.append(address)
-        cities.append(city)
-        states.append(state)
-        zip_codes.append(zip_code)
-        phone_numbers.append(phone)
-        hours.append(hour)
-        longitude_list.append(longitude)
-        latitude_list.append(latitude)
+    # Fetch store urls from location menu
+    store_url = "https://www.waxingthecity.com/locations/index.html"
+    driver.get(store_url)
+
+    # listings = driver.find_elements_by_css_selector('div.col-sm-4 > a')
+    listing_urls = [
+        listing.get_attribute("href")
+        for listing in driver.find_elements_by_css_selector("div.col-sm-8 > p > a")
+    ]
+
+    # Go through each listing and append data
+    for listing_url in listing_urls:
+        try:
+            driver.get(listing_url)
+            location_title = driver.find_element_by_css_selector(
+                "h1.no-margin.ng-binding"
+            ).text
+            street_address = driver.find_element_by_css_selector(
+                "div.no-bold.line-height-bump > p"
+            ).text
+            city = driver.find_element_by_css_selector(
+                "div.no-bold.line-height-bump > span:nth-of-type(1)"
+            ).text
+            state = driver.find_element_by_css_selector(
+                "div.no-bold.line-height-bump > span:nth-of-type(2)"
+            ).text
+            zip_code = driver.find_element_by_css_selector(
+                "div.no-bold.line-height-bump > span:nth-of-type(3)"
+            ).text
+            phone_number = driver.find_element_by_css_selector(
+                "div.hidden-xs.tel-number.ng-binding"
+            ).text
+            hour = driver.find_element_by_css_selector(
+                "div.hours-card.ng-isolate-scope > div.ng-scope"
+            ).text
+            long_lat = driver.find_element_by_css_selector(
+                "div.map-container.push-bottom.ng-isolate-scope > img"
+            ).get_attribute("data-at2x")
+            long_lat_list = (
+                re.search(
+                    "[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)",
+                    long_lat,
+                )
+                .group(0)
+                .split(",")
+            )
+            longitude = long_lat_list[0]
+            latitude = long_lat_list[1]
+
+            locations_titles.append(location_title)
+            street_addresses.append(street_address)
+            cities.append(city)
+            states.append(state)
+            zip_codes.append(zip_code)
+            phone_numbers.append(phone_number)
+            hours.append(hour)
+            longitude_list.append(longitude)
+            latitude_list.append(latitude)
+        except:
+            pass
 
     for (
         locations_title,

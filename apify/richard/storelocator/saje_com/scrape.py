@@ -9,7 +9,6 @@ from selenium.webdriver.chrome.options import Options
 
 COMPANY_URL = "https://www.saje.com"
 CHROME_DRIVER_PATH = "chromedriver"
-USER_AGENT = "SafeGraph"
 
 
 def write_output(data):
@@ -41,31 +40,8 @@ def write_output(data):
             writer.writerow(row)
 
 
-def parse_info(street_address, city, state):
-    geolocator = Nominatim(user_agent=USER_AGENT)
-
-    # Get info
-    try:
-        location = geolocator.geocode(f"{street_address}, {city}, {state}")
-    except:
-        location = None
-
-    if location is not None:
-        longitude = location.longitude
-        latitude = location.latitude
-        country = location.raw["display_name"].split(",")[-1]
-    else:
-        longitude = "<MISSING>"
-        latitude = "<MISSING>"
-        country = "<MISSING>"
-
-    return longitude, latitude, country
-
-
 def fetch_data():
     # store data
-    longitude_list = []
-    latitude_list = []
     countries = []
     hours = []
     data = []
@@ -122,11 +98,11 @@ def fetch_data():
         )
     ]
 
-    for street_address, city, state in zip(street_addresses, cities, states):
-        longitude, latitude, country = parse_info(street_address, city, state)
-        longitude_list.append(longitude)
-        latitude_list.append(latitude)
-        countries.append(country)
+    for zip_code in zip_codes:
+        if re.match("[A-Z][0-9][A-Z]\s[0-9][A-Z][0-9]", zip_code):
+            countries.append("CA")
+        else:
+            countries.append("US")
 
     # This is needed to get hours
     store_location_urls = [
@@ -151,8 +127,6 @@ def fetch_data():
         state,
         zipcode,
         phone_number,
-        latitude,
-        longitude,
         hour,
         country,
     ) in zip(
@@ -162,8 +136,6 @@ def fetch_data():
         states,
         zip_codes,
         phone_numbers,
-        latitude_list,
-        longitude_list,
         hours,
         countries,
     ):
@@ -179,8 +151,8 @@ def fetch_data():
                 "<MISSING>",
                 phone_number,
                 "<MISSING>",
-                latitude,
-                longitude,
+                "<MISSING>",
+                "<MISSING>",
                 hour,
             ]
         )

@@ -1,14 +1,13 @@
 import csv
+import json
 import time
 
-from geopy.geocoders import Nominatim
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
 COMPANY_URL = "https://beavertails.com"
 CHROME_DRIVER_PATH = "chromedriver"
-USER_AGENT = "SafeGraph"
 
 
 def write_output(data):
@@ -40,53 +39,11 @@ def write_output(data):
             writer.writerow(row)
 
 
-def parse_info(street_address, zip_code, country):
-    geolocator = Nominatim(user_agent=USER_AGENT)
-
-    if country == "Canada":
-        from pypostalcode import PostalCodeDatabase
-
-        pcdb = PostalCodeDatabase()
-        pc = zip_code[:3]
-        try:
-            location = pcdb[pc]
-            city = location.city
-            state = location.province
-        except:
-            city = "<INACCESSIBLE>"
-            state = "<INACCESSIBLE>"
-    else:
-        import pgeocode
-
-        nomi = pgeocode.Nominatim("US")
-
-        try:
-            city = nomi.query_postal_code(zip_code).place_name
-            state = nomi.query_postal_code(zip_code).state_code
-        except:
-            city = "<INACCESSIBLE>"
-            state = "<INACCESSIBLE>"
-
-    # Get long and lat
-    try:
-        location = geolocator.geocode(f"{street_address}, {city}, {state}")
-    except:
-        location = None
-
-    if location is not None:
-        longitude = location.longitude
-        latitude = location.latitude
-    else:
-        longitude = "<INACCESSIBLE>"
-        latitude = "<INACCESSIBLE>"
-
-    return (city, state, longitude, latitude)
-
-
 def fetch_data():
     # store data
     locations_titles = []
     street_addresses = []
+    store_ids = []
     cities = []
     states = []
     zip_codes = []
@@ -135,32 +92,34 @@ def fetch_data():
         else:
             zip_code = city_state_info[-5:]
 
-        city, state, longitude, latitude = parse_info(street_address, zip_code, country)
-
         # Hours not always present
         try:
             hour = listing.find_element_by_css_selector("table.wpsl-opening-hours").text
         except:
             hour = "<MISSING>"
 
-        # Phone not always present
-        try:
-            phone_number = listing.find_element_by_css_selector(
-                "p.wpsl-contact-details > span:nth-of-type(1) > span > a:nth-of-type(2)"
-            ).get_attribute("textContent")
-        except:
-            phone_number = "<MISSING>"
-
         locations_titles.append(location_title)
         street_addresses.append(street_address)
-        cities.append(city)
-        states.append(state)
         zip_codes.append(zip_code)
-        phone_numbers.append(phone_number)
         hours.append(hour)
-        longitude_list.append(longitude)
-        latitude_list.append(latitude)
         countries.append(country)
+
+    # Get other information
+    driver.get(
+        "https://beavertails.com/wp-admin/admin-ajax.php?lang=en&action=store_search&lat=45.501689&lng=-73.56725599999999&max_results=500&search_radius=50000&filter=43"
+    )
+    listings = json.loads(driver.find_element_by_css_selector("pre").text)
+    for listing in listings:
+        store_ids.append(listing["id"])
+        cities.append(listing["city"])
+        states.append(listing["state"])
+        latitude_list.append(listing["lat"])
+        longitude_list.append(listing["lng"])
+        zip_codes.append(listing["zip"])
+        if listing["phone"] == "":
+            phone_numbers.append("<MISSING>")
+        else:
+            phone_numbers.append(listing["phone"])
 
     for (
         locations_title,
@@ -173,6 +132,7 @@ def fetch_data():
         longitude,
         hour,
         country,
+        store_number,
     ) in zip(
         locations_titles,
         street_addresses,
@@ -184,6 +144,7 @@ def fetch_data():
         longitude_list,
         hours,
         countries,
+        store_ids,
     ):
         data.append(
             [
@@ -194,7 +155,7 @@ def fetch_data():
                 state,
                 zipcode,
                 country,
-                "<MISSING>",
+                store_number,
                 phone_number,
                 "<MISSING>",
                 latitude,

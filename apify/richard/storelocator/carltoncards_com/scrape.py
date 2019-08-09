@@ -39,25 +39,6 @@ def write_output(data):
             writer.writerow(row)
 
 
-def parse_info(street_address, city, state):
-    geolocator = Nominatim(user_agent=USER_AGENT)
-
-    # Get info
-    try:
-        location = geolocator.geocode(f"{street_address}, {city}, {state}")
-    except:
-        location = None
-
-    if location is not None:
-        longitude = location.longitude
-        latitude = location.latitude
-    else:
-        longitude = "<INACCESSIBLE>"
-        latitude = "<INACCESSIBLE>"
-
-    return longitude, latitude
-
-
 def fetch_data():
     # store data
     locations_titles = []
@@ -67,8 +48,6 @@ def fetch_data():
     zip_codes = []
     phone_numbers = []
     hours = []
-    longitude_list = []
-    latitude_list = []
     countries = []
     data = []
 
@@ -93,13 +72,11 @@ def fetch_data():
         if len(store[3].split(",")) == 3:
             state = store[3].split(",")[1]
             zip_code = store[3].split(",")[2]
-            country = "Canada"
+            country = "CA"
         else:
-            state = store[3].split(",")[1].split(" ")[0]
-            zip_code = store[3].split(",")[1].split(" ")[1]
+            state = store[3].split(",")[1].strip().split(" ")[0]
+            zip_code = store[3].split(",")[1].strip().split(" ")[1]
             country = "US"
-
-        longitude, latitude = parse_info(street_address, city, state)
 
         # Store information
         locations_titles.append(location_title)
@@ -109,8 +86,6 @@ def fetch_data():
         zip_codes.append(zip_code)
         phone_numbers.append(phone_number)
         hours.append(hour)
-        longitude_list.append(longitude)
-        latitude_list.append(latitude)
         countries.append(country)
 
     for (
@@ -120,8 +95,6 @@ def fetch_data():
         state,
         zipcode,
         phone_number,
-        latitude,
-        longitude,
         hour,
         country,
     ) in zip(
@@ -131,8 +104,6 @@ def fetch_data():
         states,
         zip_codes,
         phone_numbers,
-        latitude_list,
-        longitude_list,
         hours,
         countries,
     ):
@@ -148,8 +119,8 @@ def fetch_data():
                 "<MISSING>",
                 phone_number,
                 "<MISSING>",
-                latitude,
-                longitude,
+                "<MISSING>",
+                "<MISSING>",
                 hour,
             ]
         )

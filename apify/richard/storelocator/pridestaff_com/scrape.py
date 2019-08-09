@@ -1,15 +1,12 @@
 import csv
-import re
 import time
 
-from geopy.geocoders import Nominatim
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
 COMPANY_URL = "https://www.pridestaff.com"
 CHROME_DRIVER_PATH = "chromedriver"
-USER_AGENT = "SafeGraph"
 
 
 def write_output(data):
@@ -41,25 +38,6 @@ def write_output(data):
             writer.writerow(row)
 
 
-def parse_info(address):
-    geolocator = Nominatim(user_agent=USER_AGENT)
-
-    # Get info
-    try:
-        location = geolocator.geocode(address)
-    except:
-        location = None
-
-    if location is not None:
-        longitude = location.longitude
-        latitude = location.latitude
-    else:
-        longitude = "<INACCESSIBLE>"
-        latitude = "<INACCESSIBLE>"
-
-    return longitude, latitude
-
-
 def fetch_data():
     # store data
     locations_titles = []
@@ -68,9 +46,6 @@ def fetch_data():
     states = []
     zip_codes = []
     phone_numbers = []
-    hours = []
-    longitude_list = []
-    latitude_list = []
     countries = []
     data = []
 
@@ -117,7 +92,6 @@ def fetch_data():
         city = address_info[-1].split(",")[0]
         state = address_info[-1].split(",")[1].split(" ")[0]
         zip_code = address_info[-1].split(",")[1].split(" ")[1]
-        longitude, latitude = parse_info(address_info[0] + " " + address_info[-1])
         try:
             phone_number = driver.find_element_by_css_selector(
                 "ul.location-contact > li:nth-child(1) > a"
@@ -132,9 +106,6 @@ def fetch_data():
         states.append(state)
         zip_codes.append(zip_code)
         phone_numbers.append(phone_number)
-        hours.append("<MISSING>")
-        longitude_list.append(longitude)
-        latitude_list.append(latitude)
         countries.append("US")
 
     for (
@@ -144,9 +115,6 @@ def fetch_data():
         state,
         zipcode,
         phone_number,
-        latitude,
-        longitude,
-        hour,
         country,
     ) in zip(
         locations_titles,
@@ -155,9 +123,6 @@ def fetch_data():
         states,
         zip_codes,
         phone_numbers,
-        latitude_list,
-        longitude_list,
-        hours,
         countries,
     ):
         data.append(
@@ -172,9 +137,9 @@ def fetch_data():
                 "<MISSING>",
                 phone_number,
                 "<MISSING>",
-                latitude,
-                longitude,
-                hour,
+                "<MISSING>",
+                "<MISSING>",
+                "<MISSING>",
             ]
         )
 

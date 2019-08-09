@@ -2,7 +2,6 @@ import csv
 import re
 import time
 
-from geopy.geocoders import Nominatim
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
@@ -40,51 +39,17 @@ def write_output(data):
             writer.writerow(row)
 
 
-def parse_info(street_address, city, state):
-    to_remove_list = re.findall(
-        "(Ste\s[a-zA-Z0-9]+)|(#[a-zA-Z0-9]+)|(Suite\s[a-zA-Z0-9]+)", street_address
-    )
-    if len(to_remove_list) > 0:
-        to_remove = "".join(to_remove_list[0])
-        street_address = street_address.replace(to_remove, "")
-
-    geolocator = Nominatim(user_agent="")
-
-    if state == "Washington":
-        country = "US"
-    else:
-        country = "Canada"
-
-    # Get info
-    try:
-        location = geolocator.geocode(f"{street_address}, {city}, {state}")
-    except:
-        location = None
-
-    if location is not None:
-        longitude = location.longitude
-        latitude = location.latitude
-        zip_code = location.raw["display_name"].split(",")[-2]
-    else:
-        longitude = "<INACCESSIBLE>"
-        latitude = "<INACCESSIBLE>"
-        zip_code = "<INACCESSIBLE>"
-
-    return longitude, latitude, country, zip_code
-
-
 def fetch_data():
     # store data
     locations_titles = []
     street_addresses = []
     cities = []
     states = []
-    zip_codes = []
     phone_numbers = []
-    longitude_list = []
-    latitude_list = []
     countries = []
     hours = []
+    longitutudes = []
+    latitudes = []
     data = []
 
     options = Options()
@@ -100,7 +65,7 @@ def fetch_data():
     ).get_attribute("href")
     driver.get(location_url)
 
-    time.sleep(0.5)
+    time.sleep(1)
     store_urls = [
         store_url.get_attribute("href")
         for store_url in driver.find_elements_by_css_selector(
@@ -110,7 +75,7 @@ def fetch_data():
 
     for store_url in store_urls:
         driver.get(store_url)
-        time.sleep(0.5)
+        time.sleep(1)
 
         location_dict = {
             "locations_title": "<MISSING>",
@@ -124,12 +89,27 @@ def fetch_data():
         location_dict["locations_title"] = driver.find_element_by_css_selector(
             "header > h1"
         ).text
+
         location_infos = [
             location_info.text
             for location_info in driver.find_elements_by_css_selector(
                 "div.row > div.col-sm-6 > div.well > ul.list-unstyled > li"
             )
         ]
+
+        match_string = driver.find_element_by_css_selector(
+            "div.google-map-object"
+        ).get_attribute("data-data")
+        latitude = (
+            re.search('("lat":)([-+]?)([\d]{1,3})(((\.)(\d+)()))', match_string)
+            .group(0)
+            .replace('"lat":', "")
+        )
+        longitutude = (
+            re.search('("lng":)([-+]?)([\d]{1,3})(((\.)(\d+)()))', match_string)
+            .group(0)
+            .replace('"lng":', "")
+        )
 
         for location_info in location_infos:
             if "Street:" in location_info:
@@ -143,20 +123,19 @@ def fetch_data():
             else:
                 location_dict["hour"] = location_info
 
-        longitude, latitude, country, zip_code = parse_info(
-            location_dict["street_address"],
-            location_dict["city"],
-            location_dict["state"],
-        )
+        if location_dict["state"] == "Washington":
+            country = "US"
+        else:
+            country = "Canada"
+
         # Paste data
+        latitudes.append(latitude)
+        longitutudes.append(longitutude)
         locations_titles.append(location_dict["locations_title"])
         street_addresses.append(location_dict["street_address"])
         phone_numbers.append(location_dict["phone_number"])
         cities.append(location_dict["city"])
         states.append(location_dict["state"])
-        zip_codes.append(zip_code)
-        longitude_list.append(longitude)
-        latitude_list.append(latitude)
         countries.append(country)
         hours.append(location_dict["hour"])
 
@@ -166,23 +145,21 @@ def fetch_data():
         street_address,
         city,
         state,
-        zipcode,
         phone_number,
-        latitude,
-        longitude,
         hour,
         country,
+        latitude,
+        longitutude,
     ) in zip(
         locations_titles,
         street_addresses,
         cities,
         states,
-        zip_codes,
         phone_numbers,
-        latitude_list,
-        longitude_list,
         hours,
         countries,
+        latitudes,
+        longitutudes,
     ):
         data.append(
             [
@@ -191,13 +168,13 @@ def fetch_data():
                 street_address,
                 city,
                 state,
-                zipcode,
+                "<MISSING>",
                 country,
                 "<MISSING>",
                 phone_number,
                 "<MISSING>",
                 latitude,
-                longitude,
+                longitutude,
                 hour,
             ]
         )

@@ -1,14 +1,12 @@
 import csv
 import time
 
-from geopy.geocoders import Nominatim
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
 COMPANY_URL = "https://drmarklynn.com/"
-CHROME_DRIVER_PATH = "chromedriver"
-USER_AGENT = "SafeGraph"
+CHROME_DRIVER_PATH = "./chromedriver"
 
 
 def write_output(data):
@@ -53,19 +51,6 @@ def parse_info(item):
     return location_title, address, city, state, zip_code, phone, hours
 
 
-def get_long_lat(address, city, state):
-    geolocator = Nominatim(user_agent=USER_AGENT)
-    try:
-        location = geolocator.geocode(f"{address}, {city}, {state}")
-    except:
-        location = None
-
-    if location is not None:
-        return location.longitude, location.latitude
-    else:
-        return "<INACCESSIBLE>", "<INACCESSIBLE>"
-
-
 def fetch_data():
     data = []
     options = Options()
@@ -98,14 +83,11 @@ def fetch_data():
     zip_codes = []
     phone_numbers = []
     hours = []
-    longitude_list = []
-    latitude_list = []
 
     for listing in listings:
         location_title, address, city, state, zip_code, phone, hour = parse_info(
             listing
         )
-        longitude, latitude = get_long_lat(address, city, state)
         locations_titles.append(location_title)
         street_addresses.append(address)
         cities.append(city)
@@ -113,8 +95,6 @@ def fetch_data():
         zip_codes.append(zip_code)
         phone_numbers.append(phone)
         hours.append(hour)
-        longitude_list.append(longitude)
-        latitude_list.append(latitude)
 
     for (
         locations_title,
@@ -123,8 +103,6 @@ def fetch_data():
         state,
         zipcode,
         phone_number,
-        latitude,
-        longitude,
         hour,
     ) in zip(
         locations_titles,
@@ -133,8 +111,6 @@ def fetch_data():
         states,
         zip_codes,
         phone_numbers,
-        latitude_list,
-        longitude_list,
         hours,
     ):
         data.append(
@@ -149,8 +125,8 @@ def fetch_data():
                 "<MISSING>",
                 phone_number,
                 "<MISSING>",
-                latitude,
-                longitude,
+                "<MISSING>",
+                "<MISSING>",
                 hour,
             ]
         )
