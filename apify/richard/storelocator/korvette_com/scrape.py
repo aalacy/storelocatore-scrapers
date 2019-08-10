@@ -90,6 +90,8 @@ def fetch_data():
         state = (
             driver.find_elements_by_css_selector("div.row > div:nth-child(1) > p")[-1]
             .text.strip()[:4]
+            .replace("(", "")
+            .replace(")", "")
             .strip()
         )
         zip_code = (

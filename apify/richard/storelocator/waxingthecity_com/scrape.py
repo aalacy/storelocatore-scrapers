@@ -2,7 +2,11 @@ import csv
 import re
 
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 COMPANY_URL = "https://www.waxingthecity.com/"
@@ -74,65 +78,72 @@ def fetch_data():
     driver.get(COMPANY_URL)
 
     # Fetch store urls from location menu
-    store_url = "https://www.waxingthecity.com/locations/index.html"
+    store_url = "https://studios.waxingthecity.com"
     driver.get(store_url)
+
+    # Wait till the element loads
+    WebDriverWait(driver, 10).until(
+        ec.visibility_of_element_located(
+            (By.CSS_SELECTOR, ".push-top.clearfix.store-buttons")
+        )
+    )
 
     # listings = driver.find_elements_by_css_selector('div.col-sm-4 > a')
     listing_urls = [
         listing.get_attribute("href")
-        for listing in driver.find_elements_by_css_selector("div.col-sm-8 > p > a")
+        for listing in driver.find_elements_by_css_selector(
+            "div.push-top.clearfix.store-buttons > a:nth-of-type(1)"
+        )
     ]
 
     # Go through each listing and append data
     for listing_url in listing_urls:
-        try:
-            driver.get(listing_url)
-            location_title = driver.find_element_by_css_selector(
-                "h1.no-margin.ng-binding"
-            ).text
-            street_address = driver.find_element_by_css_selector(
-                "div.no-bold.line-height-bump > p"
-            ).text
-            city = driver.find_element_by_css_selector(
-                "div.no-bold.line-height-bump > span:nth-of-type(1)"
-            ).text
-            state = driver.find_element_by_css_selector(
-                "div.no-bold.line-height-bump > span:nth-of-type(2)"
-            ).text
-            zip_code = driver.find_element_by_css_selector(
-                "div.no-bold.line-height-bump > span:nth-of-type(3)"
-            ).text
-            phone_number = driver.find_element_by_css_selector(
-                "div.hidden-xs.tel-number.ng-binding"
-            ).text
-            hour = driver.find_element_by_css_selector(
-                "div.hours-card.ng-isolate-scope > div.ng-scope"
-            ).text
-            long_lat = driver.find_element_by_css_selector(
-                "div.map-container.push-bottom.ng-isolate-scope > img"
-            ).get_attribute("data-at2x")
-            long_lat_list = (
-                re.search(
-                    "[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)",
-                    long_lat,
-                )
-                .group(0)
-                .split(",")
-            )
-            longitude = long_lat_list[0]
-            latitude = long_lat_list[1]
+        driver.get(listing_url)
 
-            locations_titles.append(location_title)
-            street_addresses.append(street_address)
-            cities.append(city)
-            states.append(state)
-            zip_codes.append(zip_code)
-            phone_numbers.append(phone_number)
-            hours.append(hour)
-            longitude_list.append(longitude)
-            latitude_list.append(latitude)
-        except:
-            pass
+        location_title = driver.find_element_by_css_selector(
+            "h1.no-margin.ng-binding"
+        ).text
+        street_address = driver.find_element_by_css_selector(
+            "div.no-bold.line-height-bump > p"
+        ).text
+        city = driver.find_element_by_css_selector(
+            "div.no-bold.line-height-bump > span:nth-of-type(1)"
+        ).text
+        state = driver.find_element_by_css_selector(
+            "div.no-bold.line-height-bump > span:nth-of-type(2)"
+        ).text
+        zip_code = driver.find_element_by_css_selector(
+            "div.no-bold.line-height-bump > span:nth-of-type(3)"
+        ).text
+        phone_number = driver.find_element_by_css_selector(
+            "div.hidden-xs.tel-number.ng-binding"
+        ).text
+        hour = driver.find_element_by_css_selector(
+            "div.hours-card.ng-isolate-scope > div.ng-scope"
+        ).text
+        long_lat = driver.find_element_by_css_selector(
+            "div.map-container.push-bottom.ng-isolate-scope > img"
+        ).get_attribute("data-at2x")
+        long_lat_list = (
+            re.search(
+                "[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)",
+                long_lat,
+            )
+            .group(0)
+            .split(",")
+        )
+        longitude = long_lat_list[0]
+        latitude = long_lat_list[1]
+
+        locations_titles.append(location_title)
+        street_addresses.append(street_address)
+        cities.append(city)
+        states.append(state)
+        zip_codes.append(zip_code)
+        phone_numbers.append(phone_number)
+        hours.append(hour)
+        longitude_list.append(longitude)
+        latitude_list.append(latitude)
 
     for (
         locations_title,

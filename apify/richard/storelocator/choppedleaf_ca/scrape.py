@@ -161,23 +161,27 @@ def fetch_data():
         latitudes,
         longitutudes,
     ):
-        data.append(
-            [
-                COMPANY_URL,
-                locations_title,
-                street_address,
-                city,
-                state,
-                "<MISSING>",
-                country,
-                "<MISSING>",
-                phone_number,
-                "<MISSING>",
-                latitude,
-                longitutude,
-                hour,
-            ]
-        )
+        # Filter out coming soon stores
+        if "COMING SOON" in locations_title:
+            pass
+        else:
+            data.append(
+                [
+                    COMPANY_URL,
+                    locations_title,
+                    street_address,
+                    city,
+                    state,
+                    "<MISSING>",
+                    country,
+                    "<MISSING>",
+                    phone_number,
+                    "<MISSING>",
+                    latitude,
+                    longitutude,
+                    hour,
+                ]
+            )
 
     driver.quit()
     return data

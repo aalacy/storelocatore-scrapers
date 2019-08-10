@@ -1,5 +1,7 @@
 import csv
+import json
 
+import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -49,6 +51,8 @@ def fetch_data():
     zip_codes = []
     phone_numbers = []
     countries = []
+    latitude_list = []
+    longitude_list = []
     data = []
 
     options = Options()
@@ -123,6 +127,15 @@ def fetch_data():
         phone_numbers.append(phone_number)
         countries.append("US")
 
+    # extract coordinates
+    url = "https://www.pridestaff.com/wp-admin/admin-ajax.php"
+    req_data = {"action": "get_locations_ajax"}
+    body = json.loads(requests.post(url, data=req_data).text)
+
+    for info in body:
+        latitude_list.append(info["coord"]["lat"])
+        longitude_list.append(info["coord"]["lng"])
+
     for (
         locations_title,
         street_address,
@@ -131,6 +144,8 @@ def fetch_data():
         zipcode,
         phone_number,
         country,
+        longitude,
+        latitude,
     ) in zip(
         locations_titles,
         street_addresses,
@@ -139,6 +154,8 @@ def fetch_data():
         zip_codes,
         phone_numbers,
         countries,
+        longitude_list,
+        latitude_list,
     ):
         data.append(
             [
@@ -152,8 +169,8 @@ def fetch_data():
                 "<MISSING>",
                 phone_number,
                 "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
+                latitude,
+                longitude,
                 "<MISSING>",
             ]
         )

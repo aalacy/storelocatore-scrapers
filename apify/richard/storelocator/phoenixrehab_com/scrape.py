@@ -1,4 +1,5 @@
 import csv
+import re
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -49,6 +50,8 @@ def fetch_data():
     zip_codes = []
     phone_numbers = []
     hours = []
+    latitude_list = []
+    longitude_list = []
     data = []
 
     options = Options()
@@ -115,11 +118,24 @@ def fetch_data():
         driver.get(url)
 
         # Wait until element appears - 10 secs max
-        wait = WebDriverWait(driver, 10).until(ec.visibility_of_element_located((By.CSS_SELECTOR, ".col-md-7.pr-0.border-line-left")))
+        wait = WebDriverWait(driver, 10).until(
+            ec.visibility_of_element_located(
+                (By.CSS_SELECTOR, ".col-md-7.pr-0.border-line-left")
+            )
+        )
 
         hours.append(
             driver.find_element(By.CSS_SELECTOR, ".col-md-7.pr-0.border-line-left").text
         )
+
+        long_lat = re.search(
+            "([-+]?)([\d]{1,3})(((\.)(\d+)()))%2C([-+]?)([\d]{1,3})(((\.)(\d+)()))",
+            driver.find_element_by_id("page-dynamic-styles").get_attribute(
+                "textContent"
+            ),
+        ).group(0)
+        latitude_list.append(long_lat.split("%2C")[0])
+        longitude_list.append(long_lat.split("%2C")[1])
 
     # Store data
     for (
@@ -129,6 +145,8 @@ def fetch_data():
         state,
         zipcode,
         phone_number,
+        latitude,
+        longitude,
         hour,
     ) in zip(
         locations_titles,
@@ -137,6 +155,8 @@ def fetch_data():
         states,
         zip_codes,
         phone_numbers,
+        latitude_list,
+        longitude_list,
         hours,
     ):
         data.append(
@@ -151,8 +171,8 @@ def fetch_data():
                 "<MISSING>",
                 phone_number,
                 "<MISSING>",
-                "<MISSING>",
-                "<MISSING>",
+                latitude,
+                longitude,
                 hour,
             ]
         )
