@@ -1,0 +1,257 @@
+locator_domain,location_name,street_address,city,state,zip,country_code,store_number,phone,location_type,latitude,longitude,hours_of_operation
+https://www.berkshirebank.com/,"ATM at 1350 West Street Pittsfield, MA",1350 West Street,Pittsfield,MA,01201,US,<MISSING>,<MISSING>,ATM ,42.457997,-73.31694,<MISSING>
+https://www.berkshirebank.com/,"ATM at 75 South Church Street Pittsfield, MA",75 South Church Street,Pittsfield,MA,01201,US,<MISSING>,<MISSING>,ATM ,42.446498,-73.260664,<MISSING>
+https://www.berkshirebank.com/,"Bank at 66 West Street Pittsfield, MA",66 West Street,Pittsfield,MA,01201,US,<MISSING>,(413) 445-8365,Bank ,42.4486639424634,-73.2552520062509,"Monday - Friday 8:30am - 5:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 99 North Street Pittsfield, MA",99 North Street,Pittsfield,MA,01201,US,<MISSING>,(413) 445-3544,Bank ,42.44984,-73.25355,"Monday - Wednesday 8:30am - 4:00pm
+Thursday - Friday 8:30am - 5:00pm"
+https://www.berkshirebank.com/,"Insurance at 43 East Street Pittsfield, MA",43 East Street,Pittsfield,MA,01201,US,<MISSING>,(866) 636-0244,Insurance ,42.4484823039248,-73.2529930555736,<MISSING>
+https://www.berkshirebank.com/,"Bank at 165 Elm Street Pittsfield, MA",165 Elm Street,Pittsfield,MA,01201,US,<MISSING>,(413) 447-1880,Bank ,42.44395125,-73.23823,"Monday - Friday 8:30am - 5:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 495 Pittsfield-Lenox Rd Lenox, MA",495 Pittsfield-Lenox Rd,Lenox,MA,01240,US,<MISSING>,(413) 997-6050,Bank ,42.4047855352184,-73.2651364549017,"Monday - Friday 8:30 am - 5:00 pm
+Saturday 9:00 am - 12:30 pm"
+https://www.berkshirebank.com/,"Bank at 502 Route 20 New Lebanon, NY",502 Route 20,New Lebanon,NY,12125,US,<MISSING>,(518) 794-7845,Bank ,42.4665599,-73.3925251,"Monday - Wednesday 9:00am - 4:00pm
+Thursday - Friday 9:00am - 5:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 734 Williams Street Pittsfield, MA",734 Williams Street,Pittsfield,MA,01201,US,<MISSING>,(413) 499-5178,Bank ,42.432465,-73.214345,"Monday - Wednesday 8:30am - 4:00pm
+Thursday - Friday 8:30am - 5:00pm"
+https://www.berkshirebank.com/,"Bank at 39 Cheshire Road Pittsfield, MA",39 Cheshire Road,Pittsfield,MA,01201,US,<MISSING>,(413) 499-1068,Bank ,42.4696344444444,-73.2037151851852,"Monday - Friday 8:30am - 5:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 488 Main Street Dalton, MA",488 Main Street,Dalton,MA,01226,US,<MISSING>,(413) 684-5214,Bank ,42.4731624,-73.1682344,"Monday - Wednesday 8:30am - 4:00pm
+Thursday - Friday 8:30am - 5:00pm"
+https://www.berkshirebank.com/,"Bank at 25 Main Street Lenox, MA",25 Main Street,Lenox,MA,01240,US,<MISSING>,(413) 445-3439,Bank ,42.3578033333333,-73.28471,"Monday - Wednesday 8:30 am - 4:00 pm
+Thursday - Friday 8:30 am - 5:00 pm
+Saturday Seasonal (Memorial Day-Labor Day) 9:00 am - 12:00 pm"
+https://www.berkshirebank.com/,"Bank at 2 Depot Street West Stockbridge, MA",2 Depot Street,West Stockbridge,MA,01266,US,<MISSING>,(413) 232-8542,Bank ,42.33377,-73.36829,"Monday - Wednesday 8:30am - 4:00pm
+Thursday - Friday 8:30am - 5:00pm"
+https://www.berkshirebank.com/,"Bank at 1 Park Street Lee, MA",1 Park Street,Lee,MA,01238,US,<MISSING>,(413) 243-1800,Bank ,42.30441,-73.24619,"Monday - Friday 8:30am - 5:00pm
+Saturday 8:30am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 32 Main Street Stockbridge, MA",32 Main Street,Stockbridge,MA,01262,US,<MISSING>,(413) 298-5526,Bank ,42.2822403512881,-73.3119096510539,"Monday - Thursday 8:30am - 4:00pm
+Friday 8:30am - 5:00pm"
+https://www.berkshirebank.com/,"Insurance at 31 Main Street Stockbridge, MA",31 Main Street,Stockbridge,MA,01262,US,<MISSING>,(866) 636-0244,Insurance ,42.2822045620609,-73.3117414416862,Monday - Friday 8:30am - 4:30pm
+https://www.berkshirebank.com/,"Bank at 50-52 Main St Chatham, NY",50-52 Main St,Chatham,NY,12037,US,<MISSING>,(518) 392-2105,Bank ,42.3631060590879,-73.5956397715255,"Monday - Thursday 9:00am - 4:00pm
+Friday 9:00am - 5:00pm"
+https://www.berkshirebank.com/,"Bank at 255 Stockbridge Road Great Barrington, MA",255 Stockbridge Road,Great Barrington,MA,01230,US,<MISSING>,(413) 528-1664,Bank ,42.2080747079513,-73.3461925674511,"Monday - Wednesday 8:30am - 4:00pm
+Thursday - Friday8:30 am -5:00 pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 244 Main Street Great Barrington, MA",244 Main Street,Great Barrington,MA,01230,US,<MISSING>,(413) 644-3520,Bank ,42.19549,-73.36144,"Monday - Wednesday 9:00am - 4:00pm
+Thursday - Friday 9:00 am - 5:00pm
+Saturday 9:00am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 37 Main Street North Adams, MA",37 Main Street,North Adams,MA,01247,US,<MISSING>,(413) 664-4061,Bank ,42.69939,-73.11375,"Monday 8:30am - 5:00pm
+Tuesday - Wednesday 8:30am - 4:00pm
+Thursday - Friday 8:30am - 5:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 30 East Otis Road Otis, MA",30 East Otis Road,Otis,MA,01253,US,<MISSING>,(413) 269-7546,Bank ,42.1931391917726,-73.0905304961304,"Monday - Thursday 9:00 am - 4:00 pm
+Friday 9:00 am - 5:00 pm
+Saturday Seasonal (Memorial Day-Labor Day) 9:00 am - 12:00 pm"
+https://www.berkshirebank.com/,"Bank at 602 Columbia Turnpike East Greenbush, NY",602 Columbia Turnpike,East Greenbush,NY,12061,US,<MISSING>,(518) 729-1150,Bank ,42.598465,-73.709595,"Monday - Thursday 9:00am - 4:00pm
+Friday 9:00am - 5:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 576 North Greenbush Road North Greenbush, NY",576 North Greenbush Road,North Greenbush,NY,12144,US,<MISSING>,(518) 283-5384,Bank ,42.64873,-73.69716,"Monday - Thursday 8:30 am - 4:00 pm
+Friday 8:30am - 5:00pm
+Saturday 8:30 am - 12:00 pm"
+https://www.berkshirebank.com/,"Bank at 103 Main Street Sheffield, MA",103 Main Street,Sheffield,MA,01257,US,<MISSING>,(413) 229-8516,Bank ,42.109696,-73.353783,"Monday - Wednesday 9:00am - 4:00pm
+Thursday - Friday 9:00am - 5:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 30 South Pearl Street Albany, NY",30 South Pearl Street,Albany,NY,12207,US,<MISSING>,(518) 432-0318,Bank ,42.64905,-73.75334,"Monday - Thursday 8:30am - 4:00pm
+Friday 8:30am - 5:00pm"
+https://www.berkshirebank.com/,"ATM at 194 Washington Avenue Albany, NY",194 Washington Avenue,Albany,NY,12205,US,<MISSING>,<MISSING>,ATM ,42.656284,-73.763071,<MISSING>
+https://www.berkshirebank.com/,"Bank at 399 Albany Shaker Rd Loudonville, NY",399 Albany Shaker Rd,Loudonville,NY,12211,US,<MISSING>,(518) 486-8195,Bank ,42.697075,-73.767805,"Monday - Thursday 8:30am - 4:00pm
+Friday 8:30am - 5:00pm
+Saturday 8:30am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 255 Delaware Avenue Delmar, NY",255 Delaware Avenue,Delmar,NY,12054,US,<MISSING>,(518) 475-2590,Bank ,42.62637,-73.82143,"Monday - Thursday 9:00am - 4:00pm
+Friday 9:00am - 5:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 561 Warren St Hudson, NY",561 Warren St,Hudson,NY,12534,US,<MISSING>,(518) 828-2997,Bank ,42.2486632653061,-73.7853104081633,"Monday - Thursday 9:00am - 4:00pm
+Friday 9:00am - 5:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 979 Central Ave Albany, NY",979 Central Ave,Albany,NY,12205,US,<MISSING>,(518) 269-3510,Bank ,42.68404,-73.7945675,"Monday - Thursday 8:30am - 4:00pm
+Friday 8:30am - 5:00pm"
+https://www.berkshirebank.com/,"Bank at 628 New Loudon Road Latham, NY",628 New Loudon Road,Latham,NY,12110,US,<MISSING>,(518) 389-2510,Bank ,42.73143,-73.762,"Monday - Wednesday 8:30am - 4:00pm
+Thursday - Friday 8:30am - 5:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Insurance at 3 Bridge Street Shelburne Falls, MA",3 Bridge Street,Shelburne Falls,MA,01370,US,<MISSING>,(866) 636-0244,Insurance ,42.6036925525228,-72.7412857353189,Monday - Friday 8:00am - 4:30pm
+https://www.berkshirebank.com/,"Bank at 11 Vista Blvd Slingerlands, NY",11 Vista Blvd,Slingerlands,NY,12159,US,<MISSING>,(518) 439-6282,Bank ,42.64036,-73.8602,"Monday - Thursday 9:00am - 4:00pm
+Friday 9:00am - 5:00pm"
+https://www.berkshirebank.com/,"ATM at 131 Wolf Road Colonie, NY",131 Wolf Road,Colonie,NY,12205,US,<MISSING>,<MISSING>,ATM ,42.7181403640994,-73.8071944018366,<MISSING>
+https://www.berkshirebank.com/,"Bank at 98 Wolf Road Colonie, NY",98 Wolf Road,Colonie,NY,12205,US,<MISSING>,(518) 269-3920,Bank ,42.71632,-73.81016,"Monday - Thursday 8:30am - 4:00pm
+Friday 8:30am - 5:00pm
+Saturday 8:30am - 12:00pm"
+https://www.berkshirebank.com/,"ATM at 131 Wolf Road Colonie, NY",131 Wolf Road,Colonie,NY,12205,US,<MISSING>,<MISSING>,ATM ,42.710724,-73.81718,<MISSING>
+https://www.berkshirebank.com/,"Bank at 1704 Western Avenue Albany, NY",1704 Western Avenue,Albany,NY,12203,US,<MISSING>,(518) 724-1580,Bank ,42.687805,-73.858541,"Monday - Wednesday 8:30am - 4:00pm
+Thursday - Friday 8:30am - 5:00pm"
+https://www.berkshirebank.com/,"Bank at 1202 Troy-Schenectady Road Latham, NY",1202 Troy-Schenectady Road,Latham,NY,12110,US,<MISSING>,(518) 785-0512,Bank ,42.77153,-73.82255,"Monday - Wednesday 8:30am - 4:00pm
+Thursday - Friday 8:30am - 5:00pm"
+https://www.berkshirebank.com/,"ATM at 577 Western Avenue Westfield, MA",577 Western Avenue,Westfield,MA,01085,US,<MISSING>,<MISSING>,ATM ,42.131751,-72.794734,<MISSING>
+https://www.berkshirebank.com/,"Insurance at 58 Sugarloaf Street South Deerfield, MA",58 Sugarloaf Street,South Deerfield,MA,01373,US,<MISSING>,(413) 665-2100,Insurance ,42.47269,-72.60163,Monday - Friday 8:00am - 4:30pm
+https://www.berkshirebank.com/,"ATM at 475 Southhampton Road Westfield, MA",475 Southhampton Road,Westfield,MA,01085,US,<MISSING>,<MISSING>,ATM ,42.1559083405415,-72.7258115790111,<MISSING>
+https://www.berkshirebank.com/,"Bank at 7 Halfmoon Crossing Halfmoon, NY",7 Halfmoon Crossing,Halfmoon,NY,12065,US,<MISSING>,(518) 831-8500,Bank ,42.857814,-73.770122,"Monday - Wednesday 8:30am - 4:00pm
+Thursday - Friday 8:30am - 5:00pm
+Saturday 8:30am - 12:00pm"
+https://www.berkshirebank.com/,"Insurance at 117 Main Street Greenfield, MA",117 Main Street,Greenfield,MA,01301,US,<MISSING>,(866) 636-0244,Insurance ,42.58766,-72.60452,Monday - Friday 8:00am - 4:30pm
+https://www.berkshirebank.com/,"ATM at 127 North Elm Street Westfield, MA",127 North Elm Street,Westfield,MA,01085,US,<MISSING>,<MISSING>,ATM ,42.13491,-72.74025,<MISSING>
+https://www.berkshirebank.com/,"Bank at 31 Court Street Westfield, MA",31 Court Street,Westfield,MA,01085,US,<MISSING>,(413) 564-6230,Bank ,42.12018,-72.75042,"Monday - Wednesday 9:00am - 4:00pm
+Thursday - Friday 9:00am - 5:00pm
+Saturday 9:00am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 120 Mansion Blvd Niskayuna, NY",120 Mansion Blvd,Niskayuna,NY,12304,US,<MISSING>,(518) 377-0960,Bank ,42.7741239,-73.8949522,"Monday - Thursday 8:30am - 4:00pm
+Friday 8:30am - 5:00pm
+Saturday 8:30am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 44 Little River Road Westfield, MA",44 Little River Road,Westfield,MA,01085,US,<MISSING>,(413) 568-1779,Bank ,42.1107702301276,-72.7185688638212,"Monday - Wednesday 9:00 am - 4:00 pm
+Thursday - Friday 9:00 am - 5:00 pm
+Saturday 9:00 am - 12:30 pm"
+https://www.berkshirebank.com/,"Bank at 608 College Highway Southwick, MA",608 College Highway,Southwick,MA,01077,US,<MISSING>,(413) 569-5589,Bank ,42.06308,-72.76484,"Monday - Wednesday 9:00am - 5:00pm
+Thursday 9:00am - 6:00pm
+Friday 9:00am - 5:00pm
+Saturday 9:00am - 1:00pm"
+https://www.berkshirebank.com/,"Bank at 1925 Curry Rd. Rotterdam, NY",1925 Curry Rd.,Rotterdam,NY,12306,US,<MISSING>,(518) 356-9890,Bank ,42.7798972168396,-73.9559682218697,"Monday - Thursday 8:30am - 4:00pm
+Friday 8:30am - 5:00pm
+Saturday 8:30am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 74 Lamb Street South Hadley, MA",74 Lamb Street,South Hadley,MA,01075,US,<MISSING>,(413) 534-4589,Bank ,42.2195923076923,-72.5915746153846,"Monday - Wednesday 9:00am - 4:00pm
+Thursday - Friday 9:00am - 5:00pm
+Saturday 9:00am - 1:00pm"
+https://www.berkshirebank.com/,"Bank at 1339 Memorial Drive Chicopee, MA",1339 Memorial Drive,Chicopee,MA,01020,US,<MISSING>,(413) 564-6340,Bank ,42.1939472727273,-72.5755413636364,"Monday - Wednesday 9:00am - 4:00pm
+Thursday 9:00am - 6:00pm
+Friday 9:00am - 5:00pm
+Saturday 9:00am - 1:00pm"
+https://www.berkshirebank.com/,"Bank at 1359 Springfield Street Feeding Hills, MA",1359 Springfield Street,Feeding Hills,MA,01030,US,<MISSING>,(413) 789-4935,Bank ,42.0670388001466,-72.6772183474525,"Monday - Wednesday 9:00am - 5:00pm
+Thursday 9:00am - 6:00pm
+Friday 9:00am - 5:00pm
+Saturday 9:00am - 1:00pm"
+https://www.berkshirebank.com/,"Bank at 220 Westfield Street, Route 20 West Springfield, MA","220 Westfield Street, Route 20",West Springfield,MA,01089,US,<MISSING>,(413) 781-3360,Bank ,42.1058451397298,-72.6267657024113,"Monday - Wednesday 9:00am - 4:00pm
+Thursday - Friday 9:00am - 5:00pm
+Saturday 9:00am - 1:00pm"
+https://www.berkshirebank.com/,"Bank at 3816 Vermont 7A Arlington, VT",3816 Vermont 7A,Arlington,VT,05250,US,<MISSING>,(802) 375-6535,Bank ,43.073575,-73.154082,"Monday - Wednesday 8:30am - 4:00pm
+Thursday - Friday 8:30am - 5:00pm"
+https://www.berkshirebank.com/,"Bank at 820 Suffield Street, Route 75 Agawam, MA","820 Suffield Street, Route 75",Agawam,MA,01001,US,<MISSING>,(413) 821-9437,Bank ,42.0615803897525,-72.6320836393541,"Monday - Wednesday 9:00am - 4:00pm
+Thursday - Friday 9:00am - 5:00pm
+Saturday 9:00am - 1:00pm"
+https://www.berkshirebank.com/,"Home Lending at 19 Harrison Street Springfield, MA",19 Harrison Street,Springfield,MA,01103,US,<MISSING>,(800) 773-5601,Home Lending ,42.10298,-72.58968,Monday - Friday 9am - 5pm; Saturday - Sunday - Closed
+https://www.berkshirebank.com/,"Bank at 1259 East Columbus Ave. Springfield, MA",1259 East Columbus Ave.,Springfield,MA,01105,US,<MISSING>,(413) 523-7900,Bank ,42.0973804112414,-72.5871121428386,"Monday - Wednesday 9:00am - 4:00pm
+Thursday 9:00am - 5:00pm
+Friday 9:00am - 4:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 187 Main Street Indian Orchard, MA",187 Main Street,Indian Orchard,MA,01151,US,<MISSING>,(413) 543-1978,Bank ,42.15949,-72.50113,"Monday - Wednesday 9:00am - 4:00pm
+Thursday - Friday 9:00am - 5:00pm
+Saturday 9:00am - 1:00pm"
+https://www.berkshirebank.com/,"Bank at 138 Longmeadow Street Longmeadow, MA",138 Longmeadow Street,Longmeadow,MA,01106,US,<MISSING>,(413) 567-2401,Bank ,42.0667853135995,-72.5794172519999,"Monday - Friday 9:00am - 5:00pm
+Saturday 9:00am - 1:00pm"
+https://www.berkshirebank.com/,"Bank at 431 Center Street Ludlow, MA",431 Center Street,Ludlow,MA,01056,US,<MISSING>,(413) 547-8393,Bank ,42.1677,-72.48164,"Monday - Thursday 9:00am - 5:00pm
+Friday 9:00am - 6:00pm
+Saturday 9:00am - 1:00pm"
+https://www.berkshirebank.com/,"Bank at 2005 Boston Road, Route 20 Wilbraham, MA","2005 Boston Road, Route 20",Wilbraham,MA,01095,US,<MISSING>,(413) 543-6953,Bank ,42.149594,-72.474062,"Monday - Wednesday 9:00am - 4:00pm
+Thursday - Friday 9:00am - 5:00pm
+Saturday 9:00am - 1:00pm"
+https://www.berkshirebank.com/,"Bank at 1363 Allen St, Route 21 Springfield, MA","1363 Allen St, Route 21",Springfield,MA,01118,US,<MISSING>,(413) 782-5291,Bank ,42.09463,-72.5146,"Monday - Wednesday 9:00am - 4:00pm
+Thursday - Friday 9:00am - 6:00pm
+Saturday 9:00am - 1:00pm"
+https://www.berkshirebank.com/,"Bank at 72 Shaker Road East Longmeadow, MA",72 Shaker Road,East Longmeadow,MA,01028,US,<MISSING>,(413) 564-6335,Bank ,42.06187,-72.51462,"Monday - Friday 9:00am - 5:00pm
+Saturday 9:00am - 1:00pm"
+https://www.berkshirebank.com/,"Bank at 16 Albany Turnpike Simsbury, CT",16 Albany Turnpike,Simsbury,CT,06092,US,<MISSING>,(860) 266-4090,Bank ,41.8168544444444,-72.8671511111111,"MyTeller: Monday - Friday 7:00am - 7:00pm
+Saturday 8:00am - 2:00pm
+
+Regular Branch Hours: Monday - Wednesday 9:00am - 4:00pm
+Thursday - Friday 9:00am - 5:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 3450 Richville Road Manchester Center, VT",3450 Richville Road,Manchester Center,VT,05255,US,<MISSING>,(802) 362-4960,Bank ,43.1680227125024,-73.0489457996087,"Monday - Wednesday 8:30am - 4:00pm
+Thursday - Friday 8:30am - 5:00pm
+Saturday 8:30am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 4912 Main Street Manchester Center, VT",4912 Main Street,Manchester Center,VT,05255,US,<MISSING>,(802) 549-5250,Bank ,43.1770202869481,-73.0564191391558,"Monday - Wednesday 8:30am - 4:00pm
+Thursday - Friday 8:30am - 5:00pm"
+https://www.berkshirebank.com/,"Bank at 148 Broad Street Windsor, CT",148 Broad Street,Windsor,CT,06095,US,<MISSING>,(860) 688-8999,Bank ,41.8522909045663,-72.6439529836615,"Monday - Wednesday 9:00am - 4:00pm
+Thursday 9:00am - 5:00pm
+Friday 9:00am - 4:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 2532 Route 9 Malta, NY",2532 Route 9,Malta,NY,12020,US,<MISSING>,(518) 903-8999,Bank ,43.0675374432306,-74.0003491527812,"Monday - Wednesday 8:30am - 4:00pm
+Thursday - Friday 8:30am - 5:00pm"
+https://www.berkshirebank.com/,"Bank at 927 Farmington Ave West Hartford, CT",927 Farmington Ave,West Hartford,CT,06107,US,<MISSING>,(860) 231-8148,Bank ,41.76249,-72.73995,"Monday - Wednesday 9:00am - 4:00pm
+Thursday 9:00am - 5:00pm
+Friday 9:00am - 4:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 763 Farmington Ave Farmington, CT",763 Farmington Ave,Farmington,CT,06032,US,<MISSING>,(860) 246-5200,Bank ,41.72536,-72.82217,"MyTeller: Monday - Friday 7:00am - 7:00pm
+Saturday 8:00am - 2:00pm
+
+Regular Branch Hours: Monday - Wednesday 9:00am - 4:00pm
+Thursday - Friday 9:00am - 5:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 140 Sanford Farms Shopping Ctr Amsterdam, NY",140 Sanford Farms Shopping Ctr,Amsterdam,NY,12010,US,<MISSING>,(518) 843-5940,Bank ,42.9626103030303,-74.1854590909091,"Monday - Thursday 8:30am - 4:00pm
+Friday 8:30am - 5:00pm
+Saturday 8:30am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 114 Woodland Street Hartford, CT",114 Woodland Street,Hartford,CT,06105,US,<MISSING>,(860) 541-4182,Bank ,41.774765,-72.699565,Monday - Friday 9:00am - 4:00pm
+https://www.berkshirebank.com/,"ATM at 30 State House Square Hartford, CT",30 State House Square,Hartford,CT,06103,US,<MISSING>,<MISSING>,ATM ,41.7660022222222,-72.6732785185185,<MISSING>
+https://www.berkshirebank.com/,"ATM at 114 Vernon Street Hartford, CT",114 Vernon Street,Hartford,CT,06105,US,<MISSING>,<MISSING>,ATM ,41.751215,-72.691522,<MISSING>
+https://www.berkshirebank.com/,"Bank at 66 Cedar St. Newington, CT",66 Cedar St.,Newington,CT,06111,US,<MISSING>,(860) 667-7800,Bank ,41.6976993939394,-72.72704,"Monday - Wednesday 9:00am - 4:00pm
+Thursday 9:00am - 5:00pm
+Friday 9:00am - 4:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 435 Hartford Turnpike Vernon, CT",435 Hartford Turnpike,Vernon,CT,06066,US,<MISSING>,(860) 871-3100,Bank ,41.8292044685326,-72.4813334136872,"Monday - Wednesday 9:00am - 4:00pm
+Thursday - Friday 9:00am - 5:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"ATM at 18 School Street Pawlet, VT",18 School Street,Pawlet,VT,05761,US,<MISSING>,<MISSING>,ATM ,43.346422,-73.177735,<MISSING>
+https://www.berkshirebank.com/,"Bank at 183 Quaker Rd Queensbury, NY",183 Quaker Rd,Queensbury,NY,12804,US,<MISSING>,(518) 793-2469,Bank ,43.3320616308463,-73.6558331858575,"Monday - Thursday 9:00am - 4:00pm
+Friday 9:00am - 5:00pm
+Saturday 8:30am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 7 Sycamore Street Glastonbury, CT",7 Sycamore Street,Glastonbury,CT,06033,US,<MISSING>,(860) 657-3224,Bank ,41.71326,-72.59916,"Monday - Wednesday 9:00am - 4:00pm
+Thursday 9:00am - 5:00pm
+Friday 9:00am - 4:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 396 Cromwell Ave Rocky Hill, CT",396 Cromwell Ave,Rocky Hill,CT,06067,US,<MISSING>,(860) 563-8600,Bank ,41.6589415846005,-72.67838,"Monday - Wednesday and Friday 9:00am - 4:00pm
+Thursday 9:00am - 5:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 51 West Main St Johnstown, NY",51 West Main St,Johnstown,NY,12095,US,<MISSING>,(518) 762-3115,Bank ,43.0064244897959,-74.372,"Monday - Thursday 8:30am - 4:00pm
+Friday 8:30am - 5:00pm"
+https://www.berkshirebank.com/,"Bank at 152 Main Street Ludlow, VT",152 Main Street,Ludlow,VT,05149,US,<MISSING>,(802) 228-4744,Bank ,43.39609,-72.7002759532869,"Monday - Thursday 9:00am - 5:00pm
+Friday 9:00am - 6:00pm
+Saturday 8:30am - 12:00pm"
+https://www.berkshirebank.com/,"ATM at 77 Okemo Ridge Road Ludlow, VT",77 Okemo Ridge Road,Ludlow,VT,05149,US,<MISSING>,<MISSING>,ATM ,43.402504,-72.716399,<MISSING>
+https://www.berkshirebank.com/,"ATM at 33 Jackson Road Ludlow, VT",33 Jackson Road,Ludlow,VT,05149,US,<MISSING>,<MISSING>,ATM ,43.421908,-72.714151,<MISSING>
+https://www.berkshirebank.com/,"Bank at 1059 Main Street Holden, MA",1059 Main Street,Holden,MA,01520,US,<MISSING>,(508) 829-0093,Bank ,42.34739,-71.85616,"Monday - Wednesday 8:30am - 5:00pm
+Thursday - Friday 8:30am - 6:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 184 Broadway Whitehall, NY",184 Broadway,Whitehall,NY,12887,US,<MISSING>,(518) 499-2200,Bank ,43.54717,-73.40605,"Monday - Thursday 9:00am - 4:00pm
+Friday 9:00am - 5:00pm
+Saturday 8:30am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 560 Park Ave Worcester, MA",560 Park Ave,Worcester,MA,01603,US,<MISSING>,(508) 797-6926,Bank ,42.250155,-71.83102,"Monday - Wednesday 8:30am - 5:00pm
+Thursday - Friday 8:30am - 6:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 11 Park Ave Worcester, MA",11 Park Ave,Worcester,MA,01605,US,<MISSING>,(508) 797-6972,Bank ,42.283105980584,-71.808565502427,"Monday - Wednesday 8:30am - 5:00pm
+Thursday - Friday 8:30am - 6:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 320 West Boylston Street West Boylston, MA",320 West Boylston Street,West Boylston,MA,01583,US,<MISSING>,(508) 853-0057,Bank ,42.3419328571429,-71.7879857142857,"Monday - Wednesday 8:30am - 5:00pm
+Thursday - Friday 8:30am - 6:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 386 Main Street Worcester, MA",386 Main Street,Worcester,MA,01608,US,<MISSING>,(508) 797-6844,Bank ,42.264451,-71.8019895,Monday - Friday 8:00am - 5:00pm
+https://www.berkshirebank.com/,"Bank at 451 Lincoln Street Worcester, MA",451 Lincoln Street,Worcester,MA,01605,US,<MISSING>,(508) 986-3125,Bank ,42.29232,-71.779795,"Monday - Wednesday 8:30am - 5:00pm
+Thursday - Friday 8:30am - 6:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 25 Worcester Rd Webster, MA",25 Worcester Rd,Webster,MA,01570,US,<MISSING>,(508) 943-4408,Bank ,42.0614408925643,-71.8637349260225,"Monday - Wednesday 8:30am - 5:00pm
+Thursday - Friday 8:30am - 6:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 565 Main Street Leominster, MA",565 Main Street,Leominster,MA,01453,US,<MISSING>,(978) 466-8551,Bank ,42.540763974506,-71.7396075318675,"Monday - Wednesday 8:30am - 5:00pm
+Thursday - Friday 8:30am - 6:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 993 Grafton Street Worcester, MA",993 Grafton Street,Worcester,MA,01604,US,<MISSING>,(508) 797-6954,Bank ,42.2447825475154,-71.7583652445061,"Monday - Wednesday 8:30am - 5:00pm
+Thursday - Friday 8:30am - 6:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 226 Boston Turnpike Shrewsbury, MA",226 Boston Turnpike,Shrewsbury,MA,01545,US,<MISSING>,(508) 797-6966,Bank ,42.275188,-71.743406,"Monday - Wednesday 8:30am - 5:00pm
+Thursday - Friday 8:30am - 6:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 20-22 West Street Rutland, VT",20-22 West Street,Rutland,VT,05701,US,<MISSING>,(802) 773-5477,Bank ,43.60844,-72.97441,"Monday - Wednesday 8:30am - 4:00pm
+Thursday - Friday 8:30am - 5:00pm
+Saturday 8:30am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 303 Turnpike Road Westborough, MA",303 Turnpike Road,Westborough,MA,01581,US,<MISSING>,(508) 366-4750,Bank ,42.2826810904875,-71.6543609006496,"Monday - Wednesday 9:00am - 4:00pm
+Thursday - Friday 9:00am - 5:00pm
+Saturday 9:00am - 12:00pm"
+https://www.berkshirebank.com/,"Bank at 5 East Main Street Westborough, MA",5 East Main Street,Westborough,MA,01581,US,<MISSING>,(508) 616-4403,Bank ,42.27018,-71.61271,"Monday - Wednesday 8:30am - 5:00pm
+Thursday - Friday 8:30am - 6:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at One West Main St Little Falls, NY",1 West Main St,Little Falls,NY,13365,US,<MISSING>,(315) 823-1051,Bank ,43.04325,-74.85957,"Monday - Wednesday 8:30am - 4:30pm
+Thursday - Friday 8:30am - 5:30pm"
+https://www.berkshirebank.com/,"Bank at 322 Maple Street Marlborough, MA",322 Maple Street,Marlborough,MA,01752,US,<MISSING>,(508) 303-0382,Bank ,42.3363265053251,-71.5417052563093,"Monday - Wednesday 8:30am - 5:00pm
+Thursday - Friday 8:30am - 6:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 91 Main Street Milford, MA",91 Main Street,Milford,MA,01757,US,<MISSING>,(508) 634-7890,Bank ,42.14235,-71.5178028571429,"Monday - Wednesday 8:30am - 5:00pm
+Thursday - Friday 8:30am - 6:00pm
+Saturday 8:30am - 12:30pm"
+https://www.berkshirebank.com/,"Bank at 1 Central Plaza Ilion, NY",1 Central Plaza,Ilion,NY,13357,US,<MISSING>,(315) 895-7445,Bank ,43.01499,-75.03552,"Monday - Wednesday 8:30am - 4:30pm
+Thursday - Friday 8:30am - 5:30pm
+Saturday 9:00am - 12:00pm"
