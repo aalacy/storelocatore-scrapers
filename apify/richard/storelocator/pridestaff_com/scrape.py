@@ -1,8 +1,10 @@
 import csv
-import time
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 COMPANY_URL = "https://www.pridestaff.com"
@@ -62,9 +64,6 @@ def fetch_data():
     )[0].get_attribute("href")
     driver.get(store_url)
 
-    # Loading
-    time.sleep(2)
-
     # Get all locations url
     listing_urls = [
         listing_url.get_attribute("href")
@@ -75,7 +74,10 @@ def fetch_data():
 
     for listing_url in listing_urls:
         driver.get(listing_url)
-        time.sleep(1)
+
+        # Wait until element appears - 10 secs max
+        wait = WebDriverWait(driver, 10)
+        wait.until(ec.visibility_of_element_located((By.CLASS_NAME, "h2.center")))
 
         # Extract location information
         location_title = driver.find_element_by_class_name("h2.center").text

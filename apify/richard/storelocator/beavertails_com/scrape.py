@@ -73,36 +73,13 @@ def fetch_data():
     listings = driver.find_elements_by_css_selector("div.wpsl-store-location")
 
     for listing in listings:
-        location_title = listing.find_element_by_css_selector("p > strong").text
-        street_address = " ".join(
-            [
-                address.text
-                for address in listing.find_elements_by_css_selector(
-                    "p > span.wpsl-street"
-                )
-            ]
-        )
-        country = listing.find_element_by_css_selector("p > span.wpsl-country").text
-        city_state_info = listing.find_element_by_css_selector(
-            "p > span:not(.wpsl-country):not(.wpsl-street)"
-        ).text
-
-        if country == "Canada":
-            zip_code = city_state_info[-7:]
-        else:
-            zip_code = city_state_info[-5:]
-
-        # Hours not always present
+        # Get hour from the website
         try:
             hour = listing.find_element_by_css_selector("table.wpsl-opening-hours").text
         except:
             hour = "<MISSING>"
 
-        locations_titles.append(location_title)
-        street_addresses.append(street_address)
-        zip_codes.append(zip_code)
         hours.append(hour)
-        countries.append(country)
 
     # Get other information
     driver.get(
@@ -110,16 +87,30 @@ def fetch_data():
     )
     listings = json.loads(driver.find_element_by_css_selector("pre").text)
     for listing in listings:
-        store_ids.append(listing["id"])
-        cities.append(listing["city"])
-        states.append(listing["state"])
-        latitude_list.append(listing["lat"])
-        longitude_list.append(listing["lng"])
-        zip_codes.append(listing["zip"])
-        if listing["phone"] == "":
-            phone_numbers.append("<MISSING>")
-        else:
-            phone_numbers.append(listing["phone"])
+        locations_titles.append(
+            u"{}".format(listing["store"].replace("&#8211;", "-"))
+            if listing["store"] != ""
+            else "<MISSING>"
+        )
+        street_addresses.append(
+            u"{}".format(listing["address"])
+            if listing["address"] != ""
+            else "<MISSING>"
+        )
+        store_ids.append(listing["id"] if listing["id"] != "" else "<MISSING>")
+        cities.append(
+            u"{}".format(listing["city"]) if listing["city"] != "" else "<MISSING>"
+        )
+        states.append(
+            u"{}".format(listing["state"]) if listing["state"] != "" else "<MISSING>"
+        )
+        latitude_list.append(listing["lat"] if listing["lat"] != "" else "<MISSING>")
+        longitude_list.append(listing["lng"] if listing["lng"] != "" else "<MISSING>")
+        zip_codes.append(listing["zip"] if listing["zip"] != "" else "<MISSING>")
+        countries.append("CA" if listing["country"] == "Canada" else "US")
+        phone_numbers.append(
+            listing["phone"] if listing["phone"] != "" else "<MISSING>"
+        )
 
     for (
         locations_title,

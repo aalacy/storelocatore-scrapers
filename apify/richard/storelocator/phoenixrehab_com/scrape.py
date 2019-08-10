@@ -3,6 +3,9 @@ import time
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 COMPANY_URL = "https://www.phoenixrehab.com"
@@ -61,7 +64,6 @@ def fetch_data():
         "li.menu-item.menu-item-type-post_type.menu-item-object-page.menu-item-6426 > a"
     ).get_attribute("href")
     driver.get(location_url)
-    time.sleep(2)
 
     # Get listings
     listings = [
@@ -70,6 +72,7 @@ def fetch_data():
             "li.stockist-result.stockist-list-result"
         )
     ]
+
     listing_urls = [
         url.get_attribute("href")
         for url in driver.find_elements_by_css_selector(
@@ -111,7 +114,11 @@ def fetch_data():
     # Get hours
     for url in listing_urls:
         driver.get(url)
-        time.sleep(0.5)
+
+        # Wait until element appears - 10 secs max
+        wait = WebDriverWait(driver, 10)
+        wait.until(ec.visibility_of_element_located((By.CLASS_NAME, "col-md-7")))
+
         hours.append(
             driver.find_element_by_class_name("col-md-7.pr-0.border-line-left").text
         )
