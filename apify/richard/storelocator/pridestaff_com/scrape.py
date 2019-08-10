@@ -97,26 +97,26 @@ def fetch_data():
                 "ul.location-address.noaftermath > li"
             )
         ]
-        if address_info[0] == "Coming Soon":
-            street_address = "<MISSING>"
+        if "Coming Soon" in address_info[0]:
+            pass
         else:
             street_address = " ".join(address_info[:-1])
-        city = address_info[-1].split(",")[0]
-        state = address_info[-1].split(",")[1].split(" ")[0]
-        zip_code = address_info[-1].split(",")[1].split(" ")[1]
+            city = address_info[-1].split(",")[0]
+            state = address_info[-1].split(",")[1].strip().split(" ")[0]
+            zip_code = address_info[-1].split(",")[1].strip().split(" ")[1]
 
-        # Wait for location to be loaded
-        wait = WebDriverWait(driver, 10)
-        wait.until(
-            ec.visibility_of_element_located((By.CLASS_NAME, "location-contact"))
-        )
-        try:
-            # If the phone number exists
-            phone_number = driver.find_element_by_css_selector(
-                "ul.location-contact > li:nth-child(1) > a"
-            ).text
-        except:
-            phone_number = "<MISSING>"
+            # Wait for location to be loaded
+            wait = WebDriverWait(driver, 10)
+            wait.until(
+                ec.visibility_of_element_located((By.CLASS_NAME, "location-contact"))
+            )
+            try:
+                # If the phone number exists
+                phone_number = driver.find_element_by_css_selector(
+                    "ul.location-contact > li:nth-child(1) > a"
+                ).text
+            except:
+                phone_number = "<MISSING>"
 
         # Store information
         locations_titles.append(location_title)
