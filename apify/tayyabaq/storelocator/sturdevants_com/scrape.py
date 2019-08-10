@@ -5,7 +5,7 @@ from selenium.webdriver.chrome.options import Options
 import re, time
 
 def write_output(data):
-    with open('data3.csv', mode='wb') as output_file:
+    with open('data.csv', mode='wb') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
@@ -16,7 +16,7 @@ def write_output(data):
 
 def get_driver():
     options = Options() 
-    options.add_argument('--headless')
+    options.add_argument("--start-maximized")
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     return webdriver.Chrome('chromedriver', chrome_options=options)
@@ -25,10 +25,10 @@ def fetch_data():
     #Variables
     data=[]; store_no=[];zipcode=[];hours_of_operation=[];location_name=[];location_type=[];city=[];street_address=[]; state=[]; phone=[]
     #Driver
-    driver = webdriver.Chrome('chromedriver')
+    driver = get_driver()
     #Get site
     driver.get('https://www.sturdevants.com/store-locator/')
-    time.sleep(6)
+    time.sleep(10)
     driver.find_element_by_xpath("//select[@name='wpgmza_table_2_length']/option[text()='100']").click()
     # Fetch stores
     time.sleep(6)
@@ -69,6 +69,7 @@ def fetch_data():
             '<MISSING>',
             hours_of_operation[n]
         ])
+    driver.quit()
     return data
 
 def scrape():
@@ -77,4 +78,3 @@ def scrape():
 
 scrape()
     
-

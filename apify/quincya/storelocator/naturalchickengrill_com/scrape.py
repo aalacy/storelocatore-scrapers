@@ -51,8 +51,17 @@ def fetch_data():
 		latitude = "<MISSING>"
 		longitude = "<MISSING>"
 		hours_of_operation = item.findAll('div', attrs={'class': 'c-location-list__block'})[1]
-		hours_of_operation = hours_of_operation.findAll('p')[2].text.replace("\n", " ").replace("\xa0", " ")
-		hours_of_operation = re.sub(' +', ' ', hours_of_operation)
+		hours_of_operation = hours_of_operation.findAll('span', attrs={'class': 's1'})
+		hours_list = []
+		for hours in hours_of_operation:
+			hours_list.append((hours.text.replace("\n", " ").replace("\xa0", " ")))
+		hours_of_operation = ', '.join(hours_list)
+		hours_of_operation = hours_of_operation.replace(",","")
+
+		if hours_of_operation == "":
+			hours_of_operation = item.findAll('div', attrs={'class': 'c-location-list__block'})[1]
+			hours_of_operation = hours_of_operation.findAll('p')[2].text.replace("\n", " ").replace("\xa0", " ")
+			hours_of_operation = re.sub(' +', ' ', hours_of_operation)
 
 		data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 

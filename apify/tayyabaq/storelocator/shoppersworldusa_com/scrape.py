@@ -38,7 +38,7 @@ def fetch_data():
     stores = driver.find_elements_by_class_name("maincontent")
     loc = stores[0].text.split("\n")
     for i in range(0,len(loc)):
-        if loc[i]!="":
+        if loc[i]!="" and 'coming soon' not in loc[i]:
             a=re.findall("[\d].*[\Q\s][A-Z].*",loc[i])
             try:
                 street_address.append(a[0].split(",")[0])
@@ -64,7 +64,7 @@ def fetch_data():
                 continue
     for n in range(0,len(location_name)): 
         data.append([
-            'https://www.crayolaexperience.com',
+            'https://www.shoppersworldusa.com',
             location_name[n],
             street_address[n],
             city[n],
