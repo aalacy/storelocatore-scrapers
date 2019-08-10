@@ -115,11 +115,10 @@ def fetch_data():
         driver.get(url)
 
         # Wait until element appears - 10 secs max
-        wait = WebDriverWait(driver, 10)
-        wait.until(ec.visibility_of_element_located((By.CLASS_NAME, "col-md-7")))
+        wait = WebDriverWait(driver, 10).until(ec.visibility_of_element_located((By.CSS_SELECTOR, ".col-md-7.pr-0.border-line-left")))
 
         hours.append(
-            driver.find_element_by_class_name("col-md-7.pr-0.border-line-left").text
+            driver.find_element(By.CSS_SELECTOR, ".col-md-7.pr-0.border-line-left").text
         )
 
     # Store data
