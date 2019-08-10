@@ -81,6 +81,12 @@ def fetch_data():
 
         # Extract location information
         location_title = driver.find_element_by_class_name("h2.center").text
+
+        # Wait for location to be loaded
+        wait = WebDriverWait(driver, 10)
+        wait.until(
+            ec.visibility_of_element_located((By.CLASS_NAME, "location-address"))
+        )
         address_info = [
             location_info.text
             for location_info in driver.find_elements_by_css_selector(
@@ -94,7 +100,14 @@ def fetch_data():
         city = address_info[-1].split(",")[0]
         state = address_info[-1].split(",")[1].split(" ")[0]
         zip_code = address_info[-1].split(",")[1].split(" ")[1]
+
+        # Wait for location to be loaded
+        wait = WebDriverWait(driver, 10)
+        wait.until(
+            ec.visibility_of_element_located((By.CLASS_NAME, "location-contact"))
+        )
         try:
+            # If the phone number exists
             phone_number = driver.find_element_by_css_selector(
                 "ul.location-contact > li:nth-child(1) > a"
             ).text
