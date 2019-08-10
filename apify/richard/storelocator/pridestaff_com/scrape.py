@@ -77,10 +77,10 @@ def fetch_data():
 
         # Wait until element appears - 10 secs max
         wait = WebDriverWait(driver, 10)
-        wait.until(ec.visibility_of_element_located((By.CLASS_NAME, "h2.center")))
+        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, ".h2.center")))
 
         # Extract location information
-        location_title = driver.find_element_by_class_name("h2.center").text
+        location_title = driver.find_element(By.CSS_SELECTOR, ".h2.center").text
 
         # Wait for location to be loaded
         wait = WebDriverWait(driver, 10)
