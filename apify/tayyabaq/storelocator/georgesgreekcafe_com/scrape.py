@@ -53,7 +53,7 @@ def fetch_data():
         hours_of_operation.append(driver.find_element_by_xpath("//div[@class='col-md-6']/p[2]").text)
     for n in range(0,len(location_name)): 
         data.append([
-            'https://www.crayolaexperience.com',
+            'https://www.georgesgreekcafe.com',
             location_name[n],
             street_address[n],
             city[n],

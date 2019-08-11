@@ -41,7 +41,8 @@ def fetch_data():
 		zip_code = raw_data[1][raw_data[1].rfind(' ')+1:].strip()
 		country_code = "US"
 		store_number = "<MISSING>"
-		phone = item.find('a').text.strip()
+		phone = item.find('a').get_text(separator=u' ').strip()
+		phone = re.findall("[[\d]{3}-[\d]{3}-[\d]{4}", phone)[0]
 		location_type = "<MISSING>"
 		latitude = "<MISSING>"
 		longitude = "<MISSING>"

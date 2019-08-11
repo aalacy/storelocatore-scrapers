@@ -20,6 +20,11 @@ def get_driver():
     options.add_argument('--disable-dev-shm-usage')
     return webdriver.Chrome('chromedriver', chrome_options=options)
 
+def parse_geo(url):
+    lon = re.findall(r'\"lng":(-?[\d\.]*)', url)[0]
+    lat = re.findall(r'\"lat":(-?[\d\.]*)', url)[0]
+    return lat, lon
+
 def fetch_data():
     #Variables
     data=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
@@ -34,6 +39,13 @@ def fetch_data():
     phones = driver.find_elements_by_class_name("phone")
     phone = [phones[i].text for i in range(0,len(phones))]
     address = driver.find_elements_by_class_name("address")
+    geomap =driver.find_elements_by_xpath("//script[@type='text/javascript']")
+    geomaps = geomap[-2].get_attribute('innerHTML')
+    latlon = re.findall(r'"point":{(.*?)\}', geomaps)
+    for i in range(0,len(latlon)):
+        lat,lon = parse_geo(latlon[i])
+        latitude.append(lat)
+        longitude.append(lon)
     for i in range(0,len(address)):
         a=address[i].text.split("\n")
         street_address.append(a[0])
@@ -54,8 +66,8 @@ def fetch_data():
             '<MISSING>',
             phone[n],
             '<MISSING>',
-            '<MISSING>',
-            '<MISSING>',
+            latitude[n],
+            longitude[n],
             hours_of_operation[n]
         ])
     driver.quit()

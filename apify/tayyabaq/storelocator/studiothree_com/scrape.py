@@ -12,8 +12,7 @@ def write_output(data):
         # Body
         for row in data:
             if row:
-                rows = tuple("=\"" + str(r) + "\"" for r in row)
-                writer.writerow(rows)
+                writer.writerow(row)
 def get_driver():
     options = Options() 
     options.add_argument('--headless')
@@ -30,7 +29,7 @@ def fetch_data():
     #Variables
     data=[]; latitude=[];longitude=[];zipcode=[];location_name=[];location_type=[];city=[];street_address=[]; state=[]; phone=[]
     #Driver
-    driver = get_driver()
+    driver =  get_driver()
     #Get site
     driver.get('https://studiothree.com/')
     time.sleep(6)
