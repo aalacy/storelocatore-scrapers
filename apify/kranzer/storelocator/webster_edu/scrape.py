@@ -15,8 +15,7 @@ class Scrape(base.Spider):
         base_url = "http://www.webster.edu/locations/"
         # print(requests.get('http://www.webster.edu/locations/index.xml').content)
         for result in etree.fromstring(requests.get('http://www.webster.edu/locations/index.xml').content).xpath('//x:Folder/x:Placemark/x:Placemark/x:Placemark', namespaces={"x":"http://www.opengis.net/kml/2.2"}):
-            loc = result.xpath('.//x:description', namespaces={"x": "http://www.opengis.net/kml/2.2"})[
-                0].text.strip().replace('<br/>', ', ').replace(' ,', ',').replace(',,', ',').replace('\xa0', ' ')
+            loc = result.xpath('.//x:description', namespaces={"x": "http://www.opengis.net/kml/2.2"})[0].text.strip().replace('<br/>', ', ').replace(' ,', ',').replace(',,', ',').replace('\xa0', ' ')
             loc_sp = loc.split(',')
 
             state_zip = usaddress.parse(loc_sp[-2])
