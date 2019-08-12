@@ -1,11 +1,10 @@
 import csv
+import json
 import re
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
 
 
 COMPANY_URL = "https://www.phoenixrehab.com"
@@ -43,99 +42,70 @@ def write_output(data):
 
 def fetch_data():
     # store data
+    store_numbers = []
     locations_titles = []
     street_addresses = []
     cities = []
     states = []
     zip_codes = []
     phone_numbers = []
-    hours = []
     latitude_list = []
     longitude_list = []
     data = []
+    location_hours = {}
 
     options = Options()
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     driver = webdriver.Chrome(CHROME_DRIVER_PATH, options=options)
-    driver.get(COMPANY_URL)
+    driver.get(
+        "https://stockist.co/api/v1/u4291/locations/all.js?callback=_stockistAllStoresCallback"
+    )
 
-    # Fetch store urls from location menu
-    location_url = driver.find_element_by_css_selector(
-        "li.menu-item.menu-item-type-post_type.menu-item-object-page.menu-item-6426 > a"
-    ).get_attribute("href")
-    driver.get(location_url)
+    listings = json.loads(
+        driver.find_element_by_css_selector("pre").text.replace(
+            "_stockistAllStoresCallback(", ""
+        )[:-2]
+    )
 
-    # Get listings
-    listings = [
-        listing.text
-        for listing in driver.find_elements_by_css_selector(
-            "li.stockist-result.stockist-list-result"
+    for listing in listings:
+        store_numbers.append(listing["id"])
+        locations_titles.append(listing["name"])
+        latitude_list.append(listing["latitude"])
+        longitude_list.append(listing["longitude"])
+        street_addresses.append(
+            listing["address_line_1"] + " " + listing["address_line_2"]
+            if listing["address_line_2"]
+            else listing["address_line_1"]
         )
-    ]
+        cities.append(listing["city"])
+        states.append(listing["state"])
+        zip_codes.append(listing["postal_code"])
+        phone_numbers.append(listing["phone"])
+
+    url = "https://www.phoenixrehab.com/locations/"
+    driver.get(url)
 
     listing_urls = [
         url.get_attribute("href")
         for url in driver.find_elements_by_css_selector(
-            "div.stockist-result-website > a"
+            "ul.state-locations-list > li > a"
         )
     ]
-
-    for listing in listings:
-        listing = [
-            listing
-            for listing in listing.split("\n")
-            if listing
-            not in [
-                "Physical Therapy",
-                "Occupational Health",
-                "Athletic Training",
-                "VIEW LOCATION PAGE",
-                "Occupational Therapy",
-                "Athletic Training",
-                "Massage Therapy",
-                "Pilates",
-                "Chiropractic",
-            ]
-        ]
-        locations_title = listing[0]
-        phone_number = listing[-1]
-        street_address = " ".join(listing[1:-2])
-        city = listing[-2].split(",")[0]
-        state = listing[-2].split(",")[1].strip().split(" ")[0]
-        zip_code = listing[-2].split(",")[1].strip().split(" ")[1]
-
-        locations_titles.append(locations_title)
-        street_addresses.append(street_address)
-        phone_numbers.append(phone_number)
-        cities.append(city)
-        states.append(state)
-        zip_codes.append(zip_code)
 
     # Get hours
     for url in listing_urls:
         driver.get(url)
 
-        # Wait until element appears - 10 secs max
-        wait = WebDriverWait(driver, 10).until(
-            ec.visibility_of_element_located(
-                (By.CSS_SELECTOR, ".col-md-7.pr-0.border-line-left")
-            )
+        id = (
+            driver.find_element_by_css_selector("p.phone > a.phone-link")
+            .get_attribute("textContent")
+            .strip()
         )
-
-        hours.append(
-            driver.find_element(By.CSS_SELECTOR, ".col-md-7.pr-0.border-line-left").text
-        )
-
-        long_lat = re.search(
-            "([-+]?)([\d]{1,3})(((\.)(\d+)()))%2C([-+]?)([\d]{1,3})(((\.)(\d+)()))",
-            driver.find_element_by_id("page-dynamic-styles").get_attribute(
-                "textContent"
-            ),
-        ).group(0)
-        latitude_list.append(long_lat.split("%2C")[0])
-        longitude_list.append(long_lat.split("%2C")[1])
+        location_hours[id] = driver.find_element(
+            By.CSS_SELECTOR, ".col-md-7.pr-0.border-line-left"
+        ).text
 
     # Store data
     for (
@@ -147,7 +117,6 @@ def fetch_data():
         phone_number,
         latitude,
         longitude,
-        hour,
     ) in zip(
         locations_titles,
         street_addresses,
@@ -157,7 +126,6 @@ def fetch_data():
         phone_numbers,
         latitude_list,
         longitude_list,
-        hours,
     ):
         data.append(
             [
@@ -173,7 +141,7 @@ def fetch_data():
                 "<MISSING>",
                 latitude,
                 longitude,
-                hour,
+                location_hours[phone_number],
             ]
         )
 

@@ -61,37 +61,37 @@ def fetch_data():
     time.sleep(2)
 
     locations_titles = [
-        location_title.get_attribute("text")
+        location_title.get_attribute("text").strip()
         for location_title in driver.find_elements_by_css_selector(
             "td.store-location-name > a"
         )
     ]
     street_addresses = [
-        street_address.get_attribute("textContent")
+        street_address.get_attribute("textContent").strip()
         for street_address in driver.find_elements_by_css_selector(
             "td.store-location-address > p:nth-child(1)"
         )
     ]
     cities = [
-        city_state_info.get_attribute("textContent").split(",")[0]
+        city_state_info.get_attribute("textContent").split(",")[0].strip()
         for city_state_info in driver.find_elements_by_css_selector(
             "td.store-location-address > p:nth-child(2)"
         )
     ]
     states = [
-        city_state_info.get_attribute("textContent").split(",")[1]
+        city_state_info.get_attribute("textContent").split(",")[1].strip()
         for city_state_info in driver.find_elements_by_css_selector(
             "td.store-location-address > p:nth-child(2)"
         )
     ]
     zip_codes = [
-        city_state_info.get_attribute("textContent").split(",")[2]
+        city_state_info.get_attribute("textContent").split(",")[2].strip()
         for city_state_info in driver.find_elements_by_css_selector(
             "td.store-location-address > p:nth-child(2)"
         )
     ]
     phone_numbers = [
-        phone_number.get_attribute("textContent")
+        phone_number.get_attribute("textContent").strip()
         for phone_number in driver.find_elements_by_css_selector(
             "td.store-location-address > p:nth-child(3)"
         )
