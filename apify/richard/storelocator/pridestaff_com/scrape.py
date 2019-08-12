@@ -51,8 +51,7 @@ def fetch_data():
     zip_codes = []
     phone_numbers = []
     countries = []
-    latitude_list = []
-    longitude_list = []
+    long_lat_dict = {}
     data = []
 
     options = Options()
@@ -133,8 +132,9 @@ def fetch_data():
     body = json.loads(requests.post(url, data=req_data).text)
 
     for info in body:
-        latitude_list.append(info["coord"]["lat"])
-        longitude_list.append(info["coord"]["lng"])
+        long_lat_dict[
+            info["info"].split("</strong>")[0].replace("<string>", "").strip()
+        ] = [info["coord"]["lat"], info["coord"]["lng"]]
 
     for (
         locations_title,
@@ -144,8 +144,6 @@ def fetch_data():
         zipcode,
         phone_number,
         country,
-        longitude,
-        latitude,
     ) in zip(
         locations_titles,
         street_addresses,
@@ -154,8 +152,6 @@ def fetch_data():
         zip_codes,
         phone_numbers,
         countries,
-        longitude_list,
-        latitude_list,
     ):
         data.append(
             [
@@ -169,8 +165,8 @@ def fetch_data():
                 "<MISSING>",
                 phone_number,
                 "<MISSING>",
-                latitude,
-                longitude,
+                long_lat_dict[locations_title.replace("PrideStaff", "").strip()][0],
+                long_lat_dict[locations_title.replace("PrideStaff", "").strip()][1],
                 "<MISSING>",
             ]
         )
