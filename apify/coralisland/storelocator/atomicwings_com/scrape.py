@@ -7,7 +7,8 @@ import json
 import usaddress
 
 
-base_url = 'https://www.pizzerialimone.net'
+base_url = 'https://www.prestigepreschoolacademy.com'
+
 
 def validate(item):    
     if type(item) == list:
@@ -16,7 +17,7 @@ def validate(item):
 
 def get_value(item):
     item = validate(item)
-    if item == '':
+    if item == '' or item == 'N/A':
         item = '<MISSING>'    
     return item
 
@@ -37,21 +38,15 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "https://www.pizzerialimone.com/locations"
+    url = "https://api.responsival.net/atomicwings/locations.php"
     session = requests.Session()
     request = session.get(url)
-    response = etree.HTML(request.text)
-    store_list = response.xpath('//section[@class="Main-content"]//div[@class="row sqs-row"][1]//div[@class="sqs-block-content"]//p')
-    title_list = response.xpath('//section[@class="Main-content"]//div[@class="row sqs-row"][1]//div[@class="sqs-block-content"]//h2')
-    store_hours = validate(response.xpath('//section[@class="Main-content"]//div[@class="row sqs-row"][2]//div[@class="sqs-block-content"]')[0].xpath('.//text()')).replace('All locations Open ', '')
-    for idx, store in enumerate(store_list):
-        store = eliminate_space(store.xpath('.//text()'))
-        title = validate(title_list[idx].xpath('.//text()'))
+    store_list = json.loads(request.text)
+    for store in store_list:
         output = []
         output.append(base_url) # url
-        output.append(title) #location name
-        address = ', '.join(store[:-1])
-        address = usaddress.parse(address)
+        output.append(store['name']) #location name
+        address = usaddress.parse(store['address'])
         street = ''
         city = ''
         state = ''
@@ -70,12 +65,16 @@ def fetch_data():
         output.append(get_value(state)) #state
         output.append(get_value(zipcode)) #zipcode
         output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(store[-1]) #phone
-        output.append("Pizzeria Limone") #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
-        output.append(store_hours) #opening hours        
+        output.append('<MISSING>') #store_number
+        output.append(get_value(store['phone'])) #phone
+        output.append("Atomic Wings") #location type
+        output.append(store['latitude']) #latitude
+        output.append(store['longitude']) #longitude
+        store_hours = '  '
+        days_of_week = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        for day in days_of_week:
+            store_hours += day.capitalize() + ' ' + store[day+'-hours'] + ', '
+        output.append(get_value(store_hours[:-2])) #opening hours
         output_list.append(output)
     return output_list
 
