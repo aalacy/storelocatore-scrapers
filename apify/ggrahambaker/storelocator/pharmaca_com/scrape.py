@@ -2,6 +2,7 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
+import json
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,6 +23,7 @@ def fetch_data():
     
 
     page = requests.get(to_scrape)
+
     assert page.status_code == 200
 
     soup = BeautifulSoup(page.content, 'html.parser')

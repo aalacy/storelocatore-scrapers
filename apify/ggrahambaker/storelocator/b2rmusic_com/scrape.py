@@ -72,11 +72,13 @@ def fetch_data():
 
         a_tags = loc_business.find_elements_by_css_selector('a')
         href = a_tags[2].get_attribute('href')
+        print(location_name)
+        print(href)
         start_idx = href.find('/@')
         end_idx = href.find('z/data')
         if start_idx == -1:
-            lat = '<MISSING>'
-            longit = '<MISSING>'
+            lat = '<INACCESSIBLE>'
+            longit = '<INACCESSIBLE>'
         else:
             coords = href[start_idx + 2: end_idx].split(',')
             lat = coords[0]

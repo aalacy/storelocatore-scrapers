@@ -22,6 +22,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -33,80 +34,48 @@ def addy_ext(addy):
 
 
 def fetch_data():
-    locator_domain = 'https://www.batterygiant.com/'
-    ext = 'store-locator'
+    locator_domain = 'https://www.eatrockefeller.com/'
+    ext = 'locations'
 
     driver = get_driver()
     driver.get(locator_domain + ext)
 
-    tds = driver.find_elements_by_css_selector('td.storeLink')
-    link_list = []
-    for td in tds:
-        link_list.append(td.find_element_by_css_selector('a').get_attribute('href'))
-
+    id_arr = ['#mediaisfplg6i2inlineContent-gridWrapper', '#mediaisfplg6h1inlineContent-gridWrapper',
+              '#comp-jep6p29rinlineContent-gridWrapper']
     all_store_data = []
-    for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
-        cont = driver.find_element_by_css_selector('div.grid_92')
-        content = cont.text.split('\n')
+    for id_tag in id_arr:
+        content = driver.find_element_by_css_selector('div' + id_tag).text.split('\n')
 
-        if 'Panama' in content[0]:
-            continue
-        if len(content) == 13:
+        if len(content) == 12:
+            location_name = content[1]
+            phone_number = content[2]
             street_address = content[3]
             city, state, zip_code = addy_ext(content[4])
-            phone_number = content[6]
             hours = ''
-            for h in content[10:]:
+            for h in content[5:]:
                 hours += h + ' '
+
+            hours = hours.strip()
+        else:
+            location_name = content[0]
+            phone_number = content[1]
+            street_address = content[2]
+            city, state, zip_code = addy_ext(content[3])
+            hours = ''
+            for h in content[4:-1]:
+                hours += h + ' '
+
             hours = hours.strip()
 
-        elif len(content) == 16:
-            if 'Louisville' in content[0]:
-                street_address = content[5]
-                city, state, zip_code = addy_ext(content[6])
-                phone_number = content[8]
-            else:
-                street_address = content[6]
-                city, state, zip_code = addy_ext(content[7])
-                phone_number = content[9]
 
-            hours = ''
-            for h in content[13:]:
-                hours += h + ' '
-            hours = hours.strip()
-        elif len(content) < 11:
-            if len(content) == 9:
-                street_address = content[2] + ' ' + content[3]
-
-                city, state, zip_code = addy_ext(content[4])
-                phone_number = content[6]
-                hours = '<MISSING>'
-
-            else:
-                street_address = content[2]
-                city, state, zip_code = addy_ext(content[3])
-
-                phone_number = content[5]
-                hours = ''
-                for h in content[7:]:
-                    hours += h + ' '
-                hours = hours.strip()
-
-
-        location_name = '<MISSING>'
+        lat = '<INACCESSIBLE>'
+        longit = '<INACCESSIBLE>'
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
-
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
-
-
 
 
     driver.quit()
