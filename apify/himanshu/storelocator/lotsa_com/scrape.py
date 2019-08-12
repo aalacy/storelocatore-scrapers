@@ -5,7 +5,7 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('lotsa.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -56,9 +56,9 @@ def fetch_data():
         store.append(store_name)
         store.append(street_add)
         store.append(city)
-        store.append("<MISSING>")
-        store.append(pincode)
         store.append(country)
+        store.append(pincode)
+        store.append("US")
         store.append("<MISSING>")
         store.append(phone)
         store.append("<MISSING>")

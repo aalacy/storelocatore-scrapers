@@ -3,6 +3,7 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import usaddress
+import re
 
 
 options = Options()
@@ -22,12 +23,12 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def parse_address(adr):
-    city = adr.split(',')[0]
-    state_zip = adr.split(',')[1]
-    state = state_zip.rsplit(' ', 1)[0]
-    zipcode = state_zip.rsplit(' ', 1)[1]
-    return city, state, zipcode
+
+def parse_geo(url):
+    lon = re.findall(r'2d{1}(-?\d*.{1}\d*)!{1}', url)[0]
+    lat = re.findall(r'3d{1}(-?\d*.{1}\d*)!{1}', url)[0]
+    return lat, lon
+
 
 def fetch_data():
     # Your scraper here
@@ -51,7 +52,6 @@ def fetch_data():
             state = tagged['StateName']
             zipcode = tagged['ZipCode'].split('\n')[0]
             phone = tagged['OccupancyIdentifier']
-
             data.append([
              'https://www.waltsfoods.com/',
               location_name,
@@ -67,6 +67,14 @@ def fetch_data():
               '<INACCESSIBLE>',
               hours_of_operation
             ])
+    # Retrieve latitude and longitude for all locations
+    geomaps = driver.find_elements_by_css_selector('div.et_pb_text_inner > p > iframe')
+    i = 0
+    while i < len(data):
+        lat, lon = parse_geo(geomaps[i].get_attribute('src'))
+        data[i][10] = lat
+        data[i][11] = lon
+        i += 1
 
     time.sleep(3)
     driver.quit()
