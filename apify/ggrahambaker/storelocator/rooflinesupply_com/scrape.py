@@ -1,7 +1,7 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
-
+import re
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,13 +27,34 @@ def addy_extractor(src):
 
 
 def fetch_data():
-
     locator_domain = 'http://rooflinesupply.com/'
     to_scrape = locator_domain
     page = requests.get(to_scrape)
     assert page.status_code == 200
 
     soup = BeautifulSoup(page.content, 'html.parser')
+    pattern = re.compile('(([\-\+]{0,1}\d[\d\.\,]*[\.\,][\d\.\,]*\d+)\,\s+([\-\+]{0,1}\d[\d\.\,]*[\.\,][\d\.\,]*\d+))')
+    pair_pattern = re.compile('((\w+)=\"([^\"]+)\")')
+
+
+
+
+    script = soup.find('script', text=pattern)
+
+
+    results_locs = re.findall(pair_pattern, script.text)
+    loc_arr = []
+    for i, res in enumerate(results_locs):
+        if 'title' in res:
+            res = str(res)
+            idx = [i.start() for i in re.finditer('"', res)]
+            loc_arr.append([res[idx[0] + 1:idx[1]]])
+
+    results = re.findall(pattern, script.text)
+    for i, loc in enumerate(loc_arr):
+        loc.append(results[i][0])
+
+
 
     stores = soup.find_all('div', {'class': 'locations'})
     all_store_data = []
@@ -56,11 +77,23 @@ def fetch_data():
             else:
                 hours += ' ' + hr_brs[5].previousSibling.strip()
 
+        for loc in loc_arr:
+            if city in loc[0]:
+                coords = loc[1].split(',')
+                lat = coords[0]
+                longit = coords[1]
+
+        if '4350 Pell Drive, Ste 100' in street_address:
+            lat = '38.647544'
+            longit = '-121.469982'
+
+        if '5870 88th Street' in street_address:
+            lat = '38.520273'
+            longit = '-121.376846'
+
         country_code = 'US'
         location_type = '<MISSING>'
         store_number = '<MISSING>'
-        lat = '<INACCESSIBLE>'
-        longit = '<INACCESSIBLE>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
