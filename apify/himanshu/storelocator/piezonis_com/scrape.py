@@ -34,7 +34,7 @@ def fetch_data():
             store_name = name_statcode[0]
             country_code = name_statcode[1]
             store.append(base_url)
-            store.append(state.find('a').get('href'))
+            store.append(state_soup.find('h1').text)
             store.append(state_soup.select('div#location-box')[0].find('h2').get_text())
             store.append(store_name)
             store.append(country_code)
@@ -42,10 +42,10 @@ def fetch_data():
             store.append("US")
             store.append("<MISSING>")
             store.append(state_soup.select('div#location-box')[0].find('p', {'class', 'phone'}).get_text().strip())
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append(state_soup.select('div#location-box')[0].find('p', {'class', 'phone'}).find_next('div').get_text() + " " + state_soup.select('div#location-box')[0].find('p', {'class', 'phone'}).find_next('div').find_next('p').get_text())
+            store.append("pie zonis")
+            store.append("<INACCESSIBLE>")
+            store.append("<INACCESSIBLE>")
+            store.append(state_soup.select('div#location-box')[0].find('p', {'class', 'phone'}).find_next('div').get_text() + " " + state_soup.select('div#location-box')[0].find('p', {'class', 'phone'}).find_next('div').find_next('p').get_text().replace("\n"," "))
             return_main_object.append(store)
     return return_main_object
 

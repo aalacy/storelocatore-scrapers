@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "email", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -26,21 +26,19 @@ def fetch_data():
     address = []
     data = soup.findAll('div', {'class', 'featured_block_text'})
     for values in data:
-        store = []
         data_val= values.select('.cmsmasters_heading_wrap.cmsmasters_heading_align_center')[0].find('h3').get_text()
         pin_st_city_loc = data_val.split(' ')
         if pin_st_city_loc[-1].isdigit():
-            location_name = (' ').join(data_val.split(' ')[:-3])
-            street_address = (' ').join(data_val.split(' ')[:-3])
-            city = pin_st_city_loc[-3]
-            state = pin_st_city_loc[-2]
-            zip = pin_st_city_loc[-1]
+            location_name = (' ').join(data_val.split(' ')[:-3]).strip()
+            street_address = (' ').join(data_val.split(' ')[:-3]).strip()
+            city = pin_st_city_loc[-3][:-1].strip()
+            state = pin_st_city_loc[-2].strip()
+            zip = pin_st_city_loc[-1].strip()
 
         phone_number = values.select('.cmsmasters_heading_wrap.cmsmasters_heading_align_center')[1].find('h3').get_text()
         if not phone_number.isspace():
-            phone = phone_number
-        email = values.select('.cmsmasters_heading_wrap.cmsmasters_heading_align_center')[2].find('h3').get_text()
-
+            phone = phone_number.strip()[5:]
+        store = []	
         store.append(base_url)
         store.append(location_name)
         store.append(street_address)
@@ -50,7 +48,6 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(phone)
-        store.append(email)
         store.append("New York Pizza")
         store.append("<INACCESSIBLE>")
         store.append("<INACCESSIBLE>")

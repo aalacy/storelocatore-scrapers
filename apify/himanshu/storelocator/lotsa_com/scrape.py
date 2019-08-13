@@ -5,12 +5,11 @@ import re
 import json
 
 def write_output(data):
-    with open('lotsa.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -46,10 +45,12 @@ def fetch_data():
             country = city_state_pin_arr[1][1:3]
             pincode = city_state_pin_arr[1][-5:]
         print("https://lotsa.com" + data.find('a').get('href'))
-        if state_soup.select('.et_pb_column_5'):
-            hours = state_soup.select('.et_pb_column_5')[0].find('h3').find_next('p').get_text()
+        if state_soup.select('.et_pb_column_1_3.et_pb_column_5'):
+            hours = state_soup.select('.et_pb_column_1_3.et_pb_column_5')[0].find('h3').find_next('p').get_text()
+        elif state_soup.select('.et_pb_column_1_3.et_pb_column_6'):
+            hours = state_soup.select('.et_pb_column_6')[0].find('h3').find_next('p').get_text().strip()
         else:
-            hours = state_soup.select('.et_pb_column_6')[0].find('h3').find_next('p').get_text()
+            hours = '<MISSING>'
 
         store = []
         store.append("https://lotsa.com" + data.find('a').get('href'))
@@ -61,9 +62,9 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(phone)
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
+        store.append("LOTSA Stone Fired Pizza")
+        store.append("<INACCESSIBLE>")
+        store.append("<INACCESSIBLE>")
         store.append(hours)
         return_main_object.append(store)
     return return_main_object
