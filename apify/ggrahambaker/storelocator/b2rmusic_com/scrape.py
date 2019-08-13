@@ -72,8 +72,7 @@ def fetch_data():
 
         a_tags = loc_business.find_elements_by_css_selector('a')
         href = a_tags[2].get_attribute('href')
-        print(location_name)
-        print(href)
+
         start_idx = href.find('/@')
         end_idx = href.find('z/data')
         if start_idx == -1:
