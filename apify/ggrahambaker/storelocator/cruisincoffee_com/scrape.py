@@ -79,6 +79,13 @@ def fetch_data():
                 else:
                     hours += h + ' '
 
+            if '111 E. Washington St' in street_address:
+                country_code = 'US'
+                store_number = '<MISSING>'
+                location_type = '<MISSING>'
+                store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                              store_number, phone_number, location_type, lat, longit, hours]
+                all_store_data.append(store_data)
         count += 1
 
 
