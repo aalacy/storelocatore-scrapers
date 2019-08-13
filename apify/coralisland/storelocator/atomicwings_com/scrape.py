@@ -7,7 +7,7 @@ import json
 import usaddress
 
 
-base_url = 'https://www.prestigepreschoolacademy.com'
+base_url = 'https://www.atomicwings.com/'
 
 
 def validate(item):    
@@ -75,7 +75,8 @@ def fetch_data():
         for day in days_of_week:
             store_hours += day.capitalize() + ' ' + store[day+'-hours'] + ', '
         output.append(get_value(store_hours[:-2])) #opening hours
-        output_list.append(output)
+        if '159-23' not in store['name']:
+            output_list.append(output)
     return output_list
 
 def scrape():
