@@ -91,8 +91,8 @@ def fetch_data():
             lat = coords[0]
             longit = coords[1]
         else:
-            lat = '<MISSING>'
-            longit = '<MISSING>'
+            lat = '<INACCESSIBLE>'
+            longit = '<INACCESSIBLE>'
 
         country_code = 'US'
         store_number = '<MISSING>'

@@ -1,0 +1,12 @@
+"locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
+"http://www.cauldronicecream.com/","Artesia","17901 Pioneer Blvd Suite J","Artesia","California","90701","US","939","562-403-7003","<MISSING>","0.000000","0.000000","<MISSING>"
+"http://www.cauldronicecream.com/","Chino","4024 Grand Ave ","Chino","CA","91710","US","918","(909) 517-9119","<MISSING>","33.999241","-117.716522","<MISSING>"
+"http://www.cauldronicecream.com/","Convoy","4646 Convoy St ","San Diego","CA","92111","US","920","<MISSING>","<MISSING>","32.824818","-117.155830","Mon - Th: 12:30pm - 10pm Fri: 12:30 - 11pm Sat: 12pm - 11pm Sun: 12pm - 10pm"
+"http://www.cauldronicecream.com/","Dallas","3001 Knox St #103","Dallas","TX","75205","US","923","(469) 862-4100","<MISSING>","32.821648","-96.787216","Sunday - Thursday: 10AM-10PM  Friday: 10AM–12AM  Saturday: 10AM–12AM"
+"http://www.cauldronicecream.com/","Irvine","14001 Jeffrey Rd ","Irvine","CA","92620","US","916","(949) 988-0924","<MISSING>","33.696552","-117.762939","Monday - Sunday: 12pm - 10pm"
+"http://www.cauldronicecream.com/","San Jose","1088 East Brokaw Road #60 ","San Jose","CA","95131","US","926","<MISSING>","<MISSING>","37.382454","-121.895996","<MISSING>"
+"http://www.cauldronicecream.com/","Santa Ana","1421 W MacArthur Blvd ","Santa Ana","CA","92704","US","922","(657) 245-3442","<MISSING>","33.700596","-117.887596","MON - SUN: 12pm to 10pm"
+"http://www.cauldronicecream.com/","Temple City","5708 Rosemead Blvd Ste 105","Temple City","CA","91780","US","917","(626) 872-0809","<MISSING>","34.104233","-118.073250","Sunday - Thursday: 12pm - 10pm  
+Friday - Saturday: 12pm - 11pm"
+"http://www.cauldronicecream.com/","Toronto","502 Queen St W ","Toronto","ON","M5V 2B3","CA","925","<MISSING>","<MISSING>","43.648006","-79.401321","<MISSING>"
+"http://www.cauldronicecream.com/","Torrance","21605 South Western Avenue ","Torrance","CA","90501","US","927","<MISSING>","<MISSING>","33.832729","-118.310204","<MISSING>"

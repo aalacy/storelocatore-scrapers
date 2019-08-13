@@ -57,8 +57,8 @@ def fetch_data():
         output.append('<MISSING>') #store_number
         output.append(get_value(store.xpath('.//span[@class="contact-content"]')[0].xpath('.//text()'))) #phone
         output.append("U.S. Cellular Locations in the Midwest") #location type
-        output.append('<MISSING>') #latitude
-        output.append('<MISSING>') #longitude
+        output.append('<INACCESSIBLE>') #latitude
+        output.append('<INACCESSIBLE>') #longitude
         h_temp = []
         store_hours = store.xpath('.//table[@class="store-hours-table"]//tr')
         for hour in store_hours:
