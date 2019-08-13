@@ -100,6 +100,12 @@ def fetch_data():
     for listing_url in listing_urls:
         driver.get(listing_url)
 
+        WebDriverWait(driver, 10).until(
+            ec.visibility_of_element_located(
+                (By.CSS_SELECTOR, "h1.no-margin.ng-binding")
+            )
+        )
+
         location_title = driver.find_element_by_css_selector(
             "h1.no-margin.ng-binding"
         ).text
