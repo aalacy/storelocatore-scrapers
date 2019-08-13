@@ -14,7 +14,7 @@ options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 # options.add_argument("--start-maximized")
-driver = webdriver.Chrome('chromedriver', options=options)
+driver = webdriver.Chrome('../chromedriver', options=options)
 
 base_url = 'https://www.britishbeer.com'
 
@@ -35,12 +35,13 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "https://www.britishbeer.com/"
+    url = "https://www.britishbeer.com/pages/find-your-local"
     driver.get(url)
     source = driver.page_source
     response = etree.HTML(source)
     store_list = response.xpath('//script[@type="application/ld+json"]')
-    for store in store_list:
+    store_hours = response.xpath('//div[@class="pm-location-search-list"]//div[@class="hours"]')
+    for idx, store in enumerate(store_list):
         output = []
         store = json.loads(store.xpath('.//text()')[0])
         output.append(base_url) # url
@@ -55,7 +56,7 @@ def fetch_data():
         output.append(store['@type']) #location type
         output.append('<MISSING>') #latitude
         output.append('<MISSING>') #longitude
-        output.append(', '.join(store['openingHours'])) #opening hours
+        output.append(' '.join(validate(store_hours[idx].xpath('.//text()')))) #opening hours
         output_list.append(validate(output))
     return output_list
 
