@@ -51,7 +51,10 @@ def fetch_data():
         output.append(store['zip']) #zipcode
         output.append(store['country']) #country code
         output.append(store['id']) #store_number
-        output.append(get_value(store['phone'])) #phone
+        phone = get_value(etree.HTML(session.get(store['permalink']).text).xpath('.//a[@class="location-phone-button"]//text()'))
+        if phone == 'Book Online':
+            phone = '<MISSING>'
+        output.append(phone) #phone
         output.append("LookAfter Hair Company") #location type
         output.append(store['lat']) #latitude
         output.append(store['lng']) #longitude
