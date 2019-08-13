@@ -133,7 +133,7 @@ def fetch_data():
 
     for info in body:
         long_lat_dict[
-            info["info"].split("</strong>")[0].replace("<string>", "").strip()
+            info["info"].split("</strong>")[0].replace("<strong>", "").strip()
         ] = [info["coord"]["lat"], info["coord"]["lng"]]
 
     for (

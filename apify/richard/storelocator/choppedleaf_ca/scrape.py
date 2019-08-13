@@ -162,7 +162,7 @@ def fetch_data():
         longitutudes,
     ):
         # Filter out coming soon stores
-        if "COMING SOON" in locations_title:
+        if "coming soon" in locations_title.lower():
             pass
         else:
             data.append(

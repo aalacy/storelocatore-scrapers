@@ -98,7 +98,7 @@ def fetch_data():
     ]
 
     for zip_code in zip_codes:
-        if re.match("[A-Z][0-9][A-Z]\s[0-9][A-Z][0-9]", zip_code):
+        if re.match("[A-Z][0-9][A-Z]\s?[0-9][A-Z][0-9]", zip_code.strip()):
             countries.append("CA")
         else:
             countries.append("US")
