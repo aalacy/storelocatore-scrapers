@@ -1,7 +1,5 @@
 import csv
 import requests
-from bs4 import BeautifulSoup
-import re
 import json
 
 def write_output(data):
@@ -15,52 +13,42 @@ def write_output(data):
             writer.writerow(row)
 
 
+def hours_maker(obj):
+    day_dict = {'1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Friday'}
+    hours = ''
+    for key in obj:
+        hours += day_dict[key] + ' ' + str(int(obj[key]['from'][0]) % 12) + 'am - ' +  str(int(obj[key]['to'][0]) % 12) + 'pm '
+    return hours
+
 def fetch_data():
-    locator_domain = 'https://www.pharmaca.com/'
+    locator_domain_json = 'https://www.pharmaca.com/amlocator/index/ajax/'
 
-    ext = 'store-locator'
-    to_scrape = locator_domain + ext
-    
+    an_obj = requests.get(locator_domain_json)
+    # driver = get_driver()
+    # driver.get(locator_domain + ext)
+    json_ob = json.loads(an_obj.content)
 
-    page = requests.get(to_scrape)
-
-    assert page.status_code == 200
-
-    soup = BeautifulSoup(page.content, 'html.parser')
-
-    div = soup.find('div', {'id': 'amlocator_left'})
-    stores = div.find_all('span', {'name': 'leftLocation'})
     all_store_data = []
-    for store in stores:
-        location_name = store.find('div', {'class': 'location_header'}).text.strip()
-        street_address = store.find('div', {'class': 'location_header'}).nextSibling
-
-        state = street_address.nextSibling.nextSibling
-
-        city_zip = state.nextSibling.nextSibling
-
-        phone_number = city_zip.nextSibling.nextSibling
-        street_address = street_address.strip()
-        state = state.strip()
-        city_zip = city_zip.strip()
-        phone_number = phone_number.strip()
-
-        city_zip_arr = city_zip.replace(' ', '').split(',')
-        city = city_zip_arr[0]
-        zip_code = city_zip_arr[1]
-        if not zip_code.isdigit():
-            zip_code = '<MISSING>'
-
-        hours = store.find('div', {'class': 'all_schedule'}).text.replace(' ', '').replace('\n', ' ').strip()
-
-        country_code = 'US'
+    for obj in json_ob['items']:
         store_number = '<MISSING>'
+        location_name = obj['name']
+        country_code = obj['country']
+        city = obj['city']
+        zip_code = obj['zip']
+        if 'Santa' in zip_code:
+            zip_code = '<MISSING>'
+        state = obj['state']
+        street_address = obj['address']
+        lat = obj['lat']
+        longit = obj['lng']
+        phone_number = obj['phone']
         location_type = '<MISSING>'
-        lat = '<INACCESSIBLE>'
-        longit = '<INACCESSIBLE>'
-        
+        to_make = json.loads(obj['schedule'])
+        hours = hours_maker(to_make)
+        locator_domain = 'https://www.pharmaca.com/'
+
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                     store_number, phone_number, location_type, lat, longit, hours ]
+                      store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
         
 
