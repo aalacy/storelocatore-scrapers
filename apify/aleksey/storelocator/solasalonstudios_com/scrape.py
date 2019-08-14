@@ -11,13 +11,11 @@ import re
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
-
 def parse_extra(address):
     return re.compile(r"(?<!^)\,\s+([A-z0-9\s\-\'\.]+)\,\s+([\s\'A-z]+)\s(?=[0-9]+|[A-z0-9]{3}[\-|\s][A-z0-9]{3})").split(address)
 
@@ -92,6 +90,7 @@ def fetch_data():
                 '<MISSING>'
             ])
         i = i + 1
+
     driver.quit()
     return data
 
