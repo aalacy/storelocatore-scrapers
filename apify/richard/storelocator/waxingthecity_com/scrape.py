@@ -1,5 +1,5 @@
 import csv
-import re
+import json
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -61,10 +61,12 @@ def parse_info(item):
 def fetch_data():
     # store data
     locations_titles = []
+    location_ids = []
     street_addresses = []
     cities = []
     states = []
     zip_codes = []
+    countries = []
     phone_numbers = []
     hours = []
     longitude_list = []
@@ -78,78 +80,48 @@ def fetch_data():
     driver.get(COMPANY_URL)
 
     # Fetch store urls from location menu
-    store_url = "https://studios.waxingthecity.com"
+    store_url = "https://momentfeed-prod.apigee.net/api/llp.json?auth_token=GXDJFRKFGUIUJVSV&center=41.2524,-95.998&coordinates=-9.96885060854611,-37.08984375,70.4367988185464,-154.86328125&multi_account=false&page=1&pageSize=1000"
     driver.get(store_url)
 
-    # Wait till the element loads
-    WebDriverWait(driver, 10).until(
-        ec.visibility_of_element_located(
-            (By.CSS_SELECTOR, ".push-top.clearfix.store-buttons")
-        )
-    )
+    stores = json.loads(driver.find_element_by_css_selector("pre").text)
 
-    # listings = driver.find_elements_by_css_selector('div.col-sm-4 > a')
-    listing_urls = [
-        listing.get_attribute("href")
-        for listing in driver.find_elements_by_css_selector(
-            "div.push-top.clearfix.store-buttons > a:nth-of-type(1)"
-        )
-    ]
+    for store in stores:
+        # Location name
+        locations_titles.append(store["store_info"]["name"])
 
-    # Go through each listing and append data
-    for listing_url in listing_urls:
-        driver.get(listing_url)
+        # Store id
+        location_ids.append(store["store_info"]["corporate_id"])
 
-        WebDriverWait(driver, 10).until(
-            ec.visibility_of_element_located(
-                (By.CSS_SELECTOR, "h1.no-margin.ng-binding")
-            )
+        # Address
+        street_addresses.append(
+            store["store_info"]["address"]
+            + store["store_info"]["address_extended"]
+            + store["store_info"]["address_3"]
         )
 
-        location_title = driver.find_element_by_css_selector(
-            "h1.no-margin.ng-binding"
-        ).text
-        street_address = driver.find_element_by_css_selector(
-            "div.no-bold.line-height-bump > p"
-        ).text
-        city = driver.find_element_by_css_selector(
-            "div.no-bold.line-height-bump > span:nth-of-type(1)"
-        ).text
-        state = driver.find_element_by_css_selector(
-            "div.no-bold.line-height-bump > span:nth-of-type(2)"
-        ).text
-        zip_code = driver.find_element_by_css_selector(
-            "div.no-bold.line-height-bump > span:nth-of-type(3)"
-        ).text
-        phone_number = driver.find_element_by_css_selector(
-            "div.hidden-xs.tel-number.ng-binding"
-        ).text
-        hour = driver.find_element_by_css_selector(
-            "div.hours-card.ng-isolate-scope > div.ng-scope"
-        ).text
-        long_lat = driver.find_element_by_css_selector(
-            "div.map-container.push-bottom.ng-isolate-scope > img"
-        ).get_attribute("data-at2x")
-        long_lat_list = (
-            re.search(
-                "[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)",
-                long_lat,
-            )
-            .group(0)
-            .split(",")
-        )
-        longitude = long_lat_list[0]
-        latitude = long_lat_list[1]
+        # City
+        cities.append(store["store_info"]["locality"])
 
-        locations_titles.append(location_title)
-        street_addresses.append(street_address)
-        cities.append(city)
-        states.append(state)
-        zip_codes.append(zip_code)
-        phone_numbers.append(phone_number)
-        hours.append(hour)
-        longitude_list.append(longitude)
-        latitude_list.append(latitude)
+        # State
+        states.append(store["store_info"]["region"])
+
+        # Zip
+        zip_codes.append(store["store_info"]["region"])
+
+        # Country
+        countries.append(store["store_info"]["country"])
+
+        # Phone
+        phone_numbers.append(store["store_info"]["phone"])
+
+        # Hour
+        hours.append(store["store_info"]["store_hours"])
+
+        # Lat
+        latitude_list.append(store["store_info"]["latitude"])
+
+        # Long
+        longitude_list.append(store["store_info"]["longitude"])
 
     for (
         locations_title,
@@ -161,6 +133,8 @@ def fetch_data():
         latitude,
         longitude,
         hour,
+        country,
+        location_id,
     ) in zip(
         locations_titles,
         street_addresses,
@@ -171,6 +145,8 @@ def fetch_data():
         latitude_list,
         longitude_list,
         hours,
+        countries,
+        location_ids,
     ):
         data.append(
             [
@@ -180,8 +156,8 @@ def fetch_data():
                 city,
                 state,
                 zipcode,
-                "US",
-                "<MISSING>",
+                country,
+                location_id,
                 phone_number,
                 "<MISSING>",
                 latitude,
