@@ -45,6 +45,7 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(locator_domain)
+    driver.implicitly_wait(10)
 
     if check_exists('a.sqs-popup-overlay-close', driver):
         element = driver.find_element_by_css_selector('a.sqs-popup-overlay-close')
