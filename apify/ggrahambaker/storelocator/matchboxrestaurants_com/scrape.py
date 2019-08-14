@@ -70,6 +70,7 @@ def fetch_data():
         main = driver.find_element_by_css_selector('section.Main-content')
         content = main.text.split('\n')[:17]
 
+        location_name = link[link.find('.com/') + 5: ].replace('-', ' ')
         street_address = content[1]
         city, state, zip_code = addy_ext(content[2])
         phone_number = content[3].replace('call', '').strip()
@@ -90,8 +91,6 @@ def fetch_data():
         lat = coords[0]
         longit = coords[1]
 
-
-        location_name = '<MISSING>'
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
