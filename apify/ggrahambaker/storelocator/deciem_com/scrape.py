@@ -90,7 +90,7 @@ def fetch_data():
                 hours += h + ' '
 
             hours = hours.strip()
-
+            phone_number = phone_number.replace('=', '+')
             country_code = 'CA'
             store_number = '<MISSING>'
             location_type = '<MISSING>'
