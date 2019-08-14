@@ -22,43 +22,42 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0].strip()
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1] + ' ' + state_zip[2]
-    return city, state, zip_code
-
-
-
-
 def fetch_data():
-    locator_domain = 'https://www.kojaxsouflaki.com/'
-    ext = 'en/find-a-restaurant/'
+    locator_domain = 'https://www.freedomoil.com/'
+    ext = 'locations/'
 
     driver = get_driver()
     driver.get(locator_domain + ext)
 
-    container = driver.find_element_by_css_selector('div#wpsl-stores')
-    lis = container.find_elements_by_css_selector('li')
-
     all_store_data = []
-    for loc in lis:
+    locs = driver.find_elements_by_css_selector('div.media.image-left.medium')
+    print(len(locs))
+    for loc in locs:
         content = loc.text.split('\n')
-        location_name = content[0]
-        street_address = content[1]
-        city, state, zip_code = addy_ext(content[2])
-        phone_number = content[3]
+        street_address = content[0]
+        address = content[1].split(',')
+        city = address[0]
+        state = address[1].strip()
+        if '52707' in state:
+            state = 'Illinois'
+            zip_code = '<MISSING>'
+        else:
+            zip_code = '<MISSING>'
+        href = loc.find_element_by_css_selector('a').get_attribute('href')
+        start_idx = href.find('/@')
+        end_idx = href.find('z/data')
 
-        lat = '<INACCESSIBLE>'
-        longit = '<INACCESSIBLE>'
+        coords = href[start_idx + 2:end_idx].split(',')
+        lat = coords[0]
+        longit = coords[1]
 
-        country_code = 'CA'
+        phone_number = '<MISSING>'
+        location_name = '<MISSING>'
+        country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         hours = '<MISSING>'
+
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)

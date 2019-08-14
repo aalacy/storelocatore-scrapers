@@ -2,7 +2,6 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.action_chains import ActionChains
 
 
 def get_driver():
@@ -23,6 +22,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -32,66 +32,53 @@ def addy_ext(addy):
     return city, state, zip_code
 
 
-
-
 def fetch_data():
-    locator_domain = 'https://www.matchboxrestaurants.com/'
+    # Your scraper here
+    locator_domain = 'https://www.drivetime.com/'
+    ext = 'dealership/find'
 
     driver = get_driver()
-    driver.get(locator_domain)
-
-    element = driver.find_element_by_css_selector('a.sqs-popup-overlay-close')
+    driver.get(locator_domain + ext)
+    element = driver.find_element_by_css_selector('span.right-text')
     driver.execute_script("arguments[0].click();", element)
 
-    element_to_hover_over = driver.find_element_by_css_selector("a.Header-nav-folder-title")
-
-    hover = ActionChains(driver).move_to_element(element_to_hover_over)
-    hover.perform()
-
-    hrefs = driver.find_element_by_css_selector('span.Header-nav-folder').find_elements_by_css_selector('a')
+    ul = driver.find_element_by_css_selector('ul.dealer-filter-list')
+    lis = ul.find_elements_by_css_selector('li')
+    state_list = []
+    for li in lis:
+        state_list.append(li.find_element_by_css_selector('a').get_attribute('href'))
 
     link_list = []
-    for href in hrefs:
-        link_list.append(href.get_attribute('href'))
+    for state in state_list:
+        driver.get(state)
+        driver.implicitly_wait(10)
+        lis = driver.find_elements_by_css_selector('li.dealership-marker')
+        for li in lis:
+            link_list.append(li.find_element_by_css_selector('a.dealer-name-link').get_attribute('href'))
 
     all_store_data = []
     for link in link_list:
-        driver.implicitly_wait(10)
         driver.get(link)
-
-        main = driver.find_element_by_css_selector('section.Main-content')
-        content = main.text.split('\n')[:17]
-
+        driver.implicitly_wait(10)
+        content = driver.find_element_by_css_selector('ul.contact-info').text.split('\n')
+        location_name = content[0]
         street_address = content[1]
         city, state, zip_code = addy_ext(content[2])
-        phone_number = content[3].replace('call', '').strip()
+        phone_number = content[3]
         hours = ''
-        for h in content[11:]:
+        for h in content[4:-2]:
             hours += h + ' '
 
-        # print(main.find_elements_by_css_selector('a')[1].get_attribute('href'))
-        if 'ellsworth' in street_address or 'potomac' in street_address:
-            href = main.find_elements_by_css_selector('a')[0].get_attribute('href')
-
-        else:
-            href = main.find_elements_by_css_selector('a')[1].get_attribute('href')
-
-        start_idx = href.find('/@')
-        end_idx = href.find('z/data')
-        coords = href[start_idx + 2: end_idx].split(',')
-        lat = coords[0]
-        longit = coords[1]
-
-
-        location_name = '<MISSING>'
+        hours = hours.strip()
+        lat = driver.find_element_by_css_selector('a#dealer-directions-link').get_attribute('data-lat')
+        longit = driver.find_element_by_css_selector('a#dealer-directions-link').get_attribute('data-long')
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
-
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
-        print()
+
 
     driver.quit()
     return all_store_data
