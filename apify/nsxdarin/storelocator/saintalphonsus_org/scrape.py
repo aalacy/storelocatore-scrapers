@@ -16,7 +16,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = 'https://www.saintalphonsus.org/sitemap-xml-locations'
-    r = session.get(url, headers=headers)
+    r = session.get(url, verify = False, headers=headers)
     for line in r.iter_lines():
         if '<loc>https://www.saintalphonsus.org/location/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
