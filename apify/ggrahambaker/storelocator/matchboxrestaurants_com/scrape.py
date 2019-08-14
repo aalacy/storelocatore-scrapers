@@ -3,6 +3,7 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import NoSuchElementException
 
 
 def get_driver():
@@ -32,7 +33,12 @@ def addy_ext(addy):
     return city, state, zip_code
 
 
-
+def check_exists(selector, driver):
+    try:
+        driver.find_element_by_css_selector(selector)
+    except NoSuchElementException:
+        return False
+    return True
 
 def fetch_data():
     locator_domain = 'https://www.matchboxrestaurants.com/'
@@ -40,8 +46,9 @@ def fetch_data():
     driver = get_driver()
     driver.get(locator_domain)
 
-    element = driver.find_element_by_css_selector('a.sqs-popup-overlay-close')
-    driver.execute_script("arguments[0].click();", element)
+    if check_exists('a.sqs-popup-overlay-close', driver):
+        element = driver.find_element_by_css_selector('a.sqs-popup-overlay-close')
+        driver.execute_script("arguments[0].click();", element)
 
     element_to_hover_over = driver.find_element_by_css_selector("a.Header-nav-folder-title")
 
@@ -91,7 +98,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
-        print()
 
     driver.quit()
     return all_store_data
