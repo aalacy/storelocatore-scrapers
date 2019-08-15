@@ -2,11 +2,7 @@ import csv
 import json
 
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
 
 
 COMPANY_URL = "https://www.waxingthecity.com/"
@@ -106,7 +102,7 @@ def fetch_data():
         states.append(store["store_info"]["region"])
 
         # Zip
-        zip_codes.append(store["store_info"]["region"])
+        zip_codes.append(store["store_info"]["postcode"])
 
         # Country
         countries.append(store["store_info"]["country"])
@@ -148,23 +144,26 @@ def fetch_data():
         countries,
         location_ids,
     ):
-        data.append(
-            [
-                COMPANY_URL,
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                country,
-                location_id,
-                phone_number,
-                "<MISSING>",
-                latitude,
-                longitude,
-                hour,
-            ]
-        )
+        if "coming soon" in locations_title.lower():
+            pass
+        else:
+            data.append(
+                [
+                    COMPANY_URL if COMPANY_URL != "" else "<MISSING>",
+                    locations_title if locations_title != "" else "<MISSING>",
+                    street_address if street_address != "" else "<MISSING>",
+                    city if city != "" else "<MISSING>",
+                    state if state != "" else "<MISSING>",
+                    zipcode if zipcode != "" else "<MISSING>",
+                    country if country != "" else "<MISSING>",
+                    location_id if location_id != "" else "<MISSING>",
+                    phone_number if phone_number != "" else "<MISSING>",
+                    "<MISSING>",
+                    latitude if latitude != "" else "<MISSING>",
+                    longitude if longitude != "" else "<MISSING>",
+                    hour if hour != "" else "<MISSING>",
+                ]
+            )
 
     driver.quit()
     return data
