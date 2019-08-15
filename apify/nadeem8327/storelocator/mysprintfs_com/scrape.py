@@ -16,12 +16,7 @@ opts.add_argument("ignore-certificate-errors")
 #capabilities = webdriver.DesiredCapabilities.CHROME
 #driver=webdriver.Chrome('C:\\Users\\Lenovo\\Desktop\\chrome-driver\\chromedriver',options=opts,desired_capabilities=capabilities)
 url = "https://mysprintfs.com/locations"
-'''
-html = requests.get(url)
-soup = BeautifulSoup(html,"html.parser")
-all_rec = soup.find_all("div",attrs={"class":"all-results"})
-print(all_rec.text)
-'''
+
 
 time.sleep(10)
 html = requests.get(url)
