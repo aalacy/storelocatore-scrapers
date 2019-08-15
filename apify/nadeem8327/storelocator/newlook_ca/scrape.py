@@ -9,7 +9,7 @@ import re #for regular expression
 options = webdriver.ChromeOptions()
 prefs= {"profile.default_content_setting_values.geolocation":2}
 options.add_experimental_option("prefs",prefs)
-driver=webdriver.Chrome('C:\\Users\\Lenovo\\Desktop\\chrome-driver\\chromedriver',options=options)
+driver=webdriver.Chrome('chromedriver',options=options)
 
 url = "https://www.newlook.ca/en/stores"
 driver.get(url)
@@ -51,7 +51,7 @@ with open("data.csv",mode="w") as file:
         det = rec.find(name="div", attrs={"class":"succursale-card-actions"})
         hr = det.find(name="a")
         url_det = hr["href"]
-        driver2=webdriver.Chrome('C:\\Users\\Lenovo\\Desktop\\chrome-driver\\chromedriver',options=options)
+        driver2=webdriver.Chrome('chromedriver',options=options)
         driver2.get(url_det)
         html2 = driver2.execute_script("return document.body.innerHTML")
         soup2 = BeautifulSoup(html2,"html.parser")
