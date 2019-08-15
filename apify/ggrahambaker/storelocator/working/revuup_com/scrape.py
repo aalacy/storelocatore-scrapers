@@ -22,51 +22,40 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
-
-
 def fetch_data():
-    locator_domain = 'https://spiritsunlimited.com/'
-
     driver = get_driver()
-    driver.get(locator_domain)
+    locator_domain = 'https://www.revuup.com/'
+    exts = ['brewers-hill', 'mchenry-row']
 
-    main = driver.find_element_by_css_selector(
-        'div.views-responsive-grid.views-responsive-grid-vertical.views-columns-16.container')
-    hrefs = main.find_elements_by_css_selector('a')
-    link_list = []
-    for href in hrefs:
-        link_list.append(href.get_attribute('href'))
 
     all_store_data = []
-    for link in link_list:
-        driver.implicitly_wait(10)
-        driver.get(link)
-        # name
-        location_name = driver.find_element_by_css_selector('div.store-display-name').text
-        # address
-        address = driver.find_element_by_css_selector('div.field-name-field-store-address').text.split('\n')
-        street_address = address[0]
-        city, state, zip_code = addy_ext(address[1])
+    for ext in exts:
+        driver.get(locator_domain + ext)
+        driver.implicitly_wait(20)
+        main = driver.find_element_by_css_selector('section.studios-location')
 
-        # phone
-        phone_number = driver.find_element_by_css_selector('div.store_phone_box').text
-        # hours
-        hours = driver.find_element_by_css_selector('div.field-name-field-store-hours').text.replace('\n', ' ')
+        content = main.text.split('\n')
+        location_name = content[1]
+        street_address = content[2]
+        city_state = content[3].split(',')
+        city = city_state[0]
+        state = city_state[1].strip()
+        zip_code = '<MISSING>'
+        phone_number = content[4]
 
-        lat = '<INACCESSIBLE>'
-        longit = '<INACCESSIBLE>'
+        href = driver.find_element_by_xpath(
+            '//a[@title="Open this area in Google Maps (opens a new window)"]').get_attribute('href')
+        start_idx = href.find('ll=')
+        end_idx = href.find('&z')
+        coords = href[start_idx + 3: end_idx].split(',')
+
+        lat = coords[0]
+        longit = coords[1]
 
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
+        hours = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

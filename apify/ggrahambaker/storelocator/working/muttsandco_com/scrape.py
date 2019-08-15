@@ -32,41 +32,42 @@ def addy_ext(addy):
     return city, state, zip_code
 
 
+
 def fetch_data():
-    locator_domain = 'https://spiritsunlimited.com/'
+    locator_domain = 'https://muttsandco.com/'
+    ext = 'locations/'
 
     driver = get_driver()
-    driver.get(locator_domain)
-
-    main = driver.find_element_by_css_selector(
-        'div.views-responsive-grid.views-responsive-grid-vertical.views-columns-16.container')
-    hrefs = main.find_elements_by_css_selector('a')
+    driver.get(locator_domain + ext)
+    main = driver.find_element_by_css_selector('div.location-container')
+    locs = main.find_elements_by_css_selector('a')
     link_list = []
-    for href in hrefs:
-        link_list.append(href.get_attribute('href'))
+    for loc in locs:
+        link_list.append(loc.get_attribute('href'))
 
     all_store_data = []
     for link in link_list:
-        driver.implicitly_wait(10)
         driver.get(link)
-        # name
-        location_name = driver.find_element_by_css_selector('div.store-display-name').text
-        # address
-        address = driver.find_element_by_css_selector('div.field-name-field-store-address').text.split('\n')
+        driver.implicitly_wait(10)
+
+
+        spans = driver.find_elements_by_css_selector('span.elementor-icon-list-text')
+        address = spans[0].text.split('\n')
         street_address = address[0]
         city, state, zip_code = addy_ext(address[1])
+        phone_number = spans[1].text
 
-        # phone
-        phone_number = driver.find_element_by_css_selector('div.store_phone_box').text
-        # hours
-        hours = driver.find_element_by_css_selector('div.field-name-field-store-hours').text.replace('\n', ' ')
+        location_name = link[link.find('m/') + 2: -1].replace('-', ' ')
 
-        lat = '<INACCESSIBLE>'
-        longit = '<INACCESSIBLE>'
-
+        location_type = '<MISSING>'
         country_code = 'US'
         store_number = '<MISSING>'
-        location_type = '<MISSING>'
+        lat = '<MISSING>'
+        longit = '<MISSING>'
+
+        hours = driver.find_elements_by_css_selector('div.elementor-text-editor.elementor-clearfix')[1].text.replace(
+            '\n', ' ')
+
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

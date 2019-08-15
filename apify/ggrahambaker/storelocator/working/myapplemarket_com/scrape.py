@@ -23,6 +23,7 @@ def write_output(data):
             writer.writerow(row)
 
 
+
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -33,41 +34,35 @@ def addy_ext(addy):
 
 
 def fetch_data():
-    locator_domain = 'https://spiritsunlimited.com/'
+    locator_domain = 'https://www.myapplemarket.com/'
 
     driver = get_driver()
     driver.get(locator_domain)
 
-    main = driver.find_element_by_css_selector(
-        'div.views-responsive-grid.views-responsive-grid-vertical.views-columns-16.container')
-    hrefs = main.find_elements_by_css_selector('a')
-    link_list = []
-    for href in hrefs:
-        link_list.append(href.get_attribute('href'))
+    stores = driver.find_elements_by_css_selector('div.LocalBusiness')
 
     all_store_data = []
-    for link in link_list:
-        driver.implicitly_wait(10)
-        driver.get(link)
-        # name
-        location_name = driver.find_element_by_css_selector('div.store-display-name').text
-        # address
-        address = driver.find_element_by_css_selector('div.field-name-field-store-address').text.split('\n')
-        street_address = address[0]
-        city, state, zip_code = addy_ext(address[1])
+    for i, store in enumerate(stores):
+        content = store.text.split('\n')
+        street_address = content[0]
+        city, state, zip_code = addy_ext(content[1])
+        phone_number = content[2].replace('Phone:', '').strip()
 
-        # phone
-        phone_number = driver.find_element_by_css_selector('div.store_phone_box').text
-        # hours
-        hours = driver.find_element_by_css_selector('div.field-name-field-store-hours').text.replace('\n', ' ')
+        if i < 3:
+            location_type = 'Country Harvest Apple Markets'
+        elif i < 4:
+            location_type = "Jim's Foodliner Apple Market"
+        elif i < 5:
+            location_type = 'Seabrook Apple Market'
+        elif i < 6:
+            location_type = "Ray's Apple Markets"
 
-        lat = '<INACCESSIBLE>'
-        longit = '<INACCESSIBLE>'
-
+        location_name = '<MISSING>'
         country_code = 'US'
         store_number = '<MISSING>'
-        location_type = '<MISSING>'
-
+        lat = '<MISSING>'
+        longit = '<MISSING>'
+        hours = '<MISSING>'
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
