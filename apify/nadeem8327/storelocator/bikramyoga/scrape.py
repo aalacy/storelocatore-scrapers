@@ -17,7 +17,9 @@ country_codes={
 opts=Options()
 opts.add_argument("ignore-certificate-errors")
 capabilities = webdriver.DesiredCapabilities.CHROME
-driver=webdriver.Chrome('C:\\Users\\Lenovo\\Desktop\\chrome-driver\\chromedriver',options=opts,desired_capabilities=capabilities)
+#driver=webdriver.Chrome('C:\\Users\\Lenovo\\Desktop\\chrome-driver\\chromedriver',options=opts,desired_capabilities=capabilities)
+driver=webdriver.Chrome('chromedriver',options=opts,desired_capabilities=capabilities)
+
 driver.implicitly_wait(80)
 url= "https://www.bikramyoga.com/studios/studio-locator/"
 locator_domain=url
