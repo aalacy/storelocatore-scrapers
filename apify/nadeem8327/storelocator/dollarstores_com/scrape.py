@@ -9,8 +9,8 @@ import re #for regular expression
 options = webdriver.ChromeOptions()
 prefs= {"profile.default_content_setting_values.geolocation":2}
 options.add_experimental_option("prefs",prefs)
-driver=webdriver.Chrome('C:\\Users\\Lenovo\\Desktop\\chrome-driver\\chromedriver',options=options)
-
+#driver=webdriver.Chrome('C:\\Users\\Lenovo\\Desktop\\chrome-driver\\chromedriver',options=options)
+driver=webdriver.Chrome('chromedriver',options=options)
 url = "https://www.dollarstores.com/store-finder/"
 driver.get(url)
 html = driver.execute_script("return document.body.innerHTML")
