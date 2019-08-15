@@ -153,23 +153,29 @@ def fetch_data():
         phone_numbers,
         countries,
     ):
-        data.append(
-            [
-                COMPANY_URL,
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                country,
-                "<MISSING>",
-                phone_number,
-                "<MISSING>",
-                long_lat_dict[locations_title.replace("PrideStaff", "").strip()][0],
-                long_lat_dict[locations_title.replace("PrideStaff", "").strip()][1],
-                "<MISSING>",
-            ]
-        )
+        if (
+            long_lat_dict[locations_title.replace("PrideStaff", "").strip()][0]
+            == 32.3182314
+        ):
+            pass
+        else:
+            data.append(
+                [
+                    COMPANY_URL,
+                    locations_title,
+                    street_address,
+                    city,
+                    state,
+                    zipcode,
+                    country,
+                    "<MISSING>",
+                    phone_number,
+                    "<MISSING>",
+                    long_lat_dict[locations_title.replace("PrideStaff", "").strip()][0],
+                    long_lat_dict[locations_title.replace("PrideStaff", "").strip()][1],
+                    "<MISSING>",
+                ]
+            )
 
     driver.quit()
     return data
