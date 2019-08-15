@@ -36,7 +36,13 @@ def fetch_data():
         content = div.text.split('\n')
         location_name = content[0]
         parsed_add = usaddress.tag(content[2])[0]
-        street_address = parsed_add['AddressNumber'] + ' ' + parsed_add['StreetName'] + ' '
+
+        street_address = ''
+        street_address += parsed_add['AddressNumber'] + ' '
+        if 'StreetNamePreDirectional' in parsed_add:
+            street_address += parsed_add['StreetNamePreDirectional'] + ' '
+
+        street_address += parsed_add['StreetName'] + ' '
         if 'StreetNamePostType' in parsed_add:
             street_address += parsed_add['StreetNamePostType']
         city = parsed_add['PlaceName']

@@ -1,0 +1,3 @@
+locator_domain,location_name,street_address,city,state,zip,country_code,store_number,phone,location_type,latitude,longitude,hours_of_operation
+http://kingscountymarket.com/locations/,Kings County Market - Andover,13735 Round Lake Blvd.,Andover,MN,55304,US,<MISSING>,7634221768,<MISSING>,<MISSING>,<MISSING>,5:30 a.m. to 11:00 p.m.
+http://kingscountymarket.com/locations/,Kings County Market - St. Francis,23122 St. Francis Blvd.,St. Francis,MN,55070,US,<MISSING>,7637533334,<MISSING>,<MISSING>,<MISSING>,Mon.-Sat. - 5:00 a.m. to 11:00 p.m.Sunday - 6:00 a.m. to 11:00 p.m.

@@ -46,6 +46,9 @@ def fetch_data():
     for i in range(1, 16):
         div = driver.find_element_by_css_selector('div#loc' + str(i))
 
+        coord_element = div.find_element_by_css_selector('span.distance.hideDistance')
+        longit = coord_element.get_attribute('lon')
+        lat = coord_element.get_attribute('lat')
 
         content = div.text.split('\n')
 
@@ -61,8 +64,6 @@ def fetch_data():
 
         country_code = 'US'
         location_type = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
         store_number = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,

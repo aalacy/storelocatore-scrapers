@@ -39,36 +39,33 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(locator_domain + ext)
-
+    driver.implicitly_wait(30)
     nav = driver.find_element_by_css_selector('nav.footerNav')
     nav2 = nav.find_element_by_css_selector('div.col-md-3')
     hrefs = nav2.find_elements_by_css_selector('a')
 
+
     link_list = []
     for href in hrefs:
         if len(href.get_attribute('href')) > 45:
-            link_list.append(href.get_attribute('href'))
+            link_list.append([href.get_attribute('href')])
 
+    locs = driver.find_elements_by_css_selector('div.list-content')
+    for i, loc in enumerate(locs):
+        phone = loc.find_element_by_css_selector('p.tel-holder').find_element_by_css_selector('a').get_attribute(
+            'href').replace('tel:', '')
+        link_list[i].append(phone)
 
 
     all_store_data = []
     for link in link_list:
-        driver.get(link)
+        driver.get(link[0])
         driver.implicitly_wait(30)
         div_cont = driver.find_element_by_css_selector('div.location-detail__contact')
+
         details = div_cont.text.split('\n')
-
-        if len(details) == 23:
-            phone_number = details[1]
-            if '608.205.3280' in phone_number:
-                street_address = details[7]
-                city, state, zip_code = addy_ext(details[8])
-                hours = ''
-                for h in details[13:-3]:
-                    hours += h + ' '
-                hours = hours.strip()
-
-            else:
+        if len(details) == 21:
+            if '608.848.0820' in details[1]:
                 street_address = details[5]
                 city, state, zip_code = addy_ext(details[6])
                 hours = ''
@@ -76,38 +73,41 @@ def fetch_data():
                     hours += h + ' '
                 hours = hours.strip()
 
-        elif len(details) == 21:
-            phone_number = details[1]
+            else:
+                street_address = details[3]
+                city, state, zip_code = addy_ext(details[4])
+                hours = ''
+                for h in details[9:-3]:
+                    hours += h + ' '
+                hours = hours.strip()
 
+        elif len(details) == 19:
+            street_address = details[3]
+            city, state, zip_code = addy_ext(details[4])
+            hours = ''
+            for h in details[7:-3]:
+                hours += h + ' '
+            hours = hours.strip()
+
+
+        elif len(details) == 23:
             street_address = details[5]
-
             city, state, zip_code = addy_ext(details[6])
             hours = ''
-            for h in details[9:-3]:
+            for h in details[11:-3]:
                 hours += h + ' '
             hours = hours.strip()
 
-        elif len(details) == 25:
-            phone_number = details[1]
-
-            street_address = details[7]
-            city, state, zip_code = addy_ext(details[8])
-            hours = ''
-            for h in details[13:-3]:
-                hours += h + ' '
-            hours = hours.strip()
-
-        elif len(details) == 26:
-            phone_number = details[1]
-            street_address = details[7] + ' ' + details[8]
-            city, state, zip_code = addy_ext(details[9])
+        elif len(details) == 24:
+            street_address = details[5] + ' ' + details[6]
+            city, state, zip_code = addy_ext(details[7])
 
             hours = ''
-            for h in details[14:-3]:
+            for h in details[12:-3]:
                 hours += h + ' '
             hours = hours.strip()
 
-
+        phone_number = link[1]
         location_name = '<MISSING>'
         country_code = 'US'
         store_number = '<MISSING>'

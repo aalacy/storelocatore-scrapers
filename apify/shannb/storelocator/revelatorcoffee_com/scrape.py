@@ -49,18 +49,42 @@ def fetch_data():
                 if (idx % 2) > 0:
                     contents = data.contents
                     locator_domain = url
-                    location_name = contents[1].get_text()
 
-                    address = contents[3].contents
-                    street_address = contents[0]
-                    city_state_zip = address[2]
+                    if len(contents) == 7:
+                        location_name = contents[1].get_text()
 
-                    city = city_state_zip.split(', ')[0]
-                    state = city_state_zip.split(', ')[1].split(' ')[0]
-                    zip = city_state_zip.split(', ')[1].split(' ')[1]
+                        address = contents[3].contents
+                    else:
+                        location_name = contents[3].get_text()
 
-                    hours_of_operation = contents[5].get_text()
+                        address = contents[5].contents
 
+                    if len(address) == 3:
+                        street_address = address[0]
+                        city_state_zip = address[2]
+                        city = city_state_zip.split(', ')[0]
+                        state = city_state_zip.split(', ')[1].split(' ')[0]
+                        zip = city_state_zip.split(', ')[1].split(' ')[1]
+                    else:
+                        if location_name.find("Marietta") > -1:
+                            addr = address[0].contents
+                            street_address = addr[0].split(',')[0]
+                            city = street_address.split(' ')[4]
+                            street_address = street_address.split(city)[0]
+                            state_zip = addr[0].split(',')[1].lstrip()
+                            state = state_zip.split(' ')[0]
+                            zip = state_zip.split(' ')[1]
+                        else:
+                            addr = contents[9].contents
+                            street_address = addr[0].get_text()
+                            city_state_zip = addr[1].split(', ')
+
+                            city = city_state_zip[0]
+                            state = city_state_zip[1].split(' ')[0]
+                            zip = city_state_zip[1].split(' ')[1]
+
+                    hours_of_operation = "<INACCESSIBLE>"
+                    
                     location_list.append([locator_domain, location_name, street_address, city, state, zip, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
         else:
             location_name = None

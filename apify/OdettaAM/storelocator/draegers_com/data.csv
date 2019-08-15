@@ -1,0 +1,5 @@
+"locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
+"https://www.draegers.com/","SAN MATEO","222 East 4th Avenue","San Mateo","CA","94401","US","<MISSING>","650-685-3700","<MISSING>","37.564351","-122.321835","<MISSING>"
+"https://www.draegers.com/","MENLO PARK","MENLO PARK 1010 University Dr.","Menlo Park","CA","94025","US","<MISSING>","650-324-7700","<MISSING>","37.4492362","-122.1874607","<MISSING>"
+"https://www.draegers.com/","BLACKHAWK"," 4100 Blackhawk Plaza Circle"," Danville","CA","94506","US","<MISSING>","925-648-5800","<MISSING>","37.8011912","-121.9189659","<MISSING>"
+"https://www.draegers.com/","LOS ALTOS","342 First Street","Los Altos","CA","94022","US","<MISSING>","650-948-4425","<MISSING>","37.376268","-122.116882","<MISSING>"
