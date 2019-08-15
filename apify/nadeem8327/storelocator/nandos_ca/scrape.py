@@ -14,7 +14,7 @@ opts.add_argument('disable-infobars')
 opts.add_argument("user-agent="+"sara")
 opts.add_argument("ignore-certificate-errors")
 capabilities = webdriver.DesiredCapabilities.CHROME
-driver=webdriver.Chrome('C:\\Users\\Lenovo\\Desktop\\chrome-driver\\chromedriver',options=opts,desired_capabilities=capabilities)
+driver=webdriver.Chrome('chromedriver',options=opts,desired_capabilities=capabilities)
 url = "https://www.nandos.ca/eat/restaurants"
 driver.implicitly_wait(60)
 driver.get(url)
