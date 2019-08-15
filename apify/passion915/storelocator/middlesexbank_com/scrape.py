@@ -36,7 +36,7 @@ def pull_info(content):
         longitude = store_item['data-lng']
 
         test = store_item.find('a',{'class':'ext'})
-        location_name = "<MISSING>"
+        location_name = store_item.find('a',{'class':'location-title'}).text
         state = str(street_address).split(' ')[len(str(street_address).split(' ')) - 2]
         zip = str(street_address).split(' ')[len(str(street_address).split(' ')) - 1]
         store_type = "<MISSING>"

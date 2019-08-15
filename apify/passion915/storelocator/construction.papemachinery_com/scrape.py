@@ -52,10 +52,21 @@ def pull_info(content):
         store_number = "<MISSING>"
         
         phone = href_data.find('span',{'class':'fe-phone-swap'}).find('a')['href']
-       
+        index_of_store = location_list.index(location_item)
+ 
+        data_for_latitude = soup.find_all('script')
+        for item_for_latitude in data_for_latitude:
+            if data_for_latitude.index(item_for_latitude) == 11:
+                
+                s = str(item_for_latitude.text.split('},{')[index_of_store])
+                result_lat = re.search("latitude':(.*)'longitude", s)
+                latitude = str(result_lat.group(1)).replace(',','')
+                result_lng = re.search("longitude':(.*),'makeTitles", s)
+                longitude = result_lng.group(1).replace(',','')
+                
+
         store_type = "<MISSING>"
-        latitude = "<MISSING>"
-        longitude = "<MISSING>"
+        
         
         test_hours = href_data.find('aside').table
 

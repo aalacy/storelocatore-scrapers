@@ -26,7 +26,8 @@ def pull_content(url):
 
 def pull_info(content):
  
-
+    
+   
     store_data = []
     footer_menu_content = soup.find_all('ul',{'class':'footer-menu'})
 
@@ -37,20 +38,26 @@ def pull_info(content):
             for store_list_item in store_list_li:
                 
                 if store_list_li.index(store_list_item) == 6:
-                    locator_domain = store_list_item.a['href']
-                    location_name = '<MISSING>'
-                    href_data = '<MISSING>'
-                    street_address = '<MISSING>'
-                    city = '<MISSING>'
-                    zip = '<MISSING>'
-                    state = '<MISSING>'
+                    locator_domain = store_list_item.a['href'] + '/locations/port-orange/index'
+                    location_name = store_list_item.a.text
+                    href_data = pull_content(locator_domain)
+                    street_address = href_data.find('div',{'class':'location-address'}).text
+                    city = location_name
+                    zip = str(street_address).split(' ')[len(str(street_address).split(' ')) - 1]
+                    state = str(street_address).split(' ')[len(str(street_address).split(' ')) - 2]
                     country_code = 'US'
                     store_number = '<MISSING>'
-                    phone = '<MISSING>'
+                    # phone = str(href_data.find('a',{'class':'zPhoneLink'})['href']).replace('tel:','')
+                    phone = href_data.find('a',{'class':'zPhoneLink'}).text
                     store_type = '<MISSING>'
-                    latitude = '<MISSING>'
-                    longitude = '<MISSING>'
-                    hours_of_operation = '<MISSING>'
+                    
+                    data_for_latitude = href_data.find_all('script')
+                    for item_latitude in data_for_latitude:
+                        if data_for_latitude.index(item_latitude) == 4:
+                            longitude = str(str(item_latitude.text.split(':')[1]).split(',')[0]).replace('"','')
+                            latitude = str(item_latitude.text.split(':')[4]).replace('"}];','').replace('"','')
+
+                    hours_of_operation = href_data.find('div',{'class':'zEditorHTML'}).text
                 else:
                     locator_domain = site_url + store_list_item.a['href']
                    
@@ -64,8 +71,20 @@ def pull_info(content):
                     store_number = '<MISSING>'
                     phone = href_data.find('div',{'class':'location-info'}).find('a',{'class':'zPhoneLink'}).text
                     store_type = '<MISSING>'
-                    latitude = '<MISSING>'
-                    longitude = '<MISSING>'
+                    data_for_latitude = href_data.find_all('script')
+                    for item_latitude in data_for_latitude:
+                        if data_for_latitude.index(item_latitude) == 7:
+                            index_of_store = store_list_li.index(store_list_item)
+                            if index_of_store > 6:
+                                longitude = str(str(str(item_latitude.text.split('},{')[index_of_store - 1]).split(',')[0]).split(':')[1]).replace('"','')
+                                latitude = str(str(item_latitude.text.split('},{')[index_of_store - 1]).split(',')[3]).split(':')[1].replace('"','').replace('}];','')
+                            else:
+                                longitude = str(str(str(item_latitude.text.split('},{')[index_of_store]).split(',')[0]).split(':')[1]).replace('"','')
+                                latitude = str(str(item_latitude.text.split('},{')[index_of_store]).split(',')[3]).split(':')[1].replace('"','')
+                           
+                        
+                    
+                    
                     hours_of_operation = href_data.find('div',{'class':'location-hours'}).find('div',{'class':'zEditorHTML'}).text.replace('pmMon','pm Mon').replace('pmFri','pm Fri')
                    
                 temp_data = [
