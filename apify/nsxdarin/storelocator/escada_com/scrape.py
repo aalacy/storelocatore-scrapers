@@ -20,8 +20,8 @@ def fetch_data():
     url = 'https://www.escada.com/us/storelocator/'
     r = session.get(url, headers=headers)
     Found = False
-    cty = ''
-    state = ''
+    cty = '<MISSING>'
+    state = '<MISSING>'
     cities = []
     for line in r.iter_lines():
         if 'city-select is--hidden" data-country="CA"' in line or 'city-select is--hidden" data-country="US"' in line:
