@@ -1,6 +1,7 @@
 import csv
-import requests
 import json
+
+import requests
 
 
 COMPANY_URL = "https://handelsicecream.com"
@@ -50,55 +51,86 @@ def fetch_data():
     hours = []
     data = []
 
-    stores = json.loads(requests.get("https://handelsicecream.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=342475a0ef&load_all=1&layout=1").content)
+    stores = json.loads(
+        requests.get(
+            "https://handelsicecream.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=342475a0ef&load_all=1&layout=1"
+        ).content
+    )
 
     for store in stores:
         # Store id
-        locations_id.append(store['id'])
+        locations_id.append(
+            store["id"].strip() if store["id"].strip() != "" else "<MISSING>"
+        )
 
         # Store title
-        locations_titles.append(store['title'])
+        locations_titles.append(
+            store["title"].strip() if store["title"].strip() != "" else "<MISSING>"
+        )
 
         # Street
-        street_addresses.append(store['street'])
+        street_addresses.append(
+            store["street"].strip() if store["street"].strip() != "" else "<MISSING>"
+        )
 
         # city
-        cities.append(store['city'])
+        cities.append(
+            store["city"].strip() if store["city"].strip() != "" else "<MISSING>"
+        )
 
         # State
-        states.append(store['state'])
+        states.append(
+            store["state"].strip() if store["state"].strip() != "" else "<MISSING>"
+        )
 
         # zip codes
-        zip_codes.append(store['postal_code'])
+        zip_codes.append(
+            store["postal_code"].strip()
+            if store["postal_code"].strip() != ""
+            else "<MISSING>"
+        )
 
         # Country
-        countries.append(store['country'])
+        countries.append(
+            store["country"].strip() if store["country"].strip() != "" else "<MISSING>"
+        )
 
         # Lat
-        latitude_list.append(store['lat'])
+        latitude_list.append(
+            store["lat"].strip() if store["lat"].strip() != "" else "<MISSING>"
+        )
 
         # lng
-        longitude_list.append(store['lng'])
+        longitude_list.append(
+            store["lng"].strip() if store["lng"].strip() != "" else "<MISSING>"
+        )
 
         # Phone
-        phone_numbers.append(store['phone'])
+        phone_numbers.append(store["phone"].strip() if store["phone"] else "<MISSING>")
 
         # hour
-        hours.append(''.join([key + ': ' + value + '\n' for key, value in json.loads(store['open_hours']).items()]))
+        hours.append(
+            "".join(
+                [
+                    key + ": " + value + "\n"
+                    for key, value in json.loads(store["open_hours"]).items()
+                ]
+            )
+        )
 
     # Store data
     for (
-            locations_title,
-            street_address,
-            city,
-            state,
-            zipcode,
-            phone_number,
-            country,
-            latitude,
-            longitude,
-            location_id,
-            hour
+        locations_title,
+        street_address,
+        city,
+        state,
+        zipcode,
+        phone_number,
+        country,
+        latitude,
+        longitude,
+        location_id,
+        hour,
     ) in zip(
         locations_titles,
         street_addresses,
@@ -110,25 +142,28 @@ def fetch_data():
         latitude_list,
         longitude_list,
         locations_id,
-        hours
+        hours,
     ):
-        data.append(
-            [
-                COMPANY_URL,
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                country,
-                location_id,
-                phone_number,
-                "<MISSING>",
-                latitude,
-                longitude,
-                hour,
-            ]
-        )
+        if "coming soon" in locations_title.lower():
+            pass
+        else:
+            data.append(
+                [
+                    COMPANY_URL,
+                    locations_title,
+                    street_address,
+                    city,
+                    state,
+                    zipcode,
+                    country,
+                    location_id,
+                    phone_number,
+                    "<MISSING>",
+                    latitude,
+                    longitude,
+                    hour,
+                ]
+            )
 
     return data
 
