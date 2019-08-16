@@ -1,9 +1,9 @@
 import csv
 import re
 
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from bs4 import BeautifulSoup
 
 
 COMPANY_URL = "https://eatcopperbranch.com"
@@ -58,57 +58,154 @@ def fetch_data():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     driver = webdriver.Chrome(CHROME_DRIVER_PATH, options=options)
-    driver.get('https://eatcopperbranch.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=en&t=1565644279976')
+    driver.get(
+        "https://eatcopperbranch.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=en&t=1565644279976"
+    )
     lists = BeautifulSoup(driver.page_source)
 
-    for item in lists.find_all('item'):
-        location_title = item.location.renderContents().decode('utf-8') if item.location.renderContents() else '<MISSING>'
-        street_address = item.address.renderContents().decode('utf-8') if item.address.renderContents() else '<MISSING>'
-        latitude = item.latitude.renderContents().decode('utf-8') if item.latitude.renderContents() else '<MISSING>'
-        longitude = item.longitude.renderContents().decode('utf-8') if item.longitude.renderContents() else '<MISSING>'
-        phone_number = item.telephone.renderContents().decode('utf-8') if item.telephone.renderContents() else '<MISSING>'
+    for item in lists.find_all("item"):
+        location_title = (
+            item.location.renderContents().decode("utf-8")
+            if item.location.renderContents()
+            else "<MISSING>"
+        )
+        street_address = (
+            item.address.renderContents().decode("utf-8")
+            if item.address.renderContents()
+            else "<MISSING>"
+        )
+        latitude = (
+            item.latitude.renderContents().decode("utf-8")
+            if item.latitude.renderContents()
+            else "<MISSING>"
+        )
+        longitude = (
+            item.longitude.renderContents().decode("utf-8")
+            if item.longitude.renderContents()
+            else "<MISSING>"
+        )
+        phone_number = (
+            item.telephone.renderContents().decode("utf-8")
+            if item.telephone.renderContents()
+            else "<MISSING>"
+        )
 
-        hour = item.operatinghours.renderContents().decode('utf-8').replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
-        hour = re.sub('<[^>]*>', '', hour) if hour != re.sub('<[^>]*>', '', hour) else '<MISSING>'
+        hour = (
+            item.operatinghours.renderContents()
+            .decode("utf-8")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&amp;", "&")
+        )
+        hour = (
+            re.sub("<[^>]*>", "", hour)
+            if hour != re.sub("<[^>]*>", "", hour)
+            else "<MISSING>"
+        )
 
         # Location title
-        locations_titles.append(location_title.replace('&amp', '').replace(';#44;', '')) if location_title.replace('&amp', '').replace(';#44;', '') != '' else locations_titles.append('<MISSIG>')
+        locations_titles.append(
+            location_title.replace("&amp", "").replace(";#44;", "")
+        ) if location_title.replace("&amp", "").replace(
+            ";#44;", ""
+        ) != "" else locations_titles.append(
+            "<MISSING>"
+        )
 
         # Street Address
-        street_addresses.append(street_address.replace('&amp', '').replace(';#44;', '').strip().split(',')[0].strip().split('  ')[0].strip()) if street_address.replace('&amp', '').replace(';#44;', '').strip().split('  ')[-1].strip()[:-7] != '' else street_addresses.append('<MISSIG>')
+        street_addresses.append(
+            street_address.replace("&amp", "")
+            .replace(";#44;", "")
+            .strip()
+            .split(",")[0]
+            .strip()
+            .split("  ")[0]
+            .strip()
+        ) if street_address.replace("&amp", "").replace(";#44;", "").strip().split(
+            "  "
+        )[
+            -1
+        ].strip()[
+            :-7
+        ] != "" else street_addresses.append(
+            "<MISSING>"
+        )
 
         # City
-        cities.append(street_address.replace('&amp', '').replace(';#44;', '').strip().split(',')[0].strip().split('  ')[1].strip()) if street_address.replace('&amp', '').replace(';#44;', '').strip().split('  ')[-1].strip()[:-7] != '' else cities.append('<MISSIG>')
-
-        # Province
-        states.append(street_address.replace('&amp', '').replace(';#44;', '').strip().split('  ')[-1].strip()[:-7]) if street_address.replace('&amp', '').replace(';#44;', '').strip().split('  ')[-1].strip()[:-7] != '' else states.append('<MISSIG>')
+        cities.append(
+            street_address.replace("&amp", "")
+            .replace(";#44;", "")
+            .strip()
+            .split(",")[0]
+            .strip()
+            .split("  ")[1]
+            .strip()
+        ) if street_address.replace("&amp", "").replace(";#44;", "").strip().split(
+            "  "
+        )[
+            -1
+        ].strip()[
+            :-7
+        ] != "" else cities.append(
+            "<MISSING>"
+        )
 
         # Zip code
-        zip_codes.append(street_address.replace('&amp', '').replace(';#44;', '').strip().split('  ')[-1].strip()[-7:]) if street_address.replace('&amp', '').replace(';#44;', '').strip().split('  ')[-1].strip()[-7:] != '' else zip_codes.append('<MISSIG>')
+        zip_find = re.search(
+            "([A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1})|(\d{5}$)",
+            street_address.replace("&amp", "")
+            .replace(";#44;", "")
+            .strip()
+            .split("  ")[-1]
+            .strip(),
+        )
+        zip_codes.append(zip_find.group(0) if zip_find else "<MISSING>")
+
+        # Province
+        state = (
+            street_address.replace("&amp", "")
+            .replace(";#44;", "")
+            .strip()
+            .split("  ")[-1]
+            .strip()
+        )
+        if state == "":
+            states.append("<MISSING>")
+        else:
+            if zip_find:
+                states.append(state.replace(zip_find.group(0), ""))
+            else:
+                states.append(state)
 
         # Latitude
-        latitude_list.append(latitude) if latitude != '' else latitude_list.append('<MISSING>')
+        latitude_list.append(latitude) if latitude != "" else latitude_list.append(
+            "<MISSING>"
+        )
 
         # Longitude
-        longitude_list.append(longitude) if longitude != '' else longitude_list.append('<MISSING>')
+        longitude_list.append(longitude) if longitude != "" else longitude_list.append(
+            "<MISSING>"
+        )
 
         # Phone
-        phone_numbers.append(phone_number) if phone_number != '' else phone_numbers.append('<MISSING>')
+        phone_numbers.append(
+            phone_number
+        ) if phone_number != "" else phone_numbers.append("<MISSING>")
 
         # Hour
-        hours.append(hour) if hour != '' else hours.append('<MISSING>')
+        hours.append(hour) if hour != "" else hours.append("<MISSING>")
 
     # Store data
     for (
-            locations_title,
-            street_address,
-            city,
-            state,
-            zipcode,
-            phone_number,
-            latitude,
-            longitude,
-            hour,
+        locations_title,
+        street_address,
+        city,
+        state,
+        zipcode,
+        phone_number,
+        latitude,
+        longitude,
+        hour,
     ) in zip(
         locations_titles,
         street_addresses,
@@ -118,7 +215,7 @@ def fetch_data():
         phone_numbers,
         latitude_list,
         longitude_list,
-        hours
+        hours,
     ):
         data.append(
             [
