@@ -27,12 +27,12 @@ def fetch_data():
             store = '<MISSING>'
             country = 'US'
             typ = 'Hotel'
-            name = ''
-            add = ''
+            name = '<MISSING>'
+            add = '<MISSING>'
             city = '<MISSING>'
-            state = ''
+            state = '<MISSING>'
             zc = '<MISSING>'
-            phone = ''
+            phone = '<MISSING>'
             for line2 in r2.iter_lines():
                 if '<a class="hotelinfo-phone" href="tel:+' in line2:
                     phone = line2.split('<a class="hotelinfo-phone" href="tel:+')[1].split('"')[0].replace('.','-')
