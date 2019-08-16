@@ -22,63 +22,48 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
-
-
 def fetch_data():
-    locator_domain = 'http://www.vinnysitaliangrill.com/'
+    locator_domain = 'https://fruthpharmacy.com/'
     ext = 'locations/'
+
     driver = get_driver()
     driver.get(locator_domain + ext)
 
-    locs = driver.find_elements_by_css_selector('div.div_location')
-
-    seen_count = 0
+    main = driver.find_element_by_css_selector('div#map_sidebar')
+    locs = main.find_elements_by_css_selector('div.results_entry.location_primary')
     all_store_data = []
     for loc in locs:
-        address = loc.find_element_by_css_selector('p.descrizione_location').text.split('\n')
-        print(address)
-        street_address = address[0]
-        if 'Garrisonville' in street_address:
-            seen_count += 1
-            print(seen_count)
-            if seen_count == 2:
-                continue
+        location_name = loc.find_element_by_css_selector('span.location_name').text
+        street_address = loc.find_element_by_css_selector('span.slp_result_address.slp_result_street').text
+        address = loc.find_element_by_css_selector('span.slp_result_address.slp_result_citystatezip').text.split(',')
 
-        if len(address) == 3:
-            city, state, zip_code = addy_ext(address[2])
-        elif '241 Connor Drive, unit L' in street_address:
-            city = '<MISSING>'
-            state = '<MISSING>'
-            zip_code = '<MISSING>'
-        elif '20 Plantation Drive' in street_address:
-            city = 'Fredericksburg'
-            state = 'VA'
-            zip_code = '22406'
-        elif 'Richmond Tappahannock Hwy' in street_address:
-            city = 'Aylett'
-            state = 'VA'
-            zip_code = '<MISSING>'
+        city = address[0]
+        state = address[1].strip()
+        if len(state.split(' ')) == 2:
+            state_zip = state.split(' ')
+            state = state_zip[0]
+            zip_code = state_zip[1]
         else:
-            city, state, zip_code = addy_ext(address[1])
+            zip_code = '<MISSING>'
 
-        phone_number = loc.find_element_by_css_selector('p.telefono_location').text.replace('Phone:', '').strip()
-        print(phone_number)
+        phone_number = loc.find_element_by_css_selector('span.slp_result_address.slp_result_phone').text
+        hours_div = loc.find_element_by_css_selector('span.slp_result_contact.slp_result_hours.textblock').text.split(
+            '\n')
+
+        if len(hours_div) == 1:
+            hours = '<MISSING>'
+        else:
+            hours = ''
+            for h in hours_div[:3]:
+                hours += h + ' '
+
+            hours = hours.replace('Store Hours:', '').strip()
 
         country_code = 'US'
-        location_name = '<MISSING>'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
-        hours = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

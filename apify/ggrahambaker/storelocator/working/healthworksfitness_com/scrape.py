@@ -22,67 +22,55 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-def addy_extractor(src):
-    arr = src.split(',')
-    city = arr[0]
-    prov_zip = arr[1].strip().split(' ')
-    state = prov_zip[0].strip()
-    zip_code = prov_zip[1]
-    if len(zip_code) == 4:
-        zip_code = '0' + zip_code
-
-    return city, state, zip_code
-
-
-
 def fetch_data():
-    locator_domain = 'https://wingsover.com/'
-    ext = 'locations/'
+    locator_domain = 'https://healthworksfitness.com/'
+    ext = 'our-locations/'
 
     driver = get_driver()
     driver.get(locator_domain + ext)
 
-    to_click = driver.find_elements_by_css_selector('div.name')
-    for clicks in to_click:
-        if 'CONNECTICUT' in clicks.text:
-            continue
-        driver.execute_script("arguments[0].click();", clicks)
+    divs = driver.find_elements_by_css_selector('div.work-info')
+    link_list = [div.find_element_by_css_selector('a').get_attribute('href') for div in divs]
 
-    names = driver.find_element_by_css_selector('div.locs').find_elements_by_css_selector('p')
-
-    name_arr = []
-    for name in names:
-        name_arr.append(name.get_attribute('data-link'))
 
     all_store_data = []
-    for name in name_arr:
-        driver.get(locator_domain + ext + name)
+    for link in link_list:
+        driver.get(link)
         driver.implicitly_wait(10)
+        main = driver.find_elements_by_css_selector('div.wpb_text_column.wpb_content_element')[2]
+        content = main.text.split('\n')
 
-        section = driver.find_element_by_xpath("//section[@data-location='" + name + "']")
+        if len(content) == 16:
+            content = content[:-7]
+        if len(content) == 15:
+            content = content[:-1]
 
-        location_name = section.find_element_by_css_selector('div.title').find_element_by_css_selector('h2').text
-
-        info = section.find_element_by_css_selector('div.copy').text.split('\n')
-
-        street_address = info[0]
-        city, state, zip_code = addy_extractor(info[1])
-        phone_number = info[2]
+        addy = content[0].split(',')
+        street_address = addy[0]
+        city = addy[1].strip()
+        state_zip = addy[2].strip().split(' ')
+        state = state_zip[0]
+        zip_code = state_zip[1]
         hours = ''
-        for h in info[4:]:
+        for h in content[1:]:
             hours += h + ' '
-        hours = hours.strip()
 
+        coord = driver.find_element_by_css_selector('div.nectar-google-map')
+        lat = coord.get_attribute('data-center-lat')
+        longit = coord.get_attribute('data-center-lng')
+        location_name = driver.find_elements_by_css_selector('div.wpb_text_column.wpb_content_element')[0].text
+
+        phone = driver.find_elements_by_css_selector('div.wpb_text_column.wpb_content_element')[4].text.split('\n')
+
+        phone_number = phone[1].replace('Telephone:', '').strip()
         country_code = 'US'
-        location_type = '<MISSING>'
-        lat = '<INACCESSIBLE>'
-        longit = '<INACCESSIBLE>'
         store_number = '<MISSING>'
+        location_type = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
+
 
     driver.quit()
     return all_store_data

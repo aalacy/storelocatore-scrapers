@@ -23,6 +23,7 @@ def write_output(data):
             writer.writerow(row)
 
 
+
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -33,53 +34,35 @@ def addy_ext(addy):
 
 
 def fetch_data():
-    locator_domain = 'http://www.vinnysitaliangrill.com/'
-    ext = 'locations/'
+    locator_domain = 'https://www.myapplemarket.com/'
+
     driver = get_driver()
-    driver.get(locator_domain + ext)
+    driver.get(locator_domain)
 
-    locs = driver.find_elements_by_css_selector('div.div_location')
+    stores = driver.find_elements_by_css_selector('div.LocalBusiness')
 
-    seen_count = 0
     all_store_data = []
-    for loc in locs:
-        address = loc.find_element_by_css_selector('p.descrizione_location').text.split('\n')
-        print(address)
-        street_address = address[0]
-        if 'Garrisonville' in street_address:
-            seen_count += 1
-            print(seen_count)
-            if seen_count == 2:
-                continue
+    for i, store in enumerate(stores):
+        content = store.text.split('\n')
+        street_address = content[0]
+        city, state, zip_code = addy_ext(content[1])
+        phone_number = content[2].replace('Phone:', '').strip()
 
-        if len(address) == 3:
-            city, state, zip_code = addy_ext(address[2])
-        elif '241 Connor Drive, unit L' in street_address:
-            city = '<MISSING>'
-            state = '<MISSING>'
-            zip_code = '<MISSING>'
-        elif '20 Plantation Drive' in street_address:
-            city = 'Fredericksburg'
-            state = 'VA'
-            zip_code = '22406'
-        elif 'Richmond Tappahannock Hwy' in street_address:
-            city = 'Aylett'
-            state = 'VA'
-            zip_code = '<MISSING>'
-        else:
-            city, state, zip_code = addy_ext(address[1])
+        if i < 3:
+            location_type = 'Country Harvest Apple Markets'
+        elif i < 4:
+            location_type = "Jim's Foodliner Apple Market"
+        elif i < 5:
+            location_type = 'Seabrook Apple Market'
+        elif i < 6:
+            location_type = "Ray's Apple Markets"
 
-        phone_number = loc.find_element_by_css_selector('p.telefono_location').text.replace('Phone:', '').strip()
-        print(phone_number)
-
-        country_code = 'US'
         location_name = '<MISSING>'
+        country_code = 'US'
         store_number = '<MISSING>'
-        location_type = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
         hours = '<MISSING>'
-
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)

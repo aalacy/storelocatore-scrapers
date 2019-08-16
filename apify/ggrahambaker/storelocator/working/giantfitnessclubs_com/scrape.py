@@ -33,52 +33,37 @@ def addy_ext(addy):
 
 
 def fetch_data():
-    locator_domain = 'http://www.vinnysitaliangrill.com/'
+    locator_domain = 'https://giantfitnessclubs.com/'
     ext = 'locations/'
+
     driver = get_driver()
     driver.get(locator_domain + ext)
 
-    locs = driver.find_elements_by_css_selector('div.div_location')
+    stores = driver.find_elements_by_css_selector('div.column.mcb-column.one-fourth.column_column.column-margin-')
+    link_list = []
+    for store in stores:
+        link_list.append(store.find_element_by_css_selector('a').get_attribute('href'))
 
-    seen_count = 0
     all_store_data = []
-    for loc in locs:
-        address = loc.find_element_by_css_selector('p.descrizione_location').text.split('\n')
-        print(address)
-        street_address = address[0]
-        if 'Garrisonville' in street_address:
-            seen_count += 1
-            print(seen_count)
-            if seen_count == 2:
-                continue
+    for link in link_list:
+        driver.get(link)
+        driver.implicitly_wait(10)
+        location_name = link[link.find('.com/') + 5:].replace('-', ' ').replace('/', '')
 
-        if len(address) == 3:
-            city, state, zip_code = addy_ext(address[2])
-        elif '241 Connor Drive, unit L' in street_address:
-            city = '<MISSING>'
-            state = '<MISSING>'
-            zip_code = '<MISSING>'
-        elif '20 Plantation Drive' in street_address:
-            city = 'Fredericksburg'
-            state = 'VA'
-            zip_code = '22406'
-        elif 'Richmond Tappahannock Hwy' in street_address:
-            city = 'Aylett'
-            state = 'VA'
-            zip_code = '<MISSING>'
-        else:
-            city, state, zip_code = addy_ext(address[1])
+        content = driver.find_elements_by_css_selector('div.column_attr.clearfix')[1].text.split('\n')
 
-        phone_number = loc.find_element_by_css_selector('p.telefono_location').text.replace('Phone:', '').strip()
-        print(phone_number)
+        street_address = content[1]
+        city, state, zip_code = addy_ext(content[2])
+        phone_number = content[4].replace('Phone:', '').strip()
+        hours = ''
+        for h in content[7:]:
+            hours += ' '.join(h.split()) + ' '
 
         country_code = 'US'
-        location_name = '<MISSING>'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
-        hours = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

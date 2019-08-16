@@ -45,11 +45,11 @@ def fetch_data():
     driver = get_driver()
     driver.get(locator_domain + ext)
 
-    tables = driver.find_elements_by_css_selector('div.table-responsive')
+    tables = driver.find_elements_by_css_selector('table.table.table-striped.table-bordered')
     all_store_data = []
+
     for table in tables:
         rows = table.find_element_by_css_selector('tbody').find_elements_by_css_selector('tr')
-
         for row in rows:
             cols = row.find_elements_by_css_selector('td')
             address = cols[0].text.split('\n')
@@ -61,6 +61,39 @@ def fetch_data():
                 street_address = address[0]
                 location_name = '<MISSING>'
                 city, state, zip_code = addy_extractor(address[1])
+            elif len(address) == 4:
+                street_address = address[0]
+                location_name = '<MISSING>'
+                city, state, zip_code = addy_extractor(address[-1])
+            elif len(address) == 6:
+                country_code = 'US'
+                store_number = '<MISSING>'
+                phone_number = '<MISSING>'
+                location_type = '<MISSING>'
+                lat = '<MISSING>'
+                longit = '<MISSING>'
+
+                street_address = address[0]
+                location_name = '<MISSING>'
+                city, state, zip_code = addy_extractor(address[1])
+
+
+
+                hours_arr = cols[2].text.split('\n')
+                hours = hours_arr[0]
+
+                store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                              store_number, phone_number, location_type, lat, longit, hours]
+                all_store_data.append(store_data)
+
+
+                street_address = address[4]
+                location_type = address[3]
+                city, state, zip_code = addy_extractor(address[5])
+
+                hours_arr = cols[2].text.split('\n')
+                hours = hours_arr[0]
+
             else:
                 continue
 
@@ -76,7 +109,9 @@ def fetch_data():
 
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                           store_number, phone_number, location_type, lat, longit, hours]
+
             all_store_data.append(store_data)
+
 
     driver.quit()
     return all_store_data
