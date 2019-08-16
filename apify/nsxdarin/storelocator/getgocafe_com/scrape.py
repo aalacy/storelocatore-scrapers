@@ -17,7 +17,7 @@ def fetch_data():
     for x in range(0, 325, 25):
         print('Pulling Range %s...' % str(x))
         url = 'https://www.getgocafe.com/api/sitecore/locations/getlocationlistvm?q=banner:(code+(GG))&skip=' + str(x) + '&top=25&orderBy=geo.distance(storeCoordinate,%20geography%27POINT(-93.2871%2044.9427)%27)%20asc'
-        r = session.get(url, headers=headers)
+        r = session.get(url, headers=headers, verify=False)
         for line in r.iter_lines():
             if '"Id":"' in line:
                 items = line.split('"Id":"')
