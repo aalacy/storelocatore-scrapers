@@ -23,17 +23,17 @@ def fetch_data():
             HoursFound = False
             name = line.split('" >')[1].split('<')[0].strip()
             website = 'stoneyriver.com'
-            add = ''
-            city = ''
-            state = ''
-            zc = ''
-            phone = ''
-            hours = ''
+            add = '<MISSING>'
+            city = '<MISSING>'
+            state = '<MISSING>'
+            zc = '<MISSING>'
+            phone = '<MISSING>'
+            hours = '<MISSING>'
             typ = 'Restaurant'
-            store = ''
+            store = '<MISSING>'
             country = 'US'
-            lat = ''
-            lng = ''
+            lat = '<MISSING>'
+            lng = '<MISSING>'
         if '{"venueId":' in line:
             store = line.split('{"venueId":')[1].split(',')[0]
         if 'google.com/maps/place/' in line:
@@ -45,8 +45,8 @@ def fetch_data():
                     lat = line.split('sll=')[1].split(',')[0]
                     lng = line.split('sll=')[1].split(',')[1].split('&')[0]
                 except:
-                    lat = ''
-                    lng = ''
+                    lat = '<MISSING>'
+                    lng = '<MISSING>'
         if '<p><a href=' in line:
             add = line.split('"_blank"')[1].split('>')[1].split('<')[0].strip()
             g = next(lines)
@@ -58,7 +58,7 @@ def fetch_data():
             try:
                 zc = g.split(',')[1].strip().split('<')[0].strip().replace('\t',' ').rsplit(' ',1)[1]
             except:
-                zc = ''
+                zc = '<MISSING>'
         if 'strong>GM:' in line:
             phone = line.split('strong>GM:')[1].split('<br />')[1].split('<')[0].strip()
         if '<div class="locationSocial">' in line and 'Coming Soon' not in name:
