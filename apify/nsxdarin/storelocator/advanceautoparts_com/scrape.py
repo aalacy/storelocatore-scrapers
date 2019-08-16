@@ -21,8 +21,8 @@ def fetch_data():
     locs = []
     allstores = []
     website = 'advanceautoparts.com'
-    typ = ''
-    country = ''
+    typ = '<MISSING>'
+    country = '<MISSING>'
     canada = ['PE','NB','MB','BC','ON','QC','AB','NS','NL']
     for url in urls:
         r = session.get(url, headers=headers)
@@ -78,7 +78,7 @@ def fetch_data():
                 try:
                     state = line.split('class="c-address-state"')[1].split('>')[1].split('<')[0]
                 except:
-                    state = ''
+                    state = '
                 if state in canada:
                     country = 'CA'
                 else:
@@ -87,7 +87,7 @@ def fetch_data():
                 try:
                     phone = line.split('c-phone-main-number-link"')[1].split('>')[1].split('<')[0]
                 except:
-                    phone = ''
+                    phone = '<MISSING>'
                 try:
                     hours = 'Mon: ' + line.split('"day":"MONDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"MONDAY","')[1].split('"end":')[1].split(',')[0]
                 except:
@@ -159,7 +159,7 @@ def fetch_data():
                 try:
                     state = line.split('class="c-address-state"')[1].split('>')[1].split('<')[0]
                 except:
-                    state = ''
+                    state = '<MISSING>'
                 if state in canada:
                     country = 'CA'
                 else:
@@ -168,7 +168,7 @@ def fetch_data():
                 try:
                     phone = line.split('c-phone-main-number-link"')[1].split('>')[1].split('<')[0]
                 except:
-                    phone = ''
+                    phone = '<MISSING>'
                 try:
                     hours = 'Mon: ' + line.split('"day":"MONDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"MONDAY","')[1].split('"end":')[1].split(',')[0]
                 except:
