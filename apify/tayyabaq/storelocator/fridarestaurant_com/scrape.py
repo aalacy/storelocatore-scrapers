@@ -31,7 +31,6 @@ def fetch_data():
     data=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
     #Driver
     driver = get_driver()
-    #Get site
     driver.get('http://fridarestaurant.com/locations/')
     time.sleep(6)
     # Fetch stores
@@ -49,6 +48,26 @@ def fetch_data():
         state.append(tagged['StateName'])
         city.append(tagged['PlaceName'])
         street_address.append(tagged['AddressNumber']+" "+tagged['StreetName']+" "+tagged['StreetNamePostType'])
+    #Fetch more locations from JS variable wpgmaps_localize_marker_data, It doesn't contain phone data. 
+    names = driver.execute_script('return wpgmaps_localize_marker_data')
+    title = re.findall(r"title': u'(.+?('))", str(names))
+    address = re.findall(r"address': u'(.+?('))", str(names))
+    lat = re.findall(r"lat': u'(.+?('))", str(names))
+    lng = re.findall(r"lng': u'(.+?('))", str(names))
+    for i in range(0,len(title)):
+        try:
+            tagged1=usaddress.tag(address[i][0].replace("'",""))[0]
+        except:
+            tagged1=usaddress.tag(str(address[i][0].replace("'","").split(",")[0:2]))[0]
+        if tagged1['ZipCode'] not in zipcode:
+            location_name.append(title[i][0].replace(",",""))
+            latitude.append(lat[i][0].replace("'",""))
+            longitude.append(lng[i][0].replace("'",""))
+            zipcode.append(tagged1['ZipCode'].replace("']",""))
+            state.append(tagged1['StateName'])
+            city.append(tagged1['PlaceName'])
+            street_address.append(tagged1['AddressNumber']+" "+tagged1['StreetName']+" "+tagged1['StreetNamePostType'])
+            phone.append('<MISSING>')
     for n in range(0,len(location_name)): 
         data.append([
             'https://www.fridarestaurant.com',
