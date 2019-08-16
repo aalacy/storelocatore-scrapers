@@ -3,6 +3,7 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re, time
+import usaddress
 
 def write_output(data):
     with open('data.csv', mode='wb') as output_file:
@@ -12,13 +13,8 @@ def write_output(data):
         # Body
         for row in data:
             if row:
-                writer.writerow(row)
-def parse_geo(url):
-    a=re.findall(r'\&ll=(-?[\d\.]*,(--?[\d\.]*))',url)[0]
-    lat = a[0].split(",")[0]
-    lon = a[0].split(",")[1]
-    return lat, lon
-
+                writer.writerow([unicode(s).encode("utf-8") for s in row])
+                
 def get_driver():
     options = Options() 
     options.add_argument('--headless')
@@ -38,30 +34,39 @@ def fetch_data():
     stores = driver.find_elements_by_class_name("maincontent")
     loc = stores[0].text.split("\n")
     for i in range(0,len(loc)):
-        if loc[i]!="" and 'coming soon' not in loc[i]:
-            a=re.findall("[\d].*[\Q\s][A-Z].*",loc[i])
+        if loc[i]!="" and loc[i]!=" " and 'coming soon' not in loc[i]:
             try:
-                street_address.append(a[0].split(",")[0])
-                b=re.findall("[\d].*",a[0].split(",")[1].strip())
-                if b!=[]:
-                    city.append('<INACCESSIBLE>')
-                else:
-                    city.append(a[0].split(",")[1].strip())
-                state.append(re.findall("([A-Z]{2}) (\d{5})",loc[i])[0][0])
-                try:
-                    zipcode.append(re.findall("([A-Z]{2}) (\d{5})",loc[i])[0][1])
-                except:
-                    zipcode.append('<MISSING>')
-                try:
-                    phone.append(re.findall(r'([(]-?[\d\.]*?.*)',loc[i])[0].split(",")[0])
-                except:
-                    phone.append('<MISSING>')
-                try:
-                    location_name.append(loc[i].split(",")[-4])
-                except:
-                    location_name.append('<MISSING>')
+                tagged = usaddress.tag(loc[i].encode('utf-8'))[0]
+                street_address.append(tagged['AddressNumber']+" "+tagged['StreetName']+" "+tagged['StreetNamePostType'])
             except:
-                continue
+                try:
+                    tagged = usaddress.tag(str(loc[i].encode('utf-8').split(",")[1:]))[0]
+                    street_address.append(tagged['AddressNumber']+" "+tagged['StreetName']+" "+tagged['StreetNamePostType'])
+                except:
+                    if len(loc[i].split(","))>=4:
+                        street_address.append(loc[i].split(",")[1])
+                    else:
+                        street_address.append(loc[i].split(",")[0])
+            try:
+                zipcode.append(tagged['ZipCode'])
+            except:
+                zipcode.append('<MISSING>')
+            try:
+                state.append(tagged['StateName'])
+            except:
+                state.append('<MISSING>')
+            try:
+                city.append(tagged['PlaceName'].replace("'",""))
+            except:
+                city.append('<MISSING>')
+            try:
+                    phone.append(re.findall(r'([(]-?[\d\.]*?.*)',loc[i])[0].split(",")[0])
+            except:
+                    phone.append('<MISSING>')
+            try:
+                    location_name.append(loc[i].split(",")[-4])
+            except:
+                    location_name.append('<MISSING>')
     for n in range(0,len(location_name)): 
         data.append([
             'https://www.shoppersworldusa.com',
