@@ -55,6 +55,12 @@ def fetch_data():
                     hours = hours + '; ' + 'Sun: ' + item.split('"Sunday":["')[1].split('"]')[0].replace('","','-')
                     hours = hours.replace(': -',': Closed')
                     phone = phone.replace('\\r\\n',';').replace(';;',';').replace(';;',';').replace(';;',';').replace(';;',';').replace(';;',';')
+                    phone = phone.replace('  PHONE','')
+                    if ';' in phone:
+                        try:
+                            phone = phone.split(';')[0].strip().replace(') ',')').rsplit(' ',1)[1].replace(')',') ').strip()
+                        except:
+                            phone = phone.split(';')[0].strip()
                     yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
