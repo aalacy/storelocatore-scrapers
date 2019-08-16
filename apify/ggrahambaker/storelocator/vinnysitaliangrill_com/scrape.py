@@ -35,52 +35,54 @@ def addy_ext(addy):
 def fetch_data():
     locator_domain = 'http://www.vinnysitaliangrill.com/'
     ext = 'locations/'
-    seen_garrison = False
     driver = get_driver()
     driver.get(locator_domain + ext)
 
-    cont = driver.find_element_by_css_selector('div.blog-lg-area-left')
-    stores = cont.find_elements_by_css_selector('div.div_location')
+    locs = driver.find_elements_by_css_selector('div.div_location')
 
+    seen_count = 0
     all_store_data = []
-    for store in stores:
-        if seen_garrison:
-            continue
-        content = store.text.split('\n')
-        if len(content) == 5:
-            street_address = content[0]
-            city, state, zip_code = addy_ext(content[2])
-            phone_number = content[3].replace('Phone:', '').strip()
+    for loc in locs:
+        address = loc.find_element_by_css_selector('p.descrizione_location').text.split('\n')
+        print(address)
+        street_address = address[0]
+        if 'Garrisonville' in street_address:
+            seen_count += 1
+            print(seen_count)
+            if seen_count == 2:
+                continue
+
+        if len(address) == 3:
+            city, state, zip_code = addy_ext(address[2])
+        elif '241 Connor Drive, unit L' in street_address:
+            city = '<MISSING>'
+            state = '<MISSING>'
+            zip_code = '<MISSING>'
+        elif '20 Plantation Drive' in street_address:
+            city = 'Fredericksburg'
+            state = 'VA'
+            zip_code = '22406'
+        elif 'Richmond Tappahannock Hwy' in street_address:
+            city = 'Aylett'
+            state = 'VA'
+            zip_code = '<MISSING>'
         else:
-            street_address = content[0]
-            if 'Connor' in street_address:
-                city, state, zip_code = '<MISSING>', '<MISSING>', '<MISSING>'
-            elif 'Plantation' in street_address:
-                city = 'Fredericksburg'
-                state = 'VA'
-                zip_code = '22406'
-            elif 'Tappahannock' in street_address:
-                city = 'Fredericksburg'
-                state = 'VA'
-                zip_code = '22406'
-            else:
-                city, state, zip_code = addy_ext(content[1])
+            city, state, zip_code = addy_ext(address[1])
 
-            phone_number = content[2].replace('Phone:', '').strip()
+        phone_number = loc.find_element_by_css_selector('p.telefono_location').text.replace('Phone:', '').strip()
+        print(phone_number)
 
-            country_code = 'US'
-            location_name = '<MISSING>'
-            store_number = '<MISSING>'
-            location_type = '<MISSING>'
-            lat = '<MISSING>'
-            longit = '<MISSING>'
-            hours = '<MISSING>'
-            if 'Garrisonville' in street_address:
-                seen_garrison = True
+        country_code = 'US'
+        location_name = '<MISSING>'
+        store_number = '<MISSING>'
+        location_type = '<MISSING>'
+        lat = '<MISSING>'
+        longit = '<MISSING>'
+        hours = '<MISSING>'
 
-            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                          store_number, phone_number, location_type, lat, longit, hours]
-            all_store_data.append(store_data)
+        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                      store_number, phone_number, location_type, lat, longit, hours]
+        all_store_data.append(store_data)
 
     driver.quit()
     return all_store_data

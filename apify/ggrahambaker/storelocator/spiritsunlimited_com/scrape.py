@@ -61,8 +61,8 @@ def fetch_data():
         # hours
         hours = driver.find_element_by_css_selector('div.field-name-field-store-hours').text.replace('\n', ' ')
 
-        lat = '<MISSING>'
-        longit = '<MISSING>'
+        lat = '<INACCESSIBLE>'
+        longit = '<INACCESSIBLE>'
 
         country_code = 'US'
         store_number = '<MISSING>'
