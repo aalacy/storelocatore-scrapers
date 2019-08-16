@@ -35,7 +35,7 @@ def fetch_data():
                     state = item.split('"area":"')[1].split('"')[0]
                     zc = item.split('"postal_code":"')[1].split('"')[0]
                     phone = item.split('"store_phone_number":"')[1].split('"')[0]
-                    hours = ''
+                    hours = '<MISSING>'
                     if '"opening_hours":' in item:
                         hours = item.split('"opening_hours":[')[1].split('"]')[0]
                     hours = hours.replace(':0:',':00:')
