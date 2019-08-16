@@ -27,7 +27,7 @@ def fetch_data():
     
     r = session.post(url, headers=headers, data=payload)
     website = 'metro-dentalcare.com'
-    store = ''
+    store = '<MISSING>'
     typ = 'Office'
     country = 'US'
     for line in r.iter_lines():
