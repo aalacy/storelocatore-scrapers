@@ -55,19 +55,20 @@ def fetch_data():
     lat = re.findall(r"lat': u'(.+?('))", str(names))
     lng = re.findall(r"lng': u'(.+?('))", str(names))
     for i in range(0,len(title)):
-        try:
-            tagged1=usaddress.tag(address[i][0].replace("'",""))[0]
-        except:
-            tagged1=usaddress.tag(str(address[i][0].replace("'","").split(",")[0:2]))[0]
-        if tagged1['ZipCode'] not in zipcode:
-            location_name.append(title[i][0].replace(",",""))
-            latitude.append(lat[i][0].replace("'",""))
-            longitude.append(lng[i][0].replace("'",""))
-            zipcode.append(tagged1['ZipCode'].replace("']",""))
-            state.append(tagged1['StateName'])
-            city.append(tagged1['PlaceName'])
-            street_address.append(tagged1['AddressNumber']+" "+tagged1['StreetName']+" "+tagged1['StreetNamePostType'])
-            phone.append('<MISSING>')
+        if 'coming soon' not in (title[i][0]):
+            try:
+                tagged1=usaddress.tag(address[i][0].replace("'",""))[0]
+            except:
+                tagged1=usaddress.tag(str(address[i][0].replace("'","").split(",")[0:2]))[0]
+            if tagged1['ZipCode'] not in zipcode:
+                location_name.append(title[i][0].replace(",",""))
+                latitude.append(lat[i][0].replace("'",""))
+                longitude.append(lng[i][0].replace("'",""))
+                zipcode.append(tagged1['ZipCode'].replace("']",""))
+                state.append(tagged1['StateName'])
+                city.append(tagged1['PlaceName'])
+                street_address.append(tagged1['AddressNumber']+" "+tagged1['StreetName']+" "+tagged1['StreetNamePostType'])
+                phone.append('<MISSING>')
     for n in range(0,len(location_name)): 
         data.append([
             'https://www.fridarestaurant.com',
