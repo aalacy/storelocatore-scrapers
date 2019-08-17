@@ -78,7 +78,7 @@ def fetch_data():
                 try:
                     state = line.split('class="c-address-state"')[1].split('>')[1].split('<')[0]
                 except:
-                    state = '
+                    state = ''
                 if state in canada:
                     country = 'CA'
                 else:
