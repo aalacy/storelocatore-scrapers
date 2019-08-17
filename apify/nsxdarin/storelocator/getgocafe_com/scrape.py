@@ -1,6 +1,7 @@
 import csv
 import urllib2
 import requests
+import json
 
 session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -18,31 +19,28 @@ def fetch_data():
         print('Pulling Range %s...' % str(x))
         url = 'https://www.getgocafe.com/api/sitecore/locations/getlocationlistvm?q=banner:(code+(GG))&skip=' + str(x) + '&top=25&orderBy=geo.distance(storeCoordinate,%20geography%27POINT(-93.2871%2044.9427)%27)%20asc'
         r = session.get(url, headers=headers, verify=False)
-        for line in r.iter_lines():
-            if '"Id":"' in line:
-                items = line.split('"Id":"')
-                for item in items:
-                    if '"StoreDisplayName":"' in item:
-                        website = 'getgocafe.com'
-                        name = item.split('"StoreDisplayName":"')[1].split(':')[1].split('"')[0].strip()
-                        add = item.split('"lineOne":"')[1].split('"')[0]
-                        city = item.split('"City":"')[1].split('"')[0]
-                        state = item.split(',"Abbreviation":"')[1].split('"')[0]
-                        zc = item.split('"Zip":"')[1].split('"')[0]
-                        phone = item.split('"DisplayNumber":"')[1].split('"')[0]
-                        hours = 'Mon: ' + item.split('"Label":"Mon","')[1].split('"Range":{"Label":"')[1].split('"')[0]
-                        hours = hours + '; ' + 'Tue: ' + item.split('"Label":"Tue","')[1].split('"Range":{"Label":"')[1].split('"')[0]
-                        hours = hours + '; ' + 'Wed: ' + item.split('"Label":"Wed","')[1].split('"Range":{"Label":"')[1].split('"')[0]
-                        hours = hours + '; ' + 'Thu: ' + item.split('"Label":"Thu","')[1].split('"Range":{"Label":"')[1].split('"')[0]
-                        hours = hours + '; ' + 'Fri: ' + item.split('"Label":"Fri","')[1].split('"Range":{"Label":"')[1].split('"')[0]
-                        hours = hours + '; ' + 'Sat: ' + item.split('"Label":"Sat","')[1].split('"Range":{"Label":"')[1].split('"')[0]
-                        hours = hours + '; ' + 'Sun: ' + item.split('"Label":"Sun","')[1].split('"Range":{"Label":"')[1].split('"')[0]
-                        country = 'US'
-                        typ = item.split('"Details":{"Type":{"Code":"')[1].split('"Name":"')[1].split('"')[0]
-                        store = item.split('"StoreDisplayName":"')[1].split(':')[0].strip()
-                        lat = item.split('"Latitude":')[1].split(',')[0]
-                        lng = item.split('"Longitude":')[1].split('}')[0]
-                        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        array = json.loads(r.content)
+        for item in array['Locations']:
+            website = 'getgocafe.com'
+            name = item['StoreDisplayName']
+            add = item['Address']['lineOne']
+            city = item['Address']['City']
+            state = item['Address']['State']['Abbreviation']
+            zc = item['Address']['Zip']
+            phone = item['TelephoneNumbers'][0]['DisplayNumber']
+            hours = 'Sun: ' + item['HoursOfOperation'][0]['HourDisplay']
+            hours = hours + '; ' + 'Mon: ' + item['HoursOfOperation'][1]['HourDisplay']
+            hours = hours + '; ' + 'Tue: ' + item['HoursOfOperation'][2]['HourDisplay']
+            hours = hours + '; ' + 'Wed: ' + item['HoursOfOperation'][3]['HourDisplay']
+            hours = hours + '; ' + 'Thu: ' + item['HoursOfOperation'][4]['HourDisplay']
+            hours = hours + '; ' + 'Fri: ' + item['HoursOfOperation'][5]['HourDisplay']
+            hours = hours + '; ' + 'Sat: ' + item['HoursOfOperation'][6]['HourDisplay']
+            country = 'US'
+            typ = item['Details']['Type']['Name']
+            store = item['Id']
+            lat = item['Address']['Coordinates']['Latitude']
+            lng = item['Address']['Coordinates']['Longitude']
+            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
