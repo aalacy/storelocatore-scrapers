@@ -108,16 +108,6 @@ def fetch_data():
         # Phone
         phone_numbers.append(store["phone"].strip() if store["phone"] else "<MISSING>")
 
-        # hour
-        hours.append(
-            "".join(
-                [
-                    key + ": " + value + "\n"
-                    for key, value in json.loads(store["open_hours"]).items()
-                ]
-            )
-        )
-
     # Store data
     for (
         locations_title,
@@ -130,7 +120,6 @@ def fetch_data():
         latitude,
         longitude,
         location_id,
-        hour,
     ) in zip(
         locations_titles,
         street_addresses,
@@ -142,7 +131,6 @@ def fetch_data():
         latitude_list,
         longitude_list,
         locations_id,
-        hours,
     ):
         if "coming soon" in locations_title.lower():
             pass
@@ -161,7 +149,7 @@ def fetch_data():
                     "<MISSING>",
                     latitude,
                     longitude,
-                    hour,
+                    "<MISSING>",
                 ]
             )
 

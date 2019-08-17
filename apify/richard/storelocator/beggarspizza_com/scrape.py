@@ -38,6 +38,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
     # store data
     locations_titles = []
@@ -59,54 +60,57 @@ def fetch_data():
     driver.get(COMPANY_URL)
 
     # Fetch store urls from location menu
-    store_url = "https://www.beggarspizza.com/wp-admin/admin-ajax.php?action=store_search&lat=41.878114&lng=-87.629798&max_results=25&search_radius=50&autoload=1"
+    store_url = "https://www.beggarspizza.com/wp-admin/admin-ajax.php?action=store_search&lat=41.878114&lng=-87.629798&max_results=25&search_radius=1000&autoload=1"
     driver.get(store_url)
 
     locations = json.loads(driver.find_element_by_css_selector("pre").text)
 
     for location in locations:
         # ID
-        location_id.append(location['id'])
+        location_id.append(location["id"])
 
         # Title
-        locations_titles.append(location['store'])
+        locations_titles.append(location["store"])
 
         # Street address
-        street_addresses.append(location['address'] + ' ' + location['address2'])
+        street_addresses.append(location["address"] + " " + location["address2"])
 
         # City
-        cities.append(location['city'])
+        cities.append(location["city"])
 
         # State
-        states.append(location['state'])
+        states.append(location["state"])
 
         # Phone
-        phone_numbers.append(location['phone'])
+        phone_numbers.append(location["phone"])
 
         # Zip
-        zip_codes.append(location['zip'])
+        zip_codes.append(location["zip"])
 
         # Latitude
-        latitude_list.append(location['lat'])
+        latitude_list.append(location["lat"])
 
         # Longitude
-        longitude_list.append(location['lng'])
+        longitude_list.append(location["lng"])
 
         # Hour
-        hours.append(' '.join(re.sub('<[^>]*>', ',', location['hours']).split(',')))
-
+        hours.append(
+            " ".join(re.sub("<[^>]*>", ",", location["hours"]).split(","))
+            if location["hours"] != ""
+            else "<MISSING>"
+        )
 
     for (
-            locations_title,
-            street_address,
-            city,
-            state,
-            zipcode,
-            phone_number,
-            latitude,
-            longitude,
-            hour,
-            id
+        locations_title,
+        street_address,
+        city,
+        state,
+        zipcode,
+        phone_number,
+        latitude,
+        longitude,
+        hour,
+        id,
     ) in zip(
         locations_titles,
         street_addresses,
@@ -117,7 +121,7 @@ def fetch_data():
         latitude_list,
         longitude_list,
         hours,
-        location_id
+        location_id,
     ):
         data.append(
             [
@@ -127,7 +131,7 @@ def fetch_data():
                 city,
                 state,
                 zipcode,
-                'US',
+                "US",
                 id,
                 phone_number,
                 "<MISSING>",

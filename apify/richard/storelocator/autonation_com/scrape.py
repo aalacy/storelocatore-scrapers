@@ -37,6 +37,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
     # store data
     locations_titles = []
@@ -58,54 +59,66 @@ def fetch_data():
     driver.get(COMPANY_URL)
 
     # Fetch store urls from location menu
-    store_url = "https://www.autonation.com/StoreDetails/Get/?lat=33.84502410888672&long=-84.37747192382812&radius=100&zipcode=30305&instart_disable_injection=true"
+    store_url = "https://www.autonation.com/StoreDetails/Get/?lat=33.84502410888672&long=-84.37747192382812&radius=10000&zipcode=30305&instart_disable_injection=true"
     driver.get(store_url)
 
-    locations = json.loads(driver.find_element_by_css_selector("pre").text)['Store']
+    locations = json.loads(driver.find_element_by_css_selector("pre").text)["Store"]
 
     for location in locations:
         # ID
-        location_id.append(location['StoreId'])
+        location_id.append(location["StoreId"])
 
         # Title
-        locations_titles.append(location['Name'])
+        locations_titles.append(location["Name"])
 
         # Street address
-        street_addresses.append(location['AddressLine1'] + ' ' + location['AddressLine2'])
+        street_addresses.append(
+            location["AddressLine1"] + " " + location["AddressLine2"]
+        )
 
         # City
-        cities.append(location['City'])
+        cities.append(location["City"])
 
         # State
-        states.append(location['StateCode'])
+        states.append(location["StateCode"])
 
         # Phone
-        phone_numbers.append(location['Phone'])
+        phone_numbers.append(location["Phone"])
 
         # Zip
-        zip_codes.append(location['PostalCode'])
+        zip_codes.append(location["PostalCode"])
 
         # Latitude
-        latitude_list.append(location['Latitude'])
+        latitude_list.append(location["Latitude"])
 
         # Longitude
-        longitude_list.append(location['Longitude'])
+        longitude_list.append(location["Longitude"])
 
         # Hour
-        hours.append(' '.join([str(time['Day']) + ':  ' + time['StartTime'] + ' to ' + time['EndTime'] for time in location['StoreDetailedHours']]))
-
+        hours.append(
+            " ".join(
+                [
+                    str(time["Day"])
+                    + ":  "
+                    + time["StartTime"]
+                    + " to "
+                    + time["EndTime"]
+                    for time in location["StoreDetailedHours"]
+                ]
+            )
+        )
 
     for (
-            locations_title,
-            street_address,
-            city,
-            state,
-            zipcode,
-            phone_number,
-            latitude,
-            longitude,
-            hour,
-            id
+        locations_title,
+        street_address,
+        city,
+        state,
+        zipcode,
+        phone_number,
+        latitude,
+        longitude,
+        hour,
+        id,
     ) in zip(
         locations_titles,
         street_addresses,
@@ -116,7 +129,7 @@ def fetch_data():
         latitude_list,
         longitude_list,
         hours,
-        location_id
+        location_id,
     ):
         data.append(
             [
@@ -126,7 +139,7 @@ def fetch_data():
                 city,
                 state,
                 zipcode,
-                'US',
+                "US",
                 id,
                 phone_number,
                 "<MISSING>",

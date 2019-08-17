@@ -217,23 +217,26 @@ def fetch_data():
         longitude_list,
         hours,
     ):
-        data.append(
-            [
-                COMPANY_URL,
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                "CA",
-                "<MISSING>",
-                phone_number,
-                "<MISSING>",
-                latitude,
-                longitude,
-                hour,
-            ]
-        )
+        if "coming soon" in locations_title.lower():
+            pass
+        else:
+            data.append(
+                [
+                    COMPANY_URL,
+                    locations_title,
+                    street_address,
+                    city,
+                    state,
+                    zipcode,
+                    "CA",
+                    "<MISSING>",
+                    phone_number,
+                    "<MISSING>",
+                    latitude,
+                    longitude,
+                    hour,
+                ]
+            )
 
     driver.quit()
     return data
