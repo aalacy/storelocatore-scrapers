@@ -1,6 +1,8 @@
 import csv
 import urllib2
 import requests
+import json
+import ast
 
 session = requests.Session()
 headers = {'Access-Token': '$/+8KDDU334$4a<C2M(6/<bhGyneX.e8i:6?&[57#n3h8=}z?*5Kc4W62;$BMLS#?P2Q7_PD~zxLK4x4_nPa8^HQ5H@4yMBLWev7y9iw754/k,biG6VxT33;tvg=}bcV',
@@ -19,47 +21,55 @@ def write_output(data):
 def fetch_data():
     url = 'https://stores.hermes.com/stores/get/(language)/eng-GB'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        if '"short_title":"' in line:
-            items = line.split('"short_title":"')
-            for item in items:
-                if '"street_address1":"' in item:
-                    website = 'hermes.com'
-                    name = item.split('"')[0].replace('\\u00e8','e')
-                    add = item.split('"street_address1":"')[1].split('"')[0]
-                    if '"street_address2":""' not in item:
-                        add = add + ' ' + item.split('"street_address2":"')[1].split('"')[0]
-                    if '"street_address3":""' not in item:
-                        add = add + ' ' + item.split('"street_address3":"')[1].split('"')[0]
-                    city = item.split('"city":"')[1].split('"')[0]
-                    state = item.split('"area":"')[1].split('"')[0]
-                    zc = item.split('"postal_code":"')[1].split('"')[0]
-                    phone = item.split('"store_phone_number":"')[1].split('"')[0]
-                    hours = '<MISSING>'
-                    if '"opening_hours":' in item:
-                        hours = item.split('"opening_hours":[')[1].split('"]')[0]
-                    hours = hours.replace(':0:',':00:')
-                    hours = hours.replace(',3:','; Tue: ')
-                    hours = hours.replace(',4:','; Wed: ')
-                    hours = hours.replace(',5:','; Thu: ')
-                    hours = hours.replace(',6:','; Fri: ')
-                    hours = hours.replace(',7:','; Sat: ')
-                    hours = hours.replace(',8:','; Sun: ')
-                    hours = hours.replace('"2:','Mon: ')
-                    country = item.split('"country":"')[1].split('"')[0]
-                    typ = 'Store'
-                    store = item.split('"store_id":"')[1].split('"')[0]
-                    lat = item.split('"latitude":')[1].split(',')[0]
-                    lng = item.split('"longitude":')[1].split('}')[0]
-                    if country == 'United States' or country == 'Canada':
-                        if country == 'United States':
-                            country = 'US'
-                        else:
-                            country = 'CA'
-                        if country == 'US' and ' ' in zc:
-                            zc = zc.split(' ')[1]
-                            state = zc.split(' ')[0]
-                        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    array = json.loads(r.content)
+    for item in array.values():
+        website = 'hermes.com'
+        name = item['eng-GB']['short_title'].encode('utf-8').strip()
+        add = item['eng-GB']['street_address1'].strip().encode('utf-8')
+        if '"street_address2":""' not in item['eng-GB']:
+            add = add + ' ' + item['eng-GB']['street_address2'].strip().encode('utf-8')
+        if '"street_address3":""' not in item['eng-GB']:
+            add = add + ' ' + item['eng-GB']['street_address3'].strip().encode('utf-8')
+        city = item['eng-GB']['city'].encode('utf-8')
+        state = item['eng-GB']['area'].strip().encode('utf-8')
+        zc = item['eng-GB']['postal_code'].strip()
+        phone = item['eng-GB']['store_phone_number'].strip()
+        hours = '<MISSING>'
+        if 'opening_hours' in item['eng-GB']:
+            hrs = str(item['eng-GB']['opening_hours'])
+            hrs = hrs.replace('[u','').replace('"]','').replace("'",'').replace(']','')
+            if 'False' not in hrs:
+                days = hrs.split(',')
+                for day in days:
+                    day = str(day)
+                    days = ['','','Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+                    dayname = days[int(day[:1])]
+                    text = dayname + ': ' + day.split(':')[1] + ':' + day.split(':')[2] + '-' + day.split(':')[3] + ':' + day.split(':')[4]
+                    if hours == '<MISSING>':
+                        hours = text
+                    else:
+                        hours = hours + '; ' + text
+        hours = hours.replace(':0;',':00;')
+        hours = hours.replace(':0-',':00-')
+        if hours[-2:] == ':0':
+            hours = hours + '0'
+        country = item['eng-GB']['country']
+        typ = 'Store'
+        store = item['eng-GB']['store_id']
+        lat = item['eng-GB']['geo_coordinates']['latitude']
+        lng = item['eng-GB']['geo_coordinates']['longitude']
+        if country == 'United States' or country == 'Canada':
+            if country == 'United States':
+                country = 'US'
+            else:
+                country = 'CA'
+            if country == 'US' and ' ' in zc:
+                state = zc.split(' ')[0]
+                zc = zc.split(' ')[1]
+            if country == 'CA' and ' ' in state:
+                zc = state.split(' ',1)[1]
+                state = state.split(' ')[0]
+            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
