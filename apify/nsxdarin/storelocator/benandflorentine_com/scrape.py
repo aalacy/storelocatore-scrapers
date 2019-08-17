@@ -41,7 +41,6 @@ def fetch_data():
                             zc = '<MISSING>'
                     if len(state) > 2:
                         state = '<MISSING>'
-                        zc = state + ' ' + zc
                     state = state.strip()
                     zc = zc.strip()
                     city = city.strip()
