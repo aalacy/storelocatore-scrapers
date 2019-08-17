@@ -30,7 +30,7 @@ def fetch_data():
         website = 'tacodelmar.com'
         name = array['sl_store']
         add = array['sl_address']
-        add = add + array['sl_address2']
+        add = add + ' ' + array['sl_address2']
         city = array['sl_city']
         state = array['sl_state']
         zc = array['sl_zip']
