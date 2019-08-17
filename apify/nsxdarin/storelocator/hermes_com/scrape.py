@@ -69,6 +69,7 @@ def fetch_data():
             if country == 'CA' and ' ' in state:
                 zc = state.split(' ',1)[1]
                 state = state.split(' ')[0]
+            if not state.strip(): state = '<MISSING>'
             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
