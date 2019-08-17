@@ -4,9 +4,10 @@ import requests
 import json
 
 session = requests.Session()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-           'content-type': 'application/x-www-form-urlencoded; charset=UTF-8'
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
+headers2 = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
+            }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,83 +18,34 @@ def write_output(data):
 
 def fetch_data():
     ids = []
-    for x in range(19, 25, 3):
-        for y in range(-150, -160, -3):
-            print('Pulling Lat/Long %s-%s...' % (str(x), str(y)))
-            url = 'https://tacodelmar.com/wp-admin/admin-ajax.php'
-            payload = {'lat': str(x),
-                       'lng': str(y),
-                       'options[default_page_status]': 'draft',
-                       'action': 'csl_ajax_search',
-                       'radius': '5000'
-                       }
-            r = session.post(url, headers=headers, data=payload)
-            array = json.loads(r.content)
-            for item in array['response']:
-                website = 'tacodelmar.com'
-                name = item['name']
-                add = item['address']
-                add = add + ' ' + item['address2']
-                city = item['city']
-                state = item['state']
-                zc = item['zip']
-                phone = item['phone']
-                if phone == '':
-                    phone = '<MISSING>'
-                hours = item['hours'].replace('&lt;br&gt;','; ').replace('\\r','').replace('\\n','').replace('\r','').replace('\n','')
-                country = item['country']
-                typ = 'Restaurant'
-                store = item['id']
-                lat = item['lat']
-                lng = item['lng']
-                if country == 'USA':
-                    country = 'US'
-                else:
-                    country = 'CA'
-                if country == 'CA' and ' ' not in zc:
-                    zc = zc[:3] + ' ' + zc[-3:]
-                if store not in ids:
-                    ids.append(store)
-                    yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-
-    for x in range(24, 57, 3):
-        for y in range(-60, -125, -3):
-            print('Pulling Lat/Long %s-%s...' % (str(x), str(y)))
-            url = 'https://tacodelmar.com/wp-admin/admin-ajax.php'
-            payload = {'lat': str(x),
-                       'lng': str(y),
-                       'options[default_page_status]': 'draft',
-                       'action': 'csl_ajax_search',
-                       'radius': '5000'
-                       }
-            r = session.post(url, headers=headers, data=payload)
-            array = json.loads(r.content)
-            for item in array['response']:
-                website = 'tacodelmar.com'
-                name = item['name']
-                add = item['address']
-                add = add + ' ' + item['address2']
-                city = item['city']
-                state = item['state']
-                zc = item['zip']
-                phone = item['phone']
-                if phone == '':
-                    phone = '<MISSING>'
-                hours = item['hours'].replace('&lt;br&gt;','; ').replace('\\r','').replace('\\n','').replace('\r','').replace('\n','')
-                country = item['country']
-                typ = 'Restaurant'
-                store = item['id']
-                lat = item['lat']
-                lng = item['lng']
-                if country == 'USA':
-                    country = 'US'
-                else:
-                    country = 'CA'
-                if country == 'CA' and ' ' not in zc:
-                    zc = zc[:3] + ' ' + zc[-3:]
-                if store not in ids:
-                    ids.append(store)
-                    yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    url = 'https://tacodelmar.com/wp-json/store-locator-plus/v2/locations'
+    r = session.get(url, headers=headers2)
+    for item in json.loads(r.content):
+        ids.append(item['sl_id'])
+    for loc in ids:
+        print('Pulling Location %s...' % loc)
+        url2 = 'https://tacodelmar.com/wp-json/store-locator-plus/v2/locations/' + loc
+        r2 = session.get(url2, headers=headers2)
+        array = json.loads(r2.content)
+        website = 'tacodelmar.com'
+        name = array['sl_store']
+        add = array['sl_address']
+        add = add + array['sl_address2']
+        city = array['sl_city']
+        state = array['sl_state']
+        zc = array['sl_zip']
+        phone = array['sl_address']
+        hours = array['sl_hours'].replace('<br>','; ')
+        country = array['sl_country']
+        typ = 'Restaurant'
+        store = array['sl_id']
+        lat = array['sl_latitude']
+        lng = array['sl_longitude']
+        if country == 'USA':
+            country = 'US'
+        else:
+            country = 'CA'
+        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
