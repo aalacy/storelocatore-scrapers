@@ -40,8 +40,10 @@ def fetch_data():
         payload = {"esc_store[country]":cty2,"esc_store[state]":state2,"esc_store[city]":loc}
         ajax_url = 'https://www.escada.com/us/storelocator/ajaxGetStores'
         r = session.post(ajax_url, headers=headers, data=json.dumps(payload))
+        StoreFound = False
         for line in r.iter_lines():
-            if 'window.storeLocator.stores.push' in line:
+            if 'window.storeLocator.stores.push' in line and StoreFound is False:
+                StoreFound = True
                 website = 'escada.com'
                 name = line.split('"name1":"')[1].split('"')[0]
                 add = line.split('"street":"')[1].split('"')[0]
@@ -50,6 +52,23 @@ def fetch_data():
                 zc = line.split('"zipCode":"')[1].split('"')[0]
                 phone = line.split('"phone":"')[1].split('"')[0]
                 hours = '<MISSING>'
+                if '"openingHours":' in line:
+                    days = line.split('openingHours":[')[1].split(']')[0].split('"start":')
+                    week = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+                    for day in days:
+                        if '"end"' in day:
+                            print(day)
+                            hrs = day.split('"hours":"')[1].split('"')[0]
+                            sday = week[int(day.split(',')[0])]
+                            eday = week[int(day.split('"end":')[1].split(',')[0])]
+                            if sday == eday:
+                                text = sday + ': '
+                            else:
+                                text = sday + '-' + eday + ': '
+                            if hours == '<MISSING>':
+                                hours = text + hrs
+                            else:
+                                hours = hours + '; ' + text + hrs
                 country = line.split('"countryIso":"')[1].split('"')[0]
                 typ = 'Store'
                 store = line.split('{"id":')[1].split(',')[0]
