@@ -38,6 +38,8 @@ def fetch_data():
                 state = item['state']
                 zc = item['zip']
                 phone = item['phone']
+                if phone == '':
+                    phone = '<MISSING>'
                 hours = item['hours'].replace('&lt;br&gt;','; ').replace('\\r','').replace('\\n','').replace('\r','').replace('\n','')
                 country = item['country']
                 typ = 'Restaurant'
@@ -75,6 +77,8 @@ def fetch_data():
                 state = item['state']
                 zc = item['zip']
                 phone = item['phone']
+                if phone == '':
+                    phone = '<MISSING>'
                 hours = item['hours'].replace('&lt;br&gt;','; ').replace('\\r','').replace('\\n','').replace('\r','').replace('\n','')
                 country = item['country']
                 typ = 'Restaurant'
