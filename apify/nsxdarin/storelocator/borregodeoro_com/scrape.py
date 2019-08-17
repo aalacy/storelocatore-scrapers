@@ -50,7 +50,7 @@ def fetch_data():
             zc = g.split(',')[1].split('<')[0].rsplit(' ',1)[1]
             next(lines)
             phone = next(lines).split('>')[1].split('<')[0].replace('&#45;','-')
-            locs.append(name + '|' + add + '|' + city + '|' + state + '|' + zc + '|' + phone)
+            locs.append(name + '|' + add + '|' + city + '|' + state + '|' + zc + '|' + phone + '|' + store)
     for x in range(0, len(locs)):
         name = locs[x].split('|')[0]
         add = locs[x].split('|')[1]
@@ -60,6 +60,7 @@ def fetch_data():
         phone = locs[x].split('|')[5]
         lat = maps[x].split(',')[0]
         lng = maps[x].split(',')[1]
+        store = locs[x].split('|')[6]
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
