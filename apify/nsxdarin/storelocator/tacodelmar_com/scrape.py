@@ -35,7 +35,7 @@ def fetch_data():
         state = array['sl_state']
         zc = array['sl_zip']
         phone = array['sl_address']
-        hours = array['sl_hours'].replace('<br>','; ').replace('\\r','').replace('\\n','')
+        hours = array['sl_hours'].replace('</br>','; ').replace('<br>','; ').replace('\r','').replace('\n','').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ')
         country = array['sl_country']
         typ = 'Restaurant'
         store = array['sl_id']
