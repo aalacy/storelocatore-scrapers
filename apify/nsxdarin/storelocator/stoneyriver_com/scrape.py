@@ -36,7 +36,7 @@ def fetch_data():
             lng = '<MISSING>'
         if '{"venueId":' in line:
             store = line.split('{"venueId":')[1].split(',')[0]
-        if 'google.com/maps/place/' in line:
+        if 'google.com/maps/' in line or 'maps.google.com/' in line:
             if '/@' in line:
                 lat = line.split('/@')[1].split(',')[0]
                 lng = line.split('/@')[1].split(',')[1]
@@ -68,10 +68,10 @@ def fetch_data():
         if HoursFound and '</div>' in line:
             HoursFound = False
         if HoursFound and 'Hours of Operation</strong>' not in line:
-            if hours == '':
-                hours = line.split('<')[0].replace('<p>','').strip()
+            if hours == '<MISSING>':
+                hours = line.replace('<p>','').split('<')[0].strip()
             else:
-                hours = hours + '; ' + line.split('<')[0].replace('<p>','').strip()
+                hours = hours + '; ' + line.replace('<p>','').split('<')[0].strip()
 
 def scrape():
     data = fetch_data()
