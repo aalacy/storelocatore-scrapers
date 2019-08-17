@@ -18,7 +18,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = 'https://www.whitecastle.com/sitemap.xml'
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
         if '<loc>https://www.whitecastle.com/locations/' in line:
             locs.append(line.split('locations/')[1].split('<')[0])
@@ -29,7 +29,7 @@ def fetch_data():
         name = 'White Castle #' + loc
         store = loc
         hours = ''
-        r2 = session.get(lurl, headers=headers)
+        r2 = session.get(lurl, headers=headers, verify=False)
         for line2 in r2.iter_lines():
             if '"zip":"' in line2:
                 add = line2.split('"address":"')[1].split('"')[0]
