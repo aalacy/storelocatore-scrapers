@@ -14,7 +14,7 @@ def write_output(data):
         for row in data:
             if row:
                 writer.writerow([unicode(s).encode("utf-8") for s in row])
-                
+
 def get_driver():
     options = Options() 
     options.add_argument('--headless')
@@ -34,19 +34,28 @@ def fetch_data():
     stores = driver.find_elements_by_class_name("maincontent")
     loc = stores[0].text.split("\n")
     for i in range(0,len(loc)):
-        if loc[i]!="" and loc[i]!=" " and 'coming soon' not in loc[i]:
+        if (loc[i]!="" and loc[i]!=" ") and ('coming soon' not in loc[i]):
             try:
-                tagged = usaddress.tag(loc[i].encode('utf-8'))[0]
+                tagged = usaddress.tag(loc[i].replace(u'\u2022', ''))[0]
                 street_address.append(tagged['AddressNumber']+" "+tagged['StreetName']+" "+tagged['StreetNamePostType'])
             except:
                 try:
-                    tagged = usaddress.tag(str(loc[i].encode('utf-8').split(",")[1:]))[0]
+                    tagged = usaddress.tag(str(loc[i].replace(u'\u2022', '').split(",")[1:].join()))[0]
                     street_address.append(tagged['AddressNumber']+" "+tagged['StreetName']+" "+tagged['StreetNamePostType'])
                 except:
-                    if len(loc[i].split(","))>=4:
-                        street_address.append(loc[i].split(",")[1])
+                    if len(loc[i].split(","))==4:
+                        if re.search(r'\d', loc[i].split(",")[1]):
+                            street_address.append(loc[i].split(",")[1].strip())
+                        else:
+                            street_address.append(loc[i].split(",")[0].strip())
+                    elif len(loc[i].split(","))==5:
+                        if re.search(r'\d', loc[i].split(",")[2]):
+                            street_address.append(loc[i].split(",")[2].strip())
+                        else:
+                            street_address.append(loc[i].split(",")[1].strip())
                     else:
-                        street_address.append(loc[i].split(",")[0])
+                        street_address.append(loc[i].split(",")[0].strip())
+                
             try:
                 zipcode.append(tagged['ZipCode'])
             except:
@@ -60,14 +69,17 @@ def fetch_data():
             except:
                 city.append('<MISSING>')
             try:
-                    phone.append(re.findall(r'([(]-?[\d\.]*?.*)',loc[i])[0].split(",")[0])
+                phone.append(re.findall(r'([(]-?[\d\.]*?.*)',loc[i])[0].split(",")[0])
             except:
-                    phone.append('<MISSING>')
+                phone.append('<MISSING>')
             try:
+                if re.search(r'\d', loc[i].split(",")[-4])==False:
                     location_name.append(loc[i].split(",")[-4])
-            except:
+                else:
                     location_name.append('<MISSING>')
-    for n in range(0,len(location_name)): 
+            except:
+                location_name.append('<MISSING>')
+    for n in range(0,len(street_address)): 
         data.append([
             'https://www.shoppersworldusa.com',
             location_name[n],
