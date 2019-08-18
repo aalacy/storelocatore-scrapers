@@ -78,7 +78,7 @@ def fetch_data():
                 try:
                     state = line.split('class="c-address-state"')[1].split('>')[1].split('<')[0]
                 except:
-                    state = '
+                    state = ''
                 if state in canada:
                     country = 'CA'
                 else:
@@ -93,29 +93,29 @@ def fetch_data():
                 except:
                     hours = 'Mon: Closed'
                 try:
-                    hours = hours + ';Tue: ' + line.split('"day":"TUESDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"TUESDAY","')[1].split('"end":')[1].split(',')[0]
+                    hours = hours + '; Tue: ' + line.split('"day":"TUESDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"TUESDAY","')[1].split('"end":')[1].split(',')[0]
                 except:
-                    hours = hours + ';Tue: Closed'
+                    hours = hours + '; Tue: Closed'
                 try:
-                    hours = hours + ';Wed: ' + line.split('"day":"WEDNESDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"WEDNESDAY","')[1].split('"end":')[1].split(',')[0]
+                    hours = hours + '; Wed: ' + line.split('"day":"WEDNESDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"WEDNESDAY","')[1].split('"end":')[1].split(',')[0]
                 except:
-                    hours = hours + ';Wed: Closed'
+                    hours = hours + '; Wed: Closed'
                 try:
-                    hours = hours + ';Thu: ' + line.split('"day":"THURSDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"THURSDAY","')[1].split('"end":')[1].split(',')[0]
+                    hours = hours + '; Thu: ' + line.split('"day":"THURSDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"THURSDAY","')[1].split('"end":')[1].split(',')[0]
                 except:
-                    hours = hours + ';Thu: Closed'
+                    hours = hours + '; Thu: Closed'
                 try:
-                    hours = hours + ';Fri: ' + line.split('"day":"FRIDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"FRIDAY","')[1].split('"end":')[1].split(',')[0]
+                    hours = hours + '; Fri: ' + line.split('"day":"FRIDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"FRIDAY","')[1].split('"end":')[1].split(',')[0]
                 except:
-                    hours = hours + ';Fri: Closed'
+                    hours = hours + '; Fri: Closed'
                 try:
-                    hours = hours + ';Sat: ' + line.split('"day":"SATURDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"SATURDAY","')[1].split('"end":')[1].split(',')[0]
+                    hours = hours + '; Sat: ' + line.split('"day":"SATURDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"SATURDAY","')[1].split('"end":')[1].split(',')[0]
                 except:
-                    hours = hours + ';Sat: Closed'
+                    hours = hours + '; Sat: Closed'
                 try:
-                    hours = hours + ';Sun: ' + line.split('"day":"SUNDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"SUNDAY","')[1].split('"end":')[1].split(',')[0]
+                    hours = hours + '; Sun: ' + line.split('"day":"SUNDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"SUNDAY","')[1].split('"end":')[1].split(',')[0]
                 except:
-                    hours = hours + ';Sun: Closed'
+                    hours = hours + '; Sun: Closed'
                 stores.append(name.replace('|','-') + '|' + add.replace('|','-') + '|' + city.replace('|','-') + '|' + state.replace('|','-') + '|' + zc.replace('|','-') + '|' + country.replace('|','-') + '|' + phone.replace('|','-') + '|' + hours.replace('|','-'))
             if ',"id":' in line:
                 items = line.split(',"id":')
@@ -174,29 +174,29 @@ def fetch_data():
                 except:
                     hours = 'Mon: Closed'
                 try:
-                    hours = hours + ';Tue: ' + line.split('"day":"TUESDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"TUESDAY","')[1].split('"end":')[1].split(',')[0]
+                    hours = hours + '; Tue: ' + line.split('"day":"TUESDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"TUESDAY","')[1].split('"end":')[1].split(',')[0]
                 except:
-                    hours = hours + ';Tue: Closed'
+                    hours = hours + '; Tue: Closed'
                 try:
-                    hours = hours + ';Wed: ' + line.split('"day":"WEDNESDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"WEDNESDAY","')[1].split('"end":')[1].split(',')[0]
+                    hours = hours + '; Wed: ' + line.split('"day":"WEDNESDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"WEDNESDAY","')[1].split('"end":')[1].split(',')[0]
                 except:
-                    hours = hours + ';Wed: Closed'
+                    hours = hours + '; Wed: Closed'
                 try:
-                    hours = hours + ';Thu: ' + line.split('"day":"THURSDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"THURSDAY","')[1].split('"end":')[1].split(',')[0]
+                    hours = hours + '; Thu: ' + line.split('"day":"THURSDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"THURSDAY","')[1].split('"end":')[1].split(',')[0]
                 except:
-                    hours = hours + ';Thu: Closed'
+                    hours = hours + '; Thu: Closed'
                 try:
-                    hours = hours + ';Fri: ' + line.split('"day":"FRIDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"FRIDAY","')[1].split('"end":')[1].split(',')[0]
+                    hours = hours + '; Fri: ' + line.split('"day":"FRIDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"FRIDAY","')[1].split('"end":')[1].split(',')[0]
                 except:
-                    hours = hours + ';Fri: Closed'
+                    hours = hours + '; Fri: Closed'
                 try:
-                    hours = hours + ';Sat: ' + line.split('"day":"SATURDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"SATURDAY","')[1].split('"end":')[1].split(',')[0]
+                    hours = hours + '; Sat: ' + line.split('"day":"SATURDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"SATURDAY","')[1].split('"end":')[1].split(',')[0]
                 except:
-                    hours = hours + ';Sat: Closed'
+                    hours = hours + '; Sat: Closed'
                 try:
-                    hours = hours + ';Sun: ' + line.split('"day":"SUNDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"SUNDAY","')[1].split('"end":')[1].split(',')[0]
+                    hours = hours + '; Sun: ' + line.split('"day":"SUNDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line.split('"day":"SUNDAY","')[1].split('"end":')[1].split(',')[0]
                 except:
-                    hours = hours + ';Sun: Closed'
+                    hours = hours + '; Sun: Closed'
                 stores.append(name.replace('|','-') + '|' + add.replace('|','-') + '|' + city.replace('|','-') + '|' + state.replace('|','-') + '|' + zc.replace('|','-') + '|' + country.replace('|','-') + '|' + phone.replace('|','-') + '|' + hours.replace('|','-'))
             if ',"id":' in line:
                 items = line.split(',"id":')
