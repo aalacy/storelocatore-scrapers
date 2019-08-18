@@ -31,8 +31,8 @@ def fetch_data():
             output.append(store['state']) #state
             output.append(store['postal']) #zipcode
             output.append('US') #country code
-            output.append('<Missing>') #store_number
-            output.append(store['phone'] if store['phone'] != 'N/A' else '<Missing>') #phone
+            output.append('<MISSING>') #store_number
+            output.append(store['phone'] if store['phone'] != 'N/A' else '<MISSING>') #phone
             output.append('Great Lakes Ace Stores') #location type
             output.append(store['lat']) #latitude
             output.append(store['lng']) #longitude        

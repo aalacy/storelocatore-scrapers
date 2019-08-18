@@ -19,36 +19,54 @@ def fetch_data():
 
     location_links = []
     location_name = None
-    locator_domain = None
+    locator_domain = base_url
     street_address = None
     city = None
     state = None
-    zip = None
-    country_code = None
+    zip = "<MISSING>"
+    country_code = 'US'
     store_number = "<MISSING>"
     phone = None
     location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
-    hours_of_operation = None
+    hours_of_operation = "<MISSING>"
 
     soup = BeautifulSoup(requests.get(base_url).content, 'html.parser').find_all('table')[4].contents
 
     for content in soup:
 
-        if type(content) is bs4.element.NavigableString:
+        if content == '\n':
             continue
+
         elif len(content.contents) > 1:
 
-            print()
+            location_name = content.td.get_text()
+            city = location_name
+            street_address = content.contents[2].get_text()
+            phone = content.contents[6].get_text()
+            latlong = content.contents[8].a.get("href").split("ll=")
+            
+            if len(latlong) > 1:
+
+                if len(latlong[1].split("&spn")) == 1:
+                    latlong = latlong[1].split("&sspn")[0]
+                else:
+                    latlong = latlong[1].split("&spn")[0]
+            
+                latitude = latlong.split(',')[0]
+                longitude = latlong.split(',')[1]
+
+            location_list.append([locator_domain, location_name, street_address, city, state, zip, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+
         elif len(content.contents) == 1:
-            state = content.contents[0].get_text()
+            state = content.contents[0].get_text().split(' ')[0]
 
         else:
             continue
             
 
-    #location_list.append([locator_domain, location_name, street_address, city, state, zip, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+    #
     return location_list
 
 def scrape():

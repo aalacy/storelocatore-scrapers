@@ -4,6 +4,19 @@ import pdb
 import requests
 from lxml import etree
 import json
+import time
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+options = Options() 
+options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+# options.add_argument("--start-maximized")
+driver = webdriver.Chrome('chromedriver', options=options)
 
 
 base_url = 'https://freebirds.com'
@@ -20,8 +33,14 @@ def fetch_data():
     url = "https://freebirds.com/api/restaurants?includePrivate=false"
     session = requests.Session()
     request = session.get(url)
+    driver.get('https://freebirds.com/locations')
+    source = driver.page_source.encode('ascii', 'ignore').encode("utf8")
+    time.sleep(15)
+    # bt_element_present = EC.presence_of_element_located((By.CLASS, 'row golden-links'))
+    # WebDriverWait(driver, 10).until(elements)
+    store_hours = etree.HTML(source).xpath('.//div[@class="container m-auto location-cont"]')
     store_list = json.loads(request.text)['restaurants']
-    for store in store_list:
+    for idx, store in enumerate(store_list):
         output = []
         output.append(base_url) # url
         output.append(store['name']) #location name
@@ -32,10 +51,10 @@ def fetch_data():
         output.append('US') #country code
         output.append(store['id']) #store_number
         output.append(store['telephone']) #phone
-        output.append('<Missing>') #location type
+        output.append('<MISSING>') #location type
         output.append(store['latitude']) #latitude
         output.append(store['longitude']) #longitude
-        output.append('10:30 am-9:00 pm') #opening hours
+        output.append(''.join(store_hours[idx].xpath('.//strong//text()'))) #opening hours
         output_list.append(output)
     return output_list
 

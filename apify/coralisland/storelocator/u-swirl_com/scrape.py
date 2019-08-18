@@ -9,10 +9,8 @@ base_url = 'https://www.u-swirl.com'
 
 def validate(str):
     ret = ' '.join(str).strip();
-    if '-' in ret:
-        ret = ret.split('-')[0].strip()
     if ret == '':
-        return 'Missing'
+        return '<MISSING>'
     return ret
 
 def write_output(data):
@@ -27,7 +25,7 @@ def fetch_data():
     url = "https://www.u-swirl.com/find-a-location?page=1"
     session = requests.Session()
     request = session.get(url)
-    response = request.text.encode('ascii', 'ignore').encode("utf8")
+    response = request.text
     data = response.split('jQuery.extend(Drupal.settings,')[1].split('</script>')[0].strip()[:-2]
     store_list = json.loads(data)['gmap']['auto1map']['markers']
     for store in store_list:
@@ -40,12 +38,12 @@ def fetch_data():
         output.append(detail.xpath('.//span[@itemprop="addressRegion"]//text()')[0]) #state
         output.append(detail.xpath('.//span[@itemprop="postalCode"]//text()')[0]) #zipcode
         output.append('US') #country code
-        output.append('Missing') #store_number
+        output.append('<MISSING>') #store_number
         output.append(validate(detail.xpath('.//div[@class="views-field views-field-field-phone"]//text()'))) #phone
         output.append('Self-serve Yogurt Bar') #location type
         output.append(store['latitude']) #latitude
         output.append(store['longitude']) #longitude
-        output.append('<Missing>') #opening hours
+        output.append('<MISSING>') #opening hours
         output_list.append(output)
     return output_list
 

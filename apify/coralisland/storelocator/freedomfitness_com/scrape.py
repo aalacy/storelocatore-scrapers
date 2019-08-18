@@ -8,6 +8,14 @@ import json
 
 base_url = 'https://freedomfitness.com'
 
+def eliminate_space(items):
+    tmp = []
+    for item in items:
+        item = item.strip()
+        if item != '':
+            tmp.append(item)
+    return tmp
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -30,20 +38,16 @@ def fetch_data():
         output.append(store['state']) #state
         output.append(store['zip']) #zipcode
         output.append('US') #country code
-        output.append('<Missing>') #store_number
-        output.append(store['phone'] if store['phone'] != 'N/A' else '<Missing>') #phone
+        output.append('<MISSING>') #store_number
+        output.append(store['phone'] if store['phone'] != 'N/A' else '<MISSING>') #phone
         output.append('Gyms') #location type
         output.append(store['lat']) #latitude
         output.append(store['lng']) #longitude
-        h_temp = ''
-        if store['hours']:
-            store_hours = etree.HTML(store['hours']).xpath('//tr')
-            if store_hours:
-                for hour in store_hours:
-                    h_temp += ' '.join(hour.xpath('.//text()')) + ', '
-                h_temp = h_temp[:-2]
-        else:
-            h_temp = '<Missing>'
+        link = base_url + store['url']
+        h_temp = '<MISSING>'
+        if link:
+            data = etree.HTML(session.get(link).text)
+            h_temp = ' '.join(eliminate_space(data.xpath('.//div[@class="club_hours_inner"]')[0].xpath('.//text()')))
         output.append(h_temp) #opening hours        
         output_list.append(output)
     return output_list

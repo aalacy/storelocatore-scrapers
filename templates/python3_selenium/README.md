@@ -1,5 +1,7 @@
 # How to write a Python3 + Selenium scraper for SafeGraph
 
+This is the same as the `python3_simple` template, but shows how to properly configure Selenium for our production environment.
+
 Please write your scraper such that running `scrape.py` produces a file `data.csv` containing the scraped data.
 
 You can write your scraper between the `#Begin scraper` and `#End scraper` comments in `scrape.py`

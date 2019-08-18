@@ -1,7 +1,6 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
-import xlsxwriter
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:

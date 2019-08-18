@@ -1,7 +1,8 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
-
+import re
+import json
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -33,13 +34,18 @@ def fetch_data():
     ext = 'salonlocator/default.asp?state=all&city=BROWNSVILLE'
     ext2 = 'salonlocator/default.asp?state=all&city=CORPUS CHRISTI'
 
-
     to_scrape1 = locator_domain + ext
     page1 = requests.get(to_scrape1)
     assert page1.status_code == 200
 
-
     soup = BeautifulSoup(page1.content, 'html.parser')
+    pattern = re.compile('locations = ({"locations":.*);')
+    script = soup.find("script", text=pattern)
+    poi = json.loads(re.search(pattern, script.text).group(1))["locations"][0]
+
+    lat = poi['latitude']
+    longit = poi['longitude']
+
     store = soup.find('div', {'class': 'result_LocationContainer'})
 
     location_name = store.find('div', {'class': 'result_MallName'}).text
@@ -51,8 +57,6 @@ def fetch_data():
     country_code = 'US'
     store_number = '<MISSING>'
     location_type = '<MISSING>'
-    lat = '<INACCESSIBLE>'
-    longit = '<INACCESSIBLE>'
     hours = '<MISSING>'
 
     sunrise_plaza = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
@@ -64,7 +68,18 @@ def fetch_data():
     assert page2.status_code == 200
 
     soup = BeautifulSoup(page2.content, 'html.parser')
+
+    soup = BeautifulSoup(page1.content, 'html.parser')
+    pattern = re.compile('locations = ({"locations":.*);')
+    script = soup.find("script", text=pattern)
+    poi = json.loads(re.search(pattern, script.text).group(1))["locations"][0]
+    lat = poi['latitude']
+    longit = poi['longitude']
+
+
     store = soup.find('div', {'class': 'result_LocationContainer'})
+
+
 
     location_name = store.find('div', {'class': 'result_MallName'}).text
 
@@ -75,8 +90,6 @@ def fetch_data():
     country_code = 'US'
     store_number = '<MISSING>'
     location_type = '<MISSING>'
-    lat = '<MISSING>'
-    longit = '<MISSING>'
     hours = '<MISSING>'
 
     cim_center = [locator_domain, location_name, street_address, city, state, zip_code, country_code,

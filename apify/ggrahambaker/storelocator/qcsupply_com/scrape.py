@@ -45,6 +45,8 @@ def fetch_data():
     driver.get(locator_domain + ext)
     all_store_data = []
 
+
+
     
     wrapper = driver.find_element_by_css_selector('div#amlocator_left')
     spans = wrapper.find_elements_by_name('leftLocation')
@@ -59,16 +61,13 @@ def fetch_data():
         if '/' in phone_number:
             phone_number = phone_number.split('/')[0].strip()
 
-
-    
-        
         
         country_code = 'US'
         location_type = '<MISSING>'
         store_number = '<MISSING>'
-        hours = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
+        hours = '<INACCESSIBLE>'
+        lat = '<INACCESSIBLE>'
+        longit = '<INACCESSIBLE>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                          store_number, phone_number, location_type, lat, longit, hours ]

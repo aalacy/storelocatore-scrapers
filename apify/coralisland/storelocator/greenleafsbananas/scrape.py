@@ -11,7 +11,7 @@ base_url = 'https://www.greenleafsbananas.com'
 def validate(item):
     item = ''.join(item).replace(u'\xa0', '').replace(u'\u2019', '').strip()
     if item == '':
-        item = '<Missing>'
+        item = '<MISSING>'
     return item
 
 def write_output(data):
@@ -50,7 +50,7 @@ def fetch_data():
             output.append('Bananas Restaurants') #location type
             output.append(store['lat']) #latitude
             output.append(store['lng']) #longitude        
-            output.append('<Missing>') #opening hours
+            output.append('<MISSING>') #opening hours
             output_list.append(output)
         except Exception as e:
             pass
