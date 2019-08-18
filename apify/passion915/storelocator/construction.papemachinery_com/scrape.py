@@ -40,18 +40,22 @@ def pull_info(content):
         location_name = location_item.find('div',{'class','details-left'}).find('a',{'class':'location-name'}).text
         
         href_data = pull_content(locator_domain)
-        street_address = href_data.find('address').text
-        
+        address = href_data.find('address').text
+        city = location_name.split(',')[0]
+        street_address = str(str(href_data.find('address').text).replace('E.','').split(',')[0]).strip().replace('\n','').split('\t')[0] + " " + city
+   
 
         
-        city = "<MISSING>"
-        state = str(street_address).split(' ')[len(str(street_address).split(' ')) - 2]
+    
+        state = str(str(str(href_data.find('address')).split('<br/>')[1]).split(',')[1]).replace('</address>','').strip().split(' ')[0]
+   
+        # zip = str(str(href_data.find('address').text).split(',')[1]).strip().split(" ")[1]
+        zip = str(str(str(href_data.find('address')).split('<br/>')[1]).split(',')[1]).replace('</address>','').strip().split(' ')[1]
         
-        zip = str(street_address).split(' ')[len(str(street_address).split(' ')) - 1]
         country_code = "US"
         store_number = "<MISSING>"
         
-        phone = href_data.find('span',{'class':'fe-phone-swap'}).find('a')['href']
+        phone = str(href_data.find('span',{'class':'fe-phone-swap'}).find('a')['href']).replace('tel:','')
         index_of_store = location_list.index(location_item)
  
         data_for_latitude = soup.find_all('script')
@@ -83,7 +87,7 @@ def pull_info(content):
 
         
         
-        hours_of_operation = ul_for_hours
+        hours_of_operation = ul_for_hours.strip()
           
         temp_data = [
 

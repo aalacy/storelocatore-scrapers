@@ -44,13 +44,19 @@ def pull_info(content):
                 href_content = pull_content(href_data)
                 locator_domain = href_data
                 location_name = "<MISSING>"
-                street_address = href_content.find('address').text
+                address = href_content.find('address')
+                street_address = str(str(address).split('<br/>')[0]).replace('<address>','').strip()
+                
                 state = test_region.text 
                
-                zip = str(street_address).split(' ')[len(str(street_address).split(' ')) - 1]
+                zip = str(address.text).split(' ')[len(str(address.text).split(' ')) - 1]
                 country_code = "US"
                 store_number = "<MISSING>"
-                phone = href_content.find('div',{'class','store-contact'}).a.text
+                if href_content.find('div',{'class','store-contact'}).a.text != "":
+                    phone = str(href_content.find('div',{'class','store-contact'}).a.text).strip()
+                else:
+                    phone = "<MISSING>"
+                
              
                 store_type = "<MISSING>"
                 latitude = "<MISSING>"

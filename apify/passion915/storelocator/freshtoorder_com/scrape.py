@@ -34,18 +34,28 @@ def pull_info(content):
     for item in store_list:
         locator_domain = "<MISSING>"
         location_name = str(item.find('div',{'class':'mpfy-mll-l-title'}).text).split('\n')[1]
-        
-        street_address = item.find('div',{'class':'mpfy-mll-l-content'}).find('div',{'class':'location-address'}).text
-        phone = item.find('div',{'class':'mpfy-mll-l-content'}).find('div',{'class':'contact-details'}).text
-        city = str(street_address).split(',')[len(str(street_address).split(',')) - 3]
-        zip = str(street_address).split(',')[len(str(street_address).split(',')) - 1]
-        state = str(street_address).split(',')[len(str(street_address).split(',')) - 2]
+        address = item.find('div',{'class':'location-address'}).strong.text.strip()
+        state = address.split(',')[len(address.split(',')) - 2]
+        zip = address.split(',')[len(address.split(',')) - 1]
+        street_address = str(address.split('|')[0]).strip().replace('.','')
+        test_phone = item.find('div',{'class':'mpfy-mll-l-content'}).find('div',{'class':'contact-details'}).p
+        if test_phone is None:
+            phone = "<MISSING>"
+        else:
+            phone = test_phone.text.strip()
+        city = str(str(address.split('|')[1]).split(',')[0]).strip()
+
         latitude = item['data-lat']
         longitude = item['data-lng']
         country_code = "US"
         store_number = "<MISSING>"
         store_type = "<MISSING>"
-        hours_of_operation = item.find('div',{'class':'mpfy-mll-l-content'}).find('div',{'class':'location-hours'}).text
+        test_hours = item.find('div',{'class':'mpfy-mll-l-content'}).find('div',{'class':'location-hours'})
+        if test_hours.p is None:
+            hours_of_operation = "<MISSING>"
+        else:
+            hours_of_operation = test_hours.text.strip()
+   
 
         temp_data = [
 

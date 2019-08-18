@@ -31,32 +31,31 @@ def pull_info(content):
     
     for store_item in store_list:
 
-        street_address = store_item['data-address']
-        latitude = store_item['data-lat']
-        longitude = store_item['data-lng']
-
         test = store_item.find('a',{'class':'ext'})
-        location_name = store_item.find('a',{'class':'location-title'}).text
-        state = str(street_address).split(' ')[len(str(street_address).split(' ')) - 2]
-        zip = str(street_address).split(' ')[len(str(street_address).split(' ')) - 1]
-        store_type = "<MISSING>"
-        country_code = "UK"
         if test is None:
-            city = store_item.find('a',{'class':'location-title'}).text
+            address = store_item['data-address']
+            latitude = store_item['data-lat']
+            longitude = store_item['data-lng']
+
+            
+            location_name = store_item.find('a',{'class':'location-title'}).text
+            # if str(str(address).split(' ')[len(str(address).split(' ')) - 2]).strip() == 'MA':
+            state = str(str(address).split(' ')[len(str(address).split(' ')) - 2]).strip()
+            
+            
+            zip = str(str(address).split(' ')[len(str(address).split(' ')) - 1]).strip()
+            street_address = str(address).replace(state,'').replace(zip,'').replace(',','')
+            store_type = "<MISSING>"
+            country_code = "UK"
+            city = str(address.split(',')[1]).replace(zip,'').replace(state,'').strip()
             locator_domain = site_url + store_item.find('a',{'class':'visit-page'})['href']
             href_data = pull_content(locator_domain)
             phone = href_data.find('span',{'property':'telephone'}).a.text
             store_number = "<MISSING>"
-            hours_of_operation = href_data.find('div',{'property':'openingHours'}).text
-            
-
+            hours_of_operation = href_data.find('div',{'property':'openingHours'}).text.strip()
         else:
-            city = "<MISSING>"  
-            locator_domain = "<MISSING>" 
-            href_data = "<MISSING>"
-            phone = "<MISSING>"
-            store_number = "<MISSING>"
-            hours_of_operation = "<MISSING>"
+            break
+     
 
         temp_data = [
 

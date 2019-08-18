@@ -31,23 +31,57 @@ def pull_info(content):
 
     region_list = soup.find_all('dl')
     for region_item in region_list:
-        state = region_item.find('dt').text
+        
         region_store_list = region_item.find_all('dd')
         for store in region_store_list:
 
             locator_domain = site_url + store.find('a')['href']
-            location_name = "<MISSING>"
-            street_address = store.find('div').find('div',{'class':'shop-address'}).text
-            city = store.find('div').find('div',{'class':'shop-name'}).text
-            state = str(street_address).split(' ')[len(str(street_address).split(' ')) - 2]
-            zip = str(street_address).split(' ')[len(str(street_address).split(' ')) - 1]
+            location_name = store.find('div',{'class':'shop-name'}).text.replace('(Coming Soon)','')
+            address = store.find('div').find('div',{'class':'shop-address'}).text
+            city = store.find('div',{'class':'shop-name'}).text.replace('(Coming Soon)','').split('|')[0]
+
+            # test = str(str(address).split(' ')[len(str(address).split(' ')) - 1]).strip()
+            test = 'Canada' in address
+            if test:
+                country_code = "CA"
+                state_zip = address.split(',')[len(str(address).split(',')) - 1]
+                if len(str(address.replace(',','')).split(' ')[len(str(address).split(' ')) - 2]) == 3:
+                    zip = str(address.replace(',','')).split(' ')[len(str(address).split(' ')) - 3] + " " + str(address.replace(',','')).split(' ')[len(str(address).split(' ')) - 2]
+                    
+                else:
+                    zip =  str(address.replace(',','')).split(' ')[len(str(address).split(' ')) - 2]
+                test_for_state = str(str(address).split(',')[len(str(address).split(',')) - 1]).strip()
+                if test_for_state == 'Canada':
+                    state = str(str(address).split(',')[len(str(address).split(',')) - 2]).replace(zip, '').replace(',','') 
+                else:
+                    state = str(str(address).split(',')[len(str(address).split(',')) - 1]).replace(zip, '').replace('Canada','').replace(',','') 
+                
+                
+             
+            else:
+                state = str(address).split(' ')[len(str(address).split(' ')) - 2]
+
+                zip = str(address).split(' ')[len(str(address).split(' ')) - 1]
+                country_code = "US"
+
+            
+            street_address = address.replace(zip, '').replace(state, '').replace('Canada','').replace(',','')
+           
+
+            
+            
+            
             country_code = "US"
             store_number = "<MISSING>"
             
             href_data = pull_content(locator_domain)
-            iframe_src = href_data.find('iframe')['src']
-
-            phone = str(str(href_data.find('div',{'class':'shop-text'}).find('h3')).split('<br/>')[0]).split('</i>')[1]
+            
+            phone_test = len(str(href_data.find('div',{'class':'shop-text'}).find('h3').text.strip().split('\n')[0]))
+            if phone_test < 5:
+                phone = "<MISSING>"
+            else:
+                phone = str(str(href_data.find('div',{'class':'shop-text'}).find('h3').text.strip().split('\n')[0]).encode("utf-8")).replace('b','').replace("'","")
+     
             store_type = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"

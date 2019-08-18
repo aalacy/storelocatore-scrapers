@@ -47,14 +47,18 @@ def pull_info(content):
         detail_p = soup.find('div',{'id':'location_'+ref_id}).find('div',{'class':'location_address'}).find_all('p')
         for detail_item in detail_p:
             if detail_p.index(detail_item) == 0:
-
-                location_name = detail_item.span.text
-                street_address = str(str(detail_item).split('<br/>')[1]).replace('</p>','')                
+                if detail_item.span.text != '':
+                    location_name = detail_item.span.text
+                else :
+                    location_name = "<MISSING>"
+                
+                
+                street_address = str(str(detail_item).split('<br/>')[1]).split(',')[0].strip()
+                          
                 zip = str(street_address).split(' ')[len(str(street_address).split(' ')) - 1]
                 state = str(street_address).split(' ')[len(str(street_address).split(' ')) - 2]
-            # elif detail_p.index(detail_item) == 1:
-            #     phone = detail_item.text
-        hours_of_operation = soup.find('div',{'id':'location_'+ref_id}).find('div',{'class':'location_hours'}).text
+            
+        hours_of_operation = soup.find('div',{'id':'location_'+ref_id}).find('div',{'class':'location_hours'}).text.strip()
       
         temp_data = [
 

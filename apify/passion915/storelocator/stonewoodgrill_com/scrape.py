@@ -41,10 +41,11 @@ def pull_info(content):
                     locator_domain = store_list_item.a['href'] + '/locations/port-orange/index'
                     location_name = store_list_item.a.text
                     href_data = pull_content(locator_domain)
-                    street_address = href_data.find('div',{'class':'location-address'}).text
+                    address = href_data.find('div',{'class':'location-address'}).text
                     city = location_name
-                    zip = str(street_address).split(' ')[len(str(street_address).split(' ')) - 1]
-                    state = str(street_address).split(' ')[len(str(street_address).split(' ')) - 2]
+                    zip = str(address).split(' ')[len(str(address).split(' ')) - 1]
+                    state = str(address).split(' ')[len(str(address).split(' ')) - 2]
+                    street_address = str(address).replace(state,'').replace(zip,'').replace(',','').strip()
                     country_code = 'US'
                     store_number = '<MISSING>'
                     # phone = str(href_data.find('a',{'class':'zPhoneLink'})['href']).replace('tel:','')
@@ -63,10 +64,11 @@ def pull_info(content):
                    
                     location_name = store_list_item.a.text
                     href_data = pull_content(locator_domain)
-                    street_address = href_data.find('div',{'class':'location-info'}).find('div',{'class':'location-address'}).text.split('\n')[2] + " " + href_data.find('div',{'class':'location-info'}).find('div',{'class':'location-address'}).text.split('\n')[3]
-                    city = str(street_address).split(' ')[len(str(street_address).split(' ')) - 3].replace(',','')
-                    zip = str(street_address).split(' ')[len(str(street_address).split(' ')) - 1]
-                    state = str(street_address).split(' ')[len(str(street_address).split(' ')) - 2]
+                    address = href_data.find('div',{'class':'location-info'}).find('div',{'class':'location-address'}).text.split('\n')[2] + " " + href_data.find('div',{'class':'location-info'}).find('div',{'class':'location-address'}).text.split('\n')[3]
+                    city = str(address).split(' ')[len(str(address).split(' ')) - 3].replace(',','')
+                    zip = str(address).split(' ')[len(str(address).split(' ')) - 1]
+                    state = str(address).split(' ')[len(str(address).split(' ')) - 2]
+                    street_address = str(address).replace(state,'').replace(zip,'').replace(',','').strip()
                     country_code = 'US'
                     store_number = '<MISSING>'
                     phone = href_data.find('div',{'class':'location-info'}).find('a',{'class':'zPhoneLink'}).text
@@ -86,7 +88,7 @@ def pull_info(content):
                     
                     
                     hours_of_operation = href_data.find('div',{'class':'location-hours'}).find('div',{'class':'zEditorHTML'}).text.replace('pmMon','pm Mon').replace('pmFri','pm Fri')
-                   
+            
                 temp_data = [
 
                     locator_domain,
