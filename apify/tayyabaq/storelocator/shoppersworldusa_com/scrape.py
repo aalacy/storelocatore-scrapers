@@ -34,7 +34,7 @@ def fetch_data():
     stores = driver.find_elements_by_class_name("maincontent")
     loc = stores[0].text.split("\n")
     for i in range(0,len(loc)):
-        if (loc[i]!="" and loc[i]!=" ") and ('coming soon' not in loc[i]):
+        if loc[i]!="" and loc[i]!=" " and 'COMING SOON' not in loc[i]:
             try:
                 tagged = usaddress.tag(loc[i].replace(u'\u2022', ''))[0]
                 street_address.append(tagged['AddressNumber']+" "+tagged['StreetName']+" "+tagged['StreetNamePostType'])
