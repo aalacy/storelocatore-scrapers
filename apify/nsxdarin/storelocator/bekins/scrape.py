@@ -28,7 +28,7 @@ def fetch_data():
         city = ''
         state = ''
         zc = ''
-        phone = ''
+        phone = '<MISSING>'
         print('Pulling Location %s...' % loc)
         website = 'bekins.com'
         typ = 'Agent'
@@ -41,13 +41,13 @@ def fetch_data():
                 city = line2.split('<div class=agent-address>')[1].split('<br>')[1].strip().split(',')[0].replace('\t','')
                 state = line2.split('<div class=agent-address>')[1].split('<br>')[1].strip().split(',')[1].strip().split('&')[0].replace('\t','')
                 zc = line2.split('<div class=agent-address>')[1].split('&nbsp;&nbsp;')[1].split('<')[0].strip().replace('\t','')
-            if '<span class=agent-phone><' in line2:
-                phone = line2.split('<span class=agent-phone><')[1].split('>')[1].split('<')[0]
-            country = 'US'
-            store = '<MISSING>'
-            hours = '<MISSING>'
-            lat = '<MISSING>'
-            lng = '<MISSING>'
+            if 'Phone:' in line2:
+                phone = line2.split('Phone:')[1].split('href=tel:')[1].split('>')[0].replace('/','')
+        country = 'US'
+        store = '<MISSING>'
+        hours = '<MISSING>'
+        lat = '<MISSING>'
+        lng = '<MISSING>'
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
