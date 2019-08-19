@@ -35,16 +35,17 @@ def fetch_data():
     driver.get('https://www.shredit.com/en-us/service-locations')
     driver.refresh()
     WebDriverWait(driver, 60).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, "li[id*='branch']"))
+        EC.presence_of_element_located((By.CSS_SELECTOR, "ul.location-select ul > li > a"))
     )
     store_data = [
         (
-            li.find_element_by_css_selector('p.address').text,
-            li.find_element_by_css_selector('a').get_attribute('href')
+            a_tag.get_attribute('innerText'),
+            a_tag.get_attribute('data-node-id'),
+            a_tag.get_attribute('href')
         )
-        for li in driver.find_elements_by_css_selector("li[id*='branch']")
+        for a_tag in driver.find_elements_by_css_selector("ul.location-select ul > li > a")
     ]
-    for location_name, store_url in store_data:
+    for location_name, store_number, store_url in store_data:
         driver.get(store_url)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         script = json.loads(
@@ -67,7 +68,7 @@ def fetch_data():
             state,
             zipcode,
             country_code,
-            MISSING,
+            store_number,
             phone,
             MISSING,
             latitude,
