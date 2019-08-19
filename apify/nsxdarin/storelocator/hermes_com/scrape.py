@@ -67,9 +67,19 @@ def fetch_data():
                 state = zc.split(' ')[0]
                 zc = zc.split(' ')[1]
             if country == 'CA' and ' ' in state:
-                zc = state.split(' ',1)[1]
-                state = state.split(' ')[0]
-            if not state.strip(): state = '<MISSING>'
+                if 'British Columbia' in state:
+                    zc = state.split('Columbia ')[1]
+                    state = 'BC'
+                else:
+                    zc = state.split(' ',1)[1]
+                    state = state.split(' ')[0]
+            if city == 'Honolulu':
+                state = 'HI'
+            if city == 'Vancouver' and country == 'CA':
+                state = 'BC'
+            if ' O' in zc:
+                zc = zc.replace(' O',' 0')
+            state = state.replace('.','')
             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

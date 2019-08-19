@@ -2,7 +2,8 @@ import time
 import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import usaddress
+import json
+import requests
 
 
 options = Options()
@@ -27,20 +28,21 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data=[]
-    driver.get("https://www.breauxmart.com/my-store/store-locator")
-    time.sleep(10)
-    stores = driver.find_elements_by_class_name('fp-panel-item-wrapper')
-    for store in stores:
-        location_name = store.find_element_by_css_selector('div.fp-store-title >div > a').text
-        tagged_addr = usaddress.tag(store.find_element_by_css_selector('div.fp-store-address').text)[0]
-        street_address = tagged_addr['AddressNumber']+ " " + tagged_addr['StreetName'] + " " + tagged_addr['StreetNamePostType'].split('\n')[0]
-        city = tagged_addr['PlaceName']
-        state = tagged_addr['StateName']
-        zipcode = tagged_addr['ZipCode']
-        phone = store.find_element_by_css_selector('div.fp-store-phone > p').text
-        phone = phone.split('Fax')[0]
-        hours_of_op = store.find_element_by_css_selector('div.fp-panel-store-hours > p').text
-        store_number = store.get_attribute('data-store-number')
+    response = requests.get('https://api.freshop.com/1/stores?app_key=breaux_mart&has_address=true&limit=-1&token=f448f7cbfbefb4b7eb6f24bd81be0705')
+    time.sleep(5)
+    responseJson = json.loads(response.text)
+    stores = responseJson.get("items")
+    for i in range(len(stores)):
+        location_name = stores[i]['name']
+        street_address = stores[i]['address_1']
+        city = stores[i]['city']
+        state = stores[i]['state']
+        zipcode = stores[i]['postal_code']
+        phone = stores[i]['phone_md'].split('\n')[0]
+        hours_of_op = stores[i]['hours_md']
+        store_number = stores[i]['store_number']
+        latitude = stores[i]['latitude']
+        longitude = stores[i]['longitude']
         data.append([
              'https://www.breauxmart.com/',
               location_name,
@@ -52,8 +54,8 @@ def fetch_data():
               store_number,
               phone,
               '<MISSING>',
-              '<MISSING>',
-              '<MISSING>',
+              latitude,
+              longitude,
               hours_of_op
             ])
 

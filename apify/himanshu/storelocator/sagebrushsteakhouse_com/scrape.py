@@ -3,27 +3,27 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-​
-​
+
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-​
+
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
-​
-​
+
+
 def fetch_data():
-​
+
     base_url= "https://www.sagebrushsteakhouse.com/north-carolina"
     r = requests.get(base_url)
     soup1= BeautifulSoup(r.text,"lxml")
     
-​
+
     store_name=[]
     store_detail=[]
     return_main_object=[]
@@ -39,7 +39,7 @@ def fetch_data():
                 soup= BeautifulSoup(r.text,"lxml")
                 k = soup.find_all("div",{"id":"ctl01_pSpanDesc","class":"t-edit-helper"})
                 names =soup.find_all('h4',{"class":"align-left biz-address fp-el"})
-​
+
                 for name in names:
                     new=(name.text.replace("BOONE","SAGEBRUSH OF BOONE").replace("LENOIR","SAGEBRUSH OF LENOIR").replace("SHELBY","SAGEBRUSH OF SHELBY"))
                     if "SAGEBRUSH OF" in new:
@@ -48,7 +48,7 @@ def fetch_data():
                             store_name.append("SAGEBRUSH OF".join(new.split("SAGEBRUSH OF")))
                     else:
                         store_name.append(new)
-​
+
                 for i in k:
                     
                     p =i.find_all('p')
@@ -59,13 +59,13 @@ def fetch_data():
                         city = p[2].text.split(',')[0]
                         state = p[2].text.split(',')[1].split( )[0]
                         zipcode = p[2].text.split(',')[-1].split( )[-1]
-​
+
                         tem_var.append(street)
                         tem_var.append(city)
                         tem_var.append(state.strip())
                         tem_var.append(zipcode.strip())
                         store_detail.append(tem_var)
-​
+
                     for index,j in enumerate(p[:-4]):
                         time = ''
                         if index==4:
@@ -74,7 +74,7 @@ def fetch_data():
                             else:
                                 time = (j.text)
                             hours.append(time)
-​
+
     
     for i in range(len(store_name)):
         store = list()
@@ -89,13 +89,13 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(hours[i])
         return_main_object.append(store) 
-​
+
     return return_main_object
-​
-​
+
+
 def scrape():
     data = fetch_data()
     write_output(data)
-​
-​
+
+
 scrape()

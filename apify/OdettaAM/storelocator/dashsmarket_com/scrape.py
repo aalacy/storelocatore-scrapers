@@ -2,7 +2,6 @@ import time
 import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import re
 
 
 options = Options()
@@ -23,29 +22,22 @@ def write_output(data):
             writer.writerow(row)
 
 
-def parse_geo(url):
-    lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
-    lat = re.findall(r'\@(-?[\d\.]*)', url)[0]
-    return lat, lon
-
-
 def fetch_data():
     # Your scraper here
     data=[]
     driver.get("https://www.dashsmarket.com/locations/")
-    stores = driver.find_elements_by_css_selector('li.locator-store-item')
+    stores = driver.execute_script("return S.mapManager.locations")
     for store in stores:
-        driver.switch_to.default_content()
-        location_name = store.find_element_by_css_selector('h4.locator-store-name').text
-        street_address = store.find_element_by_css_selector('span.locator-address').text
-        state_city_zip = store.find_element_by_css_selector('span.locator-storeinformation').text.split('Phone')[0]
-        city = state_city_zip.split(',')[0]
-        state_zip = state_city_zip.split(',')[1]
-        state = state_zip.split(" ")[1]
-        zipcode = state_zip.split(" ")[2]
-        phone = store.find_element_by_css_selector('a.locator-phonenumber').text
-        store_number = store.get_attribute('data-store')
-        hours_of_op = store.find_element_by_css_selector('span.locator-storehours').text
+        location_name = store['name']
+        street_address = store['address1']
+        state = store['state']
+        city = store['city']
+        zipcode = store['zipCode']
+        phone = store['phone']
+        store_number= store['storeID']
+        hours_of_op = store['hourInfo']
+        lat = store['latitude']
+        lon = store['longitude']
         data.append([
              'https://www.dashsmarket.com/',
               location_name,
@@ -57,8 +49,8 @@ def fetch_data():
               store_number,
               phone,
               '<MISSING>',
-              '<INACCESSIBLE>',
-              '<INACCESSIBLE>',
+              lat,
+              lon,
               hours_of_op
             ])
 
