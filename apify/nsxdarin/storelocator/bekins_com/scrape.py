@@ -48,6 +48,8 @@ def fetch_data():
         hours = '<MISSING>'
         lat = '<MISSING>'
         lng = '<MISSING>'
+        if 'Sales office only' in add:
+            add = add.split('Sales office only')[0].strip(', ')
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
