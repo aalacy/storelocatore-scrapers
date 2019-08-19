@@ -7,9 +7,10 @@ from selenium.webdriver.common.proxy import Proxy,ProxyType
 import time
 import re #for regular expression
 options = webdriver.ChromeOptions()
+options.add_argument("--headless")
 prefs= {"profile.default_content_setting_values.geolocation":2}
 options.add_experimental_option("prefs",prefs)
-driver=webdriver.Chrome('C:\\Users\\Lenovo\\Desktop\\chrome-driver\\chromedriver',options=options)
+driver=webdriver.Chrome('chromedriver',options=options)
 
 url = "https://mammaspizza.com/locations/"
 driver.get(url)
