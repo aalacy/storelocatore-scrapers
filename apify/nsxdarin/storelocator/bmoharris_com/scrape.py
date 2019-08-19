@@ -23,11 +23,15 @@ def fetch_data():
 
     print('Branch List Downloaded...')
     branches = []
+    ids = []
     with gzip.open('branches.xml.gz', 'rb') as f:
         for line in f:
             if '/harris1' in line or '/harris2' in line:
                 burl = line.split('>')[1].split('<')[0]
-                branches.append(burl)
+                bid = burl.rsplit('/harris',1)[1]
+                if bid not in ids:
+                    ids.append(bid)
+                    branches.append(burl)
 
     os.remove("branches.xml.gz")
     print('Found %s Branches.' % str(len(branches)))
@@ -73,8 +77,10 @@ def fetch_data():
                 else:
                     hours = hours + '; ' + day + ': ' + ophr + '-' + clhr
             if '</html>' in line:
-                hours = hours.replace('closed-closed','closed')
-                yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                if store not in stores:
+                    stores.append(store)
+                    hours = hours.replace('closed-closed','closed')
+                    yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
