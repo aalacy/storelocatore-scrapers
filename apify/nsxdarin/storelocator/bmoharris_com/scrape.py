@@ -23,6 +23,7 @@ def fetch_data():
 
     print('Branch List Downloaded...')
     branches = []
+    stores = []
     ids = []
     with gzip.open('branches.xml.gz', 'rb') as f:
         for line in f:
