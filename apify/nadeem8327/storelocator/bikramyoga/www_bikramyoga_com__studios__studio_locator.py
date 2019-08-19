@@ -17,9 +17,10 @@ country_codes={
 opts=Options()
 opts.add_argument("ignore-certificate-errors")
 opts.add_argument("--no-sandbox")
+opts.add_argument("--headless")
 opts.add_argument("--disable-dev-shm-usage")
 capabilities = webdriver.DesiredCapabilities.CHROME
-driver=webdriver.Chrome("/home/nadeem/Downloads/chromedriver",options=opts,desired_capabilities=capabilities)
+driver=webdriver.Chrome("chromedriver",options=opts,desired_capabilities=capabilities)
 url= "https://www.bikramyoga.com/studios/studio-locator/"
 locator_domain=url
 driver.get(url)
