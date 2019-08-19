@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup as bs
 import requests as r
 import os
 import re
-
+import json
 # Site URL
 site_url = 'http://jinya-ramenbar.com'
 
@@ -25,49 +25,45 @@ def pull_content(url):
 
     return soup
 
+def pull_content_json(url):
+
+    results = r.get(url)
+
+    return results.json()
+
+
 def pull_info(content):
  
     store_data = []
 
-    region_list = soup.find('div',{'id':'content'}).find('div',{'class':'small-12 columns'}).div.find_all('div',{'class':'row'})
-    
-    for region_item in region_list:
-        test_region = region_item.find('div',{'class':'small-12 column'})
-        if test_region is not None:
-            
+    state_list = soup.find('select',{'id':'select-state'}).find_all('option')
 
-            href_datas = region_item.find_all('a')
-            for href_datas_list in href_datas:
-                href_data = href_datas_list['href']
-                city = href_datas_list.text
-                
-                href_content = pull_content(href_data)
-                locator_domain = href_data
-                location_name = "<MISSING>"
-                address = href_content.find('address')
-                street_address = str(str(address).split('<br/>')[0]).replace('<address>','').strip()
-                
-                state = test_region.text 
-               
-                zip = str(address.text).split(' ')[len(str(address.text).split(' ')) - 1]
-                country_code = "US"
-                store_number = "<MISSING>"
-                if href_content.find('div',{'class','store-contact'}).a.text != "":
-                    phone = str(href_content.find('div',{'class','store-contact'}).a.text).strip()
-                else:
+    for state_item in state_list:
+        state = state_item['value']
+        if state != '0':
+            href_url = location_url + 'results/?state=' + state
+            content_store = pull_content_json(href_url)
+            for item_content in content_store:
+                locator_domain = href_url
+                location = item_content['location']
+                location_name = item_content['post_name']
+                store_number = item_content['info']['store_number']
+                if item_content['info']['phone'] == '':
                     phone = "<MISSING>"
-                
-             
+                else:
+                    phone = item_content['info']['phone']
                 store_type = "<MISSING>"
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-                ul_for_hours_test = href_content.find('div',{'class':'store-hours'}).find('p')
-                if ul_for_hours_test is not None:
-                    ul_for_hours = ul_for_hours_test.text
-                
-
-        
-    
+                zip = location['zip']
+                city = location['city']
+                state = location['state']
+                street_address = location['address']
+                country_code = 'US'
+                longitude = str(location['longitude']).split(',')[0]
+                latitude = location['latitude']
+                if item_content['info']['hours'] == '':
+                    ul_for_hours = "<MISSING>"
+                else:
+                    ul_for_hours = str(item_content['info']['hours']).replace('<br />','')
           
                 temp_data = [
 
