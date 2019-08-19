@@ -1,0 +1,6 @@
+"locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
+"http://kentsgrocery.com/","Kent's Brigham City","260 North Main","Brigham City","UT","84302","US","<MISSING>","435-734-9565","<MISSING>","41.51641060000001","-112.0148078","Mon-Sat: 6:00 AM - 11:00 PM Sunday: 8:00 AM - 10:00 PM"
+"http://kentsgrocery.com/","Kent's Clearfield","580 S State St","Clearfield","UT","84015","US","<MISSING>","801-773-8700","<MISSING>","41.10456610000002","-112.01841019999996","Mon-Sat: 6:00 AM - 11:00 PM Sunday: 7:00 AM - 10:00 PM"
+"http://kentsgrocery.com/","Kent's Plain City","3673 West 2600","North Plain City","UT","84404","US","<MISSING>","801-827-0690","<MISSING>","41.30468257927187","-112.10356382148146","Mon-Sat: 6:00 AM - 11:00 PM Sunday: 7:00 AM - 10:00 PM"
+"http://kentsgrocery.com/","Kent's Roy","3535 W 5600","So Roy","UT","84067","US","<MISSING>","801-985-3940","<MISSING>","41.16158599999999","-112.0653193","Mon-Sat: 6:00 AM - 11:00 PM Sunday: 7:00 AM - 10:00 PM"
+"http://kentsgrocery.com/","Kent's Tremonton","300 East Main","Tremonton","UT","84337","US","<MISSING>","435-257-7014","<MISSING>","41.71115300000001","-112.16170799999992","Mon-Sat: 6:00 AM - 11:00 PM Sunday: 7:00 AM - 10:00 PM"
