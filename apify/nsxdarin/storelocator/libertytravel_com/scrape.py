@@ -55,18 +55,18 @@ def fetch_data():
         print('Pulling Location %s...' % loc)
         rs = session.get(loc, headers=headers)
         website = 'libertytravel.com'
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        zc = ''
-        phone = ''
-        hours = ''
+        name = '<MISSING>'
+        add = '<MISSING>'
+        city = '<MISSING>'
+        state = '<MISSING>'
+        zc = '<MISSING>'
+        phone = '<MISSING>'
+        hours = '<MISSING>'
         country = 'US'
-        typ = ''
-        store = ''
-        lat = ''
-        lng = ''
+        typ = '<MISSING>'
+        store = '<MISSING>'
+        lat = '<MISSING>'
+        lng = '<MISSING>'
         for line2 in rs.iter_lines():
             if ',"id":' in line2:
                 typ = line2.split('"name":"')[1].split('"')[0]

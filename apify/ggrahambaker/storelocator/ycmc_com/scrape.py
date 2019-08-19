@@ -9,6 +9,7 @@ def get_driver():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
     return webdriver.Chrome('chromedriver', options=options)
 
 
@@ -40,23 +41,32 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(locator_domain + ext)
+    driver.implicitly_wait(30)
 
     pop_up = driver.find_element_by_xpath("//a[@title='Close']")
     driver.execute_script("arguments[0].click();", pop_up)
+
 
     divs = driver.find_elements_by_css_selector('div.ycmc_store_detail')
 
     all_store_data = []
     for div in divs:
-        content = div.text.split('\n')
-        if len(content) == 1:
-            continue
 
-        location_name = content[0]
-        street_address = content[1]
-        city, state, zip_code = addy_extractor(content[2])
-        phone_number = content[3].replace('Phone:', '').strip()
-        hours = content[5] + ' ' + content[6]
+        ps = div.find_elements_by_css_selector('p')
+
+
+        location_name = ps[0].text
+
+        addy = ps[1].text.split('\n')
+
+
+        street_address = addy[0]
+        city, state, zip_code = addy_extractor(addy[1])
+        phone_number = addy[2].replace('Phone:', '').strip()
+
+
+        hour_split = ps[2].text.split('\n')
+        hours = hour_split[1] + ' ' + hour_split[2]
 
         country_code = 'US'
         location_type = '<MISSING>'

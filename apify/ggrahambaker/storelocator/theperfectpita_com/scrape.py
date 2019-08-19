@@ -76,8 +76,8 @@ def fetch_data():
             start_idx = href.find('ll=')
             end_idx = href.find('&sspn')
             if start_idx == -1:
-                lat = '<MISSING>'
-                longit = '<MISSING>'
+                lat = '<INACCESSIBLE>'
+                longit = '<INACCESSIBLE>'
             else:
                 coords = href[start_idx + 3:end_idx].split(',')
 

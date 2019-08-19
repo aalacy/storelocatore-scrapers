@@ -56,7 +56,6 @@ def fetch_data():
         longit = '<INACCESSIBLE>'
 
         country_code = 'CA'
-        location_name = '<MISSING>'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         hours = '<MISSING>'
