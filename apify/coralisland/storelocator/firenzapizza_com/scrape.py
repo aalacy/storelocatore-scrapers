@@ -40,23 +40,28 @@ def fetch_data():
     url = "https://www.firenzapizza.com/location-store-locator/"
     session = requests.Session()
     request = session.get(url)
-    response = etree.HTML(request.text)
-    store_list = json.loads(validate(response.xpath('//script[@type="application/ld+json"]//text()')))['subOrganization']    
+    source = request.text
+    response = etree.HTML(source)    
+    data = validate(source.split('locations:')[1].split('apiKey:')[0])[:-1]
+    store_list = json.loads(data)
     for store in store_list[:-1]:
         output = []        
         output.append(base_url) # url
         output.append(store['name']) #location name
-        output.append(store['address']['streetAddress']) #address
-        output.append(store['address']['addressLocality']) #city
-        output.append(store['address']['addressRegion']) #state
-        output.append(store['address']['postalCode']) #zipcode
+        output.append(store['street']) #address
+        output.append(store['city']) #city
+        output.append(store['state']) #state
+        output.append(store['postal_code']) #zipcode
         output.append('US') #country code
-        output.append('<MISSING>') #store_number
-        output.append(get_value(store['telephone'])) #phone
-        output.append(store['@type']) #location type
-        output.append('<MISSING>') #latitude
-        output.append('<MISSING>') #longitude
-        output.append(get_value(store['description'])) #opening hours        
+        output.append(str(store['id'])) #store_number
+        output.append(get_value(store['phone_number'])) #phone
+        output.append('Firenza Pizza') #location type
+        output.append(store['lat']) #latitude
+        output.append(store['lng']) #longitude
+        store_hours = '<MISSING>'
+        if store['hours'] != '':
+            store_hours = ' '.join(eliminate_space(etree.HTML(store['hours']).xpath('.//text()')))
+        output.append(store_hours) #opening hours
         output_list.append(output)
     return output_list
 

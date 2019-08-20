@@ -65,7 +65,7 @@ def fetch_data():
             h_temp = ''
             phone = ''
             for idx, hour in enumerate(store[3:]):
-                if '(' in hour.lower() and 'fax' not in hour.lower():
+                if 'tel' in hour.lower():
                     phone += get_value(hour.lower().replace('tel', '')) + ' '
                 if 'operation' in hour.lower():
                     h_temp = ', '.join(store[idx+4:])
