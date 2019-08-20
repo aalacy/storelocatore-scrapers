@@ -1,7 +1,19 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import time
 import re
+
+
+def get_driver():
+    options = Options() 
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    #return webdriver.Chrome(executable_path='driver/chromedriver', chrome_options=options)
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -30,10 +42,11 @@ def fetch_data():
 
 	items = base.findAll('div', attrs={'class': 'et_pb_text_inner'})
 	items = items[6:-1]
-	
+	driver = get_driver()
 	data = []
 	for item in items:
 		locator_domain = "pincho.com"
+
 		try:
 			location_name = item.find('strong').text.strip()
 		except:
@@ -47,7 +60,7 @@ def fetch_data():
 			got_street = False
 
 		if got_street:
-			try:				
+			try:
 				raw_data = raw_data.findAll('span')[1].text
 			except:
 				raw_data = item.findAll('span')[1].text
@@ -68,15 +81,24 @@ def fetch_data():
 			phone = re.findall("[[\d]{3}-[\d]{3}-[\d]{4}", item.text)[0]
 		except:
 			phone = "<MISSING>"
-		if "NOW OPEN" in item.text:
-			location_type = "NOW OPEN"
-		else:
-			location_type = "<MISSING>"
+		location_type = "<MISSING>"
 		hours_of_operation = "<MISSING>"
-		latitude = "<MISSING>"
-		longitude = "<MISSING>"
-		data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
+		try:
+			link = item.find('a')['href']
+			driver.get(link)
+			time.sleep(2)
+			raw_gps = driver.current_url
+			start_point = raw_gps.find("@") + 1
+			latitude = raw_gps[start_point:raw_gps.find(',',start_point)]
+			long_start = raw_gps.find(',',start_point)+1
+			longitude = raw_gps[long_start:raw_gps.find(',',long_start)]
+		except:
+			latitude = "<MISSING>"
+			longitude = "<MISSING>"
+
+		data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+	driver.close()
 	return data
 
 def scrape():

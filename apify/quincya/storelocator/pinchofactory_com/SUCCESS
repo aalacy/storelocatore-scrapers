@@ -1,4 +1,2 @@
-VALIDATOR_VERSION: 0.0.48
-
-COMMAND: validate.py data.csv
+VALIDATOR_VERSION: 0.0.52COMMAND: validate.py data.csv --ignore DuplicationValidator:validateLatLngsWithMultipleAddresses
 PYTHON_VERSION: sys.version_info(major=3, minor=5, micro=2, releaselevel='final', serial=0)
