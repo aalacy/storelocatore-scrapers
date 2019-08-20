@@ -66,8 +66,8 @@ def fetch_data():
         content = loc.text.split('\n')
         location_name = content[0]
         street_address = content[1]
-        city, state, zip_code = addy_ext_can(content[2])
-        phone_number = content[3]
+        city, state, zip_code = addy_ext_can(content[3])
+        phone_number = content[4]
 
         country_code = 'CA'
         store_number = '<MISSING>'
