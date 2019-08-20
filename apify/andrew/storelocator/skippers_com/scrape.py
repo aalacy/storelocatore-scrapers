@@ -43,11 +43,13 @@ def extract_inner_text(container, selector):
 def parse_google_maps_url(url):
     return re.findall(r'@(-?\d*.{1}\d*,-?\d*.{1}\d*)', url)[0].split(',')
 
-def parse_address(address, state):
+def parse_address(address, state, x=''):
     city = ""
     _address = address
+    # STEP 1: Replace state in address text
     state_abbrev = US_STATE_ABBREV[state]
     address = address.replace(state_abbrev, '').replace(state, '')
+    # STEP 2: Replace zipcode in address text
     try:
         zipcode = re.findall(r' \d{5,}', address)[0]
     except:
@@ -56,10 +58,12 @@ def parse_address(address, state):
         zipcode = INACCESSIBLE
     address = re.sub(r'(Hours .*)', '', address)
     address = address.replace(zipcode, '')
+    # STEP 2.5: Clean address text
     address = ' '.join(address.split())
     address = address.rstrip('.').rstrip(',').strip()
     if address[-1] == ',':
         address = address[:-1]
+    # STEP 3: Replace city in addres text
     if len(address.split(',')) == 2:
         street_address, city = address.split(',')
     else:
@@ -70,7 +74,11 @@ def parse_address(address, state):
         city = " ".join(_city)
     if not len(city):
         city = address.split()[-1]
-    street_address = address.replace(city, '')
+    # If the city name is also in the street address name
+    regex = '{}$'.format(city)
+    street_address = re.sub(regex, '', address)
+    # This is a purely *cleaning* functionality.
+    # rstrip(), strip() could not be used because there were varying numbers of trailing columns/whitespaces
     try:
         street_address = street_address[:street_address.index(',')]
     except ValueError:
@@ -90,43 +98,45 @@ def fetch_data():
     states_by_location_type = [
         (
             remove_non_ascii_characters(location_type.find_element_by_css_selector('h3.location-title').text),
-            location_type.find_element_by_css_selector('div.state-box')
+            location_type.find_elements_by_css_selector('div.state-box')
         )
         for location_type in driver.find_elements_by_css_selector('article')
     ]
-    for location_type, state_container in states_by_location_type:
-        state = state_container.find_element_by_css_selector('h3').text
-        stores = state_container.find_elements_by_css_selector('div[class*="location-box"]')
-        for store in stores:
-            location_name = extract_inner_text(store, 'h3')
-            address = extract_inner_text(store, 'div.location-addy')
-            street_address, city, zipcode = parse_address(address, state)
-            google_map_url = store.find_element_by_css_selector('div.location-map-link a').get_attribute('href')
-            try:
-                lat, lon = parse_google_maps_url(google_map_url)
-            except:
-                lat, lon = [MISSING]*2
-            phone = extract_inner_text(store, 'div.location-phone')
-            if not sum(char.isdigit() for char in phone) == 10:
-                if phone == 'NA':
-                    phone = MISSING
-                else:
-                    phone = INACCESSIBLE
-            data.append([
-                BASE_URL,
-                location_name,
-                street_address,
-                city,
-                state,
-                zipcode,
-                'US',
-                MISSING,
-                phone,
-                location_type,
-                lat,
-                lon,
-                MISSING
-            ])
+    for location_type, state_containers in states_by_location_type:
+        for state_container in state_containers:
+            state = state_container.find_element_by_css_selector('h3').text
+            if not len(state): continue
+            stores = state_container.find_elements_by_css_selector('div[class*="location-box"]')
+            for store in stores:
+                location_name = extract_inner_text(store, 'h3')
+                address = extract_inner_text(store, 'div.location-addy')
+                street_address, city, zipcode = parse_address(address, state, location_name)
+                google_map_url = store.find_element_by_css_selector('div.location-map-link a').get_attribute('href')
+                try:
+                    lat, lon = parse_google_maps_url(google_map_url)
+                except:
+                    lat, lon = [MISSING]*2
+                phone = extract_inner_text(store, 'div.location-phone')
+                if not sum(char.isdigit() for char in phone) == 10:
+                    if phone == 'NA':
+                        phone = MISSING
+                    else:
+                        phone = INACCESSIBLE
+                data.append([
+                    BASE_URL,
+                    location_name,
+                    street_address,
+                    city,
+                    state,
+                    zipcode,
+                    'US',
+                    MISSING,
+                    phone,
+                    location_type,
+                    lat,
+                    lon,
+                    MISSING
+                ])
     driver.quit()
     return data
 
