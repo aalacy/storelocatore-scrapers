@@ -19,18 +19,14 @@ def write_output(data):
 
 def fetch_data():
 
-    for  i  in range(0,10):
-        base_url= "https://www.shopfamilyfare.com/locations?page="+str(i)
+    store_name=[]
+    store_detail=[]
+    return_main_object=[]
+    for  q  in range(0,10):
+        base_url= "https://www.shopfamilyfare.com/locations?page="+str(q+1)
         r = requests.get(base_url)
         soup= BeautifulSoup(r.text,"lxml")
-    
-        store_name=[]
-        store_detail=[]
-        return_main_object=[]
-        
-        
         k= soup.find_all("div",{"class":"col-xs-12 col-lg-7"})
-
         for i in k:
             st = i.find_all("div",{"class":"brief"})
             names = i.find_all("h3")
@@ -46,8 +42,8 @@ def fetch_data():
                 city = list(address.stripped_strings)[1].split(',')[0]
                 state = " ".join(list(address.stripped_strings)[1].split(',')[1].split( )[:-1])
                 zipcode = list(address.stripped_strings)[1].split(',')[1].split( )[-1]
+            
                 
-
                 tem_var.append(address1)
                 tem_var.append(city)
                 tem_var.append(state)
@@ -61,15 +57,14 @@ def fetch_data():
                 tem_var.append(hours)
                 store_detail.append(tem_var)
 
-   
-    for i in range(len(store_name)):
+    
+    for index,i in enumerate(range(len(store_name))):
         store = list()
         store.append("https://www.shopfamilyfare.com")
         store.append(store_name[i])
         store.extend(store_detail[i])
-     
-        return_main_object.append(store) 
-
+        return_main_object.append(store)
+    
     return return_main_object
 
 
