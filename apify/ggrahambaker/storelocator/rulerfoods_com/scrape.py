@@ -2,7 +2,6 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
 import usaddress
 import time
 
@@ -41,13 +40,21 @@ def fetch_data():
     element = driver.find_element_by_css_selector('span.popup-close')
     driver.execute_script("arguments[0].click();", element)
 
+
     all_store_data = []
     # ten pages
-    for i in range(0, 10):
+
+
+    inputElement = driver.find_element_by_id("addressInput")
+    inputElement.send_keys('kentuky')
+    inputElement.submit()
+    time.sleep(2)
+    for i in range(1, 11):
         main = driver.find_element_by_css_selector('div#map_sidebar')
-        lis = main.find_elements_by_css_selector('div.results_entry.location_primary')
+
+        lis = main.find_elements_by_css_selector('div.results_wrapper.cf')
         for li in lis:
-            content = li.text.split('\n')
+            content = li.find_element_by_css_selector('div.results_entry.location_primary').text.split('\n')
             if len(content) > 1:
                 hours = '8AM - 9PM'
                 phone_number = content[1].replace('HOURS: 8AM - 9PM', '').strip()
@@ -69,6 +76,8 @@ def fetch_data():
                 city = parsed_add['PlaceName']
                 state = parsed_add['StateName']
                 zip_code = parsed_add['ZipCode']
+                if '1129 N. BALDWIN AVE.' in street_address:
+                    zip_code = '46952'
 
                 country_code = 'US'
                 location_type = '<MISSING>'
@@ -81,11 +90,16 @@ def fetch_data():
                               store_number, phone_number, location_type, lat, longit, hours]
                 all_store_data.append(store_data)
 
+
         time.sleep(2)
+
         element = driver.find_element_by_css_selector('a.next_link')
+
         driver.execute_script("arguments[0].click();", element)
 
     driver.quit()
+
+
     return all_store_data
 
 def scrape():

@@ -42,7 +42,7 @@ def fetch_data():
     country_code = 'US'
     location_type = '<MISSING>'
     store_number = '<MISSING>'
-    hours = '<MISSING>'
+    hours = 'open 7 days a week from 11 AM.'
     state = '<MISSING>'
     city = '<MISSING>'
     zip_code = '<MISSING>'
