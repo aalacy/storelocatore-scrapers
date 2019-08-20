@@ -52,7 +52,10 @@ def fetch_data():
 			phone = "<MISSING>"
 		location_type = "<MISSING>"
 
-		raw_gps = item.findAll('a', attrs={'class': 'underlined_hover'})[2]['href']
+		if location_name == "Studio City":
+			raw_gps = "https://www.google.com/maps/place/12059+Ventura+Pl,+Studio+City,+CA+91604,+USA/@34.1448112,-118.3967849,17z/data=!3m1!4b1!4m5!3m4!1s0x80c2bdfd0da03909:0xac5b87916c389233!8m2!3d34.1448112!4d-118.3945962"
+		else:
+			raw_gps = item.findAll('a', attrs={'class': 'underlined_hover'})[2]['href']
 
 		start_point = raw_gps.find("@") + 1
 		latitude = raw_gps[start_point:raw_gps.find(',',start_point)]

@@ -2,6 +2,7 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
 import usaddress
 import time
 
@@ -13,6 +14,8 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
+    options.add_argument("--use--fake-ui-for-media-stream")
+
     return webdriver.Chrome('chromedriver', options=options)
 
 
@@ -31,8 +34,9 @@ def fetch_data():
     ext = 'locations/'
     driver = get_driver()
     driver.get(locator_domain + ext)
-    time.sleep(15)
-    driver.implicitly_wait(30)
+
+    obj = driver.switch_to.alert
+    obj.accept()
 
     element = driver.find_element_by_css_selector('span.popup-close')
     driver.execute_script("arguments[0].click();", element)

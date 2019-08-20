@@ -31,17 +31,13 @@ def fetch_data():
     if exists:
         for values in soup.select('.col-xs-12.col-sm-6.col-sd-4.col-md-3.col-xl-4'):
             if values.select('.listing__heading'):
-                location_name = values.select('.listing__heading')[0].get_text()
+                city = values.select('.listing__heading')[0].get_text()
             else:
-                location_name = '<MISSING>'
-            if values.select('.listing__detail'):
-                street_city = values.select('.listing__detail')[0].get_text()
-                street_address = (' ').join(street_city.split(';')[:-1])
-                city = street_city.split(';')[-1]
-            else:
-                street_address = '<MISSING>'
                 city = '<MISSING>'
-
+            if values.select('.listing__detail'):
+                location_name = values.select('.listing__detail')[0].get_text()
+            else:
+                pass
             if values.find('a'):
                 phone = values.find('a').get_text()
             else:
@@ -51,10 +47,11 @@ def fetch_data():
             stAndPins = StAndPin.replace('\n', ' ').split(' ')
             if stAndPins[-1].isdigit():
                 zip = stAndPins[-1]
-                state = stAndPins[-2]
+                state = "Iowa"
             else:
-                zip = stAndPins[0]
-                state = (' ').join(stAndPins[1:])
+                zip = '<MISSING>'
+                state = "Iowa"
+            street_address = stAndPins[0] + "," + (' ').join(stAndPins[1:])
             hours_val = values.select('.listing__hours')
             if hours_val:
                 hours_of_operation = hours_val[0].select('.listing__detail')[0].get_text().replace('\n', ', ')[2:]

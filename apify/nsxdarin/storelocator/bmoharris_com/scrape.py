@@ -42,7 +42,7 @@ def fetch_data():
         typ = 'Branch'
         hours = '<MISSING>'
         print('Pulling Branch %s...' % branch)
-        r = session.get(branch, headers=headers)
+        r = session.get(branch, verify=False, headers=headers)
         lines = r.iter_lines()
         for line in lines:
             if 'property="og:title" content="' in line:

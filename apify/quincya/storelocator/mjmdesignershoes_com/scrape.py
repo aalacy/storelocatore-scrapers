@@ -51,8 +51,18 @@ def fetch_data():
 		except:
 			phone = "<MISSING>"
 		location_type = "<MISSING>"
-		latitude = "<MISSING>"
-		longitude = "<MISSING>"
+		map_link =item.find('a')['href']
+
+		req = requests.get(map_link, headers=headers)
+
+		try:
+			map_base = BeautifulSoup(req.text,"lxml")
+		except (BaseException):
+			print ('[!] Error Occured. ')
+			print ('[?] Check whether system is Online.')
+
+		latitude = map_base.find('meta', attrs={'property': 'place:location:latitude'})['content']
+		longitude = map_base.find('meta', attrs={'property': 'place:location:longitude'})['content']
 		hours_of_operation = hours_of_operation = base.find('div', attrs={'class': 'bodycopy'}).text
 		hours_of_operation = hours_of_operation[hours_of_operation.find('open')+5:]
 

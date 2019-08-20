@@ -45,28 +45,29 @@ def fetch_data():
     store_list = json.loads(request.text)['value']
     for store in store_list:        
         output = []
-        output.append(base_url) # url
-        output.append(validate(store['LocationName'])) #location name
-        output.append(get_value(store['LocationAddress']['Street'])) #address
-        output.append(get_value(store['LocationAddress']['City'])) #city
-        output.append(get_value(store['LocationAddress']['StateCode'])) #state
-        output.append(get_value(store['LocationAddress']['Zip'])) #zipcode
-        output.append(get_value(store['LocationAddress']['CountryCode'])) #country code
-        output.append(get_value(store['LocationId'])) #store_number
-        output.append(', '.join(eliminate_space([store['LocationPhoneAlt'], store['LocationPhoneParts'], store['LocationPhonePrimary'], store['LocationPhoneService']]))) #phone
-        output.append("Titan Machinery") #location type
-        output.append(get_value(str(store['LocationAddress']['Latitude']))) #latitude
-        output.append(get_value(str(store['LocationAddress']['Longitude']))) #longitude
-        days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        store_hours = []
-        for day in days_of_week:
-            week = 'LocationSummerHours' + day
-            val = store[week]
-            if val == '':
-                val = 'Closed'
-            store_hours.append(day + ' ' + val)
-        output.append(', '.join(store_hours)) #opening hours
-        output_list.append(output)
+        if get_value(store['LocationAddress']['CountryCode']) == 'US':
+            output.append(base_url) # url
+            output.append(validate(store['LocationName'])) #location name
+            output.append(get_value(store['LocationAddress']['Street'])) #address
+            output.append(get_value(store['LocationAddress']['City'])) #city
+            output.append(get_value(store['LocationAddress']['StateCode'])) #state
+            output.append(get_value(store['LocationAddress']['Zip'])) #zipcode
+            output.append(get_value(store['LocationAddress']['CountryCode'])) #country code
+            output.append(get_value(store['LocationId'])) #store_number
+            output.append(get_value(store['LocationPhonePrimary'])) #phone
+            output.append("Titan Machinery") #location type
+            output.append(get_value(str(store['LocationAddress']['Latitude']))) #latitude
+            output.append(get_value(str(store['LocationAddress']['Longitude']))) #longitude
+            days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+            store_hours = []
+            for day in days_of_week:
+                week = 'LocationSummerHours' + day
+                val = store[week]
+                if val == '':
+                    val = 'Closed'
+                store_hours.append(day + ' ' + val)
+            output.append(', '.join(store_hours)) #opening hours
+            output_list.append(output)
     return output_list
 
 def scrape():

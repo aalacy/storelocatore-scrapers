@@ -55,9 +55,9 @@ def fetch_data():
         output.append('US') #country code
         output.append("<MISSING>") #store_number
         output.append(detail[3]) #phone
-        output.append(store['addressTitle']) #location type
+        output.append(store['addressTitle']) #location type        
         output.append(store['mapLat']) #latitude
-        output.append(store['mapLat']) #longitude
+        output.append(store['mapLng']) #longitude
         output.append(store_hours) #opening hours        
         output_list.append(output)
     return output_list

@@ -1,7 +1,18 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import time
 import re
+
+def get_driver():
+    options = Options() 
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    #return webdriver.Chrome(executable_path='driver/chromedriver', chrome_options=options)
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
 	with open('data.csv', mode='w') as output_file:
@@ -30,12 +41,13 @@ def fetch_data():
 
 	items = base.findAll('div', attrs={'class': 'accordion_title'})
 
+	driver = get_driver()
 	data = []
 	for item in items:
 		if "Opening" not in item.text:
 			locator_domain = "baronsmarket.com"
 			location_name = item.find('h2').text.strip()
-			
+			print (location_name)
 			raw_data = str(item.find('a').text).replace("  ",";")
 			street_address = raw_data[:raw_data.rfind(';')].strip()
 			city = raw_data[raw_data.rfind(';')+1:raw_data.find(',')].strip()
@@ -48,13 +60,24 @@ def fetch_data():
 			except:
 				phone = "<MISSING>"
 			location_type = "<MISSING>"
-			latitude = "<MISSING>"
-			longitude = "<MISSING>"
+
+			try:
+				map_link =item.find('a')['href']
+				driver.get(map_link)
+				time.sleep(4)
+				raw_gps = driver.current_url
+				start_point = raw_gps.find("@") + 1
+				latitude = raw_gps[start_point:raw_gps.find(',',start_point)]
+				long_start = raw_gps.find(',',start_point)+1
+				longitude = raw_gps[long_start:raw_gps.find(',',long_start)]
+			except:
+				latitude = "<MISSING>"
+				longitude = "<MISSING>"
 			hours_of_operation = str(item.findAll('div', attrs={'class': 'accordion_col'})[1]).replace("</div>", "").split('<br/>')
 			hours_of_operation = hours_of_operation[-1].strip()
 
 			data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
+	driver.close()
 	return data
 
 def scrape():

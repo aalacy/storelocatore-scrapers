@@ -38,9 +38,9 @@ def fetch_data():
         if len(zip_code) < 5:
             zip_code = '<MISSING>'
         elif len(zip_code) == 6:
-            print(zip_code)
+            #print(zip_code)
             zip_code = zip_code[0:3] + ' ' + zip_code[3:]
-            print(zip_code)
+            #print(zip_code)
 
         if len(zip_code.split(' ')) == 2:
             country_code = 'CA'
@@ -55,6 +55,8 @@ def fetch_data():
 
         store_number = store_info['no']
         phone_number = store_info['p']
+        if phone_number == '':
+            phone_number = '<MISSING>'
         location_type = store_info['l']
         location_name = store_info['n']
         lat = data['ln']

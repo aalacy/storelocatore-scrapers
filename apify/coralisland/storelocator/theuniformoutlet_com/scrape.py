@@ -91,8 +91,8 @@ def fetch_data():
             if 'hours:' in hour.lower() or 'shop with us' in hour.lower():
                 start_point = idx + 1
             if 'pm' in hour.lower() and ':' in hour.lower():
-                end_point = idx        
-        output.append(get_value(', '.join(store_hours[start_point:end_point]))) #opening hours
+                end_point = idx + 1
+        output.append(get_value(', '.join(store_hours[start_point:end_point]))) #opening hours        
         output_list.append(output)
     return output_list
 
