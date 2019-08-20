@@ -47,7 +47,6 @@ def fetch_data():
 			if "Now Open" not in street_address:			
 				raw_line = raw_data[1].strip()
 			else:
-				location_type = "Now Open"
 				street_address = raw_data[1].strip()
 				raw_line = raw_data[2].strip()
 			city = raw_line[:raw_line.rfind(',')].strip()
