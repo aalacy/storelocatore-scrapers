@@ -21,7 +21,7 @@ ca_provinces = ['alberta', 'british columbia', 'manitoba', 'new brunswick', 'new
 ca_provinces_codes = {'AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT'}
 
 def get_country_by_code(code=''):
-    if code in us_states_codes:
+    if code in us_states_codes or code in us_states:
         return "US"
     elif code in ca_provinces_codes:
         return "CA"
