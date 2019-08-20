@@ -115,6 +115,10 @@ def fetch_data():
                 city, state, zip_code, country_code = addy_ext('Bellevue, WA 98004')
                 phone_number = '(425) 214-1182'
                 hours = content[4]
+            elif '79 E Madison St' in street_address:
+                city, state, zip_code, country_code = addy_ext(content[2].strip())
+                phone_number = content[3]
+                hours = content[4]
             else:
                 city, state, zip_code, country_code = addy_ext(content[2].strip())
                 phone_number = content[3].replace('TEL:', '').strip()

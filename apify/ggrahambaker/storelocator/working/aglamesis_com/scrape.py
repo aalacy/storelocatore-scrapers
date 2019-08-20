@@ -2,7 +2,7 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.action_chains import ActionChains
+
 
 def get_driver():
     options = Options()
@@ -22,7 +22,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -34,61 +33,42 @@ def addy_ext(addy):
 
 
 def fetch_data():
-    locator_domain = 'https://www.daliaspizza.com/'
+    locator_domain = 'https://www.aglamesis.com/'
+    ext = 'gourmet_chocolatiers/cincinnati_locations_a/255.htm'
 
     driver = get_driver()
-    driver.get(locator_domain)
+    driver.get(locator_domain + ext)
 
-    link_list = []
-
-    hrefs = driver.find_elements_by_xpath("//a[contains(@href, '/pizza/')]")
-    for href in hrefs:
-        link_list.append(href.get_attribute('href'))
-
-
-
-
+    main = driver.find_element_by_css_selector('div.locations')
+    locs = main.find_elements_by_css_selector('div')
     all_store_data = []
-    for link in link_list:
-        driver.implicitly_wait(10)
-        driver.get(link)
-        body = driver.find_element_by_css_selector('tbody')
-        content = body.text.split('\n')
+    for i, loc in enumerate(locs):
+        content = loc.text.split('\n')
+        location_name = content[0]
+        street_address = content[1]
+        city, state, zip_code = addy_ext(content[2])
+        phone_number = content[3]
+        hours = ''
+        for h in content[5:]:
+            hours += h + ' '
 
-        if len(content) == 5:
-            location_name = content[0]
-            address = content[1]
-            start_idx = address.find('RdR')
-            street_address = address[:start_idx + 2]
-            rest_address = address[start_idx + 2:].split(',')
-            city = rest_address[0]
-            state_zip = rest_address[1].split(' ')
-            state = state_zip[0][:-1]
-            zip_code = state_zip[1]
-            phone_number = content[2]
-        else:
-            location_name = content[0]
-            street_address = content[1]
-            city, state, zip_code = addy_ext(content[2])
-            phone_number = content[3]
+        hours = hours.strip()
 
-        href = driver.find_element_by_xpath("//a[contains(text(),'View Larger Map')]").get_attribute('href')
-        start_idx = href.find('ll=')
-        end_idx = href.find('&ss')
+        link = driver.find_elements_by_xpath("//a[contains(@href, 'google.com/maps?')]")[i].get_attribute('href')
+        start_idx = link.find('ll=')
+        end_idx = link.find('&sa')
 
-        coords = href[start_idx + 3:end_idx].split(',')
+        coords = link[start_idx + 3:end_idx].split(',')
         lat = coords[0]
         longit = coords[1]
 
-        hours = '<MISSING>'
         country_code = 'US'
-        store_number = '<MISSING>'
         location_type = '<MISSING>'
+        store_number = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data
