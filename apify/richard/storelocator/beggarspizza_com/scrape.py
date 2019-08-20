@@ -57,7 +57,28 @@ def fetch_data():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     driver = webdriver.Chrome(CHROME_DRIVER_PATH, options=options)
-    driver.get(COMPANY_URL)
+
+    store_url = "https://www.beggarspizza.com/locations/"
+    driver.get(store_url)
+    names = [
+        name.get_attribute("textContent")
+        for name in driver.find_elements_by_css_selector(
+            "div.wpsl-store-location > p > strong > a"
+        )
+    ]
+    urls = [
+        url.get_attribute("href")
+        for url in driver.find_elements_by_css_selector(
+            "div.wpsl-store-location > p > strong > a"
+        )
+    ]
+    hour_dict = {}
+    for name, url in zip(names, urls):
+        driver.get(url)
+        hour = driver.find_element_by_css_selector(
+            "div.col-sm-12.reset-left > div.col-xs-6.smallWide.reset-left"
+        ).get_attribute("textContent")
+        hour_dict[name.strip()] = hour
 
     # Fetch store urls from location menu
     store_url = "https://www.beggarspizza.com/wp-admin/admin-ajax.php?action=store_search&lat=41.878114&lng=-87.629798&max_results=25&search_radius=1000&autoload=1"
@@ -93,12 +114,9 @@ def fetch_data():
         # Longitude
         longitude_list.append(location["lng"])
 
-        # Hour
-        hours.append(
-            " ".join(re.sub("<[^>]*>", ",", location["hours"]).split(","))
-            if location["hours"] != ""
-            else "<MISSING>"
-        )
+        # Hour  - Use backup to reference
+        hour = " ".join(re.sub("<[^>]*>", ",", location["hours"]).split(","))
+        hours.append(hour if hour != "" else hour_dict[location["store"]])
 
     for (
         locations_title,

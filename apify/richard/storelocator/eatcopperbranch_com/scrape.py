@@ -217,7 +217,10 @@ def fetch_data():
         longitude_list,
         hours,
     ):
-        if "coming soon" in locations_title.lower():
+        if (
+            "coming soon" in locations_title.lower()
+            or "opening soon" in locations_title.lower()
+        ):
             pass
         else:
             data.append(
