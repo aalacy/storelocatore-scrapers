@@ -11,4 +11,4 @@ Please make sure that:
 
 # Validation Skips:
 
-Skipped street validation because `York's 6` does not include a street address on the website.
+Skipped `street validation` because York's 6 does not include a street address on the website.
