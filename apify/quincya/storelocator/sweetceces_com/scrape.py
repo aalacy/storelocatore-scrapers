@@ -37,8 +37,6 @@ def fetch_data():
 	for item in items:
 		if "Coming Soon" in item.text:
 			continue
-		if "Now Open" in item.text:
-			location_type = "Now Open"
 		else:
 			location_type = "<MISSING>"
 		link = item.a['href']
@@ -72,7 +70,11 @@ def fetch_data():
 		try:
 			phone = re.findall("[[\d]{3}-[\d]{3}-[\d]{4}", str(content.find('p')))[0]
 		except:
-			phone = "<MISSING>"	
+			if "Cool Springs" in location_name:
+				phone = raw_data[-1][raw_data[-1].find(" ")+1:raw_data[-1].find("<")]
+				phone = phone + raw_data[-1][raw_data[-1].find('">')+2:raw_data[-1].find('">')+6]
+			else:
+				phone = "<MISSING>"	
 
 		link = base.findAll('iframe')[1]['src']
 		start_point = link.find("2d") + 2
