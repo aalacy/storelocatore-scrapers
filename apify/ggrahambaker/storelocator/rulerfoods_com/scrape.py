@@ -34,7 +34,7 @@ def fetch_data():
     ext = 'locations/'
     driver = get_driver()
     driver.get(locator_domain + ext)
-    #time.sleep(15)
+
     obj = driver.switch_to.alert
     obj.accept()
 

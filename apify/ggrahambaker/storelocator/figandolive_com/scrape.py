@@ -2,7 +2,8 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+import requests
+from bs4 import BeautifulSoup
 
 def get_driver():
     options = Options()
@@ -47,6 +48,20 @@ def fetch_data():
         phone_number = driver.find_element_by_xpath('//a[@data-bb-track-category="Phone Number"]').get_attribute(
             'href').replace('tel:', '')
         address = driver.find_element_by_css_selector('div.gmaps').get_attribute('data-gmaps-address').split(',')
+        page = requests.get(link)
+        assert page.status_code == 200
+
+        soup = BeautifulSoup(page.content, 'html.parser')
+        main = soup.find('section', {'id': 'intro'})
+        ps = main.find_all('p')
+
+        hours = ''
+        for i, p in enumerate(ps):
+            if '00pm' in p.text or '00am' in p.text:
+                hours += p.text + ' '
+
+
+        hours = hours.strip()
         if len(address) == 4:
             street_address = address[1]
             city = address[2].strip()
@@ -65,7 +80,6 @@ def fetch_data():
         lat = driver.find_element_by_css_selector('div.gmaps').get_attribute('data-gmaps-lat')
         longit = driver.find_element_by_css_selector('div.gmaps').get_attribute('data-gmaps-lng')
 
-        hours = '<INACCESSIBLE>'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         country_code = 'US'
