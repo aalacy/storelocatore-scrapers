@@ -7,10 +7,28 @@ from urllib.parse import urljoin
 from lxml import html
 crawled = []
 class Scrape(base.Spider):
+    def get_centroid_map(self, text):
+        centroid_map = {}
+        try:
+            key = None
+            for line in text.splitlines():
+                if key:
+                    m = re.match(r'^.*!2d(-[\d\.]+)!3d([\d\.]+)!.*$', line)
+                    if m:
+                        centroid_map[key] = (m.group(1), m.group(2))
+                    key = None
+                m = re.match(r'^.*case "([a-z]+)":.*$', line)
+                if m:
+                    key = m.groups(1)[0]
+            return centroid_map
+        except:
+            return {}
+                
 
     def crawl(self):
         base_url = "https://www.camprunamutt.com/locations.php"
-        # json_body = json.loads(html.fromstring(requests.get(base_url).text).xpath('//script[@type="application/json"]/text()')[0])
+        centroid_map = self.get_centroid_map(requests.get(base_url).text)
+        print(centroid_map)
         body = html.fromstring(requests.get(base_url).text).xpath('//div[@class="location"]/div/a/@href')
         for result in body:
             selector = base.selector(urljoin(base_url, result))
