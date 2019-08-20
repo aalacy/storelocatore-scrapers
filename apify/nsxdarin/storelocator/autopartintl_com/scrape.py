@@ -1,7 +1,7 @@
 import csv
 import urllib2
 import requests
-import sgzip
+from sgzip import sgzip
 import json
 
 session = requests.Session()
