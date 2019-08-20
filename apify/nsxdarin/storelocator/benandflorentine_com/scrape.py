@@ -38,10 +38,9 @@ def fetch_data():
                         try:
                             zc = item.split('"address":"<p>')[1].split('<br \\/>\\n')[1].split('<')[0].split(',')[2]
                         except:
-                            zc = ''
+                            zc = '<MISSING>'
                     if len(state) > 2:
-                        state = ''
-                        zc = state + ' ' + zc
+                        state = '<MISSING>'
                     state = state.strip()
                     zc = zc.strip()
                     city = city.strip()

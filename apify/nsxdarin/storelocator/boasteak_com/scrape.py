@@ -41,7 +41,7 @@ def fetch_data():
                     zc = line2.split('<h5 class="location-detail">')[1].split(',')[2].strip().split(' ')[1].split('<')[0]
                     phone = line2.split('<h5 class="location-detail">')[2].split('<')[0].replace('.','-')
                     country = 'US'
-                    store = ''
+                    store = '<MISSING>'
                     hours = line2.split('<div class="location-hours w-richtext">')[1].split('</p><h5><strong>')[0].replace('</p><p>','; ').replace('<h5>','')
                     hours = hours.replace('</h5><p>',' - ').replace('</p>','; ')
                     lat = '<MISSING>'

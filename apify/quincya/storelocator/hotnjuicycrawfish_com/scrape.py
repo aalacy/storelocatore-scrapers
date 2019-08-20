@@ -39,6 +39,10 @@ def fetch_data():
 			continue
 
 		print (page_link)
+		city_text = item.find('h4').text
+		city = city_text[:city_text.find(',')].title()
+		if "Planet" in city:
+			city = "Las Vegas"
 
 		req = requests.get(page_link, headers=headers)
 
@@ -53,7 +57,6 @@ def fetch_data():
 		raw_data = new_base.find('div', attrs={'class': 'sub-text updates info _2-lines'}).text.replace("Â\xa0"," " ) 
 		raw_address = raw_data[:raw_data.find(',')]
 		street_address = "<INACCESSIBLE>"
-		city = "<INACCESSIBLE>"
 		state = raw_data[raw_data.rfind(',')+1:raw_data.rfind(' ')].strip()
 		zip_code = raw_data[raw_data.rfind(' '):].strip()
 		country_code = "US"

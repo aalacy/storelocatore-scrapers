@@ -48,7 +48,7 @@ def fetch_data():
 
 
     divs = driver.find_elements_by_css_selector('div.ycmc_store_detail')
-    
+
     all_store_data = []
     for div in divs:
 

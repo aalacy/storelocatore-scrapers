@@ -1,6 +1,7 @@
 import csv
 import urllib2
 import requests
+import json
 
 session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -18,7 +19,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = 'https://www.whitecastle.com/sitemap.xml'
-    r = session.get(url, headers=headers)
+    r = session.get(url, verify=False, headers=headers)
     for line in r.iter_lines():
         if '<loc>https://www.whitecastle.com/locations/' in line:
             locs.append(line.split('locations/')[1].split('<')[0])
@@ -30,32 +31,30 @@ def fetch_data():
         store = loc
         hours = ''
         r2 = session.get(lurl, headers=headers)
-        for line2 in r2.iter_lines():
-            if '"zip":"' in line2:
-                add = line2.split('"address":"')[1].split('"')[0]
-                city = line2.split('"city":"')[1].split('"')[0]
-                state = line2.split(',"state":"')[1].split('"')[0]
-                zc = line2.split('"zip":"')[1].split('"')[0]
-                phone = line2.split('"telephone":"')[1].split('"')[0]
-                country = 'US'
-                if '"open24x7":true' in line2:
-                    hours = 'Open 24 Hours'
+        array = json.loads(r2.content)
+        add = array['address']
+        city = array['city']
+        state = array['state']
+        zc = array['zip']
+        phone = array['telephone']
+        country = 'US'
+        if array['open24x7']:
+            hours = 'Open 24 Hours'
+        else:
+            for hr in array['days']:
+                day = hr['day']
+                if not hr['open24Hours']:
+                    time = hr['hours']
                 else:
-                    hrs = line2.split('"days":[')[1].split(']')[0].split('"},{"')
-                    for hr in hrs:
-                        day = hr.split('"day":"')[1]
-                        if '"open24Hours":false' in hr:
-                            time = hr.split('hours":"')[1].split('"')[0]
-                        else:
-                            time = 'Open 24 Hours'
-                        if hours == '':
-                            hours = day + ': ' + time
-                        else:
-                            hours = hours + '; ' + day + ': ' + time
-                typ = 'Restaurant'
-                lat = line2.split('"lat":"')[1].split('"')[0]
-                lng = line2.split('"lng":"')[1].split('"')[0]
-                yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    time = 'Open 24 Hours'
+                if hours == '':
+                    hours = day + ': ' + time
+                else:
+                    hours = hours + '; ' + day + ': ' + time
+        typ = 'Restaurant'
+        lat = array['lat']
+        lng = array['lng']
+        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

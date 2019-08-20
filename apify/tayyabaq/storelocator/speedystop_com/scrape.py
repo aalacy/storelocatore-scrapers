@@ -1,8 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+import requests
 import re, time
+from bs4 import BeautifulSoup
 
 def write_output(data):
     with open('data.csv', mode='wb') as output_file:
@@ -13,41 +13,26 @@ def write_output(data):
         for row in data:
             if row:
                 #Keep the trailing zeroes in zipcodes
-                writer.writerow(row)
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
-
-def parse_geo(url):
-    lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
-    lat = re.findall(r'\q=(-?[\d\.]*)', url)[0]
-    return lat, lon
-
+                writer.writerow([unicode(s).encode("utf-8") for s in row])
+                
 def fetch_data():
     #Variables
     data=[]; store_no=[];location_name=[];location_type=[];city=[];street_address=[]; state=[]; phone=[]
-    #Driver
-    driver = get_driver()
-    #Get site
-    driver.get('http://www.speedystop.com/locations.html')
-    time.sleep(6)
-    # Fetch stores 
-    stores = driver.find_elements_by_xpath("//table[@class='tabledivinn']/tbody/tr/td")
+    url ="http://www.speedystop.com/mapservice.php?option=locations"
+    r = requests.get(url)
+    soup = BeautifulSoup(r.content, 'html.parser')
+    stores = soup.find_all('td')
     for i in xrange(0,len(stores),4):
-        location_name.append(stores[i].text)
-        store_no.append(stores[i].text.split("#")[1])
+        location_name.append(stores[i].get_text())
+        store_no.append(stores[i].get_text().split("#")[1])
     for i in xrange(1,len(stores),4):
-        street_address.append(stores[i].text.split("\n")[0])
-        city.append(stores[i].text.split("\n")[1].split(",")[0])
-        state.append(stores[i].text.split("\n")[1].split(",")[1])
+        street_address.append(stores[i].get_text().split(",")[0])
+        state.append(stores[i].get_text().split(",")[1].strip())
     for i in xrange(2,len(stores),4):
-        phone.append(stores[i].text)
+        phone.append(stores[i].get_text())
     for i in xrange(3,len(stores),4):
-        if stores[i].text!="":
-            location_type.append(stores[i].text)
+        if stores[i].get_text()!="":
+            location_type.append(stores[i].get_text().split()[-1].strip())
         else:
             location_type.append("<MISSING>")
     for n in range(0,len(location_name)): 
@@ -55,7 +40,7 @@ def fetch_data():
             'http://www.speedystop.com',
             location_name[n],
             street_address[n],
-            city[n],
+            '<MISSING>',
             state[n],
             '<MISSING>',
             'US',
@@ -66,7 +51,6 @@ def fetch_data():
             '<MISSING>',
             '<MISSING>'
         ])
-    driver.quit()
     return data
 
 def scrape():
@@ -74,4 +58,3 @@ def scrape():
     write_output(data)
 
 scrape()
-    

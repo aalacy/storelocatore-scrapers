@@ -28,9 +28,10 @@ def get_country_by_code(code=''):
     else:
         return "<MISSING>"
 
-def selector(url=''):
+def selector(url='', headers=None):
+    headers = headers or {}
     if url:
-        r = requests.get(url)
+        r = requests.get(url, headers=headers)
         tree = html.fromstring(r.text.replace('\xa0',' '))
         return {'tree': tree, 'url':url, 'request': r}
 

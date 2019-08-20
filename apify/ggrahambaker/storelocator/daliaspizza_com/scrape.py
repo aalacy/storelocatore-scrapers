@@ -39,16 +39,14 @@ def fetch_data():
     driver = get_driver()
     driver.get(locator_domain)
 
-    element_to_hover_over = driver.find_element_by_css_selector('li#menu-item-90')
-
-    hover = ActionChains(driver).move_to_element(element_to_hover_over)
-    hover.perform()
-
-    ul = driver.find_element_by_css_selector('ul.sub-menu')
-    lis = ul.find_elements_by_css_selector('li')
     link_list = []
-    for li in lis:
-        link_list.append(li.find_element_by_css_selector('a').get_attribute('href'))
+
+    hrefs = driver.find_elements_by_xpath("//a[contains(@href, '/pizza/')]")
+    for href in hrefs:
+        link_list.append(href.get_attribute('href'))
+
+
+
 
     all_store_data = []
     for link in link_list:

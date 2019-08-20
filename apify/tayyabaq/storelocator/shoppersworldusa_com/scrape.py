@@ -3,6 +3,7 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re, time
+import usaddress
 
 def write_output(data):
     with open('data.csv', mode='wb') as output_file:
@@ -12,12 +13,7 @@ def write_output(data):
         # Body
         for row in data:
             if row:
-                writer.writerow(row)
-def parse_geo(url):
-    a=re.findall(r'\&ll=(-?[\d\.]*,(--?[\d\.]*))',url)[0]
-    lat = a[0].split(",")[0]
-    lon = a[0].split(",")[1]
-    return lat, lon
+                writer.writerow([unicode(s).encode("utf-8") for s in row])
 
 def get_driver():
     options = Options() 
@@ -38,31 +34,52 @@ def fetch_data():
     stores = driver.find_elements_by_class_name("maincontent")
     loc = stores[0].text.split("\n")
     for i in range(0,len(loc)):
-        if loc[i]!="" and 'coming soon' not in loc[i]:
-            a=re.findall("[\d].*[\Q\s][A-Z].*",loc[i])
+        if loc[i]!="" and loc[i]!=" " and 'COMING SOON' not in loc[i]:
             try:
-                street_address.append(a[0].split(",")[0])
-                b=re.findall("[\d].*",a[0].split(",")[1].strip())
-                if b!=[]:
-                    city.append('<INACCESSIBLE>')
-                else:
-                    city.append(a[0].split(",")[1].strip())
-                state.append(re.findall("([A-Z]{2}) (\d{5})",loc[i])[0][0])
+                tagged = usaddress.tag(loc[i].replace(u'\u2022', ''))[0]
+                street_address.append(tagged['AddressNumber']+" "+tagged['StreetName']+" "+tagged['StreetNamePostType'])
+            except:
                 try:
-                    zipcode.append(re.findall("([A-Z]{2}) (\d{5})",loc[i])[0][1])
+                    tagged = usaddress.tag(str(loc[i].replace(u'\u2022', '').split(",")[1:].join()))[0]
+                    street_address.append(tagged['AddressNumber']+" "+tagged['StreetName']+" "+tagged['StreetNamePostType'])
                 except:
-                    zipcode.append('<MISSING>')
-                try:
-                    phone.append(re.findall(r'([(]-?[\d\.]*?.*)',loc[i])[0].split(",")[0])
-                except:
-                    phone.append('<MISSING>')
-                try:
+                    if len(loc[i].split(","))==4:
+                        if re.search(r'\d', loc[i].split(",")[1]):
+                            street_address.append(loc[i].split(",")[1].strip())
+                        else:
+                            street_address.append(loc[i].split(",")[0].strip())
+                    elif len(loc[i].split(","))==5:
+                        if re.search(r'\d', loc[i].split(",")[2]):
+                            street_address.append(loc[i].split(",")[2].strip())
+                        else:
+                            street_address.append(loc[i].split(",")[1].strip())
+                    else:
+                        street_address.append(loc[i].split(",")[0].strip())
+                
+            try:
+                zipcode.append(tagged['ZipCode'])
+            except:
+                zipcode.append('<MISSING>')
+            try:
+                state.append(tagged['StateName'])
+            except:
+                state.append('<MISSING>')
+            try:
+                city.append(tagged['PlaceName'].replace("'",""))
+            except:
+                city.append('<MISSING>')
+            try:
+                phone.append(re.findall(r'([(]-?[\d\.]*?.*)',loc[i])[0].split(",")[0])
+            except:
+                phone.append('<MISSING>')
+            try:
+                if re.search(r'\d', loc[i].split(",")[-4])==False:
                     location_name.append(loc[i].split(",")[-4])
-                except:
+                else:
                     location_name.append('<MISSING>')
             except:
-                continue
-    for n in range(0,len(location_name)): 
+                location_name.append('<MISSING>')
+    for n in range(0,len(street_address)): 
         data.append([
             'https://www.shoppersworldusa.com',
             location_name[n],

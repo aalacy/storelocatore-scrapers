@@ -61,7 +61,7 @@ def fetch_data():
 
         country_code = 'US'
         store_number = '<MISSING>'
-        location_name = '<MISSING>'
+        location_name = link[link.find('m/') + 2: ].replace('-', ' ')
         location_type = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,

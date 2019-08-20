@@ -7,7 +7,7 @@ crawled = []
 class Scrape(base.Spider):
 
     def crawl(self):
-        base_url = "https://earthwisepet_com/store-locator"
+        base_url = "https://earthwisepet.com/store-locator"
         body = html.fromstring(requests.get(base_url).text)
         for result in body.xpath('//div[@class="store"]/div[@class="address"]/div[@class="store-link"]/div/a[1]/@href'):
             selector = base.selector(urljoin(base_url,result))

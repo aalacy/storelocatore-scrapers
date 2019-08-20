@@ -36,14 +36,14 @@ def fetch_data():
                         try:
                             phone = item.split('"phone":"')[1].split('"')[0]
                         except:
-                            phone = ''
+                            phone = '<MISSING>'
                         if state in castates:
                             country = 'CA'
                         else:
                             country = 'US'
                         store = item.split('"id":')[1].split(',')[0]
                         hrs = item.split('{"day":"')
-                        hours = ''
+                        hours = '<MISSING>'
                         for hr in hrs:
                             if '"time":"' in hr:
                                 if hours == '':
