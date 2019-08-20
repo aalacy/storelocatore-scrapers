@@ -28,15 +28,14 @@ class Scrape(base.Spider):
     def crawl(self):
         base_url = "https://www.camprunamutt.com/locations.php"
         centroid_map = self.get_centroid_map(requests.get(base_url).text)
-        print(centroid_map)
         body = html.fromstring(requests.get(base_url).text).xpath('//div[@class="location"]/div/a/@href')
         for result in body:
             selector = base.selector(urljoin(base_url, result))
             i = base.Item(selector['tree'])
             i.add_value('locator_domain', selector['url'])
             i.add_xpath('location_name', '//h4[preceding-sibling::h2[1][contains(text(), "Camp")]][1]/text()', base.get_first)
-            i.add_value('latitude', '<INACCESSIBLE>')
-            i.add_value('longitude', '<INACCESSIBLE>')
+            i.add_value('latitude', centroid_map.get(result[:-1], ("<MISSING>", "<MISSING>"))[0])
+            i.add_value('longitude', centroid_map.get(result[:-1], ("<MISSING>", "<MISSING>"))[1])
             czs = selector['tree'].xpath('//p[@class="campAddress"]/text()[2]')[0]
             czs_re = re.findall(r'(?P<city>.+?),\s(?P<state>[A-Z][A-Z])\s(?P<zip>.+)', czs)
             i.add_value('city', czs_re[0][0], lambda x: x.replace('\t', ''), lambda x: x.replace('\n', '').strip())
