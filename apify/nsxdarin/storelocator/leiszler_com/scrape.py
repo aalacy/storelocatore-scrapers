@@ -55,7 +55,7 @@ def fetch_data():
                 state = add[0]['StateName'].encode('utf-8')
                 zc = add[0]['ZipCode'].encode('utf-8')
             except:
-                rawadd = rawadd.strip()
+                pass
             name = g.split("content: '")[1].split('<')[0]
             country = 'US'
             store = g.split('Short Stop #')[1].split('<')[0]
