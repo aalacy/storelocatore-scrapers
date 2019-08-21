@@ -5,7 +5,7 @@ import requests
 from lxml import etree
 import json
 
-base_url = 'https://www.thelashlounge.com'
+base_url = 'https://www.roscoeschickenandwaffles.com'
 
 def validate(item):    
     if type(item) == list:
@@ -37,32 +37,32 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "https://www.thelashlounge.com/salons/"
+    url = "https://www.roscoeschickenandwaffles.com/locations-and-hours"
     session = requests.Session()
     request = session.get(url)
     response = etree.HTML(request.text)
-    store_list = response.xpath('.//a[@class="location-bottom-link"]')
+    store_list = response.xpath('//div[@class="col sqs-col-3 span-3"]//div[@class="sqs-block-content"]')
     for store in store_list:
+        store = eliminate_space(store.xpath('.//text()'))
         output = []
         output.append(base_url) # url
-        output.append(validate(store.xpath('.//h2//text()'))) #location name
-        output.append(get_value(store.xpath('.//span[@itemprop="streetAddress"]//text()'))) #address
-        output.append(get_value(store.xpath('.//span[@itemprop="addressLocality"]//text()'))) #city
-        output.append(get_value(store.xpath('.//span[@itemprop="addressRegion"]//text()'))) #state
-        output.append(get_value(store.xpath('.//span[@itemprop="postalCode"]//text()'))) #zipcode
+        output.append(store[0]) #location name
+        output.append(store[1]) #address
+        output.append('<MISSING>') #city
+        output.append('<MISSING>') #state
+        output.append('<MISSING>') #zipcode
         output.append('US') #country code
         output.append("<MISSING>") #store_number
-        output.append(get_value(store.xpath('.//span[@itemprop="telephone"]//text()'))) #phone
-        output.append("The Lash Lounge Salons") #location type
+        phone = ''
+        store_hours = ''
+        if len(store) > 3:
+            phone = store[2]
+            store_hours = validate(store[4:])
+        output.append(get_value(phone)) #phone
+        output.append("Roscoe's House Of Chicken And Waffles") #location type
         output.append("<MISSING>") #latitude
         output.append("<MISSING>") #longitude
-        store = etree.HTML(session.get(validate(store.xpath('./@href'))).text)
-        store_hours = get_value(', '.join(eliminate_space(store.xpath('.//div[@class="home-contact-content"]//li//text()'))))        
-        if store_hours == '<MISSING>':
-            temp = store.xpath('.//div[@class="pre-footer-details"]')
-            if len(temp) > 0:
-                store_hours = get_value(' '.join(eliminate_space(temp[0].xpath('.//ul//li//text()'))))
-        output.append(store_hours) #opening hours
+        output.append(get_value(store_hours)) #opening hours
         output_list.append(output)
     return output_list
 

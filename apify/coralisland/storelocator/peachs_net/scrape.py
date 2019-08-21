@@ -5,7 +5,7 @@ import requests
 from lxml import etree
 import json
 
-base_url = 'https://www.thelashlounge.com'
+base_url = 'http://www.peachs.net'
 
 def validate(item):    
     if type(item) == list:
@@ -37,31 +37,47 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "https://www.thelashlounge.com/salons/"
+    url = "http://www.peachs.net/locations.html"
     session = requests.Session()
     request = session.get(url)
     response = etree.HTML(request.text)
-    store_list = response.xpath('.//a[@class="location-bottom-link"]')
-    for store in store_list:
+    store_list = response.xpath('//div[@class="uk-button uk-button-primary uk-button-small uk-margin-top"]//a/@href')
+    for link in store_list:
+        link = base_url + link
+        store = etree.HTML(session.get(link).text)
         output = []
         output.append(base_url) # url
-        output.append(validate(store.xpath('.//h2//text()'))) #location name
-        output.append(get_value(store.xpath('.//span[@itemprop="streetAddress"]//text()'))) #address
-        output.append(get_value(store.xpath('.//span[@itemprop="addressLocality"]//text()'))) #city
-        output.append(get_value(store.xpath('.//span[@itemprop="addressRegion"]//text()'))) #state
-        output.append(get_value(store.xpath('.//span[@itemprop="postalCode"]//text()'))) #zipcode
+        output.append(get_value(store.xpath('.//h1[@class="uk-text-orange uk-margin-top-remove"]//text()'))) #location name
+        address = eliminate_space(store.xpath('.//ul[@class="uk-list"]//text()'))
+        street = '<MISSING>'
+        city = '<MISSING>'
+        state = '<MISSING>'
+        zipcode = '<MISSING>'
+        phone = '<MISSING>'
+        store_hours = '<MISSING>'
+        for idx, addr in enumerate(address):
+            if addr == 'Street:':
+                street = address[idx+1]
+            if addr == 'City:':
+                city = address[idx+1]
+            if addr == 'State:':
+                state = address[idx+1]
+            if addr == 'Zip Code:':
+                zipcode = address[idx+1]
+            if addr == 'Phone:':
+                phone = address[idx+1]
+            if addr == 'Hours:':
+                store_hours = ', '.join(address[idx+1:])
+        output.append(street) #address
+        output.append(city) #city
+        output.append(state) #state
+        output.append(zipcode) #zipcode
         output.append('US') #country code
         output.append("<MISSING>") #store_number
-        output.append(get_value(store.xpath('.//span[@itemprop="telephone"]//text()'))) #phone
-        output.append("The Lash Lounge Salons") #location type
+        output.append(phone) #phone
+        output.append("Peach's Restaurants - Breakfast & Lunch in Sarasota, Bradenton") #location type
         output.append("<MISSING>") #latitude
         output.append("<MISSING>") #longitude
-        store = etree.HTML(session.get(validate(store.xpath('./@href'))).text)
-        store_hours = get_value(', '.join(eliminate_space(store.xpath('.//div[@class="home-contact-content"]//li//text()'))))        
-        if store_hours == '<MISSING>':
-            temp = store.xpath('.//div[@class="pre-footer-details"]')
-            if len(temp) > 0:
-                store_hours = get_value(' '.join(eliminate_space(temp[0].xpath('.//ul//li//text()'))))
         output.append(store_hours) #opening hours
         output_list.append(output)
     return output_list

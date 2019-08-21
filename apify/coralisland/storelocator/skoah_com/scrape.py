@@ -5,7 +5,7 @@ import requests
 from lxml import etree
 import json
 
-base_url = 'https://www.thelashlounge.com'
+base_url = 'https://skoah.com'
 
 def validate(item):    
     if type(item) == list:
@@ -37,32 +37,32 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "https://www.thelashlounge.com/salons/"
+    url = "https://us.skoah.com/pages/our-locations"
     session = requests.Session()
     request = session.get(url)
     response = etree.HTML(request.text)
-    store_list = response.xpath('.//a[@class="location-bottom-link"]')
+    store_list = response.xpath('//div[@class="css-grid__item location__item"]')
     for store in store_list:
+        store = eliminate_space(store.xpath('.//text()'))
         output = []
         output.append(base_url) # url
-        output.append(validate(store.xpath('.//h2//text()'))) #location name
-        output.append(get_value(store.xpath('.//span[@itemprop="streetAddress"]//text()'))) #address
-        output.append(get_value(store.xpath('.//span[@itemprop="addressLocality"]//text()'))) #city
-        output.append(get_value(store.xpath('.//span[@itemprop="addressRegion"]//text()'))) #state
-        output.append(get_value(store.xpath('.//span[@itemprop="postalCode"]//text()'))) #zipcode
-        output.append('US') #country code
+        output.append(store[0]) #location name
+        output.append(store[1]) #address
+        address = store[2].strip().split(',')
+        output.append(address[0]) #city
+        state_zip = address[1].strip().split(' ')
+        output.append(state_zip[0]) #state
+        output.append(validate(state_zip[1:])) #zipcode
+        if len(state_zip) == 2:
+            output.append('US') #country code
+        else:
+            output.append('CA')
         output.append("<MISSING>") #store_number
-        output.append(get_value(store.xpath('.//span[@itemprop="telephone"]//text()'))) #phone
-        output.append("The Lash Lounge Salons") #location type
+        output.append(store[3]) #phone
+        output.append("Facials & Natural Skin Care Products Online") #location type
         output.append("<MISSING>") #latitude
         output.append("<MISSING>") #longitude
-        store = etree.HTML(session.get(validate(store.xpath('./@href'))).text)
-        store_hours = get_value(', '.join(eliminate_space(store.xpath('.//div[@class="home-contact-content"]//li//text()'))))        
-        if store_hours == '<MISSING>':
-            temp = store.xpath('.//div[@class="pre-footer-details"]')
-            if len(temp) > 0:
-                store_hours = get_value(' '.join(eliminate_space(temp[0].xpath('.//ul//li//text()'))))
-        output.append(store_hours) #opening hours
+        output.append(validate(store[5: -2])) #opening hours
         output_list.append(output)
     return output_list
 
