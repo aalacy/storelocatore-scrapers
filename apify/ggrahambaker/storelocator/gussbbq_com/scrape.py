@@ -2,7 +2,7 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+import time
 
 def get_driver():
     options = Options()
@@ -36,10 +36,17 @@ def loc_ext(driver, locator_domain, ext, all_store_data):
     link = ext[0]
     ids = ext[1]
     driver.get(locator_domain + link)
-    driver.implicitly_wait(10)
+    driver.implicitly_wait(1200)
 
-    #item = driver.execute_script('return mapu143149')
-    #print(item)
+    while (driver.execute_script("return typeof mapu143149 === 'undefined' && typeof mapu144269 === 'undefined'")): time.sleep(10)
+
+    if (driver.execute_script("return typeof mapu143149 !== 'undefined'")):
+        print(driver.execute_script('return mapu143149.center.toJSON()'))
+    elif (driver.execute_script("return typeof mapu144269 !== 'undefined'")):
+        print(driver.execute_script('return mapu144269.center.toJSON()'))
+    else:
+        print("nooooo!!!")
+            
     address = driver.find_element_by_css_selector('div' + ids[0]).text.split('\n')
     street_address = address[1]
     city, state, zip_code = addy_ext(address[2])
