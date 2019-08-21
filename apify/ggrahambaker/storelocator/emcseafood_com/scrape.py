@@ -59,12 +59,13 @@ def fetch_data():
                     hours += h + ' '
 
                 href = div.find_element_by_css_selector('a').get_attribute('href')
+
                 start_idx = href.find('/@')
                 end_idx = href.find('z/data')
                 if start_idx == -1:
                     start_idx = href.find('!ld')
-                    # end_idx = href.find('z/data')
                     if start_idx == -1:
+
                         lat = '<INACCESSIBLE>'
                         longit = '<INACCESSIBLE>'
                     else:

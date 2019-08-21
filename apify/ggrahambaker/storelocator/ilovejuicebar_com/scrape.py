@@ -55,6 +55,7 @@ def fetch_data():
         driver.implicitly_wait(30)
         main = driver.find_element_by_css_selector('section.Main-content').text.split('\n')
         location_name = main[0]
+
         if len(main) < 10:
             if '13317 shelbyville rd' in main[1] or '109 old camp rd.' in main[1] or '10283 clayton road' in main[
                 1] or '9849 manchester road' in main[1]:
@@ -77,11 +78,10 @@ def fetch_data():
                 street_address = main[1]
                 city, state, zip_code = addy_ext(main[2])
             elif '1350 concourse avenue' in main[1]:
-                '1350 concourse avenue', 'memphis, tennessee'
                 street_address = main[1]
                 city = 'memphis'
                 state = 'tennessee'
-                zip_code = '<MISSING>'
+                zip_code = '38104'
             elif '301 n. custer rd. suite 100' in main[5]:
                 street_address = main[5]
                 city, state, zip_code = addy_ext(main[6])
@@ -101,11 +101,11 @@ def fetch_data():
                     street_address = main[1] + ' ' + main[2]
                     city = 'charlotte'
                     state = 'nc'
-                    zip_code = '<MISSING>'
+                    zip_code = '28204'
                 elif '6425 wilkinson blvd' in street_address:
                     city = 'belmont'
                     state = 'nc'
-                    zip_code = '<MISSING>'
+                    zip_code = '28012'
                 elif '7324 gaston ave, suite 123' in main[1]:
                     street_address = main[1]
                     city, state, zip_code = addy_ext(main[2])
@@ -135,19 +135,21 @@ def fetch_data():
                     city, state, zip_code = addy_ext(main[4])
 
         hours = ''
+        phone_number = ''
         for h in main:
             if '//' in h:
                 hours += h + ' '
             if re.search('([\-\+]{0,1}\d[\d\.\,]*[\.\,][\d\.\,]*\d+)', h):
                 phone_number = re.search('([\-\+]{0,1}\d[\d\.\,]*[\.\,][\d\.\,]*\d+)', h).group()
-            else:
-                phone_number = '<MISSING>'
+
+
 
         hours = hours.strip()
 
         if hours == '':
             hours = '<MISSING>'
-
+        if phone_number == '':
+            phone_number = '<MISSING>'
         data = driver.find_element_by_css_selector('div.sqs-block.map-block.sqs-block-map').get_attribute(
             'data-block-json')
         json_coord = json.loads(data)
