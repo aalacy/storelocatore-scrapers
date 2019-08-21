@@ -1,5 +1,0 @@
-skippers.com
-Looks like we're only getting the Washington locations (need Idaho and Oregon also)
-
-snappytomato.com
-Can we use the usaddress library when the address has a comma inside, instead of using INACCESSIBLE
