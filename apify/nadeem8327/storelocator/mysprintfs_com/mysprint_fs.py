@@ -18,7 +18,7 @@ opts.add_argument("ignore-certificate-errors")
 url = "https://mysprintfs.com/locations"
 
 
-time.sleep(10)
+time.sleep(3)
 html = requests.get(url)
 soup = BeautifulSoup(html.text,"html.parser")
 all_rec = soup.find_all("div",attrs={"class":"all-results"})
