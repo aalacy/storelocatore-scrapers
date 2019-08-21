@@ -51,6 +51,7 @@ def fetch_data():
     latitude_list = []
     longitude_list = []
     hours = []
+    coming_soon = []
     data = []
 
     options = Options()
@@ -102,6 +103,7 @@ def fetch_data():
             if hour != re.sub("<[^>]*>", "", hour)
             else "<MISSING>"
         )
+        opening_soon = item.opening_soon
 
         # Location title
         locations_titles.append(
@@ -194,6 +196,7 @@ def fetch_data():
 
         # Hour
         hours.append(hour) if hour != "" else hours.append("<MISSING>")
+        coming_soon.append(opening_soon)
 
     # Store data
     for (
@@ -206,6 +209,7 @@ def fetch_data():
         latitude,
         longitude,
         hour,
+        opening_soon,
     ) in zip(
         locations_titles,
         street_addresses,
@@ -216,11 +220,9 @@ def fetch_data():
         latitude_list,
         longitude_list,
         hours,
+        coming_soon,
     ):
-        if (
-            "coming soon" in locations_title.lower()
-            or "opening soon" in locations_title.lower()
-        ):
+        if opening_soon:
             pass
         else:
             data.append(
