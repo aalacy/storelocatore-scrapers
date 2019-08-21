@@ -1,6 +1,7 @@
 import csv
 import re
 import json
+import usaddress
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -35,22 +36,23 @@ def remove_non_ascii_characters(string):
     return ''.join([i if ord(i) < 128 else '' for i in string]).strip()
 
 def parse_address(address, state):
-    address = address.replace(state, '') \
-        .replace(US_STATE_ABBREV[state], '')
-    zipcode = re.findall(r' \d{5}', address)[0]
-    address = address.replace(zipcode, '').strip()
+    _address = address.replace('<br />', '')
+    address = address.replace('{} '.format(state), '') \
+        .replace('{} '.format(US_STATE_ABBREV[state]), '')
     address = address.split('<br />')
-    if len(address) == 2:
-        street_address, city = address
-    if len(address) == 3:
+    city_zipcode = address.pop()
+    zipcode = re.findall(r'\d{5}', city_zipcode)[0]
+    city = city_zipcode.replace(zipcode, '')
+    city = city.replace(',', '').replace('\n', '')
+    if len(address) == 1:
+        street_address  = address[0]
+    else:
         street_address = " ".join([
             item.strip()
-            for item in address[:2]
+            for item in address
         ])
-        city = address[2]
-    city = city.replace(',', '')
-    if ',' in street_address:
-        street_address, city = [INACCESSIBLE]*2
+    if city == '':
+        city = usaddress.tag(_address)[0]['PlaceName']
     return [
         remove_non_ascii_characters(item)
         for item in [street_address, city, zipcode]
