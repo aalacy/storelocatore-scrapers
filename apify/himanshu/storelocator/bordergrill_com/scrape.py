@@ -1,0 +1,67 @@
+import csv
+import requests
+from bs4 import BeautifulSoup
+import re
+import json
+import sgzip
+
+def write_output(data):
+    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
+        # Header
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
+
+def fetch_data():
+    headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+    }
+    base_url = "http://www.bordergrill.com"
+    r = requests.get("http://www.bordergrill.com/locations/",headers=headers)
+    soup = BeautifulSoup(r.text,"lxml")
+    return_main_object = []
+    for location in soup.find("li",{"id":"menu-item-501"}).find_all("a"):
+        if "#" in location["href"]:
+            continue
+        location_request = requests.get(location["href"],headers=headers)
+        location_soup = BeautifulSoup(location_request.text,"lxml")
+        if location_soup.find("a",{"title":"Hours & Directions"}) == None:
+            continue
+        details_url = location_soup.find("a",{"title":"Hours & Directions"})["href"]
+        if "www.bordergrill.com" not in details_url:
+            continue
+        details_request = requests.get(details_url,headers=headers)
+        details_soup = BeautifulSoup(details_request.text,"lxml")
+        for script in details_soup.find_all("script"):
+            if 'pois' in script.text:
+                location_details = json.loads(script.text.split('"pois":')[1].split("}]}")[0] + "}]")[0]
+                if location_details["address"] == None:
+                    continue
+                location_list = list(BeautifulSoup(location_details["body"],"lxml").stripped_strings)[-3:]
+                name = list(details_soup.find("div",{'class':'secCol col-xs-6'}).stripped_strings)[1]
+                hours = " ".join(details_soup.find("div",{'class':"firstCol col-xs-3"}).stripped_strings)
+                store = []
+                store.append("http://www.bordergrill.com")
+                store.append(name)
+                store.append(location_list[0])
+                store.append(location_list[1].split(",")[0])
+                store.append(location_list[1].split(",")[-1].split(" ")[-2])
+                store.append(location_list[1].split(",")[-1].split(" ")[-1])
+                store.append("US")
+                store.append("<MISSING>")
+                store.append(location_list[2].replace("phone: ","").split("fax:")[0])
+                store.append("border grill")
+                store.append(location_details["point"]["lat"])
+                store.append(location_details["point"]["lng"])
+                store.append(hours.replace("\xa0"," "))
+                return_main_object.append(store)
+    return return_main_object
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()

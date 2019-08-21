@@ -16,7 +16,7 @@ async function scrape() {
   $('.contact_wrapper .grid_item').each((_, store_element) => {
     const storeDetails = $('li', store_element);
     const { city, state, zip } = storeDetails.eq(2).text().trim().match(
-      /^(?<city>.*)\s*?\(\s*?(?<state>.*)\s*?\)\s*?(?<zip>[\dA-Z]{3}\s?[\dA-Z]{3})\s*?/
+      /^(?<city>.*)\b\s*?\(\s*?\b(?<state>.*)\b\s*?\)\s*?(?<zip>[\dA-Z]{3}\s?[\dA-Z]{3})\s*?/
     ).groups;
     const phone = storeDetails.eq(4).text().trim();
     if (phone.indexOf('pening') !== -1) {

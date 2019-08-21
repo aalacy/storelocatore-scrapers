@@ -57,10 +57,12 @@ def fetch_data():
         output.append("<MISSING>") #latitude
         output.append("<MISSING>") #longitude
         store = etree.HTML(session.get(validate(store.xpath('./@href'))).text)
-        store_hours = get_value(', '.join(eliminate_space(store.xpath('.//div[@class="home-contact-content"]//li//text()'))))
+        store_hours = get_value(', '.join(eliminate_space(store.xpath('.//div[@class="home-contact-content"]//li//text()'))))        
         if store_hours == '<MISSING>':
-            store_hours = get_value(' '.join(eliminate_space(store.xpath('.//div[@class="pre-footer-details"]')[0].xpath('.//ul//li//text()'))))
-        output.append(get_value(' '.join(eliminate_space(store.xpath('.//div[@class="home-contact-content"]//li//text()'))))) #opening hours
+            temp = store.xpath('.//div[@class="pre-footer-details"]')
+            if len(temp) > 0:
+                store_hours = get_value(' '.join(eliminate_space(temp[0].xpath('.//ul//li//text()'))))
+        output.append(store_hours) #opening hours
         output_list.append(output)
     return output_list
 
