@@ -7,8 +7,8 @@ from selenium.webdriver.common.proxy import Proxy,ProxyType
 import time
 import re #for regular expression
 options = webdriver.ChromeOptions()
-options.add_argument("--headless")
 prefs= {"profile.default_content_setting_values.geolocation":2}
+options.add_argument("--headless")
 options.add_experimental_option("prefs",prefs)
 driver=webdriver.Chrome('chromedriver',options=options)
 
@@ -56,7 +56,7 @@ with open("data.csv",mode="w") as file:
         
         data=["www_mammaspizza_com","<MISSING>",street_address,city,"<MISSING>","<MISSING>","CA",store_number,contact_number,"<MISSING>","<MISSING>",
          "<MISSING>",hours_of_operation]
-        print(data)
+        
         fl_writer.writerow(data)
         
 driver.quit()

@@ -68,7 +68,7 @@ def fetch_data():
 
         lat = '<MISSING>'
         longit = '<MISSING>'
-        location_name = '<MISSING>'
+        location_name = link[link.find('on/') + 3:].replace('-', ' ').replace('/', '')
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'

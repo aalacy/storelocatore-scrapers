@@ -71,7 +71,7 @@ def fetch_data():
     states = driver.find_elements_by_css_selector('div.accordion-group')
     link_list = []
     for state in states:
-        i = state.find_element_by_css_selector('i.ico-plus')
+        i = state.find_element_by_css_selector('div.accordion-head')
         driver.execute_script("arguments[0].click();", i)
         time.sleep(1)
         lis = state.find_elements_by_css_selector('li')

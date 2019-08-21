@@ -29,14 +29,14 @@ class Scrape(base.Spider):
                     try:
                         loc = json_resp['address'][json_resp['address'].find('<br>')+4:].split(', '+state)
                         i.add_value('city', loc[0])
-                        i.add_value('zip', loc[1], lambda x: x.strip()[:3]+' '+x.strip()[3:] if ' ' not in x.strip() and len(x.strip())==6 else x)
+                        i.add_value('zip', loc[1], lambda x: x.strip()[:3]+' '+x.strip()[3:] if ' ' not in x.strip() and len(x.strip())==6 else x.strip())
                         i.add_value('street_address', json_resp['address'].split('<br>')[0])
                     except:
                         pass
                 else:
                     try:
                         loc = [l for l in json_resp['address'][:json_resp['address'].find(', '+state)].split(',')[-1].split(' ') if l]
-                        i.add_value('zip', loc[0], lambda x: x.strip()[:3]+' '+x.strip()[3:] if ' ' not in x.strip() and len(x.strip())==6 else x)
+                        i.add_value('zip', loc[0], lambda x: x.strip()[:3]+' '+x.strip()[3:] if ' ' not in x.strip() and len(x.strip())==6 else x.strip())
                         i.add_value('city', loc[1])
                         i.add_value('street_address', json_resp['address'].split(', '+loc[0])[0])
                     except:
@@ -45,7 +45,7 @@ class Scrape(base.Spider):
                 i.add_value('latitude', lat)
                 i.add_value('longitude', json_resp['longitude'])
                 i.add_value('state', state)
-                i.add_value('country_code', base.get_country_by_code(state))
+                i.add_value('country_code', base.get_country_by_code(state.lower()) if len(state) > 2 else base.get_country_by_code(state))
                 yield i
 
 

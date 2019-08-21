@@ -19,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     ids = []
-    for coord in sgzip.coords_for_radius(200):
+    for coord in sgzip.coords_for_radius(50):
         x = coord[0]
         y = coord[1]
         print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
@@ -53,7 +53,7 @@ def fetch_data():
         array = json.loads(r.content)
         for item in array['response']:
             website = 'autopartintl.com'
-            typ = item.split('"')[0]
+            typ = 'Store'
             name = item['name']
             add = item['address'] + ' ' + item['address2']
             city = item['city']

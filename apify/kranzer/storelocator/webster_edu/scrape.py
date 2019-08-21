@@ -31,7 +31,7 @@ class Scrape(base.Spider):
                     i.add_value('latitude', coords[1])
                     i.add_value('longitude', coords[0])
                     i.add_value('phone', loc_sp[-1].replace('Phone:', ''), lambda x: x.strip())
-                    i.add_value('state', ''.join([s[0] for s in state_zip if s[1] == "StateName"]), lambda x: x.lower() if len(x) > 2 else x)
+                    i.add_value('state', ''.join([s[0] for s in state_zip if s[1] == "StateName"]), lambda x: capwords(x) if len(x) > 2 else x)
                     i.add_value('zip', ''.join([s[0] for s in state_zip if s[1] == "ZipCode"]))
                     i.add_value('city', loc_sp[-3].strip())
                     i.add_value('country_code', 'US')
