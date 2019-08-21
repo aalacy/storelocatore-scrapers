@@ -22,7 +22,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -33,45 +32,39 @@ def addy_ext(addy):
 
 
 
-
 def fetch_data():
-    # Your scraper here
-    locator_domain = 'https://fathersoffice.com/'
+    locator_domain = 'https://www.aglamesis.com/'
+    ext = 'gourmet_chocolatiers/cincinnati_locations_a/255.htm'
 
     driver = get_driver()
-    driver.get(locator_domain)
-    driver.implicitly_wait(30)
+    driver.get(locator_domain + ext)
 
-    a_tags = driver.find_elements_by_css_selector('a.c-post.c-post--small')
-
-    link_list = []
-    for a_tag in a_tags:
-        link_list.append(a_tag.get_attribute('href'))
-
+    main = driver.find_element_by_css_selector('div.locations')
+    locs = main.find_elements_by_css_selector('div')
     all_store_data = []
-    for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
-
-        content = driver.find_element_by_css_selector('section.c-location-info').text.split('\n')
-
-        if '905 E. 2ND ST.' in content[1]:
-            # not open
-            continue
-
+    for i, loc in enumerate(locs):
+        content = loc.text.split('\n')
+        location_name = content[0]
         street_address = content[1]
         city, state, zip_code = addy_ext(content[2])
         phone_number = content[3]
         hours = ''
-        for h in content[6:]:
+        for h in content[5:]:
             hours += h + ' '
 
-        lat = '<MISSING>'
-        longit = '<MISSING>'
-        location_name = link[link.find('on/') + 3:].replace('-', ' ').replace('/', '')
+        hours = hours.strip()
+
+        link = driver.find_elements_by_xpath("//a[contains(@href, 'google.com/maps?')]")[i].get_attribute('href')
+        start_idx = link.find('ll=')
+        end_idx = link.find('&sa')
+
+        coords = link[start_idx + 3:end_idx].split(',')
+        lat = coords[0]
+        longit = coords[1]
+
         country_code = 'US'
-        store_number = '<MISSING>'
         location_type = '<MISSING>'
+        store_number = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

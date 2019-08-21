@@ -37,6 +37,9 @@ def loc_ext(driver, locator_domain, ext, all_store_data):
     ids = ext[1]
     driver.get(locator_domain + link)
     driver.implicitly_wait(10)
+
+    #item = driver.execute_script('return mapu143149')
+    #print(item)
     address = driver.find_element_by_css_selector('div' + ids[0]).text.split('\n')
     street_address = address[1]
     city, state, zip_code = addy_ext(address[2])
