@@ -51,6 +51,16 @@ class Scrape(base.Spider):
                     i.add_value('zip', st.split(' ')[1], lambda x: x.replace('\n',''), lambda x: x.replace('\r', ''))
                 except:
                     pass
+            elif len(addr) == 4:
+                i.add_value('street_address', ', '.join(addr[:3]), lambda x: x.replace('\n','').replace(', , ',', '), lambda x: x.replace('\r', ''))
+                st = addr[3]
+                i.add_value('city', st[:st.find(',')], lambda x: x.replace('\n',''), lambda x: x.replace('\r', ''))
+                st = st[st.find(',')+2:]
+                i.add_value('state', st.split(' ')[0], lambda x: x.replace('\n',''), lambda x: x.replace('\r', ''))
+                try:
+                    i.add_value('zip', st.split(' ')[1], lambda x: x.replace('\n',''), lambda x: x.replace('\r', ''))
+                except:
+                    pass
             i.add_xpath('phone', './/a[contains(@href, "tel")]/text()', base.get_first)
             i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
             print(i)

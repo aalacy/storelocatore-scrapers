@@ -13,7 +13,7 @@ opts=Options()
 opts.add_argument('disable-infobars')
 opts.add_argument("user-agent="+"sara")
 opts.add_argument("ignore-certificate-errors")
-options.add_argument("--headless")
+opts.add_argument("--headless")
 capabilities = webdriver.DesiredCapabilities.CHROME
 driver=webdriver.Chrome('chromedriver',options=opts,desired_capabilities=capabilities)
 url = "https://www.nandos.ca/eat/restaurants"
