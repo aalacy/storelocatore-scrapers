@@ -51,10 +51,9 @@ def fetch_data():
         store_hours = ""
         for x in hours:
             if x['openingTime'] == "Closed":
-                continue
-            store_hours += x['day'] + ":" + x['openingTime'] + '-' + x['closingTime'] + ' '
-        if store_hours == "":
-            continue
+                store_hours += x['day'] + ": Closed "
+            else:
+                store_hours += x['day'] + ":" + x['openingTime'] + '-' + x['closingTime'] + ' '
         output = []
         output.append(base_url) # url
         output.append(validate(store["acf"]["locationHero"]["storeName"])) #location name

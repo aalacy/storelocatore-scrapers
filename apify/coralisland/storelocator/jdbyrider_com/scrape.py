@@ -54,31 +54,32 @@ def fetch_data():
     store_list = json.loads(request.text)
     keys = list(store_list.keys())
     store_hours = ""
-    for key in keys:
-        store = store_list[key]
-        hours = store['_ServiceHours']
-        for hour in hours:
-            if hour['isClosed']:
-                continue
-            else:
-                store_hours += hour["dayOfWeek"] + ":" + hour["openTime"] + ' - ' + hour["closeTime"] + " "
-        output = []
-        output.append(base_url) # url
-        output.append(get_value(store['_BusName'])) #location name
-        output.append(get_value(store['_BusAddr1'])) #address
-        output.append(get_value(store['_BusCity'])) #city
-        output.append(get_value(store['_BusStateCd'])) #state
-        output.append(get_value(store['_BusZipCd'])) #zipcode
-        output.append('US') #country code
-        output.append(key) #store_number
-        output.append(get_value(store['_ServicePhoneNumber'])) #phone
-        output.append(validate(store["_SrvType"])) #location type
-        output.append(store['latitude']) #latitude
-        output.append(store['longitude']) #longitude
-        output.append(validate(store_hours)) #opening hours
-        if store['location_is_closed']:
-            continue        
-        output_list.append(output)
+
+    for key, store in store_list.items():
+        if store:
+            hours = store['_ServiceHours']
+            for hour in hours:
+                if hour['isClosed']:
+                    store_hours += hour["dayOfWeek"] + ": Closed "
+                else:
+                    store_hours += hour["dayOfWeek"] + ":" + hour["openTime"] + ' - ' + hour["closeTime"] + " "
+            output = []
+            output.append(base_url) # url
+            output.append(get_value(store['_BusName'])) #location name
+            output.append(get_value(store['_BusAddr1'])) #address
+            output.append(get_value(store['_BusCity'])) #city
+            output.append(get_value(store['_BusStateCd'])) #state
+            output.append(get_value(store['_BusZipCd'])) #zipcode
+            output.append('US') #country code
+            output.append(key) #store_number
+            output.append(get_value(store['_ServicePhoneNumber'])) #phone
+            output.append(validate(store["_SrvType"])) #location type
+            output.append(store['latitude']) #latitude
+            output.append(store['longitude']) #longitude
+            output.append(validate(store_hours)) #opening hours
+            if store['location_is_closed']:
+                continue        
+            output_list.append(output)
     return output_list
 
 def scrape():

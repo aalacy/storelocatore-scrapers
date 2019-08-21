@@ -54,8 +54,9 @@ def fetch_data():
     store_urls = response.xpath('//ul[@class="sydbar-ul-fld"]//a/@href')
     for store_url in store_urls:
         store_request = requests.get(store_url, headers=headers)
+        store_response = etree.HTML(store_request.text)
         
-        store = etree.HTML(store_request.text).xpath('//div[contains(@class, "contnsect-fld-dflt")]')[0]
+        store = store_response.xpath('//div[contains(@class, "contnsect-fld-dflt")]')[0]
         street_address = get_value(store.xpath('.//p//text()')[0])
         address = get_value(store.xpath('.//p//text()')[1])
         index = 0
@@ -69,6 +70,13 @@ def fetch_data():
             state = address.split(',')[1].split(' ')[1]
             zipcode = address.split(',')[1].split(' ')[2]
             index = 1
+
+        geolocation = store.xpath('.//iframe/@src')[0]
+
+        latitude =  geolocation.split('!2d-')[1].split('!3d')[0]
+        longitude = geolocation.split('!2d-')[1].split('!3d')[1].split('!')[0]
+        
+
         phone = get_value(store.xpath('.//p//text()')[2 + index])
         hours = get_value(store.xpath('.//p')[1].xpath('.//text()'))
         happyhours = get_value(store.xpath('.//p')[2].xpath('.//text()')[0])
@@ -85,8 +93,8 @@ def fetch_data():
         output.append("<MISSING>") #store_number
         output.append(phone) #phone
         output.append("ALONDRAS'S - Craft American Eatery") #location type
-        output.append("<INACCESSIBLE>") #latitude
-        output.append("<INACCESSIBLE>") #longitude
+        output.append(latitude) #latitude
+        output.append(longitude) #longitude
         output.append(store_hours.replace('\n', '')) #opening hours       
         output_list.append(output)
     return output_list
