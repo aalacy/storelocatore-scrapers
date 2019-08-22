@@ -43,7 +43,6 @@ def fetch_data():
                             else:
                                 locs.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
     for state in states:
-        print('Pulling State %s...' % state)
         r = session.get(state, headers=headers)
         for line in r.iter_lines():
             if 'a class="c-directory-list-content-item-link" href="' in line:
@@ -62,7 +61,6 @@ def fetch_data():
                             else:
                                 locs.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
     for city in cities:
-        print('Pulling City %s...' % city)
         coords = []
         stores = []
         if 'carquest' in city:
@@ -141,7 +139,6 @@ def fetch_data():
                     state = 'PR'
                 yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         coords = []
         stores = []
         if 'carquest' in loc:
