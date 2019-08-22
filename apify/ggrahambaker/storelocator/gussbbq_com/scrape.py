@@ -4,6 +4,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
 
+
 def get_driver():
     options = Options()
     options.add_argument('--headless')
@@ -38,15 +39,21 @@ def loc_ext(driver, locator_domain, ext, all_store_data):
     driver.get(locator_domain + link)
     driver.implicitly_wait(1200)
 
-    while (driver.execute_script("return typeof mapu143149 === 'undefined' && typeof mapu144269 === 'undefined'")): time.sleep(10)
+
+    while (driver.execute_script("return typeof mapu143149 === 'undefined' && typeof mapu144269 === 'undefined'")):
+        time.sleep(10)
 
     if (driver.execute_script("return typeof mapu143149 !== 'undefined'")):
-        print(driver.execute_script('return mapu143149.center.toJSON()'))
+        js = driver.execute_script('return mapu143149.center.toJSON()')
+        s_lat = js['lat']
+        s_longit = js['lng']
     elif (driver.execute_script("return typeof mapu144269 !== 'undefined'")):
-        print(driver.execute_script('return mapu144269.center.toJSON()'))
+        js = driver.execute_script('return mapu144269.center.toJSON()')
+        c_lat = js['lat']
+        c_longit = js['lng']
     else:
-        print("nooooo!!!")
-            
+        print('dang!')
+
     address = driver.find_element_by_css_selector('div' + ids[0]).text.split('\n')
     street_address = address[1]
     city, state, zip_code = addy_ext(address[2])
@@ -54,12 +61,23 @@ def loc_ext(driver, locator_domain, ext, all_store_data):
 
     hours = driver.find_element_by_css_selector('div' + ids[1]).text.replace('\n', ' ').replace('HOURS', '').strip()
 
-    lat = '<MISSING>'
-    longit = '<MISSING>'
+
     location_name = '<MISSING>'
     country_code = 'US'
     location_type = '<MISSING>'
     store_number = '<MISSING>'
+
+
+    if 'Claremont' in city:
+        lat = c_lat
+        longit = c_longit
+    if 'South' in city:
+        lat = s_lat
+        longit = s_longit
+
+
+
+
     store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                   store_number, phone_number, location_type, lat, longit, hours]
     all_store_data.append(store_data)

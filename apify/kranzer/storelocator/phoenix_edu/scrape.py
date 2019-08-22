@@ -16,7 +16,7 @@ class Scrape(base.Spider):
             selector = base.selector(urljoin(base_url,result))
             i = base.Item(selector['tree'])
             i.add_value('locator_domain', selector['request'].url)
-            i.add_xpath('hours_of_operation', './/div[@class="tabindexClass"]/p/text()[contains(., "Hours:")]', base.get_first, lambda x: x.replace('Hours: ', ''))
+            i.add_xpath('hours_of_operation', './/div[@class="tabindexClass"]/p/text()[contains(., "Hours:")]', base.get_first, lambda x: x.replace('Hours: ', '').strip())
             loc = selector['tree'].xpath('.//p[@class="section-lead-copy"]//text()')
             st = []
             al_s = False
