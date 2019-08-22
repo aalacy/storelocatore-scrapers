@@ -116,7 +116,12 @@ def fetch_data():
 
         # Hour  - Use backup to reference
         hour = " ".join(re.sub("<[^>]*>", ",", location["hours"]).split(","))
-        hours.append(hour if hour != "" else hour_dict[location["store"]])
+        if hour == "":
+            if location["store"] in hour_dict.keys():
+                hour = hour_dict[location["store"]]
+            else:
+                hour = "<MISSING>"
+        hours.append(hour)
 
     for (
         locations_title,
