@@ -28,7 +28,7 @@ async function scrape() {
     street_address = street_address.replace(/\s/, ' ');
     const location_name = $(poiElement).parent().prev().text().trim();
     records.push({
-      locator_domain: 'safegraph.com',
+      locator_domain: 'phoenixmovies.net',
       location_name,
       street_address,
       city,
