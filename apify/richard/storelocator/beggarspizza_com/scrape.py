@@ -1,6 +1,7 @@
 import csv
 import json
 import re
+import time
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -83,6 +84,7 @@ def fetch_data():
     # Fetch store urls from location menu
     store_url = "https://www.beggarspizza.com/wp-admin/admin-ajax.php?action=store_search&lat=41.878114&lng=-87.629798&max_results=25&search_radius=1000&autoload=1"
     driver.get(store_url)
+    time.sleep(1)
 
     locations = json.loads(driver.find_element_by_css_selector("pre").text)
 
