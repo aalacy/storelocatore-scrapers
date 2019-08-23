@@ -82,8 +82,8 @@ def fetch_data():
         output.append(validate(store[2].replace('Tel:', ''))) #phone
         output.append("Asian Grocery Stores") #location type
         geo = eliminate_space(geo_list[idx].split(','))
-        output.append(geo[0]) #latitude
-        output.append(geo[1]) #longitude
+        output.append(geo[1]) #latitude
+        output.append(geo[2]) #longitude
         output.append(', '.join(store[4:-1])) #opening hours        
         output_list.append(output)
     return output_list
