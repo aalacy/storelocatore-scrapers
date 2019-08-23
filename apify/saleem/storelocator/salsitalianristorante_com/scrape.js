@@ -40,7 +40,9 @@ async function scrape() {
       location_type: '<MISSING>',
       latitude: store.data.map_lat,
       longitude: store.data.map_lng,
-      hours_of_operation: JSON.stringify((({ hours_Sunday, hours_Monday, hours_Tuesday, hours_Wednesday, hours_Thursday, hours_Friday, hours_Saturday }) => {return { hours_Sunday, hours_Monday, hours_Tuesday, hours_Wednesday, hours_Thursday, hours_Friday, hours_Saturday }})(store.data)),
+      hours_of_operation: (({ hours_Sunday, hours_Monday, hours_Tuesday, hours_Wednesday, hours_Thursday, hours_Friday, hours_Saturday }) => {
+        return `Sunday: ${hours_Sunday}, Monday: ${hours_Monday}, Tuesday: ${hours_Tuesday}, Wednesday: ${hours_Wednesday}, Thursday: ${hours_Thursday}, Friday: ${hours_Friday}, Saturday: ${hours_Saturday}`;
+      })(store.data),
     });
   }
 

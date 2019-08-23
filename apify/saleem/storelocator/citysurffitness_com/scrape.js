@@ -48,7 +48,7 @@ const cheerio = require('cheerio');
 
 
 			const poi = {
-        locator_domain: 'safegraph.com',
+        locator_domain: 'citysurffitness.com',
         location_name,
         street_address,
         city,

@@ -28,7 +28,7 @@ const cheerio = require('cheerio');
         longitude
       } = $('iframe').attr('src').match(/\!2d(?<longitude>-?\d{2}\.\d+)\!3d(?<latitude>-?\d{2}\.\d+)\!/).groups;
 			const poi = {
-        locator_domain: 'coreevolutionpb_com',
+        locator_domain: 'coreevolutionpb.com',
         location_name: $('title').text().trim(),
         street_address: $(info[3]).text().trim(),
         city,
@@ -36,7 +36,7 @@ const cheerio = require('cheerio');
         zip,
         country_code: 'US',
 				store_number: '<MISSING>',
-				phone: $(info[0]).text().trim(),
+				phone: $(info[0]).text().trim().match(/\d{3} \. \d{3} \. \d{4}/)[0],
 				location_type: '<MISSING>',
         latitude,
         longitude,
