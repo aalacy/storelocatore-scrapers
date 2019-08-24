@@ -2,6 +2,8 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import json
+import time
 
 
 def get_driver():
@@ -81,7 +83,15 @@ def fetch_data():
 
     for link in link_list:
         driver.get(link)
-        driver.implicitly_wait(10)
+        driver.implicitly_wait(30)
+
+        loc_j = driver.find_elements_by_xpath('//script[@type="application/ld+json"]')
+
+        loc_json = json.loads(loc_j[1].get_attribute('innerHTML'))
+
+        lat = loc_json['geo']['latitude']
+        longit = loc_json['geo']['longitude']
+
         loc = driver.find_element_by_css_selector('div.pt-2.pb-4.px-4')
 
         content = loc.text.split('\n')
@@ -95,8 +105,7 @@ def fetch_data():
 
         hours = driver.find_element_by_css_selector('tbody').text.replace('\n', ' ')
 
-        lat = '<INACCESSIBLE>'
-        longit = '<INACCESSIBLE>'
+
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

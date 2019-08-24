@@ -36,7 +36,7 @@ const cheerio = require('cheerio');
         zip,
         country_code: 'US',
 				store_number: '<MISSING>',
-				phone: $(info[0]).text().trim().match(/\d{3} \. \d{3} \. \d{4}/)[0],
+				phone: $(info[0]).text().trim(),
 				location_type: '<MISSING>',
         latitude,
         longitude,
