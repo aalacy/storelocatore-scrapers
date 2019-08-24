@@ -54,7 +54,7 @@ const cheerio = require('cheerio');
         zip,
         country_code,
 				store_number,
-				phone,
+				phone: (phone.length > 0)? phone : '<MISSING>',
 				location_type,
         latitude: '<MISSING>',
         longitude: '<MISSING>',
