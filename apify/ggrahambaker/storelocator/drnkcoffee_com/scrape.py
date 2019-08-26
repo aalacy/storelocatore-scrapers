@@ -49,8 +49,10 @@ def fetch_data():
                 street_address += parsed_add['AddressNumber'] + ' '
                 if 'StreetNamePreDirectional' in parsed_add:
                     street_address += parsed_add['StreetNamePreDirectional'] + ' '
-
-                street_address += parsed_add['StreetName'] + ' '
+                if 'LandmarkName' in parsed_add:
+                    street_address += parsed_add['LandmarkName'] + ' '
+                if 'StreetName' in parsed_add:
+                    street_address += parsed_add['StreetName'] + ' '
                 if 'StreetNamePostType' in parsed_add:
                     street_address += parsed_add['StreetNamePostType'] + ' '
                 if 'OccupancyType' in parsed_add:
@@ -60,6 +62,19 @@ def fetch_data():
                 city = parsed_add['PlaceName']
                 state = parsed_add['StateName']
                 zip_code = parsed_add['ZipCode']
+                lat = '<MISSING>'
+                longit = '<MISSING>'
+
+                country_code = 'US'
+                location_type = '<MISSING>'
+                store_number = '<MISSING>'
+                hours = '<MISSING>'
+                if 'Little Elm' in location_name:
+                    zip_code = '75068'
+
+                store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                              store_number, phone_number, location_type, lat, longit, hours]
+                all_store_data.append(store_data)
 
         else:
             to_spin = [content[:4], content[4:9], content[-4:]]
@@ -74,6 +89,8 @@ def fetch_data():
                     street_address += parsed_add['AddressNumber'] + ' '
                 if 'StreetNamePreDirectional' in parsed_add:
                     street_address += parsed_add['StreetNamePreDirectional'] + ' '
+                if 'LandmarkName' in parsed_add:
+                    street_address += parsed_add['LandmarkName'] + ' '
                 if 'StreetName' in parsed_add:
                     street_address += parsed_add['StreetName'] + ' '
                 if 'StreetNamePostType' in parsed_add:
@@ -85,21 +102,21 @@ def fetch_data():
                 city = parsed_add['PlaceName']
                 state = parsed_add['StateName']
                 zip_code = parsed_add['ZipCode']
+                lat = '<MISSING>'
+                longit = '<MISSING>'
 
-        lat = '<MISSING>'
-        longit = '<MISSING>'
+                country_code = 'US'
+                location_type = '<MISSING>'
+                store_number = '<MISSING>'
+                hours = '<MISSING>'
+                if 'Little Elm' in location_name:
+                    zip_code = '75068'
 
-        country_code = 'US'
-        location_type = '<MISSING>'
-        store_number = '<MISSING>'
-        hours = '<MISSING>'
-        if 'Little Elm' in location_name:
-            zip_code = '75068'
+                store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                              store_number, phone_number, location_type, lat, longit, hours]
+                all_store_data.append(store_data)
 
 
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
-        all_store_data.append(store_data)
     driver.quit()
     return all_store_data
 

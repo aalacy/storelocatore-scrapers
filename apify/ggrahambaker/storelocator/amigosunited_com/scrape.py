@@ -52,11 +52,13 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(locator_domain + ext)
+    driver.implicitly_wait(30)
 
     locs = driver.find_elements_by_css_selector('div.storeresult-listitem')
     all_store_data = []
     for loc in locs:
         content = clean(loc.text.split('\n'))
+
         location_type = content[0]
         street_address = content[1]
         city, state, zip_code = addy_ext(content[2])

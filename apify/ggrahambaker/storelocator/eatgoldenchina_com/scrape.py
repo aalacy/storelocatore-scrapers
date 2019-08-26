@@ -40,6 +40,7 @@ def fetch_data():
         zip_code = content[2].text
         state = content[3].text
         phone_number = content[5].text
+
         if phone_number == '':
             phone_number = '<MISSING>'
 
