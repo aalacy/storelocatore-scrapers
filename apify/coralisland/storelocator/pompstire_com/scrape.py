@@ -27,7 +27,7 @@ def fetch_data():
     url = "https://www.pompstire.com/locations.aspx"
     request = requests.get(url)
     response = etree.HTML(request.text.encode("utf-8"))
-    store_list = response.xpath('//div[@class="loclisting"]')
+    store_list = response.xpath('//div[@id="LocationListView"]/div')
     for idx, store in enumerate(store_list):
         output = []
         info = store.xpath('.//div[@class="locationInfo"]')
@@ -47,7 +47,6 @@ def fetch_data():
         output.append("<MISSING>") #longitude
         output.append(store_hours) #hours_of_operation
         output = validate(output)
-
         output_list.append(output)
     return output_list
     

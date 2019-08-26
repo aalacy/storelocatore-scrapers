@@ -14,7 +14,7 @@ async function scrape() {
   await request("https://www.btonefitness.com/locations")
     .then((html) => {
       // the location information is available in the google maps markers in the inline javascript of the page
-      const regex = /(google.maps.Marker[\d\D]*?html: \')(?<elementHTML>[\d\D]*?)(\'\s*\}\))/g;
+      const regex = /(google.maps.Marker[\d\D]*?position: \{ lat: (?<lat>[-\d\.]*?), lng: (?<long>[-\d\.]*)[\d\D]*?html: \')(?<elementHTML>[\d\D]*?)(\'\s*\}\))/g;
       while ((element = regex.exec(html)) !== null) {
         var $ = cheerio.load(element.groups.elementHTML);
           var location_name = $('h3').text();
@@ -37,8 +37,8 @@ async function scrape() {
             store_number: '<MISSING>',
             phone: '<MISSING>',
             location_type: '<MISSING>',
-            latitude: '<MISSING>',
-            longitude: '<MISSING>',
+            latitude: element.groups.lat || '<MISSING>',
+            longitude: element.groups.long || '<MISSING>',
             hours_of_operation: '<MISSING>',
           });
       }

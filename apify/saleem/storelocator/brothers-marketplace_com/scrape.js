@@ -10,7 +10,7 @@ Apify.main(async () => {
 async function scrape() {
 
   // Begin scraper
-  const rootAddress = 'https://www.brothers-marketplace.com';
+  const rootAddress = 'http://rochemarket.wpengine.com/locations/';
   const records = [];
   await request({
     url: rootAddress,
@@ -20,16 +20,15 @@ async function scrape() {
   })
     .then(async function (html) {
       const $ = cheerio.load(html);
-
-      // individual stores are in .col elements
-      $(".col").each((_, storeElement) => {
-        const location_name = $("h2", storeElement).text();
-        const rawAddress = $('p', storeElement).text();
-        const {groups: addressParts} = rawAddress.match(/\s*(?<street_address>.+)\n(?<hours>.+\n.+)\n(?<phone>[.\d]*)/)
+      
+      const pois = [...$('.entry-content').text().trim().matchAll(/(?<location_name>[A-Z]{3,})[\d\D]*?\n(?<street_address>\d+ .*)\b\s*?\n(?<hours>[\d\D]*?)\b(?<phone>\d{3}\.\d{3}.\d{4})\b/g)];
+      
+      for (const poi of pois) {
+        const { location_name, street_address, hours, phone} = poi.groups;
         records.push({
-          locator_domain: 'brothers-marketplace_com',
+          locator_domain: 'rochemarket.wpengine.com',
           location_name: location_name,
-          street_address: addressParts.street_address,
+          street_address: street_address,
           // location_name appears to be city name
           city: location_name,
           // state is not given with each location, but it is the same across all
@@ -37,13 +36,13 @@ async function scrape() {
           zip: '<MISSING>',
           country_code: 'US',
           store_number: '<MISSING>',
-          phone: addressParts.phone,
+          phone: phone,
           location_type: '<MISSING>',
           latitude: '<MISSING>',
           longitude: '<MISSING>',
-          hours_of_operation: addressParts.hours,
+          hours_of_operation: hours,
         });
-      });
+      }
     });
 
   return records;

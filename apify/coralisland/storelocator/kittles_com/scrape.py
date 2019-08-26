@@ -54,6 +54,7 @@ def fetch_data():
         link = base_url + validate(link.xpath('./@href'))
         data = etree.HTML(session.get(link, headers=headers).text)
         store = json.loads(validate(data.xpath('//script[@type="application/ld+json"]')[1].xpath('.//text()')).replace('- -', '-'))
+        store_hours = ', '.join(eliminate_space(data.xpath('.//div[@class="store-locations-info"]')[1].xpath('.//text()'))[1:])
         output = []
         output.append(base_url) # url
         output.append(name) #location name
@@ -66,15 +67,8 @@ def fetch_data():
         output.append(store['telephone']) #phone
         output.append("Kittle's Furniture and Mattress Stores") #location type
         output.append(str(store['geo']['latitude'])) #latitude
-        output.append(str(store['geo']['longitude'])) #longitude  
-        store_hours = []
-        for hour in store['openingHoursSpecification']:
-            if type(hour['dayOfWeek']) == list:
-                for day in hour['dayOfWeek']:
-                    store_hours.append(day + ' ' + hour['opens'] + ' - ' + hour['closes'])
-            else:
-                store_hours.append(hour['dayOfWeek'] + ' ' + hour['opens'] + ' - ' + hour['closes'])
-        output.append(', '.join(store_hours)) #opening hours
+        output.append(str(store['geo']['longitude'])) #longitude          
+        output.append(store_hours) #opening hours
         output_list.append(output)
     return output_list
 
