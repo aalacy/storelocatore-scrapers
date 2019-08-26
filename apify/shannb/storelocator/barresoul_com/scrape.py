@@ -2,6 +2,7 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import xlsxwriter
+import json
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -14,11 +15,9 @@ def write_output(data):
             writer.writerow(row)
 
 
-def add_store(locator_domain, location_name, street_address, city, state, zip, phone):
+def add_store(locator_domain, location_name, street_address, city, state, zip, phone, latitude, longitude):
 
     country_code = "US"
-    latitude = "<INACCESSIBLE>"
-    longitude = "<INACCESSIBLE>"
     store_number = "<MISSING>"
     location_type = "<MISSING>"
     hours_of_operation = "<MISSING>"
@@ -56,7 +55,21 @@ def fetch_data():
             location_name = soup.title.get_text().split("|")[0].strip(" ")
         street_address = None
         addtl_address = None
-    
+
+        lat_long = None
+        if soup.find(class_="sqs-block map-block sqs-block-map sized vsize-7"):
+            lat_long = json.loads(soup.find(class_="sqs-block map-block sqs-block-map sized vsize-7")['data-block-json'])['location']
+        elif soup.find(class_="sqs-block map-block sqs-block-map sqs-col-5 span-5 float float-right"):
+            lat_long = json.loads(soup.find(class_="sqs-block map-block sqs-block-map sqs-col-5 span-5 float float-right")['data-block-json'])['location']
+        elif soup.find(class_="sqs-block map-block sqs-block-map sqs-col-6 span-6 float float-right"):
+            lat_long = json.loads(soup.find(class_="sqs-block map-block sqs-block-map sqs-col-6 span-6 float float-right")['data-block-json'])['location']
+        elif soup.find(class_="sqs-block map-block sqs-block-map sqs-col-5 span-5 float float-right sized vsize-7"):
+            lat_long = json.loads(soup.find(class_="sqs-block map-block sqs-block-map sqs-col-5 span-5 float float-right sized vsize-7")['data-block-json'])['location']
+
+        
+        latitude = lat_long['mapLat']
+        longitude = lat_long['mapLng']
+
 
         if location_name == "Portsmouth":
 
@@ -72,7 +85,7 @@ def fetch_data():
                 elif i == 3:
                     zip = val.string
             phone = soup.find_all("h3")[2].next_sibling.contents[0].string
-            barre_store = add_store(locator_domain, location_name, street_address, city, state, zip, phone)
+            barre_store = add_store(locator_domain, location_name, street_address, city, state, zip, phone, latitude, longitude)
             barre_stores.append(barre_store)
         elif location_name == "Wayland Square":
             address = soup.find_all("h3")[2].contents
@@ -82,7 +95,7 @@ def fetch_data():
             state = address[3].split(" ")[1]
             zip = address[3].split(" ")[2]
             phone = soup.find_all("h3")[2].next_sibling.contents[0].string.strip(" \xa0| \xa0")
-            barre_store = add_store(locator_domain, location_name, street_address, city, state, zip, phone)
+            barre_store = add_store(locator_domain, location_name, street_address, city, state, zip, phone, latitude, longitude)
             barre_stores.append(barre_store)
         elif soup.find_all("h3")[2].strong is None:
             address1 = soup.find_all("h3")[2].next_sibling.children
@@ -99,7 +112,7 @@ def fetch_data():
             zip = addtl_address.split(" ")[2]
             phone = soup.find_all("h3")[2].next_sibling.next_sibling.next_sibling.next_sibling.contents[0].strip(" |")
 
-            barre_store = add_store(locator_domain, location_name, street_address, city, state, zip, phone)
+            barre_store = add_store(locator_domain, location_name, street_address, city, state, zip, phone, latitude, longitude)
             barre_stores.append(barre_store)
 
             address2 = soup.find_all("h3")[2].next_sibling.next_sibling.children
@@ -115,7 +128,7 @@ def fetch_data():
             state = addtl_address.split(" ")[1].strip(", ")
             zip = addtl_address.split(" ")[2]
 
-            barre_store = add_store(locator_domain, location_name, street_address, city, state, zip, phone)
+            barre_store = add_store(locator_domain, location_name, street_address, city, state, zip, phone, latitude, longitude)
             barre_stores.append(barre_store)
 
         else:
@@ -132,7 +145,7 @@ def fetch_data():
             state = addtl_address.split(" ")[1].strip(", ")
             zip = addtl_address.split(" ")[2]
             phone = soup.find_all("h3")[2].next_sibling.contents[0].string.strip(" \xa0| \xa0")
-            barre_store = add_store(locator_domain, location_name, street_address, city, state, zip, phone)
+            barre_store = add_store(locator_domain, location_name, street_address, city, state, zip, phone, latitude, longitude)
             barre_stores.append(barre_store)
 
     return barre_stores
