@@ -2,7 +2,7 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+import time
 
 def get_driver():
     options = Options()
@@ -23,58 +23,41 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
-
-
-
 def fetch_data():
-    locator_domain = 'https://deliastamales.com/'
-    ext = 'locations/'
+    locator_domain = 'https://www.newyorkfries.com/'
+    ext = 'locations/all'
 
     driver = get_driver()
     driver.get(locator_domain + ext)
+    main = driver.find_element_by_css_selector('div.canada')
+    locs = main.find_elements_by_xpath('//span[@role="row"]')
 
-    alert_obj = driver.switch_to.alert
-
-    alert_obj.accept()
-
-    main = driver.find_element_by_css_selector('footer#footer')
-
-    locs = main.find_elements_by_css_selector('div.location')
     all_store_data = []
     for loc in locs:
-        content = loc.text.split('\n')
-        location_name = content[0]
-        street_address = content[1]
-        city, state, zip_code = addy_ext(content[2])
-        phone_number = content[3]
+        driver.execute_script("arguments[0].classList.add('open');", loc)
+        cont = loc.find_element_by_css_selector('div.location-title').text.split('\n')
+        if 'Bahrain City Centre Mall' in cont[0]:
+            break
+        time.sleep(.1)
+        location_name = cont[0]
+        city = cont[-2]
+        state = cont[-1]
 
+        street_address = loc.find_element_by_css_selector('div.location-info').text
 
-        href = loc.find_element_by_css_selector('a').get_attribute('href')
-        start_idx = href.find('/@')
-        end_idx = href.find('z/d')
-        coords = href[start_idx + 2: end_idx].split(',')
-        lat = coords[0]
-        longit = coords[1]
-
-        hours = 'Monday - Saturday 6:00AM to 8:00PM Sunday 7:00 AM to 6:00PM'
-
-        country_code = 'US'
+        hours = '<MISSING>'
+        zip_code = '<MISSING>'
 
         store_number = '<MISSING>'
         location_type = '<MISSING>'
+        phone_number = '<MISSING>'
+        country_code = 'CA'
+        lat = '<MISSING>'
+        longit = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

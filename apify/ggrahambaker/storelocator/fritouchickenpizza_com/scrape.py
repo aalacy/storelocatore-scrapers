@@ -24,36 +24,36 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    locator_domain = 'http://singaspizzas.com/'
-    ext = 'locations/'
+    locator_domain = 'https://www.fritouchickenpizza.com/'
 
     driver = get_driver()
-    driver.get(locator_domain + ext)
-
-    stores = driver.find_elements_by_css_selector('div.et_pb_text.et_pb_module.et_pb_text_align_left')
+    driver.get(locator_domain)
+    driver.implicitly_wait(10)
 
     all_store_data = []
-    for store in stores:
-        content = store.text.split('\n')
+    loc = driver.find_element_by_css_selector('div#SITE_FOOTERinlineContent-gridContainer')
 
-        if len(content) > 1:
-            location_name = content[0]
-            street_address = content[1]
-            city = content[2]
-            zip_code = content[3]
-            phone_number = content[4]
-            state = '<MISSING>'
+    cont = loc.text.split('\n')
+    street_address = cont[2].strip()
+    addy = cont[3].split(',')
+    city = addy[0]
+    state = addy[1].strip()
+    zip_code = '<MISSING>'
+    phone_number = cont[6]
+    hours = cont[9] + ' ' + cont[10]
 
-            country_code = 'US'
-            store_number = '<MISSING>'
-            location_type = '<MISSING>'
-            hours = '<MISSING>'
-            lat = '<MISSING>'
-            longit = '<MISSING>'
 
-            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                          store_number, phone_number, location_type, lat, longit, hours]
-            all_store_data.append(store_data)
+    store_number = '<MISSING>'
+    location_type = '<MISSING>'
+    location_name = '<MISSING>'
+
+    country_code = 'CA'
+    lat = '<MISSING>'
+    longit = '<MISSING>'
+
+    store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                  store_number, phone_number, location_type, lat, longit, hours]
+    all_store_data.append(store_data)
 
     driver.quit()
     return all_store_data
