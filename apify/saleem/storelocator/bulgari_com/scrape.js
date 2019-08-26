@@ -60,7 +60,7 @@ const cheerio = require('cheerio');
         location_type: request.userData.itemSubtitle,
         latitude: request.userData.latitude,
         longitude: request.userData.longitude,
-        hours_of_operation: $('.store-hours').text()
+        hours_of_operation: $('.store-hours').text().replace(/\s+/g, ' ')
       });
     }
   });

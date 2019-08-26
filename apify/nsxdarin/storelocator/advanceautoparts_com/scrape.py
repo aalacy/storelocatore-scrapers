@@ -15,7 +15,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    urls = ['https://stores.advanceautoparts.com/','https://www.carquest.com/stores/united-states','https://www.carquest.com/stores/canada']
+    urls = ['https://stores.advanceautoparts.com/']
     states = []
     cities = []
     locs = []
@@ -33,16 +33,11 @@ def fetch_data():
                     if '<span class="c-directory-list-content-item-count">(' in item:
                         count = item.split('<span class="c-directory-list-content-item-count">(')[1].split(')')[0]
                         if count != '1':
-                            if 'carquest' in url:
-                                states.append('https://www.carquest.com/' + item.split('"')[0].replace('..',''))
-                            else:
-                                states.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
+                            states.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
                         else:
-                            if 'carquest' in url:
-                                locs.append('https://www.carquest.com/' + item.split('"')[0].replace('..',''))
-                            else:
-                                locs.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
+                            locs.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
     for state in states:
+        print('Pulling State %s...' % state)
         r = session.get(state, headers=headers)
         for line in r.iter_lines():
             if 'a class="c-directory-list-content-item-link" href="' in line:
@@ -51,22 +46,15 @@ def fetch_data():
                     if '<span class="c-directory-list-content-item-count">(' in item:
                         count = item.split('<span class="c-directory-list-content-item-count">(')[1].split(')')[0]
                         if count != '1':
-                            if 'carquest' in state:
-                                cities.append('https://www.carquest.com/' + item.split('"')[0].replace('..',''))
-                            else:
-                                cities.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
+                            cities.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
                         else:
-                            if 'carquest' in state:
-                                locs.append('https://www.carquest.com/' + item.split('"')[0].replace('..',''))
-                            else:
-                                locs.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
+                            locs.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
+                                
     for city in cities:
+        print('Pulling City %s...' % city)
         coords = []
         stores = []
-        if 'carquest' in city:
-            typ = 'Carquest'
-        else:
-            typ = 'Advance Auto Parts'
+        typ = 'Advance Auto Parts'
         r = session.get(city, headers=headers)
         for line in r.iter_lines():
             if '<div class="LocationName-geo">' in line:
@@ -139,14 +127,23 @@ def fetch_data():
                     state = 'PR'
                 yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for loc in locs:
-        coords = []
-        stores = []
-        if 'carquest' in loc:
-            typ = 'Carquest'
-        else:
-            typ = 'Advance Auto Parts'
+        print('Pulling Location %s...' % loc)
+        typ = 'Advance Auto Parts'
         r = session.get(loc, headers=headers)
+        name = ''
+        add = ''
+        city = ''
+        state = ''
+        zc = ''
+        lat = ''
+        lng = ''
+        hours = ''
+        country = ''
+        phone = ''
+        store = ''
         for line in r.iter_lines():
+            if '"store_id":"' in line:
+                store = line.split('"store_id":"')[1].split('"')[0]
             if '<div class="LocationName-geo">' in line:
                 name = line.split('<div class="LocationName-geo">')[1].split('<')[0]
                 add = line.split('class="c-address-street-1"')[1].split('>')[1].split('<')[0]
@@ -199,25 +196,13 @@ def fetch_data():
                 items = line.split(',"id":')
                 for item in items:
                     if '"longitude":' in item:
-                        latlng = item.split(',')[0] + '|' + item.split('"latitude":')[1].split(',')[0] + '|' + item.split('"longitude":')[1].split(',')[0]
-                        coords.append(latlng)
-        for x in range(0, len(stores)):
-            name = stores[x].split('|')[0]
-            add = stores[x].split('|')[1]
-            city = stores[x].split('|')[2]
-            state = stores[x].split('|')[3]
-            zc = stores[x].split('|')[4]
-            country = stores[x].split('|')[5]
-            phone = stores[x].split('|')[6]
-            hours = stores[x].split('|')[7]
-            store = coords[x].split('|')[0]
-            lat = coords[x].split('|')[1]
-            lng = coords[x].split('|')[2]
-            if store not in allstores:
-                allstores.append(store)
-                if state == '':
-                    state = 'PR'
-                yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                        lat = item.split('"latitude":')[1].split(',')[0]
+                        lng = item.split('"longitude":')[1].split(',')[0]
+        if store not in allstores:
+            allstores.append(store)
+            if state == '':
+                state = 'PR'
+            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
