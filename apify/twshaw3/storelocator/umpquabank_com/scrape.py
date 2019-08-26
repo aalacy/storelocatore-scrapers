@@ -1,6 +1,9 @@
 import requests
 import csv
 import datetime
+import sgzip
+import geopy.distance
+import random
 
 class UmpquaBank:
     csv_filename = 'data.csv'
@@ -8,6 +11,9 @@ class UmpquaBank:
     url = 'https://www.umpquabank.com/api/v1/locations'
     seen = set()
     csv_fieldnames = ['locator_domain', 'location_name', 'street_address', 'city', 'state', 'zip', 'country_code', 'store_number', 'phone', 'location_type', 'latitude', 'longitude', 'hours_of_operation']
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    random.seed(1234)
 
     def encode(self, string):
         return string.encode('utf-8')
@@ -15,18 +21,18 @@ class UmpquaBank:
     def map_data(self, row):
         return {
             'locator_domain': self.domain_name
-            ,'location_name': self.encode(row.get('name', '<MISSING>'))
-            ,'street_address': self.encode(row.get('address1', '<MISSING>'))
+            ,'location_name': '<MISSING>'
+            ,'street_address': self.encode(row.get('addressLine1', '<MISSING>'))
             ,'city': self.encode(row.get('city', '<MISSING>'))
             ,'state': self.encode(row.get('state', '<MISSING>'))
-            ,'zip': self.encode(row.get('postal', '<MISSING>')) if len(row.get('postal', '')) <= 6 else None
-            ,'country_code': self.encode(row.get('country', '<MISSING>'))
-            ,'store_number': self.encode(row.get('id', '<MISSING>'))
-            ,'phone': self.encode(row.get('phone', '<MISSING>')) if len(row.get('phone', '')) >= 10 else None
-            ,'location_type': row.get('utcOffset', '<MISSING>')
-            ,'latitude': row.get('lat', '<MISSING>')
-            ,'longitude': row.get('lng', '<MISSING>')
-            ,'hours_of_operation': ', '.join('%s-%s; day %d' % (d.get('openTime'), d.get('closeTime'), d.get('day')) for d in row.get('daysOfWeek', ''))
+            ,'zip': self.encode(row.get('zip', '<MISSING>'))
+            ,'country_code': 'US'
+            ,'store_number': self.encode(row.get('storeNumber', '<MISSING>'))
+            ,'phone': self.encode(row.get('phoneNumber', '<MISSING>'))
+            ,'location_type': 'ATM' if row['atm'] else 'BRANCH'
+            ,'latitude': row.get('latitude', '<MISSING>')
+            ,'longitude': row.get('longitude', '<MISSING>')
+            ,'hours_of_operation': '<MISSING>'
         }
 
     def crawl(self):
@@ -36,7 +42,6 @@ class UmpquaBank:
             ,'cache-control': 'max-age=0'
             ,'authority': 'www.umpquabank.com'
             ,'method': 'POST'
-            ,'content-length': 185
             ,'path': '/api/v1/locations'
             ,'scheme': 'https'
             ,'accept': '*/*'
@@ -48,10 +53,24 @@ class UmpquaBank:
             ,'sec-fetch-site': 'same-origin'
             ,'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         })
-        api_data = {"latitude":37.7618242,"longitude":-122.39858709999999,"spanishSpeaking":False,"atm":False,"openNow":False,"openSaturdays":False,"driveUpWindow":False,"date":"2019-08-22T04:04:22.311Z"}
-        r = session.post(self.url, json=api_data, allow_redirects=False)
-        if r.status_code == 200:
-            print(r.content)
+        query_coord = self.search.next_coord()
+        locations = []
+        while query_coord:
+            lat, lng = query_coord[0], query_coord[1]
+            api_data = {"latitude":lat,"longitude":lng,"spanishSpeaking":False,"atm":False,"openNow":False,"openSaturdays":False,"driveUpWindow":False,"date":"2019-08-22T04:04:22.311Z"}
+            r = session.post(self.url, json=api_data, allow_redirects=False)
+            if r.status_code == 200:
+                json = r.json()
+                result_coords = []
+                for location in json['locations']:
+                    result_coords.append((location['latitude'], location['longitude']))
+                    if location['storeNumber'] not in self.seen:
+                        self.seen.add(location['storeNumber'])
+                        locations.append(location)
+                self.search.update(result_coords)
+                query_coord = self.search.next_coord()
+        for loc in locations:
+            yield loc
 
     def write_to_csv(self, rows):
         output_file = self.csv_filename
