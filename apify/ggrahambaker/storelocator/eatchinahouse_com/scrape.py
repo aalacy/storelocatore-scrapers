@@ -40,6 +40,8 @@ def fetch_data():
         zip_code = cont[2].text.replace('#', '').strip()
         state = cont[3].text
         phone_number = cont[4].text
+        if phone_number == '':
+            phone_number = '<MISSING>'
 
         location_name = '<MISSING>'
         store_number = '<MISSING>'

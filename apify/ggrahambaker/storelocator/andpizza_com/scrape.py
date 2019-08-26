@@ -59,8 +59,6 @@ def fetch_data():
             tds = row.find_elements_by_css_selector('td')
             for td in tds:
                 cont = clean(td.text.split('\n'))
-                print(cont)
-                print(len(cont))
                 if len(cont) == 0:
                     continue
                 elif len(cont) == 14:
@@ -108,6 +106,10 @@ def fetch_data():
                             hours += h + ' '
 
                         hours = hours.strip()
+                    elif 'HARD ROCK STADIUM' in location_name:
+                        street_address = cont[1]
+                        city, state, zip_code = addy_ext(cont[2])
+                        hours = '<MISSING>'
 
                     else:
                         street_address = cont[1]
