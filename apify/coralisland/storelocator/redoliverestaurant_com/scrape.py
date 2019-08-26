@@ -44,6 +44,7 @@ def fetch_data():
     store_list = response.xpath('//div[@class="et_pb_text_inner"]')
     for store in store_list:
         link = validate(store.xpath('.//a/@href'))
+        detail = etree.HTML(session.get(link).text)
         store = eliminate_space(store.xpath('.//text()'))        
         output = []
         output.append(base_url) # url
@@ -55,11 +56,11 @@ def fetch_data():
         output.append(address[1].strip().split(' ')[1]) #zipcode
         output.append('US') #country code
         output.append("<MISSING>") #store_number
-        phone = get_value(etree.HTML(session.get(link).text).xpath('.//a[@class="fl r-i3pE_opxS6_w"]//text()'))
+        phone = get_value(detail.xpath('.//a[@class="fl r-i3pE_opxS6_w"]//text()'))
         output.append(phone) #phone
         output.append("Red Olive Restaurants") #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
+        output.append(get_value(detail.xpath('//div[@class="et_pb_map"]/@data-center-lat'))) #latitude
+        output.append(get_value(detail.xpath('//div[@class="et_pb_map"]/@data-center-lng'))) #longitude
         output.append("<MISSING>") #opening hours
         output_list.append(output)
     return output_list

@@ -37,13 +37,13 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "http://pizzadepot.ca/location"
+    url = "http://pizzadepot.ca/location/"
     session = requests.Session()
     headers = {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
-        'Cookie': 'PHPSESSID=4edb86319379a349f4c5c65e7c3ff77a; ci_session=5c5e9540a1428812532231e44285e86e',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+        'Cookie': 'PHPSESSID=8d8e586fed5af828811eece9d97469db; _ga=GA1.2.1413556867.1566836552; _gid=GA1.2.1762243189.1566836552; _gcl_au=1.1.339031034.1566836552; gwcc=%7B%22fallback%22%3A%229056549711%22%2C%22clabel%22%3A%22zRXMCKn4iIMBELDB0ZYD%22%2C%22backoff%22%3A86400%2C%22backoff_expires%22%3A1566922957%7D',
         'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'
     }
     request = session.get(url, headers=headers)
     source = request.text
