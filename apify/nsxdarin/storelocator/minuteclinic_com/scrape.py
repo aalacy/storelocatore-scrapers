@@ -54,7 +54,10 @@ def fetch_data():
             zc = item['addressZipCode']
             lat = item['geographicLatitudePoint']
             lng = item['geographicLongitudePoint']
-            phone = item['storePhonenumber']
+            try:
+                phone = item['storePhonenumber']
+            except:
+                phone = '<MISSING>'
             country = 'US'
             hours = 'Mon: ' + item['minuteClinicHours']['DayHours'][0]['Hours']
             hours = hours + '; Tue: ' + item['minuteClinicHours']['DayHours'][1]['Hours']
