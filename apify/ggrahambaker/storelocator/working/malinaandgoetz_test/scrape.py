@@ -6,7 +6,7 @@ from selenium.webdriver.chrome.options import Options
 
 def get_driver():
     options = Options()
-    options.add_argument('--headless')
+    #options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
@@ -35,7 +35,10 @@ def fetch_data():
         pop = driver.find_element_by_xpath('//img[@data-popup-image-type="square_new"]')
         driver.execute_script("arguments[0].click();", pop)
 
-    man = driver.execute_script(' window.onload(); return mapManager;')
+    driver.execute_script('MapManager.prototype.updateCountLabel = (() => console.log("update count label"))')
+    try: driver.execute_script('window.onload()')
+    except: print("failed")
+    man = driver.execute_script('return mapManager.markers.reduce((accumulator, marker) => ({ ...accumulator, [marker.storelocator_id]: [marker.position.lat(), marker.position.lng()] }),{})')
     print(man)
 
 
