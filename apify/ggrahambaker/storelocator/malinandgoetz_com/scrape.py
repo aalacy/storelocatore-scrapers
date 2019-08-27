@@ -119,7 +119,8 @@ def fetch_data():
 
         store_number = '<MISSING>'
         location_type = '<MISSING>'
-
+        if location_name == '':
+            location_name = 'Hayes Street'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
