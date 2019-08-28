@@ -22,7 +22,7 @@ def fetch_data():
             items = line.split('"auto2map":')[0].split('{"latitude":')
             for item in items:
                 if ',"longitude":' in item:
-                    lat = item.split('"')[0]
+                    lat = item.split(',')[0]
                     lng = item.split(',"longitude":')[1].split(',')[0]
                     surl = 'https://www.marazziusa.com/' + item.split('\\u003Ca href=\\u0022\\')[1].split('\\u0022\\u003E')[0].replace('\\/','/')
                     name = ''
