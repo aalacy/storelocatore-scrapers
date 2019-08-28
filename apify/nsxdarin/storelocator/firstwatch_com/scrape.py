@@ -4,8 +4,16 @@ import requests
 import json
 import time
 from sgzip import sgzip
+import os
 
 session = requests.Session()
+proxy_password = os.environ["PROXY_PASSWORD"]
+proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
+proxies = {
+    'http': proxy_url,
+    'https': proxy_url
+}
+session.proxies = proxies
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -21,7 +29,6 @@ def fetch_data():
     for coord in sgzip.coords_for_radius(50):
         x = coord[0]
         y = coord[1]
-        time.sleep(1)
         print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://www.firstwatch.com/api/get_locations.php?latitude=' + x + '&longitude=' + y
         Found = True
@@ -32,6 +39,8 @@ def fetch_data():
                 if '"city"' in r.content:
                     array = json.loads(r.content)
                     for item in array:
+                        store = item['corporate_id']
+                        if store in ids: continue
                         website = 'firstwatch.com'
                         hours = '<MISSING>'
                         name = item['name']
@@ -48,7 +57,6 @@ def fetch_data():
                                 for line2 in r2.iter_lines():
                                     if '<address>Open' in line2:
                                         hours = line2.split('<address>')[1].split('<')[0]
-                                time.sleep(1)
                                 typ = 'Restaurant'
                                 city = item['city']
                                 state = item['state']
@@ -57,10 +65,9 @@ def fetch_data():
                                 store = item['corporate_id']
                                 lat = item['latitude']
                                 lng = item['longitude']
-                                if store not in ids:
-                                    ids.append(store)
-                                    print('Pulling Store ID #%s...' % store)
-                                    yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                                ids.append(store)
+                                print('Pulling Store ID #%s...' % store)
+                                yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                             except:
                                 SFound = True
             except:
