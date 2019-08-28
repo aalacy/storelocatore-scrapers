@@ -1,7 +1,6 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
-import xlsxwriter
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -112,6 +111,10 @@ def fetch_data():
         location_type = "<MISSING>"
         hours_of_operation = "<MISSING>"
         
+        if len(location_name.split(' - Coming Soon')) > 1:
+            location_type = 'Coming Soon'
+            location_name = location_name.split(' - Coming Soon')[0]
+
         theater = [locator_domain, location_name, street_address, city, state, zip, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
         theater_list.append(theater)
 
