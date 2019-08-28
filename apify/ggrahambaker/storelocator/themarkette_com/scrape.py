@@ -69,8 +69,8 @@ def fetch_data():
             phone_number = '<MISSING>'
         else:
             phone_number = main[3]
-        if len(phone_number) == 3:
-            continue
+        #if len(phone_number) == 3:
+        #    continue
 
         lat = '<MISSING>'
         longit = '<MISSING>'

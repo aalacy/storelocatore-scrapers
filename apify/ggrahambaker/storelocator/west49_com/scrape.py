@@ -58,6 +58,7 @@ def fetch_data():
         time.sleep(1)
         stores = driver.find_elements_by_css_selector('div.store__list')
         for store in stores:
+
             cont = store.text.split('\n')
 
             location_type = cont[0]
@@ -88,7 +89,10 @@ def fetch_data():
             country_code = 'CA'
             lat = '<MISSING>'
             longit = '<MISSING>'
-            phone_number = '<MISSING>'
+            phone_number = store.find_element_by_css_selector('div.store__list-phone').text
+
+            if phone_number == '':
+                phone_number = '<MISSING>'
 
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                           store_number, phone_number, location_type, lat, longit, hours]
