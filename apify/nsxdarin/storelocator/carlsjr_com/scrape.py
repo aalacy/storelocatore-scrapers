@@ -58,7 +58,7 @@ def fetch_data(search):
                                     else:
                                         hours = hours + '; ' + hr.split('"')[0] + ': ' + hr.split('"time":"')[1].split('"')[0]
                             locations.append([website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours])
-        if coords: search.update(coords)
+        if coords: search.max_count_update(coords)
         code = search.next_zip()
     for location in locations:
         yield location

@@ -67,7 +67,7 @@ class UmpquaBank:
                     if location['storeNumber'] not in self.seen:
                         self.seen.add(location['storeNumber'])
                         locations.append(location)
-                self.search.update(result_coords)
+                self.search.max_count_update(result_coords)
                 query_coord = self.search.next_coord()
         for loc in locations:
             yield loc

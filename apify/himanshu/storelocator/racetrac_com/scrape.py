@@ -27,6 +27,7 @@ def fetch_data():
     for key in location_list:
         if "Stores" in location_list[key]:
             for store_data in location_list[key]["Stores"]:
+                if store_data['ZipCode'] == '30004': print(store_data) 
                 store = []
                 store.append("https://racetrac.com")
                 store.append(store_data['Address'])
