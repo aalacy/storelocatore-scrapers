@@ -45,50 +45,56 @@ def fetch_data():
 
         for loc in locs:
             print('Pulling Location %s...' % loc)
-            r3 = session.get(loc, headers=headers)
-            typ = 'Store'
-            website = 'www.goodyearautoservice.com'
-            country = 'US'
-            lines3 = r3.iter_lines()
-            name = ''
-            store = ''
-            lat = '<MISSING>'
-            lng = '<MISSING>'
-            add = '<MISSING>'
-            city = '<MISSING>'
-            state = '<MISSING>'
-            zc = '<MISSING>'
-            hours = '<MISSING>'
-            phone = '<MISSING>'
-            for line3 in lines3:
-                if '<h1 class="page-title" itemprop="name">' in line3:
-                    name = next(lines3).split('<')[0].strip().replace('\t','').replace('"',"'")
-                if '"name":"' in line3:
-                    store = line3.split('"name":"')[1].split('"')[0]
-                    lat = line3.split('"latitude":')[1].split(',')[0]
-                    lng = line3.split('"longitude":')[1].split(',')[0]
-                if 'itemprop="streetAddress">' in line3:
-                    add = line3.split('itemprop="streetAddress">')[1].split('<')[0].replace('"',"'")
-                if 'itemprop="addressLocality">' in line3:
-                    city = line3.split('itemprop="addressLocality">')[1].split(',')[0]
-                    try:
-                        state = line3.split('&nbsp;')[1].split('<')[0]
-                    except:
-                        state = citystate
-                if 'itemprop="postalCode">' in line3:
-                    zc = line3.split('itemprop="postalCode">')[1].split('<')[0]
-                if 'itemprop="telephone">' in line3:
-                    phone = line3.split('itemprop="telephone">')[1].split('<')[0]
-                if 'Monday</span>' in line3:
-                    hours = 'Mon: ' + next(lines3).split('>')[1].split('<')[0]
-                if 'itemprop="dayOfWeek">' in line3 and 'Monday' not in line3:
-                    g = next(lines3)
-                    hours = hours + '; ' + line3.split('"dayOfWeek">')[1].split('<')[0] + ': ' + g.split('>')[1].split('<')[0]
-            if add == '':
-                add = '<MISSING>'
-            if phone == '':
-                phone = '<MISSING>'
-            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            PageFound = False
+            while PageFound is False:
+                try:
+                    PageFound = True
+                    r3 = session.get(loc, headers=headers)
+                    typ = 'Store'
+                    website = 'www.goodyearautoservice.com'
+                    country = 'US'
+                    lines3 = r3.iter_lines()
+                    name = ''
+                    store = ''
+                    lat = '<MISSING>'
+                    lng = '<MISSING>'
+                    add = '<MISSING>'
+                    city = '<MISSING>'
+                    state = '<MISSING>'
+                    zc = '<MISSING>'
+                    hours = '<MISSING>'
+                    phone = '<MISSING>'
+                    for line3 in lines3:
+                        if '<h1 class="page-title" itemprop="name">' in line3:
+                            name = next(lines3).split('<')[0].strip().replace('\t','').replace('"',"'")
+                        if '"name":"' in line3:
+                            store = line3.split('"name":"')[1].split('"')[0]
+                            lat = line3.split('"latitude":')[1].split(',')[0]
+                            lng = line3.split('"longitude":')[1].split(',')[0]
+                        if 'itemprop="streetAddress">' in line3:
+                            add = line3.split('itemprop="streetAddress">')[1].split('<')[0].replace('"',"'")
+                        if 'itemprop="addressLocality">' in line3:
+                            city = line3.split('itemprop="addressLocality">')[1].split(',')[0]
+                            try:
+                                state = line3.split('&nbsp;')[1].split('<')[0]
+                            except:
+                                state = citystate
+                        if 'itemprop="postalCode">' in line3:
+                            zc = line3.split('itemprop="postalCode">')[1].split('<')[0]
+                        if 'itemprop="telephone">' in line3:
+                            phone = line3.split('itemprop="telephone">')[1].split('<')[0]
+                        if 'Monday</span>' in line3:
+                            hours = 'Mon: ' + next(lines3).split('>')[1].split('<')[0]
+                        if 'itemprop="dayOfWeek">' in line3 and 'Monday' not in line3:
+                            g = next(lines3)
+                            hours = hours + '; ' + line3.split('"dayOfWeek">')[1].split('<')[0] + ': ' + g.split('>')[1].split('<')[0]
+                    if add == '':
+                        add = '<MISSING>'
+                    if phone == '':
+                        phone = '<MISSING>'
+                    yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                except:
+                    PageFound = False
 
 def scrape():
     data = fetch_data()
