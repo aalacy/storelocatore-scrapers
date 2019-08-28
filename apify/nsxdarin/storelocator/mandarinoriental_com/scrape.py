@@ -43,6 +43,8 @@ def fetch_data():
                 add = line.split('itemprop="streetAddress">')[1].split('<')[0]
             if '"postalCode">' in line:
                 zc = line.split('"postalCode">')[1].split('<')[0]
+                if not zc.strip():
+                    zc = '<MISSING>'
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
