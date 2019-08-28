@@ -47,9 +47,18 @@ def fetch_data():
                             if 'autocomplete="address-line1">' in line2:
                                 add = line2.split('autocomplete="address-line1">')[1].split('<')[0].strip()
                                 city = line2.split('autocomplete="locality">')[1].split('<')[0].strip()
-                                state = line2.split('autocomplete="region">')[1].split('<')[0].strip()
-                                zc = line2.split('="postal-code">')[1].split('<')[0].strip()
-                                phone = line2.split('</span></div>')[1].split('<')[0].strip().replace('\t','')
+                                try:
+                                    state = line2.split('autocomplete="region">')[1].split('<')[0].strip()
+                                except:
+                                    state = '<MISSING>'
+                                try:
+                                    zc = line2.split('="postal-code">')[1].split('<')[0].strip()
+                                except:
+                                    zc = '<MISSING>'
+                                try:
+                                    phone = line2.split('</span></div>')[1].split('<')[0].strip().replace('\t','')
+                                except:
+                                    phone = '<MISSING>'
                         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
