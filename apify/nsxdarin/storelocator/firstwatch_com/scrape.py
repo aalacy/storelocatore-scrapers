@@ -39,6 +39,8 @@ def fetch_data():
                 if '"city"' in r.content:
                     array = json.loads(r.content)
                     for item in array:
+                        store = item['corporate_id']
+                        if store in ids: continue
                         website = 'firstwatch.com'
                         hours = '<MISSING>'
                         name = item['name']
@@ -63,10 +65,9 @@ def fetch_data():
                                 store = item['corporate_id']
                                 lat = item['latitude']
                                 lng = item['longitude']
-                                if store not in ids:
-                                    ids.append(store)
-                                    print('Pulling Store ID #%s...' % store)
-                                    yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                                ids.append(store)
+                                print('Pulling Store ID #%s...' % store)
+                                yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                             except:
                                 SFound = True
             except:
