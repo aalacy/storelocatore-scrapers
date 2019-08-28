@@ -36,14 +36,13 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        print(link)
+
         driver.get(link)
         driver.implicitly_wait(10)
 
         cont = driver.find_element_by_css_selector('div.storeModule').text.split('\n')
         location_name = cont[0]
         start_idx = cont.index('Horario de Operación')
-        # print(start_idx)
         content = cont[start_idx:]
         hours = content[2] + ' ' + content[3]
         street_address = content[5]
@@ -63,11 +62,9 @@ def fetch_data():
         if len(src) == 1:
             src = driver.find_element_by_css_selector('iframe').get_attribute('src')
 
-            print(src)
             start = src.find('!2d')
             end = src.find('!3m2')
 
-            print(src[start + 3: end].split('!3d'))
             if start > 1:
                 coords = src[start + 3: end].split('!3d')
                 lat = coords[1][:9]
@@ -79,11 +76,9 @@ def fetch_data():
             lat = '<MISSING>'
             longit = '<MISSING>'
 
-        location_name = '<MISSING>'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
 
-        hours = '<MISSING>'
         country_code = 'US'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
