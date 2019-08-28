@@ -1,3 +1,4 @@
+
 base_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo $base_path
 domain=${PWD##*/}

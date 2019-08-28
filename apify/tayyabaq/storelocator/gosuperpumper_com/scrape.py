@@ -39,7 +39,7 @@ def fetch_data():
     longitude = [lng[n].get_text() for n in range(0,len(lng))]
     for n in range(0,len(location_name)): 
         data.append([
-            'https://www.doolys.ca',
+            'http://www.gosuperpumper.com',
             location_name[n],
             street_address[n],
             '<MISSING>',
