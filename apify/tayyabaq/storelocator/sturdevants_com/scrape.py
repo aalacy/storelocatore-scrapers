@@ -66,8 +66,8 @@ def fetch_data():
             '<MISSING>',
             phone[n],
             '<MISSING>',
-            '<MISSING>',
-            '<MISSING>',
+            '<INACCESSIBLE>',
+            '<INACCESSIBLE>',
             hours_of_operation[n]
         ])
     driver.quit()
