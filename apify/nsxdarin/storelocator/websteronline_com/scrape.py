@@ -46,7 +46,7 @@ def fetch_data():
                 HFound = False
             if HFound and 'Banking Center Hours</h2>' not in line2:
                 hrs = line2.rsplit('<',1)[0].strip().replace('\t','').replace('<p>','').replace('<strong>','').replace('</strong>','')
-                if hours == '<MISSING>':
+                if hours == '':
                     hours = hrs
                 else:
                     hours = hours + '; ' + hrs
@@ -69,7 +69,10 @@ def fetch_data():
                 g = next(lines)
                 lat = g.split('latitude=')[1].split('&')[0]
                 lng = g.split('longitude=')[1].split('&')[0]
-        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if hours == '<MISSING>':
+            hours = ''
+        if add != '':
+            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
