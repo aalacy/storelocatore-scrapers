@@ -23,7 +23,6 @@ def fetch_data():
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
         r2 = session.get(loc, headers=headers, verify=False)
-        print('Pulling Location %s...' % loc)
         website = 'www.security-finance.com'
         typ = 'Location'
         store = ''
