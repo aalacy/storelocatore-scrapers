@@ -23,7 +23,12 @@ def pull_content(url):
     soup = bs(r.get(url).content,'html.parser')
 
     return soup
-
+def get_country_code(country_name):
+    if country_name == 'Canada':
+        return 'CA'
+    elif country_name == 'United States':
+        return 'US'
+    
 def pull_info(content):
  
 
@@ -36,164 +41,172 @@ def pull_info(content):
         contient_countries = item_continent.ul.find_all('li')
         
         for country_item in contient_countries:
-            country_code = str(country_item.a['data-label']).strip()
-            country_href = country_item.a['href']
-            
-            content_country = pull_content(country_href)
-            
-            test_state = content_country.find('div',{'class':'store'})
-            
-            if test_state is not None:
-
-                list_stores = content_country.find('div',{'class':'store'}).find_all('a',{'class':'item'})
+            country_code = get_country_code(str(country_item.a['data-label']).strip())
+            if country_code == 'CA' or country_code == 'US':
+                country_href = country_item.a['href']
                 
-                for item_store in list_stores:
-                    
-                    store_href = item_store['href']
-                    
-                    locator_domain = store_href
-                    
-                    content_store = pull_content(locator_domain)
-                    location_name = item_store.find('span',{'class':'name'}).text.strip()
-                    # print(location_name)
-                    test_ok = content_store.find('htag1',{'itemprop':'name'})
-                    if test_ok is not None:
+                content_country = pull_content(country_href)
+                
+                test_state = content_country.find('div',{'class':'store'})
+                
+                if test_state is not None:
 
+                    list_stores = content_country.find('div',{'class':'store'}).find_all('a',{'class':'item'})
+                    
+                    for item_store in list_stores:
                         
-                        street_address = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address1'}).text + " " + content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address2'}).text
-                        city = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'city'}).text
-                        state = "<MISSING>"
-                        # print(locator_domain)
-                        if content_store.find('span',{'class':'address2'}).text == '':
-                            zip = "<MISSING>"
-                        else:
-                            string_for_zip = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address2'}).text.strip()
-                            # print(string_for_zip)
-                            if country_code == "Canada":
-                                zip = string_for_zip.replace('CA','').strip().split(' ')[len(string_for_zip.replace('CA','').strip().split(' ')) -2] + " " + string_for_zip.strip().replace('CA','').split(' ')[len(string_for_zip.replace('CA','').strip().split(' ')) -1]
-                            else:
-                                if len(string_for_zip.split(' ')) > 1:
-                                    zip = str(string_for_zip.replace('US','').strip().split(' ')[len(string_for_zip.replace('US','').strip().split(' ')) - 1]).strip()
-                                else:
-                                
-                                    zip = string_for_zip
+                        store_href = item_store['href']
+                        
+                        locator_domain = store_href
+                        
+                        content_store = pull_content(locator_domain)
+                        location_name = item_store.find('span',{'class':'name'}).text.strip()
+                        full_street_address = item_store.find_all('span',{'class':'address'})
+                        for item_address in full_street_address:
+                            if full_street_address.index(item_address) == 0:
+                                street_address = item_address.text
+                            elif full_street_address.index(item_address) == 1:
+                                zip = item_address.text
+                        state = item_store.find('span',{'itemprop':'addressLocality'}).text.strip()
                         if zip == 'Floor':
                             zip = "<MISSING>"
-                      
-                        store_number = "<MISSING>"
-                        phone_test = content_store.find('div',{'class':'cols clearfix'}).find('a',{'class':'tel btn'})
-                        if phone_test is None:
-                            phone = "<MISSING>"
-                        else:
-                            phone = str(phone_test['href'].replace('tel:','').replace('Option 1','').replace('- OPTION 1','').replace('- OPTION 2','').replace('- Option 1','').strip().encode("utf-8")).replace('b','').replace("'","").replace('\xef\xc\x','').replace('\xe2\x80\x93','')
-              
-                        store_type = "<MISSING>"
-                        latitude = "<MISSING>"
-                        longitude = "<MISSING>"
-                        hours_of_operation = content_store.find('div',{'class':'hours'}).ul.text.strip()
-                    else:
+                        test_ok = content_store.find('htag1',{'itemprop':'name'})
+                        if test_ok is not None:
+
+                            
+                            # street_address = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address1'}).text + " " + content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address2'}).text
+                            city = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'city'}).text
+                            # state = "<MISSING>"
+                            # print(locator_domain)
+                            # if content_store.find('span',{'class':'address2'}).text == '':
+                                # zip = "<MISSING>"
+                            # else:
+                            #     string_for_zip = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address2'}).text.strip()
+                            #     # print(string_for_zip)
+                            #     if country_code == "CA":
+                            #         zip = string_for_zip.replace('CA','').strip().split(' ')[len(string_for_zip.replace('CA','').strip().split(' ')) -2] + " " + string_for_zip.strip().replace('CA','').split(' ')[len(string_for_zip.replace('CA','').strip().split(' ')) -1]
+                            #     else:
+                            #         if len(string_for_zip.split(' ')) > 1:
+                            #             zip = str(string_for_zip.replace('US','').strip().split(' ')[len(string_for_zip.replace('US','').strip().split(' ')) - 1]).strip()
+                            #         else:
+                                    
+                            #             zip = string_for_zip
+                            
                         
-                        street_address = "<MISSING>"
-                        city = "<MISSING>"
-                        state = "<MISSING>"
-                        zip = "<MISSING>"
-                        store_number = "<MISSING>"
-                        phone = "<MISSING>"
-                        store_type = "<MISSING>"
-                        latitude = "<MISSING>"
-                        longitude = "<MISSING>"
-                        hours_of_operation = "<MISSING>"
-                    temp_data = [
-
-                        locator_domain,
-
-                        location_name,
-
-                        street_address,
-
-                        city,
-
-                        state,
-
-                        zip,
-
-                        country_code,
-
-                        store_number,
-
-                        phone,
-
-                        store_type,
-
-                        latitude,
-
-                        longitude,
-
-                        hours_of_operation
-
-                    ]
-                    store_data = store_data + [temp_data]
-            else:
+                            store_number = "<MISSING>"
+                            phone_test = content_store.find('div',{'class':'cols clearfix'}).find('a',{'class':'tel btn'})
+                            if phone_test is None:
+                                phone = "<MISSING>"
+                            else:
+                                phone = phone_test['href'].replace('tel:','').replace('Option 1','').replace('- OPTION 1','').replace('- OPTION 2','').replace('- Option 1','').strip()
                 
-                store_href = country_href
+                            store_type = "<MISSING>"
+                            latitude = "<MISSING>"
+                            longitude = "<MISSING>"
+                            hours_of_operation = content_store.find('div',{'class':'hours'}).ul.text.strip()
+                        else:
+                            
+                            street_address = "<MISSING>"
+                            city = "<MISSING>"
+                            state = "<MISSING>"
+                            zip = "<MISSING>"
+                            store_number = "<MISSING>"
+                            phone = "<MISSING>"
+                            store_type = "<MISSING>"
+                            latitude = "<MISSING>"
+                            longitude = "<MISSING>"
+                            hours_of_operation = "<MISSING>"
+                        temp_data = [
+
+                            locator_domain,
+
+                            location_name,
+
+                            street_address,
+
+                            city,
+
+                            state,
+
+                            zip,
+
+                            country_code,
+
+                            store_number,
+
+                            phone,
+
+                            store_type,
+
+                            latitude,
+
+                            longitude,
+
+                            hours_of_operation
+
+                        ]
+                        store_data = store_data + [temp_data]
+                # else:
+                
+                #     store_href = country_href
+                        
+                #     locator_domain = store_href
                     
-                locator_domain = store_href
-                
-                content_store = pull_content(locator_domain)
-                test_ok = content_store.find('div',{'id':'store-information'})
-                if test_ok is not None:
-          
-                    location_name = content_store.find('hgroup').div.find('htag1').text.strip()
-                    street_address = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address1'}).text + " " + content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address2'}).text
-                    city = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'city'}).text
-                    state = "<MISSING>"
-                    if content_store.find('span',{'class':'address2'}).text == '':
-                        zip = "<MISSING>"
-                    else:
-                        string_for_zip = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address2'}).text
-                        zip = string_for_zip
-                     
-                    store_number = "<MISSING>"
-                    phone_test = content_store.find('div',{'class':'cols clearfix'}).find('a',{'class':'tel btn'})
-                    if phone_test is None:
-                        phone = "<MISSING>"
-                    else:
-                        phone = str(str(phone_test['href']).replace('tel:','').replace('Option 1','').replace('- OPTION 1','').replace('- Option 1','').replace('- OPTION 2','').strip().encode("utf-8")).replace('b','').replace("'","").replace('\xef\xc\x','').replace('\xe2\x80\x93','')
-                    store_type = "<MISSING>"
-                    latitude = "<MISSING>"
-                    longitude = "<MISSING>"
-                    hours_of_operation = content_store.find('div',{'class':'hours'}).ul.text.strip()
+                #     content_store = pull_content(locator_domain)
+                #     test_ok = content_store.find('div',{'id':'store-information'})
+                #     if test_ok is not None:
+            
+                #         location_name = content_store.find('hgroup').div.find('htag1').text.strip()
+                #         street_address = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address1'}).text + " " + content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address2'}).text
+                #         city = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'city'}).text
+                #         state = "<MISSING>"
+                #         if content_store.find('span',{'class':'address2'}).text == '':
+                #             zip = "<MISSING>"
+                #         else:
+                #             string_for_zip = content_store.find('hgroup').find('div',{'class':'text'}).find('htag4').find('span',{'class':'address2'}).text
+                #             zip = string_for_zip
+                        
+                #         store_number = "<MISSING>"
+                #         phone_test = content_store.find('div',{'class':'cols clearfix'}).find('a',{'class':'tel btn'})
+                #         if phone_test is None:
+                #             phone = "<MISSING>"
+                #         else:
+                #             phone = str(phone_test['href']).replace('tel:','').replace('Option 1','').replace('- OPTION 1','').replace('- Option 1','').replace('- OPTION 2','').strip()
+                #         store_type = "<MISSING>"
+                #         latitude = "<MISSING>"
+                #         longitude = "<MISSING>"
+                #         hours_of_operation = content_store.find('div',{'class':'hours'}).ul.text.strip()
 
-                temp_data = [
+                #     temp_data = [
 
-                    locator_domain,
+                #         locator_domain,
 
-                    location_name,
+                #         location_name,
 
-                    street_address,
+                #         street_address,
 
-                    city,
+                #         city,
 
-                    state,
+                #         state,
 
-                    zip,
+                #         zip,
 
-                    country_code,
+                #         country_code,
 
-                    store_number,
+                #         store_number,
 
-                    phone,
+                #         phone,
 
-                    store_type,
+                #         store_type,
 
-                    latitude,
+                #         latitude,
 
-                    longitude,
+                #         longitude,
 
-                    hours_of_operation
+                #         hours_of_operation
 
-                ]
-                store_data = store_data + [temp_data]
+                #     ]
+                #     store_data = store_data + [temp_data]
  
     final_columns = [
 

@@ -46,7 +46,7 @@ def pull_info(content):
             zip = str(str(address).split(' ')[len(str(address).split(' ')) - 1]).strip()
             street_address = str(address).replace(state,'').replace(zip,'').replace(',','')
             store_type = "<MISSING>"
-            country_code = "UK"
+            country_code = "US"
             city = str(address.split(',')[1]).replace(zip,'').replace(state,'').strip()
             locator_domain = site_url + store_item.find('a',{'class':'visit-page'})['href']
             href_data = pull_content(locator_domain)

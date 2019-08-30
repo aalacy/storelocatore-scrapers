@@ -36,7 +36,7 @@ def pull_info(content):
         for store in region_store_list:
 
             locator_domain = site_url + store.find('a')['href']
-            location_name = store.find('div',{'class':'shop-name'}).text.replace('(Coming Soon)','')
+            location_name = store.find('div',{'class':'shop-name'}).text
             address = store.find('div').find('div',{'class':'shop-address'}).text
             city = store.find('div',{'class':'shop-name'}).text.replace('(Coming Soon)','').split('|')[0]
 
@@ -87,8 +87,12 @@ def pull_info(content):
             longitude = "<MISSING>"
             
             ul_for_hours = href_data.find('div',{'class':'shop-text'}).find('ul').find('li').text
-            hours_of_operation = ul_for_hours
-          
+            if ul_for_hours == '':
+                hours_of_operation = "<MISSING>"
+            else:
+                hours_of_operation = ul_for_hours
+
+
             temp_data = [
 
             locator_domain,
@@ -117,8 +121,8 @@ def pull_info(content):
 
             hours_of_operation
 
-        ]
-        store_data = store_data + [temp_data]
+            ]
+            store_data = store_data + [temp_data]
 
 
     final_columns = [

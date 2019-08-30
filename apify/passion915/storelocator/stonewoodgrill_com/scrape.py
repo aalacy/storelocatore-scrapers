@@ -87,7 +87,7 @@ def pull_info(content):
                         
                     
                     
-                    hours_of_operation = href_data.find('div',{'class':'location-hours'}).find('div',{'class':'zEditorHTML'}).text.replace('pmMon','pm Mon').replace('pmFri','pm Fri')
+                    hours_of_operation = href_data.find('div',{'class':'z-2of5 z-m-0 location-info'}).find('div',{'class':'zEditorHTML'}).text
             
                 temp_data = [
 
@@ -120,37 +120,37 @@ def pull_info(content):
                 ]
                 store_data = store_data + [temp_data]
 
-            final_columns = [
+    final_columns = [
 
-                'locator_domain',
+        'locator_domain',
 
-                'location_name',
+        'location_name',
 
-                'street_address', 
+        'street_address', 
 
-                'city',
+        'city',
 
-                'state',
+        'state',
 
-                'zip',
+        'zip',
 
-                'country_code',
+        'country_code',
 
-                'store_number',
+        'store_number',
 
-                'phone',
+        'phone',
 
-                'location_type',
+        'location_type',
 
-                'latitude',
+        'latitude',
 
-                'longitude',
+        'longitude',
 
-                'hours_of_operation']
+        'hours_of_operation']
 
-            final_df = pd.DataFrame(store_data,columns=final_columns)
+    final_df = pd.DataFrame(store_data,columns=final_columns)
 
-            return final_df 
+    return final_df 
        
         
 

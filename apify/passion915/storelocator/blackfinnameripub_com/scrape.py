@@ -33,33 +33,28 @@ def pull_info(content):
     
     for item in store_list:
         
-        city = item.text
+        city = str(item.text.split(',')[0]).strip()
         country_code = "<MISSING>"
         store_number = "<MISSING>"
         store_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        phone = "<MISSING>"
+        location_name = "<MISSING>"
 
 
         locator_domain = item['ref']
         ref_id = item['id']
+        full_address = soup.find('div',{'id':'location_'+ref_id}).find('div',{'class':'location_address'}).find('input')['value']
+        street_address = str(full_address.split(',')[0]).strip().replace('\n',' ')
+        zip = str(full_address.split(',')[1]).strip().split(' ')[1]
+        state = str(full_address.split(',')[1]).strip().split(' ')[0]
         detail_p = soup.find('div',{'id':'location_'+ref_id}).find('div',{'class':'location_address'}).find_all('p')
         for detail_item in detail_p:
-            if detail_p.index(detail_item) == 0:
-                if detail_item.span.text != '':
-                    location_name = detail_item.span.text
-                else :
-                    location_name = "<MISSING>"
-                
-                
-                street_address = str(str(detail_item).split('<br/>')[1]).split(',')[0].strip()
-                          
-                zip = str(street_address).split(' ')[len(str(street_address).split(' ')) - 1]
-                state = str(street_address).split(' ')[len(str(street_address).split(' ')) - 2]
-            
+           
+            if detail_p.index(detail_item) == 1:
+                phone = str(detail_item.text.replace('.','').strip())
         hours_of_operation = soup.find('div',{'id':'location_'+ref_id}).find('div',{'class':'location_hours'}).text.strip()
-      
+
         temp_data = [
 
             locator_domain,

@@ -35,7 +35,7 @@ def pull_info(content):
         td_dec_store = tr_region_item.find_all('td')
         for td_dec_item in td_dec_store:
             if td_dec_store.index(td_dec_item) == 0:
-                locator_domain = "<MISSING>"
+                locator_domain = location_url
                 location_name = "Let's Yo"
                 street_address = td_dec_item.find('div',{'class':'street-address'}).text.replace('\n','')
                 store_number = "<MISSING>"
