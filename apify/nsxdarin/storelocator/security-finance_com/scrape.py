@@ -1,11 +1,14 @@
 import csv
-import urllib2
+import urllib3
 import requests
 import json
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 session = requests.Session()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
