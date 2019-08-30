@@ -17,26 +17,27 @@ def write_output(data):
 def fetch_data():
     url = 'https://public.websteronline.com/sitemap.xml'
     locs = []
-    r = session.get(url, verify=False, headers=headers)
+    r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if '<loc>https://public.websteronline.com/location/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
-        r2 = session.get(loc, verify=False, headers=headers)
+        r2 = session.get(loc, headers=headers)
         print('Pulling Location %s...' % loc)
         website = 'public.websteronline.com'
         typ = ''
         store = ''
         add = ''
-        zc = ''
-        state = ''
-        city = ''
+        zc = '<MISSING>'
+        state = '<MISSING>'
+        city = '<MISSING>'
         country = ''
         name = ''
         phone = ''
         hours = ''
         lat = '<MISSING>'
         lng = '<MISSING>'
+        country = 'US'
         HFound = False
         lines = r2.iter_lines()
         for line2 in lines:
@@ -61,9 +62,10 @@ def fetch_data():
                 add = next(lines).split('<')[0].strip().replace('\t','')
             if '<span class="locality">' in line2:
                 city = line2.split('<span class="locality">')[1].split('<')[0]
+            if '<abbr class="region">' in line2:
                 state = line2.split('<abbr class="region">')[1].split('<')[0]
+            if '<span class="postal-code">' in line2:
                 zc = line2.split('<span class="postal-code">')[1].split('<')[0]
-                country = 'US'
                 phone = next(lines).split('<a href="tel:')[1].split('"')[0]
             if "if(cur_latitude === ''" in line2:
                 g = next(lines)
