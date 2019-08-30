@@ -54,44 +54,30 @@ def fetch_data():
     driver.get(locator_domain + ext)
     driver.implicitly_wait(30)
 
-    source = str(driver.page_source.encode("utf-8"))
+    source = str(driver.page_source)
+
     for line in source.splitlines():
         if line.strip().startswith("var stores"):
-            print("found")
             stores = driver.execute_script(line + "; return stores")
-    print(len(stores))
 
-    locs = driver.find_elements_by_css_selector('div.storeresult-listitem')
     all_store_data = []
-    for loc in locs:
-        content = clean(loc.text.split('\n'))
+    for store in stores:
+        street_address = store['Address1']
+        city = store['City']
+        lat = store['Latitude']
+        longit = store['Longitude']
+        phone_number = store['PhoneNumber']
+        state = store['State']
+        hours = store['StoreHours']
+        location_type = store['StoreName']
+        zip_code = store['Zipcode']
 
-        location_type = content[0]
-        street_address = content[1]
-        city, state, zip_code = addy_ext(content[2])
-
-        phone_number = content[3].replace('Phone:', '').strip()
-
-        hours = ''
-        hours_on = False
-        for h in content[4:]:
-            if 'Pharmacy Phone' in h:
-                break
-            if 'Store Hours' in h:
-                hours_on = True
-
-            if hours_on:
-                hours += h + ' '
-
-        lat = '<MISSING>'
-        longit = '<MISSING>'
         country_code = 'US'
         store_number = '<MISSING>'
         location_name = '<MISSING>'
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data
