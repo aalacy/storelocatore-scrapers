@@ -34,6 +34,8 @@ def fetch_data():
                         typ = 'Marathon'
                     store = '<MISSING>'
                     zc = '<MISSING>'
+                    if '&output=classic' in item:
+                        zc = item.split('&output=classic')[0].rsplit('+',1)[1]
                     city = item.split('"address":"')[1].split('","desc')[0].split(',')[1].strip()
                     try:
                         state = item.split('"address":"')[1].split('","desc')[0].split(',')[2].split('"')[0].strip()
@@ -49,6 +51,8 @@ def fetch_data():
                         name = city + ' Marathon'
                     if '\\' in hours:
                         hours = hours.split('\\')[0]
+                    if zc == '':
+                        zc = '<MISSING>'
                     yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
