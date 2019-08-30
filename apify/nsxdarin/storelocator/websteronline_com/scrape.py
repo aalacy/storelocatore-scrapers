@@ -17,12 +17,12 @@ def write_output(data):
 def fetch_data():
     url = 'https://public.websteronline.com/sitemap.xml'
     locs = []
-    r = session.get(url, headers=headers)
+    r = session.get(url, verify=False, headers=headers)
     for line in r.iter_lines():
         if '<loc>https://public.websteronline.com/location/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
-        r2 = session.get(loc, headers=headers)
+        r2 = session.get(loc, verify=False, headers=headers)
         print('Pulling Location %s...' % loc)
         website = 'public.websteronline.com'
         typ = ''
