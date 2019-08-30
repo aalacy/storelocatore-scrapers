@@ -48,11 +48,18 @@ def clean(arr):
 
 def fetch_data():
     locator_domain = 'https://www.amigosunited.com/'
-    ext = 'rs/StoreLocator'
+    ext = 'Sysnify.Relationshop.v2/StoreLocation/SearchStore'
 
     driver = get_driver()
     driver.get(locator_domain + ext)
     driver.implicitly_wait(30)
+
+    source = str(driver.page_source.encode("utf-8"))
+    for line in source.splitlines():
+        if line.strip().startswith("var stores"):
+            print("found")
+            stores = driver.execute_script(line + "; return stores")
+    print(len(stores))
 
     locs = driver.find_elements_by_css_selector('div.storeresult-listitem')
     all_store_data = []
