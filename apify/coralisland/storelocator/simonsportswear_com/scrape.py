@@ -81,6 +81,8 @@ def fetch_data():
             continue
         if len(store) > 4:
             address = parse_address(store[1] + ', ' + store[2].replace('United States', ''))
+            if 'pompano' in store[2].lower():
+                address = parse_address(store[1] + ', ' + store[2].replace('United States', 'Fl'))
             output.append(address['street']) #address
             output.append(address['city']) #city
             output.append(address['state']) #state
@@ -106,7 +108,7 @@ def fetch_data():
         output.append(address['street']) #address
         output.append(address['city']) #city
         output.append(address['state']) #state
-        output.append(address['zipcode']) #zipcode       
+        output.append(address['zipcode']) #zipcode
         output.append('US') #country code
         output.append("<MISSING>") #store_number
         output.append(temp[idx*5-1].replace(':', '')) #phone

@@ -63,7 +63,8 @@ def fetch_data():
         output.append("<MISSING>") #latitude
         output.append("<MISSING>") #longitude
         output.append(get_value(store_hours)) #opening hours
-        output_list.append(output)
+        if get_value(store_hours) != '<MISSING>':
+            output_list.append(output)
     return output_list
 
 def scrape():

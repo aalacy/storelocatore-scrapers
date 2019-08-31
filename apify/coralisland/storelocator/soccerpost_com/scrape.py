@@ -60,7 +60,10 @@ def fetch_data():
         output.append("Soccer Post America's Soccer Store") #location type
         output.append(parse(store, 'latitude')) #latitude
         output.append(parse(store, 'longitude')) #longitude
-        output.append("<MISSING>") #opening hours        
+        output.append("<MISSING>") #opening hours   
+        # if parse(store, 'url') != '':
+        #    res = etree.HTML(session.get(parse(store, 'url')).text)
+        #    store_hours = validate(eliminate_space(res.xpath('//div[@class="pp-sub-heading"]')[1].xpath('.//text()')))
         output_list.append(output)
     return output_list
 
