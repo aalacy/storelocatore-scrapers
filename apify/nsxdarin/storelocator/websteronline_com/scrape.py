@@ -17,12 +17,12 @@ def write_output(data):
 def fetch_data():
     url = 'https://public.websteronline.com/sitemap.xml'
     locs = []
-    r = session.get(url, verify=False, headers=headers)
+    r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if '<loc>https://public.websteronline.com/location/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
-        r2 = session.get(loc, verify=False, headers=headers)
+        r2 = session.get(loc, headers=headers)
         print('Pulling Location %s...' % loc)
         website = 'public.websteronline.com'
         typ = ''
@@ -33,7 +33,7 @@ def fetch_data():
         city = '<MISSING>'
         country = ''
         name = ''
-        phone = ''
+        phone = '<MISSING>'
         hours = ''
         lat = '<MISSING>'
         lng = '<MISSING>'
@@ -66,7 +66,8 @@ def fetch_data():
                 state = line2.split('<abbr class="region">')[1].split('<')[0]
             if '<span class="postal-code">' in line2:
                 zc = line2.split('<span class="postal-code">')[1].split('<')[0]
-                phone = next(lines).split('<a href="tel:')[1].split('"')[0]
+            if '<a href="tel:' in line2:
+                phone = line2.split('<a href="tel:')[1].split('"')[0]
             if "if(cur_latitude === ''" in line2:
                 g = next(lines)
                 lat = g.split('latitude=')[1].split('&')[0]
