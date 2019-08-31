@@ -29,70 +29,47 @@ def fetch_data():
 		print ('[?] Check whether system is Online.')
 	
 	data = []
-	sections = base.findAll('div', attrs={'class': 'conceptcontainer'})
-	for section in sections:
-		items = section.findAll('div', attrs={'class': 'location-details'})
-		locator_domain = "jalexandersholdings.com"
-		location_name = section.find('h3').text.strip()
-		print (location_name)
-		for item in items:
-			if "Opening" not in item.text:
-				raw_data = str(item.find('a')).replace('<p>',"").replace('</p>',"").replace('\n',"").replace('\t'," ").strip().split('<br/>')
-				street_address = raw_data[0][raw_data[0].rfind('blank">')+7:].strip()
-				raw_line = raw_data[1][2:raw_data[1].find('<')].strip()
-				city = raw_line[:raw_line.rfind(',')].strip()
-				if "Suite" in city:
-					street_address = street_address + " " + city[:city.find("    ")].strip()
-					city = city[city.find("    "):].strip()
 
+	items = base.findAll('div', attrs={'class': 'restaurantCard'})
+	locator_domain = "jalexandersholdings.com"
+	for item in items:
+		location_name = item.find('h4').text.strip()
+		location_name = location_name[:location_name.find('|')].strip()
+		
+		if "Coming" not in location_name:
+			print (location_name)
+			raw_data = str(item.find('address')).replace('<p>',"").replace('</p>',"").replace('\n',"").replace('\t'," ").strip().split('<br/>')
+			street_address = raw_data[0][raw_data[0].find('>')+1:].strip()
+			raw_line = raw_data[1]
+			if "Suite" in raw_line:
+				street_address = (street_address + " " + raw_line).strip()
+				raw_line = raw_data[2]
+			city = raw_line[:raw_line.rfind(',')].strip()
+			state = raw_line[raw_line.rfind(',')+1:raw_line.rfind(' ')].strip()
+			zip_code = raw_line[raw_line.rfind(' ')+1:].strip()
+			try:
+				int(zip_code)
+			except:
+				raw_data = str(item.find('address')).replace('<p>',"").replace('</p>',"").replace('\n',"").replace('\t'," ").strip().split('<br/>')
+				street_address = raw_data[0][raw_data[0].find('>')+1:].strip()
+				street_address = (street_address + raw_data[1].strip()).strip()
+				raw_line = raw_data[2]
+				city = raw_line[:raw_line.rfind(',')].strip()
 				state = raw_line[raw_line.rfind(',')+1:raw_line.rfind(' ')].strip()
 				zip_code = raw_line[raw_line.rfind(' ')+1:].strip()
-				try:
-					int(zip_code)
-				except:
-					raw_data = str(item.find('a')).replace('<p>',"").replace('</p>',"").replace('\n',"").replace('\t'," ").strip().split('<br/>')
-					street_address = raw_data[0][raw_data[0].rfind('blank">')+7:].strip() + raw_data[1].strip()
-					raw_line = raw_data[2][2:raw_data[2].find('<')].strip()
-					city = raw_line[:raw_line.rfind(',')].strip()
-					state = raw_line[raw_line.rfind(',')+1:raw_line.rfind(' ')].strip()
-					zip_code = raw_line[raw_line.rfind(' ')+1:].strip()
+			country_code = "US"
+			store_number = "<MISSING>"
+			try:
+				phone = re.findall("[[(\d)]{5} [\d]{3}-[\d]{4}", item.text)[0]
+			except:
+				phone = re.findall("[[\d]{3}-[\d]{3}-[\d]{4}", item.text)[0]
+			location_type = "<MISSING>"
+			latitude = "<MISSING>"
+			longitude = "<MISSING>"
+			hours_of_operation = item.find('div', attrs={'class': 'hours'}).p.get_text(separator=u' ').replace("\n"," ").replace("\xa0","").strip()
+			hours_of_operation = re.sub(' +', ' ', hours_of_operation)
 
-				country_code = "US"
-				store_number = "<MISSING>"
-				try:
-					phone = re.findall("[[(\d)]{5} [\d]{3}-[\d]{4}", item.text)[0]
-				except:
-					phone = re.findall("[[\d]{3}-[\d]{3}-[\d]{4}", item.text)[0]
-				location_type = "<MISSING>"
-
-				raw_gps = item.find('a')['href']
-
-				start_point = raw_gps.find("@") + 1
-				latitude = raw_gps[start_point:raw_gps.find(',',start_point)]
-				long_start = raw_gps.find(',',start_point)+1
-				longitude = raw_gps[long_start:raw_gps.find(',',long_start)]
-				try:
-					int(latitude[4:8])
-				except:
-					try:
-						start_point = raw_gps.find("ll=") + 3
-						latitude = raw_gps[start_point:raw_gps.find(',',start_point)]
-						long_start = raw_gps.find(',',start_point)+1
-						longitude = raw_gps[long_start:raw_gps.find('&',long_start)]
-					except:
-						latitude = "<MISSING>"
-						longitude = "<MISSING>"
-					try:
-						int(latitude[4:8])
-					except:
-						latitude = "<MISSING>"
-						longitude = "<MISSING>"						
-
-				hours_of_operation = item.find('div', attrs={'class': 'hours'}).p.get_text(separator=u' ').replace("\n"," ").replace("\xa0","").strip()
-				hours_of_operation = re.sub(' +', ' ', hours_of_operation)
-
-				data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
-
+			data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 	return data
 
 def scrape():
