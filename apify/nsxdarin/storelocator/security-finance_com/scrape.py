@@ -1,14 +1,11 @@
 import csv
-import urllib3
+import urllib2
 import requests
 import json
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 session = requests.Session()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
-
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,8 +23,9 @@ def fetch_data():
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
         r2 = session.get(loc, headers=headers, verify=False)
+        print('Pulling Location %s...' % loc)
         website = 'www.security-finance.com'
-        typ = 'Location'
+        typ = ''
         store = ''
         add = ''
         zc = ''
@@ -41,6 +39,8 @@ def fetch_data():
         lat = '<MISSING>'
         lng = '<MISSING>'
         for line2 in r2.iter_lines():
+            if '<h1 class="location-name">' in line2:
+                typ = line2.split('<h1 class="location-name">')[1].split('<')[0]
             if '"name": "' in line2 and NFound is False:
                 NFound = True
                 name = line2.split('"name": "')[1].split('"')[0]
