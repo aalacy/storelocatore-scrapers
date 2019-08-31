@@ -24,14 +24,33 @@ def fetch_data():
     store_name=[]
     store_detail=[]
     return_main_object=[]
-  
-  
+    lat =[]
+    log =[]
+    hours =[]
     k=(soup.find_all("div",{"class":"entry-content"}))
 
     for i in k:
+
+          
+        lat1  =  i.find_all("div",{"class":"et_pb_map_pin"})
+        # print(lat1)
+        for j in lat1:
+            # lat = j['data-lat']
+            # lng = j['data-lng']
+  
+            # print(lat2.arttrs['data-center-lat'])
+            # print(lat2.attrs['data-lat'])
+            # for j in lat2:
+            #     print(j.attrs["data-lat"])
+            lat.append(j['data-lat'])
+            log.append(j['data-lng'])
+            # print(j.attrs['data-center-lng'])
+        
         p  =  i.find_all("div",{"class":"et_pb_text_inner"})
         for p1 in p:
             tem_var =[]
+
+
             if len(list(p1.stripped_strings)) != 1:
                 data = list(p1.stripped_strings)
                 stopwords = "(Jiffy Mart)"
@@ -50,7 +69,7 @@ def fetch_data():
                     state = new_words2[1].split(",")[2].split( )[0]
                     zipcode = new_words2[1].split(",")[2].split( )[1]
 
-                    hours = (new_words2[2])
+                    hours.append(new_words2[2])
                     phone = new_words2[-1]
 
 
@@ -62,9 +81,7 @@ def fetch_data():
                     tem_var.append("<MISSING>")
                     tem_var.append(phone)
                     tem_var.append("ramuntos")
-                    tem_var.append("<MISSING>")
-                    tem_var.append("<MISSING>")
-                    tem_var.append(hours)
+                    
                     store_detail.append(tem_var)
 
                     store_name.append(new_words2[0])
@@ -80,7 +97,7 @@ def fetch_data():
                     else:
                         phone = (new_words2[-1].split("Phone:\xa0")[1])
 
-                    hours = (" ".join(new_words2[3:-1]).replace("Phone:",""))
+                    hours.append(" ".join(new_words2[3:-1]).replace("Phone:",""))
 
                     tem_var.append(street_address)
                     tem_var.append(city)
@@ -90,9 +107,7 @@ def fetch_data():
                     tem_var.append("<MISSING>")
                     tem_var.append(phone)
                     tem_var.append("ramuntos")
-                    tem_var.append("<MISSING>")
-                    tem_var.append("<MISSING>")
-                    tem_var.append(hours)
+                   
                     store_detail.append(tem_var)   
    
    
@@ -101,7 +116,9 @@ def fetch_data():
         store.append("https://ramuntos.com")
         store.append(store_name[i])
         store.extend(store_detail[i])
-     
+        store.append(lat[i])
+        store.append(log[i])
+        store.append(hours[i])
         return_main_object.append(store) 
 
     return return_main_object
@@ -113,4 +130,5 @@ def scrape():
 
 
 scrape()
+
 
