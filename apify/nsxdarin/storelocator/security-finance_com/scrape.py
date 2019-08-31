@@ -25,7 +25,7 @@ def fetch_data():
         r2 = session.get(loc, headers=headers, verify=False)
         print('Pulling Location %s...' % loc)
         website = 'www.security-finance.com'
-        typ = 'Location'
+        typ = ''
         store = ''
         add = ''
         zc = ''
@@ -39,6 +39,8 @@ def fetch_data():
         lat = '<MISSING>'
         lng = '<MISSING>'
         for line2 in r2.iter_lines():
+            if '<h1 class="location-name">' in line2:
+                typ = line2.split('<h1 class="location-name">')[1].split('<')[0]
             if '"name": "' in line2 and NFound is False:
                 NFound = True
                 name = line2.split('"name": "')[1].split('"')[0]

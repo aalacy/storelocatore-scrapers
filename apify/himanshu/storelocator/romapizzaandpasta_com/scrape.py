@@ -27,13 +27,15 @@ def fetch_data():
     store_name=[]
     store_detail=[]
     return_main_object=[]
-    
-    hours =[]
+    hours1=[]
+  
     k1  = soup.find_all("div",{"class":"x-column x-sm vc x-1-1"})
-
     for i in k1:
         names = i.find_all("strong")
         a = i.find_all("a")
+        span = i.find_all("span")
+        for s in span:
+            hours1.append(" ".join(list(s.stripped_strings)))
 
         for a1 in a[:-1]:
             if "https:" in a1['href']:
@@ -44,7 +46,7 @@ def fetch_data():
                     hours = ''
                     tem_var =[]
                     p = i.find("div",{"class":"card-body"})
-                    
+            
                     zipcode = list(p.stripped_strings)[2].split(',')[1].split( )[1]
                     state = list(p.stripped_strings)[2].split(',')[1].split( )[0]
                     city = list(p.stripped_strings)[2].split(',')[0]
@@ -67,18 +69,47 @@ def fetch_data():
                     tem_var.append("romapizzaandpasta")
                     tem_var.append("<MISSING>")
                     tem_var.append("<MISSING>")
-                    tem_var.append(hours)
+                    
                     store_detail.append(tem_var)
 
         for name in names[:-1]:
             store_name.append(name.text.replace("\n",""))
     del store_name[3]
+
+
+    arr=["https://www.opendining.net/menu/5bec37d9515ee9202e15a752#ordering-for-prompt","https://www.opendining.net/menu/5bcf1d1b505ee9035f2a106d"]
+    for arr1 in arr:
+        tem_var=[]
+        r = requests.get(arr1,headers=headers)
+        soup2= BeautifulSoup(r.text,"lxml")
+        v2=soup2.find("div",{"class":"restaurant-info"})
+
+        name = list(v2.stripped_strings)[0]
+        store_name.append(name)
+        st=list(v2.stripped_strings)[1]
+        city = list(v2.stripped_strings)[2].split(',')[0]
+        state = list(v2.stripped_strings)[2].split(',')[1].split( )[0]
+        zip1=list(v2.stripped_strings)[2].split(',')[1].split( )[1]
+        phone  = list(v2.stripped_strings)[3]
+        
+        tem_var.append(st)
+        tem_var.append(city)
+        tem_var.append(state)
+        tem_var.append(zip1)
+        tem_var.append("US")
+        tem_var.append("<MISSING>")
+        tem_var.append(phone)
+        tem_var.append("romapizzaandpasta")
+        tem_var.append("<MISSING>")
+        tem_var.append("<MISSING>")
+        store_detail.append(tem_var)
     
     for i in range(len(store_name)):
         store = list()
         store.append("https://romapizzaandpasta.com")
         store.append(store_name[i])
         store.extend(store_detail[i])
+        store.append(hours1[i])
         return_main_object.append(store) 
 
     return return_main_object
@@ -90,3 +121,5 @@ def scrape():
 
 
 scrape()
+
+

@@ -26,8 +26,16 @@ def fetch_data():
     return_main_object=[]
     phone =[]
     hours =[]
+    lat=[]
+    log=[]
     k = soup.find_all("div",{"class":"sqs-block-content"})
+    k1 = (soup.find_all("div",{"class":"sqs-block map-block sqs-block-map"}))
+    for k2 in k1:
+        lat.append(json.loads(k2.attrs["data-block-json"])["location"]['mapLat'])
+        log.append(json.loads(k2.attrs["data-block-json"])["location"]['mapLng'])
+        # print(json.loads(k2.attrs["data-block-json"])["location"]['mapLng'])
     for i in k:
+        
         p =i.find_all('p')
         for j in p:
             tem_var=[]
@@ -48,9 +56,6 @@ def fetch_data():
                 tem_var.append("<MISSING>")
                 tem_var.append(phone)
                 tem_var.append("sanfelipenc")
-                tem_var.append("<MISSING>")
-                tem_var.append("<MISSING>")
-                tem_var.append("<MISSING>")
                 store_detail.append(tem_var)     
 
 
@@ -59,6 +64,9 @@ def fetch_data():
         store.append("https://www.sanfelipenc.com")
         store.append(store_name[i])
         store.extend(store_detail[i])
+        store.append(lat[i])
+        store.append(log[i])
+        store.append("<MISSING>")
         return_main_object.append(store)
   
     return return_main_object
@@ -70,3 +78,5 @@ def scrape():
 
 
 scrape()
+
+

@@ -54,7 +54,7 @@ def fetch_data():
         output.append(store['country']) #country code
         output.append(store['id']) #store_number
         output.append('<MISSING>') #phone
-        output.append("Spumoni – Trattoria & Pizzeria") #location type
+        output.append("Spumoni - Trattoria & Pizzeria") #location type
         output.append(store['lat']) #latitude
         output.append(store['lng']) #longitude
         h_temp = []

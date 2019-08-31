@@ -5,7 +5,7 @@ import requests
 from lxml import etree
 import json
 
-base_url = 'https://prairielife.com'
+base_url = 'https://www.happyspizza.com'
 
 def validate(item):    
     if type(item) == list:

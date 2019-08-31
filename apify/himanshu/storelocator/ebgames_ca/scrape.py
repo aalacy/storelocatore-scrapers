@@ -25,10 +25,12 @@ def fetch_data():
     base_url= "https://www.ebgames.ca/StoreLocator/GetStoresForStoreLocatorByProduct?value=&skuType=0&language=en-CA"
     r = requests.get(base_url,headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
-  
+
     name_store=[]
     store_detail=[]
     phone=[]
+    lat =''
+    log=''
     return_main_object=[]
     k=json.loads(soup.text,strict=False)
     for index,i in enumerate(k):
@@ -36,8 +38,17 @@ def fetch_data():
 
         if index!=0:
             st = i['Address']
-            lat = i['Latitude']
-            log =i['Longitude']
+            if "Latitude" in i:
+                lat = i['Latitude']
+                print(lat)
+            else:
+                lat = "<MISSING>"
+
+            if "Longitude" in i:
+                log =i['Longitude']
+            else:
+                log ="<MISSING>"
+
             postal =i['Zip']
             name = i['Name']
             
@@ -72,14 +83,12 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append(phone.replace("\x8f","").replace("undefined","<MISSING>"))
             tem_var.append("ebgames.ca")
+            
             tem_var.append(lat.replace("undefined","<MISSING>"))
-            tem_var.append(log.replace("undefined","<MISSING>").replace("0","<MISSING>"))
+            tem_var.append(log.replace("undefined","<MISSING>"))
             tem_var.append(hours.replace("\x8f",""))
             return_main_object.append(tem_var)
        
-
-
-          
    
     return return_main_object
 
@@ -90,3 +99,7 @@ def scrape():
 
 
 scrape()
+
+
+
+

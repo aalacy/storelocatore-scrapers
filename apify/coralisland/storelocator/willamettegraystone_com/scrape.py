@@ -41,8 +41,17 @@ def fetch_data():
     session = requests.Session()
     request = session.get(url)
     response = etree.HTML(request.text)
-    store_list = response.xpath('//div[@class="b-address"]')
-    for store in store_list:
+    store_list_summer = response.xpath('//div[@class="branches-list"][1]//div[@class="b-address"]')
+    store_list_winter = response.xpath('//div[@class="branches-list"][2]//div[@class="b-address"]')    
+    temp_output = {}
+    for idx, store in enumerate(store_list_winter):
+        store = eliminate_space(store_list_winter[idx].xpath('.//text()'))
+        store_hours_ = '<MISSING>'
+        for w_idx, item in enumerate(store):
+            if 'hours:' in item.lower():
+                store_hours_ = ', '.join(store[w_idx:]).replace('Hours:', '').replace('  ', '').replace('\n', ' ')
+        temp_output[store[0]] = store_hours_
+    for idx, store in enumerate(store_list_summer):
         flag = validate(store.xpath('./@style'))
         if flag == '':
             store = eliminate_space(store.xpath('.//text()'))
@@ -51,12 +60,12 @@ def fetch_data():
             address_end_point = 0
             phone = '<MISSING>'
             store_hours = '<MISSING>'
-            for idx, item in enumerate(store):
+            for s_idx, item in enumerate(store):
                 if 'phone:' in item.lower():
                     phone = item.replace('Phone:', '')
-                    address_end_point = idx
+                    address_end_point = s_idx
                 if 'hours:' in item.lower():
-                    store_hours = ', '.join(store[idx:]).replace('Hours:', '').replace('  ', '').replace('\n', ' ')
+                    store_hours = ', '.join(store[s_idx:]).replace('Hours:', '').replace('  ', '').replace('\n', ' ')
             store = store[:address_end_point]
             output.append(store[0]) #location name
             output.append(', '.join(store[1: address_end_point-1])) #address
@@ -70,7 +79,7 @@ def fetch_data():
             output.append("Willamette Graystone") #location type
             output.append("<MISSING>") #latitude
             output.append("<MISSING>") #longitude
-            output.append(store_hours) #opening hours
+            output.append('Summer Hours ' + store_hours + ' Winter Hours ' + temp_output[store[0]]) #opening hours
             output_list.append(output)
     return output_list
 

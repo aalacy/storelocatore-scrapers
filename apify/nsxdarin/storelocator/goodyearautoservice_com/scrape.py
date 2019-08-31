@@ -35,7 +35,7 @@ def fetch_data():
         citystate = city.split('/tire-stores/')[1].split('/')[0]
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
-            if '<a href="/en-US/tire-shop/' in line2:
+            if '<a href="/en-US/tire-shop/' in line2 and 'Goodyear Auto' in line2:
                 lurl = 'https://www.goodyear.com/' + line2.split('href="')[1].split('"')[0]
                 if lurl not in alllocs:
                     alllocs.append(lurl)

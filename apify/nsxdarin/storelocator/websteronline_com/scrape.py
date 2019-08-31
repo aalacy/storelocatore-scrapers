@@ -28,15 +28,16 @@ def fetch_data():
         typ = ''
         store = ''
         add = ''
-        zc = ''
-        state = ''
-        city = ''
+        zc = '<MISSING>'
+        state = '<MISSING>'
+        city = '<MISSING>'
         country = ''
         name = ''
-        phone = ''
+        phone = '<MISSING>'
         hours = ''
         lat = '<MISSING>'
         lng = '<MISSING>'
+        country = 'US'
         HFound = False
         lines = r2.iter_lines()
         for line2 in lines:
@@ -61,10 +62,12 @@ def fetch_data():
                 add = next(lines).split('<')[0].strip().replace('\t','')
             if '<span class="locality">' in line2:
                 city = line2.split('<span class="locality">')[1].split('<')[0]
+            if '<abbr class="region">' in line2:
                 state = line2.split('<abbr class="region">')[1].split('<')[0]
+            if '<span class="postal-code">' in line2:
                 zc = line2.split('<span class="postal-code">')[1].split('<')[0]
-                country = 'US'
-                phone = next(lines).split('<a href="tel:')[1].split('"')[0]
+            if '<a href="tel:' in line2:
+                phone = line2.split('<a href="tel:')[1].split('"')[0]
             if "if(cur_latitude === ''" in line2:
                 g = next(lines)
                 lat = g.split('latitude=')[1].split('&')[0]

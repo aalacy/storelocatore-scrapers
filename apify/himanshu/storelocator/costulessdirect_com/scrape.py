@@ -19,21 +19,25 @@ def write_output(data):
 
 def fetch_data():
     headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+    "Content-Type":"application/x-www-form-urlencoded"
     }
 
     base_url= "https://www.costulessdirect.com/resources/locations/"
-    r = requests.get(base_url,headers=headers)
+    data ="page=1&rows=10000000&search=search&address=&radius=200"
+    r = requests.post(base_url,headers=headers,data=data)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
     return_main_object=[]
     hours =[]
-    k = soup.find_all("div",{"class":"main_content"})
+    k= soup.find_all("div",{"class":"main_content"})
+
+
    
     for i in k:
         name = i.find_all("h2",{"itemprop":"name"})
-
+        
         for n in name:
             tem_var=[]
             name=(n.text.replace('\n',""))
@@ -67,7 +71,7 @@ def fetch_data():
 
             if v1[0] !="Office Hours:":
                 del v1[0]
-            hours = (v1)
+            hours = " ".join(v1)
             
         tem_var.append("https://www.costulessdirect.com")
         tem_var.append(name)
@@ -77,7 +81,7 @@ def fetch_data():
         tem_var.append(zip1)
         tem_var.append("US")
         tem_var.append("<MISSING>")
-        tem_var.append(phone)
+        tem_var.append(phone.replace("Mountain/San Antonio. In the Superior supermarket shopping center","909-218-8631"))
         tem_var.append("costulessdirect")
         tem_var.append("<MISSING>")
         tem_var.append("<MISSING>")
@@ -93,3 +97,5 @@ def scrape():
 
 
 scrape()
+
+
