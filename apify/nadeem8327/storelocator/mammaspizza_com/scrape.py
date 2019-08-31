@@ -10,7 +10,7 @@ options = webdriver.ChromeOptions()
 prefs= {"profile.default_content_setting_values.geolocation":2}
 options.add_argument("--headless")
 options.add_experimental_option("prefs",prefs)
-driver=webdriver.Chrome('chromedriver',options=options)
+driver=webdriver.Chrome('/home/nadeem/Downloads/chromedriver',options=options)
 
 url = "https://mammaspizza.com/locations/"
 driver.get(url)
@@ -28,6 +28,9 @@ with open("data.csv",mode="w") as file:
         store_number = rec["data-id"]
         add = rec.find(name="div",attrs={"class":"loc-info"})
         stre = add.find(name="address")
+        location_type = "<MISSING>"
+        if "OPENING SOON" in stre.text:
+            location_type = "Opening Soon"
         address = stre.text.split("\n")
         if len(address) == 2:
             street_address = address[0]
@@ -51,12 +54,12 @@ with open("data.csv",mode="w") as file:
         contact_number = contact_number.replace(")","")
         contact_number = contact_number.replace("---","-")
         #print("contact number ",contact_number, "HRS ",hours_of_operation)
-                
-        
-        
-        data=["www_mammaspizza_com","<MISSING>",street_address,city,"<MISSING>","<MISSING>","CA",store_number,contact_number,"<MISSING>","<MISSING>",
+
+
+
+        data=["www_mammaspizza_com",location_type,street_address,city,"<MISSING>","<MISSING>","CA",store_number,contact_number,"<MISSING>","<MISSING>",
          "<MISSING>",hours_of_operation]
-        
+
         fl_writer.writerow(data)
-        
+
 driver.quit()

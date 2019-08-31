@@ -29,31 +29,30 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(locator_domain + ext)
-    main = driver.find_element_by_css_selector('div.canada')
-    locs = main.find_elements_by_xpath('//span[@role="row"]')
+
+
+    locs = driver.execute_script('return canadaEntries;')
 
     all_store_data = []
     for loc in locs:
-        driver.execute_script("arguments[0].classList.add('open');", loc)
-        cont = loc.find_element_by_css_selector('div.location-title').text.split('\n')
-        if 'Bahrain City Centre Mall' in cont[0]:
-            break
-        time.sleep(.1)
-        location_name = cont[0]
-        city = cont[-2]
-        state = cont[-1]
-
-        street_address = loc.find_element_by_css_selector('div.location-info').text
+        street_address = loc['address']
+        if street_address == '':
+            street_address = '<MISSING>'
+        city = loc['city']
+        country_code = 'CA'
+        lat = loc['latitude']
+        longit = loc['longitude']
+        location_name = loc['title']
+        state = loc['province']
 
         hours = '<MISSING>'
         zip_code = '<MISSING>'
 
-        store_number = '<MISSING>'
+        store_number = loc['store_number']
+        if store_number == '':
+            store_number = '<MISSING>'
         location_type = '<MISSING>'
         phone_number = '<MISSING>'
-        country_code = 'CA'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

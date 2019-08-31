@@ -21,7 +21,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    print("soup ===  first")
+    # print("soup ===  first")
 
     base_url = "https://pier49.com"
     r = requests.get("https://pier49.com/locations/", headers=headers)
@@ -46,7 +46,7 @@ def fetch_data():
     longitude = ""
     hours_of_operation = ""
 
-    for script in soup.find_all('div', {'class': re.compile('themify_builder_row module_row clearfix locationbox')}):
+    for script in soup.find_all('div', {'class': re.compile('themify_builder_row module_row clearfix')}):
         list_store_data = list(script.stripped_strings)
         # print('list_store_data === '+str(list_store_data))
         if len(list_store_data) > 0:
@@ -68,7 +68,7 @@ def fetch_data():
             if 'Google Maps' in list_store_data:
                 list_store_data.remove('Google Maps')
 
-            print(str(len(list_store_data)) + " = script ------- " + str(list_store_data))
+            # print(str(len(list_store_data)) + " = script ------- " + str(list_store_data))
 
             location_name = list_store_data[0]
             phone = list_store_data[1]
@@ -91,14 +91,14 @@ def fetch_data():
             latitude = '<MISSING>'
             longitude = '<MISSING>'
 
-
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-            print("data = " + str(store))
-            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
-            return_main_object.append(store)
+            if street_address != '<MISSING>':
+                return_main_object.append(store)
 
     return return_main_object
 

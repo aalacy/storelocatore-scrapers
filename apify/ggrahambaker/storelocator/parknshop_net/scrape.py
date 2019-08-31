@@ -18,7 +18,7 @@ def fetch_data():
     ext = 'park-n-shop-locations/'
 
     to_scrape = locator_domain + ext
-    print(to_scrape)
+
     page = requests.get(to_scrape)
     assert page.status_code == 200
 

@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -38,10 +39,15 @@ def fetch_data():
         if len(list1)==28:
             for j in range(len(list1)):
                 tem_var=[]
+                
                 r = requests.get("https://www.seasonspizza.com/"+list1[j])
                 soup= BeautifulSoup(r.text,"lxml")
                 title = soup.find("div",{"class":"panel-heading"})
 
+                lat = (soup.find_all("script")[-1].text.split("new google.maps.LatLng")[1].split("var var_mapoption")[0].split(");")[0].replace("(","").split(",")[0])
+                log  = (soup.find_all("script")[-1].text.split("new google.maps.LatLng")[1].split("var var_mapoption")[0].split(");")[0].replace("(","").split(",")[1])
+               
+               
                 store_name.append(title.text.replace("\n","").replace("\r",""))
 
                 hours = soup.find_all("dd")
@@ -68,8 +74,8 @@ def fetch_data():
                     tem_var.append("<MISSING>")
                     tem_var.append(phone)
                     tem_var.append("seasonspizza")
-                    tem_var.append("<MISSING>")
-                    tem_var.append("<MISSING>")
+                    tem_var.append(lat)
+                    tem_var.append(log)
                     tem_var.append(hours_of_operation)
                     store_detail.append(tem_var)
 
@@ -90,8 +96,8 @@ def fetch_data():
                     tem_var.append("<MISSING>")
                     tem_var.append(phone)
                     tem_var.append("seasonspizza")
-                    tem_var.append("<MISSING>")
-                    tem_var.append("<MISSING>")
+                    tem_var.append(lat)
+                    tem_var.append(log)
                     tem_var.append(hours_of_operation)
                     store_detail.append(tem_var)
     for i in range(len(store_name)):
@@ -109,3 +115,7 @@ def scrape():
 
 
 scrape()
+
+
+
+

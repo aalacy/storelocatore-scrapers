@@ -70,7 +70,7 @@ def fetch_data():
         else:
             phone_number = main[3]
         if len(phone_number) == 3:
-            continue
+            phone_number = '<MISSING>'
 
         lat = '<MISSING>'
         longit = '<MISSING>'
