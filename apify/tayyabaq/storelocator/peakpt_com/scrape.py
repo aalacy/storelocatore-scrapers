@@ -1,6 +1,4 @@
-import csv
-import os
-import re, time
+import csv, os, re, time
 import requests
 from bs4 import BeautifulSoup
 
