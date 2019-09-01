@@ -41,7 +41,7 @@ def fetch_data():
             city[n],
             state[n],
             '<MISSING>',
-            'US',
+            'Canada',
             '<MISSING>',
             phone[n],
             '<MISSING>',
