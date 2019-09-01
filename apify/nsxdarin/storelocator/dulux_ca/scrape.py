@@ -60,6 +60,8 @@ def fetch_data():
                     store = line2.split('<form method="post" action="')[1].split('.aspx')[0].rsplit('-',1)[1]
                 if '<h1>' in line2:
                     name = next(lines).split('>')[1].split('<')[0].strip().replace('\t','')
+                    if ' in ' in name:
+                        typ = name.split(' in ')[0]
                 if '<span itemprop="streetAddress" id="street">' in line2:
                     Found = True
                     while Found:
@@ -68,8 +70,9 @@ def fetch_data():
                             Found = False
                     add = g.split('>')[1].split('<')[0]
                     g = next(lines)
-                    add = add + ' ' + g.split('>')[1].split('<')[0]
-                    add = add.strip()
+                    if '>' in g:
+                        add = add + ' ' + g.split('>')[1].split('<')[0]
+                        add = add.strip()
                 if 'addressLocality" id="city">' in line2:
                     city = line2.split('addressLocality" id="city">')[1].split('<')[0].strip().replace(',','')
                 if 'addressRegion" id="state">' in line2:
