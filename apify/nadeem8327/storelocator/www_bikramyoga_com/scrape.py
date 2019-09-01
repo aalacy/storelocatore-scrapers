@@ -48,6 +48,8 @@ with open("data.csv",mode="w") as file:
         if state=="":
             state="<INACCESSIBLE>"
         contact_number = contact_number.replace(","," ")
+        if contact_number == "":
+            contact_number="<MISSING>"
         raw_address = raw_address.replace(",","'")
         data=["www_bikramyoga_com",name,street_address,"<INACCESSIBLE>",state,"<INACCESSIBLE>",
         "<INACCESSIBLE>","<MISSING>",contact_number,"<MISSING>","<MISSING>","<MISSING>","<MISSING>",raw_address]
