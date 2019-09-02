@@ -53,7 +53,7 @@ def fetch_data():
             output.append(base_url) # url
             output.append(store['name']) #location name
             output.append(store['address']) #address
-            output.append(store['city']) #city
+            output.append(validate(eliminate_space(store['city'].replace('us', '').replace('on_ca', 'on').replace('_', ' ').split(' '))[:-1]).capitalize()) #city
             output.append(store['state']) #state
             output.append(store['zipcode']) #zipcode
             output.append(store['country']) #country code

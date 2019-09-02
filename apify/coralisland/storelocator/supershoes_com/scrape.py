@@ -55,14 +55,14 @@ def fetch_data():
     for city in city_list:
         data = {
             'action': 'search',
-            'address': 'MONTREAL',
-            'distance': '10000',
+            'address': city['city'],
+            'distance': '500',
             'chains[]': '1'
         }
         request = session.post(url, data=data, headers=headers)
         response = etree.HTML(request.text)
         store_list = response.xpath('//div[@id="nearest"]/ul/li')
-        print(city)
+        print('~~~~~~~~~~~', city, len(store_list))
         for store in store_list:
             store = eliminate_space(store.xpath('.//text()'))
             output = []
