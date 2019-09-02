@@ -53,8 +53,8 @@ def fetch_data():
         for line in lines:
             if '<h1 class="offscreen">' in line:
                 name = line.split('<h1 class="offscreen">')[1].split('<')[0]
-                if 'Western Union Agent Location — ' in name:
-                    name = name.split('Western Union Agent Location — ')[1]
+                if ' — ' in name:
+                    name = name.split(' — ')[1]
             if 'itemprop="streetAddress">' in line and AFound is False:
                 AFound = True
                 add = line.split('itemprop="streetAddress">')[1].split('<')[0]
