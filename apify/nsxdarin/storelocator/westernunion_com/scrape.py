@@ -1,4 +1,3 @@
-# -*- coding: cp1252 -*-
 import csv
 import urllib2
 import requests
@@ -53,8 +52,8 @@ def fetch_data():
         for line in lines:
             if '<h1 class="offscreen">' in line:
                 name = line.split('<h1 class="offscreen">')[1].split('<')[0]
-                if ' — ' in name:
-                    name = name.split(' — ')[1]
+                if 'Western Union Agent Location' in name:
+                    name = name[:31]
             if 'itemprop="streetAddress">' in line and AFound is False:
                 AFound = True
                 add = line.split('itemprop="streetAddress">')[1].split('<')[0]
