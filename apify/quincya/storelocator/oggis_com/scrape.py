@@ -53,7 +53,8 @@ def fetch_data():
             zip_code = "<MISSING>"
             no_zip = True
             state = zip_code
-                
+        if state == "<MISSING>" and city == "Upland":
+            state = "CA"
         country_code = "US"
         link = item.find('a')['href']
         store_number = "<MISSING>"
@@ -86,7 +87,7 @@ def fetch_data():
             print '[?] Check whether system is Online.'
 
         section = new_base.findAll('section', attrs={'class': 'av_textblock_section'})[1]
-        hours_of_operation = section.find('div', attrs={'id': 'lbmb_hours'}).text.replace("\n"," ").replace("\r","").encode('utf-8').strip()
+        hours_of_operation = section.find('div', attrs={'id': 'lbmb_hours'}).text.replace("\n"," ").replace("\r","").replace("*","").replace("<strong>","").replace("</strong>","").replace("<br>"," ").encode('utf-8').strip()
 
         data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
