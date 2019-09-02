@@ -72,6 +72,9 @@ def fetch_data():
 
                 # print("json_data ==== "+ str(phone))
 
+                if phone is None or len(phone) == 0:
+                    phone = "<MISSING>"
+                
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation]
 

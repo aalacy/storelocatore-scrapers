@@ -33,7 +33,24 @@ def fetch_data():
     latitude =[]
     longitude =[]
     data = soup.find_all("div",{"class":"locations_scroll"})
-    
+    a = soup.find_all("a",{"class":"storeinfo button btn qbutton small2 red"})
+    for a1 in a:
+        if "https://tonysaccos.com/pizza-locations/mentor-oh/" in a1['href'] or "https://tonysaccos.com/pizza-locations/granger-in/" in a1['href'] or "https://tonysaccos.com/pizza-locations/estero-fl/" in a1['href'] :
+         
+            base_url= a1['href']
+            r = requests.get(base_url)
+            soup1= BeautifulSoup(r.text,"lxml")
+            g=(soup1.find_all("span",{"itemprop":"openingHours"}))
+            for g1 in g:
+                hours1.append(g1.text)
+        else:
+            hours1.append("<INACCESSIBLE>")
+            # r = requests.get(a1['href'])
+            # print(a1['href'])
+            # soup1= BeautifulSoup(r.text,"lxml")
+            # print(soup1)
+
+
     for i in data:
         names = i.find_all("span",{"itemprop":"name"})
         phone  = i.find_all("span",{"itemprop":"telephone"})
@@ -52,12 +69,14 @@ def fetch_data():
             state.append(st.text.split(',')[1].split( )[1])
             zipcode.append(st.text.split(',')[1].split( )[2])
             
-        for h in hours:
-            hours1.append(h.text)
+        # for h in hours:
+        #     hours1.append(" ".join(list(h.stripped_strings)))
+            
          
         for l in links:
             latitude.append(l.a['href'].split("/")[5].split(',')[0])
             longitude.append(l.a['href'].split("/")[5].split(',')[1])
+            
     for i in range(len(store_name)):
         store = list()
         store.append("https://tonysaccos.com")
@@ -74,6 +93,7 @@ def fetch_data():
         store.append(latitude[i])
         store.append(longitude[i])
         store.append(hours1[i])
+        
         return_main_object.append(store)
         
         
@@ -86,4 +106,5 @@ def scrape():
 
 
 scrape()
+
 

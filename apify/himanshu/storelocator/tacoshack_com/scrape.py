@@ -32,6 +32,7 @@ def fetch_data():
         location_name = val.find('h3').text
        
         
+       
         if len(val.find('span',{'class':'locationLine'}).find_next('span').text.strip().split(',')) == 2:
             if len(val.find('span',{'class':'locationLine'}).find_next('span').text.strip().split(',')[1].strip().split(' ')[0].strip()) == 2:
                 street_address = val.find('span',{'class':'locationLine'}).find_next('span').text.strip().split(',')[0].strip()
@@ -56,8 +57,22 @@ def fetch_data():
                 location_type = 'tacoshack'
                 latitude = '<MISSING>'
                 longitude = '<MISSING>'
-                    
                 
+        elif len(val.find('span',{'class':'locationLine'}).find_next('span').text.strip().split(',')) == 3:
+                
+                street_address = val.find('span',{'class':'locationLine'}).find_next('span').text.strip().split(',')[0].strip()
+                city = val.find('span',{'class':'locationLine'}).find_next('span').text.strip().split(',')[1].strip()
+                state = val.find('span',{'class':'locationLine'}).find_next('span').text.strip().split(',')[2].strip()
+                zip = '<MISSING>'  
+                store_number = '<MISSING>'
+                phone = val.find('span',{'class':'contact'}).text.split('|')[0].strip().replace('PH:','').strip()
+
+    
+                country_code = 'USA'        
+                location_type = 'tacoshack'
+                latitude = '<MISSING>'
+                longitude = '<MISSING>'
+           
         else:
 
             street_address = val.find('span',{'class':'locationLine'}).find_next('span').text.strip().split(',')[0].strip()
@@ -70,6 +85,8 @@ def fetch_data():
             location_type = 'tacoshack'
             latitude = '<MISSING>'
             longitude = '<MISSING>'
+
+
             
         hours_of_operation = val.find_all('div',{'class':'worktime'})
         
