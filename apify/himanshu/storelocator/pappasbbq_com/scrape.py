@@ -30,7 +30,7 @@ def fetch_data():
         locator_domain = base_url
         location_name = val['name'].strip()
 
-        street_address = val['street'].strip()
+        street_address = val['street'].strip().replace('Terminal','').replace('  C Gate 14','')
         city = val['city'].split(',')[0].strip()
         state = val['city'].split(',')[1].strip().split(' ')[0].strip()
             
@@ -49,7 +49,8 @@ def fetch_data():
         for vv in ck:
             dk.append(vv.text+'-')
             
-        hours_of_operation = ' '.join(dk)
+        hours_of_operation = ' '.join(dk).replace('Dining Room:',' ')
+
         
         store=[]
         store.append(locator_domain if locator_domain else '<MISSING>')

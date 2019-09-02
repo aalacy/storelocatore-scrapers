@@ -1,7 +1,7 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
- 
+
 import re
 
 def write_output(data):
@@ -68,7 +68,8 @@ def fetch_data():
                 country_code = 'US'
                 store_number = '<MISSING>'
                 location_type = 'unicobank'
-                hours_of_operation = main_arry[0].text.strip()
+                hours_of_operation = ' '.join(main_arry[0].text.strip().split('\n')).strip()
+                
         
                 store=[]
                 store.append(locator_domain if locator_domain else '<MISSING>')

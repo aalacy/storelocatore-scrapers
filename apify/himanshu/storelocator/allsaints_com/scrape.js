@@ -5,7 +5,7 @@ const zipcode=require('zipcodes')
 const { getCode,getName } = require('country-list');
 async function scrape(){
   return new Promise(async (resolve,reject)=>{
-      var url=`https://store-locator-api.allsaints.com/shops`;
+      var url=`https://store-locator-api.allsaints.com/shops?attributes=`;
       request(url,async function(err,res,re){
           if(!err && res.statusCode==200){
             var maindata=JSON.parse(res.body);
