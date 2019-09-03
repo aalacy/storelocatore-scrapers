@@ -27,6 +27,34 @@ with open("data.csv",mode="w") as file:
         if strong:
             place=strong.text.split("\n")[0]
         if row:
+            #handle special case
+            if "Mahalo Kilani Mart" in row.text:
+                #   print("Yes it is there")
+                dta = row.text
+                dta = dta.replace("\t","")
+                dta = dta.split("\n")
+                location_name = dta[0]
+                street_address = dta[1].strip()
+                contact_number = dta[2].strip()
+                contact_number = contact_number.replace(" ","")
+                contact_number = contact_number.replace("(","")
+                contact_number = contact_number.replace(")","-")
+                data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
+                "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
+                fl_writer.writerow(data)
+
+                location_name = dta[4].strip()
+                street_address = dta[5].strip()
+                contact_number = dta[6].strip()
+                contact_number = contact_number.replace(" ","")
+                contact_number = contact_number.replace("(","")
+                contact_number = contact_number.replace(")","-")
+                data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
+                "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
+                fl_writer.writerow(data)
+
+
+                continue
             dta = row.find("img")
             if "Aloha Airport Cardlock" in row.text:
                 shouldPrint = True
@@ -60,4 +88,165 @@ with open("data.csv",mode="w") as file:
                 fl_writer.writerow(data)
 
 
-#driver.quit()
+##############HAWAIII######################################
+    html2 = requests.get("https://www.alohagas.com/hawaii.html")
+    soup2 = BeautifulSoup(html2.text,"html.parser")
+     #   location_name=location_name+x.text
+    hed=["locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude",
+               "longitude","hours_of_operation"]
+    location_name=street_address=contact_number=location_type=""
+
+    rows = soup2.find_all("table",attrs={"width":"100%"})
+    all_p = rows[0].find_all("tr",attrs={"class":"BodyCopy","valign":"top"})
+    i=0
+    shouldPrint=False
+    place = ""
+    city = ""
+
+    for row in all_p:
+        span = row.find("span")
+        strng = row.find("strong")
+        dta = row.find("img")
+        if span:
+            place = span.text
+            place = place.replace("\n","")
+            place = place.strip()
+        if strng:
+            city = strng.text
+            city = city.replace("\n","")
+            city = city.strip()
+        if dta:
+            adr = row.text.strip().split("\n")
+            for x in range(len(adr)):
+                adr[x]=adr[x].strip()
+            if "MOUNTAIN" in city and i==0:  #Handle special case
+                #print("Special Case")
+                place = "Kona"
+                location_name = adr[0]
+                location_name = location_name.replace(",","'")
+                street_address = adr[1]
+                street_address = street_address.replace(",","'")
+                contact_number= adr[2]
+                contact_number = contact_number.replace(" ","")
+                contact_number = contact_number.replace("(","")
+                contact_number = contact_number.replace(")","-")
+                location_type=location_name +" "+place
+                data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
+                "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
+                #print(data)
+                fl_writer.writerow(data)
+                location_name = adr[4]
+                location_name = location_name.replace(",","'")
+                street_address = adr[5]
+                street_address = street_address.replace(",","'")
+                contact_number= adr[6]
+                contact_number = contact_number.replace(" ","")
+                contact_number = contact_number.replace("(","")
+                contact_number = contact_number.replace(")","-")
+                location_type=location_name +" "+place
+                data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
+                "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
+                #print(data)
+                fl_writer.writerow(data)
+
+                i=i+1
+                #print("---------------------------------------")
+            elif "MOUNTAIN" in city and i==1:
+                i=i+1
+            else:
+                if len(adr) == 3:
+                   # print("Length is three")
+                    location_name = adr[0]
+                    location_name = location_name.replace(",","'")
+                    street_address = adr[1]
+                    street_address = street_address.replace(",","'")
+                    contact_number= adr[2]
+                    contact_number = contact_number.replace(" ","")
+                    contact_number = contact_number.replace("(","")
+                    contact_number = contact_number.replace(")","-")
+                    location_type=location_name +" "+place
+                    data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
+                    "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
+                   # print(data)
+                    fl_writer.writerow(data)
+                    #print("-------------------------------------------------")
+                elif len(adr) == 6:
+                    if "(808)" in adr[2]:
+                        #print("length is six and 808 is there ")
+                        location_name = adr[0]
+                        location_name = location_name.replace(",","'")
+                        street_address = adr[1]
+                        street_address = street_address.replace(",","'")
+                        contact_number= adr[2]
+                        contact_number = contact_number.replace(" ","")
+                        contact_number = contact_number.replace("(","")
+                        contact_number = contact_number.replace(")","-")
+                        location_type=location_name +" "+place
+                        data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
+                        "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
+                        #print(data)
+                        fl_writer.writerow(data)
+                        location_name = adr[3]
+                        location_name = location_name.replace(",","'")
+                        street_address = adr[4]
+                        street_address = street_address.replace(",","'")
+                        contact_number= adr[5]
+                        contact_number = contact_number.replace(" ","")
+                        contact_number = contact_number.replace("(","")
+                        contact_number = contact_number.replace(")","-")
+                        location_type=location_name +" "+place
+                        data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
+                        "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
+                        fl_writer.writerow(data)
+                       # print(data)
+                       # print("------------------------------------------------------------------")
+                    else:
+                       # print("size is six phone not there")
+                        location_name = adr[0]
+                        location_name = location_name.replace(",","'")
+                        street_address = adr[1]
+                        street_address = street_address.replace(",","'")
+                        contact_number= "<MISSING>"
+
+                        location_type=location_name +" "+place
+                        data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
+                        "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
+                        fl_writer.writerow(data)
+    html3 = requests.get("https://www.alohagas.com/maui.html")
+    soup3 = BeautifulSoup(html3.text,"html.parser")
+     #   location_name=location_name+x.text
+    hed=["locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude",
+               "longitude","hours_of_operation"]
+    location_name=street_address=contact_number=location_type=""
+
+    rows = soup3.find_all("table",attrs={"width":"518"})
+    all_p = rows[0].find_all("tr",attrs={"valign":"top"})
+    i=0
+    place = ""
+    city = ""
+
+    for row in all_p:
+        span = row.find("span")
+        strng = row.find("strong")
+        dta = row.find("img")
+        if span:
+            place = span.text
+            place = place.replace("\n","")
+            place = place.strip()
+        if strng:
+            city = strng.text
+            city = city.replace("\n","")
+            city = city.strip()
+        if dta:
+            #print(place)
+            ad= row.text.strip().split("\n")
+            location_name = ad[0].strip()
+            street_address = ad[1].strip()
+            contact_number = ad[2].strip()
+            location_type = location_name +" Kahului" #special case
+            data=["www_alohagas_com",location_name,street_address,"<MISSING>","<MISSING>","<MISSING>",
+            "US","<MISSING>",contact_number,location_type,"<MISSING>","<MISSING>","<MISSING>"]
+            fl_writer.writerow(data)
+            #print("------------------------------------------")
+                      #  print(data)
+                      #  print("-----------------------------------------------------")

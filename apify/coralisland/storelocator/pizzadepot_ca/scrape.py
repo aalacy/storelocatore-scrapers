@@ -41,7 +41,7 @@ def fetch_data():
     session = requests.Session()
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        'Cookie': 'PHPSESSID=8d8e586fed5af828811eece9d97469db; _ga=GA1.2.1413556867.1566836552; _gid=GA1.2.1762243189.1566836552; _gcl_au=1.1.339031034.1566836552; gwcc=%7B%22fallback%22%3A%229056549711%22%2C%22clabel%22%3A%22zRXMCKn4iIMBELDB0ZYD%22%2C%22backoff%22%3A86400%2C%22backoff_expires%22%3A1566922957%7D',
+        'Cookie': '_ga=GA1.2.1413556867.1566836552; _gcl_au=1.1.339031034.1566836552; PHPSESSID=08ca79e659004c9564e2646aaa912829; _gid=GA1.2.1156589308.1567451912; _gat=1; _gat_UA-99013361-1=1; gwcc=%7B%22fallback%22%3A%229056549711%22%2C%22clabel%22%3A%22zRXMCKn4iIMBELDB0ZYD%22%2C%22backoff%22%3A86400%2C%22backoff_expires%22%3A1567538311%7D',
         'Upgrade-Insecure-Requests': '1',
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'
     }
