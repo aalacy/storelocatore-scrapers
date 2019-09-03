@@ -3,7 +3,6 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import json
-import time
 
 
 def get_driver():
