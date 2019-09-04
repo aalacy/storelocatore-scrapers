@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "apify": "^0.15",
+    "apify": "^0.15.2",
     "country-list": "^2.1.1",
     "latlng-to-zip": "0.0.2",
     "zipcodes": "^8.0.0"

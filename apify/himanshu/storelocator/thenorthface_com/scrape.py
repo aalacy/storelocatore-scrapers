@@ -53,7 +53,7 @@ def fetch_data():
             store.append(store_data["state"] if store_data["country"] == "US" else store_data["province"])
             if store[-1] == None:
                 store[-1] = "<MISSING>"
-            store.append(store_data["postalcode"])
+            store.append(store_data["postalcode"] if store_data["postalcode"] != "" and store_data["postalcode"] != None else "<MISSING>")
             store.append(store_data["country"])
             store.append(store_data["storenumber"] if store_data["storenumber"] != None else "<MISSING>")
             store.append(store_data["phone"].split("or")[0].split(";")[0].split("and")[0] if store_data["phone"] != None and store_data["phone"] != "TBD" else "<MISSING>")

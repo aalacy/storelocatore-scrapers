@@ -4,6 +4,7 @@ import pdb
 import requests
 from lxml import etree
 import json
+from datetime import datetime
 
 
 base_url = 'https://www.nationalcar.com'
@@ -65,6 +66,7 @@ def fetch_data():
             output.append(get_value(store['locationType'])) #location type
             output.append(get_value(store['latitude'])) #latitude
             output.append(get_value(store['longitude'])) #longitude
+            # data = session.get('https://prd.location.enterprise.com/enterprise-sls/search/location/national/web/hours/'+store['peopleSoftId']+'?from=2019-09-01&to=2020-09-01&locale=en_US&cor=US').text
             output.append('<MISSING>') #opening hours
             output_list.append(output)
     return output_list

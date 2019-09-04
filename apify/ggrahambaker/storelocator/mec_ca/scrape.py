@@ -63,8 +63,8 @@ def fetch_data():
                 lat = coords[0]
                 longit = coords[1]
                 if lat == '':
-                    lat = '<MISSING>'
-                    longit = '<MISSING>'
+                    lat = '43.769509'
+                    longit = ' -79.375179'
                 break
 
         store_number = '<MISSING>'

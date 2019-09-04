@@ -93,6 +93,9 @@ def fetch_data():
         latitude = lat
         longitude = lng
 
+
+        if hours_of_operation is None or len(hours_of_operation) == 0:
+            hours_of_operation = "<MISSING>"
         # print("street_address ==== "+ street_address)
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,

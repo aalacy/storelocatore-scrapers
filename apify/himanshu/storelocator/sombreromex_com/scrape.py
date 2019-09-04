@@ -58,6 +58,9 @@ def fetch_data():
             if 'Order Food Delivery with DoorDash' in list_store_data:
                 list_store_data.remove('Order Food Delivery with DoorDash')
 
+            if 'Coming Soon!' in list_store_data:
+                list_store_data.remove('Coming Soon!')
+
             if 'More Info' in list_store_data:
                 list_store_data.remove('More Info')
 
@@ -75,6 +78,8 @@ def fetch_data():
 
             if 'Order Online' in list_store_data:
                 list_store_data.remove('Order Online')
+
+            # print(str(len(list_store_data)) + ' = list_store_data ===== ' + str(list_store_data))
 
             if len(list_store_data) > 3:
                 location_name = list_store_data[0]
@@ -110,6 +115,9 @@ def fetch_data():
             store_number = '<MISSING>'
             latitude = '<MISSING>'
             longitude = '<MISSING>'
+
+            if not phone.replace('-', '').isdigit():
+                phone = '<MISSING>'
 
             # print(str(len(list_store_data)) + " = script ------- " + str(list_store_data))
 
