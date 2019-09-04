@@ -141,10 +141,12 @@ def fetch_data():
         country = ''
         phone = ''
         store = ''
+        LocFound = False
         for line in r.iter_lines():
             if '"store_id":"' in line:
                 store = line.split('"store_id":"')[1].split('"')[0]
-            if '<div class="LocationName-geo">' in line:
+            if '<div class="LocationName-geo">' in line and LocFound is False:
+                LocFound = True
                 name = line.split('<div class="LocationName-geo">')[1].split('<')[0]
                 add = line.split('class="c-address-street-1"')[1].split('>')[1].split('<')[0]
                 if '<span class="c-address-street-2"' in line:
@@ -192,12 +194,9 @@ def fetch_data():
                 except:
                     hours = hours + '; Sun: Closed'
                 stores.append(name.replace('|','-') + '|' + add.replace('|','-') + '|' + city.replace('|','-') + '|' + state.replace('|','-') + '|' + zc.replace('|','-') + '|' + country.replace('|','-') + '|' + phone.replace('|','-') + '|' + hours.replace('|','-'))
-            if ',"id":' in line:
-                items = line.split(',"id":')
-                for item in items:
-                    if '"longitude":' in item:
-                        lat = item.split('"latitude":')[1].split(',')[0]
-                        lng = item.split('"longitude":')[1].split(',')[0]
+            if '<meta itemprop="latitude" content="' in line:
+                lat = line.split('<meta itemprop="latitude" content="')[1].split('"')[0]
+                lng = line.split('<meta itemprop="longitude" content="')[1].split('"')[0]
         if store not in allstores:
             allstores.append(store)
             if state == '':
