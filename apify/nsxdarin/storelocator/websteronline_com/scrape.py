@@ -34,11 +34,12 @@ def fetch_data():
         country = ''
         name = ''
         phone = '<MISSING>'
-        hours = ''
+        hours = '<MISSING>'
         lat = '<MISSING>'
         lng = '<MISSING>'
         country = 'US'
         HFound = False
+        PFound = False
         lines = r2.iter_lines()
         for line2 in lines:
             if HFound is False and 'Banking Center Hours</h2>' in line2:
@@ -47,7 +48,7 @@ def fetch_data():
                 HFound = False
             if HFound and 'Banking Center Hours</h2>' not in line2:
                 hrs = line2.rsplit('<',1)[0].strip().replace('\t','').replace('<p>','').replace('<strong>','').replace('</strong>','')
-                if hours == '':
+                if hours == '<MISSING>':
                     hours = hrs
                 else:
                     hours = hours + '; ' + hrs
@@ -66,7 +67,8 @@ def fetch_data():
                 state = line2.split('<abbr class="region">')[1].split('<')[0]
             if '<span class="postal-code">' in line2:
                 zc = line2.split('<span class="postal-code">')[1].split('<')[0]
-            if '<a href="tel:' in line2:
+            if '<a href="tel:' in line2 and PFound is False:
+                PFound = True
                 phone = line2.split('<a href="tel:')[1].split('"')[0]
             if "if(cur_latitude === ''" in line2:
                 g = next(lines)

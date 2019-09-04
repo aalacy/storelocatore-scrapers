@@ -1,6 +1,5 @@
 import csv
-import os
-import re, time
+import time
 import requests
 from bs4 import BeautifulSoup
 
