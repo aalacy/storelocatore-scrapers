@@ -34,7 +34,7 @@ def fetch_data():
         country = ''
         name = ''
         phone = '<MISSING>'
-        hours = ''
+        hours = '<MISSING>'
         lat = '<MISSING>'
         lng = '<MISSING>'
         country = 'US'
@@ -48,7 +48,7 @@ def fetch_data():
                 HFound = False
             if HFound and 'Banking Center Hours</h2>' not in line2:
                 hrs = line2.rsplit('<',1)[0].strip().replace('\t','').replace('<p>','').replace('<strong>','').replace('</strong>','')
-                if hours == '':
+                if hours == '<MISSING>':
                     hours = hrs
                 else:
                     hours = hours + '; ' + hrs
