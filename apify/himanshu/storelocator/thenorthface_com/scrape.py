@@ -28,7 +28,7 @@ def fetch_data():
         if "appkey: " in script.text:
             app_key = script.text.split("appkey: ")[1].split(",")[0].replace("'","")
     for zip_code in zips[3:]:
-        print(zip_code)
+       
         base_url = "https://www.thenorthface.com"
         data = '{"request":{"appkey":"' + app_key + '","formdata":{"geoip":false,"dataview":"store_default","limit":1000,"order":"rank, _DISTANCE","geolocs":{"geoloc":[{"addressline":"' + str(zip_code) + '","country":"US","latitude":"","longitude":""}]},"searchradius":"100","where":{"visiblelocations":{"eq":""},"or":{"northface":{"eq":""},"outletstore":{"eq":""},"retailstore":{"eq":""},"summit":{"eq":""}},"and":{"youth":{"eq":""},"apparel":{"eq":""},"footwear":{"eq":""},"equipment":{"eq":""},"mt":{"eq":""},"access_pack":{"eq":""},"steep_series":{"eq":""}}},"false":"0"}}}'
         r = requests.post("https://hosted.where2getit.com/northface/2015/rest/locatorsearch?lang=en_EN",headers=headers,data=data)
@@ -76,7 +76,7 @@ def fetch_data():
             if store_data["su"] != None:
                 hours = hours + " Sunday " + store_data["su"]
             store.append(hours if hours != "" else "<MISSING>")
-            print(store)
+          
             return_main_object.append(store)
     return return_main_object
 
