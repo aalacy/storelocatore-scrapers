@@ -1,10 +1,7 @@
 import csv
-import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import re, time
-from bs4 import BeautifulSoup
-import requests
+import pandas as pd
 
 def write_output(data):
     with open('data.csv', mode='wb') as output_file:
@@ -24,30 +21,24 @@ def get_driver():
 
 def fetch_data():
     data=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
+    #Driver
     driver = get_driver()
-    driver.get('https://chaska.coopersfoodsmn.com/location')
-    stores=driver.find_elements_by_xpath(("//div[@class='other-sites-select']/select/option"))
-    length=len(stores)
-    for n in range(0,length):
-        store=driver.find_elements_by_xpath(("//div[@class='other-sites-select']/select/option"))
-        store[n].click()
-        street_address.append(driver.find_element_by_class_name('addressLine1').text)
-        a=driver.find_element_by_class_name('cityStateZip').text.split(",")
-        city.append(a[0])
-        state.append(a[1].split()[0].strip())
-        zipcode.append(a[1].split()[1].strip())
-        phone.append(driver.find_element_by_class_name('phone').text)
-        hours_of_operation.append(driver.find_element_by_class_name('storeHours').text)
-    r = requests.get('https://stclair.coopersfoodsmn.com/location')
-    soup = BeautifulSoup(r.content, 'html.parser')
-    script = soup.findAll('script')
-    latlng=re.findall(r'LatLng\((.*?)\);', str(script))
-    for n in range(0,len(latlng)):
-        latitude.append(latlng[n].split(",")[0])
-        longitude.append(latlng[n].split(",")[1])
+    driver.get('http://banditsbbq.com/locations')
+    stores=driver.find_elements_by_xpath(("//div[@class='info']"))
+    for n in range(0,len(stores)):
+        a=stores[n].text.split("\n")
+        location_name.append(a[0])
+        street_address.append(a[1])
+        city.append(a[2].split(",")[0])
+        state.append(a[2].split(",")[1].split()[0].strip())
+        zipcode.append(a[2].split(",")[1].split()[1].strip())
+        phone.append(a[3])
+    hours = driver.find_elements_by_class_name('hours')
+    for n in range(0,len(hours)):
+        hours_of_operation.append(hours[n].text)
     for n in range(0,len(street_address)): 
         data.append([
-            'https://chaska.coopersfoodsmn.com',
+            'http://banditsbbq.com',
             '<MISSING>',
             street_address[n],
             city[n],
