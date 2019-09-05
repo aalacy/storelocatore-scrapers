@@ -27,9 +27,9 @@ def fetch_data():
             lat=''
             lng=''
             hr=list(main[i].stripped_strings)
-            del hr[0]
+            del hr[-1]
             country="US"
-            hour=' '.join(hr)
+            hour=' '.join(hr).replace('Hours:','')
             storeno=''
             store=[]
             store.append(base_url)
@@ -48,7 +48,6 @@ def fetch_data():
             return_main_object.append(store)
         else:
             madd=list(main[i].stripped_strings)
-            print(madd)
             name=madd[0]
             address=madd[1]
             ct=madd[2].split(',')
