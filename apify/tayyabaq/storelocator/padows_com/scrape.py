@@ -1,8 +1,8 @@
 import csv
-import os
 import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import usaddress
 
 def write_output(data):
     with open('data.csv', mode='wb') as output_file:
@@ -26,20 +26,29 @@ def fetch_data():
     driver = get_driver()
     driver.get('http://www.padows.com/LCTN.html')
     location = driver.find_elements_by_xpath('//div[@id="locations-content"]/ul/li')
-    street_address = [location[n].text.split("-")[1].strip().split(",")[0] for n in range(0,len(location))]
+    street_address = [location[n].text.split("-")[1].strip() for n in range(0,len(location))]
     location_name = [location[n].text for n in range(0,len(location))]
     phones = driver.find_elements_by_xpath('//div[@id="locations-content"]/ul/ul/li[1]')
     hour = driver.find_elements_by_xpath('//div[@id="locations-content"]/ul/ul/li[2]')
     hours_of_operation =[hour[n].text for n in range(0,len(hour))]
     for n in range(0,len(phones)):
         if 'p.m.' not in phones[n].text:
-            phone.append(phones[n].text) 
+            phone.append(phones[n].text.split("F")[0])
+    for n in range(0,len(street_address)):
+        tagged=usaddress.tag(street_address[n])[0]
+        try:
+            city.append(tagged['StateName'])
+        except:
+            try:
+                city.append(tagged['Recipient'])
+            except:
+                city.append('<MISSING>')
     for n in range(0,len(street_address)): 
         data.append([
             'http://www.padows.com',
             location_name[n],
             street_address[n],
-            '<MISSING>',
+            city[n],
             '<MISSING>',
             '<MISSING>',
             'US',
