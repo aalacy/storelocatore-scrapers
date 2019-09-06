@@ -21,49 +21,53 @@ def fetch_data():
     page_size = r.json()["searchPageData"]["pagination"]["numberOfPages"]
     return_main_object = []
     for i in range(page_size):
-        page_request = requests.get("https://www.trekbikes.com/us/en_US/store-finder/json/?q=11756&sort=Distance&distance=100000&page="+str(i),headers=headers)
-        location_list = page_request.json()["searchPageData"]["results"]
-        file1 = open("myfile1.txt","w")
-        file1.write(json.dumps(location_list,indent=4))
-        for store_data in location_list:
-            address = ""
-            if "line1" in store_data["address"] and store_data["address"]["line1"] != None:
-                address = address + store_data["address"]["line1"]
-            if "line2" in store_data["address"] and store_data["address"]["line2"] != None:
-                address = address + store_data["address"]["line2"]
-            store = []
-            store.append("https://www.trekbikes.com")
-            store.append(store_data["displayName"])
-            store.append(address)
-            store.append(store_data["address"]["town"])
-            if store_data["address"]["region"] != None:
-                store.append(store_data["address"]["region"]["isocodeShort"])
-            else:
-                store.append("<MISSING>")
-            store.append(store_data["address"]["postalCode"] if store_data["address"]["postalCode"] != "" and store_data["address"]["postalCode"] != None else "<MISSING>")
-            if "country" not in store_data["address"]:
-                store.append(store_data["address"]["region"]["countryIso"])
-            else:
-                store.append(store_data["address"]["country"]["isocode"])
-            if store[-1] != "CA" and store[-1] != "US":
-                continue
-            store.append(store_data["name"])
-            store.append(store_data["address"]["phone"].split("/")[0].split("or")[0].replace("RIDE","").split(",")[0] if store_data["address"]["phone"] != "" and store_data["address"]["phone"] != None else "<MISSING>")
-            store.append("trek")
-            store.append(store_data["geoPoint"]["latitude"])
-            store.append(store_data["geoPoint"]["longitude"])
-            hours = ""
-            if store_data["openingHours"] == None:
-                hours = ""
-            else:
-                store_hours = store_data["openingHours"]["weekDayOpeningList"]
-                for i in range(len(store_hours)):
-                    if store_hours[i]["storeOpeningTime"] == None:
-                        hours = hours + " " + store_hours[i]["weekDay"] + " Closed "
+        while True:
+            print("https://www.trekbikes.com/us/en_US/store-finder/json/?q=11756&sort=Distance&distance=100000&page="+str(i))
+            page_request = requests.get("https://www.trekbikes.com/us/en_US/store-finder/json/?q=11756&sort=Distance&distance=100000&page="+str(i),headers=headers)
+            try:
+                location_list = page_request.json()["searchPageData"]["results"]
+                for store_data in location_list:
+                    address = ""
+                    if "line1" in store_data["address"] and store_data["address"]["line1"] != None:
+                        address = address + store_data["address"]["line1"]
+                    if "line2" in store_data["address"] and store_data["address"]["line2"] != None:
+                        address = address + store_data["address"]["line2"]
+                    store = []
+                    store.append("https://www.trekbikes.com")
+                    store.append(store_data["displayName"])
+                    store.append(address)
+                    store.append(store_data["address"]["town"])
+                    if store_data["address"]["region"] != None:
+                        store.append(store_data["address"]["region"]["isocodeShort"])
                     else:
-                        hours = hours + " " + store_hours[i]["weekDayLong"] + " " + store_hours[i]["storeOpeningTime"]["formattedHour"] + " - " + store_hours[i]["storeClosingTime"]["formattedHour"]
-            store.append(hours if hours != "" else "<MISSING>")
-            return_main_object.append(store)
+                        store.append("<MISSING>")
+                    store.append(store_data["address"]["postalCode"] if store_data["address"]["postalCode"] != "" and store_data["address"]["postalCode"] != None else "<MISSING>")
+                    if "country" not in store_data["address"]:
+                        store.append(store_data["address"]["region"]["countryIso"])
+                    else:
+                        store.append(store_data["address"]["country"]["isocode"])
+                    if store[-1] != "CA" and store[-1] != "US":
+                        continue
+                    store.append(store_data["name"])
+                    store.append(store_data["address"]["phone"].split("/")[0].split("or")[0].replace("RIDE","").split(",")[0] if store_data["address"]["phone"] != "" and store_data["address"]["phone"] != None else "<MISSING>")
+                    store.append("trek")
+                    store.append(store_data["geoPoint"]["latitude"])
+                    store.append(store_data["geoPoint"]["longitude"])
+                    hours = ""
+                    if store_data["openingHours"] == None:
+                        hours = ""
+                    else:
+                        store_hours = store_data["openingHours"]["weekDayOpeningList"]
+                        for i in range(len(store_hours)):
+                            if store_hours[i]["storeOpeningTime"] == None:
+                                hours = hours + " " + store_hours[i]["weekDay"] + " Closed "
+                            else:
+                                hours = hours + " " + store_hours[i]["weekDayLong"] + " " + store_hours[i]["storeOpeningTime"]["formattedHour"] + " - " + store_hours[i]["storeClosingTime"]["formattedHour"]
+                    store.append(hours if hours != "" else "<MISSING>")
+                    return_main_object.append(store)
+                break
+            except:
+                continue
     return return_main_object
 
 def scrape():
