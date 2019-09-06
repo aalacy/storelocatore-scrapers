@@ -23,11 +23,10 @@ def fetch_data():
     del main[0]
     for li in main:
         r1 = requests.get(li['href'])
-        print(li['href'])
         soup1=BeautifulSoup(r1.text,'lxml')
         if soup1.find('div',{'class':"fl-node-5724cee2beac3"})!=None:
             main1=soup1.find('div',{'class':"fl-node-5724cee2beac3"}).find_all('p')
-            name=soup1.find('div',{"class":"fl-node-5724e69d76150"}).text.strip()
+            name=list(soup1.find('div',{"class":"fl-node-5724e69d76150"}).stripped_strings)[0].strip()
             phone=''
             zip=''
             city=''
@@ -49,7 +48,6 @@ def fetch_data():
                 else:
                     if "Store Address" in ptag.text:
                         madd=list(ptag.stripped_strings)
-                        print(madd)
                         address=madd[1].strip()
                         ct=madd[2].strip().split(',')
                         city=ct[0].strip()
@@ -69,11 +67,21 @@ def fetch_data():
                                 else:
                                     state=st[0].strip()
                                     zip=st[1].strip()
+                            else:
+                                ct=madd[2].strip().split(',')
+                                city=ct[0].strip()
+                                st=ct[1].strip().split(' ')
+                                state=st[0].strip()
+                                zip=st[1].strip()
                         if len(madd)>3:
                             st=ct[1].strip().split(' ')
                             if len(st)==1:
                                 if re.search(r'\d', st[0]):
                                     zip=st[0].strip()
+                                    ctm=ct[0].strip().split(' ')
+                                    if len(ctm)>1:
+                                        city=ctm[0]
+                                        state=ctm[1]
                                 else:
                                     state=st[0].strip()
                             else:

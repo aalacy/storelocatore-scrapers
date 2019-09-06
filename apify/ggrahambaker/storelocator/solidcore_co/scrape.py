@@ -46,7 +46,7 @@ def fetch_data():
     for href in hrefs:
         if len(href.get_attribute('href')) > 24:
             link_list.append(href.get_attribute('href'))
-            print(href.get_attribute('href'))
+
 
     all_store_data = []
     for link in link_list:
@@ -57,7 +57,7 @@ def fetch_data():
         if 'coming' in main.text:
             continue
 
-)
+
         location_name = main.find_element_by_css_selector('h1').text.replace('\n', ' ')
 
 

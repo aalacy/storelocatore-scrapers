@@ -1,6 +1,7 @@
-import csv, os, re, time
+import csv
 import requests
 from bs4 import BeautifulSoup
+from lxml import html
 
 def write_output(data):
     with open('data.csv', mode='wb') as output_file:
@@ -16,10 +17,15 @@ def fetch_data():
     #Driver
     url ='http://www.peakpt.com/contact.html'
     r = requests.get(url)
+    tree = html.fromstring(r.content)
     soup = BeautifulSoup(r.content, 'html.parser')
+    store = soup.findAll("a", href=lambda href: href and href.startswith("javascript:window.scrollTo(0,0)"))
+    for n in range(0,len(store)):
+        a=store[n].get_text()
+        if ('Directions' not in a) and (a!="") and ('Top' not in a):
+            street_address.append(store[n].get_text().strip().split(",")[0])
     stores = soup.findAll("div", {"class": "address-full"})
     for n in range(0,len(stores)):
-        street_address.append(stores[n].get_text().split(",")[0])
         state.append(stores[n].get_text().split(",")[1])
         zipcode.append(stores[n].get_text().split(",")[2])
     phones = soup.findAll("div", {"class": "address-line-idphone"})
@@ -28,7 +34,7 @@ def fetch_data():
     hours = soup.findAll("div", {"class": "address-line-idhours"})
     for n in range(0,len(street_address)):
         try:
-            hours_of_operation.append(hours[n].get_text())
+            hours_of_operation.append(hours[n].get_text().strip())
         except:
             hours_of_operation.append('<MISSING>')
     for n in range(0,len(street_address)): 
