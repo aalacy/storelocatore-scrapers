@@ -16,41 +16,44 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.carespot.com"
-    r = requests.get(base_url + "/locations")
+    data = "action=locations-get_map_locations"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        "X-Requested-With": "XMLHttpRequest",
+        "content-type": "application/x-www-form-urlencoded",
+    }
+    r = requests.post("https://www.carespot.com/wp-admin/admin-ajax.php",headers=headers,data=data)
     return_main_object = []
-    soup = BeautifulSoup(r.text,"lxml")
-    for location in soup.find_all("div",{"class":"location-content"}):
-        name = location.find("span",{'class':"pin--title"}).text
-        location_address = list(location.find("div",{'class':"pin--address"}).stripped_strings)
-        location_hours = list(location.find("div",{'class':"pin--hours"}).stripped_strings)
-        location_phone = location.find("div",{'class':"pin--telephone"}).text
-        geo_location = location.find('a',{"target":'blank'})['href']
+    for location in r.json()["data"]:
+        print(BeautifulSoup(location["info"],"lxml").find("a")["href"])
+        location_request = requests.get(BeautifulSoup(location["info"],"lxml").find("a")["href"])
+        location_soup = BeautifulSoup(location_request.text,"lxml")
+        if location_soup.find("p",text=re.compile("coming soon!",re.IGNORECASE)) != None:
+            continue
+        address = location_soup.find("span",{"itemprop":"streetAddress"}).text
+        city = location_soup.find("span",{"itemprop":"addressLocality"}).text
+        state = location_soup.find("span",{"itemprop":"addressRegion"}).text
+        zip_code = location_soup.find("span",{"itemprop":"postalCode"}).text
+        phone = location_soup.find("span",{"itemprop":"telephone"}).text
+        if location_soup.find("div",{'class':"hours"}) == None:
+            location_hours = "<MISSING>"
+        else:
+            location_hours = " ".join(list(location_soup.find("div",{'class':"hours"}).stripped_strings))
         store = []
         store.append("https://www.carespot.com")
-        store.append(name)
-        store.append(location_address[0])
-        if len(location_address) == 1:
-            store[-1] = location_address[0].split(",")[0]
-            store.append("<MISSING>")
-            store.append(location_address[0].split(",")[-1].split(" ")[-2])
-            store.append(location_address[0].split(",")[-1].split(" ")[-1])
-        elif len(location_address) < 4:
-            location_address[-1] = location_address[-1].replace("\xa0"," ")
-            store.append(location_address[-1].split(",")[0])
-            store.append(location_address[-1].split(",")[-1].split(" ")[-2])
-            store.append(location_address[-1].split(",")[-1].split(" ")[-1])
-        else:
-            store.append(location_address[1])
-            store.append(location_address[-2])
-            store.append(location_address[-1])
+        store.append(location["title"])
+        store.append(address)
+        store.append(city)
+        store.append(state)
+        store.append(zip_code)
         store.append("US")
-        location_id = location.find_all("a")[-1]["href"]
-        store.append(location_id.split("/")[-2] if location_id.split("/")[-2] != "" else "<MISSING>")
-        store.append(location_phone.replace("Â ","") if location_phone != ""  and location_phone != "COMING SOON" else "<MISSING>")
+        store.append(location["id"])
+        store.append(phone if phone != "" else "<MISSING>")
         store.append("care spot")
-        store.append(geo_location.split("?q=")[1].split(",")[0])
-        store.append(geo_location.split(",")[-1])
-        store.append(" ".join(location_hours) if location_hours != [] else "<MISSING>")
+        store.append(location["lat"])
+        store.append(location["lng"])
+        store.append(location_hours if location_hours != "" else "<MISSING>")
+        print(store)
         return_main_object.append(store)
     return return_main_object
 
