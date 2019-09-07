@@ -50,7 +50,7 @@ def fetch_data():
         store = json.loads('{' + store.split('}')[0] + '}')
         output = []
         output.append(base_url) # url
-        output.append(get_value(store['Name'])) #location name
+        output.append(get_value(store['Name'])) #location name          
         output.append(get_value(store['Address'])) #address
         output.append(get_value(store['City'])) #city
         output.append(get_value(store['State'])) #state
@@ -64,8 +64,9 @@ def fetch_data():
         link = 'https://www.grabbagreen.com/stores/healthy-food-killeen/' + str(store['StoreId'])
         data = etree.HTML(session.get(link).text)
         store_hours = ', '.join(eliminate_space(data.xpath('.//div[@class="storeCol"]')[0].xpath('.//ul//li//text()')))
-        output.append(store_hours) #opening hours
-        output_list.append(output)
+        if 'contact' not in store_hours:
+            output.append(store_hours) #opening hours
+            output_list.append(output)
     return output_list
 
 def scrape():
