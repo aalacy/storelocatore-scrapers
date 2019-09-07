@@ -21,6 +21,7 @@ request(url,(err,res,html)=>{
                 {
         var link = $('#x0ateinlineContent-gridContainer').find('div').find('a').eq(i).attr('href');
         
+        
         request(link,(err,res,html)=>{
 
           if(!err && res.statusCode==200){
@@ -123,8 +124,7 @@ mainhead(7);
       
   
       const data = await scrape();
-      
-     
-       await Apify.pushData(data);
+     // console.log(data);
+      await Apify.pushData(data);
     
     });

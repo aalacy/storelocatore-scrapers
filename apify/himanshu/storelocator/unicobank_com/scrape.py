@@ -50,7 +50,7 @@ def fetch_data():
                 
                         zip = addr[1].split(',')[1].strip().split(' ')[1].strip()
                         kb = main_arry[1].find_all('p')[1].text.strip().replace('Phone:','')
-                        phone = kb.replace('Tel:','').split('\n')[0].strip()
+                        phone = kb.replace('Tel:','').split('\n')[0].strip().replace('Tel. ','')
 
                 if len(addr) == 4:
 
@@ -62,7 +62,7 @@ def fetch_data():
                 
                         zip = addr[2].split(',')[1].strip().split(' ')[1].strip()
                         kb = main_arry[1].find_all('p')[1].text.strip().replace('Phone:','')
-                        phone = kb.replace('Tel:','').split('\n')[0].strip()
+                        phone = kb.replace('Tel:','').split('\n')[0].strip().replace('Tel. ','')
 
                 
                 country_code = 'US'
