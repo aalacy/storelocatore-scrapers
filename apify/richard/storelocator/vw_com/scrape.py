@@ -1,11 +1,11 @@
-from Scrape import Scrape
 import json
 
+from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-URL = 'https://www.vw.com'
+URL = "https://www.vw.com"
 
 
 class Scraper(Scrape):
@@ -29,49 +29,49 @@ class Scraper(Scrape):
         stores = []
 
         options = Options()
-        options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         # Fetch stores from location menu
         location_url = "https://www.vw.com/vwsdl/rest/product/dealers/zip/99546.json"
         driver.get(location_url)
-        dealers = json.loads(driver.find_element_by_css_selector('pre').text)['dealers']
+        dealers = json.loads(driver.find_element_by_css_selector("pre").text)["dealers"]
 
         for dealer in dealers:
             # Store ID
-            location_id = dealer['dealerid']
+            location_id = dealer["dealerid"]
 
             # Name
-            location_title = dealer['name']
+            location_title = dealer["name"]
 
             # Street
-            street_address = (dealer['address1'] + ' ' + dealer['address2']).strip()
+            street_address = (dealer["address1"] + " " + dealer["address2"]).strip()
 
             # Country
-            country = dealer['country']
+            country = dealer["country"]
 
             # State
-            state = dealer['state']
+            state = dealer["state"]
 
             # city
-            city = dealer['city']
+            city = dealer["city"]
 
             # zip
-            zipcode = dealer['postalcode']
+            zipcode = dealer["postalcode"]
 
             # Lat
-            lat = dealer['latlong'].split(',')[0]
+            lat = dealer["latlong"].split(",")[0]
 
             # Long
-            lon = dealer['latlong'].split(',')[1]
+            lon = dealer["latlong"].split(",")[1]
 
             # Phone
-            phone = dealer['phone']
+            phone = dealer["phone"]
 
             # hour
-            hour = dealer['hours']
+            hour = dealer["hours"]
 
             # Store data
             locations_ids.append(location_id)
@@ -87,17 +87,17 @@ class Scraper(Scrape):
             countries.append(country)
 
         for (
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                phone_number,
-                latitude,
-                longitude,
-                hour,
-                location_id,
-                country
+            locations_title,
+            street_address,
+            city,
+            state,
+            zipcode,
+            phone_number,
+            latitude,
+            longitude,
+            hour,
+            location_id,
+            country,
         ) in zip(
             locations_titles,
             street_addresses,
@@ -109,7 +109,7 @@ class Scraper(Scrape):
             longitude_list,
             hours,
             locations_ids,
-            countries
+            countries,
         ):
             self.data.append(
                 [
@@ -130,6 +130,7 @@ class Scraper(Scrape):
             )
 
         driver.quit()
+
 
 scrape = Scraper(URL)
 scrape.scrape()

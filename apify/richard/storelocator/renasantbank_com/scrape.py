@@ -1,11 +1,11 @@
-from Scrape import Scrape
 import json
 
+from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-URL = 'https://www.renasantbank.com/'
+URL = "https://www.renasantbank.com/"
 
 
 class Scraper(Scrape):
@@ -29,9 +29,9 @@ class Scraper(Scrape):
         stores = []
 
         options = Options()
-        options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         # Fetch stores from location menu
@@ -47,40 +47,62 @@ class Scraper(Scrape):
 
         for store in stores:
             # Store ID
-            location_id = store['id'] if store['id'] != '' else '<MISSING>'
+            location_id = store["id"] if store["id"] != "" else "<MISSING>"
 
             # Name
-            location_title = store['title']['rendered'] if store['title']['rendered'] != '' else '<MISSING>'
+            location_title = (
+                store["title"]["rendered"]
+                if store["title"]["rendered"] != ""
+                else "<MISSING>"
+            )
 
-            driver.get(store['link'])
-            city_state_info = driver.find_element_by_css_selector('div.hero-content.vert-center > div.wrapper > h2').get_attribute('textContent')
+            driver.get(store["link"])
+            city_state_info = driver.find_element_by_css_selector(
+                "div.hero-content.vert-center > div.wrapper > h2"
+            ).get_attribute("textContent")
 
             # City
-            city = city_state_info.split(',')[-2].strip()
+            city = city_state_info.split(",")[-2].strip()
 
             # State
-            state = city_state_info.split(',')[-1].strip()[:2].upper()
+            state = city_state_info.split(",")[-1].strip()[:2].upper()
 
             # Street Address
-            street_address = ' '.join(city_state_info.split(',')[:-2])
+            street_address = " ".join(city_state_info.split(",")[:-2])
 
             # Zip
-            zip_code = city_state_info.split(',')[-1].strip()[2:].strip()
+            zip_code = city_state_info.split(",")[-1].strip()[2:].strip()
 
             # Hours
-            hour = store['acf']['itm_hours'] if 'itm_hours' in store['acf'].keys() else '<MISSING>'
+            hour = (
+                store["acf"]["itm_hours"]
+                if "itm_hours" in store["acf"].keys()
+                else "<MISSING>"
+            )
 
             # Lat
-            lat = store['acf']['latitude'] if 'latitude' in store['acf'].keys() else '<MISSING>'
+            lat = (
+                store["acf"]["latitude"]
+                if "latitude" in store["acf"].keys()
+                else "<MISSING>"
+            )
 
             # Lon
-            lon = store['acf']['longitude'] if 'longitude' in store['acf'].keys() else '<MISSING>'
+            lon = (
+                store["acf"]["longitude"]
+                if "longitude" in store["acf"].keys()
+                else "<MISSING>"
+            )
 
             # Phone
-            phone = store['acf']['phone_number'] if 'phone_number' in store['acf'].keys() else '<MISSING>'
+            phone = (
+                store["acf"]["phone_number"]
+                if "phone_number" in store["acf"].keys()
+                else "<MISSING>"
+            )
 
             # Country
-            country = 'US'
+            country = "US"
 
             # Store data
             locations_ids.append(location_id)
@@ -96,17 +118,17 @@ class Scraper(Scrape):
             countries.append(country)
 
         for (
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                phone_number,
-                latitude,
-                longitude,
-                hour,
-                location_id,
-                country
+            locations_title,
+            street_address,
+            city,
+            state,
+            zipcode,
+            phone_number,
+            latitude,
+            longitude,
+            hour,
+            location_id,
+            country,
         ) in zip(
             locations_titles,
             street_addresses,
@@ -118,7 +140,7 @@ class Scraper(Scrape):
             longitude_list,
             hours,
             locations_ids,
-            countries
+            countries,
         ):
             self.data.append(
                 [
@@ -139,6 +161,7 @@ class Scraper(Scrape):
             )
 
         driver.quit()
+
 
 scrape = Scraper(URL)
 scrape.scrape()

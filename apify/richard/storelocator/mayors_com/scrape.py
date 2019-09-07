@@ -1,11 +1,11 @@
-from Scrape import Scrape
 import json
 
+from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-URL = 'https://www.mayors.com'
+URL = "https://www.mayors.com"
 
 
 class Scraper(Scrape):
@@ -29,16 +29,18 @@ class Scraper(Scrape):
         stores = []
 
         options = Options()
-        options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         # Fetch stores from location menu
         for num in range(0, 999):
             location_url = f"https://www.mayors.com/store-finder?q=10017&latitude=40.7519846&longitude=-73.96977950000002&page={num}"
             driver.get(location_url)
-            result = json.loads(driver.find_element_by_css_selector("pre").text)['results']
+            result = json.loads(driver.find_element_by_css_selector("pre").text)[
+                "results"
+            ]
             if result:
                 stores.extend(result)
             else:
@@ -46,37 +48,73 @@ class Scraper(Scrape):
 
         for store in stores:
             # Store ID
-            location_id = store['name'] if store['name'] != '' else '<MISSING>'
+            location_id = store["name"] if store["name"] != "" else "<MISSING>"
 
             # Name
-            location_title = store['displayName'] if store['displayName'].strip() != '' else '<MISSING>'
+            location_title = (
+                store["displayName"]
+                if store["displayName"].strip() != ""
+                else "<MISSING>"
+            )
 
             # Street Address
-            street_address = store['address']['line1'] + store['address']['line2'] if store['address']['line1'] + store['address']['line2'] != '' else '<MISSING>'
+            street_address = (
+                store["address"]["line1"] + store["address"]["line2"]
+                if store["address"]["line1"] + store["address"]["line2"] != ""
+                else "<MISSING>"
+            )
 
             # City
-            city = store['address']['town'] if store['address']['town'] != '' else '<MISSING>'
+            city = (
+                store["address"]["town"]
+                if store["address"]["town"] != ""
+                else "<MISSING>"
+            )
 
             # State
-            state = store['address']['region']['isocodeShort'] if store['address']['region']['isocodeShort'] != '' else '<MISSING>'
+            state = (
+                store["address"]["region"]["isocodeShort"]
+                if store["address"]["region"]["isocodeShort"] != ""
+                else "<MISSING>"
+            )
 
             # Zip
-            zip_code = store['address']['postalCode'] if store['address']['postalCode'] != '' else '<MISSING>'
+            zip_code = (
+                store["address"]["postalCode"]
+                if store["address"]["postalCode"] != ""
+                else "<MISSING>"
+            )
 
             # Hours
-            hour = store['openingHours'] if store['openingHours'] else '<MISSING>'
+            hour = store["openingHours"] if store["openingHours"] else "<MISSING>"
 
             # Lat
-            lat = store['geoPoint']['latitude'] if store['geoPoint']['latitude'] != '' else '<MISSING>'
+            lat = (
+                store["geoPoint"]["latitude"]
+                if store["geoPoint"]["latitude"] != ""
+                else "<MISSING>"
+            )
 
             # Lon
-            lon = store['geoPoint']['longitude'] if store['geoPoint']['longitude'] != '' else '<MISSING>'
+            lon = (
+                store["geoPoint"]["longitude"]
+                if store["geoPoint"]["longitude"] != ""
+                else "<MISSING>"
+            )
 
             # Phone
-            phone = store['address']['phone'] if store['address']['phone'] != '' else '<MISSING>'
+            phone = (
+                store["address"]["phone"]
+                if store["address"]["phone"] != ""
+                else "<MISSING>"
+            )
 
             # Country
-            country = store['address']['country']['isocode'] if store['address']['country']['isocode'] != '' else '<MISSING>'
+            country = (
+                store["address"]["country"]["isocode"]
+                if store["address"]["country"]["isocode"] != ""
+                else "<MISSING>"
+            )
 
             # Store data
             locations_ids.append(location_id)
@@ -92,17 +130,17 @@ class Scraper(Scrape):
             countries.append(country)
 
         for (
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                phone_number,
-                latitude,
-                longitude,
-                hour,
-                location_id,
-                country
+            locations_title,
+            street_address,
+            city,
+            state,
+            zipcode,
+            phone_number,
+            latitude,
+            longitude,
+            hour,
+            location_id,
+            country,
         ) in zip(
             locations_titles,
             street_addresses,
@@ -114,7 +152,7 @@ class Scraper(Scrape):
             longitude_list,
             hours,
             locations_ids,
-            countries
+            countries,
         ):
             self.data.append(
                 [
@@ -135,6 +173,7 @@ class Scraper(Scrape):
             )
 
         driver.quit()
+
 
 scrape = Scraper(URL)
 scrape.scrape()
