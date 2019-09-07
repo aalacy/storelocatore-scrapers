@@ -1,11 +1,11 @@
-from Scrape import Scrape
 import json
 
+from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-URL = 'https://www.lushusa.com'
+URL = "https://www.lushusa.com"
 
 
 class Scraper(Scrape):
@@ -30,53 +30,53 @@ class Scraper(Scrape):
         stores = []
 
         options = Options()
-        options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         location_url = "https://www.lushusa.com/on/demandware.store/Sites-Lush-Site/en_US/Stores-Search?lat=41.8781136&lng=-87.62979819999998&radius=3000"
         driver.get(location_url)
-        stores.extend(json.loads(driver.find_element_by_css_selector('pre').text))
+        stores.extend(json.loads(driver.find_element_by_css_selector("pre").text))
 
         for store in stores:
-            store = store['storeInfo']
+            store = store["storeInfo"]
 
             # Store ID
-            location_id = store['id']
+            location_id = store["id"]
 
             # Name
-            location_title = store['name']
+            location_title = store["name"]
 
             # Type
-            location_type = '<MISSING>'
+            location_type = "<MISSING>"
 
             # Street
-            street_address = store['address1']
+            street_address = store["address1"]
 
             # Country
-            country = 'CA'
+            country = "CA"
 
             # State
-            state = store['state']
+            state = store["state"]
 
             # city
-            city = store['city']
+            city = store["city"]
 
             # zip
-            zipcode = store['postalCode']
+            zipcode = store["postalCode"]
 
             # Lat
-            lat = store['lat']
+            lat = store["lat"]
 
             # Long
-            lon = store['lng']
+            lon = store["lng"]
 
             # Phone
-            phone = store['phone']
+            phone = store["phone"]
 
             # Hour
-            hour = '<MISSING>'
+            hour = "<MISSING>"
 
             # Store data
             locations_ids.append(location_id)
@@ -93,18 +93,18 @@ class Scraper(Scrape):
             location_types.append(location_type)
 
         for (
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                phone_number,
-                latitude,
-                longitude,
-                hour,
-                location_id,
-                country,
-                location_type
+            locations_title,
+            street_address,
+            city,
+            state,
+            zipcode,
+            phone_number,
+            latitude,
+            longitude,
+            hour,
+            location_id,
+            country,
+            location_type,
         ) in zip(
             locations_titles,
             street_addresses,
@@ -117,7 +117,7 @@ class Scraper(Scrape):
             hours,
             locations_ids,
             countries,
-            location_types
+            location_types,
         ):
             self.data.append(
                 [
@@ -138,6 +138,7 @@ class Scraper(Scrape):
             )
 
         driver.quit()
+
 
 scrape = Scraper(URL)
 scrape.scrape()

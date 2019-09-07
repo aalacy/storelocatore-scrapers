@@ -1,10 +1,9 @@
-from Scrape import Scrape
-
+from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-URL = 'https://www.jacksonhewitt.com'
+URL = "https://www.jacksonhewitt.com"
 
 
 class Scraper(Scrape):
@@ -29,9 +28,9 @@ class Scraper(Scrape):
         stores = []
 
         options = Options()
-        options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         # Fetch stores from location menu
@@ -47,14 +46,16 @@ class Scraper(Scrape):
 
         store_id_counter = 1
         for store in stores:
-            store_infos = store.find_elements_by_css_selector('span.text')
-            store_infos = [store_info.text for store_info in store_infos if store_info.text != '']
+            store_infos = store.find_elements_by_css_selector("span.text")
+            store_infos = [
+                store_info.text for store_info in store_infos if store_info.text != ""
+            ]
 
             # Store ID
             location_id = store_id_counter
 
             # Name
-            location_title = 'Hackson Hewitt' + ' ' +  store_infos[1]
+            location_title = "Hackson Hewitt" + " " + store_infos[1]
 
             # Type
             location_type = store_infos[-7]
@@ -63,7 +64,7 @@ class Scraper(Scrape):
             street_address = store_infos[0]
 
             # Country
-            country = 'US'
+            country = "US"
 
             # State
             state = store_infos[-3]
@@ -85,7 +86,7 @@ class Scraper(Scrape):
 
             # hour
             hour_list = [hour for hour in store_infos[10:24]]
-            hour = ' '.join(hour_list)
+            hour = " ".join(hour_list)
 
             # Store data
             locations_ids.append(location_id)
@@ -103,18 +104,18 @@ class Scraper(Scrape):
             store_id_counter += 9
 
         for (
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                phone_number,
-                latitude,
-                longitude,
-                hour,
-                location_id,
-                country,
-                location_type
+            locations_title,
+            street_address,
+            city,
+            state,
+            zipcode,
+            phone_number,
+            latitude,
+            longitude,
+            hour,
+            location_id,
+            country,
+            location_type,
         ) in zip(
             locations_titles,
             street_addresses,
@@ -127,7 +128,7 @@ class Scraper(Scrape):
             hours,
             locations_ids,
             countries,
-            location_types
+            location_types,
         ):
             self.data.append(
                 [
@@ -148,6 +149,7 @@ class Scraper(Scrape):
             )
 
         driver.quit()
+
 
 scrape = Scraper(URL)
 scrape.scrape()

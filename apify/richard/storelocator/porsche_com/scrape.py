@@ -1,12 +1,12 @@
-from Scrape import Scrape
 import json
 import re
 
+from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-URL = 'https://www.porsche.com'
+URL = "https://www.porsche.com"
 
 
 class Scraper(Scrape):
@@ -31,56 +31,60 @@ class Scraper(Scrape):
         stores = []
 
         options = Options()
-        options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         location_url = "https://www.porsche.com/all/dealer2/canada/externalSearchJson.aspx?geo=49.2827291%7C-123.12073750000002&lim=1000"
         driver.get(location_url)
-        stores.extend(json.loads(driver.find_element_by_css_selector('pre').text)['dealers']['dealer'])
+        stores.extend(
+            json.loads(driver.find_element_by_css_selector("pre").text)["dealers"][
+                "dealer"
+            ]
+        )
 
         for store in stores:
             # Store ID
-            location_id = store['id']
+            location_id = store["id"]
 
             # Name
-            location_title = store['name']
+            location_title = store["name"]
 
             # Type
-            location_type = '<MISSING>'
+            location_type = "<MISSING>"
 
             # Street
-            street_address = store['address'][0]['street']
+            street_address = store["address"][0]["street"]
 
             # State
-            state = store['address'][0]['region']
+            state = store["address"][0]["region"]
 
             # city
-            city = store['address'][0]['city']
+            city = store["address"][0]["city"]
 
             # zip
-            zipcode = store['address'][0]['postalCode']
+            zipcode = store["address"][0]["postalCode"]
 
             # Lat
-            lat = '<MISSING>'
+            lat = "<MISSING>"
 
             # Long
-            lon = '<MISSING>'
+            lon = "<MISSING>"
 
             # Phone
-            phone = store['address'][0]['phone']
+            phone = store["address"][0]["phone"]
 
             # Hour
-            hour = store['details']['main']['hours']
+            hour = store["details"]["main"]["hours"]
 
             # Country
-            if re.match('^(\d{5})?$', zipcode.strip()):
-                country = 'US'
-            elif re.match('[A-Z][0-9][A-Z]\s[0-9][A-Z][0-9]', zipcode.strip()):
-                country = 'CA'
+            if re.match("^(\d{5})?$", zipcode.strip()):
+                country = "US"
+            elif re.match("[A-Z][0-9][A-Z]\s[0-9][A-Z][0-9]", zipcode.strip()):
+                country = "CA"
             else:
-                country = '<MISSING>'
+                country = "<MISSING>"
 
             # Store data
             locations_ids.append(location_id)
@@ -97,18 +101,18 @@ class Scraper(Scrape):
             location_types.append(location_type)
 
         for (
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                phone_number,
-                latitude,
-                longitude,
-                hour,
-                location_id,
-                country,
-                location_type
+            locations_title,
+            street_address,
+            city,
+            state,
+            zipcode,
+            phone_number,
+            latitude,
+            longitude,
+            hour,
+            location_id,
+            country,
+            location_type,
         ) in zip(
             locations_titles,
             street_addresses,
@@ -121,9 +125,9 @@ class Scraper(Scrape):
             hours,
             locations_ids,
             countries,
-            location_types
+            location_types,
         ):
-            if country == '<MISSING>':
+            if country == "<MISSING>":
                 pass
             else:
                 self.data.append(
@@ -145,6 +149,7 @@ class Scraper(Scrape):
                 )
 
         driver.quit()
+
 
 scrape = Scraper(URL)
 scrape.scrape()
