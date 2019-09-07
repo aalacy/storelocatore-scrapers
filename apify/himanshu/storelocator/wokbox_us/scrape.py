@@ -43,8 +43,8 @@ def fetch_data():
     tem_var.append("<MISSING>")
     tem_var.append(phone)
     tem_var.append("wokbox")
-    tem_var.append("<MISSING>")
-    tem_var.append("<MISSING>")
+    tem_var.append("32.310491")
+    tem_var.append("-95.299903")
     tem_var.append(time)
     store_detail.append(tem_var)
     
@@ -56,9 +56,12 @@ def fetch_data():
         return_main_object.append(store)
     return return_main_object
 
+
 def scrape():
     data = fetch_data()
     write_output(data)
 
 
 scrape()
+
+

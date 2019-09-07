@@ -37,10 +37,14 @@ def fetch_data():
         r2 = session.get(hurl, headers=headers)
         print('Pulling Location %s...' % hurl)
         for line in r2.iter_lines():
+            if '"addressRegion">' in line:
+                state = line.split('"addressRegion">')[1].split('<')[0]
             if 'itemprop="streetAddress">' in line:
                 add = line.split('itemprop="streetAddress">')[1].split('<')[0]
             if '"postalCode">' in line:
                 zc = line.split('"postalCode">')[1].split('<')[0]
+                if not zc.strip():
+                    zc = '<MISSING>'
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

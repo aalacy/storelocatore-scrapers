@@ -18,77 +18,47 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url= "https://sunnin.com/santamonica/locations/"
+    base_url= "http://sunnin.com/location.html"
     r = requests.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
     return_main_object=[]
-    k=soup.find_all("div",{"class":"textwidget"})
+    k=soup.find_all("div",{"class":"col-md-4"})
 
-
-    base_url1= "https://sunnin.com/westwood/locations/"
-    r = requests.get(base_url1)
-    soup1= BeautifulSoup(r.text,"lxml")
-
-    k1 = soup1.find_all("div",{"class":"textwidget custom-html-widget"})
-   
-
-    for i in k1:
-        p = i.find_all("p")
-        h = i.find_all('h3')
-        for name in h:
-            store_name.append(list(name.stripped_strings)[0])
-
-        for j in p:
-            tem_var =[]
-            street_address = list(j.stripped_strings)[0]
-            city = list(j.stripped_strings)[1].split(',')[0]
-            state = list(j.stripped_strings)[1].split(',')[1].split( )[0]
-            zipcode = list(j.stripped_strings)[1].split(',')[1].split( )[1]
-            phone  = list(j.stripped_strings)[-1]
-           
-            tem_var.append(street_address)
-            tem_var.append(city)
-            tem_var.append(state.strip())
-            tem_var.append(zipcode.strip())
-            tem_var.append("US")
-            tem_var.append("<MISSING>")
-            tem_var.append(phone)
-            tem_var.append("sunnin")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            store_detail.append(tem_var)
-
-    for index,i in enumerate(k):
-        hours = ""
-        tem_var =[]
-        if list(i.stripped_strings) !=[]:
-            if "Mon - Thurs: 11am - 9pm" in  list(i.stripped_strings):
-                hours = (" ".join(list(i.stripped_strings)))
-            else:
-                street_address = list(i.stripped_strings)[0]
-
-                store_name.append(street_address)
-                city = list(i.stripped_strings)[1]
-                state = list(i.stripped_strings)[2].split( )[0]
-                zipcode = list(i.stripped_strings)[2].split( )[1]
-                phone  = list(i.stripped_strings)[-1]
-
-             
-            tem_var.append(street_address)
-            tem_var.append(city)
-            tem_var.append(state.strip())
-            tem_var.append(zipcode.strip())
-            tem_var.append("US")
-            tem_var.append("<MISSING>")
-            tem_var.append(phone)
-            tem_var.append("sunnin")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append(hours)
-            store_detail.append(tem_var)
+    for i in k:
+        tem_var=[]
+        latitude=''
+        longitude =''
+        if "Contact Us" in i.text:
+            r = requests.get("http://sunnin.com/"+i.a['href'])
+            soup1= BeautifulSoup(r.text,"lxml")
+            v= soup1.find_all("div",{"class":"description"})[-1]
+            # print(soup1.find("div",{'class':"col-lg-12 maps animated"}).iframe['src'].split("2d")[1].split("!2m")[0].split("!3d")[0])
+            latitude=soup1.find("div",{'class':"col-lg-12 maps animated"}).iframe['src'].split("2d")[1].split("!2m")[0].split("!3d")[1]
+            longitude= soup1.find("div",{'class':"col-lg-12 maps animated"}).iframe['src'].split("2d")[1].split("!2m")[0].split("!3d")[0]
+        
+            hours = (" ".join(list(v.stripped_strings)))
+        store_name.append(list(i.stripped_strings)[0])
+        st=list(i.stripped_strings)[1]
+        city = list(i.stripped_strings)[2].split(',')[0]
+        state = list(i.stripped_strings)[2].split(',')[1].split( )[0]
+        zip1 = list(i.stripped_strings)[2].split(',')[1].split( )[1]
+        phone = list(i.stripped_strings)[3]
+        
+  
+        tem_var.append(st)
+        tem_var.append(city)
+        tem_var.append(state.strip())
+        tem_var.append(zip1.strip())
+        tem_var.append("US")
+        tem_var.append("<MISSING>")
+        tem_var.append(phone)
+        tem_var.append("sunnin")
+        tem_var.append(latitude)
+        tem_var.append(longitude)
+        tem_var.append(hours)
+        store_detail.append(tem_var)
 
     for i in range(len(store_name)):
         store = list()
@@ -106,3 +76,5 @@ def scrape():
 
 
 scrape()
+
+

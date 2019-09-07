@@ -6,6 +6,9 @@ const renameKeys = (keysMap, obj) => {
     if (!keysMap[key]) {
       return acc
     }
+    if (obj[key] === "") {
+      obj[key] = '<MISSING>';
+    }
     return {
       ...{ [keysMap[key] || key]: obj[key]},
       ...acc
@@ -50,7 +53,7 @@ while (i <= 1429) {
           locator_domain: 'locator_domain',
           country_code: 'country_code',
         }
-        locationData.locator_domain = 'bumpertobumper_ca';
+        locationData.locator_domain = 'bumpertobumper.ca';
         locationData.country_code = 'CA';
         locationData.schedule = JSON.stringify(locationData.schedule);
         records.push(renameKeys(keys_map, locationData));

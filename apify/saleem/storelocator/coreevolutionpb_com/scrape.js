@@ -28,7 +28,7 @@ const cheerio = require('cheerio');
         longitude
       } = $('iframe').attr('src').match(/\!2d(?<longitude>-?\d{2}\.\d+)\!3d(?<latitude>-?\d{2}\.\d+)\!/).groups;
 			const poi = {
-        locator_domain: 'coreevolutionpb_com',
+        locator_domain: 'coreevolutionpb.com',
         location_name: $('title').text().trim(),
         street_address: $(info[3]).text().trim(),
         city,

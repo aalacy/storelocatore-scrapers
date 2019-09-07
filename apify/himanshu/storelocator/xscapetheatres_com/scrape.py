@@ -23,7 +23,7 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
-    return_object = []
+
     base_url = "https://xscapetheatres.com/"
     r = requests.get(base_url + '/location', headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
@@ -31,6 +31,7 @@ def fetch_data():
         if(parts.find("a", {"id": "nav_locations"})):
             semi_ul = parts.find("ul", {"class": "subNav"})
             for semi_parts in semi_ul.find_all("li"):
+                return_object = []
                 store_request = requests.get(base_url + semi_parts.find("a")['href'])
                 re_url = base_url + semi_parts.find("a")['href'];
                 store_number = re_url.split("/")[-2]
@@ -59,8 +60,10 @@ def fetch_data():
                     return_object.append("<MISSING>")
                     return_object.append("<MISSING>")
                     return_object.append("<MISSING>")
+                    print(return_object)
                     return_main_object.append(return_object)
-        return return_main_object
+    print(return_main_object)
+    return return_main_object
 def scrape():
     data = fetch_data()
     write_output(data)

@@ -32,8 +32,6 @@ async function scrapePois(html) {
 		records.push({
 			locator_domain: 'drinkblenders.com',
 			location_name: location_name,
-			// Including raw address because it contains some additional info not found in the other fields
-			raw_address: rawAddress,
 			street_address: addressParts.street_address,
 			// some of the locations are just called by their city, others that have a particular name
 			// the city is given in parentheses before the address

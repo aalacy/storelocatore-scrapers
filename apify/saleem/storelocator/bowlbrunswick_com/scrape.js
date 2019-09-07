@@ -14,6 +14,8 @@ async function scrape() {
   await request.get(rootAddress)
     .then((json) => {
       return JSON.parse(json).forEach(location => {
+        // Non-existent hours is an indication of temporarily or permanently closed
+        if (!location.hours[0]) { return };
         // Check US vs. Canada. Canada has the province in the city and state is blank
         if (location.state === "") {
           [location.state] = location.city.match(/(?<=\,\s).{2,3}$/);
@@ -33,14 +35,7 @@ async function scrape() {
           location_type: location.brand,
           latitude: location.lat,
           longitude: location.lng,
-          hours_of_operation: (() => {
-            if (!location.hours[0]) {
-              return "<MISSING>";
-            }
-            else {
-              return JSON.stringify(location.hours)
-            }
-          })()
+          hours_of_operation: JSON.stringify(location.hours)
         });      
       });
     })

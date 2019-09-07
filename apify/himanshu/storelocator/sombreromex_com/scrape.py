@@ -21,7 +21,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    print("soup ===  first")
+    # print("soup ===  first")
 
     base_url = "https://www.sombreromex.com"
     r = requests.get("https://www.sombreromex.com/locations/", headers=headers)
@@ -47,11 +47,19 @@ def fetch_data():
     hours_of_operation = ""
 
     for script in soup.find_all('div', {'mmtl-col mmtl-col-sm-3'}):
+        # for script in soup.find_all('div', {'mmtl-content'}):
         list_store_data = list(script.stripped_strings)
 
-        if len(list_store_data) > 0:
+        # if len(list_store_data) == 1:
+        #     city = list_store_data[0]
+
+        if len(list_store_data) > 1:
+
             if 'Order Food Delivery with DoorDash' in list_store_data:
                 list_store_data.remove('Order Food Delivery with DoorDash')
+
+            if 'Coming Soon!' in list_store_data:
+                list_store_data.remove('Coming Soon!')
 
             if 'More Info' in list_store_data:
                 list_store_data.remove('More Info')
@@ -71,12 +79,13 @@ def fetch_data():
             if 'Order Online' in list_store_data:
                 list_store_data.remove('Order Online')
 
-            print(str(len(list_store_data)) + " = script ------- " + str(list_store_data))
+            # print(str(len(list_store_data)) + ' = list_store_data ===== ' + str(list_store_data))
 
             if len(list_store_data) > 3:
                 location_name = list_store_data[0]
                 phone = list_store_data[-2]
                 hours_of_operation = list_store_data[-1]
+                city = location_name
 
                 if len(list_store_data[1].split(',')) > 1:
                     street_address = list_store_data[1].split(',')[0]
@@ -88,19 +97,35 @@ def fetch_data():
                     zipp = list_store_data[1][-5:]
 
             else:
-                location_name = '<MISSING>'
+                hours_of_operation = list_store_data[-1]
+                phone = list_store_data[-2]
+
+                zipp = list_store_data[0].split(',')[-1].split(' ')[-1]
+                state = list_store_data[0].split(',')[-1].split(' ')[-2]
+
+                if len(list_store_data[0].split(',')) > 1:
+                    street_address = list_store_data[0].split(',')[0]
+                else:
+                    street_address = ' '.join(list_store_data[0].split(',')[0].split(' ')[:-2])
+
+                city = street_address.split(' ')[-1]
+                location_name = city
 
             country_code = 'US'
-            city = '<MISSING>'
             store_number = '<MISSING>'
             latitude = '<MISSING>'
             longitude = '<MISSING>'
 
+            if not phone.replace('-', '').isdigit():
+                phone = '<MISSING>'
+
+            # print(str(len(list_store_data)) + " = script ------- " + str(list_store_data))
+
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-            print("data = " + str(store))
-            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
 
