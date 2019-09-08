@@ -66,8 +66,18 @@ def fetch_data():
             output.append(get_value(store['locationType'])) #location type
             output.append(get_value(store['latitude'])) #latitude
             output.append(get_value(store['longitude'])) #longitude
-            # data = session.get('https://prd.location.enterprise.com/enterprise-sls/search/location/national/web/hours/'+store['peopleSoftId']+'?from=2019-09-01&to=2020-09-01&locale=en_US&cor=US').text
-            output.append('<MISSING>') #opening hours
+            today = datetime.today().strftime("%Y-%m-%d")
+            data = session.get('https://prd.location.enterprise.com/enterprise-sls/search/location/national/web/hours/'+store['peopleSoftId']+'?from='+today+'&to='+today+'&locale=en_US&cor=US').text
+            data = json.loads(data)['data'][today]['STANDARD']['hours']
+            hours = []
+            for dat in data:
+                hours.append(dat['open'] + '-' + dat['close'])
+            store_hours = []
+            if len(hours) != 0:
+                day_of_week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                for day in day_of_week:
+                    store_hours.append(day + ' ' + validate(hours))            
+            output.append(get_value(store_hours)) #opening hours
             output_list.append(output)
     return output_list
 

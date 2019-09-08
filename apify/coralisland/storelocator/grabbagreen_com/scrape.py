@@ -44,6 +44,8 @@ def fetch_data():
     url = "https://locator.kahalamgmt.com/locator/index.php?brand=34&mode=map&latitude=37.09024&longitude=-95.712891&q=&pagesize=0"
     session = requests.Session()
     source = session.get(url).text
+    # with open('res.txt', 'wb') as f:
+    #     f.write(source.encode('utf8'))
     data = source.split('$(document).ready(function() {')[1].split('})')[0]
     store_list = data.split('= {')
     for store in store_list[1:]:
@@ -64,7 +66,7 @@ def fetch_data():
         link = 'https://www.grabbagreen.com/stores/healthy-food-killeen/' + str(store['StoreId'])
         data = etree.HTML(session.get(link).text)
         store_hours = ', '.join(eliminate_space(data.xpath('.//div[@class="storeCol"]')[0].xpath('.//ul//li//text()')))
-        if 'contact' not in store_hours:
+        if 'coming' not in get_value(store['StatusName']).lower():
             output.append(store_hours) #opening hours
             output_list.append(output)
     return output_list
