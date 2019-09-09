@@ -18,35 +18,39 @@ def fetch_data():
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-    base_url = "http://www.teddysbb.com"
-    r = requests.get("http://www.teddysbb.com/locations",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
+    base_url = "https://www.lillypulitzer.com"
+    r = requests.get("https://www.lillypulitzer.com/on/demandware.store/Sites-lillypulitzer-us-Site/default/Stores-GetNearestStores?latitude=37.751&longitude=-97.822&countryCode=US&distanceUnit=mi&maxdistance=10000",headers=headers)
+    data = r.json()["stores"]
     return_main_object = []
-    for location in soup.find_all("div",{"class":re.compile("mod_article")}):
-        if location.find("a",{"href":re.compile("/@")}) == None:
-            continue
-        if location.parent.find("h3").text == "International":
-            continue
-        geo_location = location.find("a",{"href":re.compile("/@")})["href"]
-        name = location.find("h6").text
-        location_details = list(location.find("p").stripped_strings)[:-1]
-        if len(location_details[1].split(",")) != 2:
-            location_details[0] = " ".join(location_details[0:2])
-            del location_details[1]
+    for key in data:
+        store_data = data[key]
         store = []
-        store.append("https://www.maryspizzashack.com")
-        store.append(name)
-        store.append(location_details[0])
-        store.append(location_details[1].split(",")[0])
-        store.append(location_details[1].split(",")[1].split(" ")[-2].split(".")[0])
-        store.append(location_details[1].split(",")[1].split(" ")[-1])
-        store.append("US")
+        store.append("https://www.lillypulitzer.com")
+        store.append(store_data["name"])
+        store.append(store_data["address1"] + " " + store_data["address2"])
+        store.append(store_data["city"])
+        store.append(store_data["stateCode"])
+        if len(store_data["stateCode"]) > 2:
+            continue
+        if store[-1] == "ZZ":
+            store[-1] = store_data["city"].split(",")[1]
+            store[-2] = store_data["city"].split(",")[0]
+        store.append(store_data["postalCode"] if store_data["postalCode"] != "" else "<MISSING>")
+        store.append(store_data["countryCode"])
+        if len(store_data["postalCode"]) == 7:
+            store[-1] = "CA"
+        if store[-1] == "":
+            store[-1] = "US"
         store.append("<MISSING>")
-        store.append(location_details[2].split("Phone:")[1])
-        store.append("teddyy's")
-        store.append(geo_location.split("/@")[1].split(",")[0])
-        store.append(geo_location.split("/@")[1].split(",")[1])
-        store.append(" ".join(location_details[4:]))
+        store.append(store_data["phone"] if store_data["phone"] != "" else "<MISSING>")
+        store.append("lilly pulitzer")
+        store.append(store_data["latitude"])
+        store.append(store_data["longitude"])
+        hours = ""
+        store_hours = store_data["storeHours"]
+        for key in store_hours:
+            hours = hours + " " + key + " " +  store_hours[key]
+        store.append(hours if hours != "" else "<MISSING>")
         return_main_object.append(store)
     return return_main_object
 
