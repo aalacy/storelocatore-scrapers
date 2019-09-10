@@ -61,7 +61,7 @@ def fetch_data():
                         store.append("signature style")
                         store.append(lat)
                         store.append(lng)
-                        store.append(hours)
+                        store.append(hours if hours != "" else "<MISSING>")
                         return_main_object.append(store)
     return return_main_object
 

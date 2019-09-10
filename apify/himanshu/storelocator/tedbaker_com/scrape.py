@@ -28,7 +28,7 @@ def fetch_data():
         store.append("https://www.tedbaker.com")
         store.append(store_data["displayName"])
         if "line1" in store_data["address"]:
-            store.append(store_data["address"]["line1"] + store_data["address"]["line2"] if "lin2" in store_data["address"] else store_data["address"]["line1"])
+            store.append(store_data["address"]["line1"] + " " + store_data["address"]["line2"] if "line2" in store_data["address"] else store_data["address"]["line1"])
         else:
             if "line2" in store_data["address"]:
                 store.append(store_data["address"]["line2"])
@@ -71,6 +71,34 @@ def fetch_data():
                 else:
                     store.append(store_data["address"]["line3"].split(" ")[0])
                     store.append(store_data["address"]["line3"].split(" ")[-1])
+        if len(store[-3]) == 2 and store[-3].isupper():
+            store[-3] = store_data["address"]["line2"]
+            store[-2] = store_data["address"]["line3"]
+        if store[-2] == "<MISSING>":
+            if len(store_data["address"]["town"]) == 2 and store_data["address"]["town"].isupper():
+                store[-2] = store_data["address"]["town"]
+        if "City" in store[2]:
+            if "City" in store_data["address"]["line1"]:
+                store[2] = store_data["address"]["line3"] + " " + store_data["address"]["line2"]
+                store[3] = store_data["address"]["line1"]
+        if "Space" in store[3]:
+            store[3] = store_data["address"]["town"]
+        if 'Miami Beach' in store[2]:
+            store[2] = store[2].replace("Miami Beach","")
+            store[3] = "Miami Beach"
+        if store[-1] == "":
+            store[-1] = store_data["address"]["postalCode"].split(" ")[1]
+        if store[-3] == "Nevada":
+            store[-3] = store_data["address"]["town"]
+        if store[-3].split(" ")[0].isdigit():
+            store[-3] = store_data["address"]["town"]
+        if "New York City" in store[2]:
+            store[2] = store[2].replace("New York City","")
+            store[3] = "New York City"
+        if store[-1] in store[-3]:
+            store[-3] = store[-3].split(",")[0]
+        if store[1].replace("- ","") in store[2]:
+            store[2] = store[2].replace(store[1].replace("- ",""),"")
         store.append(store_data["address"]["country"]["isocode"])
         store.append(store_data["openingHours"]["code"])
         store.append(store_data["address"]["phone"] if "phone" in store_data["address"] and store_data["address"]["phone"] != "" and store_data["address"]["phone"] != None else "<MISSING>")
@@ -85,6 +113,9 @@ def fetch_data():
             else:
                 hours = hours + " " + store_hours[k]["weekDay"] + " open time " + store_hours[k]["openingTime"]["formattedHour"] + " close time " + store_hours[k]["closingTime"]["formattedHour"]
         store.append(hours if hours != "" else "<MISSING>")
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                store[i] = store[i].replace("–","-")
         return_main_object.append(store)
     return return_main_object
 

@@ -5,7 +5,7 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -29,12 +29,28 @@ def fetch_data():
             for i in range(len(location_list)):
                 store_data = location_list[i]
                 store = []
+                geo_location = store_data["directionsLink"]
+                store_zip = ""
+                store_stat = ""
+                if "!2s" in geo_location:
+                    store_zip  =  geo_location.split("!2s")[1].split("!")[0].split("+")[-1]
+                    store_stat = geo_location.split("!2s")[1].split("!")[0].split("+")[-2]
+                elif  "/@" in geo_location:
+                    if "+" in geo_location.split("/@")[0].split("/")[-1]:
+                        store_zip = geo_location.split("/@")[0].split("/")[-1].split("+")[-1]
+                        store_stat = geo_location.split("/@")[0].split("/")[-1].split("+")[-2]
+                    else:
+                        store_zip = "<MISSING>"
+                        store_stat = "<MISSING>"
+                else:
+                    store_zip = "<MISSING>"
+                    store_stat = "<MISSING>"
                 store.append("https://www.tacodeli.com")
                 store.append(store_data["title"])
                 store.append(store_data["address"])
                 store.append(store_data["city"])
-                store.append("<MISSING>")
-                store.append("<MISSING>")
+                store.append(store_stat)
+                store.append(store_zip)
                 store.append("US")
                 store.append(store_data["id"])
                 store.append(store_data["phone"])
@@ -47,7 +63,7 @@ def fetch_data():
                 hours = ""
                 for k in range(len(store_hours)):
                     hours = hours + " ".join(list(store_hours[k].stripped_strings)) + " "
-                store.append(hours if hours != "" else "<MISSING>")
+                store.append(hours.replace("–","-") if hours != "" else "<MISSING>")
                 return_main_object.append(store)
     return return_main_object
 

@@ -27,19 +27,22 @@ def fetch_data():
         store = []
         store.append("https://www.lillypulitzer.com")
         store.append(store_data["name"])
-        store.append(store_data["address1"] + store_data["address2"])
+        store.append(store_data["address1"] + " " + store_data["address2"])
         store.append(store_data["city"])
         store.append(store_data["stateCode"])
         if len(store_data["stateCode"]) > 2:
             continue
-        store.append(store_data["postalCode"])
+        if store[-1] == "ZZ":
+            store[-1] = store_data["city"].split(",")[1]
+            store[-2] = store_data["city"].split(",")[0]
+        store.append(store_data["postalCode"] if store_data["postalCode"] != "" else "<MISSING>")
         store.append(store_data["countryCode"])
         if len(store_data["postalCode"]) == 7:
             store[-1] = "CA"
         if store[-1] == "":
             store[-1] = "US"
         store.append("<MISSING>")
-        store.append(store_data["phone"])
+        store.append(store_data["phone"] if store_data["phone"] != "" else "<MISSING>")
         store.append("lilly pulitzer")
         store.append(store_data["latitude"])
         store.append(store_data["longitude"])

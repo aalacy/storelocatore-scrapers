@@ -52,9 +52,15 @@ def fetch_data():
             output.append(base_url) # url
             output.append(get_value(store['name'])) #location name
             output.append(get_value(store['address_1'])) #address
-            output.append(get_value(store['city'])) #city
-            output.append('<MISSING>') #state
-            output.append(get_value(store['zipcode'])) #zipcode
+            if 'ontario' in get_value(store['city']).lower():
+                city = get_value(store['city']).split(' ')
+                output.append(city[0]) #city
+                output.append(city[1]) #state
+                output.append(validate(city[2:])) #zipcode                
+            else:
+                output.append(get_value(store['city'])) #city
+                output.append('<MISSING>') #state
+                output.append(get_value(store['zipcode'])) #zipcode
             output.append(get_value(store['country'])) #country code
             output.append(get_value(store['id'])) #store_number
             output.append(get_value(store['phone'])) #phone

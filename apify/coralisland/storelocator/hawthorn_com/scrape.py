@@ -78,10 +78,13 @@ def fetch_data():
         detail_url = validate(detail_url.xpath('.//a')[0].xpath('./@href'))
         detail_request = requests.get('https://www.wyndhamhotels.com' + detail_url)
         detail = etree.HTML(detail_request.text)
+
         address = validate(detail.xpath('.//div[contains(@class, "property-address")]//text()'))
         address = parse_address(address)
+
         phone = validate(detail.xpath('.//div[contains(@class, "property-phone")]')[0].xpath('.//text()')).replace('-', '')
         store_id = validate(detail_request.text.split('var overview_propertyId = "')[1].split('"')[0])
+
         more_detail_url = "https://www.wyndhamhotels.com/BWSServices/services/search/property/search?propertyId=" + store_id + "&isOverviewNeeded=true&isAmenitiesNeeded=true&channelId=tab&language=en-us"
         detail_request = requests.get(more_detail_url)
         detail = json.loads(detail_request.text)['properties'][0]
@@ -90,21 +93,8 @@ def fetch_data():
         latitude = validate(detail['latitude'])
         longitude = validate(detail['longitude'])
         country_code = validate(detail['countryCode'])
-        checkin = int(validate(detail['checkInTime']))
-        checkout = int(validate(detail['checkOutTime']))
-        if checkin > 1200:
-            checkin_str = ' p.m - '
-            checkin -= 1200
-        else:
-            checkin_str = ' a.m - '
-        if checkout > 1200:
-            checkout_str = ' p.m'
-            checkout -= 1200
-        else:
-            checkout_str = ' a.m'
-        checkin = str(checkin)[:-2] + ':' + str(checkin)[-2:] + checkin_str
-        checkout = str(checkout)[:-2] + ':' + str(checkout)[-2:] + checkout_str
-        hours = checkin + checkout
+        hours = "24 hours open"
+
         output = []
         output.append(base_url) # url
         output.append(title) #location name
@@ -119,7 +109,9 @@ def fetch_data():
         output.append(latitude) #latitude
         output.append(longitude) #longitude
         output.append(hours) #opening hours
+
         output_list.append(output)
+
     return output_list
 
 def scrape():

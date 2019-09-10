@@ -24,10 +24,11 @@ def fetch_data():
     soup= BeautifulSoup(r.text,"lxml")
   
     hours = []
-    name_store=[]
+    store_name=[]
     store_detail=[]
     phone=[]
     return_main_object=[]
+    address=[]
     k = (soup.find_all("div",{"class":"sqs-block-content"}))
 
     for i in k:
@@ -56,8 +57,8 @@ def fetch_data():
                 phone = (phone1)
 
 
-            tem_var.append("https://www.dicarlospizza.com")
-            tem_var.append(name)
+            # tem_var.append("https://www.dicarlospizza.com")
+            store_name.append(name)
             tem_var.append(st)
             tem_var.append("<MISSING>")
             tem_var.append("<MISSING>")
@@ -69,18 +70,26 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append("<MISSING>")
             tem_var.append("<MISSING>")
-            return_main_object.append(tem_var)
-                            
-  
- 
-    
-    # for i in range(len(name_store)):
-    #     store = list()
-    #     store.append("https://theyard.com")
-    #     store.append(name_store[i])
-    #     store.extend(store_detail[i])
-    #     return_main_object.append(store)
+            # if tem_var[3] in address:
+            #     continue
+        
+            # address.append(tem_var[3])
 
+            store_detail.append(tem_var)
+   
+    del store_name[5]
+    del store_detail[5]
+    for i in range(len(store_name)):
+        store = list()
+        store.append("https://www.dicarlospizza.com")
+        store.append(store_name[i])
+        store.extend(store_detail[i])
+        # if store[3] in address:
+        #         continue
+        
+        # address.append(store[3])
+
+        return_main_object.append(store) 
     return return_main_object
 
 

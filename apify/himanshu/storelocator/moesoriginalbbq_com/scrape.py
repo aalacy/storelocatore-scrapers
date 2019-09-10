@@ -112,11 +112,13 @@ def fetch_data():
             hours_of_operation = '<MISSING>'
         
         phone = str(phone[:14])
-        print("phone === "+phone)
+        phone = phone.replace('(',"").replace(')',"").replace('-',' ').split(' ')
+        phone = ' '.join(["" if not x.isdigit() else x for x in phone])
+        
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]
-
+        store = ["<MISSING>" if x == "" else x for x in store]
         # print("data = " + str(store))
         # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
