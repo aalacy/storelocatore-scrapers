@@ -5,7 +5,7 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -28,13 +28,13 @@ def fetch_data():
         if location.parent.find("h3").text == "International":
             continue
         geo_location = location.find("a",{"href":re.compile("/@")})["href"]
-        name = location.find("h6").text
+        name = location.find("h6").text.replace("\xa0","")
         location_details = list(location.find("p").stripped_strings)[:-1]
         if len(location_details[1].split(",")) != 2:
             location_details[0] = " ".join(location_details[0:2])
             del location_details[1]
         store = []
-        store.append("https://www.maryspizzashack.com")
+        store.append("http://www.teddysbb.com")
         store.append(name)
         store.append(location_details[0])
         store.append(location_details[1].split(",")[0])
@@ -46,7 +46,8 @@ def fetch_data():
         store.append("teddyy's")
         store.append(geo_location.split("/@")[1].split(",")[0])
         store.append(geo_location.split("/@")[1].split(",")[1])
-        store.append(" ".join(location_details[4:]))
+        store.append(" ".join(location_details[4:]).replace("–","-").replace("\xa0",""))
+        print(store[-1])
         return_main_object.append(store)
     return return_main_object
 
