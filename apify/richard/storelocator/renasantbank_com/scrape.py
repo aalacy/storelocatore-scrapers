@@ -35,7 +35,6 @@ class Scraper(Scrape):
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         # Fetch stores from location menu
-        # Fetch stores from location menu
         for num in range(1, 999):
             location_url = f"https://locations.renasantbank.com/wp-json/wp/v2/locations?per_page=100&page={num}"
             driver.get(location_url)
@@ -97,7 +96,7 @@ class Scraper(Scrape):
             # Phone
             phone = (
                 store["acf"]["phone_number"]
-                if "phone_number" in store["acf"].keys()
+                if "phone_number" in store["acf"].keys() and "ATM" not in location_title
                 else "<MISSING>"
             )
 
@@ -142,23 +141,24 @@ class Scraper(Scrape):
             locations_ids,
             countries,
         ):
-            self.data.append(
-                [
-                    self.url,
-                    locations_title,
-                    street_address,
-                    city,
-                    state,
-                    zipcode,
-                    country,
-                    location_id,
-                    phone_number,
-                    "<MISSING>",
-                    latitude,
-                    longitude,
-                    hour,
-                ]
-            )
+            if locations_title != "Jackson":
+                self.data.append(
+                    [
+                        self.url,
+                        locations_title,
+                        street_address,
+                        city,
+                        state,
+                        zipcode,
+                        country,
+                        location_id,
+                        phone_number,
+                        "<MISSING>",
+                        latitude,
+                        longitude,
+                        hour,
+                    ]
+                )
 
         driver.quit()
 

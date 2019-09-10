@@ -34,7 +34,7 @@ class Scraper(Scrape):
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         # Fetch stores from location menu
-        location_url = "https://cat-ms.esri.com/dls/cat/locations/en?f=json&forStorage=false&distanceUnit=mi&searchType=address&searchValue=USA&maxResults=50&productDivId=2%2C1%2C6&appId=GdeKAczdmNrGwdPo"
+        location_url = "https://cat-ms.esri.com/dls/cat/locations/en?f=json&forStorage=false&distanceUnit=mi&searchType=address&searchValue=USA&maxResults=10000&productDivId=2%2C1%2C6&appId=GdeKAczdmNrGwdPo"
         driver.get(location_url)
         dealers = json.loads(driver.find_element_by_css_selector("pre").text)
 

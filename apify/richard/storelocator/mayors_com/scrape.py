@@ -154,23 +154,24 @@ class Scraper(Scrape):
             locations_ids,
             countries,
         ):
-            self.data.append(
-                [
-                    self.url,
-                    locations_title,
-                    street_address,
-                    city,
-                    state,
-                    zipcode,
-                    country,
-                    location_id,
-                    phone_number,
-                    "<MISSING>",
-                    latitude,
-                    longitude,
-                    hour,
-                ]
-            )
+            if "33309" not in zipcode:
+                self.data.append(
+                    [
+                        self.url,
+                        locations_title,
+                        street_address,
+                        city,
+                        state,
+                        zipcode,
+                        country,
+                        location_id,
+                        phone_number,
+                        "<MISSING>",
+                        latitude,
+                        longitude,
+                        hour,
+                    ]
+                )
 
         driver.quit()
 
