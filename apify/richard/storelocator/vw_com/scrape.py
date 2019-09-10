@@ -1,5 +1,6 @@
 import json
 
+import sgzip
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -26,7 +27,8 @@ class Scraper(Scrape):
         phone_numbers = []
         hours = []
         countries = []
-        stores = []
+        dealers = []
+        seen = []
 
         options = Options()
         options.add_argument("--headless")
@@ -35,9 +37,14 @@ class Scraper(Scrape):
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         # Fetch stores from location menu
-        location_url = "https://www.vw.com/vwsdl/rest/product/dealers/zip/99546.json"
-        driver.get(location_url)
-        dealers = json.loads(driver.find_element_by_css_selector("pre").text)["dealers"]
+        for zip_search in sgzip.for_radius(50):
+            location_url = (
+                f"https://www.vw.com/vwsdl/rest/product/dealers/zip/{zip_search}.json"
+            )
+            driver.get(location_url)
+            dealers.extend(
+                json.loads(driver.find_element_by_css_selector("pre").text)["dealers"]
+            )
 
         for dealer in dealers:
             # Store ID
@@ -111,23 +118,25 @@ class Scraper(Scrape):
             locations_ids,
             countries,
         ):
-            self.data.append(
-                [
-                    self.url,
-                    locations_title,
-                    street_address,
-                    city,
-                    state,
-                    zipcode,
-                    country,
-                    location_id,
-                    phone_number,
-                    "<MISSING>",
-                    latitude,
-                    longitude,
-                    hour,
-                ]
-            )
+            if location_id not in seen:
+                self.data.append(
+                    [
+                        self.url,
+                        locations_title,
+                        street_address,
+                        city,
+                        state,
+                        zipcode,
+                        country,
+                        location_id,
+                        phone_number,
+                        "<MISSING>",
+                        latitude,
+                        longitude,
+                        hour,
+                    ]
+                )
+                seen.append(location_id)
 
         driver.quit()
 
