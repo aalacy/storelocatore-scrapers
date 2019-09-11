@@ -25,7 +25,6 @@ def fetch_data():
             states.append('https://www.goodyear.com/' + line.split('href="')[1].split('"')[0])
 
     for state in states:
-        state = state.replace('//','/')
         print('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
@@ -33,7 +32,6 @@ def fetch_data():
                 cities.append('https://www.goodyear.com/' + line2.split('href="')[1].split('"')[0])
 
     for city in cities:
-        city = city.replace('//','/')
         locs = []
         print('Pulling City %s...' % city)
         citystate = city.split('/tire-stores/')[1].split('/')[0]
