@@ -1,3 +1,4 @@
+import json
 import csv
 import urllib2
 import requests
@@ -16,27 +17,59 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    smurl = 'https://branches.bmoharris.com/sitemap.xml.gz'
-    with open('branches.xml.gz','wb') as f:
-        f.write(urllib2.urlopen(smurl).read())
-        f.close()
-
-    print('Branch List Downloaded...')
+    url = 'https://branchlocator.bmoharris.com/rest/locatorsearch?like=0.2783429985749122&lang=en_US'
+    payload = {"request":{"appkey":"1C92EACC-1A19-11E7-B395-EE7D55A65BB0","formdata":{"geoip":"false",
+                                                                                      "dataview":"store_default",
+                                                                                      "limit":"1000",
+                                                                                      "google_autocomplete":"true",
+                                                                                      "geolocs":{"geoloc":[{"addressline":"55402",
+                                                                                                            "country":"US",
+                                                                                                            "latitude":44.9754804,
+                                                                                                            "longitude":-93.26968599999998,
+                                                                                                            "state":"MN",
+                                                                                                            "province":"",
+                                                                                                            "city":"Minneapolis",
+                                                                                                            "address1":"",
+                                                                                                            "postalcode":"55402"}]},
+                                                                                      "searchradius":"5000",
+                                                                                      "softmatch":"1",
+                                                                                      "where":{"or":[{"languages":{"ilike":""},
+                                                                                                      "walkupcount":{"eq":""},
+                                                                                                      "driveupcount":{"eq":""},
+                                                                                                      "smartbranch":{"eq":""},
+                                                                                                      "grouptype":{"in":"BMOHarrisBranches"},
+                                                                                                      "or":{"safedepositsmall":{"eq":""},
+                                                                                                            "safedepositmedium":{"eq":""},
+                                                                                                            "safedepositlarge":{"eq":""},
+                                                                                                            "allpoint":{"eq":""},
+                                                                                                            "walgreens":{"eq":""},
+                                                                                                            "speedway":{"eq":""},
+                                                                                                            "mobilecash":{"eq":""}}},
+                                                                                                     {"grouptype":{"eq":"BMOHarrisBranches"},
+                                                                                                      "lobby":{"eq":""},
+                                                                                                      "secondaryid":{"eq":""}}]},
+                                                                                      "false":"0"}}}
+    headers = {'Content-Type': 'application/json',
+               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
+               'X-Requested-With': 'XMLHttpRequest'
+               }
+    locs = []
     branches = []
-    stores = []
-    ids = []
-    with gzip.open('branches.xml.gz', 'rb') as f:
-        for line in f:
-            if '/harris1' in line or '/harris2' in line:
-                burl = line.split('>')[1].split('<')[0]
-                bid = burl.rsplit('/harris',1)[1]
-                if bid not in ids:
-                    ids.append(bid)
-                    branches.append(burl)
+    r = session.post(url, headers=headers, data=json.dumps(payload))
+    for line in r.iter_lines():
+        if '{"mondayopen":"' in line:
+            items = line.split('{"mondayopen":"')
+            for item in items:
+                if '"collectionname":"' not in item:
+                    bid = item.split(',"id":"')[1].split('"')[0]
+                    state = item.split('"state":"')[1].split('"')[0].lower()
+                    city = item.split('"city":"')[1].split('"')[0].replace(' ','-').lower()
+                    burl = 'https://branches.bmoharris.com/' + state + '/' + city + '/harris' + bid
+                    if bid not in locs:
+                        locs.append(bid)
+                        branches.append(burl)
 
-    os.remove("branches.xml.gz")
-    print('Found %s Branches.' % str(len(branches)))
-    
+    stores = []
     for branch in branches:
         website = 'bmoharris.com'
         typ = 'Branch'
