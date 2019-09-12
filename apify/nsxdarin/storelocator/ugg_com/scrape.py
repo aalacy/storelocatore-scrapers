@@ -65,6 +65,8 @@ def fetch_data():
                     zc = '<MISSING>'
                 if city is None or city == '':
                     city = '<MISSING>'
+                if state is None or state == '':
+                    state = '<MISSING>'
                 if store not in ids:
                     ids.append(store)
                     yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
