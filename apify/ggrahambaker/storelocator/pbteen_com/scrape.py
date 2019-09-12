@@ -58,9 +58,16 @@ def fetch_data():
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
+        href = driver.find_element_by_xpath("//a[contains(@href, 'google.com/maps/')]").get_attribute('href')
 
-        lat = '<MISSING>'
-        longit = '<MISSING>'
+
+        start_idx = href.find('@')
+        end_idx = href.find('/data')
+        coords = href[start_idx + 1: end_idx ].split(',')
+
+        lat = coords[0]
+        longit = coords[1]
+
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

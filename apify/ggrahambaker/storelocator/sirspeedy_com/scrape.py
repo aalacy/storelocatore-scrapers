@@ -42,7 +42,7 @@ def fetch_data():
     for link in link_list:
         driver.get(link)
         driver.implicitly_wait(10)
-        print(link)
+
 
 
         try:
@@ -79,8 +79,6 @@ def fetch_data():
             continue
 
 
-
-
         location_name = '<MISSING>'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -88,9 +86,7 @@ def fetch_data():
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
-        print()
-        print(store_data)
-        print()
+
         all_store_data.append(store_data)
 
     driver.quit()
