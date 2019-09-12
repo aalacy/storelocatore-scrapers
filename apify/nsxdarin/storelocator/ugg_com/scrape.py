@@ -19,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     ids = []
-    for code in sgzip.for_radius(100):
+    for code in sgzip.for_radius(200):
         print('Pulling Zip Code %s...' % code)
         payload = {"request":{"appkey":"E76CAAF4-9877-11E1-9438-A503DEB2B31E","formdata":{"geoip":"false","dataview":"store_default","limit":5000,"reviews":{"bd":1},"order":"rank::numeric, _DISTANCE","geolocs":{"geoloc":[{"addressline":"55408","country":"US","latitude":44.9479791,"longitude":-93.29357779999998,"state":"MN","province":"","city":"Minneapolis","address1":"","postalcode":"55408"}]},"searchradius":"5000","where":{"or":{"icon":{"in":""}}},"false":"0"}}}
         url = 'https://hosted.where2getit.com/uggaustralia/rest/locatorsearch?like=0.5506876374626519&lang=en_EN'
@@ -59,8 +59,12 @@ def fetch_data():
                     hours = hours + '; Sun: ' + item['sun_hours']
                 if 'null' in hours:
                     hours = '<MISSING>'
-                if phone is None:
+                if phone is None or phone == '':
                     phone = '<MISSING>'
+                if zc is None or zc == '':
+                    zc = '<MISSING>'
+                if city is None or city == '':
+                    city = '<MISSING>'
                 if store not in ids:
                     ids.append(store)
                     yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
