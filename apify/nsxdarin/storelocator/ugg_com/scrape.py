@@ -19,9 +19,15 @@ def write_output(data):
 
 def fetch_data():
     ids = []
-    for code in sgzip.for_radius(200):
-        print('Pulling Zip Code %s...' % code)
-        payload = {"request":{"appkey":"E76CAAF4-9877-11E1-9438-A503DEB2B31E","formdata":{"geoip":"false","dataview":"store_default","limit":5000,"reviews":{"bd":1},"order":"rank::numeric, _DISTANCE","geolocs":{"geoloc":[{"addressline":"55408","country":"US","latitude":44.9479791,"longitude":-93.29357779999998,"state":"MN","province":"","city":"Minneapolis","address1":"","postalcode":"55408"}]},"searchradius":"5000","where":{"or":{"icon":{"in":""}}},"false":"0"}}}
+    for coord in sgzip.coords_for_radius(200):
+        x = coord[0]
+        y = coord[1]
+        print('Pulling Zip Lat-Lng %s-%s...' % (x, y))
+        payload = {"request":{"appkey":"E76CAAF4-9877-11E1-9438-A503DEB2B31E","formdata":{"geoip":"false","dataview":"store_default","limit":5000,
+                                                                                          "reviews":{"bd":1},"order":"rank::numeric, _DISTANCE",
+                                                                                          "geolocs":{"geoloc":[{"addressline":"","country":"US","latitude":x,"longitude":y,"state":"","province":"",
+                                                                                                                "city":"","address1":"","postalcode":""}]},
+                                                                                          "searchradius":"5000","where":{"or":{"icon":{"in":""}}},"false":"0"}}}
         url = 'https://hosted.where2getit.com/uggaustralia/rest/locatorsearch?like=0.5506876374626519&lang=en_EN'
         r = session.post(url, headers=headers, data=json.dumps(payload))
         array = json.loads(r.content)['response']
@@ -31,15 +37,15 @@ def fetch_data():
                 lat = item['latitude']
                 lng = item['longitude']
                 zc = item['postalcode']
-                name = item['name']
+                name = item['name'].encode('utf-8')
                 if item['address2']:
                     add = item['address1'] + ' ' + item['address2']
-                else:
-                    
+                else:                    
                     add = item['address1']
-                add = add.strip()
+                add = add.strip().replace('"',"'")
                 state = item['state']
-                city = item['city']
+                if item['city'] is not None:
+                    city = item['city'].encode('utf-8')
                 website = 'ugg.com'
                 phone = item['phone']
                 if item['province'] is not None:
