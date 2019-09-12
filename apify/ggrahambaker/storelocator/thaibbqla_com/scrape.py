@@ -48,6 +48,18 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
+def clean_arr(arr):
+    to_ret = []
+    for a in arr:
+        if 'DELIVERY' in a:
+            continue
+        if '(' in a:
+            continue
+
+        to_ret.append(a)
+
+
+    return to_ret
 
 
 def fetch_data():
@@ -79,6 +91,7 @@ def fetch_data():
 
     duplicate_tracker = []
     for i, c in enumerate(p_cont):
+
         cont = c.text.split('\n')
 
         if len(cont) == 13:
@@ -95,27 +108,32 @@ def fetch_data():
         elif len(cont) > 6:
             ## two locations
             spin = 0
+
+            cont = clean_arr(cont)
+
             for c in cont:
+                if 'THAI BBQ' in c:
+                    spin = 0
+
                 if spin == 0:
                     location_name = c
                 elif spin == 1:
-                    if '(IN THE HEART OF THAI TOWN)' in c:
-                        continue
                     street_address, city, state, zip_code = parse_address(c)
                 elif spin == 2:
                     cut_idx = c.find('FAX:')
                     phone_number = c[:cut_idx].replace('TEL:', '').strip()
-                elif c == '':
                     duplicate_tracker.append(location_name)
                     store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                                   store_number, phone_number, location_type, lat, longit, hours]
+
                     all_store_data.append(store_data)
-                    spin = -1
+
                 else:
                     ## do nothing
                     nothing = 0
 
                 spin += 1
+
 
         else:
             if 'CATERING and PARTY TRAYS' in cont[0]:

@@ -45,7 +45,8 @@ def fetch_data():
 
     for i, link in enumerate(link_list):
         driver.get(link)
-        driver.implicitly_wait(10)
+        driver.implicitly_wait(30)
+        print(link)
 
         try:
             alert_obj = driver.switch_to.alert
@@ -94,9 +95,7 @@ def fetch_data():
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
-        print()
-        print(store_data)
-        print()
+
         all_store_data.append(store_data)
 
     driver.quit()

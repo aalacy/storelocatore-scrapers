@@ -2,6 +2,7 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import NoSuchElementException
 import time
 
 
@@ -76,6 +77,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
+
+
 
     driver.quit()
     return all_store_data
