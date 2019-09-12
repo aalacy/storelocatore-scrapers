@@ -1,7 +1,6 @@
 import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import pandas as pd
 
 def write_output(data):
     with open('data.csv', mode='wb') as output_file:
