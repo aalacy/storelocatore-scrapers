@@ -39,10 +39,12 @@ def fetch_data():
         link_list.append(link)
 
     all_store_data = []
+    duplicate_checker = []
+
     for i, link in enumerate(link_list):
         driver.get(link)
         driver.implicitly_wait(10)
-        
+        print(i, link)
         try:
             addy = driver.find_element_by_css_selector('p.location_address').text.replace('\n', ' ').replace('-', ' ')
 
@@ -118,7 +120,7 @@ def fetch_data():
 
                 hours = driver.find_element_by_css_selector('ul.location_hours').text.replace('\n', ' ').replace('Store Hours:',
                                                                                                              '').strip()
-                phone_number = driver.find_element_by_xpath('//span[@itemprop="telephone"]').text.replace('P: ').strip()
+                phone_number = driver.find_element_by_xpath('//span[@itemprop="telephone"]').text.replace('P:', '').strip()
 
 
                 longit = driver.find_element_by_css_selector('input.hiddenCenterLong').get_attribute('value')
@@ -136,6 +138,10 @@ def fetch_data():
 
         country_code = 'US'
 
+        if street_address not in duplicate_checker:
+            duplicate_checker.append(street_address)
+        else:
+            continue
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
 
