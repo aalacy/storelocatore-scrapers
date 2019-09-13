@@ -48,12 +48,17 @@ def fetch_data():
         for line2 in r2.iter_lines():
             if '<title>' in line2:
                 name = line2.split('>')[1].split('<')[0].strip()
+            if '<p itemprop="streetAddress"' in line2:
+                add = line2.split('>')[1].split('<')[0].strip()
             if '"address":"' in line2:
-                add = line2.split('"address":"')[1].split('"')[0]
                 phone = line2.split('"phone":"')[1].split('"')[0]
                 lat = line2.split('"latitude":"')[1].split('"')[0]
                 lng = line2.split('"longitude":"')[1].split('"')[0]
                 store = line2.split('"storelocator_id":"')[1].split('"')[0]
+            if '<span itemprop="addressLocality">' in line2:
+                city = line2.split('<span itemprop="addressLocality">')[1].split('<')[0]
+            if '<span itemprop="addressRegion">' in line2:
+                state = line2.split('<span itemprop="addressRegion">')[1].split('<')[0]
             if 'itemprop="openingHours" content="' in line2:
                 hrs = line2.split('itemprop="openingHours" content="')[1].split('"')[0]
                 if hours == '':
@@ -61,7 +66,8 @@ def fetch_data():
                 else:
                     hours = hours + '; ' + hrs
         country = 'US'
-        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if '404 Not Found' not in name:
+            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         time.sleep(3)
 
 def scrape():
