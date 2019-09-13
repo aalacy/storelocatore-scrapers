@@ -38,7 +38,7 @@ def fetch_data():
         lat = ''
         lng = ''
         hours = ''
-        zc = ''
+        zc = '<MISSING>'
         phone = ''
         print('Pulling Location %s...' % loc)
         website = 'shiekhshoes.com'
@@ -66,6 +66,10 @@ def fetch_data():
                 else:
                     hours = hours + '; ' + hrs
         country = 'US'
+        if phone == '':
+            phone = '<MISSING>'
+        if hours == '':
+            hours = '<MISSING>'
         if '404 Not Found' not in name:
             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         time.sleep(3)
