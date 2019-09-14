@@ -1,4 +1,5 @@
 import json
+from pypostalcode import PostalCodeDatabase
 
 from Scraper import Scrape
 from selenium import webdriver
@@ -37,10 +38,10 @@ class Scraper(Scrape):
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
-        for first in 'ABCEGHJKLMNPRSTVXY'.lower():
-            for second in range(0, 10):
-                for third in 'ABCEGHJKLMNPRSTVWXYZ'.lower():
-                    self.postal_codes.append(f'{first}{second}{third}0a0')
+        pcdb = PostalCodeDatabase()
+        search = 'S7H'
+        radius = 3000
+        self.postal_codes = [loc.postalcode + '0A0' for loc in pcdb.get_postalcodes_around_radius(search, radius)]
 
         for postal_search in self.postal_codes:
             location_url = f'https://www.chapters.indigo.ca/en-CA/api/v1/storeavailability/getstores?province=&cityPostal={postal_search}&null'
