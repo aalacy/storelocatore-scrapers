@@ -40,27 +40,34 @@ def fetch_data():
     url = "https://www.freshtoorder.com/locate/"
     request = requests.get(url)
     response = etree.HTML(request.text)
-    store_list = response.xpath('//div[contains(@class, "mpfy-mll-location")]')
-    for store in store_list:
-        info = validate(store.xpath('.//div[contains(@class, "location-address")]//text()')).split('|')
-        street = info[0]
+    store_list = json.loads(request.text.split('search_radius, ')[1].split(', map_instance,')[0])
+    store_json = {}
+    for x in store_list:
+        store_json[validate(str(x['ID']))] = x
+    store_texts = response.xpath('//div[contains(@class, "mpfy-mll-location")]')
+    for store_text in store_texts:
+        store = store_json[validate(store_text.xpath('./@data-id'))]
+        info = validate(store_text.xpath('.//div[contains(@class, "location-address")]//text()')).split('|')
         info = info.pop().split(',')
-        hours = get_value(eliminate_space(store.xpath('.//div[contains(@class, "location-hours")]//text()'))).replace('\n', '').replace('Restaurant Hours: ', '').replace('OPEN NOW!!! ', '')
-        if 'Closed'in hours:
+        hours = get_value(eliminate_space(store_text.xpath('.//div[contains(@class, "location-hours")]//text()'))).replace('\n', '').replace('Restaurant Hours: ', '').replace('OPEN NOW!!! ', '')
+        if 'Closed' in hours:
             continue
+        street = eliminate_space(etree.HTML(store['tooltip_content']).xpath('.//text()'))[1]
+        if 'OPEN' in street or 'Cobb' in street:
+            street = eliminate_space(etree.HTML(store['tooltip_content']).xpath('.//text()'))[2]
         output = []
         output.append(base_url) # url
-        output.append(validate(store.xpath(".//div[@class='mpfy-mll-l-title']/text()"))) #location name
+        output.append(validate(store['post_title'])) #location name
         output.append(validate(street)) #address
-        output.append(info[0]) #city
+        output.append(validate(store['pin_city'])) #city
         output.append(info[1]) #state
-        output.append(info[2]) #zipcode
+        output.append(validate(store['pin_zip'])) #zipcode
         output.append('US') #country code
-        output.append(validate(store.xpath('./@data-id'))) #store_number
-        output.append(get_value(store.xpath('.//div[contains(@class, "contact-details")]//text()'))) #phone
+        output.append(store['ID']) #store_number
+        output.append(get_value(store_text.xpath('.//div[contains(@class, "contact-details")]//text()'))) #phone
         output.append("Fresh To Order") #location type
-        output.append(validate(store.xpath('./@data-lat'))) #latitude
-        output.append(validate(store.xpath('./@data-lng'))) #longitude
+        output.append(validate(store['google_coords'][0])) #latitude
+        output.append(validate(store['google_coords'][1])) #longitude
         output.append(hours) #opening hours
         output_list.append(output)
 
