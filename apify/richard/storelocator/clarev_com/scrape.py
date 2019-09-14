@@ -92,6 +92,34 @@ def fetch_data():
         phone_numbers.append(phone_number)
         hours.append(hour)
 
+    locations = driver.find_elements_by_css_selector('div.addresses > ul > li > a')
+
+    for location in locations:
+        if location.find_element_by_css_selector('span.country').text.strip() in ['United States']:
+            location_title = location.find_element_by_css_selector('span.name').text.strip()
+            phone_number = '<MISSING>'
+            street_address = location.find_element_by_css_selector('span.address').text.strip()
+            city = location.find_element_by_css_selector('span.city').text.strip()
+            state = location.find_element_by_css_selector('span.prov_state').text.strip()
+            try:
+                zip_code = location.find_element_by_css_selector('span.postal_zip').text.strip()
+            except:
+                zip_code = '<MISSING>'
+            hour = '<MISSING>'
+            latitude = '<MISSING>'
+            longitude = '<MISSING>'
+
+            # Store data
+            locations_titles.append(location_title)
+            street_addresses.append(street_address)
+            cities.append(city)
+            states.append(state)
+            zip_codes.append(zip_code)
+            latitude_list.append(latitude)
+            longitude_list.append(longitude)
+            phone_numbers.append(phone_number)
+            hours.append(hour)
+
 
     # Store data
     for locations_title, street_address, city, state, zipcode, phone_number, latitude, longitude, hour in zip(locations_titles, street_addresses, cities, states, zip_codes, phone_numbers, latitude_list, longitude_list, hours):
