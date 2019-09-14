@@ -3,7 +3,7 @@ const request=require('request');
 const cheerio=require('cheerio');
  
  
-var url = 'https://www.fendi.com/au/store-locator?listJson=true&country-selectize=&fendiType=BOUTIQUE&service=&line=&xlat=6.4626999&xlng=68.10969999999998&ylat=35.513327&ylng=97.39535869999997&country=IN';
+var url = 'https://www.fendi.com/au/store-locator?listJson=true&country-selectize=&fendiType=BOUTIQUE&service=&line=&xlat=25.82&xlng=-124.38999999999999&ylat=49.38&ylng=-66.94&country=US';
 async function scrape(){
 
   return new Promise(async (resolve,reject)=>{
@@ -16,80 +16,57 @@ request(url,(err,res,html)=>{
         var items=[];
         
         var ref = JSON.parse(res.body);
-        var ref1 = ref[0];
         
-        
-        
-        var address_tmp = ref1.address.line1;
-        var address_tmp1 = address_tmp.split(',');
-        var address = address_tmp1[0];
-        var country_code = ref1.address.country.isocode;
-        var city = ref1.address.town;
-        var zip = ref1.address.postalCode;
-        var location_name= ref1.displayName;
-         
-        var phone = ref1.address.phone;
-        var hour_tmp = ref1.openingHours.weekDayOpeningList;
-        var latitude = ref1.geoPoint.latitude;
-        var longitude = ref1.geoPoint.longitude;
-        
-        var hour= " ";
-        var i ;
-       
-        var hour_tmp1= [];
         function mainhead(i)
 
         {
-            if(hour_tmp.length>i)
+            if(ref.length>i)
 
                 {
-                          var obj = hour_tmp[i];
-                            var hour1 = obj.weekDay;
-                            
-                            
-                            var hour2 = obj.openingHours;
-                            
-                            var hour3 = hour1.concat(hour2);
-                            
-                            
-                            hour_tmp1.push(hour3);
-                            
-                    
-                            mainhead(i+1);
+                              var obj = ref[i];
+                              var location_name = obj.displayName;
+                              var address = obj.address.line1;
+                              var city =obj.address.town;
+                              var state = '<MISSING>';
+                              var zip = obj.address.postalCode.trim();
+                              var phone = obj.address.phone.trim();
+                              var latitude = obj.geoPoint.latitude;
+                              var longitude = obj.geoPoint.longitude;
+                              var hour=  '<INACCESSIBLE>';
 
-                          }
-   
+                              items.push({
+                                locator_domain : 'https://www.fendi.com/',
+                                location_name : location_name,
+                                street_address : address,
+                                city:city,
+                                state:state,
+                                zip:zip,
+                                country_code: 'US',
+                                store_number:'<MISSING>',
+                                phone:phone,
+                                location_type:'fendi',
+                                latitude:latitude,
+                                longitude :longitude,
+                                hours_of_operation:hour
+                                
+                                });  
+          
+                      mainhead(i+1);
 
-                          else{
-                      
-                          resolve(items);
-                      
-                          }
-                   } 
+                    }
 
-               mainhead(0);
 
-            var hour = hour_tmp1.toString();
-       
-               items.push({
-                    locator_domain : 'https://www.fendi.com/',
-                    location_name : location_name,
-                    street_address : address,
-                    city:city,
-                    state:'<MISSING>',
-                    zip:zip,
-                    country_code: country_code,
-                    store_number:'<MISSING>',
-                    phone:phone,
-                    location_type:'fendi',
-                    latitude:latitude,
-                    longitude :longitude,
-                    hours_of_operation:hour
-                    
-                    });  
+                    else{
                 
-        
-        
+                    resolve(items);
+                
+                    }
+            } 
+
+          mainhead(0);
+
+                
+         
          
             }
     });
@@ -106,7 +83,7 @@ request(url,(err,res,html)=>{
   
       const data = await scrape();
       
-       
-       await Apify.pushData(data);
+   
+      await Apify.pushData(data);
     
     });

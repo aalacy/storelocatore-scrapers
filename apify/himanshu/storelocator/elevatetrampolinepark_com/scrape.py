@@ -29,7 +29,7 @@ def fetch_data():
         if location_soup.find('div',{"class":'textwidget'}) == None:
             continue
         location_address = list(location_soup.find('div',{"class":'textwidget'}).stripped_strings)
-        geo_location = location_soup.find("iframe")['src']
+        geo_location = location_soup.find("iframe",{"src":re.compile("/maps/")})['src']
         hours = list(location_soup.find_all('div',{"class":"textwidget"})[-1].stripped_strings)
         store = []
         store.append("https://elevatetrampolinepark.com")
@@ -47,7 +47,7 @@ def fetch_data():
         store.append("elevate trampoline park")
         store.append(geo_location.split("!3d")[1].split("!")[0])
         store.append(geo_location.split("!2d")[1].split("!")[0])
-        store.append(" ".join(hours))
+        store.append(" ".join(hours).replace("–",'-'))
         return_main_object.append(store)
     return return_main_object
 
