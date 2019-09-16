@@ -33,11 +33,16 @@ def fetch_data():
                 main_arry = target_list.find_all('div',{'class':'fusion-clearfix'})
                 addr = main_arry[1].find_all('p')[0].text.strip().split('\n')
                 
+                if main_arry[1].find_all('p')[0].find('a') != None:
+
+                    latitude =  main_arry[1].find_all('p')[0].find('a')['href'].split('@')[1].split(',')[0]
                 
-                                
-                latitude =  '<INACCESSIBLE>'
-                
-                longitude =   '<INACCESSIBLE>'
+                    longitude =   main_arry[1].find_all('p')[0].find('a')['href'].split('@')[1].split(',')[1]
+
+                else:
+
+                    latitude ="<MISSING>"
+                    longitude = "<MISSING>"
 
                 
                                 

@@ -25,11 +25,12 @@ def fetch_data():
     store_detail=[]
     return_main_object=[]
     k=soup.find_all("div",{'class':"half"})
-    
+    hours =[]
 
     for i in k:
         # print(i.a['href'])
         r = requests.get("https://dostoros.com"+i.a['href'])
+        # print("https://dostoros.com"+i.a['href'])
         soup1= BeautifulSoup(r.text,"lxml")
         k1=soup1.find_all("div",{"class":"address"})
         h2=soup1.find_all("div",{"class":"hours"})
@@ -39,7 +40,7 @@ def fetch_data():
             store_name.append(list(j.stripped_strings)[0])
            
         for j in h2:
-            hours = (" ".join(list(j.stripped_strings)))
+            hours.append(" ".join(list(j.stripped_strings)))
         for index,j in enumerate(k1):
             tem_var=[]
             st = list(j.stripped_strings)[1]
@@ -57,7 +58,7 @@ def fetch_data():
             tem_var.append("dostoros")
             tem_var.append("<MISSING>")
             tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
+            tem_var.append(hours[index])
             store_detail.append(tem_var)
             
 

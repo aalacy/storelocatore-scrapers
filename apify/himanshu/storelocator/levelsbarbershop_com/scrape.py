@@ -58,7 +58,7 @@ def fetch_data():
                 tem_var.append("<MISSING>")
                 store_detail.append(tem_var)
            else: 
-            store_name.append(target_list.text)
+            store_name.append(target_list.text.replace(", NYC","").replace(",NY",""))
 
     for target_list in k:
 
@@ -91,7 +91,7 @@ def fetch_data():
     for i in range(len(store_name)):
         store = list()
         store.append("https://www.levelsbarbershop.com")
-        store.append(store_name[i])
+        store.append(store_name[i].replace(", NYC","").replace(",NY","").replace(", NY",""))
         store.extend(store_detail[i])
         return_main_object.append(store) 
         
@@ -104,3 +104,5 @@ def scrape():
 
 
 scrape()
+
+

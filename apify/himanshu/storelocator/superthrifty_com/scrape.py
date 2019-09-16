@@ -19,6 +19,13 @@ def fetch_data():
     return_main_object=[]
     r = requests.get(base_url+"/wp-admin/admin-ajax.php?action=store_search&lat=56.130366&lng=-106.34677099999999&max_results=25&search_radius=2000&autoload=1").json()
     for loc in r:
+        if loc['url']:
+            r1=requests.get(base_url+loc['url'])
+            soup=BeautifulSoup(r1.text,'lxml')
+            zp=list(soup.find('h3',text=re.compile("Address")).parent.stripped_strings)
+            zip=zp[-1].strip()
+        else:
+            zip=loc['zip'].strip()
         name=loc['store'].replace('&#8217;','\'').strip()
         address=loc['address'].strip()
         city=loc['city'].strip()
@@ -26,12 +33,11 @@ def fetch_data():
         country=loc['country'].strip()
         if country=="Canada":
             country="CA"
-        zip=loc['zip'].strip()
         phone=loc['phone'].strip()
         lat=loc['lat'].strip()
         lng=loc['lng'].strip()
         cleanr = re.compile('<.*?>')
-        hour=re.sub(cleanr, '',loc['hours']).strip()
+        hour=re.sub(cleanr, ' ',loc['hours']).strip()
         storeno=loc['id'].strip()
         store=[]
         store.append(base_url)
