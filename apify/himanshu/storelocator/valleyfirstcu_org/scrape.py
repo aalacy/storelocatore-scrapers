@@ -44,7 +44,7 @@ def fetch_data():
             location_type = 'valleyfirstcu'
             latitude = '<MISSING>'
             longitude = '<MISSING>'
-            hours_of_operation = ''.join(val.find_all('p')[2].text.strip().replace('Hours:','').split('\n')).strip()
+            hours_of_operation = ''.join(val.find_all('p')[2].text.strip().replace('Hours:','').split('\n')).replace('	','').strip()
         
             store=[]
             store.append(locator_domain if locator_domain else '<MISSING>')

@@ -21,29 +21,30 @@ def fetch_data():
     r = requests.get(loacation_url, headers = header)
     soup = BeautifulSoup(r.text,"lxml")
     
-    d = soup.find("div",{"class": "row_locations"}).find_all('div',{'class':'location'})
-    
+    d = soup.find_all('div',{'class':'location'})
+
     for target_list in d:
-        gethref = target_list.find('a',{'class':'location_more'})['href']
-        k = requests.get(gethref, headers = header)
-        soup = BeautifulSoup(k.text,"lxml")
+
+
         locator_domain = base_url
-        location_name = soup.find('h1').text
-        street_address = soup.find('div',{'class':'location_address'}).text
-        v = soup.find('div',{'class':'location_city'}).text
-        g = v.strip().split(',')
-        city = g[0]        
-        state = g[1]
+        location_name = target_list.find('div',{'class':'location-title'}).text.strip()
+
+        ck  = list(target_list.find('div',{'class':'location_address'}).stripped_strings)
+
+        street_address = ck[0].strip()
+
+        city = ck[1].strip().split(',')[0].strip()
+        state = ck[1].strip().split(',')[1].strip()
+
         zip = '<MISSING>'
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = 'miniluxe'
         latitude =  '<MISSING>'
         longitude =  '<MISSING>'
-        phone = soup.find('div',{'class':'location_phone'}).find('a').text
-        j = list(soup.find('div',{'class':'single-location'}).find_all('div',{'class':'col-sm-6'})[1].stripped_strings)
-        j.pop(0)
-        hours_of_operation = ' '.join(j)
+        phone = soup.find('div',{'class':'location-phone'}).text.strip()
+
+        hours_of_operation = soup.find('div',{'class':'location-hours'}).text.strip()
         store=[]
         store.append(locator_domain if locator_domain else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
@@ -57,7 +58,7 @@ def fetch_data():
         store.append(location_type if location_type else '<MISSING>')
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
-        
+
         store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
         return_main_object.append(store)
     return return_main_object

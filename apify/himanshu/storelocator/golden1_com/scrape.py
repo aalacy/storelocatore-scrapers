@@ -24,9 +24,9 @@ def fetch_data():
     r = requests.post(location_url ,headers = header, data = data)
    
     soup = BeautifulSoup(r.text,"html.parser")
+
     for idx,v in enumerate(soup.find_all('marker')):
-        
-       
+
 
         latitude = v['lat']
         longitude = v['lng']
@@ -60,7 +60,7 @@ def fetch_data():
         store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
         
         
-        return_main_object.append(store)  
+        return_main_object.append(store)
        
 
     return return_main_object         

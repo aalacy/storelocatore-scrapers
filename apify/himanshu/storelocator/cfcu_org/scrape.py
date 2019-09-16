@@ -58,20 +58,21 @@ def fetch_data():
             
     
 
-        tem_var.append("https://www.cfcu.org")
-        tem_var.append(name)
-        tem_var.append(st)
-        tem_var.append(city)
-        tem_var.append(state)
-        tem_var.append(zip1)
-        tem_var.append("US")
-        tem_var.append("<MISSING>")
-        tem_var.append(phone)
-        tem_var.append("cfcu")
-        tem_var.append("<MISSING>")
-        tem_var.append("<MISSING>")
-        tem_var.append(hours)
-        return_main_object.append(tem_var)
+            tem_var.append("https://www.cfcu.org")
+            tem_var.append(name)
+            tem_var.append(st)
+            tem_var.append(city)
+            tem_var.append(state)
+            tem_var.append(zip1)
+            tem_var.append("US")
+            tem_var.append("<MISSING>")
+            tem_var.append(phone)
+            tem_var.append("cfcu")
+            tem_var.append("<MISSING>")
+            tem_var.append("<MISSING>")
+            tem_var.append(hours)
+            print(tem_var)
+            return_main_object.append(tem_var)
         
 
     return return_main_object
@@ -83,3 +84,5 @@ def scrape():
 
 
 scrape()
+
+

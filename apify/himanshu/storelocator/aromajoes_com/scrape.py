@@ -5,7 +5,7 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -41,7 +41,7 @@ def fetch_data():
                 store.append("aroma joe's")
                 store.append(store_data['latitude'])
                 store.append(store_data['longitute'])
-                store.append(hours if hours != "" else "<MISSING>")
+                store.append(hours.replace("–","-").replace("\xa0"," ") if hours != "" else "<MISSING>")
                 return_main_object.append(store)
     return return_main_object
 
