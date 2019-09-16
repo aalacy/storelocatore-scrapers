@@ -52,7 +52,7 @@ def fetch_data():
         output.append(base_url) # url
         output.append(validate(store[:2])) #location name
         output.append(store[2]) #address        
-        output.append('<MISSING>') #city
+        output.append(store[0]) #city
         output.append('<MISSING>') #state
         output.append('<MISSING>') #zipcode
         output.append('US') #country code
