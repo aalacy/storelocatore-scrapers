@@ -46,7 +46,7 @@ def fetch_data():
             lat = re.findall(r'[-+]?[0-9]*\.?[0-9]+', map_url)[-4]
             lon = re.findall(r'[-+]?[0-9]*\.?[0-9]+', map_url)[-3]
             country= "US"
-            hours_of_operation = location_type = MISSING
+            hours_of_operation = location_type = store_number = MISSING
             data.append([DOMAIN, location_name, street_address, city, state, zipcode, country, store_number, phone, location_type, lat, lon, hours_of_operation])
         except requests.exceptions.RequestException:
             pass
