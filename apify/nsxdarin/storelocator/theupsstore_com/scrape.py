@@ -45,6 +45,7 @@ def fetch_data():
         zc = ''
         city = ''
         add = ''
+        store2 = ''
         HFound = False
         NFound = False
         for line2 in lines:
@@ -81,11 +82,15 @@ def fetch_data():
             if 'Button--napMobile" href="tel:' in line2:
                 phone = line2.split('Button--napMobile" href="tel:')[1].split('"')[0]
             if 'id="store_id" name="StoreID" value="' in line2:
-                store = line2.split('id="store_id" name="StoreID" value="')[1].split('"')[0]      
+                store = line2.split('id="store_id" name="StoreID" value="')[1].split('"')[0]
+            if 'href="https://facebook.com/TheUPSStore' in line2:
+                store2 = line2.split('href="https://facebook.com/TheUPSStore')[1].split('"')[0]
         if hours == '':
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
+        if store == '':
+            store = store2
         if store == '':
             store = '<MISSING>'
         if add != '':
