@@ -86,6 +86,8 @@ def fetch_data():
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
+        if store == '':
+            store = '<MISSING>'
         if add != '':
             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
