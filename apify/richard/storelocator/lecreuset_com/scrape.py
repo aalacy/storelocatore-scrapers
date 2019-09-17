@@ -40,7 +40,6 @@ class Scraper(Scrape):
         stores.extend(json.loads(driver.find_element_by_css_selector("pre").text)['markers'])
 
         for store in stores:
-            print(store)
             # Store ID
             location_id = store['location_id']
 
