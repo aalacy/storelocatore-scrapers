@@ -92,6 +92,7 @@ def fetch_data():
             longitude[n],
             '<MISSING>'
         ])
+    driver.quit()
     return data
 
 def scrape():
