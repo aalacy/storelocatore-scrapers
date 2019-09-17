@@ -1,0 +1,4 @@
+requests 2.22.0
+bs4 0.0.1 py3.7
+re
+csv
