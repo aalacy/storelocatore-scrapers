@@ -3,6 +3,9 @@ import json
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 URL = "https://www.lecreuset.com"
@@ -38,6 +41,10 @@ class Scraper(Scrape):
         location_url = "https://www.lecreuset.com/ustorelocator/location/searchJson/"
         driver.get(location_url)
         stores.extend(json.loads(driver.find_element_by_css_selector("pre").text)['markers'])
+
+        # Wait until element appears - 10 secs max
+        wait = WebDriverWait(driver, 10)
+        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "pre")))
 
         for store in stores:
             # Store ID
