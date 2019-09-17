@@ -77,11 +77,14 @@ class Scraper(Scrape):
             except:
                 hour = '<MISSING>'
 
+            long_lat = driver.find_element_by_css_selector('a.button.expand.getDirections').get_attribute('href')
+            long_lat = re.search('(\-?\d+(\.\d+)?),\s*(\-?\d+(\.\d+)?)', long_lat).group().split(',')
+
             # Lat
-            lat = '<MISSING>'
+            lat = long_lat[0]
 
             # Lon
-            lon = '<MISSING>'
+            lon = long_lat[1]
 
             # Country
             country = 'US' if 'united-states' in store else 'CA'
