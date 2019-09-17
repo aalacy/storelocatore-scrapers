@@ -5,7 +5,7 @@ import requests
 from lxml import etree
 import json
 
-base_url = 'https://www.redapplemarkets.com'
+base_url = 'http://www.samsitalian.com'
 
 def validate(item):    
     if item == None:
@@ -41,28 +41,30 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "https://www.redapplemarkets.com/locations"
+    url = "http://www.samsitalian.com/locations/"
     session = requests.Session()
-    source = session.get(url).text
+    source = session.get(url).text    
     response = etree.HTML(source)
-    store_list = response.xpath('//table[@class="table table-bordered"]//tbody//tr')
-    for store in store_list:
-        store = eliminate_space(store.xpath('.//td//text()'))
-        output = []
-        output.append(base_url) # url
-        output.append(validate(store[:2])) #location name
-        output.append(store[2]) #address        
-        output.append(store[0]) #city
-        output.append('<MISSING>') #state
-        output.append('<MISSING>') #zipcode
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(store[3]) #phone
-        output.append("Red Apple") #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
-        output.append("<MISSING>") #opening hours
-        output_list.append(output)
+    store_list = response.xpath('//div[@class="et_pb_section et_pb_section_1 et_pb_with_background et_section_regular"]//div[contains(@class, "et_pb_css_mix_blend_mode_passthrough")]')
+    for store in store_list[1:]:
+        store = eliminate_space(store.xpath('.//text()'))
+        if len(store) > 3:
+            output = []
+            output.append(base_url) # url
+            output.append(store[0]) #location name
+            address = store[1].split(',')
+            output.append(address[0]) #address        
+            output.append(address[1]) #city
+            output.append(address[2]) #state
+            output.append('<MISSING>') #zipcode
+            output.append('US') #country code
+            output.append("<MISSING>") #store_number
+            output.append(store[2].replace('Phone #:', '')) #phone
+            output.append("Sam's Italian Foods") #location type
+            output.append("<MISSING>") #latitude
+            output.append("<MISSING>") #longitude
+            output.append(get_value(store[4:])) #opening hours
+            output_list.append(output)
     return output_list
 
 def scrape():

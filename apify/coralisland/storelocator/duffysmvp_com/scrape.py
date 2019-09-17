@@ -5,7 +5,9 @@ import requests
 from lxml import etree
 import json
 
-base_url = 'https://www.redapplemarkets.com'
+
+base_url = 'https://www.duffysmvp.com'
+
 
 def validate(item):    
     if item == None:
@@ -41,27 +43,34 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    url = "https://www.redapplemarkets.com/locations"
+    url = "https://api.duffysmvp.com/api/app/nearByLocations"
     session = requests.Session()
-    source = session.get(url).text
-    response = etree.HTML(source)
-    store_list = response.xpath('//table[@class="table table-bordered"]//tbody//tr')
+    headers = {
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'
+    }
+    payload = {
+        "latitude": "26.6289791",
+        "longitude": "-80.0724384"
+    }
+    request = session.post(url, data=json.dumps(payload), headers=headers)
+    store_list = json.loads(request.text)
     for store in store_list:
-        store = eliminate_space(store.xpath('.//td//text()'))
         output = []
         output.append(base_url) # url
-        output.append(validate(store[:2])) #location name
-        output.append(store[2]) #address        
-        output.append(store[0]) #city
-        output.append('<MISSING>') #state
-        output.append('<MISSING>') #zipcode
-        output.append('US') #country code
-        output.append("<MISSING>") #store_number
-        output.append(store[3]) #phone
-        output.append("Red Apple") #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
-        output.append("<MISSING>") #opening hours
+        output.append(get_value(store['name'])) #location name
+        output.append(get_value(store['address']['address1'])) #address
+        output.append(get_value(store['address']['city'])) #city
+        output.append(get_value(store['address']['stateProvince'])) #state
+        output.append(get_value(store['address']['postalCode'])) #zipcode
+        output.append(get_value(store['address']['country'])) #country code
+        output.append('<MISSING>') #store_number
+        output.append(get_value(store['address']['phone'])) #phone
+        output.append("Duffy's Sports Grill") #location type
+        output.append(get_value(store['latitude'])) #latitude
+        output.append(get_value(store['longitude'])) #longitude
+        output.append(get_value(store['hoursOfOperation'])) #opening hours
         output_list.append(output)
     return output_list
 
