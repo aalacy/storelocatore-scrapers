@@ -90,8 +90,9 @@ request(url,  function(err,res,html){
                                   var zip = city_temp1[3];
                                 }
                 
-                                    var hour_temp =   $('.lm-business-detail__store-info').find('.dashin__business-detail-hours').text().trim();
-                                    var hour = hour_temp.replace(/ +(?= )/g, "").replace(/\n+/g, "");
+                                    var hour_temp =   $('.lm-business-detail__store-info').find('.lm-col-3').eq(1).text().trim();
+                                    var hour = hour_temp.replace(/ +(?= )/g, "").replace(/\n+/g, "").replace('     ','').trim();
+                                    
                                    
                                     var phone =  $('.lm-business-detail__store-info').find('.lm-col-3').find('.lm-list-item__detail-item').find('span').find('a').text().trim();
                                     var location_name_temp = $('.lm-breadcrumb').find('.lm-breadcrumb-list-item:last-child').find('a').find('span').text().trim();
@@ -190,5 +191,6 @@ request(url,  function(err,res,html){
 
 Apify.main(async () => {
     const data = await scrape();
+   
     await Apify.pushData(data);
 });
