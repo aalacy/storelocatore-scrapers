@@ -10,7 +10,8 @@ from selenium.webdriver.common.by import By
 COMPANY_URL = "https://www.phoenixrehab.com"
 CHROME_DRIVER_PATH = "chromedriver"
 
-
+# ZM See if you can abstract out methods like this one 
+# in a base class to reuse them
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
@@ -62,6 +63,12 @@ def fetch_data():
     driver.get(
         "https://stockist.co/api/v1/u4291/locations/all.js?callback=_stockistAllStoresCallback"
     )
+
+    # ZM Putting your crawler on sleep to wait for page to return is a 
+    # nondeterministic operation. Some sites may take longer than others 
+    # to load. I would advise checking for something on the requested
+    # website that you expect to find there. Some examples of that would
+    # be site name, page title, login link, etc.
     time.sleep(1)
 
     listings = json.loads(
