@@ -78,19 +78,17 @@ class Scraper(Scrape):
             except:
                 hour = '<MISSING>'
 
-            print(hour)
-
             # Lat
             lat = (
                 store["acf"]["latitude"]
-                if "latitude" in store["acf"].keys()
+                if "latitude" in store["acf"].keys() and store["acf"]["latitude"] != ''
                 else "<MISSING>"
             )
 
             # Lon
             lon = (
                 store["acf"]["longitude"]
-                if "longitude" in store["acf"].keys()
+                if "longitude" in store["acf"].keys() and store["acf"]["longitude"] != ''
                 else "<MISSING>"
             )
 
@@ -99,7 +97,7 @@ class Scraper(Scrape):
                 store["acf"]["phone_number"]
                 if "phone_number" in store["acf"].keys() and "ATM" not in location_title and "ITM" not in location_title
                 else "<MISSING>"
-            )
+            ) if store["acf"]["phone_number"] != '' else '<MISSING>'
 
             # Country
             country = "US"
