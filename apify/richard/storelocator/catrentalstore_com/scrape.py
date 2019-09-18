@@ -37,7 +37,7 @@ class Scraper(Scrape):
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         # Fetch stores from location menu
-        for zip_search in sgzip.for_radius(100):
+        for zip_search in sgzip.for_radius(50):
             location_url = f"https://cat-ms.esri.com/dls/cat/locations/en?f=json&forStorage=false&distanceUnit=mi&searchType=address&searchValue={zip_search}&maxResults=50&productDivId=2%2C1%2C6&appId=GdeKAczdmNrGwdPo"
             driver.get(location_url)
             dealers.extend(json.loads(driver.find_element_by_css_selector("pre").text))
