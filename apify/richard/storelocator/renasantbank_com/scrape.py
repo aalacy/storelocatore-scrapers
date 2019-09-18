@@ -73,11 +73,12 @@ class Scraper(Scrape):
             zip_code = city_state_info.split(",")[-1].strip()[2:].strip()
 
             # Hours
-            hour = (
-                store["acf"]["itm_hours"]
-                if "itm_hours" in store["acf"].keys()
-                else "<MISSING>"
-            )
+            try:
+                hour = driver.find_elements_by_css_selector('div.info-info')[1].get_attribute('textContent')
+            except:
+                hour = '<MISSING>'
+
+            print(hour)
 
             # Lat
             lat = (
@@ -96,7 +97,7 @@ class Scraper(Scrape):
             # Phone
             phone = (
                 store["acf"]["phone_number"]
-                if "phone_number" in store["acf"].keys() and "ATM" not in location_title
+                if "phone_number" in store["acf"].keys() and "ATM" not in location_title and "ITM" not in location_title
                 else "<MISSING>"
             )
 
@@ -117,17 +118,17 @@ class Scraper(Scrape):
             countries.append(country)
 
         for (
-            locations_title,
-            street_address,
-            city,
-            state,
-            zipcode,
-            phone_number,
-            latitude,
-            longitude,
-            hour,
-            location_id,
-            country,
+                locations_title,
+                street_address,
+                city,
+                state,
+                zipcode,
+                phone_number,
+                latitude,
+                longitude,
+                hour,
+                location_id,
+                country,
         ) in zip(
             locations_titles,
             street_addresses,
