@@ -35,7 +35,11 @@ def fetch_data():
             if len(i['zip'])==4:
                 data['zip'].append('0'+i['zip'])
             else:
-                data['zip'].append(i['zip'])
+                if r'&#39;' in i['zip']:
+                    data['zip'].append(i['zip'].replace(r'&#39;',''))
+                else:
+                    data['zip'].append(i['zip'])      
+             
             data['country_code'].append(i['countryCode'])
             if len(i['phone'])>17:
                 data['phone'].append(i['phone'].split('Ext')[0])
