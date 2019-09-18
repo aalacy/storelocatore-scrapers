@@ -89,9 +89,15 @@ def fetch_data():
         output.append('US') #country code
         output.append("<MISSING>") #store_number
         output.append(detail[-2]) #phone
-        output.append("") #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
+        output.append("Fast Eddie's Billiards | Sports Tavern & Social Club") #location type
+        geo_loc = validate(store.xpath('.//div[@class="col span_12  left"]//a[contains(@class, "nectar-button")]/@href')[0]).split('/@')
+        if len(geo_loc) > 1:
+            geo_loc = geo_loc[1].split(',17z')[0].split(',')
+            output.append(geo_loc[0]) #latitude
+            output.append(geo_loc[1]) #longitude
+        else:
+            output.append('<INACCESSIBLE>') #latitude
+            output.append('<INACCESSIBLE>') #longitude
         store_hours = validate(detail[:-2]).replace('18 years old and up, ', '').replace('|', '')
         output.append(get_value(store_hours)) #opening hours
         output_list.append(output)
