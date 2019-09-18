@@ -2,7 +2,7 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException
+import json
 
 
 
@@ -27,55 +27,38 @@ def write_output(data):
 
 
 
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
-
-
 def fetch_data():
     locator_domain = 'https://www.massageheights.com/'
-    ext = 'locations/'
+    ext = 'locations/?CallAjax=GetLocations'
 
     driver = get_driver()
     driver.get(locator_domain + ext)
-    main = driver.find_element_by_css_selector('div.results-list.auto')
-    locs = main.find_elements_by_css_selector('a.site-link.path')
-    link_list = []
-    for loc in locs:
-        link_list.append(loc.get_attribute('href'))
 
+    arr = driver.find_element_by_css_selector('body').text
+    json_data = json.loads(arr)
     all_store_data = []
-    for i, link in enumerate(link_list):
-        driver.get(link)
-        driver.implicitly_wait(10)
 
-        try:
-            footer = driver.find_element_by_css_selector('section#LocalFooter')
-        except NoSuchElementException:
-            print('no loc')
-            continue
+    for a in json_data:
+        location_name = a['FranchiseLocationName']
+        street_address = a['Address1']
+        street_address += ' ' + a['Address2']
+        city = a['City']
+        state = a['State']
+        zip_code = a['ZipCode']
+        phone_number = a['Phone']
+        lat = a['Latitude']
+        longit = a['Longitude']
+        location_hours = a['LocationHours'][1:-1].split('][')
 
-        location_name = driver.find_element_by_css_selector('div.hero-bottom').find_element_by_css_selector(
-            'strong').text
-
-        addy = driver.find_element_by_css_selector('div.hero-address').text.replace('Address', '')
-
-        addy_list = addy.split('\n')[1:3]
-
-        street_address = addy_list[0]
-        city, state, zip_code = addy_ext(addy_list[1])
-
-
-        lat = footer.find_element_by_xpath('//meta[@itemprop="latitude"]').get_attribute('content')
-        longit = footer.find_element_by_xpath('//meta[@itemprop="longitude"]').get_attribute('content')
-
-        phone_number = driver.find_element_by_css_selector('a.phone').get_attribute('href').replace('tel:', '')
-
-        hours = driver.find_element_by_css_selector('div.hero-hours').text.replace('Hours', '').replace('\n', ' ')
+        hours = ''
+        for a in location_hours:
+            temp = '{' + a + '}'
+            hours_json = json.loads(temp)
+            day = hours_json['Interval']
+            open_start = hours_json['OpenTime']
+            close_start = hours_json['CloseTime']
+            day_info = day + ' ' + open_start + ' - ' + close_start
+            hours += day_info + ' '
 
         country_code = 'US'
         store_number = '<MISSING>'

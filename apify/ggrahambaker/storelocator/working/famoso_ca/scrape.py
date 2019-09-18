@@ -2,7 +2,7 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+from selenium.common.exceptions import NoSuchElementException
 
 def get_driver():
     options = Options()
@@ -45,22 +45,23 @@ def fetch_data():
         main = driver.find_element_by_css_selector('ul.locations')
         links = main.find_elements_by_css_selector('a.highlighted')
         for link in links:
-            print(link.get_attribute('href'))
             link_list.append(link.get_attribute('href'))
 
-    for link in link_list:
-        print(link)
+    all_store_data = []
+    for i, link in enumerate(link_list):
         driver.get(link)
         driver.implicitly_wait(30)
 
-        coords = driver.find_element_by_id('map_marker')
-        lat = coords.get_attribute('data-lat')
-        longit = coords.get_attribute('data-lng')
-        print(lat, longit)
+        try:
+            coords = driver.find_element_by_id('map_marker')
+            lat = coords.get_attribute('data-lat')
+            longit = coords.get_attribute('data-lng')
+        except NoSuchElementException:
+            lat = '<MISSING>'
+            longit = '<MISSING>'
 
         phone_number = driver.find_element_by_css_selector('div.location-contacts.phone').find_element_by_css_selector(
             'a').text
-        print(phone_number)
 
         address = driver.find_element_by_css_selector('div.location-contacts.location').text.replace('Get directions\n',
                                                                                                      '').replace(
@@ -68,18 +69,53 @@ def fetch_data():
 
         addy = address.split('\n')
         street_address = addy[0]
-        city_prov = addy[1].split(' ')
-        city = city_prov[0]
-        state = city_prov[1]
-        zip_code = '<MISSING>'
-        print(city, state, street_address)
+        zip_code = ''
+        if 'West Edmonton Mall' in street_address:
+            street_address = addy[1]
+            city_prov = addy[2].split(' ')
+            city = city_prov[0]
+            state = city_prov[1]
+        elif 'Suite 125,' in street_address:
+            street_address += ' ' + addy[1]
+            city_prov = addy[2].split(' ')
+            city = city_prov[0]
+            state = city_prov[1]
+        elif 'Airport' in street_address:
+            street_address += ' ' + addy[1]
+            city_prov = addy[2].split(' ')
+
+            city = city_prov[0] + ' ' + city_prov[1]
+            state = city_prov[2]
+
+        elif 'Unit 105 - 3030' in street_address:
+            city = addy[1]
+            zip_state = addy[2].split(' ')
+            zip_code = zip_state[0] + ' ' + zip_state[1]
+            state = zip_state[2]
+
+        else:
+            city_prov = addy[1].split(' ')
+            if len(city_prov) == 2:
+                city = city_prov[0]
+                state = city_prov[1]
+            elif len(city_prov) == 3:
+                city = city_prov[0] + ' ' + city_prov[1]
+                state = city_prov[2]
+
+            else:
+                city = addy[1]
+                state = addy[2]
+
+        if zip_code == '':
+            zip_code = '<MISSING>'
+
+
 
         hours = driver.find_element_by_css_selector('ul.hours-list').text.replace('\n', ' ')
-        print(hours)
 
         start_idx = link.find('s/')
         location_name = link[start_idx + 2:-1].replace('-', ' ')
-        print(location_name)
+
 
         country_code = 'CA'
         store_number = '<MISSING>'
@@ -87,6 +123,7 @@ def fetch_data():
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
+
         all_store_data.append(store_data)
 
     driver.quit()
