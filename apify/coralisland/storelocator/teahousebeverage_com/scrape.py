@@ -91,10 +91,12 @@ def fetch_data():
         output.append(get_value(store['lat'])) #latitude
         output.append(get_value(store['lng'])) #longitude
         if len(detail) == 1:
-            output.append('<MISSING>') #opening hours
+            if 'coming' not in validate(detail).lower():
+                output.append('<MISSING>') #opening hours          
+                output_list.append(output)
         else:
             output.append(get_value(detail[1:]).replace(validate(store['address']), '')) #opening hours
-        output_list.append(output)
+            output_list.append(output)
     return output_list
 
 def scrape():
