@@ -32,9 +32,15 @@ def fetch_data():
             data['location_name'].append(i['name'])
             data['street_address'].append(i['address'])
             data['city'].append(i['cityLangName'])
-            data['zip'].append(i['zip'])
+            if len(i['zip'])==4:
+                data['zip'].append('0'+i['zip'])
+            else:
+                data['zip'].append(i['zip'])
             data['country_code'].append(i['countryCode'])
-            data['phone'].append(i['phone'])
+            if len(i['phone'])>17:
+                data['phone'].append(i['phone'].split('Ext')[0])
+            else:
+                data['phone'].append(i['phone'])
             data['hours_of_operation'].append(i['openingTimes'][0]['formatted'])
             data['state'].append('<MISSING>')
             data['store_number'].append(i['storeId'])
