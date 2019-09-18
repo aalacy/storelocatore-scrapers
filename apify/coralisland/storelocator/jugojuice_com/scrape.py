@@ -70,8 +70,9 @@ def fetch_data():
             output.append("<MISSING>") #store_number
             output.append(validate(store.xpath('.//span[@itemprop="telephone"]//text()'))) #phone
             output.append("Jugo Juice") #location type
-            output.append("<MISSING>") #latitude
-            output.append("<MISSING>") #longitude
+            geo_loc = validate(store.xpath('.//img/@src')).split('center=')[1].split('&')[0].split(',')
+            output.append(get_value(geo_loc[0])) #latitude
+            output.append(get_value(geo_loc[1])) #longitude
             store_hours = validate(eliminate_space(store.xpath('.//div[@class="hours"]//text()'))).replace('Hours', '')
             output.append(get_value(store_hours)) #opening hours
             output_list.append(output)        
