@@ -3,6 +3,14 @@ from time import sleep
 import pandas as pd
 import re
 
+from selenium.webdriver.chrome.options import Options
+options = Options()
+options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+#driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe', options=options)
+driver = webdriver.Chrome("chromedriver", options=options)
+
 
 def write_output(data):
     df=pd.DataFrame(data)
@@ -11,7 +19,6 @@ def write_output(data):
 def fetch_data():
     data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[]}
     
-    driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe')
     driver.get('https://www.sweetfactory.com/locations')
     
     location_data=[i.text for i in driver.find_elements_by_xpath('//p[@style="white-space:pre-wrap;"]')]    
