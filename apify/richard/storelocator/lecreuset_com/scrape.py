@@ -53,9 +53,6 @@ class Scraper(Scrape):
             # Name
             location_title = store['title']
 
-            # Street Address
-            street_address = store['address']
-
             try:
                 # City
                 city = store['address_display'].split('\n')[1].strip().split(',')[0].strip()
@@ -75,6 +72,9 @@ class Scraper(Scrape):
 
                 # Zip
                 zip_code = store['address_display'].split(' ')[-1]
+
+            # Street Address
+            street_address = store['address'].replace(city, '').replace(state, '').replace(zip_code, '').strip()[:-1].strip()
 
             # Hours
             hour = store['store_hours']
