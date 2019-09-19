@@ -94,7 +94,7 @@ class Scraper(Scrape):
                 )
 
                 # Hours
-                hour = store["hours"] if store["hours"] != "null" else "<MISSING>"
+                hour = store["hoursMap"] if store["hoursMap"] else "<MISSING>"
 
                 # Lat
                 lat = store["lat"]
