@@ -27,6 +27,9 @@ def fetch_data():
     return_main_object = []
     for i in range(len(data)):
         store_data = data[i]
+        filters = store_data["filters"]
+        if "Convenience Store" not in filters:
+            continue
         store = []
         store.append("https://www.townpump.com")
         store.append(store_data['name'])

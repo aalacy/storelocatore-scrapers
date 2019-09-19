@@ -52,7 +52,7 @@ def fetch_data():
         hours_of_op = stores[i]['hours']
         hours_of_op = parse_hours(hours_of_op)
         data.append([
-            'https://www.breauxmart.com/',
+            'https://bc.pizza/',
             location_name,
             street_address,
             city,

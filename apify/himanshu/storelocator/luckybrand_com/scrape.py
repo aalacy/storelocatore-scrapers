@@ -16,8 +16,8 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.luckybrand.com"
-    headers={"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36","Authorization": "R8-Gateway App=shoplocal, key=luckybrand, Type=SameOrigin","Geo-Position": "40.7876;-74.06","X-Device-Id": "4ca26032-fc4d-b686-d862-d1c5303512e7","X-Domain-Id": "luckybrand"}
-    r = requests.get("https://luckybrand.radius8.com/api/v1/streams/stores?lat=40.7876&lng=-74.06&radius=1000&units=MI&limit=10000&_ts=1563881553972",headers=headers).json()
+    headers={"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36","Authorization": "R8-Gateway App=shoplocal, key=luckybrand, Type=SameOrigin","Geo-Position": "30.7876;-116.06","X-Device-Id": "4ca26032-fc4d-b686-d862-d1c5303512e7","X-Domain-Id": "luckybrand"}
+    r = requests.get("https://luckybrand.radius8.com/api/v1/streams/stores?lat=30.7876&lng=-116.06&radius=10000&units=MI&limit=10000&_ts=1563881553972",headers=headers).json()
     return_main_object = []
     for val in r['results']:
         address=val['address']['address1']
@@ -31,7 +31,10 @@ def fetch_data():
             state="<MISSING>"
         zip=val['address']['postal_code']
         if "contact_info" in val:
-            phone=val['contact_info']['phone']
+            if "phone" in val['contact_info']:
+                phone=val['contact_info']['phone']
+            else:
+                phone="<MISSING>"
         else:
             phone="<MISSING>"
         country=val['address']['country']

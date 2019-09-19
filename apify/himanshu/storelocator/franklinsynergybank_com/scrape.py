@@ -51,7 +51,7 @@ def fetch_data():
                 tem_var.append("franklinsynergybank")
                 tem_var.append("<MISSING>")
                 tem_var.append("<MISSING>")
-                tem_var.append("<MISSING>")
+                tem_var.append(hours)
                 store_detail.append(tem_var)
 
    
@@ -72,3 +72,5 @@ def scrape():
 
 
 scrape()
+
+

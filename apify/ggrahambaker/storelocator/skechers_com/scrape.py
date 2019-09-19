@@ -57,11 +57,14 @@ def fetch_data():
     for link in link_list:
         driver.get(link)
         driver.implicitly_wait(10)
-        
-        print(link)
+
         element = driver.find_element_by_css_selector('a.city_link')
         driver.execute_script("arguments[0].click();", element)
         driver.implicitly_wait(10)
+
+        if 'Coming Soon' in driver.find_element_by_css_selector('div#storeinformation').text:
+            continue
+
         xml = driver.find_element_by_css_selector('xml').get_attribute('innerHTML')
 
         xml_tree = BeautifulSoup(xml, features='lxml')

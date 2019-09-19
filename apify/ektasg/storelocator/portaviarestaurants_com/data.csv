@@ -1,0 +1,25 @@
+"locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
+"https://portaviarestaurants.com/","Beverly Hills","424 N Canon Drive","Beverly Hills","CA","90210","US","<MISSING>","(310) 274-6534","<MISSING>","<MISSING>","<MISSING>","Hours
+Monday-Saturday
+breakfast: 7:30a – 11:30a
+lunch: 11:30a – 4:30p
+dinner: 4:30p – 10:00p
+Sunday 
+brunch: 9:00a – 3:00p
+lunch: 3:00p – 4:30p
+dinner: 4:30p – 9:00p"
+"https://portaviarestaurants.com/","Pacific Palisades","1063 N Swarthmore Avenue","Pacific Palisades","CA","90272","US","<MISSING>","(310) 499-2989","<MISSING>","<MISSING>","<MISSING>","Hours
+Monday
+8:00a – 9:30p
+Tuesday
+8:00a – 10:00p
+Wednesday
+8:00a – 10:00p
+Thursday
+8:00a – 10:00p
+Friday
+8:00a – 11:00p
+Saturday
+9:00a – 11:00p
+Sunday
+9:00a – 9:30p"

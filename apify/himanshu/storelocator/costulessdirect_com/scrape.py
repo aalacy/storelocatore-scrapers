@@ -31,6 +31,21 @@ def fetch_data():
     store_detail=[]
     return_main_object=[]
     hours =[]
+    r1 = requests.post(base_url,headers=headers)
+    soup2= BeautifulSoup(r.text,"lxml")
+    script = soup2.find_all("script",{"type":"text/javascript"})
+    # for j in script:
+    #     if "var marcadores" in j.text:
+    #         con = j.text.split("var marcadores = [")[1].split("//end marcadores")[0].replace("];",'').strip()[:-1]
+          
+    #         print(con)
+            # for index,j in enumerate(con):
+            #     print(j)
+            # for j in con:
+            #     for p in j.split("contenido:"):
+    #                 print(p)
+                # for j in con:
+                #     print(j)
     k= soup.find_all("div",{"class":"main_content"})
 
 
@@ -83,8 +98,8 @@ def fetch_data():
         tem_var.append("<MISSING>")
         tem_var.append(phone.replace("Mountain/San Antonio. In the Superior supermarket shopping center","909-218-8631"))
         tem_var.append("costulessdirect")
-        tem_var.append("<MISSING>")
-        tem_var.append("<MISSING>")
+        tem_var.append("<INACCESSIBLE>")
+        tem_var.append("<INACCESSIBLE>")
         tem_var.append(hours)
         return_main_object.append(tem_var)
    

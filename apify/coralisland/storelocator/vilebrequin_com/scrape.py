@@ -41,6 +41,15 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def check_duplicated(arr_list, address):
+    arr_list = arr_list.split(' ')[1:]
+    if len(arr_list) == 1:
+        return False
+    for arr in arr_list:
+        if arr.lower() in address.lower():
+            return True
+    return False
+
 def fetch_data():
     output_list = []
     url = "https://www.vilebrequin.com/eu/en/store-locator"
@@ -52,7 +61,12 @@ def fetch_data():
         if get_value(store['countryCode']) == 'US':
             output.append(base_url) # url
             output.append(get_value(store['name'])) #location name
-            output.append(get_value(store['address1'] + ' ' + store['address2'])) #address
+            street = ''
+            if 'outlet' not in store['name'].lower() and ' at ' not in store['address1'].lower() and check_duplicated(store['name'], store['address1']) == False:
+                street = get_value(store['address1'] + ' ' + store['address2'])
+            else:
+                street = get_value(store['address2'])
+            output.append(street) #address
             output.append(get_value(store['city'])) #city
             output.append(get_value(store['stateCode'])) #state
             output.append(get_value(store['postalCode'])) #zipcode

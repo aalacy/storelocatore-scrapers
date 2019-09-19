@@ -59,8 +59,8 @@ def fetch_data():
         store = json.loads(data)
         output = []
         output.append(base_url) # url
-        output.append(get_value(store['name'])) #location name
-        address = store['address']['streetAddress'].replace('u00E9', 'e').split(',')
+        output.append(get_value(store['name'].replace('u00E9', 'e').replace('u00C9', 'E').replace('u0026', '&'))) #location name
+        address = store['address']['streetAddress'].replace('u00E9', 'e').replace('u00C9', 'E').replace('u0026', '&').split(',')
         output.append(get_value(address[:-2])) #address
         output.append(get_value(address[-2])) #city
         output.append(get_value(store['address']['addressRegion'])) #state

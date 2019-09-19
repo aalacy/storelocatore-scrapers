@@ -29,12 +29,14 @@ def fetch_data():
         store.append(store_data['state'] if "state" in store_data else "<MISSING>")
         store.append(store_data['zip'])
         store.append(store_data["countryCode"])
+        if store[-1] not in ("US","CA"):
+            continue
         store.append(store_data["id"])
         store.append(store_data["phone"])
         store.append("charles tyrwhitt")
         store.append(store_data['yextDisplayLat'])
         store.append(store_data['yextDisplayLng'])
-        days = {"1": "Monday","2":"Tuesday","3":"Wednesday","4":"Thursday","5":"Friday","6":"Saturday","7":"Sunday"}
+        days = {"2": "Monday","3":"Tuesday","4":"Wednesday","5":"Thursday","6":"Friday","7":"Saturday","1":"Sunday"}
         store_hours = store_data["hours"].split(",")
         if store_hours == [""]:
             store_hours = ""

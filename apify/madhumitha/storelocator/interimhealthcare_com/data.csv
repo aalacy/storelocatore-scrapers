@@ -1,0 +1,11 @@
+locator_domain,location_name,street_address,city,state,zip,country_code,store_number,phone,location_type,latitude,longitude,hours_of_operation
+https://www.interimhealthcare.com,Temple,6428 South General Bruce Dr. Suite A,Temple,TX,76502,US,<MISSING>,(254) 771-4131,<MISSING>,31.072112,-97.423227,<MISSING>
+https://www.interimhealthcare.com,Lancaster,"2682 N Columbus St., Suite A",Lancaster,OH,43130,US,<MISSING>,(740) 653-5990,<MISSING>,39.744463,-82.641198,<MISSING>
+https://www.interimhealthcare.com,Raleigh,6310 Chapel Hill Rd. Suite 280,Raleigh,NC,27607,US,<MISSING>,(919) 420-0336,<MISSING>,35.7898264,-78.7318853,<MISSING>
+https://www.interimhealthcare.com,Gainesville,"3760 NW 83rd Street, Suite 2",Gainesville,FL,32606,US,<MISSING>,(352) 378-0333,<MISSING>,29.687607,-82.4314969,<MISSING>
+https://www.interimhealthcare.com,Bryan,"02731 State Route 15, Suite A",Bryan,OH,43506,US,<MISSING>,(419) 519-3106,<MISSING>,41.4560996,-84.5508398,<MISSING>
+https://www.interimhealthcare.com,Grass Valley,406 E. Main St. Suite A,Valley,CA,95945-6534,US,<MISSING>,(530) 272-0300,<MISSING>,39.221536,-121.054669,<MISSING>
+https://www.interimhealthcare.com,Denver,"333 West Hampden Ave., Suite 925",Englewood,CO,80110,US,<MISSING>,(303) 789-4686,<MISSING>,39.6534586,-104.9924216,<MISSING>
+https://www.interimhealthcare.com,Yuba City,508 Forbes Ave.  Suite B,City,CA,95991,US,<MISSING>,(530) 673-0300,<MISSING>,39.137404,-121.617339,<MISSING>
+https://www.interimhealthcare.com,Stockton,5250 Claremont Ave. Suite 121,Stockton,CA,95207,US,<MISSING>,(209) 472-6040,<MISSING>,37.998812,-121.309478,<MISSING>
+https://www.interimhealthcare.com,Smithtown,300 W Main St,Smithtown,NY,11787,US,<MISSING>,(631) 689-8920,<MISSING>,40.857122,-73.206591,<MISSING>

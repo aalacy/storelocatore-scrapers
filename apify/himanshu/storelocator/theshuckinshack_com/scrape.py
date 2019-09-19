@@ -5,7 +5,7 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -48,7 +48,7 @@ def fetch_data():
             store.append("shucking' shack")
             store.append(geo_location.split("/@")[1].split(",")[0] if "/@" in geo_location else "<MISSING>")
             store.append(geo_location.split("/@")[1].split(",")[1] if "/@" in geo_location else "<MISSING>")
-            store.append(hours if hours != "" else "<MISSING>")
+            store.append(hours.replace("Â"," ") if hours != "" else "<MISSING>")
             return_main_object.append(store)
     return return_main_object
 

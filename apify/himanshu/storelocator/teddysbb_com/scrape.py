@@ -47,7 +47,6 @@ def fetch_data():
         store.append(geo_location.split("/@")[1].split(",")[0])
         store.append(geo_location.split("/@")[1].split(",")[1])
         store.append(" ".join(location_details[4:]).replace("–","-").replace("\xa0",""))
-        print(store[-1])
         return_main_object.append(store)
     return return_main_object
 
