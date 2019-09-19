@@ -60,22 +60,29 @@ def fetch_data():
                 timing.append(tim.strip())
 
             ad = div.find_element_by_class_name("Store-address").text
-            ad=ad.split(",")
+            #ad=ad.split(",")
             st=""
             c=""
             s=""
             z=""
             if"Canada" in url:
+                ad=ad.strip()
+
+                e = re.findall(r'( [ABCEGHJ-NPRSTVXY][0-9][ABCEGHJ-NPRSTV-Z] [0-9][ABCEGHJ-NPRSTV-Z][0-9])',ad)
+                if e!= []:
+                    ad = ad.replace(e[0], "")
+                    z+= e[0].strip(" ").strip(",")
+
+                e = re.findall(r'( [A-Z]{2},)', ad)
+                if e != []:
+                    ad = ad.replace(e[0], "")
+                    s += e[0].strip(" ").strip(",")
+
+                ad=ad.strip(" ").strip(",").split(",")
+
                 if ad[-1] == "":
-                    del ad[-1]
-                o=ad[-1].split(" ")
-                if len(o)==3 and len(o[1])==3 and len(o[2])==3: #zip
-                    z+= ad[-1].strip(" ")
-                    del ad[-1]
-                if len(ad[-1])==3:
-                    s+= ad[-1].strip(" ")
-                    del ad[-1]
-                c+= ad[-1].strip(" ")
+                    del a[-1]
+                c+=ad[-1].strip()
                 del ad[-1]
                 for a in ad:
                     st+=a
@@ -83,29 +90,37 @@ def fetch_data():
                 countries.append("CA")
 
             else:
-                if len(ad[-1].strip(" "))==5:
-                    z+=ad[-1].strip(" ")
-                    del ad[-1]
-                c+= ad[-1].strip(" ")
+                ad = ad.strip()
+
+                e = re.findall(r'( [0-9]{5})', ad)
+                if e != []:
+                    ad = ad.replace(e[0], "")
+                    z += e[0].strip(" ").strip(",")
+
+                ad = ad.strip(" ").strip(",").split(",")
+
+                if ad[-1] == "":
+                    del a[-1]
+                c += ad[-1].strip()
                 del ad[-1]
                 for a in ad:
-                    st+=a
+                    st += a
                 countries.append("US")
 
             if c == "":
-                cities.append("<Missing>")
+                cities.append("<MISSING>")
             else:
                 cities.append(c)
             if s == "":
-                states.append("<Missing>")
+                states.append("<MISSING>")
             else:
                 states.append(s)
             if z == "":
-                zips.append("<Missing>")
+                zips.append("<MISSING>")
             else:
                 zips.append(z)
             if st == "":
-                street.append("<Missing>")
+                street.append("<MISSING>")
             else:
                 street.append(st)
 
