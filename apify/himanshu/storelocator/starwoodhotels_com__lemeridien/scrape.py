@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import datetime
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -22,19 +23,25 @@ def fetch_data():
     r = requests.get("https://le-meridien.marriott.com/hotel-directory/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
-
+    today = datetime.datetime.now().date()
     scripts = soup.find_all("script")
     return_main_object = []
     for script in scripts:
         if "window.MARRIOTT_GEO_DATA" in script.text:
-            location_list = json.loads(script.text.split("window.MARRIOTT_GEO_DATA = ")[1].split("}};")[0] + "}}")["properties"]
+            json_data = json.loads(script.text.split("window.MARRIOTT_GEO_DATA = ")[1].split("}};")[0] + "}}")
+            location_list = json_data["properties"]
             for key in location_list:
                 current_store = location_list[key]
+                if current_store["country"] not in ("US","CA"):
+                    continue
+                store_open_date = datetime.datetime.strptime(current_store["openingDate"], "%Y-%m-%d").date()
+                if store_open_date > today:
+                    continue
                 store = []
                 store.append("https://le-meridien.marriott.com")
                 store.append(current_store["name"])
                 store.append(current_store["address"])
-                store.append(current_store["city"] if current_store["city"] != None and current_store["city"] != "" else "<MISSING>")
+                store.append(json_data["cities"][current_store["city"]]["name"] if current_store["city"] != None and current_store["city"] != "" else "<MISSING>")
                 store.append(current_store["state"] if current_store["state"] != None and current_store["state"] != "" else "<MISSING>")
                 store.append(current_store["zipcode"])
                 store.append(current_store["country"])  

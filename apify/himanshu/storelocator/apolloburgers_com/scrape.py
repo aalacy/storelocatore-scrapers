@@ -23,17 +23,22 @@ def fetch_data():
     }
     base_url= "https://apolloburgers.com/locations/"
     r = requests.get(base_url,headers=headers)
-    soup= BeautifulSoup(r.text,"lxml")
+    soup = BeautifulSoup(r.text,"lxml")
     
     data = soup.find_all("div",{"class":"hentry","data-sync":"textbox_content"})
+    
+
     store_name=[]
     store_detail=[]
     return_main_object=[]
    
     for i in data:
         h =i.find_all("h6")
+        
+        
         for h1 in h:
             store_name.append(h1.text)
+        
         k =i.find_all("p")
         for j in k:
             tem_var =[]
@@ -60,13 +65,13 @@ def fetch_data():
                     tem_var.append("<MISSING>")
                     tem_var.append(hours)
                     store_detail.append(tem_var)
-                
+                    
    
   
-    
+    print(store_detail)
     for i in range(len(store_name)):
         store = list()
-        store.append("https://www.amnb.com")
+        store.append("https://apolloburgers.com")
         store.append(store_name[i])
         store.extend(store_detail[i])
         return_main_object.append(store) 
@@ -79,4 +84,5 @@ def scrape():
 
 
 scrape()
+
 

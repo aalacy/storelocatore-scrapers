@@ -35,6 +35,8 @@ def fetch_data():
         time.sleep(2)
         stores[n].click()
     time.sleep(3)
+    moreinfo = driver.find_elements_by_link_text('More info')
+    moreinfo_links = [moreinfo[n].get_attribute('href') for n in range(0,len(moreinfo))]
     address=driver.find_elements_by_xpath("//div[@class='block']")
     for n in range(0,len(address)):
         a=address[n].text.replace(u'\u2022',"").split("\n")
@@ -50,6 +52,9 @@ def fetch_data():
             lat,lon = parse_geo(loc[n].get_attribute('href'))
             latitude.append(lat)
             longitude.append(lon)
+    for n in range(0,len(moreinfo)):
+        driver.get(moreinfo_links[n])
+        hours_of_operation.append(driver.find_elements_by_id('hours')[1].text)
     for n in range(0,len(street_address)): 
         data.append([
             'http://hibachidining.com',
@@ -64,7 +69,7 @@ def fetch_data():
             '<MISSING>',
             latitude[n],
             longitude[n],
-            '<MISSING>'
+            hours_of_operation[n]
         ])
     driver.quit()
     return data

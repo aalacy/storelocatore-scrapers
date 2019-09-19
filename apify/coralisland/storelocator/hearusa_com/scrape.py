@@ -7,7 +7,7 @@ import json
 import usaddress
 
 
-base_url = 'https://www.penn-station.com'
+base_url = 'https://www.hearusa.com'
 
 
 def validate(item):    

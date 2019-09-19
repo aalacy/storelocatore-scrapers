@@ -5,7 +5,7 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -56,7 +56,7 @@ def fetch_data():
         store.append("anna's house")
         store.append(location_object[location_details[0]][1])
         store.append(location_object[location_details[0]][2])
-        store.append(soup.find("div",{'class':"et_pb_row et_pb_row_1"}).find("p").text)
+        store.append(soup.find("div",{'class':"et_pb_row et_pb_row_1"}).find("p").text.replace("–","-"))
         return_main_object.append(store)
     return return_main_object
 

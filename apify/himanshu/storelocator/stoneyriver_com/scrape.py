@@ -5,7 +5,7 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -22,43 +22,33 @@ def fetch_data():
     r = requests.get("https://stoneyriver.com/locations/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
-    for location in soup.find_all("div",{"class":"location-details"}):
-        address = list(location.find("p").stripped_strings)
+    for location in soup.find_all("div",{"class":"flexWrapper"}):
+        address = list(location.find("address").stripped_strings)
         if len(address) == 4:
             address[0] = " ".join(address[0:2])
             del address[1]
-        if len(address[1].split(",")) != 2:
-            address = list(location.find_all("p")[-1].stripped_strings)
         address[1] = address[1].replace("\t"," ")
         address[0] = address[0].replace("\t"," ")
         if "       " in address[1]:
             address[0] = address[0] + address[1].split("       ")[0]
             address[1] = address[1].split("       ")[1]
-        phone = list(location.find_all("p")[1].stripped_strings)
-        hours = " ".join(list(location.find("div",{'class':'hours'}).stripped_strings)[1:]).strip()
+        phone = address[-1]
+        hours = " ".join(list(location.find("div",{'class':'details hours'}).stripped_strings)[1:]).strip()
         store = []
         store.append("https://stoneyriver.com")
-        store.append(address[1].split(",")[0])
+        store.append(location.find("h4").text)
         store.append(address[0])
         store.append(address[1].split(",")[0])
         store.append(" ".join(address[1].split(",")[1].split(" ")[1:-1]))
         store.append(address[1].split(",")[1].split(" ")[-1])
         store.append("US")
-        store.append("<MISSING>")
-        store.append(phone[-1] if len(phone) == 3 else "<MISSING>")
+        store_id = json.loads(location.find("a")["data-resy"])["venueId"]
+        store.append(store_id)
+        store.append(phone)
         store.append("stoney river")
-        if location.find("a",{'href':re.compile("/@")}) != None:
-            geo_location = location.find("a",{'href':re.compile("/@")})["href"]
-            store.append(geo_location.split("/@")[1].split(",")[0])
-            store.append(geo_location.split("/@")[1].split(",")[1])
-        elif location.find("a",{'href':re.compile("ll=")}) != None:
-            geo_location = location.find("a",{'href':re.compile("ll=")})["href"]
-            store.append(geo_location.split("ll=")[1].split(",")[0])
-            store.append(geo_location.split("ll=")[1].split(",")[1].split("&")[0])
-        else:
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-        store.append(hours if hours != "" else "<MISSING>")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append(hours.replace("–","-") if hours != "" else "<MISSING>")
         return_main_object.append(store)
     return return_main_object
 

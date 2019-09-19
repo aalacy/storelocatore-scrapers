@@ -49,6 +49,9 @@ def fetch_data():
         for idx, item in store_hours.items():
             hours += validate(labels[index] + ": " + item['from'][0] + ':' + item['from'][1] + '-' + item['to'][0] + ':' + item['to'][1] + ' ')
             index += 1
+        if store['show_schedule'] == "0":
+            hours = "<MISSING>"
+        
         output = []
         output.append(base_url) # url
         output.append(validate(store['name'])) #location name

@@ -56,9 +56,9 @@ def fetch_data():
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
         store.append(hour if hour.strip() else "<MISSING>")
-        if zip not in output:
-            output.append(zip)
-            return_main_object.append(store)
+        # if zip not in output:
+        #     output.append(zip)
+        return_main_object.append(store)
     return return_main_object
 
 def scrape():

@@ -37,12 +37,13 @@ def fetch_data():
     latitude = [lat[n].get_text() for n in range(0,len(lat))]
     lng = soup.findAll("td", {"class": "hidden longitude"})
     longitude = [lng[n].get_text() for n in range(0,len(lng))]
+    city = location_name
     for n in range(0,len(location_name)): 
         data.append([
             'http://www.gosuperpumper.com',
             location_name[n],
             street_address[n],
-            '<MISSING>',
+            city[n],
             state[n],
             zipcode[n],
             'US',

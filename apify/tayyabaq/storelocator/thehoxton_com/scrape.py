@@ -1,6 +1,5 @@
 import csv
-import os
-import re, time
+import time
 import requests
 from bs4 import BeautifulSoup
 
@@ -45,8 +44,8 @@ def fetch_data():
             '<MISSING>',
             phone[n],
             '<MISSING>',
-            '<MISSING>',
-            '<MISSING>',
+            '<INACCESSIBLE>',
+            '<INACCESSIBLE>',
             '<MISSING>'
         ])
     return data

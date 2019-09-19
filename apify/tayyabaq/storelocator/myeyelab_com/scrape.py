@@ -1,8 +1,8 @@
 import csv
-import os
-import re, time
+import re
 import requests
 from bs4 import BeautifulSoup
+from lxml import html
 
 def write_output(data):
     with open('data.csv', mode='wb') as output_file:
@@ -19,6 +19,7 @@ def fetch_data():
     r = requests.get(url)
     soup = BeautifulSoup(r.content, 'html.parser')
     script = soup.findAll('script')
+    tree = html.fromstring(r.content)
     json=re.findall(r'loc_data\s*=(.*?)]\'\);',str(script))
     street_address=re.findall(r'sl_address":"(.*?)","', str(json))
     for n in range(0,len(street_address)):
@@ -32,6 +33,12 @@ def fetch_data():
     zipcode =re.findall(r'sl_zip":"(.*?)"\}', str(json))
     latitude =re.findall(r'lat":"(.*?)","', str(json))
     longitude =re.findall(r'lng":"(.*?)","', str(json))
+    #phone = re.findall(r'\(\w{3}\)\s\w{3}-\w{4}', str(json))
+    phones = tree.xpath('//li/p/text()')
+    phone=[]
+    for n in range(0,len(phones)):
+        if '(' in phones[n]:
+            phone.append(phones[n])
     for n in range(0,len(location_name)): 
         data.append([
             'https://www.myeyelab.com',
@@ -43,7 +50,7 @@ def fetch_data():
             'US',
             store_no[n],
             '<MISSING>',
-            '<MISSING>',
+            phone[n],
             latitude[n],
             longitude[n],
             '<MISSING>'

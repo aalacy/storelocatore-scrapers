@@ -27,40 +27,40 @@ def fetch_data():
             store=[]
             hour=re.sub(r'"+', '',location['weekday'].replace('[','').replace(']',''))
             store.append(base_url)
-            store.append(location['title'].strip())
-            store.append(location['address'].strip())
-            store.append(location['city'].strip())
+            store.append(location['title'].replace("\x90",' ').replace("\u011b",' ').strip())
+            store.append(location['address'].replace("\x90",' ').replace("\u011b",' ').strip())
+            store.append(location['city'].replace("\x90",' ').replace("\u011b",' ').strip())
             if location['state']:
-                store.append(location['state'].strip())
+                store.append(location['state'].replace("\x90",' ').replace("\u011b",' ').strip())
             else:
                 store.append("<MISSING>")
             if location['postalcode']:
-                store.append(location['postalcode'].strip())
+                store.append(location['postalcode'].replace("\x90",' ').replace("\u011b",' ').strip())
             else:
                 store.append("<MISSING>")
             if location['country']:
-                store.append(location['country'].strip())
+                store.append(location['country'].replace("\x90",' ').replace("\u011b",' ').strip())
             else:
                 store.append("<MISSING>")
             if location['store_id']:
-                store.append(location['store_id'])
+                store.append(location['store_id'].replace("\x90",' ').replace("\u011b",' '))
             else:
                 store.append("<MISSING>")
             if location['phone']:
-                store.append(location['phone'])
+                store.append(location['phone'].replace("\x90",' ').replace("\u011b",' '))
             else:
                 store.append("<MISSING>")
             store.append("lolelife")
             if location['latitude']:
-                store.append(location['latitude'])
+                store.append(location['latitude'].replace("\x90",' ').replace("\u011b",' '))
             else:
                 store.append("<MISSING>")
             if location['longitude']:
-                store.append(location['longitude'])
+                store.append(location['longitude'].replace("\x90",' ').replace("\u011b",' '))
             else:
                 store.append("<MISSING>")
             if hour:
-                store.append(hour)
+                store.append(hour.replace("\x90",' ').replace("\u011b",' '))
             else:
                 store.append("<MISSING>")
             if location['postalcode'] not in output:

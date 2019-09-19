@@ -80,34 +80,20 @@ def fetch_data():
                     state.append( l[1].split( )[0])
                     zip2 = " ".join(l[1].split( )[1:])
                     zip1.append(" ".join(l[1].split( )[1:]))
-                
-                # print(len(zip2))
+          
                 if len(zip2) !=5:
                     contry.append("CA")
                 else:
                     contry.append("US")
 
-            # tem_var.append("https://www.eggspectation.com")
-            # tem_var.append(city)
-            # tem_var.append(st)
-            # tem_var.append(city)
-            # tem_var.append(state)
-            # tem_var.append(zip1)
-            # tem_var.append(contry)
-            # tem_var.append("<MISSING>")
-            # tem_var.append(phone)
-            # tem_var.append("eggspectation")
-            # tem_var.append("<MISSING>")
-            # tem_var.append("<MISSING>")
-            # tem_var.append(hours if hours else "<MISSING>")
-            # return_main_object.append(tem_var)
+    
     hours.insert(0,"<MISSING>")
     hours.insert(1,"<MISSING>")
     hours.insert(4,"Monday – Sunday: 6:30 am – 9:30pm")
-    # print(hours)
+  
     for i in range(len(store_name)):
         store = list()
-        store.append("https://www.eggspectation.com")
+        store.append("https://eggspectation.com")
         store.append(store_name[i] if store_name[i] else "<MISSING>" )
         store.append(st[i] if st[i] else "<MISSING>" )
         store.append(city[i])
@@ -120,7 +106,7 @@ def fetch_data():
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append(hours[i])
-            
+           
         return_main_object.append(store)
     return return_main_object
 

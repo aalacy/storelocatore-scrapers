@@ -25,9 +25,9 @@ request(url,(err,res,html)=>{
                              var address_tmp = $('.mod-locations').find('.col-xs-6').eq(i).html().split('<br>');
                              
                              if(address_tmp.length == 2){
-                              var location_name = '<MISSING>';
-                              var address =  '<MISSING>';
-                              var city =  '<MISSING>';
+                              var location_name = '';
+                              var address =  '';
+                              var city =  '';
                               var state =  '<MISSING>';
                               var zip =  '<MISSING>';
                               var latitude =  '<MISSING>';
@@ -37,12 +37,14 @@ request(url,(err,res,html)=>{
                               var location_name = address_tmp[0].trim().replace('700 US-29 N.','<MISSING>');
                               var address_tmp1 = address_tmp[1].trim().split('<');
                               var address_tmp2 = address_tmp1[0].split(',');
+                            
                                     if(address_tmp2.length ==2){
                                       var address = address_tmp2[0].replace('Athens','<MISSING>');
                                       var city_tmp = address_tmp2[1].trim().split(' ');
+                                       
                                       if(city_tmp.length == 1){
                                         var city = address_tmp2[0];
-                                        var state = city_tmp[1];
+                                        var state = city_tmp[0];
                                         var zip = '<MISSING>';
 
                                       }
@@ -98,6 +100,7 @@ request(url,(err,res,html)=>{
                                var city_tmp1 = city_tmp[0].replace('(Piedmont Athens Regional Hospital)','Athens, GA').trim().split(',');
                                var city = city_tmp1[0];
                                var state_tmp = city_tmp1[1].split(' ');
+                               
                                if(state_tmp.length ==2){
                                  var state = state_tmp[1];
                                  var zip = '<MISSING>';
@@ -113,6 +116,7 @@ request(url,(err,res,html)=>{
                                  var zip = state_tmp[3];
                                  
                               }
+                              
                               
                                var latitude_tmp =$('.mod-locations').find('.col-xs-6').eq(i).find('a').attr('href');
                                if(typeof latitude_tmp!='undefined'){
@@ -224,34 +228,37 @@ request(url,(err,res,html)=>{
 
                              }
                            
-                          
-                              items.push({  
+                               if(location_name!=''){
+                                items.push({  
 
-                                locator_domain: 'https://hokuliashaveice.com/', 
+                                  locator_domain: 'https://hokuliashaveice.com/', 
+  
+                                  location_name: location_name, 
+                      
+                                  street_address: address,
+                      
+                                  city: city, 
+                      
+                                  state: state,
+                      
+                                  zip:  zip,
+                      
+                                  country_code: 'US',
+                      
+                                  store_number: '<MISSING>',
+                      
+                                  phone: '<MISSING>',
+                      
+                                  location_type: 'hokuliashaveice',
+                      
+                                  latitude: latitude,
+                      
+                                  longitude: longitude, 
+                      
+                                  hours_of_operation: '<MISSING>'});
 
-                                location_name: location_name, 
-                    
-                                street_address: address,
-                    
-                                city: city, 
-                    
-                                state: state,
-                    
-                                zip:  zip,
-                    
-                                country_code: 'US',
-                    
-                                store_number: '<MISSING>',
-                    
-                                phone: '<MISSING>',
-                    
-                                location_type: 'hokuliashaveice',
-                    
-                                latitude: latitude,
-                    
-                                longitude: longitude, 
-                    
-                                hours_of_operation: '<MISSING>'});
+                               }
+                               
                             
                                        
                             mainhead(i+1);
@@ -279,7 +286,7 @@ Apify.main(async () => {
 
     const data = await scrape();
    
-    await Apify.pushData(data);
+   await Apify.pushData(data);
     
   
   });

@@ -70,6 +70,13 @@ def fetch_data():
                     del geo_object[key]
                     break
         store.append("<MISSING>")
+        if len(store) < 12:
+            for key in geo_object:
+                if store[1] in key:
+                    store.append(geo_object[key]["lat"])
+                    store.append(geo_object[key]["lng"])
+                    del geo_object[key]
+                    break
         return_main_object.append(store)
     for location in soup.find_all("div",{"class":'col-md-4'}):
         location_details = list(location.stripped_strings)
@@ -99,6 +106,13 @@ def fetch_data():
         else:
             for key in geo_object:
                 if location_details[0] in key:
+                    store.append(geo_object[key]["lat"])
+                    store.append(geo_object[key]["lng"])
+                    del geo_object[key]
+                    break
+        if len(store) < 12:
+            for key in geo_object:
+                if store[1] in key:
                     store.append(geo_object[key]["lat"])
                     store.append(geo_object[key]["lng"])
                     del geo_object[key]

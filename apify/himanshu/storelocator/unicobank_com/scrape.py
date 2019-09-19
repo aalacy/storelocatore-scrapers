@@ -33,11 +33,16 @@ def fetch_data():
                 main_arry = target_list.find_all('div',{'class':'fusion-clearfix'})
                 addr = main_arry[1].find_all('p')[0].text.strip().split('\n')
                 
+                if main_arry[1].find_all('p')[0].find('a') != None:
+
+                    latitude =  main_arry[1].find_all('p')[0].find('a')['href'].split('@')[1].split(',')[0]
                 
-                                
-                latitude =  '<INACCESSIBLE>'
-                
-                longitude =   '<INACCESSIBLE>'
+                    longitude =   main_arry[1].find_all('p')[0].find('a')['href'].split('@')[1].split(',')[1]
+
+                else:
+
+                    latitude ="<MISSING>"
+                    longitude = "<MISSING>"
 
                 
                                 
@@ -50,7 +55,7 @@ def fetch_data():
                 
                         zip = addr[1].split(',')[1].strip().split(' ')[1].strip()
                         kb = main_arry[1].find_all('p')[1].text.strip().replace('Phone:','')
-                        phone = kb.replace('Tel:','').split('\n')[0].strip()
+                        phone = kb.replace('Tel:','').split('\n')[0].strip().replace('Tel. ','')
 
                 if len(addr) == 4:
 
@@ -62,7 +67,7 @@ def fetch_data():
                 
                         zip = addr[2].split(',')[1].strip().split(' ')[1].strip()
                         kb = main_arry[1].find_all('p')[1].text.strip().replace('Phone:','')
-                        phone = kb.replace('Tel:','').split('\n')[0].strip()
+                        phone = kb.replace('Tel:','').split('\n')[0].strip().replace('Tel. ','')
 
                 
                 country_code = 'US'

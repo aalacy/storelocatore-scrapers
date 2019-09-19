@@ -24,40 +24,30 @@ def fetch_data():
         store = []
         store.append("https://www.untuckit.com")
         store.append(store_data['name'])
-        store_data["address"] = store_data["address"].split(", USA")[0]
-        if len(store_data["address"].split(",")) > 1:
-            store.append(" ".join(store_data["address"].split(",")[0:-2]))
-            store.append(store_data["address"].split(",")[-2])
-            if len(store_data["address"].split(",")[-1].split(" ")[-1]) == 5:
-                store.append(store_data["address"].split(",")[-1].split(" ")[-2])
-                store.append(store_data["address"].split(",")[-1].split(" ")[-1])
-                store.append("US")
-            else:
-                store.append(store_data["address"].split(",")[-1].split(" ")[1])
-                store.append(" ".join(store_data["address"].split(",")[-1].split(" ")[2:]))
-                store.append("CA")
+        location_request = requests.get(store_data["url"])
+        location_soup = BeautifulSoup(location_request.text,"lxml")
+        address = list(location_soup.find("p",{"class":"store_info--copy"}).stripped_strings)
+        ca_zip_split = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}',address[-1])
+        if ca_zip_split:
+            ca_zip = ca_zip_split[-1]
         else:
-            if len(store_data["address"].split(" ")[-1]) == 5:
-                store.append(" ".join(store_data["address"].split(" ")[:-3]))
-                store.append(store_data["address"].split(" ")[-3])
-                store.append(store_data["address"].split(" ")[-2])
-                store.append(store_data["address"].split(" ")[-1])
-                store.append("US")
-            else:
-                store.append(" ".join(store_data["address"].split(" ")[:-4]))
-                store.append(store_data["address"].split(" ")[-4])
-                store.append(store_data["address"].split(" ")[-3])
-                store.append(" ".join(store_data["address"].split(" ")[-1:-3]))
-                store.append("CA")
-        if store_data["address"].count("New York") == 2:
-            store[-3] = "New York"
-            store[-4] = "New York"
+            ca_zip = ''
+            us_zip_split = re.findall(r'[0-9]{5}',address[-1])
+            us_zip = us_zip_split[0]
+        state_split = re.findall(r'[A-Z]{2}',address[-1])
+        if state_split:
+            state = state_split[-1]
+        store.append(address[0])
+        store.append(address[-1].replace(state,"").replace(ca_zip,"").replace(us_zip,"").replace(",",""))
+        store.append(state)
+        store.append(ca_zip if ca_zip else us_zip)
+        store.append("CA" if ca_zip else "US")
         store.append(store_data["id"])
         store.append(store_data["phone"] if store_data["phone"] != "" else "<MISSING>")
         store.append("untuck it " + store_data["category"])
         store.append(store_data['latitude'])
         store.append(store_data['longitude'])
-        store.append(store_data["description"] if store_data["description"] != "" else "<MISSING>")
+        store.append(store_data["description"].replace("\n"," ") if store_data["description"] != "" else "<MISSING>")
         return_main_object.append(store)
     return return_main_object
 
