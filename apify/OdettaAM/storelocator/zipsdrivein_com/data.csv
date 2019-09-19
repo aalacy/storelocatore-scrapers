@@ -1,9 +1,28 @@
 "locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
-"http://zipsdrivein.com/","NW Blvd & Monroe","1018 W Northwest Blvd","Spokane"," WA","<MISSING>","US","<MISSING>","509-328-0370","<MISSING>","<MISSING>","<MISSING>","<MISSING>"
-"http://zipsdrivein.com/","5 Mile Shopping Ctr","Francis & Maple","Spokane"," WA","<MISSING>","US","<MISSING>","509-326-1678","<MISSING>","<MISSING>","<MISSING>","<MISSING>"
-"http://zipsdrivein.com/","Trent & Fancher","5901 E Trent Ave","Spokane Valley"," WA","<MISSING>","US","<MISSING>","509-534-5899","<MISSING>","<MISSING>","<MISSING>","<MISSING>"
-"http://zipsdrivein.com/","Lincoln & 3rd","223 S. Lincoln","Spokane"," WA","<MISSING>","US","<MISSING>","509-455-8535","<MISSING>","<MISSING>","<MISSING>","<MISSING>"
-"http://zipsdrivein.com/","Broadway & I-90","6525 E. Broadway","Spokane"," WA","<MISSING>","US","<MISSING>","509-534-7904","<MISSING>","<MISSING>","<MISSING>","<MISSING>"
+"http://zipsdrivein.com/","NW Blvd & Monroe","1018 W Northwest Blvd","Spokane"," WA","<MISSING>","US","<MISSING>","509-328-0370","<MISSING>","<MISSING>","<MISSING>","Monday - Thursday
+10 AM - 10 PM
+Friday - Saturday
+10 AM - 11 PM
+Sunday
+11 AM - 10 PM"
+"http://zipsdrivein.com/","5 Mile Shopping Ctr","Francis & Maple","Spokane"," WA","<MISSING>","US","<MISSING>","509-326-1678","<MISSING>","<MISSING>","<MISSING>","Monday - Saturday
+10 AM - 9 PM
+Sunday
+11:30 AM - 8 PM"
+"http://zipsdrivein.com/","Trent & Fancher","5901 E Trent Ave","Spokane Valley"," WA","<MISSING>","US","<MISSING>","509-534-5899","<MISSING>","<MISSING>","<MISSING>","Monday - Saturday
+10 AM - 9 PM
+Sunday
+11:30 AM - 8 PM"
+"http://zipsdrivein.com/","Lincoln & 3rd","223 S. Lincoln","Spokane"," WA","<MISSING>","US","<MISSING>","509-455-8535","<MISSING>","<MISSING>","<MISSING>","Monday - Saturday
+10 AM - 9 PM
+Sunday
+11:30 AM - 8 PM"
+"http://zipsdrivein.com/","Broadway & I-90","6525 E. Broadway","Spokane"," WA","<MISSING>","US","<MISSING>","509-534-7904","<MISSING>","<MISSING>","<MISSING>","Monday - Friday
+10 AM - 8 PM
+Saturday
+10:30 AM - 7 PM
+Sunday
+Closed"
 "http://zipsdrivein.com/","<MISSING>","13621 E. Trent","Spokane Valley"," WA","<MISSING>","US","<MISSING>","509-473-9826","<MISSING>","<MISSING>","<MISSING>","<MISSING>"
 "http://zipsdrivein.com/","<MISSING>","10125 N Division","Spokane"," WA","<MISSING>","US","<MISSING>","509-466-6924","<MISSING>","<MISSING>","<MISSING>","<MISSING>"
 "http://zipsdrivein.com/","<MISSING>","1320 N Division","Spokane"," WA","<MISSING>","US","<MISSING>","509-328-0380","<MISSING>","<MISSING>","<MISSING>","<MISSING>"

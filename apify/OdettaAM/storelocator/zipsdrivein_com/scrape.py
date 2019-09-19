@@ -11,6 +11,8 @@ options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 #driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
 driver = webdriver.Chrome("chromedriver", options=options)
+#driver2 = webdriver.Chrome("C:\chromedriver.exe", options=options)
+driver2 = webdriver.Chrome("chromedriver", options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -43,6 +45,25 @@ def fetch_data():
         li = info.splitlines()
         if len(li) ==4:
             location_name = li[0]
+            try:
+                loc_link = store.find_element_by_css_selector('font > em > a').get_attribute('href')
+                if 'locations/' in loc_link:
+                    driver2.get(loc_link)
+                    time.sleep(5)
+                    hours_of_op = driver2.find_element_by_css_selector('body > table > tbody > tr > td > div > table > tbody > tr:nth-child(6) > td:nth-child(4)').text
+                else:
+                    hours_of_op = '<MISSING>'
+            except:
+                try:
+                    loc_link = store.find_element_by_css_selector('font > a').get_attribute('href')
+                    if 'locations/' in loc_link:
+                        driver2.get(loc_link)
+                        time.sleep(5)
+                        hours_of_op = driver2.find_element_by_css_selector('body > table > tbody > tr > td > div > table > tbody > tr:nth-child(6) > td:nth-child(4)').text
+                    else:
+                        hours_of_op = '<MISSING>'
+                except:
+                    hours_of_op = '<MISSING>'
             if location_name == '**NEW LOCATION**':
                 location_name = li[1]
                 street_addr = li[2]
@@ -60,12 +81,14 @@ def fetch_data():
             state = li[1].split(',')[1]
             city = li[1].split(',')[0]
             phone = li[2]
+            hours_of_op = '<MISSING>'
         elif len(li) ==5:
             location_name = li[0]
             street_addr = li[1]
             state = li[2].split(',')[1]
             city = li[2].split(',')[0]
             phone = li[3]
+            hours_of_op = '<MISSING>'
         data.append([
                      'http://zipsdrivein.com/',
                       location_name,
@@ -79,7 +102,7 @@ def fetch_data():
                       '<MISSING>',
                       '<MISSING>',
                       '<MISSING>',
-                      '<MISSING>'
+                       hours_of_op
                  ])
 
     time.sleep(3)

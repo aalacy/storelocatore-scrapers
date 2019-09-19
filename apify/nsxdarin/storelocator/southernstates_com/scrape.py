@@ -50,8 +50,6 @@ def fetch_data():
         hours = hours + '; ' + 'Fri: ' + item['storeOpenFriday'].split(' ')[1].rsplit(':',1)[0] + '-' + item['storeCloseFriday'].split(' ')[1].rsplit(':',1)[0]
         hours = hours + '; ' + 'Sat: ' + item['storeOpenSaturday'].split(' ')[1].rsplit(':',1)[0] + '-' + item['storeCloseSaturday'].split(' ')[1].rsplit(':',1)[0]
         hours = hours + '; ' + 'Sun: ' + item['storeOpenSunday'].split(' ')[1].rsplit(':',1)[0] + '-' + item['storeCloseSunday'].split(' ')[1].rsplit(':',1)[0]
-        if 'Mon: 00:00-00:00; Tue: 00:00-00:00' in hours:
-            hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
