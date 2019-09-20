@@ -45,7 +45,8 @@ def fetch_data():
         city =i['city']
         phone =i["phone"]
         if "saturdayClose" in i or "saturdayOpen" in i:
-            time =str(i['saturdayOpen'])+ ' '+str(i['saturdayClose'])+ ' '+str(i["weekdayOpen"])+' ' + str(i['weekdayClose'])
+            time ="saturdayOpen" + ' '+str(i['saturdayOpen'])+ ' '+ 'saturdayClose'+ ' '+str(i['saturdayClose'])+ ' '+'weekdayOpen'+' '+str(i["weekdayOpen"])+' ' +'weekdayClose'+' '+ str(i['weekdayClose'])
+            # print(time.replace("saturdayOpen None saturdayClose None weekdayOpen None weekdayClose None","<MISSING>"))
         
         else:
             time="<MISSING>"
@@ -68,7 +69,7 @@ def fetch_data():
         tem_var.append("easyhome")
         tem_var.append(lat)
         tem_var.append(log)
-        tem_var.append(time)
+        tem_var.append(time.replace("saturdayOpen None saturdayClose None weekdayOpen None weekdayClose None","<MISSING>"))
         return_main_object.append(tem_var)
 
     return return_main_object
@@ -80,3 +81,7 @@ def scrape():
 
 
 scrape()
+
+
+
+

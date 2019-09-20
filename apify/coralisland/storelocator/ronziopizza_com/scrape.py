@@ -48,8 +48,6 @@ def fetch_data():
     store_list = response.xpath('//div[contains(@id, "location")]')
     for store in store_list:
         info = eliminate_space(store.xpath(".//text()"))
-        if 'Coming Soon' in info:
-            continue
         address = eliminate_space(store.xpath('./strong//text()'))
         output = []
         output.append(base_url) # url

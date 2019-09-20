@@ -50,7 +50,15 @@ def fetch_data():
         if len(link) > 45:
             link_list.append(link)
 
+    canada = driver.find_element_by_css_selector('div#cg_canada')
+
+    canada_as = canada.find_elements_by_css_selector('a.all-location-link')
+    for a in canada_as:
+        link_list.append(a.get_attribute('href'))
+
+
     all_store_data = []
+
     for i, link in enumerate(link_list):
         driver.get(link)
         driver.implicitly_wait(10)
@@ -69,7 +77,6 @@ def fetch_data():
         if zip_code == '':
             zip_code = '<MISSING>'
 
-
         if 'openingHours' in loc_json:
             hours = ''
             hours_list = loc_json['openingHours']
@@ -79,7 +86,6 @@ def fetch_data():
             hours = hours.strip()
         else:
             hours = '<MISSING>'
-
 
         if 'telephone' in loc_json:
             phone_number = loc_json['telephone']
@@ -93,7 +99,12 @@ def fetch_data():
 
         store_number = '<MISSING>'
         location_type = '<MISSING>'
-        country_code = 'US'
+
+        if 'canada' in link:
+            country_code = 'CA'
+        else:
+            country_code = 'US'
+
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

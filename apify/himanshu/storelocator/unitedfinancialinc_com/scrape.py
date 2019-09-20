@@ -26,18 +26,18 @@ def fetch_data():
         if len(madd)>2:
             if "Tel" not in madd[2]:
                 del madd[0]
-        address=madd[0].strip()
+        address=madd[0].replace('&nbsp;',' ').strip()
         address=re.sub(cleanr, '',address)
         ct=madd[1].split(',')
         if len(ct)>1:
-            city=ct[0].replace('\r\n','').strip()
-            state=ct[1].strip().split(' ')[0].strip()
-            zip=ct[1].strip().split(' ')[1].strip()
+            city=ct[0].replace('\r\n','').replace('\&nbsp;',' ').strip()
+            state=ct[1].strip().split(' ')[0].replace('\&nbsp;',' ').strip()
+            zip=ct[1].strip().split(' ')[1].replace('\&nbsp;',' ').strip()
         else:
              ct=madd[1].strip().split(' ')
-             city=ct[0].replace('\r\n','').strip()
-             state=ct[1].strip()
-             zip=ct[2].strip()
+             city=ct[0].replace('\r\n','').replace('\&nbsp;',' ').strip()
+             state=ct[1].replace('\&nbsp;',' ').strip()
+             zip=ct[2].replace('\&nbsp;',' ').strip()
         phone=''
         if len(madd)>2:
             phone=madd[2].replace('\r\nTel:','').strip()

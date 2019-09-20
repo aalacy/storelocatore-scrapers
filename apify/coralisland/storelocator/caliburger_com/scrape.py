@@ -56,12 +56,11 @@ def fetch_data():
         geoinfo = validate(store.xpath('.//iframe/@src')).split('!2d')[1]
         latitude = geoinfo.split('!3d')[0]
         longitude = geoinfo.split('!3d')[1].split('!')[0]
-
         output = []
         output.append(base_url) # url
         output.append(title) #location name
         output.append(validate(address[:-1])) #address
-        output.append(address[-1:][0][:8]) #city
+        output.append(address[-1:][0].split(' ').pop(0)) #city
         output.append(address[-1:][0].split(' ')[:-1].pop()) #state
         output.append(address[-1:][0].split(' ').pop()) #zipcode
         output.append('US') #country code

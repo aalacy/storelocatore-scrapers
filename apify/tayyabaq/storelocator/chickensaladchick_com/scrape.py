@@ -68,4 +68,4 @@ def scrape():
     data = fetch_data()
     write_output(data)
    
-scrape(
+scrape()

@@ -5,7 +5,7 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -31,11 +31,13 @@ def fetch_data():
         country = location_store.split("country:")[1].split(",")[0]
         store = []
         store.append("http://www.worldpac.com")
-        store.append(street.replace("'",""))
-        store.append(street.replace("'",""))
+        store.append(street.replace("'","").replace("Ã¨"," "))
+        store.append(street.replace("'","").replace("Ã¨"," "))
         store.append(city.replace("'",""))
         store.append(state.replace("'",""))
         store.append(zip.replace("'","")[1:] if zip.replace("'","") != "" else "<MISSING>")
+        if store[-1] == "":
+            store[-1] = '<MISSING>'
         store.append(country.replace("'",""))
         store.append("<MISSING>")
         store.append("<MISSING>")

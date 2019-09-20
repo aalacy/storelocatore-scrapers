@@ -36,35 +36,59 @@ def fetch_data():
         hours.append( " ".join(list(t.stripped_strings)))
         
     
-    for i in k:
+    for index,i in enumerate(k,start=0):
         tem_var =[]
-        street_address = (list(i.stripped_strings)[0])
-        city =  (list(i.stripped_strings)[1].split(',')[0])
-        state = (list(i.stripped_strings)[1].split(',')[1].split( )[0])
-        zipcode = (list(i.stripped_strings)[1].split(',')[1].split( )[1])
-
-        store_name.append(street_address)
-        tem_var.append(street_address)
+        st = list(i.stripped_strings)[0].replace("\n",',').split(',')[0]
+        city = list(i.stripped_strings)[0].replace("\n",',').split(',')[1]
+        state = list(i.stripped_strings)[0].replace("\n",',').split(',')[2].split( )[0]
+        zip1 = list(i.stripped_strings)[0].replace("\n",',').split(',')[2].split( )[1]
+        phone = (list(i.stripped_strings)[0].replace("\n",',').split(',')[-1])
+        tem_var.append("https://cafemetrony.com")
+        tem_var.append(st)
+        tem_var.append(st)
         tem_var.append(city)
         tem_var.append(state)
-        tem_var.append(zipcode)
-        store_detail.append(tem_var)
+        tem_var.append(zip1)
+        tem_var.append("US")
+        tem_var.append("<MISSING>")
+        tem_var.append(phone)
+        tem_var.append("cafemetrony")
+        tem_var.append("<MISSING>")
+        tem_var.append("<MISSING>")
+        tem_var.append(hours[index])
+    
+        return_main_object.append(tem_var)
 
-        phone.append(list(i.stripped_strings)[2])
 
-    for i in range(len(store_name)):
-        store = list()
-        store.append("http://www.cafemetrony.com")
-        store.append(store_name[i])
-        store.extend(store_detail[i])
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone[i])
-        store.append("cafemetrony")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(hours[i])
-        return_main_object.append(store) 
+
+
+        # street_address = (list(i.stripped_strings)[0])
+        # city =  (list(i.stripped_strings))
+        # state = (list(i.stripped_strings)[1].split(',')[1].split( )[0])
+        # zipcode = (list(i.stripped_strings)[1].split(',')[1].split( )[1])
+
+    #     store_name.append(street_address)
+    #     tem_var.append(street_address)
+    #     tem_var.append(city)
+    #     tem_var.append(state)
+    #     tem_var.append(zipcode)
+    #     store_detail.append(tem_var)
+
+    #     phone.append(list(i.stripped_strings)[2])
+
+    # for i in range(len(store_name)):
+    #     store = list()
+    #     store.append("http://www.cafemetrony.com")
+    #     store.append(store_name[i])
+    #     store.extend(store_detail[i])
+    #     store.append("US")
+    #     store.append("<MISSING>")
+    #     store.append(phone[i])
+    #     store.append("cafemetrony")
+    #     store.append("<MISSING>")
+    #     store.append("<MISSING>")
+    #     store.append(hours[i])
+    #     return_main_object.append(store) 
       
 
     return return_main_object
@@ -76,3 +100,5 @@ def scrape():
 
 
 scrape()
+
+

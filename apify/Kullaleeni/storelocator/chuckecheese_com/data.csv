@@ -1,0 +1,125 @@
+locator_domain,location_name,street_address,city,state,zip,country_code,store_number,phone,location_type,latitude,longitude,hours_of_operation
+https://www.chuckecheese.com/locations,"Huntsville, AL",1220 Jordon Lane NW,Huntsville,AL,35816,US,<MISSING>,(256) 534-2415,<MISSING>,34.740307,-86.627025,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Anchorage, AK",308 E. Northern Lights Blvd.,Anchorage,AK,99503,US,<MISSING>,(907) 274-9999,<MISSING>,61.194869,-149.8782,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Phoenix, AZ",8039 North 35th Ave.,Phoenix,AZ,85051,US,<MISSING>,(602) 973-1945,<MISSING>,33.554574,-112.133531,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Chandler, AZ",2977 West Frye Rd.,Chandler,AZ,85244,US,<MISSING>,(480) 857-1263,<MISSING>,33.298004,-111.893068,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Glendale, AZ",6773 West Bell Rd.,Glendale,AZ,85308,US,<MISSING>,(623) 878-8884,<MISSING>,33.636224,-112.204998,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Goodyear, AZ",13371 West McDowell Rd.,Goodyear,AZ,85395,US,<MISSING>,(623) 535-9876,<MISSING>,33.46186,-112.346863,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"North Little Rock, AR",4120 Landers Rd.,North Little Rock,AR,72117,US,<MISSING>,(501) 945-1985,<MISSING>,34.792525,-92.221792,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Little Rock, AR",2706 S. Shackleford Rd.,Little Rock,AR,72205,US,<MISSING>,(501) 225-2200,<MISSING>,34.728265,-92.395729,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Los Angeles, CA",2706 Wilshire Blvd,Los Angeles,CA,90057,US,<MISSING>,(855) 606-0548,<MISSING>,34.061008,-118.283084,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Walnut Park, CA",7726 South Alameda St.,Walnut Park,CA,90255,US,<MISSING>,(323) 586-2124,<MISSING>,33.969404,-118.233151,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Los Angeles, CA",2700 Colorado Blvd.,Los Angeles,CA,90041,US,<MISSING>,(323) 551-6990,<MISSING>,34.14134,-118.224746,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Bell, CA",5089 E. Florence Ave.,Bell,CA,90201,US,<MISSING>,(323) 562-3035,<MISSING>,33.970043,-118.176438,Open from 10am Until 9pm
+https://www.chuckecheese.com/locations,"Lynwood, CA",3140 Imperial Highway,Lynwood,CA,90262,US,<MISSING>,(310) 639-9907,<MISSING>,33.927564,-118.21369,Open from 10am Until 9pm
+https://www.chuckecheese.com/locations,"Los Angeles, CA",6901 LaTijera Blvd.,Los Angeles,CA,90045,US,<MISSING>,(310) 337-0497,<MISSING>,33.976453,-118.373396,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Pico Rivera, CA",6005 Rosemead Blvd.,Pico Rivera,CA,90660,US,<MISSING>,(562) 942-7443,<MISSING>,33.992447,-118.09119,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Burbank, CA",930 N. San Fernando Blvd.,Burbank,CA,91504,US,<MISSING>,(818) 841-3453,<MISSING>,34.187759,-118.316604,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Pasadena, CA",3737 E. Foothill,Pasadena,CA,91107,US,<MISSING>,(626) 351-5441,<MISSING>,34.15121,-118.072977,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Norwalk, CA",10949 Firestone,Norwalk,CA,90650,US,<MISSING>,(562) 868-4184,<MISSING>,33.923657,-118.099618,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"El Monte, CA",4567 Peck Rd.,El Monte,CA,91732,US,<MISSING>,(626) 350-6881,<MISSING>,34.087613,-118.016651,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Torrance, CA",16920 Prairie Ave.,Torrance,CA,90504,US,<MISSING>,(310) 542-7779,<MISSING>,33.876732,-118.343377,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"LOS ANGELES, CA",20700 Avalon Blvd.,LOS ANGELES,CA,90746,US,<MISSING>,(310) 329-4200,<MISSING>,33.8449089771634,-118.262572712352,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Monrovia, CA",558 W. Huntington Dr.,Monrovia,CA,91016,US,<MISSING>,(626) 357-4022,<MISSING>,34.137978,-118.011133,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Sun Valley, CA",8375 Laurel Canyon Blvd.,Sun Valley,CA,91352,US,<MISSING>,(818) 768-2104,<MISSING>,34.22376,-118.398839,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Lakewood, CA",5151 Lakewood Blvd.,Lakewood,CA,90712,US,<MISSING>,(562) 634-5520,<MISSING>,33.851834,-118.143592,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Cerritos, CA",11231 183rd St.,Cerritos,CA,90703,US,<MISSING>,(562) 924-2410,<MISSING>,33.866736,-118.093871,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"La Mirada, CA",15100 Rosecrans,La Mirada,CA,90638,US,<MISSING>,(714) 562-0717,<MISSING>,33.897388,-118.008545,Open from 10am Until 9pm
+https://www.chuckecheese.com/locations,"Torrance, CA",2821 Pacific Coast Hwy.,Torrance,CA,90505,US,<MISSING>,(310) 326-8470,<MISSING>,33.794741,-118.335469,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Covina, CA",601 Azusa Ave.,Covina,CA,91722,US,<MISSING>,(626) 339-9088,<MISSING>,34.091613,-117.908682,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Long Beach, CA",290 E. 4th St.,Long Beach,CA,90802,US,<MISSING>,(562) 437-6895,<MISSING>,33.771556,-118.189743,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Northridge, CA",8425 Reseda Blvd.,Northridge,CA,91324,US,<MISSING>,(818) 993-3446,<MISSING>,34.223482,-118.536614,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Granada Hills, CA",16269 San Fernando Mission Rd.,Granada Hills,CA,91344,US,<MISSING>,(818) 366-6022,<MISSING>,34.272748,-118.486569,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"West Hills, CA",22940 Van Owen St.,West Hills,CA,91307,US,<MISSING>,818-713-9794,<MISSING>,34.192174,-118.627145,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Englewood, CO",1001 W. Hampden Ave.,Englewood,CO,80110,US,<MISSING>,(303) 761-8636,<MISSING>,39.653656,-104.999927,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Aurora, CO",14005 E. Exposition Ave.,Aurora,CO,80012,US,<MISSING>,(303) 340-5855,<MISSING>,39.704709,-104.826001,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Lone Tree, CO",7510 Pkwy. Dr.,Lone Tree,CO,80124,US,<MISSING>,(303) 706-1155,<MISSING>,39.565343,-104.903731,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Superior, CO",305 Marshall Rd.,Superior,CO,80027,US,<MISSING>,(720) 304-8814,<MISSING>,39.957083,-105.168162,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Dover, DE",1275 N. DuPont Hwy.,Dover,DE,19901,US,<MISSING>,(302) 736-9881,<MISSING>,39.19092,-75.539254,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Takoma Park, MD",1127 University Blvd East,Takoma Park,MD,20912,US,<MISSING>,(301) 431-0300,<MISSING>,38.989378,-76.989866,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Alexandria, VA",6301 Richmond Hwy.,Alexandria,VA,22306,US,<MISSING>,(703) 721-1500,<MISSING>,38.780702,-77.076528,Open from 10am Until 9pm
+https://www.chuckecheese.com/locations,"Largo, MD",1100 Shoppers Way,Largo,MD,20774,US,<MISSING>,(301) 324-8970,<MISSING>,38.905316,-76.848077,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Rockville, MD",5270 Randolph Rd.,Rockville,MD,20852,US,<MISSING>,(301) 816-6966,<MISSING>,39.052582,-77.105741,Open from 10am Until 9pm
+https://www.chuckecheese.com/locations,"Fairfax, VA",9404 Main St,Fairfax,VA,22031,US,<MISSING>,(703) 978-5755,<MISSING>,38.841656,-77.270367,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Laurel, MD",936 Fairlawn Ave.,Laurel,MD,20707,US,<MISSING>,(301) 498-7100,<MISSING>,39.097384,-76.854874,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Gaithersburg, MD",516 N. Frederick,Gaithersburg,MD,20877,US,<MISSING>,(301) 869-9010,<MISSING>,39.147532,-77.208882,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Pensacola, FL",7350 Plantation Rd.,Pensacola,FL,32504,US,<MISSING>,(850) 476-7724,<MISSING>,30.501702,-87.223051,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Hialeah, FL",3805 W 20th Ave. Bay,Hialeah,FL,33012,US,<MISSING>,(305) 826-0607,<MISSING>,25.856297,-80.321148,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Miami, FL",8701 SW 124th Ave,Miami,FL,33183,US,<MISSING>,(305) 270-8716,<MISSING>,25.687736,-80.392367,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Miami, FL",20335 Biscayne Blvd.,Miami,FL,33180,US,<MISSING>,(305) 936-0002,<MISSING>,25.964016,-80.143358,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Miami, FL",18575 S. Dixie Hwy.,Miami,FL,33157,US,<MISSING>,(305) 256-3886,<MISSING>,25.596824,-80.353268,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Pembroke Pines, FL",8515 Pines Blvd.,Pembroke Pines,FL,33024,US,<MISSING>,(954) 437-8178,<MISSING>,26.010094,-80.256041,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Orlando, FL",7456 W. Colonial Dr.,Orlando,FL,32818,US,<MISSING>,(407) 521-5997,<MISSING>,28.551307,-81.483165,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Orlando, FL",7419 International Dr.,Orlando,FL,32819,US,<MISSING>,(407) 351-3368,<MISSING>,28.454587,-81.470374,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Altamonte Springs, FL",541 W. Hwy 436,Altamonte Springs,FL,32714,US,<MISSING>,(407) 788-0122,<MISSING>,28.662562,-81.404355,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Orlando, FL",449 N. Alafaya Trail,Orlando,FL,32828,US,<MISSING>,(407) 382-7121,<MISSING>,28.553612,-81.202502,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Atlanta, GA",2990 Cumberland Blvd SE,Atlanta,GA,30339,US,<MISSING>,(770) 435-9036,<MISSING>,33.880521,-84.474586,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Jonesboro, GA",335 Upper Riverdale Rd.,Jonesboro,GA,30236,US,<MISSING>,(770) 996-3250,<MISSING>,33.582488,-84.382134,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Norcross, GA",5019 Jimmy Carter Blvd.,Norcross,GA,30093,US,<MISSING>,(770) 449-1767,<MISSING>,33.897067,-84.197413,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Fayetteville, GA",786 Glynn St. N.,Fayetteville,GA,30214,US,<MISSING>,(770) 461-7974,<MISSING>,33.466693,-84.448904,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Honolulu, HI",1199 Dillingham Blvd,Honolulu,HI,96817,US,<MISSING>,(808) 851-7400,<MISSING>,21.322344,-157.87482,Open from 10am Until 9pm
+https://www.chuckecheese.com/locations,"Pearl City, HI","850 Kam Highway, Ste. 140",Pearl City,HI,96782,US,<MISSING>,(808) 455-1448,<MISSING>,21.394272,-157.968938,Open from 10am Until 9pm
+https://www.chuckecheese.com/locations,"Kapolei, HI",700 Haumea Street,Kapolei,HI,96707,US,<MISSING>,8087627414,<MISSING>,21.331618,-158.083009,Open from 10am Until 9pm
+https://www.chuckecheese.com/locations,"Chicago, IL",1830 W. Fullerton Ave.,Chicago,IL,60614,US,<MISSING>,(773) 871-2484,<MISSING>,41.92654,-87.673993,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Chicago, IL",5030 S. Kedzie,Chicago,IL,60632,US,<MISSING>,(773) 476-0500,<MISSING>,41.802502,-87.70507,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Melrose Park, IL",1030 Winston Plaza,Melrose Park,IL,60160,US,<MISSING>,(708) 343-1224,<MISSING>,41.905961,-87.847181,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Skokie, IL",7142 Carpenter,Skokie,IL,60077,US,<MISSING>,(847) 679-8180,<MISSING>,42.010659,-87.762637,Open from 10am Until 9pm
+https://www.chuckecheese.com/locations,"Villa Park, IL",200 W. Roosevelt,Villa Park,IL,60181,US,<MISSING>,(630) 833-6212,<MISSING>,41.861837,-87.983356,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Darien, IL",7409 Cass Ave.,Darien,IL,60561,US,<MISSING>,(630) 964-0740,<MISSING>,41.7532,-87.972184,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Springfield, IL",2369 McArthur Ave,Springfield,IL,62704,US,<MISSING>,(217) 793-0230,<MISSING>,39.773317,-89.669913,Open from 10am Until 9pm
+https://www.chuckecheese.com/locations,"Indianapolis, IN",10021 E. Washington St.,Indianapolis,IN,46229,US,<MISSING>,(317) 897-2751,<MISSING>,39.773121,-85.989166,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Indianapolis, IN",8804 US 31 South,Indianapolis,IN,46227,US,<MISSING>,(317) 887-0646,<MISSING>,39.638058,-86.130605,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Avon, IN",9931 E. US Highway 36,Avon,IN,46123,US,<MISSING>,(317) 271-7611,<MISSING>,39.763151,-86.347093,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Indianapolis, IN",5501 E. 82nd St.,Indianapolis,IN,46250,US,<MISSING>,(317) 849-7324,<MISSING>,39.904555,-86.074472,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Davenport, IA",903 E. Kimberly Rd.,Davenport,IA,52807,US,<MISSING>,(563) 391-2041,<MISSING>,41.557187,-90.563174,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Wichita, KS",3223 N. Rock Rd.,Wichita,KS,67226,US,<MISSING>,(316) 636-2225,<MISSING>,37.741892,-97.245315,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"New Orleans, LA",3701 General DeGaulle,New Orleans,LA,70114,US,<MISSING>,(504) 367-1214,<MISSING>,29.923107,-90.019244,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Metairie, LA",7000 Veterans Blvd.,Metairie,LA,70003,US,<MISSING>,(504) 454-5959,<MISSING>,30.002752,-90.217574,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Baltimore, MD",5912 Baltimore National Pike,Baltimore,MD,21228,US,<MISSING>,(410) 719-8850,<MISSING>,39.287786,-76.734909,Open from 10am Until 9pm
+https://www.chuckecheese.com/locations,"Glen Burnie, MD",6637 Governor Ritchie Hwy.,Glen Burnie,MD,21061,US,<MISSING>,(410) 761-3131,<MISSING>,39.19409,-76.610304,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Parkville, MD",8886 Waltham Woods Rd,Parkville,MD,21234,US,<MISSING>,(410) 661-0075,<MISSING>,39.401371,-76.543309,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Everett, MA",29 Mystic View Rd.,Everett,MA,02149,US,<MISSING>,(617) 387-4689,<MISSING>,42.401234,-71.069774,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Danvers, MA",139 Endicott,Danvers,MA,01923,US,<MISSING>,(978) 777-6274,<MISSING>,42.551475,-70.93311,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Natick, MA",801 Worcester,Natick,MA,01760,US,<MISSING>,(508) 650-9497,<MISSING>,42.300934,-71.355784,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Gulfport, MS",15082 Crossroads Pkwy.,Gulfport,MS,39503,US,<MISSING>,(228) 832-9219,<MISSING>,30.435688,-89.089722,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"St. Louis, MO",720 South County Centerway,St. Louis,MO,63129,US,<MISSING>,(314) 487-0101,<MISSING>,38.503675,-90.329773,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Fairview Heights, IL",10850 Lincoln Trail,Fairview Heights,IL,62208,US,<MISSING>,(618) 397-3434,<MISSING>,38.591178,-89.988659,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Billings, MT",100 24th Street,Billings,MT,59102,US,<MISSING>,(406) 656-4171,<MISSING>,45.771572,-108.578641,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Reno, NV",5000 Smithridge Dr.,Reno,NV,89502,US,<MISSING>,(775) 827-5100,<MISSING>,39.478515,-119.787522,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"East Hanover, NJ",145 Rt 10,East Hanover,NJ,07936,US,<MISSING>,(973) 887-3020,<MISSING>,40.809556,-74.382337,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Union, NJ",1660 Route 22 East,Union,NJ,07083,US,<MISSING>,(908) 688-0210,<MISSING>,40.696283,-74.254237,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Wayne, NJ",1639 Rt. 23 South,Wayne,NJ,07470,US,<MISSING>,(973) 305-9635,<MISSING>,40.939758,-74.271488,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Jersey City, NJ",701 Route 440,Jersey City,NJ,07304,US,<MISSING>,(201) 434-2500,<MISSING>,40.721723,-74.094757,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Staten Island, NY",1775-P South Ave.,Staten Island,NY,10314,US,<MISSING>,7184941274,<MISSING>,40.600027,-74.192996,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"North Bergen, NJ",8101 Tonelle Ave.,North Bergen,NJ,07047,US,<MISSING>,(201) 861-1799,<MISSING>,40.807823,-74.016631,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Paramus, NJ",275 Route 4 West,Paramus,NJ,07652,US,<MISSING>,(201) 487-1088,<MISSING>,40.914995,-74.047871,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Edison, NJ",1120 Rte 1 North,Edison,NJ,08817,US,<MISSING>,(732) 603-0929,<MISSING>,40.51976,-74.364351,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Bridgewater, NJ",600 Promenade Blvd.,Bridgewater,NJ,08807,US,<MISSING>,(732) 764-0808,<MISSING>,40.56722,-74.557506,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Brooklyn, NY",139 Flatbush Ave.,Brooklyn,NY,11217,US,<MISSING>,(718) 783-4570,<MISSING>,40.68444,-73.977427,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Harlem, NY",280 St. Nicholas Ave.,Harlem,NY,10027,US,<MISSING>,(212) 222-9522,<MISSING>,40.81016,-73.952806,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Long Island City, NY",3419 48th St.,Long Island City,NY,11101,US,<MISSING>,(718) 728-3600,<MISSING>,40.753052,-73.914609,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Bronx, NY",700 Exterior St.,Bronx,NY,10451,US,<MISSING>,(718) 292-7812,<MISSING>,40.823429,-73.930561,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Flushing, NY",40-24 College Point Blvd.,Flushing,NY,11354,US,<MISSING>,(718) 321-0400,<MISSING>,40.757001,-73.834813,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Bronx, NY",1816 Gunhill Rd.,Bronx,NY,10469,US,<MISSING>,(718) 671-2240,<MISSING>,40.863089,-73.833352,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Hempstead, NY",162 Fulton Ave.,Hempstead,NY,11550,US,<MISSING>,(516) 483-3166,<MISSING>,40.707084,-73.629161,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Parma, OH",7601 West Ridgewood Drive,Parma,OH,44129,US,<MISSING>,(440) 888-5700,<MISSING>,41.383429,-81.736922,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"North Olmsted, OH",26104 Great Northern Shopping Center,North Olmsted,OH,44070,US,<MISSING>,(440) 734-9929,<MISSING>,41.418239,-81.912278,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Mayfield Heights, OH",1615 Golden Gate Plaza,Mayfield Heights,OH,44124,US,<MISSING>,(440) 684-1110,<MISSING>,41.51619,-81.449951,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Tulsa, OK",7108 S. Memorial Dr.,Tulsa,OK,74133,US,<MISSING>,(918) 252-9661,<MISSING>,36.059991,-95.887072,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Portland, OR",9120 SE Powell,Portland,OR,97266,US,<MISSING>,(503) 788-1200,<MISSING>,45.496747,-122.569166,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Beaverton, OR",4145 SW 110th Ave.,Beaverton,OR,97005,US,<MISSING>,(503) 643-2002,<MISSING>,45.490056,-122.790674,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Vancouver, WA",7721 NE Vancouver Plaza Dr.,Vancouver,WA,98662,US,<MISSING>,(360) 896-6672,<MISSING>,45.650369,-122.59432,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Pittsburgh, PA",20 McIntyre Square Dr.,Pittsburgh,PA,15237,US,<MISSING>,(412) 364-7762,<MISSING>,40.551545,-80.018627,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Bridgeville, PA",1035 Washington Pike,Bridgeville,PA,15017,US,<MISSING>,(412) 257-2570,<MISSING>,40.364532,-80.11033,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Monroeville, PA",3800 William Penn Highway,Monroeville,PA,15146,US,<MISSING>,(412) 856-5044,<MISSING>,40.435908,-79.783568,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Warwick, RI",650 Bald Hill Rd.,Warwick,RI,02886,US,<MISSING>,(401) 823-1203,<MISSING>,41.719795,-71.483419,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"North Dartmouth, MA",412-418 St. Rd. 6,North Dartmouth,MA,02747,US,<MISSING>,(508) 993-9969,<MISSING>,41.642217,-70.996077,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Austin, TX",9811 S. I-35,Austin,TX,78744,US,<MISSING>,(512) 282-5000,<MISSING>,30.158134,-97.789194,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Austin, TX",10515 North Mopac Expressway,Austin,TX,78759,US,<MISSING>,(512) 372-4700,<MISSING>,30.387134,-97.733465,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Austin, TX",401 W Louis Henna Blvd,Austin,TX,78728,US,<MISSING>,(512) 385-2575,<MISSING>,30.479113,-97.678549,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Bellevue, WA",2239 148th Ave. NE,Bellevue,WA,98007,US,<MISSING>,(425) 746-5000,<MISSING>,47.630474,-122.144965,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Lynnwood, WA",3717  196th St. SW,Lynnwood,WA,98036,US,<MISSING>,(425) 771-1195,<MISSING>,47.823649,-122.283892,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Kent, WA",25817 104th Ave. SE,Kent,WA,98031,US,<MISSING>,(253) 813-9000,<MISSING>,47.370659,-122.203329,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Milwaukee, WI",2701 Chase Ave.,Milwaukee,WI,53207,US,<MISSING>,(414) 483-8655,<MISSING>,42.993823,-87.912772,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"West Allis, WI",2990 South 108th Street,West Allis,WI,53227,US,<MISSING>,(414) 546-3600,<MISSING>,42.989119,-88.045918,Open from 11am Until 9pm
+https://www.chuckecheese.com/locations,"Brookfield, WI",19125 W. Blue Mound Rd.,Brookfield,WI,53045,US,<MISSING>,(262) 785-1400,<MISSING>,43.034049,-88.151182,Open from 11am Until 9pm

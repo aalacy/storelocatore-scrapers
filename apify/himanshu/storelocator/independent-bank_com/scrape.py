@@ -26,7 +26,7 @@ def fetch_data():
         k = requests.get('https://www.independent-bank.com'+target_list.find('a')['href'],headers = header)
         soup = BeautifulSoup(k.text,"lxml")
         locator_domain = base_url
-        location_name = soup.find('div',{'class':'detail-top'}).text
+        location_name = soup.find('div',{'class':'detail-top'}).find('h2').text
         street_address = soup.find('span',{'class':'street'}).text
         kb =  soup.find('span',{'class':'locale'}).text.split(',')
         city = kb[0].strip()

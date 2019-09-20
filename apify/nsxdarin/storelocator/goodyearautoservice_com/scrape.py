@@ -25,6 +25,7 @@ def fetch_data():
             states.append('https://www.goodyear.com/' + line.split('href="')[1].split('"')[0])
 
     for state in states:
+        print('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
             if '<li><a href="/en-US/tire-stores/' in line2:
@@ -32,6 +33,7 @@ def fetch_data():
 
     for city in cities:
         locs = []
+        print('Pulling City %s...' % city)
         citystate = city.split('/tire-stores/')[1].split('/')[0]
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
@@ -42,6 +44,7 @@ def fetch_data():
                     locs.append(lurl)
 
         for loc in locs:
+            print('Pulling Location %s...' % loc)
             PageFound = False
             while PageFound is False:
                 try:

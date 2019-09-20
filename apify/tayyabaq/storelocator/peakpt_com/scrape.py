@@ -2,6 +2,7 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 from lxml import html
+import usaddress
 
 def write_output(data):
     with open('data.csv', mode='wb') as output_file:
@@ -23,7 +24,12 @@ def fetch_data():
     for n in range(0,len(store)):
         a=store[n].get_text()
         if ('Directions' not in a) and (a!="") and ('Top' not in a):
-            street_address.append(store[n].get_text().strip().split(",")[0])
+            street_address.append(store[n].get_text().strip().split(",")[0].split('   ')[0])
+            tagged = usaddress.tag(store[n].get_text().strip().split(",")[0])[0]
+            try:
+                city.append(tagged['PlaceName'])
+            except:
+                city.append('<MISSING>')
     stores = soup.findAll("div", {"class": "address-full"})
     for n in range(0,len(stores)):
         state.append(stores[n].get_text().split(",")[1])
@@ -42,7 +48,7 @@ def fetch_data():
             'http://www.peakpt.com',
             '<MISSING>',
             street_address[n],
-            '<MISSING>',
+            city[n],
             state[n],
             zipcode[n],
             'US',

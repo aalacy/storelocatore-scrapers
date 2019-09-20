@@ -44,8 +44,8 @@ def fetch_data():
             '<MISSING>',
             phone[n],
             '<MISSING>',
-            '<MISSING>',
-            '<MISSING>',
+            '<INACCESSIBLE>',
+            '<INACCESSIBLE>',
             '<MISSING>'
         ])
     return data

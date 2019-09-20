@@ -47,21 +47,28 @@ def fetch_data():
 
 
 
-    location_list = []
+    city_list = []
     for state in state_list:
         driver.get(state)
         driver.implicitly_wait(10)
         cities = driver.find_elements_by_css_selector('a.cities')
         for c in cities:
-            location_list.append(c.get_attribute('href'))
+            city_list.append(c.get_attribute('href'))
+
+
+    location_list = []
+
+    for city in city_list:
+        driver.get(city)
+        driver.implicitly_wait(10)
+        store_links = driver.find_elements_by_css_selector('a.website.pull-right')
+        for link in store_links:
+            location_list.append(link.get_attribute('href'))
+
 
     all_store_data = []
     for i, link in enumerate(location_list):
         driver.get(link)
-
-        driver.implicitly_wait(10)
-        click_through = driver.find_element_by_css_selector('a.website.pull-right')
-        driver.execute_script("arguments[0].click();", click_through)
         driver.implicitly_wait(10)
 
         loc_j = driver.find_elements_by_xpath('//script[@type="application/ld+json"]')
@@ -100,11 +107,8 @@ def fetch_data():
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
-        print()
-        print(link)
-        print(i)
-        print(store_data)
-        print()
+
+
         all_store_data.append(store_data)
 
     driver.quit()

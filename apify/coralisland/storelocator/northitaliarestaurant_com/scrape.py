@@ -69,8 +69,8 @@ def fetch_data():
         if 'openingHoursSpecification' in store:
             for hour in store['openingHoursSpecification']:
                 store_hours.append(validate(hour['dayOfWeek']).split('/')[-1] + ' ' + validate(hour['opens']) + '-' + validate(hour['closes']))
-        output.append(get_value(store_hours)) #opening hours        
-        output_list.append(output)
+            output.append(get_value(store_hours)) #opening hours        
+            output_list.append(output)
     return output_list
 
 def scrape():

@@ -26,16 +26,28 @@ def fetch_data():
             for i in range(len(r1)):
                 store = []
                 location_address=r1[i]['acf']['address'].split(',')
-                lst=list(location_address[2].strip().split(' '))
-                store.append("https://www.equinox.com")
-                store.append(r1[i]['title']['rendered'])
-                store.append(location_address[0])
-                store.append(location_address[1])
-                store.append(lst[0])
-                if len(lst)>1:
-                    store.append(lst[1])
+                if len(location_address)>1:
+                    lst=list(location_address[2].strip().split(' '))
+                    address=location_address[0]
+                    city=location_address[1]
+                    state=lst[0]
+                    zip="<MISSING>"
+                    if len(lst)>1:
+                        zip=lst[1]
                 else:
-                    store.append("<MISSING>")
+                    location_address=r1[i]['acf']['address'].split(' ')
+                    zip=location_address[-1]
+                    state=location_address[-2]
+                    del location_address[-1]
+                    del location_address[-1]
+                    city=r1[i]['acf']['region'].split(',')[0]
+                    address=r1[i]['acf']['address'].replace(city,'').replace(state,'').replace(zip,'')
+                store.append("https://equinox-hotels.com/")
+                store.append(r1[i]['title']['rendered'])
+                store.append(address)
+                store.append(city)
+                store.append(state)
+                store.append(zip)
                 store.append("US")  
                 store.append(r1[i]['id'])
                 store.append("<MISSING>")

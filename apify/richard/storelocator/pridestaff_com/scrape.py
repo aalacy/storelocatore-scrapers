@@ -12,7 +12,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 COMPANY_URL = "https://www.pridestaff.com"
 CHROME_DRIVER_PATH = "chromedriver"
 
-
+# ZM See if you can abstract out methods like this one 
+# in a base class to reuse them
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
@@ -78,6 +79,12 @@ def fetch_data():
     for listing_url in listing_urls:
         driver.get(listing_url)
 
+        # ZM Putting your crawler on sleep to wait for page to return is a 
+        # nondeterministic operation. Some sites may take longer than others 
+        # to load. I would advise checking for something on the requested
+        # website that you expect to find there. Some examples of that would
+        # be site name, page title, login link, etc.
+        
         # Wait until element appears - 10 secs max
         wait = WebDriverWait(driver, 10)
         wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, ".h2.center")))
@@ -131,6 +138,9 @@ def fetch_data():
     req_data = {"action": "get_locations_ajax"}
     body = json.loads(requests.post(url, data=req_data).text)
 
+    # ZM You can extract address from "info" in the JSON you get from above
+    # info: "<strong>Houston (Southeast)</strong><br>10001 Almeda Genoa Road<br>Suite A<br>Houston, TX 77075<br><a href="http://www.pridestaff.com/houstonse">View Location &raquo;</a><br><a href="https://www.google.com/maps/dir/?api=1&destination=10001+Almeda+Genoa+Road+Suite+A+Houston%2C+TX+77075">Get Directions &raquo;</a>"
+
     for info in body:
         long_lat_dict[
             info["info"].split("</strong>")[0].replace("<strong>", "").strip()
@@ -153,6 +163,7 @@ def fetch_data():
         phone_numbers,
         countries,
     ):
+        # ZM See if you can avoid hard coding
         if (
             long_lat_dict[locations_title.replace("PrideStaff", "").strip()][0]
             == 32.3182314
