@@ -78,7 +78,7 @@ def fetch_data():
             longitude=re.findall(r'(--?[\d\.]*)\)', script[n].text)
     for n in range(0,len(location_name)):
         data.append([
-            'https://www.thenomadhotel.com',
+            'https://www.medstarhealth.org',
             location_name[n],
             street_address[n],
             city[n],
