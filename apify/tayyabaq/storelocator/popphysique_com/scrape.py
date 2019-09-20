@@ -45,7 +45,7 @@ def fetch_data():
                 break
     for n in range(0,len(location_name)):
         data.append([
-            'https://www.thenomadhotel.com',
+            'https://www.popphysique.com',
             location_name[n],
             street_address[n],
             city[n],
