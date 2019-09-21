@@ -24,9 +24,28 @@ def fetch_data():
     store_name=[]
     store_detail=[]
     return_main_object=[]
-
+    lat =[]
+    lng =[]
     data = soup.find_all("div",{"class":"location-box"})
-    for i in data:
+    # k =  soup.find_all("div",{"class":"col-md-4"})
+    k =  soup.find("main",{"class":"site-main"}).find_all("div",{"class":"col-md-4"})
+    
+    for i in k:
+        r2 = requests.get(i.a['href'])
+        soup1= BeautifulSoup(r2.text,"lxml")
+        k1 = soup1.find_all("script",{"type":"text/javascript"})
+        for i in k1:
+            if  "var wpgmaps_localize_marker_data" in i.text:
+                json1 = (i.text.split("var wpgmaps_localize_marker_data = ")[1].split("var wpgmaps_localize_cat_ids")[0].replace(";",""))
+                for index,i in enumerate(json.loads(json1).keys()):
+                    for j in json.loads(json1)[i].keys():
+                        # print(json.loads(json1)[i][j]['address'])
+                        lat.append(json.loads(json1)[i][j]['lat'])
+                        lng.append(json.loads(json1)[i][j]['lng'])
+    lat.insert(2,"<MISSING>")
+    lng.insert(2,"<MISSING>")
+    for index,i in enumerate(data,start=0):
+        
         store_name.append(list(i.h1.stripped_strings)[0])
         tem_var =[]
         street_address = list(i.stripped_strings)[1]
@@ -40,6 +59,7 @@ def fetch_data():
         v.pop(0)
         v.pop(0)
         hours = "  ".join(v)
+        # print("street_address====",street_address)
         tem_var.append(street_address)
         tem_var.append(city)
         tem_var.append(state)
@@ -48,8 +68,8 @@ def fetch_data():
         tem_var.append("<MISSING>")
         tem_var.append(phone)
         tem_var.append("lostpizza")
-        tem_var.append("<MISSING>")
-        tem_var.append("<MISSING>")
+        tem_var.append(lat[index])
+        tem_var.append(lng[index])
         tem_var.append(hours)
         store_detail.append(tem_var)        
 
@@ -69,3 +89,5 @@ def scrape():
 
 
 scrape()
+
+

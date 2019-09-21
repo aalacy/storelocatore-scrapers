@@ -69,7 +69,7 @@ def fetch_data():
                 store.append(hour.replace("\x90",' ').replace("\u011b",' '))
             else:
                 store.append("<MISSING>")
-            adrr =location['title']+' '+location['address'] + ' ' + location['city']
+            adrr =location['address'].strip() + ' ' + location['city'].strip()
             if adrr not in output:
                 output.append(adrr)
                 return_main_object.append(store)

@@ -5,7 +5,7 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -27,8 +27,8 @@ def get_store(country_code):
         store = []
         store.append("http://www.brunellocucinelli.com")
         store.append(location["data-storename"])
-        store.append(location.find("p",{'class':"store-address1"}).text)
-        store.append(location.find("p",{'class':"store-city"}).text)
+        store.append(location.find("p",{'class':"store-address1"}).text.replace("é","e"))
+        store.append(location.find("p",{'class':"store-city"}).text.replace("é","e"))
         store.append(list(location.find("p",{'class':"store-address2"}).stripped_strings)[0].split("\n")[0])
         store.append(list(location.find("p",{'class':"store-address2"}).stripped_strings)[0].split("\n")[-1])
         store.append(country_code)

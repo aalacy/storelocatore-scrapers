@@ -9,4 +9,4 @@ Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
-as per the documentation i have removed the closed entries and removed commas in city name and address
+same lat &lng and  i checked data is already comming fine no other location find this website

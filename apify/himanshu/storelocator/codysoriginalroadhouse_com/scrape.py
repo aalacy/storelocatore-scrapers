@@ -6,7 +6,7 @@ import json
 import sgzip
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -59,7 +59,7 @@ def fetch_data():
         else:
             store.append(geo_location.split("!3d")[1].split("!")[0])
             store.append(geo_location.split("!2d")[1].split("!")[0])
-        store.append(hours)
+        store.append(hours.replace("\xa0"," ").replace("â\x80\x93"," "))
         return_main_object.append(store)
     return return_main_object
 
