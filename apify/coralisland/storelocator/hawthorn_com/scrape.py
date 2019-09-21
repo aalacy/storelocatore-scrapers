@@ -70,7 +70,7 @@ def parse_address(address):
 
 def fetch_data():
     output_list = []
-    url = "https://www.wyndhamhotels.com/microtel/locations"
+    url = "https://www.wyndhamhotels.com/hawthorn-extended-stay/locations"
     headers = {
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
         'cookie': 'T2saVa1=A9afOJJsAQAAhTep2cwuVSxSAwi3CvH9xsP1ybzxJAJE7T7ZayUGw9X6TLGYAW5KyKGucn01wH8AAEB3AAAAAA==; userPreferredLanguage=en-ca; device_type=desktop; country_code=US; AKA_A2=A; firstReferringBrand=microtel; AWSELB=B3C98325144F5FE8D290FAD73119DBB01C2AEFCED73E565F3788222E78B310189A08519C02551A67524A7F9984486D38C0D76319318AD8D0EA744264411EEE9FC5BC72AD22; loglocale={"seed":"39a3ed10-187c-4646-aba8-a1f063ae45f2","pageHashCode":"7b92dcf9756003de838b8cce04566edc","timestamp":1569087148583,"channel":"responsive","serviceVersion":"1.0","language":"en-us"}; firstSearchBrand=microtel',
@@ -113,7 +113,7 @@ def fetch_data():
         output.append(country_code) #country code
         output.append(store_id) #store_number
         output.append(phone) #phone
-        output.append("Wyndham Hotels") #location type
+        output.append("Hawthorn Extended Stay Hotels") #location type
         output.append(latitude) #latitude
         output.append(longitude) #longitude
         output.append(hours) #opening hours
