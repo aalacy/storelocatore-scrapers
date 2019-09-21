@@ -7,7 +7,7 @@ from lxml import html
 import usaddress
 
 def get_driver():
-    options = Options() 
+    options = Options()
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
@@ -28,19 +28,24 @@ def fetch_data():
     driver = get_driver()
     url="https://www.medstarhealth.org/mhs/our-locations/"
     driver.get(url)
+    time.sleep(5)
     r = requests.get(url)
     tree = html.fromstring(r.content)
     soup = BeautifulSoup(r.content, 'html.parser')
     script = soup.findAll("script")
-    driver.get('https://www.medstarhealth.org/mhs/our-locations/')
-    time.sleep(3)
+    for n in range(0,len(script)):
+        if 'lng' in script[n].text:
+            latitude=re.findall(r'LatLng\((-?[\d\.]*),', script[n].text)
+            longitude=re.findall(r'(--?[\d\.]*)\)', script[n].text)
     pages=driver.find_elements_by_xpath("//a[contains(@href,'javascript:wpgmp_filter_locations')]")
     last_page=(pages[-2].text)
+    print last_page
     for n in range(0,20):
         location = driver.find_elements_by_xpath("//a[contains(@href,'javascript:open_current_location')]")
-        location_name.append([location[n].text for n in range(0,len(location))])
+        location_text = [location[n].text for n in range(0,len(location))]
         stores = driver.find_elements_by_class_name('wpgmp_locations_content')
         for n in range(0,len(location)):
+            location_name.append(location_text[n])
             try:
                 tagged=usaddress.tag(stores[n].text)[0]
                 try:
@@ -72,10 +77,6 @@ def fetch_data():
             time.sleep(6)
         except:
                    break
-    for n in range(0,len(script)):
-        if 'lng' in script[n].text:
-            latitude=re.findall(r'LatLng\((-?[\d\.]*),', script[n].text)
-            longitude=re.findall(r'(--?[\d\.]*)\)', script[n].text)
     for n in range(0,len(location_name)):
         data.append([
             'https://www.medstarhealth.org',
@@ -92,7 +93,6 @@ def fetch_data():
             longitude[n],
             '<MISSING>'
         ])
-    driver.quit()
     return data
 
 def scrape():
