@@ -14,7 +14,7 @@ options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 # options.add_argument("--start-maximized")
-driver = webdriver.Chrome('../chromedriver.exe', options=options)
+driver = webdriver.Chrome('chromedriver', options=options)
 
 base_url = 'https://ticknors.com'
 

@@ -70,13 +70,21 @@ def parse_address(address):
 
 def fetch_data():
     output_list = []
-    url = "https://www.wyndhamhotels.com/hawthorn-extended-stay/locations"
-    request = requests.get(url)
+    url = "https://www.wyndhamhotels.com/microtel/locations"
+    headers = {
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+        'cookie': 'T2saVa1=A9afOJJsAQAAhTep2cwuVSxSAwi3CvH9xsP1ybzxJAJE7T7ZayUGw9X6TLGYAW5KyKGucn01wH8AAEB3AAAAAA==; userPreferredLanguage=en-ca; device_type=desktop; country_code=US; AKA_A2=A; firstReferringBrand=microtel; AWSELB=B3C98325144F5FE8D290FAD73119DBB01C2AEFCED73E565F3788222E78B310189A08519C02551A67524A7F9984486D38C0D76319318AD8D0EA744264411EEE9FC5BC72AD22; loglocale={"seed":"39a3ed10-187c-4646-aba8-a1f063ae45f2","pageHashCode":"7b92dcf9756003de838b8cce04566edc","timestamp":1569087148583,"channel":"responsive","serviceVersion":"1.0","language":"en-us"}; firstSearchBrand=microtel',
+        'upgrade-insecure-requests': '1',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'
+    }
+    session = requests.Session()
+    request = session.get(url, headers=headers)
     response = etree.HTML(request.text)
+    pdb.set_trace()
     store_list = response.xpath('//div[@class="aem-rendered-content"]')[0].xpath('.//div[@class="state-container"]//li[@class="property"]')
     for detail_url in store_list:
         detail_url = validate(detail_url.xpath('.//a')[0].xpath('./@href'))
-        detail_request = requests.get('https://www.wyndhamhotels.com' + detail_url)
+        detail_request = session.get('https://www.wyndhamhotels.com' + detail_url)
         detail = etree.HTML(detail_request.text)
 
         address = validate(detail.xpath('.//div[contains(@class, "property-address")]//text()'))
@@ -86,7 +94,7 @@ def fetch_data():
         store_id = validate(detail_request.text.split('var overview_propertyId = "')[1].split('"')[0])
 
         more_detail_url = "https://www.wyndhamhotels.com/BWSServices/services/search/property/search?propertyId=" + store_id + "&isOverviewNeeded=true&isAmenitiesNeeded=true&channelId=tab&language=en-us"
-        detail_request = requests.get(more_detail_url)
+        detail_request = session.get(more_detail_url)
         detail = json.loads(detail_request.text)['properties'][0]
         state = validate(detail['stateCode'])
         title = validate(detail['name'])
@@ -105,11 +113,11 @@ def fetch_data():
         output.append(country_code) #country code
         output.append(store_id) #store_number
         output.append(phone) #phone
-        output.append("Hawthorn Extended Stay Hotels") #location type
+        output.append("Wyndham Hotels") #location type
         output.append(latitude) #latitude
         output.append(longitude) #longitude
         output.append(hours) #opening hours
-
+        pdb.set_trace()
         output_list.append(output)
 
     return output_list
