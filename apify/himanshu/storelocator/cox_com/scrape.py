@@ -22,7 +22,7 @@ def fetch_data():
         'Content-Type': 'application/json; charset=UTF-8'
     }
 
-    # print("soup ===  first")
+    addresses = []
 
     base_url = "https://www.cox.com"
     r = requests.get("https://www.cox.com/webapi/aem/coxretaillocations", headers=headers)
@@ -63,8 +63,14 @@ def fetch_data():
 
         for hour_item in hour_list:
             day = hour_item.split(':')[0]
+
+            if hours_of_operation == "":
+                for i in range(int(day))[1:]:
+                    # print("day === "+ str(i))
+                    hours_of_operation += str(day_list[i-1]) +" - Closed, "
+
             morning = ":".join(hour_item.split(':')[1:3])
-            evening = ":".join(hour_item.split(':')[-3:-1])
+            evening = ":".join(hour_item.split(':')[3:])
             if day != "":
                 hours_of_operation += str(day_list[int(day)-1]) +" - "+ morning +" to "+evening +", "
             else:
@@ -81,18 +87,19 @@ def fetch_data():
 
         location_name = address_list['locationName']
         phone = address_list['phone']
-        latitude = (address_list['displayLat'] if "displayLat" in address_list else address_list["yextRoutableLat"])
-        longitude = (address_list['displayLng'] if "displayLng" in address_list else address_list["yextRoutableLng"])
+        latitude = str(address_list['displayLat'] if "displayLat" in address_list else address_list["yextRoutableLat"])
+        longitude = str(address_list['displayLng'] if "displayLng" in address_list else address_list["yextRoutableLng"])
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        if store[2] + store[-3] not in addresses:
+            addresses.append(store[2] + store[-3])
 
-        return_main_object.append(store)
-
-    return return_main_object
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            yield store
 
 
 def scrape():

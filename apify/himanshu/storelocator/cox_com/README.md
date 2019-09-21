@@ -10,4 +10,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-5 addresses with no number on the website.
+addresses with no number, and i checkd data true on the website.
