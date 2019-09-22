@@ -3,6 +3,9 @@ import json
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 URL = "https://www.lecreuset.com"
@@ -39,16 +42,16 @@ class Scraper(Scrape):
         driver.get(location_url)
         stores.extend(json.loads(driver.find_element_by_css_selector("pre").text)['markers'])
 
+        # Wait until element appears - 10 secs max
+        wait = WebDriverWait(driver, 10)
+        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "pre")))
+
         for store in stores:
-            print(store)
             # Store ID
             location_id = store['location_id']
 
             # Name
             location_title = store['title']
-
-            # Street Address
-            street_address = store['address']
 
             try:
                 # City
@@ -69,6 +72,9 @@ class Scraper(Scrape):
 
                 # Zip
                 zip_code = store['address_display'].split(' ')[-1]
+
+            # Street Address
+            street_address = store['address'].replace(city, '').replace(state, '').replace(zip_code, '').strip()[:-1].strip()
 
             # Hours
             hour = store['store_hours']
