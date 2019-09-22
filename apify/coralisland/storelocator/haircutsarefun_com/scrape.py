@@ -100,8 +100,24 @@ def fetch_data():
                     output.append("Cookie Cutters - Haircuts for Kids") #location type
                     output.append("<MISSING>") #latitude
                     output.append("<MISSING>") #longitude
-                    output.append(get_value(store_hours)) #opening hours
-                    output_list.append(output)
+                    if 'coming' not in get_value(store_hours).lower():
+                        output.append(get_value(store_hours)) #opening hours
+                        output_list.append(output)
+                else:
+                    if len(address['state']) > 4 and 'missing' not in address['state'].lower():
+                        output.append(address['street']) #address
+                        output.append(address['city']) #city
+                        output.append(address['state'][:2]) #state
+                        output.append(address['state'][2:]) #zipcode   
+                        output.append('US') #country code
+                        output.append("<MISSING>") #store_number
+                        output.append(get_value(phone)) #phone
+                        output.append("Cookie Cutters - Haircuts for Kids") #location type
+                        output.append("<MISSING>") #latitude
+                        output.append("<MISSING>") #longitude
+                        if 'coming' not in get_value(store_hours).lower():
+                            output.append(get_value(store_hours)) #opening hours
+                            output_list.append(output)
             else:
                 details = eliminate_space(store.xpath('.//span[@style="color:#0D349B;font-size:16px;"]//text()'))
                 address = ''

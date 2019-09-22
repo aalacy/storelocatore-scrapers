@@ -58,51 +58,66 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
 
     for zip_code in zips:
-        print("zips === " + str(zip_code))
+        # print("zips === " + str(zip_code))
 
         page_no = 0
         isFinish = False
         while isFinish is not True:
             # zip_code = 11576
+
+            location_url = "https://www.drmartens.com/us/en/store-finder?q=" + str(zip_code) + "&page=" + str(page_no)
+
+            # print("location_url === " + location_url)
+            r = requests.get(location_url, headers=headers)
+
             try:
-                r = requests.get(
-                    "https://www.drmartens.com/us/en/store-finder?q=+" + str(zip_code) + "&page=" + str(page_no),
-                    headers=headers)
-
                 json_data = r.json()
+            except:
+                break
 
-                for address_list in json_data['data']:
+            for address_list in json_data['data']:
 
+                # print("address_list === " + str(address_list))
+                location_name = address_list['displayName']
+                latitude = address_list['latitude']
+                longitude = address_list['longitude']
+                phone = address_list['phone'].replace("Phone", "").replace(":", "")
+                street_address = address_list['line1'] + " " + address_list['line2']
 
-
-                    location_name = address_list['displayName']
-                    latitude = address_list['latitude']
-                    longitude = address_list['longitude']
-                    phone = address_list['phone']
-                    street_address = address_list['line1']+" "+address_list['line2']
+                if len(address_list['town'].split(',')) > 1:
                     city = address_list['town'].split(',')[0]
                     state = address_list['town'].split(',')[1]
-                    zipp = address_list['postalCode']
+                elif len(address_list['town'].split(' ')) > 1:
+                    city = address_list['town'].split(' ')[0]
+                    state = address_list['town'].split(' ')[1]
+                else:
+                    state = address_list['town']
+                    city = ""
+
+                zipp = address_list['postalCode']
+
+                if zipp.isdigit():
+                    country_code = "US"
+                else:
+                    country_code = "CA"
+
+                if 'openings' in address_list:
                     hours_of_operation = str(address_list['openings']).replace('{', "").replace('}', "")
+                else:
+                    hours_of_operation = ""
 
-                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                             store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                         store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-                    if store[2] in addresses:
-                        continue
-                    addresses.append(store[2])
+                if store[2] + store[-3] not in addresses:
+                    addresses.append(store[2] + store[-3])
 
-                    print("data = " + str(store))
+                    store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                    # print("data = " + str(store))
                     # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    return_main_object.append(store)
+                    yield store
 
-                page_no += 1
-
-            except:
-                isFinish = True
-                continue
-
-    return return_main_object
+            page_no += 1
 
 
 def scrape():

@@ -1,0 +1,18 @@
+"locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
+"http://pizzafusion.com/locations/","Fort Lauderdale, FL","1013 N. Federal Hwy.","Fort Lauderdale","FL","33304","US","<MISSING>","954-358-5353","<MISSING>","<MISSING>","<MISSING>"," Sunday - Thursday: 11am - 9pm Friday & Saturday: 11am - 10pm   
+  "
+"http://pizzafusion.com/locations/","Fort Myers, FL","Suite 5","Fort Myers","FL","33919","US","<MISSING>","239-337-7979","<MISSING>","<MISSING>","<MISSING>"," Monday - Saturday: 11am - 10pm   Sunday: 11am - 9pm "
+"http://pizzafusion.com/locations/","Naples, FL","2146 Tamiami Trail N","Naples","FL","34102","US","<MISSING>","239-262-8111","<MISSING>","<MISSING>","<MISSING>"," Monday - Saturday: 11am - 10pm   Sunday: 11am - 9pm "
+"http://pizzafusion.com/locations/","Ridgewood, NJ","33 Godwin Ave.","Ridgewood","NJ","07450","US","005","201-445-9010","<MISSING>","<MISSING>","<MISSING>"," Sunday - Thursday: 11am - 10pm Friday & Saturday: 11am - 10pm 
+ "
+"http://pizzafusion.com/locations/","Case Western Reserve University, OH
+Store#019
+
+10900 Euclid Ave
+Cleveland, OH 44106
+United States
+Phone: 216-368-6274Hours:
+Monday - Friday: 10:30am - 3:00pm
+
+[Fast Feedback]","10900 Euclid Ave","Cleveland","OH","44106","US","019","216-368-6274","<MISSING>","<MISSING>","<MISSING>"," Monday - Friday: 10:30am - 3:00pm 
+ "

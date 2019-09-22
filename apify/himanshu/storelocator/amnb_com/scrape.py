@@ -61,7 +61,7 @@ def fetch_data():
         tem_var.append(zipcode.strip())
         tem_var.append("US")
         tem_var.append("<MISSING>")
-        tem_var.append(phone)
+        tem_var.append(phone if phone else "<MISSING>")
         tem_var.append("amnb")
         tem_var.append(i["lat"])
         tem_var.append(i['long'])
@@ -84,7 +84,7 @@ def fetch_data():
         tem_var.append(zipcode.strip())
         tem_var.append("US")
         tem_var.append("<MISSING>")
-        tem_var.append(phone)
+        tem_var.append(phone if phone else "<MISSING>")
         tem_var.append("amnb")
         tem_var.append(i["lat"])
         tem_var.append(i['long'])
@@ -107,4 +107,5 @@ def scrape():
 
 
 scrape()
+
 

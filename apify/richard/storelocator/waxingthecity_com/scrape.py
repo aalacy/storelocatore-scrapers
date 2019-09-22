@@ -8,7 +8,8 @@ from selenium.webdriver.chrome.options import Options
 COMPANY_URL = "https://www.waxingthecity.com/"
 CHROME_DRIVER_PATH = "chromedriver"
 
-
+# ZM See if you can abstract out methods like this one 
+# in a base class to reuse them
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
@@ -37,7 +38,8 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
+# ZM If you are not using a method that is implemented in your code
+# it is best to remove it to avoid confusion
 def parse_info(item):
     item = item.split("\n")
     location_title = item[0]
@@ -147,6 +149,8 @@ def fetch_data():
         if "coming soon" in locations_title.lower():
             pass
         else:
+            # ZM if you are checking for non-empty values you can just 
+            # do "if variable"
             data.append(
                 [
                     COMPANY_URL if COMPANY_URL != "" else "<MISSING>",
