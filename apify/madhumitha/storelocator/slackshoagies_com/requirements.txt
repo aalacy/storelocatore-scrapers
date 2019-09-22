@@ -1,8 +1,4 @@
 bs4==0.0.1
-selenium==3.141.0
 requests==2.21.0
 unicodecsv==0.14.1
-usaddress==0.5.10
 regex==2019.8.19
-jsonschema==2.6.0
-time
