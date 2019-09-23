@@ -39,7 +39,19 @@ def fetch_data():
             data = list(j.stripped_strings)
             stopwords = "24 hours"
             new_words = [word for word in data if word not in stopwords]
+            
             if len(new_words) != 1 and new_words !=[]:
+
+                if "24 hours" in data[1]:
+                    hours = (data[1])
+                    
+                else:
+                    if "Kailua*" in data[0]:
+                        hours = "24 hours"
+                    else:
+                        
+                        hours = "<MISSING>"
+                # print(data[0])
                 store_name.append(new_words[0])
                 street_address = (new_words[1])
 
@@ -61,7 +73,7 @@ def fetch_data():
                 tem_var.append("napoleonsbakery")
                 tem_var.append("<MISSING>")
                 tem_var.append("<MISSING>")
-                tem_var.append("<MISSING>")
+                tem_var.append(hours)
                 store_detail.append(tem_var)
             
    
@@ -72,6 +84,7 @@ def fetch_data():
         store.append("http://napoleonsbakery.com")
         store.append(store_name[i].replace("-","").replace("*",""))
         store.extend(store_detail[i])
+        # print(store)
         return_main_object.append(store) 
         
     return return_main_object
@@ -83,4 +96,5 @@ def scrape():
 
 
 scrape()
+
 

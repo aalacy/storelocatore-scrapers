@@ -1,12 +1,9 @@
-# Import libraries
-import xml
-import lxml
 import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re
-
+import usaddress
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,133 +23,118 @@ def fetch_data():
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
     # print(soup)
-    repo_list = soup.findAll('table', {'class': 'Subsection-Table'})
-    p=0
+    title_list = soup.findAll('table', {'class': 'Subsection-Table'})
+    repo_list = soup.findAll('table', {'class': 'Table-Location'})
+    p = 1
+    flag = False
     for repo in repo_list:
-        if p == 0:
-            p = 1
-        else:
-            text = str(repo.find('h3'))
-            start = text.find(">")+1
-            end = text.find("<",start)
-            title = text[start:end]
-            repo = str(repo)
-            start = repo.find("/h4", start)
-
-            start = repo.find("<p", start) + 3
-            end = repo.find("</p", start)
-            next = end + 4
-            text = repo[start:end]
-            # print(text)
-            start = text.find("<br")
-            mid = text.find("<br",start+5)
-            if mid == -1:
-                address = text[0:start]
+        det = repo.findAll('p')
+        if p == 3:
+            if flag:
+                title = title_list[p].find('h3').text
+                p += 1
 
             else:
-                address = text[0:start]
-                address = address + text[start+6:mid]
-                start = mid
+                img = det[0].find('img')
+                title = img['alt']
+                title = title.replace("Location ","")
+                flag = True
+        else:
 
-            start = start + 6
-            state = text[start:len(text)]
-            start = state.find(",")
-            city = state[0:start]
-            state = state[start+2:len(state)]
-            start = state.find(" ")
-            xip = state[start+1:len(state)]
-            print(xip)
-            state = state[0:start]
+            title = title_list[p].find('h3').text
+            p += 1
 
-            hours = ' '
-            phone = ' '
-            loctype = ' '
-            start = next
-            i = 1
-            while i < 4:
-                start = repo.find("<h4", start) + 4
-                end = repo.find("<", start)
-                temp = repo[start:end]
-                # print(temp)
-                start = temp.find("Hours")
 
-                if start == -1:
 
-                    start = temp.find("Phone")
-                    if start == -1:
-                        start = temp.find("ATM")
-                        if start > -1:
-                            start = repo.find("<p", end) + 3
-                            end = repo.find("</p", start)
-                            loctype = repo[start:end]
 
-                    else:
-                        start = repo.find("<p", end) + 3
-                        start = repo.find(">", start)+1
-                        end = repo.find("</p", start)
-                        phone = phone + repo[start:end]
 
-                    break
-                else:
-                    start = repo.find("<p", end) + 3
-                    end = repo.find("</p", start)
-                    hours = hours + " " + repo[start:end]
-                    start = repo.find("<p", end) + 3
-                    end = repo.find("</p", start)
-                    loctype = repo[start:end]
-                    start = loctype.find("ATM")
-                    if start == -1:
-                        hours = hours + " " + loctype
-                        start = repo.find("<p", end) + 3
-                        end = repo.find("</p", start)
-                        loctype = repo[start:end]
-                        start = loctype.find("ATM")
-                        if start == -1:
-                            loctype = '<MISSING>'
 
-                start = end
-                if i == 3:
-                    break
-                i += 1
+        address = det[1].text
+        address = usaddress.parse(address)
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
+        while i < len(address):
+            temp = address[i]
+            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find("USPSBoxID") != -1:
+                street = street + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
+            i += 1
+        j = 2
+        hours = ""
+        phone = ""
+        ltype = ""
+        while j < len(det):
+            if det[j].text.find("am") > -1:
+                hours = hours + " | " + det[j].text
+            if det[j].text.find("(") > -1:
+                phone = phone + " | " + det[j].text
+            if det[j].text.find("ATM") > -1:
+                ltype = det[j].text
+            j += 1
 
-            cleanr = re.compile('<.*?>')
-            hours = re.sub(cleanr, '', hours)
-            phone = re.sub(cleanr, '', phone)
-            start = loctype.find("MISSING")
-            if start == -1:
-                loctype = re.sub(cleanr, '', loctype)
-                start = loctype.find(" ")
-                loctype = loctype[start + 1:len(loctype)]
+        phone = phone[2:len(phone)]
+        hours = hours[2:len(hours)]
+        if len(hours) < 3:
+            start = ltype.find("ATM")
+            hours = ltype[0:4]
 
-            if len(hours) == 1:
-                hours = '<MISSING>'
-            start = hours.find("class")
-            if start > 0:
-                hours = hours[0:start]
-            if len(phone) == 1:
-                phone = '<MISSING>'
-            print(len(loctype))
-            if len(loctype) < 2:
-                loctype = '<MISSING>'
-            if phone.find("Toll") != -1:
-                start = phone.find("Toll")-2
-                phone = phone[0:start]
-
-            data.append([
-                url,
-                title,
-                address,
-                city,
-                state,
-                xip,
-                'US',
-                "<MISSING>",
-                phone,
-                loctype,
-                "<MISSING>",
-                "<MISSING>",
-                hours
-            ])
+        if len(ltype) < 3:
+            ltype = "<MISSING>"
+        else:
+            ltype = ltype[5:len(ltype)]
+        if len(phone) < 3:
+            phone = "<MISSING>"
+        if len(hours) < 3:
+            hours = "<MISSING>"
+        if phone.find("Phone") != -1 or phone.find("(Toll Free)") != -1:
+            phone = phone.replace("Phone:", "")
+            phone = phone.replace("Phone :", "")
+            phone = phone.replace("(Toll Free)", "")
+        hours = hours.replace(",", "-")
+        phone = phone.lstrip()
+        street = street.lstrip()
+        street = street.replace(",","")
+        city = city.replace(",","")
+        city = city.lstrip()
+        state = state.lstrip()
+        pcode = pcode.lstrip()
+        hours = hours.lstrip()
+        start = phone.find("|")
+        if start != -1:
+            phone = phone[start+2:len(phone)]
+        print(title)
+        print(street)
+        print(city)
+        print(state)
+        print(pcode)
+        print(ltype)
+        print(phone)
+        print(hours)
+        print(p)
+        print(".................")
+        data.append([
+            url,
+            title,
+            street,
+            city,
+            state,
+            pcode,
+            "US",
+            "<MISSING>",
+            phone,
+            ltype,
+            "<MISSING>",
+            "<MISSING>",
+            hours
+        ])
 
     return data
 

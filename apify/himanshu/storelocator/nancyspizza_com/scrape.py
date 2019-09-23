@@ -29,7 +29,8 @@ def fetch_data():
         latitude = val['loc_lat']
         longitude =val['loc_long']
         phone = val['phone']
-        hours = (val['monday'] + ' ' +val['tuesday']+' ' +val['wednesday']+' ' + val['thursday']+ ' '+val['friday']+ ' ' +val['saturday']+ ' ' +val['sunday'])
+        # print(val)
+        hours = ( 'monday'+' '+val['monday'] + ' tuesday ' +val['tuesday']+' wednesday ' +val['wednesday']+' thursday ' + val['thursday']+ ' friday '+val['friday']+ ' saturday ' +val['saturday']+ ' sunday ' +val['sunday'])
 
         store_name.append(val['name'])
 
@@ -143,6 +144,7 @@ def fetch_data():
         store.append("https://www.nancyspizza.com")
         store.append(store_name[i])
         store.extend(store_detail[i])
+        print(store)
         return_main_object.append(store)
         
     return return_main_object
@@ -154,4 +156,5 @@ def scrape():
 
 
 scrape()
+
 

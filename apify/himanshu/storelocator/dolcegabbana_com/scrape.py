@@ -5,7 +5,7 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -51,6 +51,8 @@ def fetch_data():
                 store.append(store_data["latitude"])
                 store.append(store_data["longitude"])
                 store.append("<MISSING>")
+                for i in range(len(store)):
+                    store[i] = store[i].replace('–',"-")
                 return_main_object.append(store)
     return return_main_object
 
