@@ -8,22 +8,22 @@ options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
-driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe', options=options)
-#driver = webdriver.Chrome("chromedriver", options=options)
+#driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe', options=options)
+driver = webdriver.Chrome("chromedriver", options=options)
 
 
 def write_output(data):
     df=pd.DataFrame(data)
     df.to_csv('data.csv', index=False)
- 
-    
+
+
 def fetch_data():
     data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[]}
 
     driver.get('https://www.barresoul.com/contact')
-    
+
     location_data=[i.text for i in driver.find_elements_by_xpath('//div[@class="col sqs-col-4 span-4"]/div[@class="sqs-block html-block sqs-block-html"]')]
-    
+
     for i in location_data:
         data['locator_domain'].append('https://www.barresoul.com')
         if 'More info' in i:
@@ -54,11 +54,11 @@ def fetch_data():
             data['location_type'].append('<MISSING>')
             data['latitude'].append('<MISSING>')
             data['longitude'].append('<MISSING>')
-      
-        
+
+
     driver.close()
     return data
-    
+
 
 def scrape():
     data = fetch_data()

@@ -8,22 +8,22 @@ options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
-driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe', options=options)
-#driver = webdriver.Chrome("chromedriver", options=options)
+#driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe', options=options)
+driver = webdriver.Chrome("chromedriver", options=options)
 
 
 def write_output(data):
     df=pd.DataFrame(data)
     df.to_csv('data.csv', index=False)
- 
-    
+
+
 def fetch_data():
     data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[]}
-    
+
     driver.get('https://www.solsticesunglasses.com/store-finder')
-    
+
     location_data=[i.text for i in driver.find_elements_by_xpath('//span[@class="entry__info"]')]
-    
+
     for i in location_data:
         data['locator_domain'].append('https://www.solsticesunglasses.com')
         loc=i.split('\n')
@@ -39,12 +39,12 @@ def fetch_data():
         data['longitude'].append('<MISSING>')
         data['latitude'].append('<MISSING>')
         data['hours_of_operation'].append('<INACCESSIBLE>')
-    
 
-       
+
+
     driver.close()
     return data
-    
+
 
 def scrape():
     data = fetch_data()
