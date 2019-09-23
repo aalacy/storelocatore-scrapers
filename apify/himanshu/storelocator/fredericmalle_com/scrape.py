@@ -22,7 +22,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    print("soup ===  first")
+    addresses = []
 
     base_url = "https://www.fredericmalle.com"
     r = requests.get("https://www.fredericmalle.com/about#stores", headers=headers)
@@ -99,12 +99,14 @@ def fetch_data():
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, raw_address]
 
-        print("data = " + str(store))
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        if str(store[-1]) + str(store[-3]) not in addresses:
+            addresses.append(str(store[-1]) + str(store[-3]))
 
-        return_main_object.append(store)
+            store = [x if x else "<MISSING>" for x in store]
 
-    return return_main_object
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            yield store
 
 
 def scrape():

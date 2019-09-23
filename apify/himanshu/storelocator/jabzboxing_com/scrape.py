@@ -5,7 +5,7 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -62,6 +62,10 @@ def fetch_data():
         store.append(location_details[0].split(",")[0])
         store.append(location_details[0].split(",")[-1].split("–")[0])
         store.append(location_details[3].split(" ")[-1] if len(location_details[3].split(" ")[-1]) == 5 else "<MISSING>")
+        if store[-1] == "<MISSING>":
+            location_request = requests.get(location.find("a",text=re.compile("Visit Website"))["href"],headers=headers)
+            location_soup = BeautifulSoup(location_request.text,"lxml")
+            store[-1] = location_soup.find("span",{"itemprop":"postalCode"}).text
         store.append("US")
         store.append("<MISSING>")
         store.append(phone)
@@ -69,6 +73,8 @@ def fetch_data():
         store.append(lat)
         store.append(lng)
         store.append(hours)
+        for i in range(len(store)):
+            store[i] = store[i].replace("–","-")
         return_main_object.append(store)
     return return_main_object
 
