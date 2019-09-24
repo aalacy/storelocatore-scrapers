@@ -77,6 +77,8 @@ class Scraper(Scrape):
 
             # Hour
             hour = store["details"]["main"]["hours"]
+            if location_title.strip() == 'Porsche Bellingham':
+                hour = "Monday - Friday : 8:30AM - 7:00PM, Saturday : 9:00AM - 6:00PM"
 
             # Country
             if re.match("^(\d{5})?$", zipcode.strip()):
@@ -101,18 +103,18 @@ class Scraper(Scrape):
             location_types.append(location_type)
 
         for (
-            locations_title,
-            street_address,
-            city,
-            state,
-            zipcode,
-            phone_number,
-            latitude,
-            longitude,
-            hour,
-            location_id,
-            country,
-            location_type,
+                locations_title,
+                street_address,
+                city,
+                state,
+                zipcode,
+                phone_number,
+                latitude,
+                longitude,
+                hour,
+                location_id,
+                country,
+                location_type,
         ) in zip(
             locations_titles,
             street_addresses,
