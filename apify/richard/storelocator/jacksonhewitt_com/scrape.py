@@ -49,7 +49,7 @@ class Scraper(Scrape):
                     store_infos = [
                         store_info.text for store_info in store_infos if store_info.text != ""
                     ]
-                    if store_infos[0] not in seen:
+                    if store_infos[-8] not in seen:
 
                         # Store ID
                         location_id = '<MISSING>'
