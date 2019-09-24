@@ -1,3 +1,6 @@
+import sgzip
+
+import xmltodict
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -26,6 +29,7 @@ class Scraper(Scrape):
         countries = []
         location_types = []
         stores = []
+        seen = []
 
         options = Options()
         options.add_argument("--headless")
@@ -34,88 +38,89 @@ class Scraper(Scrape):
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         # Fetch stores from location menu
-        location_url = "https://www.jacksonhewitt.com/api/offices/search?customerAddress%5Blatitude%5D=39.591277468261225&customerAddress%5Blongitude%5D=-95.60140316546881"
-        driver.get(location_url)
+        for zip_search in sgzip.for_radius(50):
+            location_url = f"https://www.jacksonhewitt.com/api/offices/search/{zip_search}"
+            driver.get(location_url)
 
-        for id in range(1, 9999, 9):
-            try:
-                stores.append(driver.find_element_by_id(f"collapsible{id}"))
-            except:
-                # Reached the end
-                break
+            for id in range(2, 9999, 9):
+                try:
+                    stores.extend(driver.find_element_by_id(f"collapsible{id}"))
+                except:
+                    # Reached the end
+                    break
 
-        store_id_counter = 1
         for store in stores:
-            store_infos = store.find_elements_by_css_selector("span.text")
-            store_infos = [
-                store_info.text for store_info in store_infos if store_info.text != ""
-            ]
+            if store_infos[0] not in seen:
+                store_infos = store.find_elements_by_css_selector("span.text")
+                store_infos = [
+                    store_info.text for store_info in store_infos if store_info.text != ""
+                ]
 
-            # Store ID
-            location_id = store_id_counter
+                # Store ID
+                location_id = '<MISSING>'
 
-            # Name
-            location_title = "Hackson Hewitt" + " " + store_infos[1]
+                # Name
+                location_title = "Hackson Hewitt" + " " + store_infos[1]
 
-            # Type
-            location_type = store_infos[-7]
+                # Type
+                location_type = store_infos[-7]
 
-            # Street
-            street_address = store_infos[0]
+                # Street
+                street_address = store_infos[0]
 
-            # Country
-            country = "US"
+                # Country
+                country = "US"
 
-            # State
-            state = store_infos[-3]
+                # State
+                state = store_infos[-3]
 
-            # city
-            city = store_infos[-4]
+                # city
+                city = store_infos[-4]
 
-            # zip
-            zipcode = store_infos[-1]
+                # zip
+                zipcode = store_infos[-1]
 
-            # Lat
-            lat = store_infos[5]
+                # Lat
+                lat = store_infos[5]
 
-            # Long
-            lon = store_infos[8]
+                # Long
+                lon = store_infos[8]
 
-            # Phone
-            phone = store_infos[-8]
+                # Phone
+                phone = store_infos[-8]
 
-            # hour
-            hour_list = [hour for hour in store_infos[10:24]]
-            hour = " ".join(hour_list)
+                # hour
+                hour_list = [hour for hour in store_infos[10:24]]
+                hour = " ".join(hour_list)
 
-            # Store data
-            locations_ids.append(location_id)
-            locations_titles.append(location_title)
-            street_addresses.append(street_address)
-            states.append(state)
-            zip_codes.append(zipcode)
-            hours.append(hour)
-            latitude_list.append(lat)
-            longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
-            location_types.append(location_type)
-            store_id_counter += 9
+                # Store data
+                locations_ids.append(location_id)
+                locations_titles.append(location_title)
+                street_addresses.append(street_address)
+                states.append(state)
+                zip_codes.append(zipcode)
+                hours.append(hour)
+                latitude_list.append(lat)
+                longitude_list.append(lon)
+                phone_numbers.append(phone)
+                cities.append(city)
+                countries.append(country)
+                location_types.append(location_type)
+                seen.append(store_infos[0])
 
         for (
-            locations_title,
-            street_address,
-            city,
-            state,
-            zipcode,
-            phone_number,
-            latitude,
-            longitude,
-            hour,
-            location_id,
-            country,
-            location_type,
+                locations_title,
+                street_address,
+                city,
+                state,
+                zipcode,
+                phone_number,
+                latitude,
+                longitude,
+                hour,
+                location_id,
+                country,
+                location_type,
         ) in zip(
             locations_titles,
             street_addresses,
