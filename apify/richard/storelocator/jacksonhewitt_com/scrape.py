@@ -1,6 +1,5 @@
 import sgzip
 
-import xmltodict, json
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
