@@ -6,6 +6,14 @@ session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
+proxy_password = os.environ["PROXY_PASSWORD"]
+proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
+proxies = {
+    'http': proxy_url,
+    'https': proxy_url
+}
+session.proxies = proxies
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
