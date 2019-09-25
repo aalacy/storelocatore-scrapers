@@ -8,7 +8,7 @@ from selenium.webdriver.firefox.options import Options
 import time
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="UTF-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -23,7 +23,7 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
-    return webdriver.Firefox(options=options)
+    return webdriver.Firefox(options=options,executable_path="./geckodriver")
 
 def fetch_data():
     driver = get_driver()
