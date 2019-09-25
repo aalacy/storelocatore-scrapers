@@ -1,4 +1,4 @@
-bs4 0.0.1 py3.6
+selenium 
 re
 csv
 usaddress
