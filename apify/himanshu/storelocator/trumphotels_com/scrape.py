@@ -59,12 +59,7 @@ def fetch_data():
                     store.append("<MISSING>")
                     store.append(geo_location["data-latitude"])
                     store.append(geo_location["data-longitude"])
-                    hours = ""
-                    if "checkinTime" in store_data:
-                        hours = hours + " check in Time " + store_data["checkinTime"]
-                    if "checkoutTime" in store_data:
-                        hours = hours + " check out Time " + store_data["checkoutTime"]
-                    store.append(hours if hours else "<MISSING>")
+                    store.append("<MISSING>")
                     yield store
 
 def scrape():

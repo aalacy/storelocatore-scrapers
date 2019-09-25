@@ -34,11 +34,9 @@ def fetch_data():
         lng=''
         name=main1.find('span',{'property':'s:name','class':'hotel-sector'}).text.strip()
         hour=''
-        hr=list(main1.find('div',{"class":'c-content-block__main'}).stripped_strings)
-        phone=hr[-1].strip()
-        del hr[-1]
-        del hr[-1]
-        hour=' '.join(hr)
+        hr=list(main1.find('div',{"class":'c-content-block__main'}).find('span',text=re.compile('Front Desk Hours')).parent.stripped_strings)
+        phone=soup1.find('span', itemprop="telephone").text.strip()
+        hour=' '.join(hr).replace('Front Desk Hours','')
         store=[]
         store.append(base_url)
         store.append(name if name else "<MISSING>")

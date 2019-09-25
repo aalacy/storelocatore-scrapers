@@ -38,6 +38,7 @@ def fetch_data():
     driver.delete_all_cookies()
     driver.get("https://www.industriousoffice.com/locations?nabt=1")
     time.sleep(10)
+    latlnglocations = driver.execute_script("return locationsCords;")
     list_url=[]
     k=driver.find_elements_by_xpath("//a[contains(@class,'btn-location')]")
     for j in k:
@@ -47,7 +48,7 @@ def fetch_data():
         try:
             globalvar = driver.execute_script("return marketLocations;")
             for i in range(0,len(globalvar)):
-                location_name = globalvar[i]['title']
+                location_name = globalvar[i]['title'].replace(",","")
                 latitude = globalvar[i]['latitude']
                 longitude = globalvar[i]['longitude']
                 street_addr = globalvar[i]['address']
@@ -73,7 +74,7 @@ def fetch_data():
 
         except:
             try:
-                location_name = driver.find_element_by_xpath("//span[contains(@class,'addressLocality')]").text
+                location_name = driver.find_element_by_xpath("//span[contains(@class,'addressLocality')]").text.replace(",","")
                 phone = driver.find_element_by_xpath("//span[contains(@class,'phone')]").text
                 street_addr = driver.find_element_by_xpath("//span[contains(@class,'streetAddress')]").text
                 city = driver.find_element_by_xpath("//span[contains(@class,'addressLocality')]").text
@@ -99,6 +100,15 @@ def fetch_data():
             except:
                 pass
 
+    for i in range(0,len(latlnglocations)):
+        lat = latlnglocations[i]['lat']
+        long = latlnglocations[i]['lng']
+        title =latlnglocations[i]['title']
+        for j in range (0,len(data)):
+            if data[j][1] in title:
+                data[j][10] = lat
+                data[j][11] = long
+                break
 
     time.sleep(3)
     driver.quit()

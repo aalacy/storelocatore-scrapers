@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -27,10 +26,6 @@ def fetch_data():
             continue
         location_request = requests.get(base_url + store_data["url"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
-        if location_soup.find("span",text=re.compile("Check-in")) == None:
-            hours = "<MISSING>"
-        else:
-            hours = " ".join(list(location_soup.find("span",text=re.compile("Check-in")).parent.stripped_strings))
         store = []
         store.append("https://www.millenniumhotels.com")
         store.append(store_data["name"])
@@ -56,7 +51,7 @@ def fetch_data():
         store.append("millennium hotels")
         store.append(store_data["lat"])
         store.append(store_data["lng"])
-        store.append(hours)
+        store.append("<MISSING>")
         return_main_object.append(store)
     return return_main_object
 

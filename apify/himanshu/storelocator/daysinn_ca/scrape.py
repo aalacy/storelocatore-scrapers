@@ -24,8 +24,8 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
 
-    base_url = "daysinn.ca"
-    r = requests.get('https://www.wyndhamhotels.com/en-ca/super-8/locations', headers=headers)
+    base_url = "http://daysinn.ca"
+    r = requests.get('https://www.wyndhamhotels.com/en-ca/days-inn/locations', headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for parts in soup.find_all("ul", {"class": "property-list"}):
         for semi_parts in parts.find_all("li", {"class": "property"}):
@@ -62,13 +62,12 @@ def fetch_data():
                 return_object.append(country)
                 return_object.append("<MISSING>")
                 return_object.append(phone)
-                return_object.append("Super 8 by wyndham")
+                return_object.append("daysinn")
                 return_object.append("<MISSING>")
                 return_object.append("<MISSING>")
                 return_object.append("<MISSING>")
                 return_main_object.append(return_object)
-                
-    
+
     return return_main_object
 
 def scrape():
@@ -76,3 +75,5 @@ def scrape():
     write_output(data)
 
 scrape()
+
+

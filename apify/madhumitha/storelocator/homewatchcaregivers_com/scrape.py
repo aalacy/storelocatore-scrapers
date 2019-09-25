@@ -27,7 +27,6 @@ def fetch_data():
             lat = l['data-latitude']
             lon = l['data-longitude']
             location_name = l['data-name'].strip()
-            state = l['data-state']
             country = l['data-country'].strip()
             if country == 'usa':
                 country = 'US'
@@ -37,9 +36,14 @@ def fetch_data():
             if len(re.split('\n', ad)) >= 2:
                 street_address = re.split('\n', ad)[0].strip()
             else:
-                street_address = MISSING
+                link = l.find('a', attrs = {'class':'website-link btn v1'}, href = True)['href']
+                website = DOMAIN + link
+                res = requests.get(website)
+                w_soup = BeautifulSoup(res.content, "html.parser")
+                street_address = w_soup.find('span', attrs = {'itemprop':'streetAddress'}).text.strip()
             city_data = re.split(',', ad)[-1].strip()
             zipcode = re.split('\.', city_data)[-1].strip()
+            state = re.split('\.', city_data)[-2].strip()
             phone = l.find('a', attrs = {'class':'phone'}).text.strip()
             store_number = location_type = hours_of_operation = MISSING
             data.append([DOMAIN, location_name, street_address, city, state, zipcode, country, store_number, phone, location_type, lat, lon, hours_of_operation])

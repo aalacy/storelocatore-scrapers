@@ -3,6 +3,7 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import usaddress
+import re
 
 options = Options()
 options.add_argument('--headless')
@@ -24,6 +25,11 @@ def write_output(data):
             writer.writerow(row)
 # Your scraper here
 
+def parse_geo(url):
+    a=re.findall(r'll=(-?[\d\.]*,(--?[\d\.]*))',url)[0]
+    lat = a[0].split(",")[0]
+    lon = a[0].split(",")[1]
+    return lat, lon
 
 def fetch_data():
 
@@ -52,6 +58,12 @@ def fetch_data():
             phone_no = '<MISSING>'
         raw_address = driver.find_element_by_xpath("(//h3[contains(@class,'pattern')])").get_attribute("textContent")
         store_name = driver.find_element_by_xpath("//title").get_attribute("textContent")
+        try:
+            geomap = driver.find_element_by_xpath("//a[contains(@href, 'maps.google.com')]").get_attribute('href')
+            lat,lng = parse_geo(geomap)
+        except:
+            lat = '<MISSING>'
+            lng = '<MISSING>'
         try:
             tagged = usaddress.tag(raw_address)[0]
         except:
@@ -95,8 +107,8 @@ def fetch_data():
           '<MISSING>',
           phone_no,
           '<MISSING>',
-          '<MISSING>',
-          '<MISSING>',
+          lat,
+          lng,
           hours_of_op
         ])
     time.sleep(3)
