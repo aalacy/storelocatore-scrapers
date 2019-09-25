@@ -18,7 +18,6 @@ def fetch_data():
     base_url = "https://www.signaturestyle.com"
     r = requests.get(base_url+"/salon-directory.html")
     soup=BeautifulSoup(r.text,'lxml')
-    return_main_object = []
     main=soup.find('div',{"class":"content parsys"}).find_all('a')
     for atag in main:
         r1 = requests.get(base_url+atag['href'])
@@ -28,7 +27,11 @@ def fetch_data():
             for atag1 in main1:
                 r2 = requests.get(base_url+atag1.find('a')['href'])
                 soup2=BeautifulSoup(r2.text,'lxml')
-                storeno=soup2.find('input',{"id":"nearBySdpSalonId"})['value']
+                if soup2.find('h2',{"class":"salontitle_salonlrgtxt"})==None:
+                    continue
+                storeno=''
+                if soup2.find('input',{"id":"nearBySdpSalonId"})!=None:
+                    storeno=soup2.find('input',{"id":"nearBySdpSalonId"})['value']
                 name=soup2.find('h2',{"class":"salontitle_salonlrgtxt"}).text.strip()
                 phone=soup2.find('span',{"itemprop":"telephone"}).text.strip()
                 address=soup2.find('span',{"itemprop":"streetAddress"}).text.strip()
@@ -62,8 +65,7 @@ def fetch_data():
                     store.append(hour.strip())
                 else:
                     store.append("<MISSING>")
-                return_main_object.append(store)
-    return return_main_object
+                yield store
 
 def scrape():
     data = fetch_data()

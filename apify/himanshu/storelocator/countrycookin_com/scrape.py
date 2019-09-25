@@ -49,7 +49,9 @@ def fetch_data():
                 state = state_zip.split(" ")[1]
                 store_zip = state_zip.split(" ")[2]
                 phone= temp_storeaddresss[2]
-                hour = temp_storeaddresss[3:]
+                hour = " ".join(temp_storeaddresss[3:])
+                if (location_name == "Corporate Offices"):
+                    hour = " ".join(temp_storeaddresss[3:]).split("Closed")[0]
                 return_object = []
                 return_object.append(base_url)
                 return_object.append(location_name)
@@ -65,6 +67,7 @@ def fetch_data():
                 return_object.append("<MISSING>")
                 return_object.append(hour)
                 return_main_object.append(return_object)
+             
     return return_main_object
 
 def scrape():

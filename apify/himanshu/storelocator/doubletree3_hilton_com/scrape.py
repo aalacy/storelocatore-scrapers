@@ -38,17 +38,22 @@ def fetch_data():
                 "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
                 "content-type": "application/json"
             }
-            location_json_request = requests.post("https://www.hilton.com/graphql/customer?pod=brands&type=GetHotelInfo",data=request_data,headers=request_header)
-            location_url = location_json_request.json()["data"]["hotel"]["homepageUrl"]
-            location_request = requests.get(location_url,headers=headers)
-            location_soup = BeautifulSoup(location_request.text,"lxml")
+            while True:
+                try:
+                    print(request_data)
+                    location_json_request = requests.post("https://www.hilton.com/graphql/customer?pod=brands&type=GetHotelInfo",data=request_data,headers=request_header)
+                    location_url = location_json_request.json()["data"]["hotel"]["homepageUrl"]
+                    location_request = requests.get(location_url,headers=headers)
+                    location_soup = BeautifulSoup(location_request.text,"lxml")
+                    break
+                except:
+                    continue
             name = location_soup.find("span",{'class':"property-name"}).text.strip()
             street_address = location_soup.find("span",{'class':"property-streetAddress"}).text.strip()
             city = location_soup.find("span",{'class':"property-addressLocality"}).text.strip()
             state = location_soup.find("span",{'class':"property-addressRegion"}).text.strip()
             store_zip = location_soup.find("span",{'class':"property-postalCode"}).text.strip()
             phone = location_soup.find("span",{'class':"property-telephone"}).text.strip()
-            hours = " ".join(list(location_soup.find("div",{'class':"policy_component_checkincheckout_container"}).stripped_strings))
             store = []
             store.append("https://doubletree3.hilton.com")
             store.append(name)
@@ -65,7 +70,7 @@ def fetch_data():
             store.append("double tree by hilton")
             store.append(cord["latitude"])
             store.append(cord["longitude"])
-            store.append(hours)
+            store.append("<MISSING>")
             yield store
 
 def scrape():
