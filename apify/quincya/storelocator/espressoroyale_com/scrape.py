@@ -10,7 +10,7 @@ def write_output(data):
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
 		# Header
-		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 		# Body
 		for row in data:
 			writer.writerow(row)
@@ -61,7 +61,7 @@ def fetch_data():
 				print ('[!] Error Occured. ')
 				print ('[?] Check whether system is Online.')
 			
-			location_name = new_base.find('h3').text
+			location_name = new_base.find('h2').text
 			section = new_base.find('div', attrs={'class': 'wpb_row vc_row-fluid vc_row inner_row standard_section'})
 			raw_data = str(section.findAll('div', attrs={'class': 'wpb_text_column wpb_content_element'})[0].p).replace("<p>","").replace("</p>","").replace("\n","").split('<br/>')
 			street_address = raw_data[0]
@@ -86,7 +86,7 @@ def fetch_data():
 				latitude = "<MISSING>"
 				longitude = "<MISSING>"
 
-			data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+			data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation,link])
 			print ('Got page details')
 	return data
 
