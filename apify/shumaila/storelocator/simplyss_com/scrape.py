@@ -66,6 +66,8 @@ def fetch_data():
             end = soup.find(",", start)
             pcode = soup[start:end - 1]
             print(pcode)
+            if len(pcode) < 4:
+                pcode = "<MISSING>"
             start = soup.find("addressCountry")
             start = soup.find(":", start) + 3
             end = soup.find("}", start)
@@ -101,8 +103,9 @@ def fetch_data():
             phone = re.sub("\n", "", phone)
             phone = re.sub('"', "", phone)
             print(phone)
-            if state == "US" or state == "CA":
-                data.append([
+            print("....................................")
+
+            data.append([
                     url,
                     title,
                     street,
@@ -116,7 +119,7 @@ def fetch_data():
                     lat,
                     longt,
                     hours
-                ])
+            ])
 
     return data
 

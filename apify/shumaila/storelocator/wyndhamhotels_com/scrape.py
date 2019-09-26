@@ -89,8 +89,11 @@ def fetch_data():
         start = soup.find(":", start) + 2
         end = soup.find(",", start)
         phone = soup[start:end - 1]
+        if len(phone) > 16:
+            phone = "<MISSING>"
         print(phone)
-        if state == "US" or state == "CA":
+
+        if ccode == "US" or ccode == "CA":
             data.append([
                 url,
                 title,
