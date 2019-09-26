@@ -44,7 +44,13 @@ def fetch_data():
         location_url = "https://www.deadriver.com/LocationFinder.asmx/GetLocation"
         # print("location url = "+ location_url +'{"zipCode":"' + zip_code + '"}')
 
-        r = requests.post(location_url, headers=headers, data='{"zipCode":"' + zip_code + '"}')
+        while(True):
+            try:
+                r = requests.post(location_url, headers=headers, data='{"zipCode":"' + zip_code + '"}')
+                break
+            except:
+                continue
+            
 
         # print("text_data ==== " + str(r.text))
 
