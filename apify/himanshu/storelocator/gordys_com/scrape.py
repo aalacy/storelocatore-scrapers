@@ -39,7 +39,7 @@ def fetch_data():
             state = address[-1].replace(city,"").replace(store_zip,"").replace(",","")
             hours = " ".join(list(location_soup.find("table",{'class':'hours'}).stripped_strings))
             store = []
-            store.append("https://www.shopfamilyfare.com")
+            store.append("https://gordys.com")
             store.append(name)
             store.append(street_address)
             store.append(city)

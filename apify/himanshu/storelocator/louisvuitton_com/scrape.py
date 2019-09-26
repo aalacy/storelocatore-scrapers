@@ -5,7 +5,6 @@ import re
 import json
 
 
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -52,22 +51,23 @@ def fetch_data():
 
     for location in json_Data["stores"]:
 
+        # print(" location ==== "+ str(location))
+
         latitude = location["latitude"]
         longitude = location["longitude"]
         store_number = location["storeId"]
         location_name = location["name"]
         street_address = location["street"]
         city = location["city"]
+        state = location["state"]
+        zipp = location["zip"]
 
-        if len(location["zip"].split(" ")) > 1:
-            zipp = location["zip"].split(" ")[-1]
-            state = location["zip"].split(" ")[0]
-        else:
-            zipp = location["zip"]
-            state = location["state"]
+        if len(zipp.split(" ")) > 1:
+            if zipp.split(" ")[-1].isdigit():
+                zipp = location["zip"].split(" ")[-1]
+                state = location["zip"].split(" ")[0]
+
         phone = location["phone"]
-
-        # print("location ==== " + str(location))
 
         if "United States" == location["country"]:
             country_code = "US"
@@ -75,6 +75,9 @@ def fetch_data():
             country_code = "CA"
         else:
             continue
+
+        # print("ssssss ===  " + str(location["state"]))
+        # print(str(location["zip"])+" == state ==== " + str(zipp))
 
         page_url = location["url"]
         r_hours = requests.get(page_url, headers=headers)

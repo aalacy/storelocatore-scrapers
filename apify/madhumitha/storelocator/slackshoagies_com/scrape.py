@@ -2,6 +2,8 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
+import json
+import time
 
 headers = requests.utils.default_headers()
 headers.update({
@@ -30,17 +32,21 @@ def fetch_data():
     directions = loc.findAll('a', href = True)
     try:
         for latlng in directions:
-            if re.findall('\d+', latlng['href']) != []:
+            if re.findall('maps', latlng['href']) != []:
                 ll = re.findall(r'[-+]?[0-9]*\.?[0-9]+', latlng['href'])
                 ln = []
                 for l in ll:
                     if re.findall('\.', l) != []:
                         ln.append(l)
-                data['latitude'].append(ln[0])
-                data['longitude'].append(ln[1])
+                if ll != []:
+                    data['latitude'].append(ln[0])
+                    data['longitude'].append(ln[1])
+                else:
+                    data['latitude'].append(MISSING)
+                    data['longitude'].append(MISSING)
 
         for t in title:
-            if t.find('u') is None:
+            if re.findall('\d+', t.text) != []:
                 loc_data = t.text.strip()
                 data['location_name'].append(re.findall('\D+', loc_data)[0].strip())
                 data['phone'].append(re.findall('\d.*', loc_data)[0].strip())
