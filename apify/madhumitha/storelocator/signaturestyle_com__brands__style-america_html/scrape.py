@@ -16,8 +16,8 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
     data_df = pd.read_csv("data.csv")
-    data_df.drop_duplicates(subset ="store_number", 
-                     keep = False, inplace = True) 
+    data_df.drop_duplicates(subset ="store_number", keep = False, inplace = True)
+    data_df.drop_duplicates(subset ="street_address", keep = False, inplace = True)
     data_df.to_csv('data.csv', index=False)
 
 def fetch_data():
