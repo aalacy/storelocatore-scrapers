@@ -3,7 +3,7 @@ import urllib2
 import requests
 import json
 import time
-import sgzip
+from sgzip import sgzip
 
 session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -16,9 +16,8 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def fetch_data(search):
+def fetch_data():
     url = 'https://branchlocator.kellyservices.com/default.aspx'
-    code = search.next_zip()
     r = session.get(url, headers=headers)
     VS = ''
     VSG = ''
@@ -31,7 +30,7 @@ def fetch_data(search):
             VSG = line.split('type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="')[1].split('"')[0]
         if 'type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="' in line:
             EV = line.split('type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="')[1].split('"')[0]
-    while code:
+    for code in sgzip.for_radius(50):
         print('Pulling Postal Code %s...' % code)
         url = 'https://branchlocator.kellyservices.com/default.aspx'
         headers2 = {'Content-Type': 'application/x-www-form-urlencoded',
@@ -59,7 +58,7 @@ def fetch_data(search):
         website = 'kellyservices.com'
         typ = 'Branch'
         name = ''
-        country = 'CA' if len(code) == 3 else 'US'
+        country = ''
         for line2 in lines:
             if '<td align="center" valign="top" width="135px">' in line2:
                 add = ''
@@ -113,14 +112,16 @@ def fetch_data(search):
                 if lat == '0':
                     lat = '<MISSING>'
                     lng = '<MISSING>'
+                if ' ' in code:
+                    country = 'CA'
+                else:
+                    country = 'US'
                 if store not in ids and store != '':
                     ids.append(store)
                     yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
-    search = sgzip.ClosestNSearch()
-    search.initialize(include_canadian_fsas = True)
-    data = fetch_data(search)
+    data = fetch_data()
     write_output(data)
 
 scrape()
