@@ -3,7 +3,7 @@ import urllib2
 import requests
 import json
 import time
-from sgzip import sgzip
+import sgzip
 
 session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -16,8 +16,9 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def fetch_data():
+def fetch_data(search):
     url = 'https://branchlocator.kellyservices.com/default.aspx'
+    code = search.next_zip()
     r = session.get(url, headers=headers)
     VS = ''
     VSG = ''
