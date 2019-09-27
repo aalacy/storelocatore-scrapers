@@ -38,8 +38,7 @@ def fetch_data():
         for i in driver.find_elements_by_xpath('//ul[@class="agent-list"]/li/a'):
             sub_data['locations_data_urls'].append(i.get_attribute('href'))
             sub_data['zip_urls'].append(i)
-    
-    
+        
 
 
     driver.close()
