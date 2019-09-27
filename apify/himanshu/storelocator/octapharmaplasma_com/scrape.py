@@ -40,6 +40,7 @@ def fetch_data():
             getpagedata = BeautifulSoup(getdata.text, "lxml")
 
             getdt  = list(getpagedata.find('div',{'class':'s-grid6 m-grid8'}).stripped_strings)
+            
             if getdt[1] != 'Coming Soon!':
                 locator_domain = base_url
                 location_name = getpagedata.find('header',{'class':'header--section'}).text.strip()
@@ -82,7 +83,7 @@ def fetch_data():
                 store.append(latitude if latitude else '<MISSING>')
                 store.append(longitude if longitude else '<MISSING>')
                 store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-                print("===",str(store))
+                # print("===",str(store))
                 # return_main_object.append(store)
                 yield  store
 

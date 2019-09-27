@@ -9,4 +9,4 @@ Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
-address with no number,address contains state name,invalid phone same lat & lng this website
+there was no way to split address and city apart because the website shows both in 1 row so i had to put INACCESSIBLE in address and city and many location has the same name so validator shows as same entries when they are not
