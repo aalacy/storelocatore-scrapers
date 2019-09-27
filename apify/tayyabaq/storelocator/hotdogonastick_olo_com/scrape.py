@@ -16,7 +16,7 @@ def write_output(data):
                 writer.writerow(row)
 def parse_geo(url):
     lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
-    lat = re.findall(r'\,(--?[\d\.]*)', url)[0]
+    lat = re.findall(r'\&ll=(--?[\d\.]*)', url)[0]
     return lat,lon
                      
 def get_driver():
