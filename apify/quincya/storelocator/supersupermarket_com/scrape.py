@@ -71,7 +71,7 @@ def fetch_data():
 
 		raw_data = str(base)
 		start_point = raw_data.find("Super Supermarket",1000)
-		raw_line = raw_data[start_point+18:raw_data.find("USA",start_point)-2].strip()
+		raw_line = raw_data[start_point+18:raw_data.find("United",start_point)-2].strip()
 		street_address = raw_line[:raw_line.find(",")].strip()
 		city = raw_line[raw_line.find(",")+1:raw_line.rfind(',')].strip()
 		state = raw_line[raw_line.rfind(',')+1:raw_line.rfind(' ')].strip()
