@@ -21,7 +21,7 @@ request(url,(err,res,html)=>{
         function mainhead(i)
 
         {
-            if(main.length>i)
+            if(3>i)
 
                 {
           var address_tmp = $('.address').find('ul').find('li').find('.full-address').find('p:nth-child(1)').eq(i).html();//find('p:nth-child(1)').text().trim();
@@ -58,6 +58,20 @@ request(url,(err,res,html)=>{
             
             
           }
+          // var link =  $('.address').find('ul').find('li').find('.full-address').find('p:nth-child(2)').eq(i).find('a').attr('href');
+          // // console.log(link);
+          // request(link,(err,res,html)=>{
+
+          //   if(!err && res.statusCode==200){
+          //     const $  =cheerio.load(html);
+          //     var latitude_tmp = $('script[type="text/javascrip]');
+          //     console.log(html);
+          //   }
+      
+          // });
+          
+
+          
                         items.push({  
 
                           locator_domain: 'https://www.luxehotels.com/', 
