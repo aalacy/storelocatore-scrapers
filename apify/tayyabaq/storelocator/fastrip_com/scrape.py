@@ -45,7 +45,7 @@ def fetch_data():
     for n in range(0,len(street_address)): 
         data.append([
             'http://fastrip.com',
-            'http://fastrip.com/index.php/store-locations'
+            'http://fastrip.com/index.php/store-locations',
             location_name[n],
             street_address[n],
             city[n],
