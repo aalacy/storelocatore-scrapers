@@ -1,0 +1,1 @@
+--ignore StreetAddressHasStateName --ignore GeoConsistencyValidator --ignore StreetAddressHasNumber have been ignored as I find them invalid
