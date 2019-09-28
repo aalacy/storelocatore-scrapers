@@ -58,7 +58,6 @@ def fetch_data():
         city =i['city']
         phone =i["phone"]
         if "saturdayClose" in i or "saturdayOpen" in i:
-            # print(minute_to_hours(str(i['saturdayOpen'])))
             if  i['saturdayOpen']!= None:
                 
                 index = 2
@@ -81,7 +80,8 @@ def fetch_data():
 
                 # print(weekdayClose)
 
-                time ="saturdayOpen" + ' '+saturdayOpen.replace("90:0","09:00")+ ' '+ 'saturdayClose'+ ' '+str(saturdayClose)+ ' '+'weekdayOpen'+' '+str(weekdayOpen)+' ' +'weekdayClose'+' '+ str(weekdayClose)
+                # time ="saturdayOpen" + ' '+saturdayOpen.replace("90:0","09:00")+ ' '+ 'saturdayClose'+ ' '+str(saturdayClose)+ ' '+'Mon-Fri'+' '+str(weekdayOpen)+' - '+ str(weekdayClose)
+                time ='Mon-Fri:'+' '+str(weekdayOpen)+' - '+ str(weekdayClose)+ ', Sat: '+  saturdayOpen.replace("90:0","09:00")+' - ' + str(saturdayClose)
             
             else:
                 time="<MISSING>"
@@ -89,8 +89,8 @@ def fetch_data():
             
             # print(time.replace("saturdayOpen None saturdayClose None weekdayOpen None weekdayClose None","<MISSING>"))
         
-        else:
-            time="<MISSING>"
+        # else:
+        #     time="<MISSING>"
             
 
         # print(time)

@@ -24,8 +24,13 @@ request(url,(err,res,html)=>{
                                      {
                              
                             var location_name = $('.page-content').find('.col-lg-3').eq(i).children('h3').text().trim();
-                           
+                            var link_tmp = $('h3').find('a').eq(i).attr('href');
+                            if(link_tmp !=null){
+                              var link = $('h3').find('a').eq(i).attr('href');
                              
+                            }
+                            
+                            console.log(link);
                            
                              var address_tmp = $('.page-content').find('.col-lg-3').eq(i).children('p').text().trim().split(',');
                             

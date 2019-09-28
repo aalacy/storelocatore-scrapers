@@ -35,16 +35,16 @@ def fetch_data():
         x = getpage.find('div',{'class':'articles--list'}).find_all('article',{'class':'clearfix'})
 
         for fb in x:
+
             geturl = fb.find('a')['href']
             getdata = requests.get(base_url + geturl)
             getpagedata = BeautifulSoup(getdata.text, "lxml")
 
             getdt  = list(getpagedata.find('div',{'class':'s-grid6 m-grid8'}).stripped_strings)
-            
-            if getdt[1] != 'Coming Soon!':
+            if "Coming Soon!" not in getdt[1] :
                 locator_domain = base_url
                 location_name = getpagedata.find('header',{'class':'header--section'}).text.strip()
-                street_address = getdt[1]
+                street_address = getdt[1].replace('Now Open!','')
                 city = getdt[2].split(',')[0]
                 dd  = getdt[2].split(',')[1].strip().split(' ')
                 state = dd[0]
@@ -63,10 +63,11 @@ def fetch_data():
                         latitude =  getpagedata.find('iframe')['src'].split('!2d')[1].split('!3d')[0]
 
                         longitude =  getpagedata.find('iframe')['src'].split('!2d')[1].split('!3d')[1].split('!2m')[0]
+                        if "!3m" in longitude:
+                            longitude = longitude.split('!3m')[0]
 
-                
                 phone =  getdt[4].replace('Phone','')
-                
+
                 hours_of_operation =' '.join(list(getpagedata.find('ul',{'class':'list--hours'}).stripped_strings))
 
                 store=[]
@@ -83,7 +84,7 @@ def fetch_data():
                 store.append(latitude if latitude else '<MISSING>')
                 store.append(longitude if longitude else '<MISSING>')
                 store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-                # print("===",str(store))
+                print("===",str(store))
                 # return_main_object.append(store)
                 yield  store
 
