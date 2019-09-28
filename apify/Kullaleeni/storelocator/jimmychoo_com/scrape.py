@@ -104,18 +104,18 @@ def fetch_data():
         country_code = "US"
         data_record = {}
         data_record['locator_domain'] = locator_domain
-        data_record['location_name'] = location_name
-        data_record['street_address'] = street_address
-        data_record['city'] = city
-        data_record['state'] = state
-        data_record['zip'] = zipcode
+        data_record['location_name'] = location_name.replace("’","'").replace("–","-")  
+        data_record['street_address'] = street_address.replace("’","'").replace("–","-")  
+        data_record['city'] = city.replace("’","'").replace("–","-")  
+        data_record['state'] = state.replace("’","'").replace("–","-")  
+        data_record['zip'] = zipcode.replace("’","'").replace("–","-")  
         data_record['country_code'] = country_code
         data_record['store_number'] = '<MISSING>'
         data_record['phone'] = phone   
-        data_record['location_type'] = store_type
+        data_record['location_type'] = store_type.replace("’","'").replace("–","-")  
         data_record['latitude'] = latitude
         data_record['longitude'] = longitude
-        data_record['hours_of_operation'] = hours_of_open
+        data_record['hours_of_operation'] = hours_of_open.replace("’","'").replace("–","-")  
         data.append(data_record)
     
     return data
