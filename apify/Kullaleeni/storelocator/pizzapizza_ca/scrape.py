@@ -53,7 +53,7 @@ def fetch_data():
     
     city_list = pd.read_csv("./CA_City_List.csv").City_State.tolist()
     
-    for st in range(286,len(city_list),5):
+    for st in range(0,len(city_list),5):
         time.sleep(5)
         print(st)
         element = driver.find_element_by_id("name")
