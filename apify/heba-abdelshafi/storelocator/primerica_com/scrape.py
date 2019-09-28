@@ -19,8 +19,8 @@ def write_output(data):
 
 
 def fetch_data():
-    data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[]}
-    driver.get('http://www.primerica.com/public/locations.html')
+
+    data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[],'page_url':[]}
     driver.get('http://www.primerica.com/public/locations.html')
     
     status_urls=[i.get_attribute('href') for i in driver.find_elements_by_xpath('//section[@class="content locList"]//li/a')]
@@ -30,16 +30,16 @@ def fetch_data():
         driver.get(s_url)
         for i in driver.find_elements_by_xpath('//ul[@class="zip-list"]/li/a'):
             zip_urls.append(i.get_attribute('href'))
-    
-    sub_data={'zip_urls':[],'locations_data_urls':[]}
         
     for i in zip_urls:
         driver.get(i)
         for i in driver.find_elements_by_xpath('//ul[@class="agent-list"]/li/a'):
-            sub_data['locations_data_urls'].append(i.get_attribute('href'))
-            sub_data['zip_urls'].append(i)
-        
-
+            data['page_url'].append(i.get_arribute('href'))
+            data['location_name'].append(i.text.split(':')[-1])
+            data['city'].append(i.find_element_by_xpath('/following-sibling::br').text.split(',')[0])
+            data['state'].append(i.find_element_by_xpath('/following-sibling::br').text.split(',')[1].split()[0])
+            data['zip'].append(i.find_element_by_xpath('/following-sibling::br').text.split(',')[1].split()[0])
+    
 
     driver.close()
     return data
