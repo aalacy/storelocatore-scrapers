@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
 from bs4 import BeautifulSoup
+import sets
 
 
 options = Options()
@@ -45,9 +46,10 @@ def fetch_data():
     driver.get("https://www.inova.org/locations")
     #soup = BeautifulSoup(driver.page_source, 'html.parser')
     #divs= soup.find_all('div',{'class':'item'})
-    divs = driver.find_element_by_id("mCSB_1_container")
+    divss = driver.find_element_by_id("mCSB_1_container")
 
-    divs= divs.find_elements_by_class_name("item")
+    divs= divss.find_elements_by_class_name("item")
+
     print(len(divs))
     i=0
     for div in divs:
@@ -127,7 +129,7 @@ def fetch_data():
                 states.append(i[0])
                 zips.append(i[1])
                 ind= tex.index(o)
-                del tex[ind]
+
                 continue
             elif "Phone: " in i:
                 phones.append(re.findall(r'([0-9\-]+)', i)[0])
@@ -141,7 +143,7 @@ def fetch_data():
         if p ==0:
             phones.append("<MISSING>")
         st=""
-        for i in range(ind):
+        for i in range(ind-1):
              st+=tex[i]
         if st =="":
             street.append("<MISSING>")
@@ -150,8 +152,11 @@ def fetch_data():
         try:
             di=driver.find_element_by_id("block-inova-content")
             di.find_element_by_class_name("current-status").click()
-            tim=di.find_element_by_class_name("hours-wrap").text
-            timing.append(tim)
+            times=di.find_elements_by_class_name("hours")
+            tim=""
+            for t in times:
+                tim+=t.text+" "
+            timing.append(tim.strip())
         except:
             timing.append("<MISSING>")
     all = []
@@ -171,6 +176,11 @@ def fetch_data():
         row.append("<MISSING>")  # long
         row.append(timing[i]) #timing
         all.append(row)
+        
+        
+    
+
+
     return all
 
 def scrape():
