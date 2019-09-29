@@ -8,13 +8,13 @@ options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
-#driver=webdriver.Chrome('C:\chromedriver.exe', options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
+driver=webdriver.Chrome('C:\chromedriver.exe', options=options)
+#driver = webdriver.Chrome("chromedriver", options=options)
 
 
 def write_output(data):
     df=pd.DataFrame(data)
-    df.to_csv('data.csv', index=False)
+    df.to_csv('data.csv', index=False,encoding='utf-8-sig')
 
 
 def fetch_data():
@@ -41,9 +41,12 @@ def fetch_data():
 
 
     for i in location_data_urls:
-        data['longitude'].append(re.split(r'\+*',i)[-1].split(',')[1].split('&')[0])
-        data['latitude'].append(re.split(r'\+*',i)[-1].split(',')[0].split('=')[-1])
-        data['zip'].append(re.split(r'\+*',i)[-1].split('&')[0])
+        #data['longitude'].append(re.split(r'\+*',i)[-1].split(',')[1].split('&')[0])
+        #data['latitude'].append(re.split(r'\+*',i)[-1].split(',')[0].split('=')[-1])
+        #data['zip'].append(re.split(r'\+*',i)[-1].split('&')[0])
+        data['zip'].append(re.split(r'\++', i)[-1].split('&')[0])
+        data['latitude'].append(re.split(r'\++', i)[-1].split(',')[0].split('=')[-1])
+        data['longitude'].append(re.split(r'\++', i)[-1].split(',')[1].split('&')[0])
 
 
     driver.close()
