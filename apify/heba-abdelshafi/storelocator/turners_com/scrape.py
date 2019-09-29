@@ -8,8 +8,8 @@ options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
-driver=webdriver.Chrome('C:\chromedriver.exe', options=options)
-#driver = webdriver.Chrome("chromedriver", options=options)
+#driver=webdriver.Chrome('C:\chromedriver.exe', options=options)
+driver = webdriver.Chrome("chromedriver", options=options)
 
 
 def write_output(data):
