@@ -3,7 +3,7 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
-
+from bs4 import BeautifulSoup
 
 options = Options()
 options.add_argument('--headless')
@@ -41,10 +41,16 @@ def fetch_data():
     long = []
     lat = []
     timing = []
+
     urls=["https://www.topman.com/store-locator?country=Canada","https://www.topman.com/store-locator?country=United+States"]
     for url in urls:
         driver.get(url)
         divs = driver.find_elements_by_xpath("//div[@class='Store-headerDetails']")
+        #diva= driver.find_element_by_xpath('//div[@class="StoreLocator-resultsContainer StoreLocator-resultsContainer--fullHeight"]')
+        if "Canada" not in url:
+            soup = BeautifulSoup(driver.page_source, 'html.parser')
+            scripts = soup.find_all('script', {'type': 'application/ld+json'})
+
         print(len(divs))
         for div in divs:
             if div.find_elements_by_class_name("Store-address") ==[]:        #assuming if no address associated either closed or havent started yet
@@ -53,11 +59,7 @@ def fetch_data():
             name = div.find_element_by_class_name("Store-name").text
             locs.append(name)
 
-            tim = div.find_element_by_class_name("Store-openNowInfo").text
-            if tim =="":
-                timing.append("<Missing>")
-            else:
-                timing.append(tim.strip())
+
 
             ad = div.find_element_by_class_name("Store-address").text
             #ad=ad.split(",")
@@ -70,42 +72,50 @@ def fetch_data():
 
                 e = re.findall(r'( [ABCEGHJ-NPRSTVXY][0-9][ABCEGHJ-NPRSTV-Z] [0-9][ABCEGHJ-NPRSTV-Z][0-9])',ad)
                 if e!= []:
-                    ad = ad.replace(e[0], "")
-                    z+= e[0].strip(" ").strip(",")
+                    ad = ad.replace(e[-1], "")
+                    z+= e[-1].strip(" ").strip(",")
 
                 e = re.findall(r'( [A-Z]{2},)', ad)
                 if e != []:
-                    ad = ad.replace(e[0], "")
-                    s += e[0].strip(" ").strip(",")
+                    ad = ad.replace(e[-1], "")
+                    s += e[-1].strip(" ").strip(",")
 
-                ad=ad.strip(" ").strip(",").split(",")
+                ad=ad.strip(" ").strip(",")
+                ad=re.sub(r'[\d ]+$', '', ad).split(",")
 
                 if ad[-1] == "":
                     del a[-1]
+
                 c+=ad[-1].strip()
                 del ad[-1]
                 for a in ad:
                     st+=a
 
                 countries.append("CA")
+                timing.append("<MISSING>")
 
             else:
                 ad = ad.strip()
 
                 e = re.findall(r'( [0-9]{5})', ad)
                 if e != []:
-                    ad = ad.replace(e[0], "")
-                    z += e[0].strip(" ").strip(",")
+                    ad = ad.replace(e[-1], "")
+                    z += e[-1].strip(" ").strip(",")
 
-                ad = ad.strip(" ").strip(",").split(",")
+                ad = ad.strip(" ").strip(",")
+                ad = re.sub(r'[\d ]+$', '', ad).split(",")
 
                 if ad[-1] == "":
-                    del a[-1]
+                    del ad[-1]
+
                 c += ad[-1].strip()
                 del ad[-1]
                 for a in ad:
                     st += a
+
                 countries.append("US")
+
+
 
             if c == "":
                 cities.append("<MISSING>")
@@ -123,7 +133,13 @@ def fetch_data():
                 street.append("<MISSING>")
             else:
                 street.append(st)
-
+    for scr in scripts:
+            g = re.findall(r'.*"openingHours":"([^"]*)","',scr.text)[0]
+            #print(g)
+            if g =="":
+                timing.append("<MISSING>")
+            else:
+                timing.append(g)
     all = []
     for i in range(0, len(locs)):
         row = []
