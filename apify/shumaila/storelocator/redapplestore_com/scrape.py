@@ -27,14 +27,14 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-notifications")
-    #return webdriver.Chrome('chromedriver', chrome_options=options)
-    return webdriver.Chrome('/Users/Dell/local/chromedriver',chrome_options=options)
+    return webdriver.Chrome('chromedriver', chrome_options=options)
+    #return webdriver.Chrome('/Users/Dell/local/chromedriver',chrome_options=options)
 
 def fetch_data():
     # Your scraper here
     data = []
     p = 1
-    driver = webdriver.Chrome('/Users/Dell/local/chromedriver')
+    driver = webdriver.Chrome('chromedriver')
     links = []
     prov = []
     url = "http://www.redapplestores.com/store/52974/"
