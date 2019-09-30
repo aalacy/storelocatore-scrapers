@@ -6,6 +6,9 @@ import re, time
 import usaddress
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
+
+
 
 def get_driver():
     options = Options()
@@ -13,6 +16,7 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     chrome_path = '/Users/Dell/local/chromedriver'
+    #return webdriver.Chrome(chrome_path, chrome_options=options)
     return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
@@ -35,6 +39,7 @@ def fetch_data():
     option = driver.find_element_by_xpath("//div[@id='wpsl-stores']/ul")
     listt = option.find_elements_by_css_selector('li')
 
+
     for llist in listt:
         store = llist.get_attribute('data-store-id')
         detail = llist.text
@@ -56,6 +61,28 @@ def fetch_data():
         start = end + 1
         end = detail.find("|", start)
         pcode = detail[start:end]
+        address = street + "," + city + "," + state
+        address = address.replace(" ","+")
+        link = 'https://www.google.com/maps/dir//' + address
+        browser = get_driver()
+        browser.get(link)
+        time.sleep(3)
+        link = browser.current_url
+        #print(browser.current_url)
+        start = link.find("@")
+        if start != -1:
+            end = link.find(",",start)
+            lat = link[start+1:end]
+            start = end + 1
+            end = link.find(",", start)
+            longt = link[start:end]
+        else:
+            lat = "<MISSING>"
+            longt = "<MISSING>"
+        browser.quit()
+
+        print(lat)
+        print(longt)
         print("......................................")
 
         data.append([
@@ -65,12 +92,12 @@ def fetch_data():
             city,
             state,
             pcode,
-            "<MISSING>",
+            "US",
             store,
             "<INACCESSIBLE>",
             "<MISSING>",
-            "<MISSING>",
-            "<MISSING>",
+            lat,
+            longt,
             "<MISSING>"
         ])
     driver.quit()
