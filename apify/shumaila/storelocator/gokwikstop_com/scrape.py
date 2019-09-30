@@ -61,28 +61,7 @@ def fetch_data():
         start = end + 1
         end = detail.find("|", start)
         pcode = detail[start:end]
-        address = street + "," + city + "," + state
-        address = address.replace(" ","+")
-        link = 'https://www.google.com/maps/dir//' + address
-        browser = get_driver()
-        browser.get(link)
-        time.sleep(3)
-        link = browser.current_url
-        #print(browser.current_url)
-        start = link.find("@")
-        if start != -1:
-            end = link.find(",",start)
-            lat = link[start+1:end]
-            start = end + 1
-            end = link.find(",", start)
-            longt = link[start:end]
-        else:
-            lat = "<MISSING>"
-            longt = "<MISSING>"
-        browser.quit()
 
-        print(lat)
-        print(longt)
         print("......................................")
 
         data.append([
@@ -96,8 +75,8 @@ def fetch_data():
             store,
             "<INACCESSIBLE>",
             "<MISSING>",
-            lat,
-            longt,
+            "<MISSING>",
+            "<MISSING>",
             "<MISSING>"
         ])
     driver.quit()
