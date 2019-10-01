@@ -1,6 +1,5 @@
 import csv
 import os
-import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re, time
@@ -55,6 +54,7 @@ def fetch_data():
     for n in range(0,len(street_address)): 
         data.append([
             'https://hotdogonastick.olo.com/',
+            'https://hotdogonastick.olo.com/locations',
             location_name[n],
             street_address[n],
             city[n],
