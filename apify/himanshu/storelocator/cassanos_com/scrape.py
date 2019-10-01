@@ -24,7 +24,6 @@ def fetch_data():
         r1 = requests.get(dt['href'])
         soup1=BeautifulSoup(r1.text,'lxml')
         loc=list(soup1.find('address',{'id':'rColAddress'}).stripped_strings)
-        print(loc)
         name=loc[0].strip()
         storeno=loc[0].split('#')[-1].strip()
         address=loc[1].strip()

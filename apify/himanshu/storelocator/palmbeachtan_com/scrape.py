@@ -16,7 +16,6 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://palmbeachtan.com"
-    return_main_object=[]
     r = requests.get(base_url+'/locations/states/')
     soup=BeautifulSoup(r.text,'lxml')
     main=soup.find('div',{"class":"state-list"}).find_all('a')
@@ -25,7 +24,7 @@ def fetch_data():
         soup1=BeautifulSoup(r1.text,'lxml')
         main1=soup1.find('section',{"id":"content"}).find('div',{'class':"copy"}).find_all('a')
         for atag1 in main1:
-            print(base_url+atag['href']+atag1['href'])
+            print(atag['href'])
             r2 = requests.get(base_url+atag['href']+atag1['href'])
             soup2=BeautifulSoup(r2.text,'lxml')
             address=''
@@ -34,7 +33,6 @@ def fetch_data():
             zip=''
             phone=''
             name=soup2.find('div',{'class':"location-info"}).parent.find('h1').text.strip()
-            print(name)
             if soup2.find('data',{"itemprop":"streetAddress"})!=None:
                 address=soup2.find('data',{"itemprop":"streetAddress"}).text.strip()
             if soup2.find('data',{"itemprop":"addressLocality"})!=None:
@@ -47,12 +45,12 @@ def fetch_data():
                 phone=soup2.find('data',{"itemprop":"telephone"}).text.strip()
             hour=''
             if soup2.find('aside',{"class":"hours"})!=None:
-                  hour=' '.join(list(soup2.find('aside',{"class":"hours"}).find('div',{"class":"schedule"}).stripped_strings)).strip()
-            lat=''
-            lng=''
+                  hour=' '.join(list(soup2.find('aside',{"class":"hours"}).stripped_strings)).strip()
+            lt=soup2.find('address',{"itemprop":"address"}).find('a')['href'].split('=')[-1].split(',')
+            lat=lt[0]
+            lng=lt[1]
             storeno=''
             country="US"
-            hour=''
             store=[]
             store.append(base_url)
             store.append(name if name else "<MISSING>")
@@ -67,8 +65,7 @@ def fetch_data():
             store.append(lat if lat else "<MISSING>")
             store.append(lng if lng else "<MISSING>")
             store.append(hour if hour.strip() else "<MISSING>")
-            return_main_object.append(store)
-    return return_main_object
+            yield store
 
 def scrape():
     data = fetch_data()

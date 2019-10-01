@@ -70,8 +70,13 @@ def fetch_data():
         
         for st in range(len(stores)): 
             #print(s,st)
+            loc_page = "https://www.shakeshack.com"+stores[st].find("a").get("href")
+            soup_loc = BeautifulSoup(requests.get(loc_page).text)
+            latitude,longitude = str(soup_loc.find_all("script",attrs={"type":"text/javascript"})[7]).replace("\r","").replace("\n"," ").split("center: {")[1].split("},")[0].split(",")
             location_name = stores[st].find("h4").text
-            
+            #loc_page = "https://www.shakeshack.com"+stores[st].find("a").get("href")
+            #soup_loc = BeautifulSoup(requests.get(loc_page).text)
+            #soup_loc.find("div",attrs={"class","place-card place-card-large"})
             address = stores[st].find("div",attrs={"class":"address"}).text.replace("\xa0"," ").split("\n")
          
             data_record = {}
@@ -118,10 +123,10 @@ def fetch_data():
             if state == "Washington, D.C." or state == "Washington DC": 
                 state = "Washington"
 
-            data_record['street_address'] = street_address
-            data_record['city'] = city
-            data_record['state'] = state
-            data_record['zip'] = zipcode
+            data_record['street_address'] = street_address.replace("’","'").replace(" "," ").replace("–","-")  
+            data_record['city'] = city.replace("’","'").replace(" "," ").replace("–","-")  
+            data_record['state'] = state.replace("’","'").replace(" "," ").replace("–","-")  
+            data_record['zip'] = zipcode.replace("’","'").replace(" "," ").replace("–","-")  
             data_record['country_code'] = country_code
             data_record['store_number'] = '<MISSING>'
             try:
@@ -130,9 +135,12 @@ def fetch_data():
                 data_record['phone'] = '<MISSING>'
                 
             data_record['location_type'] = '<MISSING>'
-            data_record['latitude'] = '<MISSING>'
-            data_record['longitude'] = '<MISSING>'
-            data_record['hours_of_operation'] = hours_of_open
+            data_record['latitude'] = latitude.replace("lat:","")
+            data_record['longitude'] = longitude.replace("lng:","")
+            data_record['page_url'] = '<MISSING>'
+            data_record['hours_of_operation'] = hours_of_open.replace("’","'").replace(" "," ").replace("–","-")  
+            #print(hours_of_open)
+            #break
             data.append(data_record)
     return data
 

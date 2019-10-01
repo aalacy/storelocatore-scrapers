@@ -3,10 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -25,7 +24,7 @@ def fetch_data():
     return_main_object = []
     for script in soup.find_all("script"):
         if "locations: " in script.text:
-            location_list = json.loads(script.text.split("locations: ")[1].split("}}}],")[0] + "}}}]")
+            location_list = json.loads(script.text.split("locations: ")[1].split("}}]")[0] + "}}]")
             for store_data in location_list:
                 store = []
                 store.append("https://www.ehsandwich.com")

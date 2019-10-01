@@ -27,11 +27,11 @@ def fetch_data():
         for store_data in page_request.json()["data"]["posts"]:
             store = []
             store.append("https://www.greatexpressions.com")
-            store.append(store_data["service_title"])
-            store.append(store_data["address"])
-            store.append(store_data["city"])
-            store.append(store_data["state"])
-            store.append(store_data["zip_code"])
+            store.append(store_data["service_title"] if store_data["service_title"] else "<MISSING>")
+            store.append(store_data["address"] if store_data["address"] else "<MISSING>")
+            store.append(store_data["city"] if store_data["city"] else "<MISSING>")
+            store.append(store_data["state"] if store_data["state"] else "<MISSING>")
+            store.append(store_data["zip_code"] if store_data["zip_code"] else "<MISSING>")
             store.append("US")
             store.append(store_data["ID"])
             store.append(store_data["tel"])

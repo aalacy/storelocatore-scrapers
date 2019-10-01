@@ -44,17 +44,17 @@ def fetch_data():
         print(location_name)
         raw_address = driver.find_element_by_css_selector('div.address-locator').text
         address = raw_address.splitlines()
-        print(address)
         street_addr = address[0]
         city = address[1].split(',')[0]
         zipcode = address[1].split(',')[1].split(' ')[-1]
         state = address[1].split(',')[1].split(' ')[-2]
         phone = address[2]
-        hours_of_op =  driver.find_element_by_css_selector('div.location-info-left > div:nth-child(4) > h3').text + "\n" + \
-                       driver.find_element_by_css_selector('div.location-info-left > div:nth-child(4) > ul').text +  "\n" + \
-                       driver.find_element_by_css_selector('div.location-info-left > div:nth-child(5) > h3').text +  "\n" + \
+        hours_of_op =  driver.find_element_by_css_selector('div.location-info-left > div:nth-child(4) > h3').text + " " + \
+                       driver.find_element_by_css_selector('div.location-info-left > div:nth-child(4) > ul').text +  " " + \
+                       driver.find_element_by_css_selector('div.location-info-left > div:nth-child(5) > h3').text +  " " + \
                        driver.find_element_by_css_selector('div.location-info-left > div:nth-child(5) > ul').text
-        print(hours_of_op)
+        lat = driver.execute_script("return miliosStores;")[0][1]
+        lng = driver.execute_script("return miliosStores;")[0][2]
         data.append([
              'https://milios.com/',
               location_name,
@@ -66,8 +66,8 @@ def fetch_data():
               '<MISSING>',
               phone,
               '<MISSING>',
-              '<MISSING>',
-              '<MISSING>',
+              lat,
+              lng,
               hours_of_op
             ])
 

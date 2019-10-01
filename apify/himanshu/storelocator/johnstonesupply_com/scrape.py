@@ -26,7 +26,6 @@ def fetch_data():
         soup1=BeautifulSoup(r1.text,'lxml')
         for val in soup1.find_all('div',{"class":"floatLeft width400"}):
             loc=list(val.stripped_strings)
-            print(loc)
             name=loc[0].strip()
             address=loc[1].strip()
             city=loc[2].split(',')[0].strip()
@@ -34,7 +33,7 @@ def fetch_data():
             zip=loc[2].split(',')[1].strip().split(' ')[1]
             phone=loc[4]
             store=[]
-            store.append("https://www.kessler-rehab.com")
+            store.append("https://www.johnstonesupply.com")
             store.append(name)
             store.append(address)
             store.append(city)
@@ -46,7 +45,7 @@ def fetch_data():
             store.append('US')  
             store.append("#"+loc[0].split('#')[-1].strip())
             store.append(phone.replace('(HEAT)',''))
-            store.append("Kessler Rehab")
+            store.append("johnstonesupply")
             store.append('<MISSING>')
             store.append('<MISSING>')
             store.append('<MISSING>')

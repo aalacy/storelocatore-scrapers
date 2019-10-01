@@ -1,10 +1,7 @@
 # Import libraries
-import xml
-import lxml
 import requests
 from bs4 import BeautifulSoup
 import csv
-import string
 import re
 
 
@@ -29,74 +26,111 @@ def fetch_data():
     repo_list = soup.findAll('div', {'class': 'et_pb_text_inner'})
     cleanr = re.compile('<.*?>')
     state = ""
+    p = 1
     for repo in repo_list:
-        repo = str(repo)
-        start = repo.find("<p>") + 3
-        end = repo.find("<br", start)
-        title = repo[start:end]
-        # title = re.sub(cleanr, '', title)
+        try:
+            detail = repo.text
+            detail = detail.replace("\n","|")
+            detail = detail[1:len(detail)]
+            detail = detail.replace("||","|")
+            #print(detail)
 
-        if title.find("strong") > -1 and title.find("NOW OPEN") == -1:
-            title = re.sub(cleanr, '', title)
-            print(title)
-            start = end + 6
-            end = repo.find("<br", start)
-            address = repo[start:end]
-            print(address)
-            start = end + 6
-            start = repo.find(">", start)+1
-            end = repo.find("<", start)
-            phone = repo[start:end]
-            phone = re.sub("\n","",phone)
-            if len(phone) == 0:
-                phone = "<MISSING>"
-            print(phone)
-            start = repo.find("<br", end) + 6
-            end = repo.find("<", start)
-            hours = repo[start:end]
-            start =end + 6
-            end = repo.find("<", start)
-            hours = hours+ " " + repo[start:end]
-            print(hours)
-            start = repo.find("href", end)
-            start = repo.find("@", start) + 1
-            if start > 0:
-                end = repo.find(",", start)
-                lat = repo[start:end]
-                start = end+1
-                end = repo.find(",", start)
-                longt = repo[start:end]
-            else:
-                lat = "<MISSING>"
-                longt = "<MISSING>"
-
-            print(lat)
-            print(longt)
-            print(state)
-            print(".....................")
-            data.append([
-                url,
-                title,
-                address,
-                title,
-                state,
-                '<MISSING>',
-                'US',
-                '<MISSING>',
-                phone,
-                '<MISSING>',
-                lat,
-                longt,
-                hours
-            ])
-        else:
-            start = repo.find("<h3>") + 6
-            if start > 0:
-                start = repo.find(";",start) + 3
-                end = repo.find("<", start)
-                state = repo[start:end]
-                if state.find("Bar") > 1:
+            start = detail.find("|")
+            if start == len(detail)-1:
+                state = detail[0:start]
+                if state.find("Sports Bar & Wings") > -1:
                     state = "<MISSING>"
+            else:
+                end = start
+                start = 0
+                title = detail[start:end]
+                city = title
+                if title.find("NOW OPEN!") > -1:
+                    start = detail.find("|") + 1
+                    end = detail.find("|", start)
+                    title = detail[start:end]
+                    start =end +1
+                    end = detail.find("|", start)
+                    city = detail[start:end]
+
+                if city.find("/") > 1:
+                    city = city[0:city.find("/")]
+
+
+                start = end + 1
+                end = detail.find("|", start)
+                street = detail[start:end]
+
+                start = end + 1
+                end = detail.find("|", start)
+                phone = detail[start:end]
+                if phone.find("(") == -1:
+                    street = street + phone
+                    start = end + 1
+                    end = detail.find("|", start)
+                    phone = detail[start:end]
+
+                start = end + 1
+                end = detail.find("|", start)
+                hours = detail[start:end]
+
+                start = end + 1
+                end = detail.find("|", start)
+                temp = detail[start:end]
+                if temp.find("am") > -1:
+                    hours = hours + " | " + temp
+
+                links = repo.findAll('a')
+                link = links[1]
+                try:
+                    link = link['href']
+                    start = link.find("@")
+                    if start == -1:
+                        lat = "<MISSING>"
+                        longt = "<MISSING>"
+                    else:
+                        end = link.find(",",start)
+                        start = start + 1
+                        lat = link[start:end]
+                        start = end + 1
+                        end = link.find(",",start)
+                        longt = link[start:end]
+
+                except:
+                    lat = "<MISSING>"
+                    longt = "<MISSING>"
+
+                print(p)
+                print(title)
+                print(street)
+                print(city)
+                print(state)
+                print(phone)
+                print(hours)
+                print(lat)
+                print(longt)
+                data.append([
+                    url,
+                    title,
+                    street,
+                    city,
+                    state,
+                    '<MISSING>',
+                    'US',
+                    '<MISSING>',
+                    phone,
+                    '<MISSING>',
+                    lat,
+                    longt,
+                    hours
+                ])
+
+                p += 1
+                print("..............")
+
+        except:
+            print("Empty div")
+        # title = re.sub(cleanr, '', title)
 
     return data
 

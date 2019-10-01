@@ -35,7 +35,8 @@ def fetch_data():
         tem_var =[]
         location_name = i.find('h3', {'class': 'location-name'}).text
         address_tmp2 = i.find_all('div', {'class': 'threecol'})[1].find('p')
-        hour = i.find_all('div', {'class': 'threecol'})[2].text
+        hour = i.find_all('div', {'class': 'threecol'})[2].text.replace('\r','').replace('\n','')
+        print(hour)
         address = list(address_tmp2.stripped_strings)[0]
         city_tmp = list(address_tmp2.stripped_strings)[1].split(',')
         city = city_tmp[0]

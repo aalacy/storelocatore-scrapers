@@ -25,7 +25,7 @@ def fetch_data():
         a=store[n].get_text()
         if ('Directions' not in a) and (a!="") and ('Top' not in a):
             street_address.append(store[n].get_text().strip().split(",")[0].split('   ')[0])
-            tagged = usaddress.tag(store[n].get_text().strip().split(",")[0])[0]
+            tagged = usaddress.tag(store[n].get_text())[0]
             try:
                 city.append(tagged['PlaceName'])
             except:

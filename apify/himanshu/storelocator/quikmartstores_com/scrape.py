@@ -26,6 +26,10 @@ def fetch_data():
     return_main_object=[]
     k = (soup.find_all("table",{"border":"0","cellpadding":"10","cellspacing":"0"}))
     
+    # name1 = soup.find("div",{"id":"navigation"}).find_all("a")[1:4]
+
+
+
     street_address =[]
     phone=[]
     store_no1 =[]
@@ -44,7 +48,7 @@ def fetch_data():
     for i in range(len(street_address)):
         store = list()
         store.append("http://www.quikmartstores.com")
-        store.append(street_address[i])
+        store.append("<MISSING>")
         store.append(street_address[i])
         store.append("<MISSING>")
         store.append("<MISSING>")
@@ -69,3 +73,5 @@ def scrape():
 
 
 scrape()
+
+

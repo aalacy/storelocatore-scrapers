@@ -22,9 +22,10 @@ def fetch_data():
     r = requests.get("https://www.midwestvisioncenters.com/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
-    ul = soup.find_all("ul",{"class":"sub-menu"})[-2:]
-    for i in range(len(ul)):
-        for link in ul[i].find_all('a'):
+    for sub_menu in soup.find("span",text="Locations").parent.parent.find_all("ul",{"class":"sub-menu"}):
+        if sub_menu.find("ul",{"class":"sub-menu"}) == None:
+            continue
+        for link in sub_menu.find("ul",{"class":"sub-menu"}).find_all("a"):
             print(link["href"])
             location_reqeust = requests.get(link["href"],headers=headers)
             location_soup = BeautifulSoup(location_reqeust.text,"lxml")
@@ -33,8 +34,8 @@ def fetch_data():
                 location_details.extend(list(location_soup.find_all("h5",{'style':"text-align: center;"})[k].stripped_strings))
                 if len(location_details[0]) < 10:
                     location_details[0] = " ".join(location_details[0:2])
-                    del location_details[0]
-                    del location_details[0]
+                    del location_details[1]
+            print(location_details[0:6])
             store = []
             store.append("https://www.midwestvisioncenters.com")
             store.append(link["href"].split("/")[-2])
@@ -68,7 +69,9 @@ def fetch_data():
             store.append("<MISSING>")
             phone = ""
             for k in range(len(location_details[0:5])):
-                if "Phone" in location_details[k]:
+                if "Phone" == location_details[k]:
+                    phone = location_details[k+1]
+                elif "Phone" in location_details[k]:
                     phone = location_details[k].split("\xa0")[0].split("Phone")[1].strip()
                     if phone == "":
                         phone = location_details[k].split("\xa0")[1]
@@ -82,8 +85,9 @@ def fetch_data():
                 store.append(geo_location.split("&sll=")[1].split(",")[0])
                 store.append(geo_location.split("&sll=")[1].split(",")[0].split("&")[0])
             hours = ""
-            for k in range(len(location_details[0:5])):
-                if "AM" in location_details[k] or "PM" in location_details[k]:
+            print(location_details[0:7])
+            for k in range(len(location_details[0:7])):
+                if "AM" in location_details[k] or "PM" in location_details[k] or "open" in location_details[k].lower() or "monday" in location_details[k].lower() or "close" in location_details[k].lower() or "Sat" in location_details[k] or "thursday" in location_details[k].lower() or "tuesday" in location_details[k].lower() or "wednesday" in location_details[k].lower() or "friday" in location_details[k].lower() or "sunday" in location_details[k].lower():
                     hours = hours + " " + location_details[k]
             store.append(hours if hours != "" else " ".join(location_details[3:6]).split("Manager:")[0])
             return_main_object.append(store)

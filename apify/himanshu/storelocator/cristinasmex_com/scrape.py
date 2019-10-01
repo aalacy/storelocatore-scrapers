@@ -52,12 +52,13 @@ def fetch_data():
                 return_object.append(store_zip)
                 return_object.append("US")
                 return_object.append("<MISSING>")
-                return_object.append("<MISSING>")
+                return_object.append(phone)
                 return_object.append("Cristinas Mex")
                 return_object.append("<MISSING>")
                 return_object.append("<MISSING>")
                 return_object.append(hour)
                 return_main_object.append(return_object)
+             
     return return_main_object
 
 def scrape():

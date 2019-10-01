@@ -22,7 +22,8 @@ def fetch_data():
     base_url= "https://carnitasmichoacanla.com/locations/"
     r = requests.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
-    data = soup.find_all("div",{"class":"entry-content","itemprop":"text"})
+    data = soup.find_all("div",{"class":"entry-content"})
+    # print(data)
     name_store=[]
     store_detail=[]
     return_main_object=[]
@@ -53,7 +54,6 @@ def fetch_data():
             if a1.a != None:
                 latitude.append(a1.a['href'].split("@")[1].split("z")[:1][0].split(',')[0])
                 longitude.append(a1.a['href'].split("@")[1].split("z")[:1][0].split(',')[1])
-                
 
         st = i.find_all("strong")
         for j in st:
@@ -83,6 +83,7 @@ def fetch_data():
         store.append(latitude[i])
         store.append(longitude[i])
         store.append(hours[i])
+        # print(hours[i])
         return_main_object.append(store)
     
     return return_main_object
@@ -94,3 +95,7 @@ def scrape():
 
 
 scrape()
+
+
+
+

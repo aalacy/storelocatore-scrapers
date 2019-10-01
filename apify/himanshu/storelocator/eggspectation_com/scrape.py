@@ -105,9 +105,11 @@ def fetch_data():
         store.append("eggspectation")
         store.append("<MISSING>")
         store.append("<MISSING>")
-        store.append(hours[i])
-           
-        return_main_object.append(store)
+        store.append(hours[i].replace(" TBA","<MISSING>"))
+        if "45 Carlton Street Unit 200" in store or " 7600 Weston Road, Unit 70C" in store:
+            pass
+        else:
+            return_main_object.append(store)
     return return_main_object
 
 

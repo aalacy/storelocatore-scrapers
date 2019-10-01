@@ -26,6 +26,8 @@ def fetch_data():
         name = location.text.strip()
         location_request = requests.get(location["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
+        if location_soup.find("span",text=re.compile("COMING SOON")):
+            continue
         address = list(location_soup.find_all("address")[-1].find("p").stripped_strings)
         if len(address) == 4:
             address = address[1:-1]
@@ -51,6 +53,8 @@ def fetch_data():
         store.append(geo_location.split("/@")[1].split(",")[0] if geo_location != "" else "<MISSING>")
         store.append(geo_location.split("/@")[1].split(",")[1] if geo_location != "" else "<MISSING>")
         store.append("<MISSING>")
+        for i in range(len(store)):
+            store[i] = store[i].replace("–","-")
         return_main_object.append(store)
     return return_main_object
 
