@@ -8,7 +8,7 @@ def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             if row:
@@ -74,6 +74,7 @@ def fetch_data():
     for n in range(0,len(location_name)):
         data.append([
             'http://keyfood.mywebgrocer.com',
+            'http://keyfood.mywebgrocer.com/StoreLocator.aspx?s=723953668&g=2d6a1d25-bf8f-4056-8736-269d1b9db7cf&uc=581EF7',
             location_name[n],
             street_address[n],
             city[n],
