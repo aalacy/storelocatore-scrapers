@@ -16,52 +16,45 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = 'https://pizza.dominos.ca/'
+    states = []
+    url = 'https://pizza.dominos.com/sitemap.xml'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if '<a rel="canonical" href="http://pizza.dominos.ca/' in line:
-            items = line.split('class="location"><h2>')
-            for item in items:
-                if 'rel="canonical" href="' in item:
-                    locs.append(item.split('rel="canonical" href="')[1].split('"')[0])
+        if 'https://pizza.dominos.com/' in line and '/home/sitemap' not in line:
+            states.append(line.replace('\r','').replace('\n','').replace('\t','').strip())
+    for state in states:
+        Found = True
+        print('Pulling State %s...' % state)
+        r2 = session.get(state, headers=headers)
+        for line2 in r2.iter_lines():
+            if 'https://pizza.dominos.com/' in line2:
+                if line2.count('/') == 4:
+                    Found = False
+                if Found:
+                    locs.append(line2.replace('\r','').replace('\n','').replace('\t','').strip())
+        print('%s Locations Found...' % str(len(locs)))
     for loc in locs:
         print('Pulling Location %s...' % loc)
         r2 = session.get(loc, headers=headers)
-        website = 'dominos.ca'
-        country = 'CA'
-        typ = 'Store'
-        store = loc.rsplit('-',1)[1].replace('/','')
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        zc = ''
-        phone = ''
-        lat = ''
-        lng = ''
-        hours = ''
-        lines = r2.iter_lines()
-        for line2 in lines:
-            if '<h1 itemprop="name">' in line2:
-                name = line2.split('<h1 itemprop="name">')[1].split('<')[0]
-            if 'id="Street" name="Street" value="' in line2:
-                add = line2.split('id="Street" name="Street" value="')[1].split('"')[0]
-            if 'id="City" name="City" value="' in line2:
-                city = line2.split('id="City" name="City" value="')[1].split('"')[0]
-            if 'id="Region" name="Region" value="' in line2:
-                state = line2.split('id="Region" name="Region" value="')[1].split('"')[0]
-            if 'id="PostalCode" name="PostalCode" value="' in line2:
-                zc = line2.split('id="PostalCode" name="PostalCode" value="')[1].split('"')[0]
-            if 'itemprop="telephone">' in line2:
-                phone = line2.split('itemprop="telephone">')[1].split('<')[0]
-            if 'coords[0] = ' in line2:
-                lat = line2.split('coords[0] = ')[1].split(';')[0]
-            if 'coords[1] = ' in line2:
-                lng = line2.split('coords[1] = ')[1].split(';')[0]
-            if 'itemprop="openingHours">' in line2:
-                g = next(lines)
-                hours = g.split('</table>')[0].strip().replace('\t','').replace('</td></tr><tr><td>','; ').replace('<tr><td>','').replace('</td></tr>','').replace('</td><td>',': ')
-        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        for line2 in r2.iter_lines():
+            if '"branchCode":"' in line2:
+                store = line2.split('"branchCode":"')[1].split('"')[0]
+                lat = line2.split('"latitude":"')[1].split('"')[0]
+                lng = line2.split('"longitude":"')[1].split('"')[0]
+                add = line2.split('"streetAddress":"')[1].split('"')[0]
+                name = "Domino's #" + store
+                website = 'dominos.com'
+                country = 'US'
+                zc = line2.split('"postalCode":"')[1].split('"')[0]
+                state = line2.split('"addressRegion":"')[1].split('"')[0]
+                city = line2.split('"addressLocality":"')[1].split('"')[0]
+                typ = 'Store'
+                hours = line2.split('"openingHours":["')[1].split('"]')[0].replace('","','; ')
+                try:
+                    phone = line2.split(',"telephone":"')[1].split('"')[0]
+                except:
+                    phone = '<MISSING>'
+                yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
