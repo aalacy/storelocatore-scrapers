@@ -8,7 +8,7 @@ def write_output(data):
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
 		# Header
-		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 		# Body
 		for row in data:
 			writer.writerow(row)
@@ -36,7 +36,7 @@ def fetch_data():
 		store_number = "<MISSING>"
 		phone = re.findall("[[\d]{3} [\d]{3} [\d]{4}", item.text)[0]
 		location_type = "<MISSING>"
-		hours_of_operation = "<MISSING>"
+		hours_of_operation = (item.findAll("p")[2].text + item.findAll("p")[3].text).replace("  ", " ").strip()
 
 		link = "http://supersupermarket.com/" + item.a['href']
 		link = link.replace('home','contact-us')
@@ -77,7 +77,7 @@ def fetch_data():
 		state = raw_line[raw_line.rfind(',')+1:raw_line.rfind(' ')].strip()
 		zip_code = raw_line[raw_line.rfind(' ')+1:].strip()
 
-		data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+		data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation,link])
 
 	return data
 

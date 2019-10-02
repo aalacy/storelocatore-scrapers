@@ -57,13 +57,12 @@ def fetch_data():
     for zip_code in zips:
         # data = '{"strLocation":"85029","strLat":33.5973469,"strLng":-112.10725279999997,"strRadius":"100","country":"US"}'
         # print("zips === " + str(zip_code))
-        r = requests.get('https://agents.allstate.com/locator.html?search='+str(zip_code)+'&r=100000000000',headers=headers)
-        soup1= BeautifulSoup(r.text,"lxml").text
-        address=[]
-      
-        k = json.loads(soup1)
+        try:
+            r = requests.get('https://agents.allstate.com/locator.html?search='+str(zip_code)+'&r=1000',headers=headers)
+            soup1= BeautifulSoup(r.text,"lxml").text
+            address=[]
         
-        if "entities" in k['response']:
+            k = json.loads(soup1)
             for i in k['response']['entities']:
                 tem_var=[]
                 postalCode = i['profile']['address']['postalCode']
@@ -76,7 +75,7 @@ def fetch_data():
                     st = i['profile']['address']['line2']
                 st=  i['profile']['address']['line1'] + ' '+time
                 if "facebookCallToAction" in i['profile']:
-                    phone =i['profile']['facebookCallToAction']['value'].replace("https://agents.allstate.com/trey-cook-brookings-sd.html","<MISSING>").replace("https://agents.allstate.com/tracy-ratcliff-wentzville-mo.html","<MISSING>").replace("https://agents.allstate.com/bruce-bagley-family-insurance-woodburn-or.html","<MISSING>").replace("http://www.facebook.com/alexmartinez.allstate/","<MISSING>").replace("https://agents.allstate.com/daniel-harper-charlottesville-va.html","<MISSING>").replace("https://agents.allstate.com/daniel-harper-charlottesville-va.html","<MISSING>").replace("https://agents.allstate.com/bruce-bagley-family-insurance-woodburn-or.html","<MISSING>").replace("http://www.facebook.com/alexmartinez.allstate/","<MISSING>").replace("https://agents.allstate.com/daniel-harper-charlottesville-va.html","<MISSING>").replace("https://agents.allstate.com/kristin-bishop-spotsylvania-va.html","<MISSING>").replace("https://agents.allstate.com/0B8394","<MISSING>").replace("https://agents.allstate.com/0B8503","<MISSING>").replace("sharontnugent@allstate.com","<MISSING>")
+                    phone =(i['profile']['facebookCallToAction']['value'])
                 else:
                     phone = "<MISSING>"
 
@@ -120,8 +119,10 @@ def fetch_data():
                     continue
             
                 addresses.append(tem_var[3])
-                return_main_object.append(tem_var)
-
+                # print(tem_var)
+                yield tem_var
+        except:
+            continue
 
                
 

@@ -8,6 +8,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from geopy.geocoders import Nominatim
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -33,19 +34,20 @@ def fetch_data():
     # Your scraper here
     data = []
     p = 1
+    #driver = webdriver.Chrome('/Users/Dell/local/chromedriver')
     driver = webdriver.Chrome('chromedriver')
     links = []
     prov = []
     url = "http://www.redapplestores.com/store/52974/"
     driver.get(url)
-    time.sleep(5)
+    time.sleep(4)
     container = driver.find_element_by_class_name("disallow")
     container.click()
 
     province_box = driver.find_element_by_id("province-selector")
     poption = province_box.find_elements_by_tag_name('option')
     for n in range(1,len(poption)):
-        print(poption[n].get_attribute('value'))
+        # print(poption[n].get_attribute('value'))
         province = poption[n].get_attribute('value')
         prov.append(province)
     print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
@@ -55,7 +57,7 @@ def fetch_data():
         print(prov[i])
         print("checking.....")
         city_box = driver.find_element_by_id("city-selector")
-        time.sleep(10)
+        time.sleep(5)
         coption = city_box.find_elements_by_tag_name('option')
         for j in range(1,len(coption)):
             city = coption[j].get_attribute("value")
@@ -64,91 +66,141 @@ def fetch_data():
             links.append(link)
 
     driver.quit()
-    for n in range(0,len(links)):
-        driver = get_driver()
-        driver.get(links[n])
-        time.sleep(2)
-        title = driver.find_element_by_id("store_title").text
 
-        address = driver.find_element_by_id("store_address").text
-        address = usaddress.parse(address)
-        print(address)
-        i = 0
-        street = ""
-        city = ""
-        state = ""
-        pcode = ""
-        while i < len(address):
-            temp = address[i]
-            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or \
-                    temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
-                "USPSBoxID") != -1 or temp[1].find("LandmarkName") != -1:
-                street = street + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                pcode = pcode + " " + temp[0]
-            i += 1
-        phone = driver.find_element_by_id("store_phone").text
+    p = 1
+    print(len(links))
+    for n in range(0, len(links)):
+        link = links[n]
+        print(link)
+        driver1 = get_driver()
+        driver1.get(link)
 
-        hours = str(driver.find_element_by_id("store_hours").text)
-        hours = hours.replace("\n", " | ")
-        street = street.lstrip()
-        city = city.lstrip()
-        state = state.lstrip()
-        phone = phone.lstrip()
-        pcode = pcode.lstrip()
+        scripts = driver1.page_source
+        start = scripts.find("article = {")
+        if start != -1:
+            end = scripts.find("</script>", start)
+            scripts = scripts[start:end]
+            start = scripts.find("https://www.google.ca/maps")
+            if start != -1:
+                start = scripts.find("@", start) + 1
+                end = scripts.find(",", start)
+                lat = scripts[start:end]
+                start = end + 1
+                end = scripts.find(",", start)
+                longt = scripts[start:end]
+            else:
+                start = scripts.find('"lat"')
+                start = scripts.find(":", start) + 1
+                end = scripts.find(",", start)
+                lat = scripts[start:end]
+                start = start = scripts.find('"lon"')
+                start = scripts.find(":", start) + 1
+                end = scripts.find(",", start)
+                longt = scripts[start:end]
 
-        street = street.replace(",", "")
-        street = street.replace("(", "")
-        street = street.replace(")", "")
-        city = city.replace(",", "")
-        city = city.replace("(", "")
-        city = city.replace(")", "")
-        title = title.replace(",", "")
+            start = scripts.find('"id":', 0)
+            start = scripts.find(":", start) + 1
+            end = scripts.find(',', start)
+            store = scripts[start:end]
 
-        if len(street) < 4:
-            address = "<MISSING>"
-        if len(title) < 3:
-            title = "<MISSING>"
-        if len(city) < 3:
-            city = "<MISSING>"
-        if len(state) < 2:
-            state = "<MISSING>"
-        if len(pcode) < 5:
-            pcode = "<MISSING>"
-        if len(phone) < 5:
-            phone = "<MISSING>"
-        if len(hours) < 3:
-            hours = "<MISSING>"
+            start = scripts.find("address")
+            start = scripts.find(":", start) + 2
+            end = scripts.find('"', start)
+            street = scripts[start:end]
 
-        print(title)
-        print(street)
-        print(city)
-        print(state)
-        print(pcode)
-        print(phone)
-        print(hours)
-        print(p)
-        print("......................................")
-        data.append([
-            url,
-            title,
-            street,
-            city,
-            state,
-            pcode,
-            "CA",
-            "<MISSING>",
-            phone,
-            "<MISSING>",
-            "<MISSING>",
-            "<MISSING>",
-            hours
-        ])
-        p += 1
+            start = scripts.find("country")
+            start = scripts.find(":", start) + 2
+            end = scripts.find('"', start)
+            ccode = scripts[start:end]
+
+            start = scripts.find("postalzip")
+            start = scripts.find(":", start) + 2
+            end = scripts.find('"', start)
+            pcode = scripts[start:end]
+
+            start = scripts.find("provstate")
+            start = scripts.find(":", start) + 2
+            end = scripts.find('"', start)
+            state = scripts[start:end]
+
+            start = scripts.find("city")
+            start = scripts.find(":", start) + 2
+            end = scripts.find('"', start)
+            city = scripts[start:end]
+
+            start = scripts.find("phone", 0)
+            start = scripts.find(":", start) + 2
+            end = scripts.find('"', start)
+            phone = scripts[start:end]
+
+
+            start = scripts.find("google_structured_data")
+            end = scripts.find("district")
+            hdetail = scripts[start:end]
+            i = True
+            start = 0
+            hours = ""
+            while i:
+                start = hdetail.find("dayOfWeek", start)
+                end = hdetail.find("@type", start)
+                if end == -1:
+                    end = len(hdetail) - 1
+                    i = False
+
+                temp = hdetail[start:end]
+
+                start1 = temp.find(":", 0) + 1
+                end1 = temp.find("}", start1)
+                temp = temp[start1:end1]
+                temp = temp.replace('\\', "")
+                temp = temp.replace(']', "")
+                temp = temp.replace('[', "")
+                temp = temp.replace('"', "")
+                temp = temp.replace(',', "-")
+                hours = hours + "|" + temp
+                start = end
+
+            title = "Red Apple - " + city + "," + state
+
+            hours = hours[1:len(hours)]
+            if len(hours) < 3:
+                hours = "<MISSING>"
+            if len(phone) < 3:
+                phone = "<MISSING>"
+
+            pcode = pcode.replace("-"," ")
+
+            print(store)
+            print(title)
+            print(street)
+            print(city)
+            print(state)
+            print(pcode)
+            print(ccode)
+            print(phone)
+            print(hours)
+            print(lat)
+            print(longt)
+            print(p)
+            print("......................................")
+            data.append([
+                "http://www.redapplestores.com/locations.htm",
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "CA",
+                store,
+                phone,
+                "<MISSING>",
+                lat,
+                longt,
+                hours
+            ])
+            p += 1
+
+
     return data
 
 def scrape():
