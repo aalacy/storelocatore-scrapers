@@ -1,6 +1,7 @@
 from selenium import webdriver
 from time import sleep
 import pandas as pd
+import json
 
 
 from selenium.webdriver.chrome.options import Options
@@ -28,8 +29,17 @@ def fetch_data():
     loc=[]
     for i in location_data_urls:
         driver.get(i)
+        #sleep(3)
         loc.append(driver.find_element_by_xpath('//div[@class="col sqs-col-6 span-6"]/div[contains(@class,"sqs-block")][@data-block-type="2"][contains(@id,"block")][2]').text.split('\n'))
-
+        data['longitude'].append(json.loads(driver.find_element_by_xpath('//div[contains(@class,"sqs-block map-block sqs-block-map")]').get_attribute('data-block-json'))['location']['mapLat'])
+        data['latitude'].append(json.loads(driver.find_element_by_xpath('//div[contains(@class,"sqs-block map-block sqs-block-map")]').get_attribute('data-block-json'))['location']['mapLng'])
+        try:
+            if "TWO LOCATIONS:" in driver.find_element_by_xpath('//div[@class="col sqs-col-6 span-6"]/div[contains(@class,"sqs-block")][@data-block-type="2"][contains(@id,"block")][2]').text:
+                data['longitude'].append(json.loads(driver.find_element_by_xpath('//div[contains(@class,"sqs-block map-block sqs-block-map")]').get_attribute('data-block-json'))['location']['mapLat'])
+                data['latitude'].append(json.loads(driver.find_element_by_xpath('//div[contains(@class,"sqs-block map-block sqs-block-map")]').get_attribute('data-block-json'))['location']['mapLng'])
+        except:
+            pass
+    
     for ind,i in enumerate(loc):
         if len(i)==3:
             data['street_address'].append(i[0])
@@ -43,8 +53,6 @@ def fetch_data():
             data['hours_of_operation'].append('<MISSING>')
             data['store_number'].append('<MISSING>')
             data['location_type'].append('<MISSING>')
-            data['latitude'].append('<MISSING>')
-            data['longitude'].append('<MISSING>')
             data['page_url'].append(location_data_urls[ind])
             data['location_name'].append(location_data_urls[ind].split('/')[-1])
 
@@ -60,8 +68,6 @@ def fetch_data():
             data['hours_of_operation'].append('<MISSING>')
             data['store_number'].append('<MISSING>')
             data['location_type'].append('<MISSING>')
-            data['latitude'].append('<MISSING>')
-            data['longitude'].append('<MISSING>')
             data['page_url'].append(location_data_urls[ind])
             data['location_name'].append(location_data_urls[ind].split('/')[-1])
 
@@ -76,8 +82,6 @@ def fetch_data():
             data['hours_of_operation'].append('<MISSING>')
             data['store_number'].append('<MISSING>')
             data['location_type'].append('<MISSING>')
-            data['latitude'].append('<MISSING>')
-            data['longitude'].append('<MISSING>')
             data['page_url'].append(location_data_urls[ind])
             data['location_name'].append(location_data_urls[ind].split('/')[-1])
 
