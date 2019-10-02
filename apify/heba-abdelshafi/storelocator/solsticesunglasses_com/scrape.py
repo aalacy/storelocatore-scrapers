@@ -38,8 +38,12 @@ def fetch_data():
         data['store_number'].append('<MISSING>')
         data['longitude'].append('<MISSING>')
         data['latitude'].append('<MISSING>')
-        data['hours_of_operation'].append('<INACCESSIBLE>')
-
+        #data['hours_of_operation'].append('<INACCESSIBLE>')
+    for i in driver.find_elements_by_xpath('//a[@onclick="return false"]'):
+        i.click()
+        sleep(3)
+        data['hours_of_operation'].append((' '.join(driver.find_element_by_xpath('//div[@class="gm-style-iw-d"]').text.split('\n')[5:])))
+ 
 
 
     driver.close()
