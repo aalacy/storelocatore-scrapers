@@ -20,43 +20,35 @@ def write_output(data):
 
 def fetch_data():
     data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[],'page_url':[]}
-    driver.get('https://securitynationalbank.com/locations/?view=all')    
+    dfs=pd.read_html('https://snb.com/locations?range=20')[1]
     
-    location_data=[i.text.split('\n') for i in driver.find_elements_by_xpath('//div[@class="branch-info-container"]')]
-    data['page_url']=[i.get_attribute('href') for i in driver.find_elements_by_xpath('//span[@class="sub-head fw-light"]/a')]
-
-    for i in location_data:
-        data['locator_domain'].append('https://parknationalbank.com')
+    for i in range(len(dfs)):
+        data['locator_domain'].append('https://snb.com')
+        data['location_name'].append(dfs.Address[i].split('  ')[0])
+        data['street_address'].append(dfs.Address[i].split('  ')[1].split(',')[0])
+        data['city'].append((' ').join(dfs.Address[i].split('  ')[1].split(',')[1].split()[:-2]))
+        data['state'].append('<MISSING>')
+        data['zip'].append(dfs.Address[i].split('  ')[1].split(',')[1].split()[-2])
         data['country_code'].append('US')
-        data['store_number'].append('<MISSING>')
-        data['latitude'].append('<MISSING>')
-        data['longitude'].append('<MISSING>')
-        data['hours_of_operation'].append('<INACCESSIBLE>')
-        if 'ank' in i[1]:
-            data['location_name'].append(i[0]+' '+i[1])
-            data['street_address'].append(i[2])
-            data['city'].append(i[3].split(',')[0])
-            data['state'].append(i[3].split(',')[1].split()[0])
-            data['zip'].append(i[3].split(',')[1].split()[1])
-            if bool(re.search(r'[0-9]+', i[4]))==True:
-                data['phone'].append((' ').join(re.findall(r'[0-9]+',i[4])))
-                try:
-                    data['location_type'].append(i[5])
-                except:
-                    data['location_type'].append('<MISSING>')
-            else:
-                data['phone'].append('<MISSING>')            
-                data['location_type'].append(i[-1])
-        else:
-            data['location_name'].append(i[0])
-            data['street_address'].append(i[1])
-            data['city'].append(i[2].split(',')[0])
-            data['state'].append(i[2].split(',')[1].split()[0])
-            data['zip'].append(i[2].split(',')[1].split()[1])
-            data['phone'].append((' ').join(re.findall(r'[0-9]+',i[3])))
-            data['location_type'].append(i[-1])
-
-     
+        try:
+            data['phone'].append((' ').join(re.findall(r'[0-9]+',dfs.Contact[i])))
+            data['hours_of_operation'].append(dfs.Hours[i])
+        except:
+            data['phone'].append('<MISSING>')
+            data['hours_of_operation'].append('<MISSING>')
+        data['location_type'].append(dfs.Services[i])
+        data['page_url'].append('https://snb.com/locations?range=20')
+    
+       
+    driver=webdriver.Chrome('C:\chromedriver.exe')
+    driver.get('https://snb.com/locations?range=20')
+    globalvar = driver.execute_script("return locations;")
+    
+    for i in globalvar:
+        data['latitude'].append(i['latitude'])
+        data['longitude'].append(i['longitude'])
+        data['store_number'].append(i['id'])
+    
     
     driver.close()
     return data
