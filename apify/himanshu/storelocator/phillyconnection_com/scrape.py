@@ -29,7 +29,6 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     part = soup.find("table")
     temp_storeaddresss = list(part.stripped_strings)
-    print(temp_storeaddresss)
     return_val = []
     main_val =[]
     i = 1
@@ -79,6 +78,7 @@ def fetch_data():
         return_object.append("<MISSING>")
         return_object.append("<MISSING>")
         return_main_object.append(return_object)
+        # print(return_object)
     return return_main_object
 
 def scrape():
