@@ -29,23 +29,22 @@ class Scraper(Scrape):
         stores = []
         seen = []
 
-        for zipcode_search in sgzip.for_radius(50):
-            headers = {
-                "accept": "application/json",
-                "accept-encoding": "gzip, deflate, br",
-                "accept-language": "en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7",
-                "cookie": "__cfduid=d24a4ef0dd2121b660960ab850eea8bcb1567440380; _gcl_au=1.1.392025716.1567440401; cartItemNumber=0; _ga=GA1.2.452346534.1567440401; _abck=D8754B70249CED827066BD13FB403EB8~0~YAAQFUsHYPpJLdRsAQAA3nO68gIT7Poxr1V/mTKq8mkAR86OyEvVmzgU2dwO8vtzccBxocoDbKNKJs1aZZAfs1dEOVmJQYu/dnTovteAifYKlfppDwMsN0WwPMrkqoKeBmrP4dHMbg+rZruQQUmAdtQgXNxyB1u/Z5tHW538LJg6dHwnWX50pjlRzOQRiRcku7BVQOXku96mEQvgR/BMbakFdRWfulllGLG+OL0X2eqTYb1bR+lKrs9JG48dy87K6eFHSA8UFqr29zqJtEAEnBb2LAi8qUnhXfOzZncwzDL57XPKjPE34js=~-1~-1~-1; _fbp=fb.1.1567440405945.1384358145; __utmc=199958332; __utmz=199958332.1567440412.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); _ga=GA1.3.452346534.1567440401; __utma=199958332.452346534.1567440401.1567831619.1568041277.3; _gid=GA1.3.1297343513.1568158533; _gat_UA-12251584-6=1",
-                "dnt": "1",
-                "referer": f"https://stores.celine.com/home?c=US&q={zipcode_search}",
-                "sec-fetch-mode": "cors",
-                "sec-fetch-site": "same-origin",
-                "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36",
-            }
-            r = requests.get(
-                url=f"https://stores.celine.com/home?offset=0&offset=50&c=US&q={zipcode_search}",
-                headers=headers,
-            )
-            stores.extend(json.loads(r.content)["response"]["entities"])
+        headers = {
+            "accept": "application/json",
+            "accept-encoding": "gzip, deflate, br",
+            "accept-language": "en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7",
+            "cookie": "__cfduid=d24a4ef0dd2121b660960ab850eea8bcb1567440380; _gcl_au=1.1.392025716.1567440401; cartItemNumber=0; _ga=GA1.2.452346534.1567440401; _abck=D8754B70249CED827066BD13FB403EB8~0~YAAQFUsHYPpJLdRsAQAA3nO68gIT7Poxr1V/mTKq8mkAR86OyEvVmzgU2dwO8vtzccBxocoDbKNKJs1aZZAfs1dEOVmJQYu/dnTovteAifYKlfppDwMsN0WwPMrkqoKeBmrP4dHMbg+rZruQQUmAdtQgXNxyB1u/Z5tHW538LJg6dHwnWX50pjlRzOQRiRcku7BVQOXku96mEQvgR/BMbakFdRWfulllGLG+OL0X2eqTYb1bR+lKrs9JG48dy87K6eFHSA8UFqr29zqJtEAEnBb2LAi8qUnhXfOzZncwzDL57XPKjPE34js=~-1~-1~-1; _fbp=fb.1.1567440405945.1384358145; __utmc=199958332; __utmz=199958332.1567440412.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); _ga=GA1.3.452346534.1567440401; __utma=199958332.452346534.1567440401.1567831619.1568041277.3; _gid=GA1.3.1297343513.1568158533; _gat_UA-12251584-6=1",
+            "dnt": "1",
+            "referer": "https://stores.celine.com/en_us/home?c=US&q=",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36",
+        }
+        r = requests.get(
+            url="https://stores.celine.com/en_us/home?offset=50&c=US&q=",
+            headers=headers,
+        )
+        stores.extend(json.loads(r.content)["response"]["entities"])
 
         for store in stores:
 
