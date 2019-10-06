@@ -41,6 +41,7 @@ def fetch_data():
     long = []
     lat = []
     timing = []
+    ids=[]
 
     urls=["https://www.topman.com/store-locator?country=Canada","https://www.topman.com/store-locator?country=United+States"]
     for url in urls:
@@ -51,7 +52,6 @@ def fetch_data():
             for scr in scripts:
                 countries.append("CA")
                 tex=scr.text
-                print(tex)
                 locs.append(re.findall(r'.*"name":"([^"]*)"', tex)[0])
                 if "Regina" in locs:
                     k=0
@@ -148,13 +148,26 @@ def fetch_data():
                         street.append("<MISSING>")
                     else:
                         street.append(addr)
+            texts = re.findall(r'"stores":(.*),"selectedStore":', soup.text, re.DOTALL)[0].split('"cfsiPickCutOffTime"')
+            del texts[-1]
+            for tex in texts:
+                ids.append(re.findall(r'.*"storeId":"([^"]*)"', tex)[0])
+                la = re.findall(r'.*"latitude":(-?[\d\.]*)', tex)[0]
+                lo = re.findall(r'.*"longitude":(-?[\d\.]*)', tex)[0]
+                if la == "0":
+                    lat.append("<MISSING>")
+                else:
+                    lat.append(la)
+                if lo == "0":
+                    long.append("<MISSING>")
+                else:
+                    long.append(lo)
 
         else:
             for scr in scripts:
 
                 countries.append("US")
                 tex=scr.text
-                print(tex)
                 locs.append(re.findall(r'.*"name":"([^"]*)"', tex)[0])
                 p = re.findall(r'.*"telephone":"([^"]*)"', tex)[0]
                 if p == "":
@@ -183,6 +196,22 @@ def fetch_data():
                     street.append("<MISSING>")
                 else:
                     street.append(addr)
+            texts = re.findall(r'"stores":(.*),"selectedStore":', soup.text, re.DOTALL)[0].split('"cfsiPickCutOffTime"')
+            del texts[-1]
+            for tex in texts:
+                ids.append(re.findall(r'.*"storeId":"([^"]*)"', tex)[0])
+                la=re.findall(r'.*"latitude":(-?[\d\.]*)', tex)[0]
+                lo=re.findall(r'.*"longitude":(-?[\d\.]*)', tex)[0]
+                if la =="0":
+                    lat.append("<MISSING>")
+                else:
+                    lat.append(la)
+                if lo =="0":
+                    long.append("<MISSING>")
+                else:
+                    long.append(lo)
+
+
 
 
 
@@ -293,11 +322,11 @@ def fetch_data():
         row.append(states[i])
         row.append(zips[i])
         row.append(countries[i])
-        row.append("<MISSING>")  # store #
+        row.append(ids[i])  # store #
         row.append(phones[i]) #phone
         row.append("<MISSING>") #type
-        row.append("<MISSING>") #lat
-        row.append("<MISSING>") #long
+        row.append(lat[i]) #lat
+        row.append(long[i]) #long
         row.append(timing[i])
 
         all.append(row)

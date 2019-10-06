@@ -163,7 +163,9 @@ def write_output(data):
     df_data = df_data.replace(r'^\s*$', "<MISSING>", regex=True)
     df_data = df_data.drop_duplicates(["location_name","street_address"])
     df_data['zip'] = df_data.zip.astype(str)
-    df_data.to_csv('./data.csv',index = 0,header=True)
+    df_data.to_csv('./data.csv',index = 0,header=True,columns=['locator_domain','location_name','street_address','city',
+                                                               'state','zip','country_code','store_number','phone','location_type',
+                                                               'latitude','longitude','hours_of_operation','page_url'])
 
 def scrape():
     data = fetch_data()

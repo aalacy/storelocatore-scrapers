@@ -36,7 +36,7 @@ def fetch_data():
         state = ''
         zc = ''
         country = 'CA'
-        store = ''
+        store = '<MISSING>'
         phone = ''
         lat = ''
         lng = ''
@@ -52,7 +52,6 @@ def fetch_data():
                     state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
                     zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
                     phone = line2.split('id="telephone">')[1].split('<')[0]
-                    store = line2.split('"siteId":')[1].split(',')[0]
                     lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
                     lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]
                     hrs = line2.split('Restaurant Hours</h4>')[1].split("}]' data-showOpenToday=")[0]
