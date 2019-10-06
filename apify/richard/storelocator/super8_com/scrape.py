@@ -3,6 +3,9 @@ import re
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 URL = "super8.com"
@@ -37,23 +40,42 @@ class Scraper(Scrape):
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
-        driver.get('https://www.wyndhamhotels.com/super-8/locations')
-        stores.extend([url.get_attribute('href') for url in driver.find_elements_by_css_selector('li.property > a:nth-of-type(1)')])
+        driver.get("https://www.wyndhamhotels.com/super-8/locations")
+        stores.extend(
+            [
+                url.get_attribute("href")
+                for url in driver.find_elements_by_css_selector(
+                    "li.property > a:nth-of-type(1)"
+                )
+            ]
+        )
 
         for store in stores:
-            print(store)
+            print(f"Now scraping: {store}")
             driver.get(store)
 
-            location_info = driver.find_element_by_css_selector('div.uu-map-address.hidden-xs > p').text.split(',')
+            # Wait until element appears - 10 secs max
+            wait = WebDriverWait(driver, 10)
+            wait.until(
+                ec.visibility_of_element_located(
+                    (By.CSS_SELECTOR, ".uu-map-address.hidden-xs")
+                )
+            )
+
+            location_info = driver.find_element_by_css_selector(
+                "div.uu-map-address.hidden-xs > p"
+            ).text.split(",")
 
             # Location id
-            location_id = '<MISSING>'
+            location_id = "<MISSING>"
 
             # Location title
-            locations_title = driver.find_element_by_css_selector('span.highlight-wrapper').text
+            locations_title = driver.find_element_by_css_selector(
+                "span.highlight-wrapper"
+            ).text
 
             # Location type
-            location_type = 'Hotel'
+            location_type = "Hotel"
 
             # Street address
             street_address = location_info[0].strip()
@@ -68,24 +90,49 @@ class Scraper(Scrape):
             zip_code = location_info[3].strip()
 
             # Country
-            country = 'US'
+            country = "US"
 
             # Store hour
-            hour = 'Always Open'
+            hour = "Always Open"
 
             # Phone
-            phone_number = driver.find_element_by_css_selector('div.property-phone.hidden-xs > span > a').text
+            phone_number = driver.find_element_by_css_selector(
+                "div.property-phone.hidden-xs > span > a"
+            ).text
 
-            if re.search('(\-?\d+(\.\d+)?),\s*(\-?\d+(\.\d+)?)', driver.find_element_by_css_selector('div.directions-btn.action-btn.col-md-7.col-md-offset-8 > a').get_attribute('href')):
+            if re.search(
+                "(\-?\d+(\.\d+)?),\s*(\-?\d+(\.\d+)?)",
+                driver.find_element_by_css_selector(
+                    "div.directions-btn.action-btn.col-md-7.col-md-offset-8 > a"
+                ).get_attribute("href"),
+            ):
                 # Latitude
-                lat = re.search('(\-?\d+(\.\d+)?),\s*(\-?\d+(\.\d+)?)', driver.find_element_by_css_selector('div.directions-btn.action-btn.col-md-7.col-md-offset-8 > a').get_attribute('href')).group().split(',')[0]
+                lat = (
+                    re.search(
+                        "(\-?\d+(\.\d+)?),\s*(\-?\d+(\.\d+)?)",
+                        driver.find_element_by_css_selector(
+                            "div.directions-btn.action-btn.col-md-7.col-md-offset-8 > a"
+                        ).get_attribute("href"),
+                    )
+                    .group()
+                    .split(",")[0]
+                )
 
                 # Longitude
-                lon = re.search('(\-?\d+(\.\d+)?),\s*(\-?\d+(\.\d+)?)', driver.find_element_by_css_selector('div.directions-btn.action-btn.col-md-7.col-md-offset-8 > a').get_attribute('href')).group().split(',')[1]
+                lon = (
+                    re.search(
+                        "(\-?\d+(\.\d+)?),\s*(\-?\d+(\.\d+)?)",
+                        driver.find_element_by_css_selector(
+                            "div.directions-btn.action-btn.col-md-7.col-md-offset-8 > a"
+                        ).get_attribute("href"),
+                    )
+                    .group()
+                    .split(",")[1]
+                )
             else:
-                lat = '<MISSING>'
+                lat = "<MISSING>"
 
-                lon = '<MISSING>'
+                lon = "<MISSING>"
 
             locations_ids.append(location_id)
             locations_type.append(location_type)
@@ -100,20 +147,19 @@ class Scraper(Scrape):
             latitude_list.append(lat)
             longitude_list.append(lon)
 
-
         for (
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                phone_number,
-                latitude,
-                longitude,
-                hour,
-                location_id,
-                country,
-                location_type
+            locations_title,
+            street_address,
+            city,
+            state,
+            zipcode,
+            phone_number,
+            latitude,
+            longitude,
+            hour,
+            location_id,
+            country,
+            location_type,
         ) in zip(
             locations_titles,
             street_addresses,
@@ -126,7 +172,7 @@ class Scraper(Scrape):
             hours,
             locations_ids,
             countries,
-            locations_type
+            locations_type,
         ):
             self.data.append(
                 [
