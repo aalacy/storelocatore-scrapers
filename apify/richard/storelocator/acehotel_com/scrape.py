@@ -1,9 +1,7 @@
-import time
-import re
+import requests
+import json
 
 from Scraper import Scrape
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 
 URL = "https://www.acehotel.com"
 
@@ -12,7 +10,7 @@ class Scraper(Scrape):
     def __init__(self, url):
         Scrape.__init__(self, url)
         self.data = []
-        self.block = ['Ace Hotel Kyoto', 'Ace Hotel London Shoreditch']
+        self.block = ['Ace Hotel Kyoto | Ace Hotel Kyoto', 'Ace Hotel London | Ace Hotel London']
 
     def fetch_data(self):
         # store data
@@ -28,59 +26,65 @@ class Scraper(Scrape):
         hours = []
         countries = []
         location_types = []
-        seen = []
 
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
+        headers = {
+            'sec-fetch-mode': 'cors',
+            'x-newrelic-id': 'VQAHWVFSGwEAVVVQAAEFXg==',
+            'dnt': '1',
+            'accept-encoding': 'gzip, deflate, br',
+            'accept-language': 'en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7',
+            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+            'accept': 'application/json, text/plain, */*',
+            'referer': 'https://www.acehotel.com/locations/',
+            'authority': 'www.acehotel.com',
+            'cookie': 'csrftoken=jXyb38XIf4Hd3nLkCObyUsUUb91X8KV5s1E1jk4UCgRI5UeXcjXplC8zgdvev1ph; _gcl_au=1.1.553951305.1568512822; _fbp=fb.1.1568512822621.199288418; _ga=GA1.2.978627245.1568512849; gwcc=%7B%22fallback%22%3A%223125481177%22%2C%22clabel%22%3A%22cuVoCOzEu3EQ9ZuulgM%22%2C%22backoff%22%3A86400%2C%22backoff_expires%22%3A1569298706%7D; _gid=GA1.2.526416788.1570423537; _gat_UA-4157266-1=1',
+            'sec-fetch-site': 'same-origin',
+        }
 
-        driver.get('https://www.acehotel.com/locations/')
-        time.sleep(5)
+        params = (
+            ('type', 'tupac.Hotel'),
+        )
 
-        stores = [link.get_attribute('href') for link in driver.find_elements_by_css_selector('div.v-card__title > a')][:-2]
+        response = requests.get('https://www.acehotel.com/api/v2/pages/', headers=headers, params=params)
+
+        stores = [item['meta']['detail_url'] for item in json.loads(response.content)['items']]
 
         for store in stores:
-            driver.get(store)
-            time.sleep(3)
-            if driver.find_element_by_css_selector('title').get_attribute('textContent').split('|')[0].strip() in self.block:
-                pass
-            else:
-                location_info = driver.find_element_by_css_selector('div.hotel-address > span > a').get_attribute('textContent').replace('\n', '').strip()
-
+            print(store)
+            r = json.loads((requests.get(store)).content)
+            if r['construct_title'] not in self.block:
                 # Store ID
-                location_id = '<MISSING>'
+                location_id = r['id']
 
                 # Name
-                location_title = driver.find_element_by_css_selector('title').get_attribute('textContent')
+                location_title = r['hotel_data']['title']
 
                 # Type
                 location_type = 'Hotel'
-
-                # Street
-                street_address = re.search('.+?((?i)street|(?i)broadway|(?i)st|(?i)dr|(?i)avenue)', location_info).group()
 
                 # Country
                 country = "US"
 
                 # State
-                state = location_info.replace(street_address, '')[1:].split(',')[1].strip()[:-5]
+                state = r['address'].split(',')[-1].strip()[:2]
 
                 # city
-                city = location_info.replace(street_address, '')[1:].split(',')[0].strip()
+                city = r['address'].split(',')[1] if len(r['address'].split(',')) == 3 else r['construct_title'].split('|')[0].strip().replace('Ace Hotel', '').strip()
 
                 # zip
-                zipcode = location_info.replace(street_address, '')[1:].split(',')[1].strip()[-5:]
+                zipcode = r['address'].split(',')[-1].strip()[2:].strip()
+
+                # Street
+                street_address = r['address'].split(',')[0].strip().replace(city, '')
 
                 # Lat
-                lat = '<MISSING>'
+                lat = r['latitude']
 
                 # Long
-                lon = '<MISSING>'
+                lon = r['longitude']
 
                 # Phone
-                phone = driver.find_element_by_css_selector('div.hotel-phone-email > span > a').get_attribute('textContent')
+                phone = r['telephone']
 
                 # hour
                 hour = "Always Open"
@@ -143,8 +147,6 @@ class Scraper(Scrape):
                     hour,
                 ]
             )
-
-        driver.quit()
 
 
 scrape = Scraper(URL)
