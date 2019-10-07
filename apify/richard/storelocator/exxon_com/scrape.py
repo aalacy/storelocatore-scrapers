@@ -37,17 +37,24 @@ class Scraper(Scrape):
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         # Fetch stores from location menu
-        for coords in sgzip.coords_for_radius(100):
+        for coords in sgzip.coords_for_radius(50):
             lat1 = str(float(coords[0]) - 0.1)
             lat2 = str(float(coords[0]) + 0.1)
             lon1 = str(float(coords[1]) + 0.1)
             lon2 = str(float(coords[1]) - 0.1)
             location_url = f'https://www.exxon.com/en/api/v1/Retail/retailstation/GetStationsByBoundingBox?Latitude1={lat1}&Latitude2={lat2}&Longitude1={lon1}&Longitude2={lon2}'
             driver.get(location_url)
-            stores.extend(json.loads(driver.find_element_by_css_selector('pre').text))
+            try:
+                data = json.loads(driver.find_element_by_css_selector('pre').text)
+                print(f'{len(data)} locations scraped')
+                stores.extend(data)
+            except:
+                print('0 locations scraped')
+                pass
 
         for store in stores:
             if store['LocationID'] not in self.seen:
+                print(store)
                 # Store ID
                 location_id = store['LocationID']
 
