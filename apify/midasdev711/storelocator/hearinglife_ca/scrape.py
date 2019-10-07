@@ -14,7 +14,6 @@ def validate(items):
             continue
         if type(item) is str:
             item = item.encode('ascii','ignore').encode('utf-8').strip()
-
         rets.append(item)
     return rets
 
