@@ -10,7 +10,6 @@ base_url = 'https://www.hearinglife.ca'
 def validate(items):
     rets = []
     for item in items:
-        
         if item is '<MISSING>':
             continue
         if type(item) is str:
