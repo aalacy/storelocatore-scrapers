@@ -27,16 +27,23 @@ class Scraper(Scrape):
         hours = []
         countries = []
         stores = []
-
         options = Options()
         options.add_argument("--headless")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
+        driver.get('https://bankaf.com/home/locations.html')
+        coords = driver.find_element_by_css_selector('body > main > script').get_attribute('outerHTML')
+
+        latitude = re.findall('lat: "(.+)",', coords)
+        longitude = re.findall('lng: "(.+)",', coords)
+
         location_url = 'https://bankaf.com/home/locations.html'
         driver.get(location_url)
         stores.extend(driver.find_elements_by_css_selector('div.locations-pane'))
+
+        counter = 0
 
         for store in stores:
             # Store ID
@@ -61,10 +68,10 @@ class Scraper(Scrape):
             hour = re.search('(?<=Hours).*', store.find_element_by_css_selector('p.location-pane-contact-info').get_attribute('textContent')).group().replace(':', '').replace(' of Operation', '').strip()
 
             # Lat
-            lat = '<MISSING>'
+            lat = latitude[counter]
 
             # Lon
-            lon = '<MISSING>'
+            lon = longitude[counter]
 
             # Phone
             phone = store.find_element_by_css_selector('p.location-pane-contact-info > span:nth-of-type(1) > a').text
@@ -84,6 +91,7 @@ class Scraper(Scrape):
             phone_numbers.append(phone)
             cities.append(city)
             countries.append(country)
+            counter += 1
 
         for (
                 locations_title,
