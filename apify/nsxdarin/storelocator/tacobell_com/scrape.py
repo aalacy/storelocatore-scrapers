@@ -46,6 +46,8 @@ def fetch_data():
         store = loc
         phone = ''
         hours = ''
+        lat = ''
+        lng = ''
         lurl = 'https://locations.tacobell.com/' + loc
         r2 = session.get(lurl, headers=headers)
         for line2 in r2.iter_lines():
@@ -74,7 +76,12 @@ def fetch_data():
                                 pass
         if hours == '':
             hours = '<MISSING>'
-        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if lat == '':
+            lat = '<MISSING>'
+        if lng == '':
+            lng = '<MISSING>'
+        if name != '':
+            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
