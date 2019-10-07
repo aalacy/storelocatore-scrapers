@@ -10,8 +10,10 @@ base_url = 'https://www.boosterjuice.com'
 def validate(items):
     rets = []
     for item in items:
+
         if item is '<MISSING>':
             continue
+        
         item = item.encode('ascii','ignore').encode('utf-8').replace(u'\xba', '').strip()
         if item != '':
             rets.append(item)
