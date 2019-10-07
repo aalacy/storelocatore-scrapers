@@ -30,8 +30,15 @@ def fetch_data():
     for parts in soup.find_all("ul", {"class": "property-list"}):
         for semi_parts in parts.find_all("li", {"class": "property"}):
             return_object = []
-            store_request = requests.get('https://www.wyndhamhotels.com' + semi_parts.find("a")['href'])
+            try:
+                # store_request = requests.get('https://www.wyndhamhotels.com/en-ca/hotels/99778')
+                store_request = requests.get('https://www.wyndhamhotels.com' + semi_parts.find("a")['href'])
+            except Exception as e:
+                # print('error =>' + str(e))
+                if(str(e) == "Exceeded 30 redirects."):
+                    continue
             store_soup = BeautifulSoup(store_request.text, "lxml")
+
             if (store_soup.find("div", {"class": "property-info"})):
                 locationDetails = store_soup.find("div", {"class": "property-info"})
                 temp_storeaddresss = list(locationDetails.stripped_strings)
@@ -67,6 +74,7 @@ def fetch_data():
                 return_object.append("<MISSING>")
                 return_object.append("<MISSING>")
                 return_main_object.append(return_object)
+                # print(return_object)
 
     return return_main_object
 

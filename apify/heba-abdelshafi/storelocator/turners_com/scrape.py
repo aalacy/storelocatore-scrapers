@@ -14,7 +14,7 @@ driver = webdriver.Chrome("chromedriver", options=options)
 
 def write_output(data):
     df=pd.DataFrame(data)
-    df.to_csv('data.csv', index=False)
+    df.to_csv('data.csv', index=False,encoding='utf-8-sig')
 
 
 def fetch_data():
@@ -34,16 +34,19 @@ def fetch_data():
         data['state'].append('california')
         data['phone'].append(loc[3])
         data['country_code'].append('US')
-        data['hours_of_operation'].append([s.split(':')[-1] for s in loc if 'Friday' in s][0])
+        data['hours_of_operation'].append(loc[-3]+loc[-4]+loc[-5]+loc[-6])
         data['store_number'].append('<MISSING>')
         loc_type=driver.find_element_by_xpath('//div[@class="locatorForm"]/h1').text.split()
         data['location_type'].append(loc_type[4]+loc_type[5])
 
 
     for i in location_data_urls:
-        data['longitude'].append(re.split(r'\+*',i)[-1].split(',')[1].split('&')[0])
-        data['latitude'].append(re.split(r'\+*',i)[-1].split(',')[0].split('=')[-1])
-        data['zip'].append(re.split(r'\+*',i)[-1].split('&')[0])
+        #data['longitude'].append(re.split(r'\+*',i)[-1].split(',')[1].split('&')[0])
+        #data['latitude'].append(re.split(r'\+*',i)[-1].split(',')[0].split('=')[-1])
+        #data['zip'].append(re.split(r'\+*',i)[-1].split('&')[0])
+        data['zip'].append(re.split(r'\++', i)[-1].split('&')[0])
+        data['latitude'].append(re.split(r'\++', i)[-1].split(',')[0].split('=')[-1])
+        data['longitude'].append(re.split(r'\++', i)[-1].split(',')[1].split('&')[0])
 
 
     driver.close()

@@ -1,11 +1,9 @@
-# Import libraries
-import xml
-import lxml
 import requests
 from bs4 import BeautifulSoup
 import csv
 import string
-import re
+import re, time
+import usaddress
 
 
 def write_output(data):
@@ -22,153 +20,176 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
+    links = []
+    cleanr = re.compile('<.*?>')
     url = 'http://pizzafusion.com/locations/'
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
-    repo_list = soup.findAll('a',{'class': 'borderImg'})
-    cleanr = re.compile('<.*?>')
-    temp = "1"
-    end = 0
-    for repo in repo_list:
-        check = repo['href']
-        if check != '#':
+
+    maindiv = soup.find('div', {'id': 'usa3'})
+    divs = maindiv.findAll('div')
+    print("ENTER")
+    n = 2
+    for div in divs:
+        dets = div.findAll('div')
+        for linka in dets:
             try:
-                link = "http://pizzafusion.com" + repo['href']
-                print(link)
-                page = requests.get(link)
-                soup = BeautifulSoup(page.text, "html.parser")
-                detail = soup.find('td', {'class': 'locations'})
-                title = detail.find('strong').text
-                try:
-                    store = detail.find('small').text
-                    storeline = str(detail)
-                    start = storeline.find('Store#')
-                    start = storeline.find('>', start)+1
-                    end = storeline.find('<', start)
-                    store = storeline[start:end]
-                    if len(store) == 0:
-                        store = "<MISSING>"
-                except:
-                    store = "<MISSING>"
-                temp = detail.findAll('span')
-                print("................")
-                print(len(temp))
-                if len(temp) < 2:
-                    temp = str(temp)
-                    detail = str(detail)
-                    start = detail.find('<br')+3
-                    if store != "<MISSING>":
-                        print("NOOOOT")
-                        start = detail.find('<br', start) + 3
-                    start = detail.find('<br', start) + 5
-                    end = detail.find('<br',start)
-                    street = detail[start:end]
-                    street = re.sub(cleanr, '', street)
-                    street = re.sub("\r\n", '', street)
-                    print("Street>>>>"+street)
-                    start = end + 5
-                    end = detail.find('<br', start)
-                    state = detail[start:end]
-                    state = re.sub(cleanr, '', state)
-                    state = re.sub("\r\n", '', state)
-                    start = state.find(",")
-                    city = state[0:start]
-                    print(city)
-                    start = start + 2
-                    state = state[start:len(state)]
-                    state,xip = state.split(" ")
-                    print(state)
+                link = linka.find('a',{'class': 'borderImg'})
+                link = link["href"]
+                link = str(link)
+                if link.find("#") == -1:
+                    links.append("http://pizzafusion.com" + link)
 
-                    if len(xip) == 4:
-                        xip = "0" + xip
-                    print(xip)
-                    start= detail.find("Phone")+7
-                    end = detail.find("<",start)
-                    phone = detail[start:end]
-                    print(phone)
-                    start = detail.find("Hours",end) + 7
-                    end = detail.find("<td", start) - 4
-                    hours = detail[start:end]
-                    hours = re.sub(cleanr, ' ', hours)
-                    hours = re.sub("\r\n", '', hours)
-                    hours = re.sub("/strong>", '', hours)
-                    hours = re.sub("amp;", '', hours)
-
-                else:
-                    num = detail.findAll('span')
-                    if len(num) == 7:
-                        street = str(num[0])
-                        street = re.sub(cleanr, '', street)
-                        state = str(num[1])
-                        state = re.sub(cleanr, '', state)
-                        start = state.find(",")
-                        city = state[0:start]
-                        print(city)
-                        start = start + 2
-                        state = state[start:len(state)]
-                        state, xip = state.split(" ")
-                        print(state)
-                        print(xip)
-                        phone = str(num[3])
-                        phone = re.sub(cleanr, '', phone)
-                        phone = phone[7:len(phone)]
-                        hours = str(num[5]) + " " + str(num[6])
-
-
-                    elif len(num) == 8:
-                        street = str(num[1])
-                        street = re.sub(cleanr, '', street)
-                        state = str(num[2])
-                        state = re.sub(cleanr, '', state)
-                        start = state.find(",")
-                        city = state[0:start]
-                        print(city)
-                        start = start + 2
-                        state = state[start:len(state)]
-                        state, xip = state.split(" ")
-                        print(state)
-                        print(xip)
-                        phone =  str(num[4])
-                        phone = re.sub(cleanr, '', phone)
-                        phone = phone[7:len(phone)]
-                        hours = str(num[6]) + " " + str(num[7])
-
-                    hours = re.sub(cleanr, ' ', hours)
-                    hours = re.sub("\r\n", '', hours)
-                    hours = re.sub("amp;", '', hours)
-
-                if hours.find("Fast") > 0:
-                    start = hours.find("Fast")
-                    hours = hours[0:start-2]
-                    hours =  hours = re.sub("\n\r", '', hours)
-                print(hours)
-
-
-
-                data.append([
-                    url,
-                    title,
-                    street,
-                    city,
-                    state,
-                    xip,
-                    'US',
-                    store,
-                    phone,
-                    '<MISSING>',
-                    '<MISSING>',
-                    '<MISSING>',
-                    hours
-                    ])
             except:
-                print("Not Found")
+                flag = 2
 
 
+    for n in range(0, len(links)):
+        link = links[n]
+        try:
+            page = requests.get(link)
+            #print(page)
+            print(link)
+            soup = BeautifulSoup(page.text, "html.parser")
+            td = soup.find("td")
+            td = str(td)
+            td = re.sub(cleanr, " ", td)
+
+            td = td.replace("\n", "|")
+            td = td.replace("\r", "|")
+            td = td.replace("||", "|")
+        except:
+            print(link)
+            page = requests.get(url)
+            soup = BeautifulSoup(page.text, "html.parser")
+            maindiv = soup.find('div', {'id': '117'})
+            divs = maindiv.find('div')
+            td = divs.find('p')
+            td = str(td)
+            td = re.sub(cleanr, " ", td)
+            td = td.replace("  ", "|")
+            flag = 1
+        try:
+            mainframe = soup.findAll('iframe')
+                #print(mainframe[1])
+            maplink = str(mainframe[1])
+            start = maplink.find("sll") +5
+            start = maplink.find("ll",start)+3
+            end = maplink.find(",", start)
+            lat = maplink[start:end]
+            start = end + 1
+            end = maplink.find("&", start)
+            longt = maplink[start:end]
+        except:
+            lat = "<MISSING>"
+            longt = "<MISSING>"
 
 
+            # print(maplink)
+        p = n + 1
+
+        print(td)
+        if flag == 1:
+            start = td.find("|", 3)
+            title = td[1:start]
+        else:
+            start = td.find(",", 0)
+            title = td[2:start]
+        if td.find("#") > -1:
+            start = td.find("#")
+            end = td.find("|", start)
+            store = td[start + 1:end]
+        else:
+            store = "<MISSING>"
+
+        end = td.find("Phone")
 
 
+        address = td[start:end]
 
+        if flag == 1:
+            address = address.replace("|", " ")
+
+        address = usaddress.parse(address)
+        #print(address)
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
+
+        while i < len(address):
+            temp = address[i]
+            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or \
+                    temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
+                "USPSBoxID") != -1 or temp[1].find("LandmarkName") != -1:
+                street = street + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
+
+            i += 1
+
+        start = td.find(":", start) + 1
+        end = td.find("Hours", start)
+        phone = td[start:end]
+        if phone.find("Fax"):
+            phone = phone[0:phone.find("Fax")]
+        start = td.find("Hours")
+        start = td.find(":",start) + 2
+        hours = td[start:len(td)]
+        start = hours.find("[")
+        if start != -1:
+            hours = hours[0:start-1]
+
+        phone = phone.replace("\n","")
+        phone = phone.replace("|", "")
+        title = title.lstrip()
+        street = street.lstrip()
+        city =city.lstrip()
+        city = city.replace(",", "")
+        pcode = pcode.lstrip()
+        state = state.lstrip()
+        phone = phone.lstrip()
+        hours = hours.replace("|","")
+        hours = hours.replace(" &amp; ", "-")
+        hours = hours.lstrip()
+        hours = hours.replace("\n", "")
+        pcode = pcode.replace("|","")
+
+        store = store.lstrip()
+        flag =0
+        print(p)
+        print(store)
+        print(title)
+        print(street)
+        print(city)
+        print(state)
+        print(pcode)
+
+        print(phone)
+        print(hours)
+        print(lat)
+        print(longt)
+        print("...................................")
+        data.append([
+            url,
+            title,
+            street,
+            city,
+            state,
+            pcode,
+            'US',
+            store,
+            phone,
+            '<MISSING>',
+            lat,
+            longt,
+            hours
+        ])
 
 
     return data

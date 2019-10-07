@@ -47,25 +47,60 @@ def fetch_data():
     #lis=driver.find_elements_by_css_selector("li ")
 
 
-    lis = driver.find_elements_by_tag_name("a")
-    i=0
-    for li in lis:
 
-        if i in [12,13,14,15,16,17,18,19,20,21,22,23,24,25]:
-            ulinks.append(li.get_attribute("href"))
-        elif i in [27,28,29,30]:
-            rlinks.append(li.get_attribute("href"))
-        i+=1
-    k=0
+    ast=driver.find_element_by_id("1833213139").find_elements_by_tag_name("a")
+    for a in ast:
+        if a.text=='FULL SERVICE RESTAURANTS':
+            continue
+        if a.text=="Fayetteville":
+            rlinks.append('https://www.twistedtaco.com/fayetteville-georgia')
+            locs.append(a.text)
+            continue
+        elif a.text=='Suwanee':
+            rlinks.append(a.get_attribute("href"))
+            locs.append(a.text)
+            break
+        rlinks.append(a.get_attribute("href"))
+        locs.append(a.text)
 
-    del ulinks[-2] #coming soon
+
+    ast = driver.find_element_by_id("1682398545").find_elements_by_tag_name("a")
+    for a in ast:
+        if a.text=="UNIVERSITY LOCATIONS":
+            continue
+        if"auburn"in a.get_attribute("href"):#coming soon
+            continue
+        ulinks.append(a.get_attribute("href"))
+        locs.append(a.text)
+
+    ast = driver.find_element_by_id("1253176376").find_elements_by_tag_name("a")
+    for a in ast:
+        ulinks.append(a.get_attribute("href"))
+        locs.append(a.text)
+
+    for link in rlinks:
+        driver.get(link)
+
+        try:
+            div=driver.find_element_by_id("1315575225")
+        except:
+            div = driver.find_element_by_id("1876037087")
+        data=div.text.split("\n\n")
+        timing.append(data[0].replace("\n",""))
+        data=data[1].split("\n")
+        street.append(data[0])
+        phones.append(data[2])
+        s=re.findall(r'( [A-Za-z]{2})', data[1])[-1]
+        z= re.findall(r'( [0-9]{5})', data[1])[0].strip()
+        c = data[1].replace(z,"").replace(s,"").strip().strip(",")
+
+        cities.append(c)
+        states.append(s)
+        zips.append(z)
 
     for link in ulinks:
         driver.get(link)
-        if "-" in link:
-            locs.append(link.split("/")[-1].replace("-"," "))
-        else:
-            locs.append(link.split("/")[-1])
+
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         a = soup.text
         #print(a)
@@ -114,35 +149,17 @@ def fetch_data():
 
         t= re.findall('(Monday.*)'+g,b,re.DOTALL)[0]
         st=b.replace(t,"")
-        timing.append(t)
+
         if st!="":
             street.append(st)
         else:
-            street.append("<MISSING>")
+            t=re.findall('(Monday.*pm)'+g,b,re.DOTALL)[0]
+            st=b.replace(t,"")
+            street.append(st)
+        timing.append(t.replace("\n", ""))
         phones.append("<MISSING>")
 
-    for link in rlinks:
-        driver.get(link)
-        if "-" in link:
-            locs.append(link.split("/")[-1].replace("-"," "))
-        else:
-            locs.append(link.split("/")[-1])
-        try:
-            div=driver.find_element_by_id("1315575225")
-        except:
-            div = driver.find_element_by_id("1876037087")
-        data=div.text.split("\n\n")
-        timing.append(data[0])
-        data=data[1].split("\n")
-        street.append(data[0])
-        phones.append(data[2])
-        s=re.findall(r'( [A-Za-z]{2})', data[1])[0]
-        z= re.findall(r'( [0-9]{5})', data[1])[0].strip()
-        c = data[1].replace(z,"").replace(s,"").strip().strip(",")
 
-        cities.append(c)
-        states.append(s)
-        zips.append(z)
 
     all = []
     for i in range(0, len(locs)):

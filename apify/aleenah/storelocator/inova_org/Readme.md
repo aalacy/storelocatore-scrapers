@@ -1,2 +1,2 @@
-validation failed due to 00000 zip code scraped from website.
-the script takes long time to run as there are 350 locations and the code visits each site to extract data.
+validation failed due to invalid zip code scraped from website and duplicate rows (a check for duplicate rows exists the validater fails for not checking that store ids are different)
+

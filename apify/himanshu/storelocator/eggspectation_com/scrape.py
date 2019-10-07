@@ -37,19 +37,30 @@ def fetch_data():
     contry=[]
     return_main_object=[]
 
+    longitude =[]
+    latitude=[]
     for i in range(2,4):
         k=(soup.find("div",{"class":"et_pb_button_module_wrapper et_pb_button_"+str(i)+"_wrapper et_pb_button_alignment_center et_pb_module"}).a['href'])
         r = requests.get(k,headers=headers)
         soup1= BeautifulSoup(r.text,"lxml")
         k1 = (soup1.find_all("div",{"class":"et_pb_text_inner"}))
-
+        lat = soup1.find_all("div",{"class":"et_pb_button_module_wrapper"})
+        for i in lat:
+            if "DETAILS" in i.text:
+                r = requests.get(i.a['href'],headers=headers)
+                soup3= BeautifulSoup(r.text,"lxml")
+                latitude1 = (soup3.find("iframe")['src'].split("1d"))
+                if len(latitude1)==2:
+                    latitude.append(latitude1[-1].split("!2d")[0])
+                    longitude.append(latitude1[-1].split("!2d")[1].split("!3")[0])
+                else:
+                    latitude.append("<MISSING>")
+                    longitude.append("<MISSING>")
         for j in k1:
             tem_var=[]
-            
             zip2=''
             if j.p.find("span",{"style":"font-family: oswald-bold; font-size: 18pt; color: #000000;"}) != None:
                 store_name.append(j.p.find("span",{"style":"font-family: oswald-bold; font-size: 18pt; color: #000000;"}).text)
-
                 
             p = j.find('p')
             if len(list(j.find_all('p')[-1].stripped_strings)) !=1:
@@ -90,7 +101,11 @@ def fetch_data():
     hours.insert(0,"<MISSING>")
     hours.insert(1,"<MISSING>")
     hours.insert(4,"Monday – Sunday: 6:30 am – 9:30pm")
-  
+    
+    latitude.insert(0,"<MISSING>")
+    latitude.insert(1,"<MISSING>")
+    longitude.insert(0,"<MISSING>")
+    longitude.insert(1,"<MISSING>")
     for i in range(len(store_name)):
         store = list()
         store.append("https://eggspectation.com")
@@ -103,11 +118,14 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(phone[i].replace("TBA","<MISSING>"))
         store.append("eggspectation")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(hours[i])
-           
-        return_main_object.append(store)
+        store.append(latitude[i])
+        store.append(longitude[i])
+        
+        store.append(hours[i].replace(" TBA","<MISSING>"))
+        if "45 Carlton Street Unit 200" in store or " 7600 Weston Road, Unit 70C" in store:
+            pass
+        else:
+            return_main_object.append(store)
     return return_main_object
 
 

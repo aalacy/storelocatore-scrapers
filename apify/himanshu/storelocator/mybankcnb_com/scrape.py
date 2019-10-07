@@ -55,9 +55,6 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append(phone)
             tem_var.append("mybankcnb")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
             store_detail.append(tem_var)
 
         else:
@@ -87,7 +84,6 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append(phone)
             tem_var.append("mybankcnb")
-       
             store_detail.append(tem_var)
             
    

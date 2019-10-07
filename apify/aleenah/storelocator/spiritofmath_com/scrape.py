@@ -50,7 +50,8 @@ def fetch_data():
     for i in range(37):
         li = uls[i]
         tex=li.text.split("\n")
-
+        if tex[0]=="Head Office":
+            continue
         addr=tex[1]
 
         if "Pakistan" in addr:
@@ -94,7 +95,26 @@ def fetch_data():
         else:
             phones.append("<MISSING>")
         links.append(li.find_element_by_tag_name("a").get_attribute("href"))
-    """ to extract lat long and country
+
+    for link in links:
+        print(link)
+        driver.get(link)
+        news=driver.find_element_by_xpath('//div[@class="news-text"]').text
+        #print(news)
+        try:
+            tim = re.findall(r'(Hours.*pm|HOURS.*pm|Hours.*PM|HOURS.*PM).*(Open)*(OPEN)*',news,re.DOTALL)[0][0].replace("\n"," ")
+            try:
+                tim=tim.replace(re.findall(r'pm|PM(.*Open.*)',tim,re.DOTALL)[0],"")
+            except:
+                tim=tim
+            print (tim)
+            timing.append(tim)
+        except:
+            timing.append("<MISSING>")
+
+    """ 
+    links.append(li.find_element_by_tag_name("a").get_attribute("href"))
+    to extract lat long and country
     for link in links:
         driver.get(link)
         div=driver.find_element_by_class_name("popup-holder")
@@ -129,7 +149,7 @@ def fetch_data():
         row.append("<INACCESSIBLE>")  # type
         row.append("<INACCESSIBLE>")  # lat
         row.append("<INACCESSIBLE>")  # long
-        row.append("<INACCESSIBLE>")
+        row.append(timing[i])    #timing
 
         all.append(row)
     return all

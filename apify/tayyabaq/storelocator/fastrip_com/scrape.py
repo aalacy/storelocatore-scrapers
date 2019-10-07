@@ -2,13 +2,12 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import re, time, pgeocode
 
 def write_output(data):
     with open('data.csv', mode='wb') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             if row:
@@ -38,7 +37,6 @@ def fetch_data():
             city.append(a.split()[-3].split(",")[0].strip())
             street_address.append(stores[n].text.split(".")[0])
             zipcode.append(a.split()[-1].strip())
-    nomi = pgeocode.Nominatim('US')
     loc = driver.find_elements_by_class_name('loc-name')
     location_name = [loc[n].text for n in range(0,len(loc))]
     store_number= [loc[n].text.split("#")[1].strip() for n in range(0,len(loc))]
@@ -47,6 +45,7 @@ def fetch_data():
     for n in range(0,len(street_address)): 
         data.append([
             'http://fastrip.com',
+            'http://fastrip.com/index.php/store-locations',
             location_name[n],
             street_address[n],
             city[n],

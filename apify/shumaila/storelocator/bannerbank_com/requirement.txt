@@ -1,0 +1,3 @@
+Beautifulsoup python 3.6
+re
+csv

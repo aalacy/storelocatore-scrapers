@@ -48,6 +48,7 @@ def fetch_data():
 
     for  i in data['branches']:
         tem_var =[]
+        # print(i)
         store_name.append(i['name'])
         street_address = i["address"]
         city = i["city"]
@@ -62,15 +63,17 @@ def fetch_data():
         tem_var.append("US")
         tem_var.append("<MISSING>")
         tem_var.append(phone if phone else "<MISSING>")
-        tem_var.append("amnb")
+        tem_var.append("branches")
         tem_var.append(i["lat"])
         tem_var.append(i['long'])
-        tem_var.append(i["description"].replace("ATM available during business hours",""))
+        tem_var.append(i["description"].replace("ATM available during business hours"," ").replace("Hours:","").strip().replace("."," ").replace("Drive-Thru Mon"," Drive-Thru Mon").replace("24 Hour ATM"," 24 Hour ATM"))
+        # print()
         store_detail.append(tem_var)
      
         
     for  i in data1['atms']:
         tem_var =[]
+        
         store_name.append(i['name'])
         street_address = i["address"]
         city = i["city"]
@@ -85,7 +88,7 @@ def fetch_data():
         tem_var.append("US")
         tem_var.append("<MISSING>")
         tem_var.append(phone if phone else "<MISSING>")
-        tem_var.append("amnb")
+        tem_var.append("atms")
         tem_var.append(i["lat"])
         tem_var.append(i['long'])
         tem_var.append("<MISSING>")

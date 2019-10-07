@@ -55,8 +55,11 @@ def fetch_data():
                     pcode = ""
                     while i < len(address):
                         temp = address[i]
-                        if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1:
-                            street = street + " " + temp[0]
+                        if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("LandmarkName") != -1:
+                            if temp[1].find("StreetNamePostType") > -1 and temp[0].find(",") > -1:
+                                city = city + " " + temp[0]
+                            else:
+                                street = street + " " + temp[0]
                         if temp[1].find("PlaceName") != -1:
                             city = city + " " + temp[0]
                         if temp[1].find("StateName") != -1:
@@ -133,7 +136,6 @@ def fetch_data():
                         lat = "<MISSING>"
                     if len(longt) < 2 or longt == "undefined":
                         longt = "<MISSING>"
-
 
                     print(title)
                     print(street)
