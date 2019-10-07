@@ -26,7 +26,7 @@ def fetch_data():
     data['page_url']=[i.get_attribute('href') for i in driver.find_elements_by_xpath('//span[@class="sub-head fw-light"]/a')]
 
     for i in location_data:
-        data['locator_domain'].append('https://parknationalbank.com')[1]
+        data['locator_domain'].append('https://parknationalbank.com')
         data['country_code'].append('US')
         data['store_number'].append('<MISSING>')
         data['latitude'].append('<MISSING>')
