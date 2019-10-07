@@ -1,5 +1,6 @@
 from selenium import webdriver
 import pandas as pd
+import re
 
 
 from selenium.webdriver.chrome.options import Options
@@ -38,8 +39,14 @@ def fetch_data():
             data['phone'].append(sub_data[2])
             data['hours_of_operation'].append(driver.find_element_by_xpath('//div[@class="fl-rich-text"]/h2/following-sibling::p').text)
             data['location_type'].append(driver.find_element_by_xpath('//meta[@itemprop="name"]').get_attribute('content'))
-            data['longitude'].append('<MISSING>')
-            data['latitude'].append('<MISSING>')
+            try:
+                geo=driver.find_element_by_xpath('//div[@class="embed-responsive embed-responsive-16by9"]/iframe').get_attribute('src')
+                data['latitude'].append(re.findall(r'!1d-?[\d\.]+', geo)[0].split('d')[-1])
+                data['longitude'].append(re.findall(r'!2d-?[\d\.]+', geo)[0].split('d')[-1])
+            except:
+                data['longitude'].append('<INACCESSIBLE>')
+                data['latitude'].append('<INACCESSIBLE>')
+
 
     driver.close()
     return data

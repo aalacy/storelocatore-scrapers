@@ -10,8 +10,8 @@ options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
-#driver=webdriver.Chrome('C:\chromedriver.exe', options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
+driver=webdriver.Chrome('C:\chromedriver.exe', options=options)
+#driver = webdriver.Chrome("chromedriver", options=options)
 
 
 def write_output(data):
@@ -55,11 +55,12 @@ def fetch_data():
         stri=driver.find_element_by_xpath("//div[contains(@class, 'col-md-3 col-md-offset-0 Column2')]").text
         rep={'HOURS':'','BREAKFAST HOURS':'','*Dinner Pricing All Day on Easter, Mother\'s Day and Father\'s Day.\nReservations Recommended':'','**Holiday hours may vary':'','Private Group Events of 40 or more may be booked during lunch hours Monday through Wednesday in advance. Please call for details.':'','*Join us Saturday & Sunday for our special extended brunch menu!':'','CLOSED SUNDAY':''}
         data['hours_of_operation'].append(replace(stri,rep))
-        data['longitude'].append('<INACCESSIBLE>')
-        data['latitude'].append('<INACCESSIBLE>')
         data['location_type'].append(driver.find_element_by_xpath('//a[@class="logo"]/img').get_attribute('alt'))
         data['store_number'].append('<MISSING>')
-
+        source = str(driver.page_source.encode("utf-8"))
+        geo=re.sub('[A-Za-z)(]','',re.findall(r"LatLng\(-?[\d\.]+,\s-?[\d\.]+\)", source)[0])
+        data['longitude'].append(geo.split(',')[1])
+        data['latitude'].append(geo.split(',')[0])
     
     driver.close()
     return data
