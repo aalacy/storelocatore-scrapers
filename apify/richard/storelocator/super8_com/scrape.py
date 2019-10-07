@@ -1,4 +1,5 @@
 import re
+import time
 
 from Scraper import Scrape
 from selenium import webdriver
@@ -43,18 +44,35 @@ class Scraper(Scrape):
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
+        SCROLL_PAUSE_TIME = 0.5
+
+        # Get scroll height
         driver.get("https://www.wyndhamhotels.com/super-8/locations")
+        last_height = driver.execute_script("return document.body.scrollHeight")
+
+        while True:
+            # Scroll down to bottom
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+            # Wait to load page
+            time.sleep(SCROLL_PAUSE_TIME)
+
+            # Calculate new scroll height and compare with last scroll height
+            new_height = driver.execute_script("return document.body.scrollHeight")
+            if new_height == last_height:
+                break
+            last_height = new_height
+
+
         stores.extend(
             [
                 url.get_attribute("href")
-                for url in driver.find_elements_by_css_selector(
-                    "li.property > a:nth-of-type(1)"
-                )
+                for url in driver.find_elements_by_css_selector("li.property > a:nth-of-type(1)")
             ]
         )
 
         for store in stores:
-            if store not in self.skip:
+            if store not in self.skip and 'china' not in store and 'germany' not in store and 'saudi-arabia' not in store:
                 print(f"Now scraping: {store}")
                 try:
                     driver.get(store)
@@ -83,16 +101,16 @@ class Scraper(Scrape):
                     location_type = "Hotel"
 
                     # Street address
-                    street_address = location_info[0].strip()
+                    street_address = ' '.join([detail.strip() for detail in location_info[0:-3]])
 
                     # City
-                    city = location_info[1].strip()
+                    city = location_info[-3].strip()
 
                     # State
-                    state = location_info[2].strip()
+                    state = location_info[-2].strip()
 
                     # Zip code
-                    zip_code = location_info[3].strip()
+                    zip_code = location_info[-1].strip()
 
                     # Country
                     country = "US"
@@ -106,10 +124,10 @@ class Scraper(Scrape):
                     ).text
 
                     if re.search(
-                        "(\-?\d+(\.\d+)?),\s*(\-?\d+(\.\d+)?)",
-                        driver.find_element_by_css_selector(
-                            "div.directions-btn.action-btn.col-md-7.col-md-offset-8 > a"
-                        ).get_attribute("href"),
+                            "(\-?\d+(\.\d+)?),\s*(\-?\d+(\.\d+)?)",
+                            driver.find_element_by_css_selector(
+                                "div.directions-btn.action-btn.col-md-7.col-md-offset-8 > a"
+                            ).get_attribute("href"),
                     ):
                         # Latitude
                         lat = (
@@ -119,8 +137,8 @@ class Scraper(Scrape):
                                     "div.directions-btn.action-btn.col-md-7.col-md-offset-8 > a"
                                 ).get_attribute("href"),
                             )
-                            .group()
-                            .split(",")[0]
+                                .group()
+                                .split(",")[0]
                         )
 
                         # Longitude
@@ -131,8 +149,8 @@ class Scraper(Scrape):
                                     "div.directions-btn.action-btn.col-md-7.col-md-offset-8 > a"
                                 ).get_attribute("href"),
                             )
-                            .group()
-                            .split(",")[1]
+                                .group()
+                                .split(",")[1]
                         )
                     else:
                         lat = "<MISSING>"
@@ -155,18 +173,18 @@ class Scraper(Scrape):
                     pass
 
         for (
-            locations_title,
-            street_address,
-            city,
-            state,
-            zipcode,
-            phone_number,
-            latitude,
-            longitude,
-            hour,
-            location_id,
-            country,
-            location_type,
+                locations_title,
+                street_address,
+                city,
+                state,
+                zipcode,
+                phone_number,
+                latitude,
+                longitude,
+                hour,
+                location_id,
+                country,
+                location_type,
         ) in zip(
             locations_titles,
             street_addresses,
