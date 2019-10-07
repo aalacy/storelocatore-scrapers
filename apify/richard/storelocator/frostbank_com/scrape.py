@@ -61,8 +61,11 @@ class Scraper(Scrape):
                 data = '{"searchKeyword"' + f':"{zip_search}"' + ', "distance":10}'
                 response = requests.post('https://www.frostbank.com/.rest/public/locations/v1/location/searchbykeyword', headers=headers, cookies=cookies, data=data)
                 try:
+                    data = json.loads(response.text)['locations']
                     stores.extend(json.loads(response.text)['locations'])
+                    print(f'{len(data)} locations scraped for zipcode {zip_search}')
                 except:
+                    print(f'0 location scraped for zipcode {zip_search}')
                     pass
 
         for store in stores:
@@ -98,7 +101,10 @@ class Scraper(Scrape):
                 phone = store['phone']
 
                 # Hour
-                hour = [store['lobbyHoursMonToThu'], store['lobbyHoursFri'], store['lobbyHoursSat'], store['atmHours']]
+                if len(''.join([store['lobbyHoursMonToThu'], store['lobbyHoursFri'], store['lobbyHoursSat'], store['atmHours']]).strip()) == 0:
+                    hour = '<MISSING>'
+                else:
+                    hour = ' '.join(['lobby Hours Mon To Thu:' + store['lobbyHoursMonToThu'], 'lobby Hours Fri:' + store['lobbyHoursFri'], 'lobby Hours Sat:' + store['lobbyHoursSat'], 'atm Hours:' + store['atmHours']])
 
                 # Country
                 country = 'US'

@@ -65,10 +65,13 @@ class Scraper(Scrape):
             lon = '<MISSING>'
 
             # Phone
-            phone = store.find_element_by_css_selector('p:nth-of-type(4)').text
+            phone = store.find_element_by_css_selector('p:nth-of-type(4)').text.replace('Phone:', '').strip()
 
             # Hour
-            hour = store.find_element_by_css_selector('p:nth-of-type(7)').text + ' ' + store.find_element_by_css_selector('p:nth-of-type(8)').text
+            try:
+                hour = store.find_element_by_css_selector('p:nth-of-type(7)').text + ' ' + store.find_element_by_css_selector('p:nth-of-type(8)').text + ' ' + store.find_element_by_css_selector('p:nth-of-type(9)').text
+            except:
+                hour = store.find_element_by_css_selector('p:nth-of-type(7)').text + ' ' + store.find_element_by_css_selector('p:nth-of-type(8)').text
 
             # Country
             country = 'US'
