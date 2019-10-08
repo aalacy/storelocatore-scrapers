@@ -1,18 +1,19 @@
-import sgzip
-import json
+import re
 
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-URL = "https://www.stinehome.com"
+URL = "https://www.wurstkuche.com"
 
 
 class Scraper(Scrape):
     def __init__(self, url):
         Scrape.__init__(self, url)
         self.data = []
+        self.seen = []
+        self.postal_codes = []
 
     def fetch_data(self):
         # store data
@@ -27,7 +28,6 @@ class Scraper(Scrape):
         phone_numbers = []
         hours = []
         countries = []
-        stores = []
 
         options = Options()
         options.add_argument("--headless")
@@ -35,57 +35,48 @@ class Scraper(Scrape):
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
-        for zipcode_search in sgzip.for_radius(100):
-            location_url = f'https://www.stinehome.com/on/demandware.store/Sites-Stine-Site/en_US/Stores-FindStores?showMap=true&radius=100&postalCode={zipcode_search}'
-            driver.get(location_url)
-            stores.extend(json.loads(driver.find_element_by_css_selector('pre').text)['stores'])
+        location_url = 'https://www.wurstkuche.com'
+        driver.get(location_url)
+        stores = driver.find_element_by_id('page-56538a4ee4b0e74bc86c4cc4').find_elements_by_css_selector('div.row.sqs-row')
 
         for store in stores:
-            # Store ID
-            location_id = store['ID']
+            if store.get_attribute('id') != '':
+                locations_title = store.find_element_by_css_selector('div.sqs-block-content > h1').text
 
-            # Name
-            location_title = store['name']
+                location_info = store.find_element_by_css_selector('div.sqs-block-content > p:nth-of-type(2) > a').text
+                city_state = re.search('(\w+\s?\w+,\s\w{2}\s\d{5}$)', location_info).group()
 
-            # Street Address
-            street_address = store['address1'] + ' ' + store['address2'] if store['address2'] else store['address1']
+                street_address = location_info.replace(city_state, '').strip()
 
-            # City
-            city = store['city']
+                city = city_state.split(',')[0]
 
-            # State
-            state = store['stateCode']
+                state = city_state.split(',')[1].strip()[:-5]
 
-            # Zip
-            zip_code = store['postalCode']
+                country = 'US'
 
-            # Hours
-            hour = store['storeHours']
+                zip_code = city_state.split(',')[1].strip()[-5:]
 
-            # Lat
-            lat = store['latitude']
+                hour = store.find_element_by_css_selector('div.sqs-block-content > p:nth-of-type(3)').get_attribute('textContent')
 
-            # Lon
-            lon = store['longitude']
+                phone_number = re.search('\d+.\d+.\d+\sext\s\d', store.find_element_by_css_selector('div.sqs-block-content > p:nth-of-type(4)').get_attribute('textContent')).group()
 
-            # Phone
-            phone = store['phone']
+                location_id = '<MISSING>'
 
-            # Country
-            country = store['countryCode']
+                lat = '<MISSING>'
 
-            # Store data
-            locations_ids.append(location_id)
-            locations_titles.append(location_title)
-            street_addresses.append(street_address)
-            states.append(state)
-            zip_codes.append(zip_code)
-            hours.append(hour)
-            latitude_list.append(lat)
-            longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
+                lon = '<MISSING>'
+
+                locations_ids.append(location_id)
+                locations_titles.append(locations_title)
+                street_addresses.append(street_address)
+                cities.append(city)
+                states.append(state)
+                zip_codes.append(zip_code)
+                phone_numbers.append(phone_number)
+                hours.append(hour)
+                countries.append(country)
+                latitude_list.append(lat)
+                longitude_list.append(lon)
 
         for (
                 locations_title,

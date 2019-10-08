@@ -1,22 +1,25 @@
-import sgzip
 import json
+import requests
 
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-URL = "https://www.stinehome.com"
+URL = "http://www.thebargainshop.com"
 
 
 class Scraper(Scrape):
     def __init__(self, url):
         Scrape.__init__(self, url)
         self.data = []
+        self.stores_url = []
+        self.provinces = []
 
     def fetch_data(self):
         # store data
         locations_ids = []
+        locations_type = []
         locations_titles = []
         street_addresses = []
         cities = []
@@ -26,8 +29,8 @@ class Scraper(Scrape):
         longitude_list = []
         phone_numbers = []
         hours = []
-        countries = []
         stores = []
+        countries = []
 
         options = Options()
         options.add_argument("--headless")
@@ -35,57 +38,66 @@ class Scraper(Scrape):
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
-        for zipcode_search in sgzip.for_radius(100):
-            location_url = f'https://www.stinehome.com/on/demandware.store/Sites-Stine-Site/en_US/Stores-FindStores?showMap=true&radius=100&postalCode={zipcode_search}'
-            driver.get(location_url)
-            stores.extend(json.loads(driver.find_element_by_css_selector('pre').text)['stores'])
+        r = requests.get('http://www.thebargainshop.com/ajax_store.cfm?action=provinces')
+        self.provinces = [prov['val'] for prov in json.loads(r.content)['data']]
 
-        for store in stores:
-            # Store ID
-            location_id = store['ID']
+        for prov in self.provinces:
+            url = f'http://www.thebargainshop.com/ajax_store.cfm?province={prov}&action=cities'
+            r = requests.get(url)
+            self.stores_url.extend([url['val'] for url in json.loads(r.content)['data']])
 
-            # Name
-            location_title = store['name']
+        for store_url in self.stores_url:
+            driver.get(f'http://www.thebargainshop.com{store_url}')
 
-            # Street Address
-            street_address = store['address1'] + ' ' + store['address2'] if store['address2'] else store['address1']
+            # Location id
+            location_id = store_url.replace('/store/', '')[:-1]
+
+            # Location title
+            locations_title = driver.find_element_by_id('store_title').text
+
+            # Location type
+            location_type = '<MISSING>'
+
+            # Street address
+            street_address = driver.find_element_by_id('store_address').text.split(',')[0].strip()
 
             # City
-            city = store['city']
+            city = driver.find_element_by_id('store_address').text.split(',')[1].strip()
 
             # State
-            state = store['stateCode']
-
-            # Zip
-            zip_code = store['postalCode']
-
-            # Hours
-            hour = store['storeHours']
-
-            # Lat
-            lat = store['latitude']
-
-            # Lon
-            lon = store['longitude']
-
-            # Phone
-            phone = store['phone']
+            state = driver.find_element_by_id('store_address').text.split(',')[2].strip()
 
             # Country
-            country = store['countryCode']
+            country = 'CA'
 
-            # Store data
+            # Zip code
+            zip_code = '<MISSING>'
+
+            # Store hour
+            hour = driver.find_element_by_id('store_hours').get_attribute('textContent')
+
+            # Phone
+            phone_number = driver.find_element_by_id('store_phone').text
+
+            # Latitude
+            lat = '<MISSING>'
+
+            # Longitude
+            lon = '<MISSING>'
+
             locations_ids.append(location_id)
-            locations_titles.append(location_title)
+            locations_type.append(location_type)
+            locations_titles.append(locations_title)
             street_addresses.append(street_address)
+            cities.append(city)
             states.append(state)
             zip_codes.append(zip_code)
+            phone_numbers.append(phone_number)
             hours.append(hour)
+            countries.append(country)
             latitude_list.append(lat)
             longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
+
 
         for (
                 locations_title,
@@ -99,6 +111,7 @@ class Scraper(Scrape):
                 hour,
                 location_id,
                 country,
+                location_type
         ) in zip(
             locations_titles,
             street_addresses,
@@ -111,6 +124,7 @@ class Scraper(Scrape):
             hours,
             locations_ids,
             countries,
+            locations_type
         ):
             self.data.append(
                 [
@@ -123,7 +137,7 @@ class Scraper(Scrape):
                     country,
                     location_id,
                     phone_number,
-                    "<MISSING>",
+                    location_type,
                     latitude,
                     longitude,
                     hour,

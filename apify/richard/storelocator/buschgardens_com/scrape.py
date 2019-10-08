@@ -1,12 +1,12 @@
-import sgzip
-import json
-
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 
-URL = "https://www.stinehome.com"
+URL = "https://buschgardens.com/"
 
 
 class Scraper(Scrape):
@@ -35,44 +35,53 @@ class Scraper(Scrape):
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
-        for zipcode_search in sgzip.for_radius(100):
-            location_url = f'https://www.stinehome.com/on/demandware.store/Sites-Stine-Site/en_US/Stores-FindStores?showMap=true&radius=100&postalCode={zipcode_search}'
-            driver.get(location_url)
-            stores.extend(json.loads(driver.find_element_by_css_selector('pre').text)['stores'])
+        location_url = 'https://buschgardens.com/'
+        driver.get(location_url)
+
+        stores.extend(driver.find_elements_by_css_selector('li.two-col-content__item > a'))
+        stores = [store.get_attribute('href') for store in stores]
+
 
         for store in stores:
+            driver.get(store)
+
+            wait = WebDriverWait(driver, 10)
+            wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "div.footer")))
+
+            location_info = driver.find_element_by_css_selector('div.footer-contentinfo__wrapper.container > p').get_attribute('innerHTML').replace('© 2019 SeaWorld Parks &amp; Entertainment, Inc. All Rights Reserved.', '').strip()
+
             # Store ID
-            location_id = store['ID']
-
-            # Name
-            location_title = store['name']
-
-            # Street Address
-            street_address = store['address1'] + ' ' + store['address2'] if store['address2'] else store['address1']
+            location_id = '<MISSING>'
 
             # City
-            city = store['city']
+            city = location_info.split(',')[1].strip()
+
+            # Name
+            location_title = city
+
+            # Street Address
+            street_address = location_info.split(',')[0]
 
             # State
-            state = store['stateCode']
+            state = location_info.split(',')[2][:-5]
 
             # Zip
-            zip_code = store['postalCode']
+            zip_code = location_info.split(',')[2][-5:]
 
             # Hours
-            hour = store['storeHours']
+            hour = '<MISSING>'
 
             # Lat
-            lat = store['latitude']
+            lat = '<MISSING>'
 
             # Lon
-            lon = store['longitude']
+            lon = '<MISSING>'
 
             # Phone
-            phone = store['phone']
+            phone = phone = [info.get_attribute('innerHTML') for info in driver.find_elements_by_css_selector('span.contact-links-listing__link-text') if info.get_attribute('innerHTML') != 'Email Us'][0]
 
             # Country
-            country = store['countryCode']
+            country = "US"
 
             # Store data
             locations_ids.append(location_id)

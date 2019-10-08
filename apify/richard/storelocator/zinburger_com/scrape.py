@@ -1,18 +1,19 @@
-import sgzip
-import json
+import re
 
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-URL = "https://www.stinehome.com"
+URL = "https://zinburger.com/"
 
 
 class Scraper(Scrape):
     def __init__(self, url):
         Scrape.__init__(self, url)
         self.data = []
+        self.seen = []
+        self.postal_codes = []
 
     def fetch_data(self):
         # store data
@@ -27,7 +28,6 @@ class Scraper(Scrape):
         phone_numbers = []
         hours = []
         countries = []
-        stores = []
 
         options = Options()
         options.add_argument("--headless")
@@ -35,57 +35,50 @@ class Scraper(Scrape):
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
-        for zipcode_search in sgzip.for_radius(100):
-            location_url = f'https://www.stinehome.com/on/demandware.store/Sites-Stine-Site/en_US/Stores-FindStores?showMap=true&radius=100&postalCode={zipcode_search}'
-            driver.get(location_url)
-            stores.extend(json.loads(driver.find_element_by_css_selector('pre').text)['stores'])
+        location_url = 'https://zinburger.com/locations/'
+        driver.get(location_url)
+        stores = driver.find_elements_by_css_selector('div.fusion-builder-row.fusion-builder-row-inner.fusion-row')
 
         for store in stores:
-            # Store ID
-            location_id = store['ID']
+            location_id = '<MISSING>'
 
-            # Name
-            location_title = store['name']
+            locations_title = store.find_element_by_css_selector('strong > span').text.replace(' – MAP IT', '')
 
-            # Street Address
-            street_address = store['address1'] + ' ' + store['address2'] if store['address2'] else store['address1']
+            location_info = store.find_element_by_css_selector('div.fusion-text > p:nth-of-type(1)').text.split('\n')
 
-            # City
-            city = store['city']
+            if re.search('^\d', location_info[0]):
+                street_address = location_info[0]
+                city = location_info[1].split(',')[0]
+                state = location_info[1].split(',')[1].strip()[:-5]
+                zip_code = location_info[1].split(',')[1].strip()[-5:]
+            else:
+                street_address = location_info[1]
+                city =location_info[2].split(',')[0]
+                state = location_info[2].split(',')[1].strip()[:-5]
+                zip_code = location_info[2].split(',')[1].strip()[-5:]
 
-            # State
-            state = store['stateCode']
+            phone_number = location_info[-1]
 
-            # Zip
-            zip_code = store['postalCode']
+            country = 'US'
 
-            # Hours
-            hour = store['storeHours']
+            lat = '<MISSING>'
 
-            # Lat
-            lat = store['latitude']
+            lon = '<MISSING>'
 
-            # Lon
-            lon = store['longitude']
+            hour = store.find_element_by_css_selector('div.panel-body.toggle-content.fusion-clearfix > p').get_attribute('textContent')
 
-            # Phone
-            phone = store['phone']
-
-            # Country
-            country = store['countryCode']
-
-            # Store data
             locations_ids.append(location_id)
-            locations_titles.append(location_title)
+            locations_titles.append(locations_title)
             street_addresses.append(street_address)
+            cities.append(city)
             states.append(state)
             zip_codes.append(zip_code)
+            phone_numbers.append(phone_number)
             hours.append(hour)
+            countries.append(country)
             latitude_list.append(lat)
             longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
+
 
         for (
                 locations_title,

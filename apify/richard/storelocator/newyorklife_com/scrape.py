@@ -1,18 +1,19 @@
 import sgzip
-import json
 
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-URL = "https://www.stinehome.com"
+URL = "https://www.newyorklife.com"
 
 
 class Scraper(Scrape):
     def __init__(self, url):
         Scrape.__init__(self, url)
         self.data = []
+        self.seen = []
+        self.postal_codes = []
 
     def fetch_data(self):
         # store data
@@ -27,7 +28,6 @@ class Scraper(Scrape):
         phone_numbers = []
         hours = []
         countries = []
-        stores = []
 
         options = Options()
         options.add_argument("--headless")
@@ -36,56 +36,23 @@ class Scraper(Scrape):
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         for zipcode_search in sgzip.for_radius(100):
-            location_url = f'https://www.stinehome.com/on/demandware.store/Sites-Stine-Site/en_US/Stores-FindStores?showMap=true&radius=100&postalCode={zipcode_search}'
+            location_url = f'https://www.newyorklife.com/nylife/dispatcher/searchAgentsBySingleLineAddress?singleLineAddress={zipcode_search}&distance=100'
             driver.get(location_url)
-            stores.extend(json.loads(driver.find_element_by_css_selector('pre').text)['stores'])
 
-        for store in stores:
-            # Store ID
-            location_id = store['ID']
+            length = len([content.get_attribute('id') for content in driver.find_elements_by_css_selector('div.contact-agent')])
 
-            # Name
-            location_title = store['name']
+            locations_ids.extend([content.get_attribute('id') for content in driver.find_elements_by_css_selector('div.contact-agent')])
+            locations_titles.extend([content.get_attribute('textContent') for content in driver.find_elements_by_css_selector('div.name > a')])
+            street_addresses.extend([content.get_attribute('textContent') for content in driver.find_elements_by_css_selector('div.address.one')])
+            cities.extend([content.get_attribute('textContent').split(',')[0] for content in driver.find_elements_by_css_selector('div.city-state-zip')])
+            states.extend([content.get_attribute('textContent').split(',')[1].strip()[:2] for content in driver.find_elements_by_css_selector('div.city-state-zip')])
+            zip_codes.extend([content.get_attribute('textContent').split(',')[1].strip()[2:] for content in driver.find_elements_by_css_selector('div.city-state-zip')])
+            phone_numbers.extend([content.get_attribute('textContent') for content in driver.find_elements_by_css_selector('div.phone > a')])
 
-            # Street Address
-            street_address = store['address1'] + ' ' + store['address2'] if store['address2'] else store['address1']
-
-            # City
-            city = store['city']
-
-            # State
-            state = store['stateCode']
-
-            # Zip
-            zip_code = store['postalCode']
-
-            # Hours
-            hour = store['storeHours']
-
-            # Lat
-            lat = store['latitude']
-
-            # Lon
-            lon = store['longitude']
-
-            # Phone
-            phone = store['phone']
-
-            # Country
-            country = store['countryCode']
-
-            # Store data
-            locations_ids.append(location_id)
-            locations_titles.append(location_title)
-            street_addresses.append(street_address)
-            states.append(state)
-            zip_codes.append(zip_code)
-            hours.append(hour)
-            latitude_list.append(lat)
-            longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
+            latitude_list.extend(['<MISSING>'] * length)
+            longitude_list.extend(['<MISSING>'] * length)
+            hours.extend(['<MISSING>'] * length)
+            countries.extend(['US'] * length)
 
         for (
                 locations_title,
