@@ -21,7 +21,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    # print("soup ===  first")
+
 
     base_url = "https://pier49.com"
     r = requests.get("https://pier49.com/locations/", headers=headers)
@@ -46,10 +46,10 @@ def fetch_data():
     longitude = ""
     hours_of_operation = ""
 
-    for script in soup.find_all('div', {'class': re.compile('themify_builder_row module_row clearfix')}):
+    for script in soup.find_all('div', {'class': re.compile('row_inner col_align_middle gutter-none')}):
         list_store_data = list(script.stripped_strings)
-        # print('list_store_data === '+str(list_store_data))
-        if len(list_store_data) > 0:
+        # print(str(len(list_store_data))+' == list_store_data === '+str(list_store_data))
+        if len(list_store_data) > 0 :
             if 'ORDER ONLINE' in list_store_data:
                 list_store_data.remove('ORDER ONLINE')
 

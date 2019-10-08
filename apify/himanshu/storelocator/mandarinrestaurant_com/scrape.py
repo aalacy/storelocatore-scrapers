@@ -2,6 +2,7 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
+import json
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,32 +33,51 @@ def fetch_data():
             fetch_p.pop(0)
             
             location_name = fetch_p[0].find('a').text
+            r = requests.get(fetch_p[0].find('a')['href'], headers=header)
+            soup = BeautifulSoup(r.text, "lxml")
+            d =  soup.find_all('script',{'type':'application/ld+json'})
+            h = []
+            for id,val in enumerate(d):
+                if id != 0:
+                    if id  == 1:
+                        dk = json.loads(val.text.replace('@',''))
+                        hour  = dk['openingHoursSpecification']
+
+                        for f in hour:
+                            h.append(' '.join(f['dayOfWeek']) +": open = "+ f['opens'] + " : close = " + f['closes'])
+
+
+
+
             street_address = fetch_p[1].find('span').text
 
             phone = fetch_p[3].find('span').text.split(':')[1]
             db = fetch_p[2].find('span').text.split(' ')
-             
-            zip = db[-2]+db[-1]            
+
+            zip = db[-2]+db[-1].strip()
             state = db[-3]
             db.pop(-1)
             db.pop(-1)
             db.pop(-1)
             city = ' '.join(db)
             vv = fetch_p[2].find('span').text.split(' ')
-            
+
             if not db:
-                 
-                 zip = vv[-1]            
+
+                 zip = vv[-1].strip()
                  state = vv[-2]
                  city = vv[-3]
 
-            
-            country_code = 'CANADA'
-            store_number = dk['data-store-id']
+
+            country_code = 'CA'
+            store_number = ''
+            if 'data-store-id' in dk:
+                store_number = dk['data-store-id']
             location_type = 'mandarinrestaurant'
             latitude =  '<MISSING>'
             longitude =  '<MISSING>'
-            hours_of_operation =  '<MISSING>'
+            hours_of_operation =  ' '.join(h)
+
             store=[]
             store.append(locator_domain if locator_domain else '<MISSING>')
             store.append(location_name if location_name else '<MISSING>')
@@ -72,12 +92,12 @@ def fetch_data():
             store.append(latitude if latitude else '<MISSING>')
             store.append(longitude if longitude else '<MISSING>')
             store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-            return_main_object.append(store)  
-    return return_main_object      
+            return_main_object.append(store)
+            print("data ==== "+str(store))
+    return return_main_object
         
 def scrape():
     data = fetch_data()    
     write_output(data)
 
 scrape()
-

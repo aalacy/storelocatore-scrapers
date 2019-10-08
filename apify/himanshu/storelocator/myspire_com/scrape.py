@@ -28,12 +28,12 @@ def fetch_data():
         soup = BeautifulSoup(r.text,"lxml")
         v = soup.find_all('div',{'class':'locationTXT'})
         for target_list in v:
-            
-            
+
             locator_domain = base_url
             location_name = target_list.find('h3',{'class':'locationheadingTXT'}).find('a').text
             gk =  target_list.find('p',{'class':'locationsHoursTXTaddress'}).text.strip().split('\n')
-            
+            coor = target_list.find('a')['href'].replace('/Branches-ATMS?','').replace('radius=100','').replace('&',' ').split(' ')
+
             street_address = gk[0].strip()
             city = gk[1].strip().split(',')[0]
             state =  gk[1].strip().split(',')[1].strip().split(' ')[0]
@@ -42,8 +42,9 @@ def fetch_data():
             location_type = 'myspire'
             store_number = '<MISSING>'
             phone = '<MISSING>'
-            latitude = '<MISSING>'
-            longitude = '<MISSING>'
+
+            latitude = coor[0].replace('lat=','')
+            longitude =  coor[1].replace('lng=','')
             ck =  target_list.find('p',{'class':'locationsHoursTXT'}).text.strip().split('\n')
             hours_of_operation = ck[0] +' , '+ck[1]
             
@@ -63,9 +64,9 @@ def fetch_data():
             store.append(longitude if longitude else '<MISSING>')
             
             store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-
+            print("====",str(store))
             return_main_object.append(store)  
-    return return_main_object        
+    return return_main_object
 
 
            

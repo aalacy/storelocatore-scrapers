@@ -34,6 +34,8 @@ def fetch_data():
             location_link = location.find("a")["href"]
             location_request = requests.get(location_link,headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
+            if location_soup.find("span",text=re.compile("Coming Soon")):
+                continue
             location_details = []
             for details in location_soup.find_all("h2",{"class":"font_2"}):
                 location_details.extend(list(details.stripped_strings))

@@ -21,10 +21,11 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    print("soup ===  first")
+
 
     base_url = "https://www.threedollarcafe.com"
     r = requests.get("https://www.threedollarcafe.com/our-locations/", headers=headers)
+
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
@@ -61,8 +62,12 @@ def fetch_data():
 
         hours_of_operation = ' '.join(list(script.find('p',{'class':'day-time'}).stripped_strings))
 
+        # hours_of_operation = hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip()
+
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]
+
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
         # print("data = " + str(store))
         # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

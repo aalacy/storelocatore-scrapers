@@ -23,32 +23,40 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     geo_object = {}
-    for location in soup.find_all("div",{'class':"et_pb_map_pin"}):
-        location_details = list(location.stripped_strings)
+    for location in soup.find_all("a",text=re.compile("Learn More")):
+        location_request = requests.get(base_url + location["href"],headers=headers)
+        location_soup = BeautifulSoup(location_request.text,"lxml")
+        location_details = list(location_soup.find("div",{"class":"et_pb_blurb_description"}).stripped_strings)
         if "@" in location_details[-1]:
             del location_details[-1]
         if "Fax" in location_details[-1]:
             del location_details[-1]
+        phone = location_soup.find_all("a",{"href":re.compile("tel:")})[-1].text
         store = []
         store.append("https://la-mesa.com")
-        store.append(location_details[0])
-        if len(location_details[3].split(",")) == 2:
-            store.append(location_details[2])
-            store.append(location_details[3].split(",")[0])
-            store.append(location_details[3].split(",")[-1].split(" ")[-2])
-            store.append(location_details[3].split(",")[-1].split(" ")[-1])
-        else:
-            store.append(location_details[0])
-            store.append(" ".join(location_details[2].split(",")[0].split(" ")[:-2]))
-            store.append(location_details[2].split(",")[-1].split(" ")[-2])
-            store.append(location_details[2].split(",")[-1].split(" ")[-1])
+        store.append("<MISSING>")
+        store.append(location_details[1])
+        store.append(location_details[2].split(",")[0])
+        store.append(location_details[2].split(",")[-1].split(" ")[-2])
+        store.append(location_details[2].split(",")[-1].split(" ")[-1])
         store.append("US")
         store.append("<MISSING>")
-        store.append(location_details[-1])
-        store.append(location_details[1])
-        store.append(location["data-lat"])
-        store.append(location["data-lng"])
-        store.append("<MISSING>")
+        store.append(phone.replace("Call ",""))
+        store.append(location_details[0])
+        if location_soup.find("iframe"):
+            geo_location = location_soup.find('iframe')["data-wpfc-original-src"]
+            store.append(geo_location.split("!3d")[1].split("!")[0])
+            store.append(geo_location.split("!2d")[1].split("!")[0])
+        elif location_soup.find('div',{"class":"et_pb_map_pin"}):
+            geo_location = location_soup.find('div',{"class":"et_pb_map_pin"})
+            store.append(geo_location["data-lat"])
+            store.append(geo_location["data-lng"])
+        else:
+            location_data = json.loads(location_soup.find("script",{"type":"application/ld+json"}).text[:-1])
+            store.append(location_data["provider"]["geo"]["latitude"])
+            store.append(location_data["provider"]["geo"]["longitude"])
+        hours = " ".join(list(location_soup.find("h4",text=re.compile("Hours of Operation")).parent.stripped_strings)[1:])
+        store.append(hours if hours else "<MISSING>")
         return_main_object.append(store)
     return return_main_object
 

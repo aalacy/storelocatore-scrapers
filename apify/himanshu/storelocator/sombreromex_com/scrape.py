@@ -21,8 +21,6 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    # print("soup ===  first")
-
     base_url = "https://www.sombreromex.com"
     r = requests.get("https://www.sombreromex.com/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
@@ -46,9 +44,15 @@ def fetch_data():
     longitude = ""
     hours_of_operation = ""
 
-    for script in soup.find_all('div', {'mmtl-col mmtl-col-sm-3'}):
+    for script in soup.find_all('div', {'class': 'mmtl-col mmtl-col-sm-3'}):
         # for script in soup.find_all('div', {'mmtl-content'}):
         list_store_data = list(script.stripped_strings)
+
+        cityTag = script.parent.find('div', {'class': 'mmtl-col mmtl-col-sm-12'})
+        if cityTag is not None:
+            city = cityTag.text.strip()
+
+        # print(" city === " + str(city))
 
         # if len(list_store_data) == 1:
         #     city = list_store_data[0]
@@ -85,7 +89,7 @@ def fetch_data():
                 location_name = list_store_data[0]
                 phone = list_store_data[-2]
                 hours_of_operation = list_store_data[-1]
-                city = location_name
+                # city = location_name
 
                 if len(list_store_data[1].split(',')) > 1:
                     street_address = list_store_data[1].split(',')[0]
@@ -108,8 +112,11 @@ def fetch_data():
                 else:
                     street_address = ' '.join(list_store_data[0].split(',')[0].split(' ')[:-2])
 
-                city = street_address.split(' ')[-1]
-                location_name = city
+                location_name = street_address.split(' ')[-1]
+                # city = location_name
+
+            # city = city.split("–")[0]
+            # print("city === "+ city)
 
             country_code = 'US'
             store_number = '<MISSING>'

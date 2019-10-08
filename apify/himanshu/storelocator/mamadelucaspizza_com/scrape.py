@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -23,14 +23,14 @@ def handle_store(store_data,country_code):
     store.append(store_data["name"])
     store.append(store_data["address"] + " " + store_data["address2"] if store_data["address2"] != None else store_data["address"])
     store.append(store_data["city"])
-    if country_code == "US":
+    if country_code == "US" and "state" in store_data:
         store.append(store_data["state"])
     else:
-        store.append(store_data["province"])
+        store.append(store_data["province"] if store_data["province"] else "<MISSING>")
     store.append(store_data["zip"] if store_data["zip"] != None else "<MISSING>")
     store.append(country_code)
     store.append(store_data["id"])
-    store.append(store_data["phone"])
+    store.append(store_data["phone"] if store_data["phone"] else "<MISSING>")
     store.append("mama deluca's pizza")
     store.append("<MISSING>")
     store.append("<MISSING>")
@@ -41,6 +41,7 @@ def handle_store(store_data,country_code):
         store.append("<MISSING>")
     else:
         store.append(" ".join(list(location_soup.find("div",{'class':"hours"}).stripped_strings)))
+    store.append("<MISSING>")
     return store
 
 def fetch_data():
@@ -58,14 +59,21 @@ def fetch_data():
         stores = state_request.json()
         for store_data in stores:
             store = handle_store(store_data,"US")
-            if store[2] == "COMING SOON!":
+            if "COMING SOON!" in store[2]:
                 continue
             return_main_object.append(store)
     r = requests.get("https://mamadelucaspizza.com/wp-json/mdp/v1/globallocations?country=CA",headers=headers)
     data = r.json()
     for store_data in data:
         store = handle_store(store_data,"CA")
-        if store[2] == "COMING SOON!":
+        if "COMING SOON!" in store[2]:
+                continue
+        return_main_object.append(store)
+    r = requests.get("https://mamadelucaspizza.com/wp-json/mdp/v1/globallocations?country=PR",headers=headers)
+    data = r.json()
+    for store_data in data:
+        store = handle_store(store_data,"US")
+        if "COMING SOON!" in store[2]:
                 continue
         return_main_object.append(store)
     return return_main_object

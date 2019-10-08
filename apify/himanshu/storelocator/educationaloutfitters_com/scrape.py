@@ -21,15 +21,11 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    print("soup ===  first")
-
+    addresses = []
     base_url = "https://www.educationaloutfitters.com"
     r = requests.get("http://www.educationaloutfitters.com/states", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
-    #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
-    # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
 
     # it will used in store data.
     locator_domain = base_url
@@ -47,67 +43,55 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
 
-    for script_location in soup.find_all("div", {"class": "p-name"}):
-        location_url = script_location.find('a')['href']
+    for script in soup.find_all("div", {"class": "p-name"}):
+        location_name = script.text
+
+        print(location_name + " === " + str(script.find("a")["href"]))
+        location_url = script.find("a")["href"]
         r_location = requests.get(location_url, headers=headers)
-        soup_location = BeautifulSoup(r_location.text, "lxml")
-        # print("location_url === "+location_url)
+        soup_location = BeautifulSoup(r_location.text, "html.parser")
 
-        for script_reservation_a in soup_location.find_all("div", {"class": "ProductDetailsGrid ProductAddToCart"}):
-            address_list = list(script_reservation_a.stripped_strings)
-            address_list = [x for x in address_list if "Outfitter" not in x]
+        full_detail = list(soup_location.find("div", {"class": "ProductDetailsGrid ProductAddToCart"}).stripped_strings)
 
-            for i in range(len(address_list)):
-                address_list[i] = re.sub('[^A-Za-z0-9 ]+', '', address_list[i])
+        full_address = ",".join(full_detail[full_detail.index("\uf041") + 1:full_detail.index("\uf0e0")]).split(",")
 
-            while "" in address_list:
-                address_list.remove("")
-
-            for phone in address_list:
-                if len(phone) == 10 and phone.isdigit():
-                    break
-
-            # print("address_list === "+str(address_list))
-
-            if any(char.isdigit() for char in address_list[0]):
-                street_address = address_list[0]
-                if address_list[1][-5:].isdigit():
-                    zipp = address_list[1][-5:]
-                    state = address_list[1][-8:-6]
-                    city = address_list[1][:-8]
-                else:
-                    zipp = address_list[2][-5:]
-                    state = address_list[2][-8:-6]
-                    city = address_list[1]
-
+        street_address = ", ".join(full_address[:-2])
+        if street_address != "":
+            if full_address[-2] == "":
+                city = location_name
             else:
-                street_address = "<MISSING>"
-                zipp = "<MISSING>"
-                state = "<MISSING>"
-                city = "<MISSING>"
-                if len(address_list[0].split(" ")[-1]) == 2:
-                    state = address_list[0].split(" ")[-1]
-                    city = address_list[0].split(" ")[0]
+                city = full_address[-2]
+        else:
+            street_address = full_address[0]
+            city = location_name
 
-            hours_of_operation = "<MISSING>"
-            location_name = city
+        if len(full_address[-1].strip().split(" ")) > 2:
+            state = "<MISSING>"
+            zipp = "<MISSING>"
+        else:
+            if len(full_address[-1].strip().split(" ")) > 1:
+                state = full_address[-1].strip().split(" ")[0]
+                zipp = full_address[-1].strip().split(" ")[-1]
+            else:
+                if full_address[-1].strip().isdigit():
+                    zipp = full_address[-1].strip()
+                    state = "<MISSING>"
+                else:
+                    state = full_address[-1].strip()
+                    zipp = "<MISSING>"
 
+        phone = full_detail[full_detail.index("\uf095")+1]
 
-            # print("street_address === "+str(street_address))
-            # print("zipp === "+str(zipp))
-            # print("state === "+str(state))
-            # print("city === "+str(city))
+        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
+        if str(store[2]) + str(store[-3]) not in addresses:
+            addresses.append(str(store[2]) + str(store[-3]))
 
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation]
-
+            store = [x if x else "<MISSING>" for x in store]
             # print("data = " + str(store))
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-            return_main_object.append(store)
-
-    return return_main_object
+            yield store
 
 
 def scrape():

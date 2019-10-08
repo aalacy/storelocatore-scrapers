@@ -32,24 +32,25 @@ def fetch_data():
     json_data = json_data.split("/* ]]> */")[0]
     json_data = json_data.replace(';', ' ')
     data = json.loads(str(json_data))
+
     res_data =data['restaurants']
     for r_data in res_data:
-        location_name = r_data['name']
+        location_name = r_data['name'].encode('ascii', 'ignore').decode('ascii').strip()
         if(location_name == ''):
             location_name = "<MISSING>"
         store_id = r_data['id']
         if (store_id == ''):
             store_id = "<MISSING>"
-        street_address = r_data['contact']['adress']
+        street_address = r_data['contact']['adress'].encode('ascii', 'ignore').decode('ascii').strip()
         if (street_address == ''):
             street_address = "<MISSING>"
-        city = r_data['contact']['city']
+        city = r_data['contact']['city'].encode('ascii', 'ignore').decode('ascii').strip()
         if (city == ''):
             city = "<MISSING>"
         phone = r_data['contact']['phone']
         if (phone == ''):
             phone = "<MISSING>"
-        state = r_data['contact']['province']
+        state = r_data['contact']['province'].encode('ascii', 'ignore').decode('ascii').strip()
         if (state == ''):
             state = "<MISSING>"
         store_zip = r_data['contact']['zip']
@@ -79,7 +80,6 @@ def fetch_data():
         return_object.append(lag)
         return_object.append(hour)
         return_main_object.append(return_object)
-
     return return_main_object
 def scrape():
     data = fetch_data()

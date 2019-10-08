@@ -26,8 +26,8 @@ def fetch_data():
     for val in db:
         
         locator_domain = base_url
-        
-        
+
+
 
         location_name = val.find('h3').text
        
@@ -94,7 +94,8 @@ def fetch_data():
         for target_list in hours_of_operation:
            
             bn.append(target_list.find('div',{'class':'worktimeItem'}).text.strip())
-        hours_of_operation = ''.join(bn)
+        hours_of_operation = re.sub('\s','',''.join(bn))
+        hours_of_operation = hours_of_operation.replace('\n','').replace('\n','').replace('\t','')
 
         store=[]
         store.append(locator_domain if locator_domain else '<MISSING>')

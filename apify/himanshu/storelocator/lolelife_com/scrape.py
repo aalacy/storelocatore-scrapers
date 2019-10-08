@@ -35,7 +35,10 @@ def fetch_data():
             else:
                 store.append("<MISSING>")
             if location['postalcode']:
-                store.append(location['postalcode'].replace("\x90",' ').replace("\u011b",' ').strip())
+                zp=location['postalcode']
+                if len(location['postalcode'])==4:
+                    zp="0"+location['postalcode'].replace("\x90",' ').replace("\u011b",' ').strip()
+                store.append(zp)
             else:
                 store.append("<MISSING>")
             if location['country']:
@@ -47,7 +50,10 @@ def fetch_data():
             else:
                 store.append("<MISSING>")
             if location['phone']:
-                store.append(location['phone'].replace("\x90",' ').replace("\u011b",' '))
+                if len(location['phone'])>4:
+                    store.append(location['phone'].replace("\x90",' ').replace("\u011b",' '))
+                else:
+                    store.append("<MISSING>")
             else:
                 store.append("<MISSING>")
             store.append("lolelife")
@@ -63,8 +69,9 @@ def fetch_data():
                 store.append(hour.replace("\x90",' ').replace("\u011b",' '))
             else:
                 store.append("<MISSING>")
-            if location['postalcode'] not in output:
-                output.append(location['postalcode'])
+            adrr =location['address'].strip() + ' ' + location['city'].strip()
+            if adrr not in output:
+                output.append(adrr)
                 return_main_object.append(store)
     return return_main_object
 

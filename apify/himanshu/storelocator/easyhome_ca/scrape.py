@@ -16,6 +16,19 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def minute_to_hours(time):
+    am = "AM"
+    hour = int(time / 60)
+    if hour > 12:
+        am = "PM"
+        hour = hour - 12
+    if int(str(time / 60).split(".")[1]) == 0:
+        
+        return str(hour) + ":00" + " " + am
+        
+    else:
+        k1 = str(int(str(time / 60).split(".")[1]) * 6)[:2]
+        return str(hour) + ":" + k1 + " " + am
 
 def fetch_data():
   
@@ -45,13 +58,42 @@ def fetch_data():
         city =i['city']
         phone =i["phone"]
         if "saturdayClose" in i or "saturdayOpen" in i:
-            time ="saturdayOpen" + ' '+str(i['saturdayOpen'])+ ' '+ 'saturdayClose'+ ' '+str(i['saturdayClose'])+ ' '+'weekdayOpen'+' '+str(i["weekdayOpen"])+' ' +'weekdayClose'+' '+ str(i['weekdayClose'])
+            if  i['saturdayOpen']!= None:
+                
+                index = 2
+                char = ':'
+                saturdayOpen = i['saturdayOpen'][:index] + char + i['saturdayOpen'][index + 1:]+''+str(0)
+                # print(i['saturdayClose'])
+
+                index1 = 2
+                char = ':'
+                saturdayClose = i['saturdayClose'][:index1] + char + i['saturdayClose'][index1 + 1:]+''+str(0)
+
+                index2 = 2
+                char = ':'
+                weekdayOpen = i['weekdayOpen'][:index2] + char + i['weekdayOpen'][index2 + 1:]+''+str(0)
+                # print(weekdayOpen)
+
+                index3 = 2
+                char = ':'
+                weekdayClose = i['weekdayClose'][:index3] + char + i['weekdayClose'][index3 + 1:]+''+str(0)
+
+                # print(weekdayClose)
+
+                # time ="saturdayOpen" + ' '+saturdayOpen.replace("90:0","09:00")+ ' '+ 'saturdayClose'+ ' '+str(saturdayClose)+ ' '+'Mon-Fri'+' '+str(weekdayOpen)+' - '+ str(weekdayClose)
+                time ='Mon-Fri:'+' '+str(weekdayOpen)+' - '+ str(weekdayClose)+ ', Sat: '+  saturdayOpen.replace("90:0","09:00")+' - ' + str(saturdayClose)
+            
+            else:
+                time="<MISSING>"
+                
+            
             # print(time.replace("saturdayOpen None saturdayClose None weekdayOpen None weekdayClose None","<MISSING>"))
         
-        else:
-            time="<MISSING>"
+        # else:
+        #     time="<MISSING>"
             
 
+        # print(time)
        
 
        

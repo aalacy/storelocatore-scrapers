@@ -36,8 +36,13 @@ def fetch_data():
 
                 for in_semi_part in store_soup.find_all("address", {"class": "footer__top-section footer__top-section--left"}):
                     return_object = []
+                    dir = store_soup.find("div", {"id": "neighborhood-map"})
+
                     temp_storeaddresss = list(in_semi_part.stripped_strings)
                     temp_storeaddresss = [w.replace('\xa0', ' ') for w in temp_storeaddresss]
+                    lat = dir["data-latitude"]
+                    lag = dir["data-longitude"]
+
                     if 'Contact' in temp_storeaddresss :
                       temp_storeaddresss.remove('Contact')
 
@@ -51,7 +56,7 @@ def fetch_data():
                         add = temp_storeaddresss[1]
                         state_zip = add.split(",")
                         state = state_zip[1].split(" ")[1]
-                        store_zip = state_zip[1].split(" ")[0]
+                        store_zip = state_zip[1].split(" ")[2]
 
                         new_add = state_zip[0].split(" ")
                         if(len(new_add) == 2):
@@ -72,13 +77,16 @@ def fetch_data():
                 return_object.append("<MISSING>")
                 return_object.append(phone)
                 return_object.append("Affinia Hotel & suites")
-                return_object.append("<MISSING>")
-                return_object.append("<MISSING>")
+                return_object.append(lat)
+                return_object.append(lag)
                 return_object.append("<MISSING>")
                 return_main_object.append(return_object)
+           
     return return_main_object
 def scrape():
     data = fetch_data()
     write_output(data)
 
 scrape()
+
+

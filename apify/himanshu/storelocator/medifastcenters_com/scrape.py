@@ -46,6 +46,7 @@ def fetch_data():
             state=ct[1].strip().split(' ')[0].strip()
             zip=ct[1].strip().split(' ')[1].strip()
             name=loc[0].strip()
+            del loc[-1]
             del loc[0]
             del loc[0]
             address=' '.join(loc).strip()

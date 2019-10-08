@@ -24,13 +24,14 @@ def fetch_data():
     return_main_object = []
     for script in soup.find_all("script"):
         if "restore" in script.text:
-            file1 = open("myfile1.txt","w")
             data = json.loads(re.sub(r'(?<={|,)([a-zA-Z][a-zA-Z0-9]*)(?=:)', r'"\1"',script.text.split("restore: ")[1].split("}}]}]}")[0] + '}}]}]}'),strict=False)["groups"][0]["pins"]
             for i in range(len(data)):
                 store_data = data[i]
-                location_details = list(BeautifulSoup(store_data["label"]["content"],"lxml").stripped_strings)[:-1]
+                location_details = list(BeautifulSoup(store_data["label"]["content"],"lxml").stripped_strings)
+                if location_details[-1] == "Directions to Store":
+                    del location_details[-1]
                 store = []
-                store.append("https://www.diptyqueparis.com")
+                store.append("http://fayettepartsservice.com")
                 store.append(location_details[0])
                 store.append(location_details[1])
                 store.append(location_details[2].split(",")[0])

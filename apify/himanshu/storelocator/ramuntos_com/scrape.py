@@ -103,8 +103,8 @@ def fetch_data():
 
         for j in range(0,14):
             if store_name[i] == res[j]:
-                store.append(res1[j])
-                store.append(res2[j])
+                store.append(res1[j].replace("44.450207","42.88439").replace("43.8016109","43.802345").replace("44.4454432","44.450207"))
+                store.append(res2[j].replace("-73.1101539999999","-72.55651").replace("-73.0952237","-73.096565").replace("-73.09919400000001","-73.11015399999997"))
 
         store.append(hours[i])
         return_main_object.append(store) 

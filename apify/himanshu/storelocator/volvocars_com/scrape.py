@@ -15,9 +15,9 @@ def write_output(data):
             writer.writerow(row)
 
 def parser(location_soup):
-    street_address = " ".join(list(location_soup.find("span",{'itemprop':"streetAddress"}).stripped_strings)) 
-    name = location_soup.find("span",{'class':"c-address-city"}).text
-    city = location_soup.find("span",{'class':"c-address-city"}).text
+    street_address = " ".join(list(location_soup.find("span",{'itemprop':"streetAddress"}).stripped_strings)).replace(","," ") 
+    name = location_soup.find("span",{'class':"c-address-city"}).text.replace(",","")
+    city = location_soup.find("span",{'class':"c-address-city"}).text.replace(",","")
     state = location_soup.find("span",{'class':"c-address-state"}).text
     store_zip = location_soup.find("span",{'class':"c-address-postal-code"}).text
     phone = location_soup.find("span",{'itemprop':"telephone"}).text
@@ -25,6 +25,8 @@ def parser(location_soup):
         hours = "<MISSING>"
     else:
         hours = " ".join(list(location_soup.find("div",{'class':"Hours-table"}).stripped_strings))
+        if hours.count("Closed") == 7:
+            return None
     lat = location_soup.find("meta",{'itemprop':"latitude"})["content"]
     lng = location_soup.find("meta",{'itemprop':"longitude"})["content"]
     store = []
@@ -56,7 +58,8 @@ def fetch_data():
             location_request = requests.get("https://usdealers.volvocars.com/" + states["href"].replace("../",""))
             location_soup = BeautifulSoup(location_request.text,"lxml")
             store_data = parser(location_soup)
-            return_main_object.append(store_data)
+            if store_data:
+                return_main_object.append(store_data)
         else:
             state_request = requests.get("https://usdealers.volvocars.com/" + states["href"])
             state_soup = BeautifulSoup(state_request.text,"lxml")
@@ -65,7 +68,8 @@ def fetch_data():
                     location_request = requests.get("https://usdealers.volvocars.com/" + city["href"].replace("../",""))
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                     store_data = parser(location_soup)
-                    return_main_object.append(store_data)
+                    if store_data:
+                        return_main_object.append(store_data)
                 else:
                     city_request = requests.get("https://usdealers.volvocars.com/" + city["href"].replace("../",""))
                     city_soup = BeautifulSoup(city_request.text,"lxml")
@@ -73,7 +77,8 @@ def fetch_data():
                         location_request = requests.get("https://usdealers.volvocars.com/" + location["href"].replace("../",""))
                         location_soup = BeautifulSoup(location_request.text,"lxml")
                         store_data = parser(location_soup)
-                        return_main_object.append(store_data)
+                        if store_data:
+                            return_main_object.append(store_data)
     return return_main_object
 
 def scrape():

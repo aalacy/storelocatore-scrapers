@@ -21,7 +21,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    # print("soup ===  first")
+
 
     base_url = "https://www.berluti.com"
     # r = requests.get("http://store.berluti.com/search?country=us", headers=headers)
@@ -55,10 +55,8 @@ def fetch_data():
     for script_us in soup_us.find_all('div',{'class':'container'}):
         address_list = list(script_us.stripped_strings)
 
-        # print("script_us === " + str(address_list))
         if 'Closed' in address_list:
             # print("script_us === " + str(address_list))
-
             location_name = address_list[0]
             street_address = address_list[1] +", "+ address_list[2]
 
@@ -74,10 +72,16 @@ def fetch_data():
                 state = "<MISSING>"
 
             phone = address_list[closed_index[0]-1]
-            hours_of_operation = ",".join(address_list[closed_index[0]+1:])
+
+            hours_url = "http://store.berluti.com" + script_us.find("a",{"class":"components-outlet-item-search-result-basic__link__details__link"})["href"]
+            # print("script_us === " + str(hours_url))
+            r_hours = requests.get(hours_url, headers=headers)
+            soup_hours = BeautifulSoup(r_hours.text, "lxml")
+
+            hours_of_operation = " ".join(list(soup_hours.find("div",{"class":"components-outlet-item-hours-retail"}).stripped_strings))
 
             street_address = street_address.replace(city,"")
-            # print("city city ====== "+ city)
+            # print("hours_of_operationty ====== "+ str(hours_of_operation))
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]

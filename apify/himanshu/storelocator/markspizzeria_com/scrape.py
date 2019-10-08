@@ -21,7 +21,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    print("soup ===  first")
+    addresses = []
 
     base_url = "https://www.markspizzeria.com"
     r = requests.get("https://www.markspizzeria.com/locations/all", headers=headers)
@@ -50,7 +50,7 @@ def fetch_data():
         store_url = base_url + script.find('a')['href']
         r_store = requests.get(store_url, headers=headers)
         soup_store = BeautifulSoup(r_store.text, "lxml")
-        print('Store URL = ' + store_url)
+        # print('Store URL = ' + store_url)
 
         list_store_address = list(soup_store.find('div', {'class': 'col-10 postal-address'}).stripped_strings)
         street_address = list_store_address[0]
@@ -63,25 +63,31 @@ def fetch_data():
         latitude = map_location.split("/@")[1].split(",")[0]
         longitude = map_location.split("/@")[1].split(",")[1]
 
-        phone = str(soup_store.find('div', {'id': 'location-phone'}).find('a',{'href':re.compile('tel:')}).text)
+        phone = str(soup_store.find('div', {'id': 'location-phone'}).find('a', {'href': re.compile('tel:')}).text)
         if 'Coming Soon' in phone:
             phone = '<MISSING>'
+            continue
 
         hours_of_operation = ''.join(list(soup_store.find('div', {'id': 'location-hours-collapse'}).stripped_strings))
-        hours_of_operation = hours_of_operation.replace("pm",'pm,')
+        hours_of_operation = hours_of_operation.replace("pm", 'pm,')
         country_code = 'US'
+
+        if hours_of_operation == ":-":
+            hours_of_operation = "<MISSING>"
 
         # print('list_store_address = ' + str(list_store_address))
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        if str(store[2]) + str(store[-3]) not in addresses:
+            addresses.append(str(store[2]) + str(store[-3]))
 
-        return_main_object.append(store)
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-    return return_main_object
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            yield store
 
 
 def scrape():
