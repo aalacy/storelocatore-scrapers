@@ -20,6 +20,7 @@ def validate(items):
     for item in items:
         if item is '<MISSING>':
             continue
+        
         item = item.encode('utf-8').replace('\xef\xbb\xbf', '').strip()
         if item != '':
             rets.append(item)
