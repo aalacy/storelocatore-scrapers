@@ -40,9 +40,28 @@ def fetch_data():
         for t in range(len(tables)):
             hours_of_operation.append(tables[t].text + " - "+soup_page.find_all("table",attrs={"class":"locationTable table-responsive"})[t].text[3:-3].replace(".\n\n\n"," ; ").replace("\n\n\n"," - "))
         
-        hours_of_operation = ' ; '.join(hours_of_operation)            
+        location_type = []
+        for h in range(len(hours_of_operation)):
+            location_type.append(hours_of_operation[h].split("-")[0].strip())
+            
+        #hours_of_operation = ' ; '.join(hours_of_operation)            
         country_code = "US"
-        location_type = '<MISSING>'
+        #location_type = '<MISSING>'
+        
+        lat_lon = soup.find("div",attrs={"class":"edMaps_moduleWrapper"}).find("script")#.text.split("\\r\\n\\t\\r\\n")[-1]
+        
+        import re
+        try:
+            latitude = re.search("\"latitude\":\d+.\d+",str(lat_lon))[0].replace("\"latitude\":","")
+        except:
+            latitude = re.search("\"latitude\":-\d+.\d+",str(lat_lon))[0].replace("\"latitude\":","")
+
+
+        try:
+            longitude = re.search("\"longitude\":\d+.\d+",str(lat_lon))[0].replace("\"longitude\":","")
+        except:
+            longitude = re.search("\"longitude\":-\d+.\d+",str(lat_lon))[0].replace("\"longitude\":","")
+        
         
         data_record = {}
         data_record['locator_domain'] = locator_domain.strip()
@@ -54,9 +73,9 @@ def fetch_data():
         data_record['country_code'] = country_code
         data_record['store_number'] = '<MISSING>'
         data_record['phone'] = phone.strip()
-        data_record['location_type'] = location_type.strip()
-        data_record['latitude'] = '<MISSING>'
-        data_record['longitude'] = '<MISSING>'
+        data_record['location_type'] = location_type#.strip()
+        data_record['latitude'] = latitude
+        data_record['longitude'] = longitude
         data_record['hours_of_operation'] = hours_of_operation
         data_record['page_url'] = page_url
         data.append(data_record)
@@ -70,11 +89,14 @@ def write_output(data):
         df = pd.DataFrame(list(data[d].values())).transpose()
         df.columns = list((data[d].keys()))   
         df_data = df_data.append(df)
+        #break
     #df_data = df_data.fillna("<MISSING>")
     df_data = df_data.replace(r'^\s*$', "<MISSING>", regex=True)
     df_data = df_data.drop_duplicates(["location_name","street_address"])
     df_data['zip'] = df_data.zip.astype(str)
-    df_data.to_csv('./data.csv',index = 0,header=True)
+    df_data.to_csv('./data.csv',index = 0,header=True,columns=['locator_domain','location_name','street_address','city',
+                                                               'state','zip','country_code','store_number','phone','location_type',
+                                                               'latitude','longitude','hours_of_operation','page_url'])
 
 def scrape():
     data = fetch_data()
