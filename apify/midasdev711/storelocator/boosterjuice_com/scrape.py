@@ -10,7 +10,6 @@ base_url = 'https://www.boosterjuice.com'
 def validate(items):
     rets = []
     for item in items:
-
         if item is '<MISSING>':
             continue
         
