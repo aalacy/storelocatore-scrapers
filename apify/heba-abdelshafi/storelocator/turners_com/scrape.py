@@ -34,7 +34,7 @@ def fetch_data():
         data['state'].append('california')
         data['phone'].append(loc[3])
         data['country_code'].append('US')
-        data['hours_of_operation'].append([s.split(':')[-1] for s in loc if 'Friday' in s][0])
+        data['hours_of_operation'].append(loc[-3]+loc[-4]+loc[-5]+loc[-6])
         data['store_number'].append('<MISSING>')
         loc_type=driver.find_element_by_xpath('//div[@class="locatorForm"]/h1').text.split()
         data['location_type'].append(loc_type[4]+loc_type[5])

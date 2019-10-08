@@ -44,7 +44,8 @@ def fetch_data():
         state = state_tmp[1]
         zip1= state_tmp[2]
         phone = list(i.stripped_strings)[2].replace('/ (734) 424-1402 (Delivery)','')
-        hour = list(i.stripped_strings)[4]+''+list(i.stripped_strings)[5]
+        hour = list(i.stripped_strings)[4]+''+list(i.stripped_strings)[5].replace("Aubree's Depot Town Happy Hour","")
+       
 
 
 
