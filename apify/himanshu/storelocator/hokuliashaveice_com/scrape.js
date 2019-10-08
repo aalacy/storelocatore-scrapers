@@ -24,22 +24,14 @@ request(url,(err,res,html)=>{
                                      {
                              var address_tmp = $('.mod-locations').find('.col-xs-6').eq(i).html().split('<br>');
                              
-                             if(address_tmp.length == 2){
-                              var location_name = '';
-                              var address =  '';
-                              var city =  '';
-                              var state =  '<MISSING>';
-                              var zip =  '<MISSING>';
-                              var latitude =  '<MISSING>';
-                              var longitude =  '<MISSING>';
-                             }
-                             else if(address_tmp.length == 3){
+                              
+                             if(address_tmp.length == 3){
                               var location_name = address_tmp[0].trim().replace('700 US-29 N.','<MISSING>');
                               var address_tmp1 = address_tmp[1].trim().split('<');
                               var address_tmp2 = address_tmp1[0].split(',');
                             
                                     if(address_tmp2.length ==2){
-                                      var address = address_tmp2[0].replace('Athens','<MISSING>');
+                                      var address = address_tmp2[0].replace('Athens','<MISSING>').replace(/\r?\n?/g, '');
                                       var city_tmp = address_tmp2[1].trim().split(' ');
                                        
                                       if(city_tmp.length == 1){
@@ -58,7 +50,7 @@ request(url,(err,res,html)=>{
                                     }
                                    else if(address_tmp2.length ==3){
                                      
-                                      var address = address_tmp2[0];
+                                      var address = address_tmp2[0].replace(/\r?\n?/g, '');
                                       var city = address_tmp2[1];
                                       var state_tmp = address_tmp2[2].trim().split(' ');
                                       var state = state_tmp[0];
@@ -68,7 +60,7 @@ request(url,(err,res,html)=>{
                                     }
                                    else if(address_tmp2.length ==4){
                                       
-                                    var address = address_tmp2[0]+''+address_tmp2[1];
+                                    var address = address_tmp2[0]+''+address_tmp2[1].replace(/\r?\n?/g, '');
                                     var city = address_tmp2[2];
                                     var state_tmp = address_tmp2[3].trim().split(' ');
                                     var state = state_tmp[0];
@@ -82,6 +74,7 @@ request(url,(err,res,html)=>{
                                       var latitude_tmp2 = latitude_tmp1[1].split(',');
                                       var latitude = latitude_tmp2[0];
                                       var longitude = latitude_tmp2[1];
+                                    
                                      
                                     }
                                     else {
@@ -127,7 +120,8 @@ request(url,(err,res,html)=>{
                                           var latitude_tmp2 = latitude_tmp1[1].split(',');
                                           var latitude = latitude_tmp2[0];
                                           var longitude = latitude_tmp2[1];
-                                        
+                                         
+
 
                                         }
                                         else if(latitude_tmp1.length == 3){
@@ -155,7 +149,7 @@ request(url,(err,res,html)=>{
                              }
                              else if (address_tmp.length ==5){
                               var location_name = address_tmp[0].trim();
-                              var address = address_tmp[1].trim().replace('Next to Burberry/Blaze Pizza','48400 Seminole Dr').replace('(Near Honeybaked Ham)','1083 W Riverdale Rd').replace('Shadow Point Shopping Center','1235 W 1700 S');
+                              var address = address_tmp[1].trim().replace('Next to Burberry/Blaze Pizza','48400 Seminole Dr').replace('(Near Honeybaked Ham)','1083 W Riverdale Rd').replace('Shadow Point Shopping Center','1235 W 1700 S').replace(/\r?\n?/g, '');
                               var city_tmp = address_tmp[3].trim().split('<a');
                               var city_tmp1 = city_tmp[0];
                               if(city_tmp1!=''){
@@ -203,7 +197,7 @@ request(url,(err,res,html)=>{
                              }
                              else if(address_tmp.length ==6){
                               var location_name = address_tmp[0].trim();
-                              var address = address_tmp[2].replace('Olathe, KS 66061','11118 S. Lone Elm Rd #104');
+                              var address = address_tmp[2].replace('Olathe, KS 66061','11118 S. Lone Elm Rd #104').replace(/\r?\n?/g, '');
                               var city_tmp = address_tmp[3].trim().replace('(913)289-5400','Olathe, KS 66061').split(',');
                               var city = city_tmp[0];
                               var state_tmp = city_tmp[1].split(' ');
@@ -224,11 +218,14 @@ request(url,(err,res,html)=>{
                               var city = city_tmp[0].replace(',','');
                               var state = city_tmp[1].replace('.','');
                               var zip = city_tmp[2];
-                               
+                              var latitude = '33.750656';
+                              var longitude = '-84.3245447';
+                             
 
                              }
-                           
-                               if(location_name!=''){
+                            
+                             
+                               if(location_name!='' &&  location_name!=undefined){
                                 items.push({  
 
                                   locator_domain: 'https://hokuliashaveice.com/', 

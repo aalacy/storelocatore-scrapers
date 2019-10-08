@@ -1,5 +1,6 @@
 from selenium import webdriver
 import pandas as pd
+import re
 
 
 from selenium.webdriver.chrome.options import Options

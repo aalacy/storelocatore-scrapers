@@ -34,6 +34,7 @@ def fetch_data():
             location_name = semi_part.find("a").text
             for inner_part in store_soup.find_all("div", {"class": "content-column"}):
                 temp_storeaddresss = list(inner_part.stripped_strings)
+
                 del temp_storeaddresss[-3]
                 del temp_storeaddresss[-2]
                 del temp_storeaddresss[-1]
@@ -67,7 +68,7 @@ def fetch_data():
                 return_object.append("<MISSING>")
                 return_object.append(hour)
                 return_main_object.append(return_object)
-             
+               
     return return_main_object
 
 def scrape():

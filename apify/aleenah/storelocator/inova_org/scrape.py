@@ -5,6 +5,7 @@ import re
 from bs4 import BeautifulSoup
 
 
+
 options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
@@ -41,17 +42,21 @@ def fetch_data():
     long = []
     lat = []
     timing = []
+    ids=[]
     urls=[]
+    types=[]
+    """
     driver.get("https://www.inova.org/locations")
     #soup = BeautifulSoup(driver.page_source, 'html.parser')
     #divs= soup.find_all('div',{'class':'item'})
-    divs = driver.find_element_by_id("mCSB_1_container")
+    divss = driver.find_element_by_id("mCSB_1_container")
 
-    divs= divs.find_elements_by_class_name("item")
+    divs= divss.find_elements_by_class_name("item")
+
     print(len(divs))
     i=0
     for div in divs:
-        """
+        
         locs.append(div.find_element_by_tag_name("h2").text)
         if i not in [0,2,3]:
             but = div.find_element_by_tag_name("button")
@@ -102,8 +107,13 @@ def fetch_data():
         else:
             timing.append("<MISSING>")
             
-        """
+        
         urls.append(div.find_element_by_tag_name("h2").find_element_by_tag_name("a").get_attribute("href"))
+
+
+
+
+    
     for url in urls:
         driver.get(url)
         div = driver.find_element_by_id("block-inova-content").find_element_by_class_name("content")
@@ -127,7 +137,7 @@ def fetch_data():
                 states.append(i[0])
                 zips.append(i[1])
                 ind= tex.index(o)
-                del tex[ind]
+
                 continue
             elif "Phone: " in i:
                 phones.append(re.findall(r'([0-9\-]+)', i)[0])
@@ -141,7 +151,7 @@ def fetch_data():
         if p ==0:
             phones.append("<MISSING>")
         st=""
-        for i in range(ind):
+        for i in range(ind-1):
              st+=tex[i]
         if st =="":
             street.append("<MISSING>")
@@ -150,10 +160,86 @@ def fetch_data():
         try:
             di=driver.find_element_by_id("block-inova-content")
             di.find_element_by_class_name("current-status").click()
-            tim=di.find_element_by_class_name("hours-wrap").text
-            timing.append(tim)
+            times=di.find_elements_by_class_name("hours")
+            tim=""
+            for t in times:
+                tim+=t.text+" "
+            timing.append(tim.strip())
         except:
             timing.append("<MISSING>")
+    """
+    driver.get("https://www.inova.org/locations")
+
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    script = soup.find('script', {'type': 'application/json'})
+    list=re.findall(r'"allResults":(.*)',script.text)[0]
+    idss=list.split('"indexExtra"')
+    del idss[-1]
+    print(len(idss))
+
+
+    for tex in idss:
+
+        l = re.findall(r'.*"name":"([^"]*)"', tex)[0].replace("\n"," ")
+        st=re.findall(r'.*"address_line1":"([^"]*)"', tex)[0]
+        try:
+            st += (" "+re.findall(r'.*"address_line2":"([^"]*)"', tex)[0])
+        except:
+            k=0
+        c=re.findall(r'.*"locality":"([^"]*)"', tex)[0]
+        la=re.findall(r'.*"lat":(-?[\d\.]*)', tex)
+        if la ==[]:
+            la="<MISSING>"
+        else:
+            la=la[0].strip()
+        lo=re.findall(r'.*"lng":(-?[\d\.]*)', tex)
+        if lo ==[]:
+            lo="<MISSING>"
+        else:
+            lo=lo[0].strip()
+        try:
+            p=re.findall(r'.*"phone":"([^"]*)"', tex,re.DOTALL)[0].strip()
+            p=re.sub(r'[A-Z]+',"",p)
+
+        except:
+            p="<MISSING>"
+        z=re.findall(r'.*"postal_code":"([^"]*)"', tex)[0].strip()
+        s=re.findall(r'.*"administrative_area":"([^"]*)"', tex)[0].strip()
+        if s=="":
+            s="<MISSING>"
+        id=re.findall(r'.*"id":"([^"]*)"', tex)[0]
+        tim=re.findall(r'.*"schedule":\{(.*)\},"direction', tex, re.DOTALL)[0].strip().replace("\"","").replace("{","").replace("}","").replace("\n"," ").replace("null"," ")
+
+        ltypes=re.findall(r'.*"locationTypes":(.*),"address"', tex,re.DOTALL)[0].strip()
+        if ltypes =="[]":
+            locs.append(l)
+            states.append(s)
+            cities.append(c)
+            zips.append(z)
+            timing.append(tim)
+            street.append(st)
+            lat.append(la)
+            long.append(lo)
+            phones.append(p)
+            ids.append(id)
+            types.append("<MISSING>")
+        else:
+            subs = ltypes.split("},{")
+            for sub in subs:
+                id = re.findall(r'.*"id":"([^"]*)"', tex)[0]
+                t=re.findall(r'.*"name":"([^"]*)"', tex)[0]
+                locs.append(l)
+                states.append(s)
+                cities.append(c)
+                zips.append(z)
+                timing.append(tim)
+                street.append(st)
+                lat.append(la)
+                long.append(lo)
+                phones.append(p)
+                ids.append(id)
+                types.append(t)
+
     all = []
     for i in range(0, len(locs)):
         row = []
@@ -164,13 +250,19 @@ def fetch_data():
         row.append(states[i])
         row.append(zips[i])
         row.append("US")
-        row.append("<MISSING>")  # store #
+        row.append(ids[i])  # store #
         row.append(phones[i])  # phone
-        row.append("<INACCESSIBLE>")  # type
-        row.append("<MISSING>")  # lat
-        row.append("<MISSING>")  # long
+        row.append(types[i])  # type
+        row.append(lat[i])  # lat
+        row.append(long[i])  # long
         row.append(timing[i]) #timing
-        all.append(row)
+        if row not in all:
+            all.append(row)
+        
+        
+    
+
+
     return all
 
 def scrape():

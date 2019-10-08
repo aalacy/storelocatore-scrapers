@@ -41,10 +41,181 @@ def fetch_data():
     long = []
     lat = []
     timing = []
+    ids=[]
 
     urls=["https://www.topman.com/store-locator?country=Canada","https://www.topman.com/store-locator?country=United+States"]
     for url in urls:
         driver.get(url)
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        scripts = soup.find_all('script', {'type': 'application/ld+json'})
+        if "Canada"  in url:
+            for scr in scripts:
+                countries.append("CA")
+                tex=scr.text
+                locs.append(re.findall(r'.*"name":"([^"]*)"', tex)[0])
+                if "Regina" in locs:
+                    k=0
+                p= re.findall(r'.*"telephone":"([^"]*)"', tex)[0]
+                if p == "":
+                    phones.append("<MISSING>")
+                else:
+                    phones.append(p)
+                tim = re.findall(r'.*"openingHours":"([^"]*)"',tex)[0]
+                if tim=="":
+                    timing.append("<MISSING>")
+                else:
+                    timing.append(tim)
+                addr = re.findall(r'.*"addressLocality":"([^"]*)"',tex)
+                if addr == []:
+                    z = re.findall(r'.*"postalCode":"([^"]*)"', tex)
+                    if z == []:
+                        zips.append("<MISSING>")
+                    else:
+                        zips.append(z[0])
+                    addr = re.findall(r'.*"streetAddress":"([^"]*)"', tex)[0]
+                    states.append("<MISSING>")
+                    cities.append("<MISSING>")
+                    if addr == "":
+                        street.append("<MISSING>")
+                    else:
+                        street.append(addr)
+
+                    continue
+                else:
+                    addr=addr[0]
+                z = re.findall(r'([ABCEGHJ-NPRSTVXY][0-9][ABCEGHJ-NPRSTV-Z] [0-9][ABCEGHJ-NPRSTV-Z][0-9])',addr)
+                if z ==[]:
+                    z=re.findall(r'.*"postalCode":"([^"]*)"', tex)
+                    if z==[]:
+                        zips.append("<MISSING>")
+                    else:
+                        zips.append(z[0])
+
+                else:
+                    zips.append(z[0])
+                    addr = re.findall(r'.*"streetAddress":"([^"]*)"', tex)[0]
+                    if addr =="":
+                        states.append("<MISSING>")
+                        street.append("<MISSING>")
+                        cities.append("<MISSING>")
+                        continue
+
+                    add = addr.strip().split(",")
+                    if add[-1] == "":
+                        del add[-1]
+                    s=re.findall(r'( [A-Z]{2}$)', add[-1])
+                    if s==[]:
+                        states.append("<MISSING>")
+                    else:
+                        states.append(add[-1].strip())
+                        del add[-1]
+                    cities.append(add[-1].strip())
+                    del add[-1]
+                    st=""
+                    for a in add:
+                        st+=(a+" ")
+                    street.append(st.strip())
+                    continue
+                s=re.findall(r'([A-Z]{2}$)', addr)
+                if s!=[]:
+                    states.append(s[0])
+                    addr = re.findall(r'.*"streetAddress":"([^"]*)"', tex)[0]
+                    z=re.findall(r'([ABCEGHJ-NPRSTVXY][0-9][ABCEGHJ-NPRSTV-Z] [0-9][ABCEGHJ-NPRSTV-Z][0-9])', addr)
+                    if z!=[]:
+                        z=z[0]
+                        addr=addr.replace(z,"")
+                        zips[-1]=z
+                    if addr == "":
+                        states.append("<MISSING>")
+                        street.append("<MISSING>")
+                        cities.append("<MISSING>")
+                        continue
+                    add=addr.strip().split(",")
+                    if add[-1]=="":
+                        del add[-1]
+                    cities.append(add[-1].strip())
+                    del add[-1]
+                    st = ""
+                    for a in add:
+                        st += (a + " ")
+                    street.append(st.strip())
+                    continue
+                else:
+                    cities.append(addr)
+                    states.append("<MISSING>")
+                    addr = re.findall(r'.*"streetAddress":"([^"]*)"', tex)[0]
+                    if addr == "":
+                        street.append("<MISSING>")
+                    else:
+                        street.append(addr)
+            texts = re.findall(r'"stores":(.*),"selectedStore":', soup.text, re.DOTALL)[0].split('"cfsiPickCutOffTime"')
+            del texts[-1]
+            for tex in texts:
+                ids.append(re.findall(r'.*"storeId":"([^"]*)"', tex)[0])
+                la = re.findall(r'.*"latitude":(-?[\d\.]*)', tex)[0]
+                lo = re.findall(r'.*"longitude":(-?[\d\.]*)', tex)[0]
+                if la == "0":
+                    lat.append("<MISSING>")
+                else:
+                    lat.append(la)
+                if lo == "0":
+                    long.append("<MISSING>")
+                else:
+                    long.append(lo)
+
+        else:
+            for scr in scripts:
+
+                countries.append("US")
+                tex=scr.text
+                locs.append(re.findall(r'.*"name":"([^"]*)"', tex)[0])
+                p = re.findall(r'.*"telephone":"([^"]*)"', tex)[0]
+                if p == "":
+                    phones.append("<MISSING>")
+                else:
+                    phones.append(p)
+                tim = re.findall(r'.*"openingHours":"([^"]*)"', tex)[0]
+                if tim == "":
+                    timing.append("<MISSING>")
+                else:
+                    timing.append(tim)
+
+                addr = re.findall(r'.*"addressLocality":"([^"]*)"', tex)
+                if addr==[]:
+                    cities.append("<MISSING>")
+                else:
+                    cities.append(addr[0])
+                z = re.findall(r'.*"postalCode":"([^"]*)"', tex)
+                if z == []:
+                    zips.append("<MISSING>")
+                else:
+                    zips.append(z[0])
+                states.append("<MISSING>")
+                addr = re.findall(r'.*"streetAddress":"([^"]*)"', tex)[0]
+                if addr =="":
+                    street.append("<MISSING>")
+                else:
+                    street.append(addr)
+            texts = re.findall(r'"stores":(.*),"selectedStore":', soup.text, re.DOTALL)[0].split('"cfsiPickCutOffTime"')
+            del texts[-1]
+            for tex in texts:
+                ids.append(re.findall(r'.*"storeId":"([^"]*)"', tex)[0])
+                la=re.findall(r'.*"latitude":(-?[\d\.]*)', tex)[0]
+                lo=re.findall(r'.*"longitude":(-?[\d\.]*)', tex)[0]
+                if la =="0":
+                    lat.append("<MISSING>")
+                else:
+                    lat.append(la)
+                if lo =="0":
+                    long.append("<MISSING>")
+                else:
+                    long.append(lo)
+
+
+
+
+
+    """
         divs = driver.find_elements_by_xpath("//div[@class='Store-headerDetails']")
         #diva= driver.find_element_by_xpath('//div[@class="StoreLocator-resultsContainer StoreLocator-resultsContainer--fullHeight"]')
         if "Canada" not in url:
@@ -140,6 +311,7 @@ def fetch_data():
                 timing.append("<MISSING>")
             else:
                 timing.append(g)
+    """
     all = []
     for i in range(0, len(locs)):
         row = []
@@ -150,11 +322,11 @@ def fetch_data():
         row.append(states[i])
         row.append(zips[i])
         row.append(countries[i])
-        row.append("<MISSING>")  # store #
-        row.append("<MISSING>") #phone
+        row.append(ids[i])  # store #
+        row.append(phones[i]) #phone
         row.append("<MISSING>") #type
-        row.append("<MISSING>") #lat
-        row.append("<MISSING>") #long
+        row.append(lat[i]) #lat
+        row.append(long[i]) #long
         row.append(timing[i])
 
         all.append(row)
