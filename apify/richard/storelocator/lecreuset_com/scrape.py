@@ -1,18 +1,23 @@
-import sgzip
 import json
 
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 
-URL = "https://www.stinehome.com"
+URL = "https://www.lecreuset.com"
 
 
 class Scraper(Scrape):
     def __init__(self, url):
         Scrape.__init__(self, url)
         self.data = []
+        self.exceptions = {
+            "37677": {"city": "Simpsonville", "state": "KY", "zip_code": "40067"}
+        }
 
     def fetch_data(self):
         # store data
@@ -35,44 +40,72 @@ class Scraper(Scrape):
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
-        for zipcode_search in sgzip.for_radius(100):
-            location_url = f'https://www.stinehome.com/on/demandware.store/Sites-Stine-Site/en_US/Stores-FindStores?showMap=true&radius=100&postalCode={zipcode_search}'
-            driver.get(location_url)
-            stores.extend(json.loads(driver.find_element_by_css_selector('pre').text)['stores'])
+        # Fetch stores from location menu
+        location_url = "https://www.lecreuset.com/ustorelocator/location/searchJson/"
+        driver.get(location_url)
+        stores.extend(
+            json.loads(driver.find_element_by_css_selector("pre").text)["markers"]
+        )
+
+        # Wait until element appears - 10 secs max
+        wait = WebDriverWait(driver, 10)
+        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "pre")))
 
         for store in stores:
             # Store ID
-            location_id = store['ID']
+            location_id = store["location_id"]
 
             # Name
-            location_title = store['name']
+            location_title = store["title"]
+
+            if location_id in self.exceptions:
+                # City
+                city = self.exceptions[location_id]["city"]
+
+                # State
+                state = self.exceptions[location_id]["state"]
+
+                # Zip
+                zip_code = self.exceptions[location_id]["zip_code"]
+
+            else:
+                # City
+                city = store["address_display"].split("\n")[-1].split(",")[-2].strip()
+
+                # State
+                state = (
+                    store["address_display"].split("\n")[-1].split(",")[-1].strip()[:-5]
+                )
+
+                # Zip
+                zip_code = (
+                    store["address_display"].split("\n")[-1].split(",")[-1].strip()[-5:]
+                )
 
             # Street Address
-            street_address = store['address1'] + ' ' + store['address2'] if store['address2'] else store['address1']
-
-            # City
-            city = store['city']
-
-            # State
-            state = store['stateCode']
-
-            # Zip
-            zip_code = store['postalCode']
+            street_address = (
+                store["address"]
+                .replace(city, "")
+                .replace(state, "")
+                .replace(zip_code, "")
+                .strip()[:-1]
+                .strip()
+            )
 
             # Hours
-            hour = store['storeHours']
+            hour = store["store_hours"]
 
             # Lat
-            lat = store['latitude']
+            lat = store["latitude"]
 
             # Lon
-            lon = store['longitude']
+            lon = store["longitude"]
 
             # Phone
-            phone = store['phone']
+            phone = store["phone"]
 
             # Country
-            country = store['countryCode']
+            country = store["country"]
 
             # Store data
             locations_ids.append(location_id)
@@ -88,17 +121,17 @@ class Scraper(Scrape):
             countries.append(country)
 
         for (
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                phone_number,
-                latitude,
-                longitude,
-                hour,
-                location_id,
-                country,
+            locations_title,
+            street_address,
+            city,
+            state,
+            zipcode,
+            phone_number,
+            latitude,
+            longitude,
+            hour,
+            location_id,
+            country,
         ) in zip(
             locations_titles,
             street_addresses,
