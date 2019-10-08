@@ -8,7 +8,7 @@ import time
 
 def get_driver():
     options = Options()
-    options.add_argument('--headless')
+    #options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
@@ -53,8 +53,9 @@ def fetch_data():
     main = driver.find_element_by_css_selector('div#main-content')
 
     locs = main.find_elements_by_css_selector('div.wpb_content_element')
-    all_store_data = []
+    link_store_data = []
     for loc in locs:
+        link = loc.find_elements_by_css_selector('a')[1].get_attribute('href')
 
         cont = loc.text.split('\n')
         if 'COMET CLEANERS' not in cont[0]:
@@ -74,9 +75,22 @@ def fetch_data():
         longit = '<MISSING>'
         lat = '<MISSING>'
 
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
-        all_store_data.append(store_data)
+        store_data = [link, [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                      store_number, phone_number, location_type, lat, longit, hours]]
+        link_store_data.append(store_data)
+
+
+
+
+    print(len(link_store_data))
+    all_store_data = []
+
+    for data in link_store_data:
+        print(data[0])
+        driver.get(data[0])
+        driver.implicitly_wait(10)
+        time.sleep(1)
+
 
 
 

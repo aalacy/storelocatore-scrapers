@@ -19,7 +19,10 @@ def fetch_data():
     r = requests.get("https://www.thriftyfoods.com/api/en/Store/get?Latitude=48.45423&Longitude=-123.359205&Skip=0&Max=60000000").json()
     return_main_object = []
     for loc in r['Data']:
-        hour=loc['OpeningHours'].strip()
+        r1=requests.get(base_url+loc['StoreDetailPageUrl'])
+        soup=BeautifulSoup(r1.text,'lxml')
+        hour=''
+        hour=' '.join(soup.find('div',{'id':"body_0_main_0_PnlOpenHours"}).stripped_strings)
         name=loc['Name'].strip()
         address=loc['AddressMain']['Line'].strip()
         zip=loc['AddressMain']['DisplayPostalCode'].strip()

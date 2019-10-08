@@ -52,7 +52,7 @@ def fetch_data():
                     zipcode = phone.text.split( )[-1]
 
                     tem_var.append(street_address)
-                    tem_var.append(city)
+                    tem_var.append(city.replace(",",""))
                     tem_var.append(state)
                     tem_var.append(zipcode)
                     store_detail.append(tem_var)
@@ -67,7 +67,7 @@ def fetch_data():
 
 
                         tem_var.append(street_address)
-                        tem_var.append(city)
+                        tem_var.append(city.replace(",",""))
                         tem_var.append(state)
                         tem_var.append(zipcode)
                         store_detail.append(tem_var)
@@ -78,7 +78,7 @@ def fetch_data():
                         zipcode = phone.text.split(',',2)[2].split( )[1]
 
                         tem_var.append(street_address)
-                        tem_var.append(city)
+                        tem_var.append(city.replace(",",""))
                         tem_var.append(state)
                         tem_var.append(zipcode)
                         store_detail.append(tem_var)
@@ -92,13 +92,13 @@ def fetch_data():
     
     for i in range(len(store_name)):
         store = list()
-        store.append("https://lostpizza.com")
+        store.append("https://www.fatshack.com")
         store.append(store_name[i])
         store.extend(store_detail[i])
         store.append("US")
         store.append("<MISSING>")
         store.append(phone_no[i])
-        store.append("parryspizza")
+        store.append("fatshack")
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append(time[i].replace("\x80","").replace("\x93",""))
@@ -114,3 +114,5 @@ def scrape():
 
 
 scrape()
+
+

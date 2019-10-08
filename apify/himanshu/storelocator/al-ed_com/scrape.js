@@ -32,7 +32,14 @@ async function scrape(){
                                       var zip=address.substr(q+1,)
                                       // var zip="";
                                       var madd=item.address.split(',');
-                                      if(madd.length==2){
+                                      if(madd.length==1){
+                                        address=madd[0];
+                                        var dt=$('.group-info span').eq(1).text().split(',');
+                                        state=dt[1].trim()
+                                        city=dt[0].trim()
+                                        zip=''
+                                      }
+                                      else if(madd.length==2){
                                           address=madd[0];
                                           state=madd[1].trim().split(' ')[0];
                                           zip=madd[1].trim().split(' ')[1];
@@ -50,23 +57,23 @@ async function scrape(){
                                                " , Thurday : "+$('#open_hour table tbody tr').eq(4).find('td').eq(2).text()+
                                                " , Friday : "+$('#open_hour table tbody tr').eq(5).find('td').eq(2).text()+
                                                " , Saturday : "+$('#open_hour table tbody tr').eq(6).find('td').eq(2).text();
-                                      var regexp = /^[0-9]+$/;
-                                      if(zip.match(regexp))
+                                    //   var regexp = /^[0-9]+$/;
+                                    //   if(zip.match(regexp))
                                         items.push({
-                                    locator_domain: 'https://al-ed.com',
-                                    location_name:item.store_name,
-                                    street_address: "<INACCESSIBLE>",
-                                    raw_address:address,
-                                    city:city?city:"<INACCESSIBLE>",
-                                    state:state?state:"<INACCESSIBLE>",
-                                    zip:zip?zip:"<ESSIBLE>",
-                                    country_code: 'US',
-                                    store_number:item.storelocator_id,
-                                    phone:item.phone,
-                                    location_type: 'al-ed',
-                                    latitude: item.latitude,
-                                    longitude: item.longitude,
-                                    hours_of_operation:hour
+                                                locator_domain: 'https://al-ed.com',
+                                                location_name:item.store_name,
+                                                street_address: "<INACCESSIBLE>",
+                                                raw_address:address,
+                                                city:city?city:"<INACCESSIBLE>",
+                                                state:state?state:"<INACCESSIBLE>",
+                                                zip:zip?zip:"<INACCESSIBLE>",
+                                                country_code: 'US',
+                                                store_number:item.storelocator_id,
+                                                phone:item.phone,
+                                                location_type: 'al-ed',
+                                                latitude: item.latitude,
+                                                longitude: item.longitude,
+                                                hours_of_operation:hour
                                         });
                                       page++;
                                       if(totpage==page){

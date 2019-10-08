@@ -39,25 +39,25 @@ def fetch_data():
         if country=="United States":
             country="US"
         try:
-            hour=' '.join(soup1.find('div',{'class':'views-field-field-store-hours"'}).find('div',{'class':'field-content'}).stripped_strings)
+            hour=' '.join(soup1.find('div',{'class':'views-field-field-store-hours'}).find('div',{'class':'field-content'}).stripped_strings)
         except:
             hour=''
         phone=soup1.find('div',{'class':'views-field-field-store-phone'}).find('div',{'class':'field-content'}).text.strip()
         storeno=name.split('-')[-1].strip()
         store=[]
         store.append(base_url)
-        store.append(name if name else "<MISSING>")
-        store.append(address if address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zip if zip else "<MISSING>")
-        store.append(country if country else "<MISSING>")
+        store.append(name.encode('ascii', 'ignore').decode('ascii') if name else "<MISSING>")
+        store.append(address.encode('ascii', 'ignore').decode('ascii') if address else "<MISSING>")
+        store.append(city.encode('ascii', 'ignore').decode('ascii') if city else "<MISSING>")
+        store.append(state.encode('ascii', 'ignore').decode('ascii') if state else "<MISSING>")
+        store.append(zip.encode('ascii', 'ignore').decode('ascii') if zip else "<MISSING>")
+        store.append(country.encode('ascii', 'ignore').decode('ascii') if country else "<MISSING>")
         store.append(storeno if storeno else "<MISSING>")
         store.append(phone if phone else "<MISSING>")
         store.append("beefjerkyoutlet")
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
-        store.append(hour if hour.strip() else "<MISSING>")
+        store.append(hour.encode('ascii', 'ignore').decode('ascii') if hour.strip() else "<MISSING>")
         if zip not in output:
             output.append(zip)
             return_main_object.append(store)

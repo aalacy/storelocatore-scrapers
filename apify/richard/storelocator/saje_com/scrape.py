@@ -9,7 +9,8 @@ from selenium.webdriver.chrome.options import Options
 COMPANY_URL = "https://www.saje.com"
 CHROME_DRIVER_PATH = "chromedriver"
 
-
+# ZM See if you can abstract out methods like this one 
+# in a base class to reuse them
 def write_output(data):
     with open("data.csv", mode="w") as output_file:
         writer = csv.writer(
@@ -58,6 +59,13 @@ def fetch_data():
     ).get_attribute("href")
 
     driver.get(location_url)
+
+    # ZM Putting your crawler on sleep to wait for page to return is a 
+    # nondeterministic operation. Some sites may take longer than others 
+    # to load. I would advise checking for something on the requested
+    # website that you expect to find there. Some examples of that would
+    # be site name, page title, login link, etc.
+
     time.sleep(2)
 
     locations_titles = [
@@ -66,6 +74,11 @@ def fetch_data():
             "td.store-location-name > a"
         )
     ]
+    # ZM See if you can break down this comprehension into more readable code.
+    # You can create a variable with 
+    # driver.find_elements_by_css_selector("td.store-location-address")
+    # Then you can operate on variable to obtain individual items you are 
+    # interested in. 
     street_addresses = [
         street_address.get_attribute("textContent").strip()
         for street_address in driver.find_elements_by_css_selector(
@@ -90,6 +103,7 @@ def fetch_data():
             "td.store-location-address > p:nth-child(2)"
         )
     ]
+    # ZM You can get phone number by simply selecting for p[@class="phone-no"]
     phone_numbers = [
         phone_number.get_attribute("textContent").strip()
         for phone_number in driver.find_elements_by_css_selector(

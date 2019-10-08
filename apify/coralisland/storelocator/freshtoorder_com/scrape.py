@@ -52,9 +52,15 @@ def fetch_data():
         hours = get_value(eliminate_space(store_text.xpath('.//div[contains(@class, "location-hours")]//text()'))).replace('\n', '').replace('Restaurant Hours: ', '').replace('OPEN NOW!!! ', '')
         if 'Closed' in hours:
             continue
-        street = eliminate_space(etree.HTML(store['tooltip_content']).xpath('.//text()'))[1]
-        if 'OPEN' in street or 'Cobb' in street:
-            street = eliminate_space(etree.HTML(store['tooltip_content']).xpath('.//text()'))[2]
+        street_info = eliminate_space(etree.HTML(store['tooltip_content']).xpath('.//text()'))
+        street = street_info[1]
+        if 'OPEN' in street:
+            street = street_info[2]
+        else:
+            if 'Suite' in street or 'Leon' in street or 'Parkway' in street:
+                street = street_info[1]
+            else:
+                street = street_info[1] + ' ' + street_info[2]
         output = []
         output.append(base_url) # url
         output.append(validate(store['post_title'])) #location name

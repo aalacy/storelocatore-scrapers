@@ -18,9 +18,13 @@ def fetch_data():
     base_url = "https://mickeythemoose.com"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
-        "Content-Type":'application/x-www-form-urlencoded; charset=UTF-8'
-    }
-    r = requests.post("https://mickeythemoose.com/wp-json/wpgmza/v1/marker-listing/",data='phpClass=WPGMZA%5CMarkerListing%5CBasicTable&start=0&length=10000&map_id=1',headers=headers).json()
+        "Content-Type":'application/x-www-form-urlencoded; charset=UTF-8',
+        "origin": "https://mickeythemoose.com",
+        "x-requested-with": "XMLHttpRequest",
+        "x-wp-nonce": "82137680ac",
+        "x-wpgmza-action-nonce": "48f1dad054"
+   }
+    r = requests.post("https://mickeythemoose.com/wp-json/wpgmza/v1/marker-listing/",headers=headers,data='phpClass=WPGMZA%5CMarkerListing%5CBasicTable&start=0&length=10000&map_id=1').json()
     return_main_object = []
     for loc in r['meta']:
         r1=requests.get(loc['link'])

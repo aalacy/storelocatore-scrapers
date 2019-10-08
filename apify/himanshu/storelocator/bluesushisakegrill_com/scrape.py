@@ -18,48 +18,55 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url= "https://bluesushisakegrill.com/locations/ohio/westlake/crocker-park"
+    base_url= "https://bluesushisakegrill.com/locations"
     r = requests.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
     return_main_object=[]
-    phone1 =[]
-    data = soup.find("div",{"class":"location_details-address"})
+    name1 =[]
+    data = soup.find_all("div",{"class":"locations-city"})
 
-    data1 = soup.find("div",{"class":"single_location-information-top"})
-    latitude  = (data1.a['href'].split("&ll=")[-1].split("+-")[0])
-    longitude  =  data1.a['href'].split("&ll=")[-1].split("+-")[1]
-    phone  =(list(data1.stripped_strings)[4])
-    hours = (" ".join(list(data1.stripped_strings)[8:]))
-    street_address = (data.p.text.replace("flagship_locationselect_color","").replace("\n","").split('W')[0])
-    city = data.p.text.replace("flagship_locationselect_color","").replace("\n","").split('d')[1].split(",")[0]
-    state =  data.p.text.replace("flagship_locationselect_color","").replace("\n","").split('d')[1].split(",")[1].split( )[0]
-    zipcode =  data.p.text.replace("flagship_locationselect_color","").replace("\n","").split('d')[1].split(",")[1].split( )[1]
-   
-    tem_var =[]
+    for i in data:
+        p = i.find_all("div",{"class":"locations-item-details"})
+        name = i.find_all("h3",{"class":"locations-item-title"})
+        for j in name:
+            name1.append(j.text)
+        for index,j in enumerate(p):
+            tem_var =[]
+            if len(j.a['href'].split('@'))==2:
+                lat = j.a['href'].split('@')[1].split(',')[0]
+                lon = j.a['href'].split('@')[1].split(',')[1]
 
-    tem_var.append(street_address)
-    store_name.append(street_address)
-    tem_var.append(city)
-    tem_var.append(state)
-    tem_var.append(zipcode)
-    tem_var.append("US")
-    tem_var.append("<MISSING>")
-    tem_var.append(phone)
-    tem_var.append("bluesushisakegrill")
-    tem_var.append(latitude)
-    tem_var.append(longitude)
-    tem_var.append(hours)
-    store_detail.append(tem_var)
+            else :
+                lat = j.a['href'].split("ll=")[-1].split("+")[0]
+                lon = j.a['href'].split("ll=")[-1].split("+")[1]
+                # print(j.a['href'].split("ll=")[-1].split("+"))
+            st = list(j.stripped_strings)[0]
+            city = list(j.stripped_strings)[1].split(",")[0]
+            state = list(j.stripped_strings)[1].split(",")[1].split( )[0]
+            zip1 = list(j.stripped_strings)[1].split(",")[1].split( )[1]
+            phone = list(j.stripped_strings)[2]
+            hours = " ".join(list(j.stripped_strings)[3:])
 
-
-    for i in range(len(store_name)):
-        store = list()
-        store.append("https://bluesushisakegrill.com")
-        store.append(store_name[i])
-        store.extend(store_detail[i])
-        return_main_object.append(store) 
+            tem_var.append("https://bluesushisakegrill.com")
+            tem_var.append(name1[index])
+            tem_var.append(st)
+            tem_var.append(city)
+            tem_var.append(state)
+            tem_var.append(zip1)
+            tem_var.append("US")
+            tem_var.append("<MISSING>")
+            tem_var.append(phone)
+            tem_var.append("bluesushisakegrill")
+            tem_var.append(lat)
+            tem_var.append(lon)
+            tem_var.append(hours)
+            # print(tem_var)
+            # if tem_var[3] in address:
+            #     continue
+            # address.append(tem_var[3])
+            return_main_object.append(tem_var)
 
     return return_main_object
 
@@ -70,4 +77,5 @@ def scrape():
 
 
 scrape()
+
 

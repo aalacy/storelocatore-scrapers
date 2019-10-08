@@ -128,16 +128,13 @@ def fetch_data():
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-            if store[2]+store[-3] in addresses:
-                continue
+            if store[2] + store[-3] not in addresses:
+                addresses.append(store[2] + store[-3])
 
-            addresses.append(store[2]+store[-3])
-
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-            return_main_object.append(store)
-    return return_main_object
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                yield store
 
 
 def scrape():

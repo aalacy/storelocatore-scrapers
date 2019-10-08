@@ -31,13 +31,14 @@ def fetch_data():
         tem_var=[]
     
         if len(i["address"].split(','))==4:
+            
             street_address = i["address"].split(',')[0]
             city = i["address"].split(',')[1]
             state = i["address"].split(',')[2].split( )[0]
             zipcode =  i["address"].split(',')[2].split( )[1]
             latitude = i["lat"]
             longitude  = i["lng"]
-        
+
             store_name.append(i["store"])
 
 
@@ -57,18 +58,27 @@ def fetch_data():
         else:
 
             store_name.append(i["store"])
-            street_address = " ".join(i["address"].split(',')[:2])
+            # street_address = " ".join(i["address"].split(',')[:2])
             city = i["address"].split(',')[2]
-            state =  i["address"].split(',')[3].split( )[0]
-            zipcode = i["address"].split(',')[3].split( )[1]
+            v1 =i["address"].split(',')
+            if v1[-1]==" USA":
+                del v1[-1]
+            
+            state = v1[-1].split( )[0]
+            zip1 = v1[-1].split( )[1]
+            city = v1[-2]
+            st =(" ".join(v1[:-2]))
+
+            # state =  i["address"].split(',')[3].split( )[0]
+            # zipcode = i["address"].split(',')[3].split( )[1]
             latitude = i["lat"]
             longitude  = i["lng"]
 
 
-            tem_var.append(street_address)
+            tem_var.append(st)
             tem_var.append(city)
             tem_var.append(state.strip())
-            tem_var.append(zipcode.strip())
+            tem_var.append(zip1.strip())
             tem_var.append("US")
             tem_var.append("<MISSING>")
             tem_var.append("<MISSING>")
@@ -95,3 +105,5 @@ def scrape():
 
 
 scrape()
+
+

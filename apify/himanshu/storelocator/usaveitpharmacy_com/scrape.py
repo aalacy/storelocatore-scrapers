@@ -26,7 +26,40 @@ def fetch_data():
         main1=soup1.find('div',{"id":'wsite-content'}).find('tr',{"class":"wsite-multicol-tr"}).find('div',{"class":"paragraph"})
         data=list(main1.stripped_strings)
         val=[]
-        if len(data)>4:
+        if len(data)==1:
+            main2=soup1.find('div',{"id":'wsite-content'}).find('div',{"class":"paragraph"})
+            lt = main2.find('a')['href'].split('@')[1].split(',')
+            lat = lt[0].strip()
+            lng = lt[1].strip()
+            loc=list(main2.stripped_strings)
+            address = loc[0]
+            ct = loc[1].split(',')
+            city = ct[0].strip()
+            if "." not in loc[2]:
+                del loc[2]
+            phone = loc[2].replace('\u200b', '').strip()
+            state = ct[1].strip().split(' ')[0].strip()
+            zip = ct[1].strip().split(' ')[1].strip()
+            del loc[0]
+            del loc[0]
+            del loc[0]
+            hour = ' '.join(loc)
+            store = []
+            store.append(base_url)
+            store.append("U-Save-It Pharmacy")
+            store.append(address)
+            store.append(city)
+            store.append(state)
+            store.append(zip)
+            store.append("US")
+            store.append("<MISSING>")
+            store.append(phone)
+            store.append("usaveitpharmacy")
+            store.append(lat)
+            store.append(lng)
+            store.append(hour)
+            return_main_object.append(store)
+        elif len(data)>4:
             lt=main1.find('a')['href'].split('@')[1].split(',')
             lat=lt[0].strip()
             lng=lt[1].strip()
@@ -42,8 +75,8 @@ def fetch_data():
             state=ct[1].strip().split(' ')[0].strip()
             zip=ct[1].strip().split(' ')[1].strip()
             del val[0]
-            del val[1]
-            del val[2]
+            del val[0]
+            del val[0]
             hour=' '.join(val)
             store=[]
             store.append(base_url)

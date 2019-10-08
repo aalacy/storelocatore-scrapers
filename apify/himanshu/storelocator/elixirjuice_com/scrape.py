@@ -70,7 +70,7 @@ def fetch_data():
             
             phone = (list(p1.stripped_strings)[2].replace("now open!",""))
  
-            print(phone)
+            # print(phone)
             store_name.append(st)
             tem_var.append(st)
             tem_var.append("<MISSING>")
@@ -85,9 +85,34 @@ def fetch_data():
             tem_var.append("<MISSING>")
             store_detail.append(tem_var)
 
+    tem_var=[]
+    base_url1= "http://elixirjuice.com/location-detail-8084parklane.php"
+    r = requests.get(base_url1,headers=headers)
+    soup1= BeautifulSoup(r.text,"lxml")
+    h1 = " ".join(list(soup1.find("div",{"class":"exlr2"}).stripped_strings)[:-2]).replace("Store Hours",'')
+    st = " ".join(list(soup1.find("div",{"class":"exlr1"}).stripped_strings)[1].replace("\n",',').split(',')[:-1])
+    city = list(soup1.find("div",{"class":"exlr1"}).stripped_strings)[1].replace("\n",',').split(',')[-1].split( )[0]
+    state = list(soup1.find("div",{"class":"exlr1"}).stripped_strings)[1].replace("\n",',').split(',')[-1].split( )[1]
+    zip1 = list(soup1.find("div",{"class":"exlr1"}).stripped_strings)[1].replace("\n",',').split(',')[-1].split( )[2]
+    hors = h1
+    phone = list(soup1.find("div",{"class":"exlr1"}).stripped_strings)[2].replace("Phone: ","")
+    store_name.append(st)
+    tem_var.append(st)
+    tem_var.append(city)
+    tem_var.append(state)
+    tem_var.append(zip1)
+    tem_var.append("US")
+    tem_var.append("<MISSING>")
+    tem_var.append(phone.replace("\n",""))
+    tem_var.append("elixirjuice")
+    tem_var.append("<MISSING>")
+    tem_var.append("<MISSING>")
+    tem_var.append(h1)
+    store_detail.append(tem_var)
+    # print(list(soup1.find("div",{"class":"exlr1"}).stripped_strings)[2].replace("Phone: ",""))
     for i in range(len(store_name)):
         store = list()
-        store.append("https://www.erewhonmarket.com/")
+        store.append("http://elixirjuice.com")
         store.append(store_name[i])
         store.extend(store_detail[i])
         return_main_object.append(store)
@@ -100,4 +125,7 @@ def scrape():
 
 
 scrape()
+
+
+
 

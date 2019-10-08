@@ -4,7 +4,6 @@ import pdb
 import requests
 from lxml import etree
 import json
-
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 

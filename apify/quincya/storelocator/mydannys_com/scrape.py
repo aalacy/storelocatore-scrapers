@@ -36,8 +36,8 @@ def fetch_data():
 		location_name = base.title.text.strip()
 		location_name = location_name[location_name.find("–")+1:].strip()
 		street_address = item.find('a')['title']
-		city = "<MISSING>"
-		state = "<MISSING>"
+		city = "Laredo"
+		state = "TX"
 		zip_code = "<MISSING>"
 		country_code = "US"
 		store_number = "<MISSING>"
