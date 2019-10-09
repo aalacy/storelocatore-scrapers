@@ -84,7 +84,6 @@ class Scraper(Scrape):
             stores.extend(data)
             print(f'{len(data)} stores scraped for zipcode {zip_search}')
 
-
         for store in stores:
             if store['unitNumber'] not in seen:
                 # Store ID
@@ -159,25 +158,23 @@ class Scraper(Scrape):
             locations_ids,
             countries,
         ):
-            if location_id not in seen:
-                self.data.append(
-                    [
-                        self.url,
-                        locations_title,
-                        street_address,
-                        city,
-                        state,
-                        zipcode,
-                        country,
-                        location_id,
-                        phone_number,
-                        "<MISSING>",
-                        latitude,
-                        longitude,
-                        hour,
-                    ]
-                )
-                seen.append(location_id)
+            self.data.append(
+                [
+                    self.url,
+                    locations_title,
+                    street_address,
+                    city,
+                    state,
+                    zipcode,
+                    country,
+                    location_id,
+                    phone_number,
+                    "<MISSING>",
+                    latitude,
+                    longitude,
+                    hour,
+                ]
+            )
 
 
 
