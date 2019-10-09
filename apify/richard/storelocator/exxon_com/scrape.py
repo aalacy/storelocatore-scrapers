@@ -54,7 +54,6 @@ class Scraper(Scrape):
 
         for store in stores:
             if store['LocationID'] not in self.seen:
-                print(store)
                 # Store ID
                 location_id = store['LocationID']
 
