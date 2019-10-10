@@ -51,16 +51,19 @@ def fetch_data():
         else:
             hours = "<MISSING>"
        
-
-
-        if "1190 Boulevard Louis-XIV" in i['address']:
-            st = (i['address'].split(',')[-2])
-            
+        if len(i['address'].split(','))==1:
+            st = i['address']
         else:
-            st =(i['address'].split(',')[-1])
+            
+            st =(" ".join(i['address'].split(",")[1:]))
+        # if "1190 Boulevard Louis-XIV" in i['address']:
+        #     st = (i['address'].split(',')[-2])
+            
+        # else:
+        #     st =(i['address'].split(',')[-1])
 
        
- 
+
 
         tem_var.append("https://hartstores.com")
         tem_var.append(name)
@@ -79,9 +82,14 @@ def fetch_data():
 
     return return_main_object
 
+
 def scrape():
     data = fetch_data()
     write_output(data)
 
 
 scrape()
+
+
+
+

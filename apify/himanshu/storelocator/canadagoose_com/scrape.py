@@ -26,6 +26,7 @@ def fetch_data():
     base_url1 = "https://hosted.where2getit.com/canadagoose/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E8949AAF8-550E-11DE-B2D5-479533A3DD35%3C%2Fappkey%3E%3Cgeoip%3E1%3C%2Fgeoip%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Corder%3Erank%3A%3Anumeric%2C_DISTANCE%3C%2Forder%3E%3Catleast%3E5%3C%2Fatleast%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3E%3C%2Faddressline%3E%3Clongitude%3E%3C%2Flongitude%3E%3Clatitude%3E%3C%2Flatitude%3E%3Ccountry%3E%3C%2Fcountry%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Csearchradius%3E10%7C25%7C50%7C100%7C250%3C%2Fsearchradius%3E%3Cradiusuom%3Emile%3C%2Fradiusuom%3E%3C%2Fformdata%3E%3C%2Frequest%3E"
     r1 = requests.get(base_url1)
     main_soup1 = BeautifulSoup(r1.text, "lxml")
+    # print(main_soup1)
 
 
     n =  main_soup1.find_all("name")
@@ -110,12 +111,21 @@ def fetch_data():
         list1 = []
         a = k1.find_all('a', {'class': "button"})
         for i in a:
-            latitude.append(i['href'].split('/@')[1].split('z/')[0].split(',')[0])
-            longitude.append((i['href'].split('/@')[1].split('z/')[0].split(',')[1]))
+            if len(i['href'].split('/@')[-1].split(",")) != 1:
+                latitude.append(i['href'].split('/@')[-1].split(",")[0])
+                longitude.append(i['href'].split('/@')[-1].split(",")[1])
+                
+            else:
+                latitude.append("<MISSING>")
+                longitude.append("<MISSING>")
+                
+                # print(i['href'])
+
+            # latitude.append(i['href'].split('/@')[-1].split(",")[0])
+            # longitude.append(i['href'].split('/@')[-1].split(",")[1])
         if times:
             for i in times:
                 time = time + ' ' + (i.get('content'))
-
         else:
             time = time + ' ' + ("<MISSING>")
         hours_of_operation.append(time.strip())
@@ -135,6 +145,7 @@ def fetch_data():
         store.append(latitude[i])
         store.append(longitude[i])
         store.append(hours_of_operation[i].replace("\uff0b",""))
+        # print(store)
         return_main_object.append(store)
 
 
@@ -153,6 +164,7 @@ def fetch_data():
         tem_var.append(lat[i].text)
         tem_var.append(lon[i].text)
         tem_var.append("<MISSING>")
+        # print(tem_var)
         return_main_object.append(tem_var) 
 
     return return_main_object

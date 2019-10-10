@@ -38,10 +38,10 @@ class Scraper(Scrape):
 
         # Fetch stores from location menu
         for coords in sgzip.coords_for_radius(50):
-            lat1 = str(float(coords[0]) - 0.1)
-            lat2 = str(float(coords[0]) + 0.1)
-            lon1 = str(float(coords[1]) + 0.1)
-            lon2 = str(float(coords[1]) - 0.1)
+            lat1 = str(float(coords[0]) - 0.5)
+            lat2 = str(float(coords[0]) + 0.5)
+            lon1 = str(float(coords[1]) + 0.5)
+            lon2 = str(float(coords[1]) - 0.5)
             location_url = f'https://www.exxon.com/en/api/v1/Retail/retailstation/GetStationsByBoundingBox?Latitude1={lat1}&Latitude2={lat2}&Longitude1={lon1}&Longitude2={lon2}'
             driver.get(location_url)
             try:
@@ -54,7 +54,6 @@ class Scraper(Scrape):
 
         for store in stores:
             if store['LocationID'] not in self.seen:
-                print(store)
                 # Store ID
                 location_id = store['LocationID']
 

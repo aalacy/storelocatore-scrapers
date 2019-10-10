@@ -22,7 +22,6 @@ def fetch_data():
     main=soup.find('div',{"class":"loc-full-st"}).find_all('div',{"class":"loc-fullbox"})
     for atag in main:
         link=atag.find('a')['href']
-        print(link)
         r1 = requests.get(link)
         soup1=BeautifulSoup(r1.text,'lxml')
         phone=''
@@ -35,13 +34,13 @@ def fetch_data():
         country="US"
         name=soup1.find('h2',{'itemprop':'name'}).text.strip()
         if soup1.find('div',{"class":"address-info"}).find('span',{"itemprop":"streetAddress"})!=None:
-            address=soup1.find('div',{"class":"address-info"}).find('span',{"itemprop":"streetAddress"}).text.strip()
+            address=soup1.find('div',{"class":"address-info"}).find('span',{"itemprop":"streetAddress"}).text.replace(',',' ').strip()
         if soup1.find('div',{"class":"address-info"}).find('span',{"itemprop":"addressLocality"})!=None:
-            city=soup1.find('div',{"class":"address-info"}).find('span',{"itemprop":"addressLocality"}).text.strip()
+            city=soup1.find('div',{"class":"address-info"}).find('span',{"itemprop":"addressLocality"}).text.replace(',',' ').strip()
         if soup1.find('div',{"class":"address-info"}).find('span',{"itemprop":"addressRegion"})!=None:
             state=soup1.find('div',{"class":"address-info"}).find('span',{"itemprop":"addressRegion"}).text.strip()
         if soup1.find('div',{"class":"address-info"}).find('span',{"itemprop":"postalCode"})!=None:
-            city=soup1.find('div',{"class":"address-info"}).find('span',{"itemprop":"postalCode"}).text.strip()
+            zip=soup1.find('div',{"class":"address-info"}).find('span',{"itemprop":"postalCode"}).text.strip()
         if soup1.find('a',{"itemprop":"telephone"})!=None:
             phone=soup1.find('a',{"itemprop":"telephone"}).text.replace('Phone: ','').strip()
         hour=''

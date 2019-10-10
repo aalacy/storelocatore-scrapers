@@ -21,36 +21,41 @@ def fetch_data():
     base_url = "https://www.additionfi.com/"
     location_url  = 'https://www.additionfi.com/RestApi/locations?type=Branches&format=json'
     r = requests.get(location_url ,headers = header).json()
-    for idx, val in enumerate(r):
-        
-        r = requests.get(base_url+'locations-hours/detail/'+val['UrlName'],headers = header)
-        soup = BeautifulSoup(r.text,"lxml")
-       
+
+
+    for idx, val in enumerate(r['Locations']):
+
         locator_domain = base_url
         location_name = val['Title']
-        v = soup.find('div',{'class':'address'}).text.strip()
-       
-        street_address = v.split('\n')[0].strip()
-       
-        city = v.split('\n')[1].strip().split(',')[0].strip()
-        state = v.split('\n')[1].strip().split(',')[1].strip().split(' ')[0].strip()
-        zip = v.split('\n')[1].strip().split(',')[1].strip().split(' ')[1].strip()
-        
+        street_address = val['Address']['Street'].strip()
+
+        city = val['Address']['City'].strip()
+        state = val['Address']['StateCode'].strip()
+        zip = val['Address']['Zip'].strip()
+
         store_number = '<MISSING>'
         country_code = 'US'
         phone = val['Phone']
         location_type = 'additionfi'
-        latitude = '<MISSING>'
-        longitude = '<MISSING>'
+        latitude = val['Address']['Latitude']
+        longitude = val['Address']['Longitude']
+        r = requests.get(base_url+'locations-hours/detail/'+val['UrlName'],headers = header)
+        # print(base_url+'locations-hours/detail/'+val['UrlName'])
+        # exit()
+        soup = BeautifulSoup(r.text,"lxml")
+
         hours_of_operation = soup.find('div',{'class':'hours-spreadsheet'}).find_all('div',{'class':'hours-row'})
+
         cc= []
         for vv in hours_of_operation:
-           
+
             cc.append(vv.find('div',{'class':'days'}).text+vv.find_all('div',{'class':'times'})[0].text+vv.find_all('div',{'class':'times'})[1].text)
-        
-        
-        hours_of_operation = 'Lobby - Drive-up :'+''.join(cc)
-       
+
+
+        hours_of_operation = 'Lobby - Drive-up :'+''.join(cc).strip()
+        hours_of_operation = re.sub(r'\s+',' ',hours_of_operation).replace('N/A','-')
+
+
 
         store=[]
         store.append(locator_domain if locator_domain else '<MISSING>')
@@ -65,9 +70,9 @@ def fetch_data():
         store.append(location_type if location_type else '<MISSING>')
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
-        
+
         store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-        
+        print("====",str(store))
 
         return_main_object.append(store)
     return return_main_object

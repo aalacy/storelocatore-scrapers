@@ -42,7 +42,10 @@ def fetch_data():
                     add = item['address1'] + ' ' + item['address2']
                 else:                    
                     add = item['address1']
-                add = add.strip().replace('"',"'")
+                try:
+                    add = add.strip().replace('"',"'")
+                except:
+                    add = ''
                 state = item['state']
                 if item['city'] is not None:
                     city = item['city'].encode('utf-8')
@@ -73,7 +76,7 @@ def fetch_data():
                     city = '<MISSING>'
                 if state is None or state == '':
                     state = '<MISSING>'
-                if store not in ids:
+                if store not in ids and add != '':
                     ids.append(store)
                     yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 

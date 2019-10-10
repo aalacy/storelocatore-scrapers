@@ -26,21 +26,34 @@ def fetch_data():
         
         locator_domain = base_url
         location_name =  target_list.find('h3',{'itemprop':'name'}).text
-        street_address = target_list.find('address').find('span',{'itemprop':'streetAddress'}).text 
+        street_address = target_list.find('address').find('span',{'itemprop':'streetAddress'}).text.replace('\r','')
+
 
         if  target_list.find('address').find('span',{'itemprop':'addressLocality'}) != None:
 
             city = target_list.find('address').find('span',{'itemprop':'addressLocality'}).text
+        else:
+            city  =target_list.find('address').text.split('\n')[1].strip().split(',')[0].strip()
+
         if target_list.find('address').find('span',{'itemprop':'addressRegion'}) != None:
             state = target_list.find('address').find('span',{'itemprop':'addressRegion'}).text
+        else:
+
+            state =  target_list.find('address').text.split('\n')[1].strip().split(' ')[1].strip()
+
         if target_list.find('address').find('span',{'itemprop':'postalCode'}) != None:
             zip = target_list.find('address').find('span',{'itemprop':'postalCode'}).text
+        else:
+
+            zip = target_list.find('address').text.split('\n')[1].strip().split(' ')[2].strip()
+            street_address = target_list.find('address').text.split('\n')[0]
+
+
         store_number = '<MISSING>'
         if target_list.find('span',{'itemprop':'telephone'}) != None:
 
             phone = target_list.find('span',{'itemprop':'telephone'}).text 
 
-     
         country_code ='US'
 
         location_type = 'homestarbank'
@@ -69,7 +82,8 @@ def fetch_data():
         store.append(longitude if longitude else '<MISSING>')
         
         store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-        
+
+
         
         return_main_object.append(store)   
     return return_main_object            

@@ -5,7 +5,7 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -27,20 +27,40 @@ def fetch_data():
     location_data = {}
     for location in location_soup.find("aside").find_all("li"):
         name = location.find_all("a")[1].text
-        hours = " ".join(list(location.find_all("p")[2].stripped_strings))
-        location_data[name] = hours
+        if "COMING SOON" in location.find("a").text:
+            location_data[name] = False
+        else:
+            hours = " ".join(list(location.find_all("p")[2].stripped_strings))
+            location_data[name] = hours
     for script in soup.find_all("script"):
         if "var mappangea5_data =" in script.text:
             location_list = json.loads((script.text.split("var mappangea5_data =")[1].split("};")[0] + "}").replace("'",'"').split('"locations":')[1].split("]")[0] + "{}]")[:-1]
             for i in range(len(location_list)):
                 store_data = location_list[i]
+                if location_data[store_data["phone"]] == False:
+                    continue
                 store = []
                 store.append("https://limefreshmexicangrill.com")
                 store.append(store_data["name"])
                 store.append(store_data["address"])
-                store.append(store_data["citystzip"].split(",")[0])
-                store.append(store_data["citystzip"].split(",")[1].split(" ")[-2])
-                store.append(store_data["citystzip"].split(",")[1].split(" ")[-1])
+                if "," in store_data["citystzip"]:
+                    store.append(store_data["citystzip"].split(",")[0])
+                    store_zip_split = re.findall("([0-9]{5})",store_data["citystzip"])
+                    if store_zip_split:
+                        store_zip = store_zip_split[0]
+                    else:
+                        store_zip = "<MISSING>"
+                    state_split = re.findall("([A-Z]{2})",store_data["citystzip"])
+                    if state_split:
+                        state = state_split[0]
+                    else:
+                        state = "<MISSING>"
+                    store.append(state)
+                    store.append(store_zip)
+                else:
+                    store.append(store_data["citystzip"])
+                    store.append("<MISSING>")
+                    store.append("<MISSING>")
                 store.append("US")
                 store.append("<MISSING>")
                 store.append(store_data["phone"])

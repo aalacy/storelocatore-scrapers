@@ -27,7 +27,9 @@ def fetch_data():
         if location.find("p") == None:
             continue
         phone = list(location.find("strong").stripped_strings)[0].replace("(","").replace(")","").replace(" ","-")
-        hours = " ".join(list(location.find_all("p")[2].stripped_strings))
+        hours = ''
+        for p_tag in location.find_all("p")[2:-1]:
+            hours = hours + " "  + " ".join(list(p_tag.stripped_strings))
         hours_object[phone] = hours
     for script in soup.find_all("script"):
         if '.maps(' in script.text:
@@ -40,7 +42,7 @@ def fetch_data():
                 store.append(store_data["location"]['city'])
                 store.append(store_data["location"]['state'])
                 store.append(store_data["location"]["postal_code"])
-                store.append("<MISSING>")
+                store.append("US")
                 store.append(store_data["id"])
                 location_details = list(BeautifulSoup(store_data["content"],"lxml").stripped_strings)
                 for i in range(len(location_details)):

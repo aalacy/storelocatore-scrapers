@@ -5,7 +5,7 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -54,7 +54,7 @@ def fetch_data():
         store.append("baggin's")
         store.append(geo_location.split("ll=")[1].split(",")[0] if "ll=" in geo_location else geo_location.split("!3d")[1].split("!")[0])
         store.append(geo_location.split("ll=")[1].split(",")[1].split("&")[0] if "ll=" in geo_location else geo_location.split("!2d")[1].split("!")[0])
-        store.append(hours)
+        store.append(hours.replace("–","-").replace("\xa0"," "))
         return_main_object.append(store)
     return return_main_object
 

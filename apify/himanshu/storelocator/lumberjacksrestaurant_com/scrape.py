@@ -38,6 +38,7 @@ def fetch_data():
                     hours.append(" ".join(list(p1.stripped_strings)[1:]))
         
         for j in span:
+            # print(j)
             tem_var =[]
             if list(j.stripped_strings) != []:
                 if "Grass Valley" in list(j.stripped_strings):
@@ -68,8 +69,15 @@ def fetch_data():
         store.extend(store_detail[i])
         store.append(phone[i])
         store.append("lumberjacksrestaurant")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
+        if i==0:
+            print(i)
+            store.append("39.23867449999999")
+            store.append("-121.03553520000003")
+        else:
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            
+
         store.append(hours[i])
         return_main_object.append(store) 
 

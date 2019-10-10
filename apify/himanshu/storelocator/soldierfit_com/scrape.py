@@ -33,33 +33,38 @@ def fetch_data():
         phone=madd[-2].strip()
         r1 = requests.get(base_url+link,headers=headers)
         soup1=BeautifulSoup(r1.text,'lxml')
-        hour=''
-        country="US"
-        storeno=''
-        lat=''
-        lng=''
-        for script in soup1.find_all('script'):
-            if "var map_data" in script.text:
-                lt=json.loads(script.text.split('var map_data =')[1].split(';')[0])
-                lat=lt['locations'][0]['lat']
-                lng=lt['locations'][0]['lng']
-        hour=' '.join(soup1.find('div',{'class':"sidebar-info"}).stripped_strings).replace('View Schedule','').replace('Gym Hours','')
-        storeno=''
-        store=[]
-        store.append(base_url)
-        store.append(name if name else "<MISSING>")
-        store.append(address if address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
-        store.append(state if state else "<MISSING>")
-        store.append(zip if zip else "<MISSING>")
-        store.append(country if country else "<MISSING>")
-        store.append(storeno if storeno else "<MISSING>")
-        store.append(phone if phone else "<MISSING>")
-        store.append("soldierfit")
-        store.append(lat if lat else "<MISSING>")
-        store.append(lng if lng else "<MISSING>")
-        store.append(hour if hour.strip() else "<MISSING>")
-        return_main_object.append(store)
+        if "Schedule Coming Soon!" not in soup1.text:
+            hour=''
+            country="US"
+            storeno=''
+            lat=''
+            lng=''
+            for script in soup1.find_all('script'):
+                if "var map_data" in script.text:
+                    lt=json.loads(script.text.split('var map_data =')[1].split(';')[0])
+                    lat=lt['locations'][0]['lat']
+                    lng=lt['locations'][0]['lng']
+            day=soup1.find('div',{'class':"sidebar-info"}).find_all('div',{"class":"sidebar-days"})
+            hours=soup1.find('div',{'class':"sidebar-info"}).find_all('div',{"class":"sidebar-hours"})
+            hour=''
+            for ln in range(len(day)):
+                hour+=" "+day[ln].text.strip()+' '+hours[ln].text.strip()
+            storeno=''
+            store=[]
+            store.append(base_url)
+            store.append(name if name else "<MISSING>")
+            store.append(address if address else "<MISSING>")
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            store.append(zip if zip else "<MISSING>")
+            store.append(country if country else "<MISSING>")
+            store.append(storeno if storeno else "<MISSING>")
+            store.append(phone if phone else "<MISSING>")
+            store.append("soldierfit")
+            store.append(lat if lat else "<MISSING>")
+            store.append(lng if lng else "<MISSING>")
+            store.append(hour.strip() if hour.strip() else "<MISSING>")
+            return_main_object.append(store)
     return return_main_object
 
 def scrape():

@@ -33,7 +33,6 @@ def fetch_data():
 
     for state in all_states:
         link = 'https://twomenandatruck.com/movers/' + state
-
         driver.get(link)
         driver.implicitly_wait(10)
 

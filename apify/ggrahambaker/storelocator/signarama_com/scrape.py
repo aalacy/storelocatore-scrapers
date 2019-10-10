@@ -46,7 +46,6 @@ def fetch_data():
     for i, link in enumerate(link_list):
         driver.get(link)
         driver.implicitly_wait(30)
-        print(link)
 
         try:
             alert_obj = driver.switch_to.alert

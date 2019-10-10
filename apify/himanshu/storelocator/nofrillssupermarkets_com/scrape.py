@@ -24,43 +24,35 @@ def fetch_data():
     return_main_object =[]
     store_detail =[]
     store_name=[]
-    tem_var =[]
-
-    k =  soup.find("div",{"class":"location-box","id":"location_one"}).p
-    name1 =  soup.find("div",{"class":"location-box","id":"location_one"}).h1
-    h =  soup.find("div",{"class":"location-box","id":"location_one"})
-
-    time1 =  list(h.find("div",{"class":"r"}).stripped_strings)
-    time = time1[7] + ' ' +time1[9] + ' '+ time1[11] + ' '+time1[13] + ' '+time1[15]
-    store_no = name1.text.replace("No Frills ","")
-    name = name1.text.replace(" #3803","")
-    store_name.append(name)
-    phone = list(h.find("div",{"class":"r"}).stripped_strings)[2]
-    info = k.text.split(",")
-    street_address= info[0]
-    city = info[1]
-    state = info[2].split( )[0]
-    zipcode = info[2].split( )[1]
-
-    tem_var.append(street_address)
-    tem_var.append(city)
-    tem_var.append(state)
-    tem_var.append(zipcode)
-    tem_var.append("US")
-    tem_var.append(store_no)
-    tem_var.append(phone)
-    tem_var.append("nofrillssupermarkets")
-    tem_var.append("<MISSING>")
-    tem_var.append("<MISSING>")
-    tem_var.append(time)
-    store_detail.append(tem_var)
     
-    for i in range(len(store_name)):
-        store =list()
-        store.append("http://nutritionzoneusa.com")
-        store.append(store_name[i])
-        store.extend(store_detail[i])
-        return_main_object.append(store)
+
+    k =  soup.find_all("div",{"class":"location-box"})
+
+    for i in k:
+        tem_var =[]
+        store_no = list(i.stripped_strings)[0].split("#")[-1]
+        name = list(i.stripped_strings)[0].split("#")[0]
+        st = list(i.stripped_strings)[1].split(",")[0]
+        city = list(i.stripped_strings)[1].split(",")[1]
+        state = list(i.stripped_strings)[1].split(",")[2].split( )[0]
+        zip1 = list(i.stripped_strings)[1].split(",")[2].split( )[1]
+        phone = list(i.stripped_strings)[6]
+        time = " ".join(list(i.stripped_strings)[10:20]).replace("Services meat","")
+        tem_var.append("http://nofrillssupermarkets.com")
+        tem_var.append(name)
+        tem_var.append(st)
+        tem_var.append(city)
+        tem_var.append(state)
+        tem_var.append(zip1)
+        tem_var.append("US")
+        tem_var.append(store_no)
+        tem_var.append(phone)
+        tem_var.append("nofrillssupermarkets")
+        tem_var.append("<MISSING>")
+        tem_var.append("<MISSING>")
+        tem_var.append(time)
+        return_main_object.append(tem_var)
+
 
     return return_main_object
 
