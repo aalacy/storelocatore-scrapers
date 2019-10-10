@@ -23,22 +23,22 @@ def fetch_data():
     base_url = "https://www.canadagoose.com/ca/en/find-a-retailer/find-a-retailer.html"
     r = requests.get(base_url)
 
-    base_url1 = "https://hosted.where2getit.com/canadagoose/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E8949AAF8-550E-11DE-B2D5-479533A3DD35%3C%2Fappkey%3E%3Cgeoip%3E1%3C%2Fgeoip%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Corder%3Erank%3A%3Anumeric%2C_DISTANCE%3C%2Forder%3E%3Catleast%3E5%3C%2Fatleast%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3E%3C%2Faddressline%3E%3Clongitude%3E%3C%2Flongitude%3E%3Clatitude%3E%3C%2Flatitude%3E%3Ccountry%3E%3C%2Fcountry%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Csearchradius%3E10%7C25%7C50%7C100%7C250%3C%2Fsearchradius%3E%3Cradiusuom%3Emile%3C%2Fradiusuom%3E%3C%2Fformdata%3E%3C%2Frequest%3E"
-    r1 = requests.get(base_url1)
-    main_soup1 = BeautifulSoup(r1.text, "lxml")
+    # base_url1 = "https://hosted.where2getit.com/canadagoose/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E8949AAF8-550E-11DE-B2D5-479533A3DD35%3C%2Fappkey%3E%3Cgeoip%3E1%3C%2Fgeoip%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Corder%3Erank%3A%3Anumeric%2C_DISTANCE%3C%2Forder%3E%3Catleast%3E5%3C%2Fatleast%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3E%3C%2Faddressline%3E%3Clongitude%3E%3C%2Flongitude%3E%3Clatitude%3E%3C%2Flatitude%3E%3Ccountry%3E%3C%2Fcountry%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Csearchradius%3E10%7C25%7C50%7C100%7C250%3C%2Fsearchradius%3E%3Cradiusuom%3Emile%3C%2Fradiusuom%3E%3C%2Fformdata%3E%3C%2Frequest%3E"
+    # r1 = requests.get(base_url1)
+    # main_soup1 = BeautifulSoup(r1.text, "lxml")
     # print(main_soup1)
 
 
-    n =  main_soup1.find_all("name")
-    st = main_soup1.find_all("address1")
-    city3 = main_soup1.find_all("city")
-    lat = main_soup1.find_all("latitude")
-    lon = main_soup1.find_all("longitude")
-    phone3  = main_soup1.find_all("phone")
-    state3 = main_soup1.find_all("state")
-    postalcode3= main_soup1.find_all("postalcode")
-    state3 = main_soup1.find_all("state")
-    country =  main_soup1.find_all("country")
+    # n =  main_soup1.find_all("name")
+    # st = main_soup1.find_all("address1")
+    # city3 = main_soup1.find_all("city")
+    # lat = main_soup1.find_all("latitude")
+    # lon = main_soup1.find_all("longitude")
+    # phone3  = main_soup1.find_all("phone")
+    # state3 = main_soup1.find_all("state")
+    # postalcode3= main_soup1.find_all("postalcode")
+    # state3 = main_soup1.find_all("state")
+    # country =  main_soup1.find_all("country")
 
     # if len(postalcode3)==5:
     #     contry = "US"
@@ -98,9 +98,7 @@ def fetch_data():
 
     for i in phone:
         phone1.append(i.text)
-
     link = k.find_all('a', {'class': "more-info", 'title': "More info"})
-
     for i in link:
         time = ''
         url = i['href']
@@ -134,9 +132,9 @@ def fetch_data():
         store = []
         store.append("https://www.canadagoose.com")
         store.append(store_names[i].replace("\uff0b",""))
-        store.append(street_address1[i].replace("\uff0b",""))
-        store.append(city1[i].replace("\uff0b",""))
-        store.append(state1[i].replace("\uff0b",""))
+        store.append(street_address1[i].replace("\uff0b","").replace("Mall of America ",""))
+        store.append(city1[i].replace("\uff0b","").replace(", Alberta","").replace(", MN 55425, ",""))
+        store.append(state1[i].replace("\uff0b","").replace("Canada","AB"))
         store.append(zip1[i].replace("\uff0b",""))
         store.append(country_code[i].replace("\uff0b",""))
         store.append("<MISSING>")
@@ -145,27 +143,38 @@ def fetch_data():
         store.append(latitude[i])
         store.append(longitude[i])
         store.append(hours_of_operation[i].replace("\uff0b",""))
-        # print(store)
-        return_main_object.append(store)
+
+        if "West Edmonton Mall" in store:
+            store[6] = store[6].replace("<MISSING>","CA")
+        if "Mall of America" in store:
+            store[4] = store[4].replace("USA","MN")
+            store[5] = store[5].replace("<MISSING>","55425")
+            store[6] = store[6].replace("<MISSING>","US")
+            # print(store)
+        if "Shop 2088, Level 2" in store or "SANLITUN" in store or "Mixc Shopping Mall" in store or "Via della Spiga" in store or "LONDON" in store or "ifc mall" in store or "SENDAGAYA" in store or "REGENT STREET" in store:
+            pass
+        else:
+            # print(store)
+            return_main_object.append(store)
 
 
-    for i in range(len(st)):
-        tem_var=[]
-        tem_var.append("https://www.canadagoose.com")
-        tem_var.append(n[i].text)
-        tem_var.append(st[i].text)
-        tem_var.append(city3[i].text)
-        tem_var.append(state3[i].text)
-        tem_var.append(postalcode3[i].text)
-        tem_var.append(country[i].text)
-        tem_var.append("<MISSING>")
-        tem_var.append(phone3[i].text if phone3[i].text else "<MISSING>") 
-        tem_var.append("canadagoose")
-        tem_var.append(lat[i].text)
-        tem_var.append(lon[i].text)
-        tem_var.append("<MISSING>")
-        # print(tem_var)
-        return_main_object.append(tem_var) 
+    # for i in range(len(st)):
+    #     tem_var=[]
+    #     tem_var.append("https://www.canadagoose.com")
+    #     tem_var.append(n[i].text)
+    #     tem_var.append(st[i].text)
+    #     tem_var.append(city3[i].text)
+    #     tem_var.append(state3[i].text)
+    #     tem_var.append(postalcode3[i].text)
+    #     tem_var.append(country[i].text)
+    #     tem_var.append("<MISSING>")
+    #     tem_var.append(phone3[i].text if phone3[i].text else "<MISSING>") 
+    #     tem_var.append("canadagoose")
+    #     tem_var.append(lat[i].text)
+    #     tem_var.append(lon[i].text)
+    #     tem_var.append("<MISSING>")
+    #     # print(tem_var)
+    #     return_main_object.append(tem_var) 
 
     return return_main_object
 

@@ -25,7 +25,7 @@ def fetch_data():
             f.close()
             with gzip.open('branches.xml.gz', 'rb') as f:
                 for line in f:
-                    if '<loc>http://locations.westernunion.com/us/' in line or '<loc>http://locations.westernunion.com/ca/' in line:
+                    if '<loc>http://locations.westernunion.com/us/' in line:
                         locs.append(line.split('<loc>')[1].split('<')[0])
         print(str(len(locs)) + ' Locations Found...')
     for loc in locs:

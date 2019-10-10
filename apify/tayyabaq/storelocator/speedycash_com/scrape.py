@@ -41,7 +41,7 @@ def fetch_data():
         phones = driver.find_elements_by_xpath("//a[contains(@class,'store-phone')]")
         for n in range(0,len(address)):
             a=address[n].text.split("\n")
-            street_address.append(' '.join(a[:-2])
+            street_address.append(' '.join(a[:-2]))
             lat,lon = parse_geo(address[n].get_attribute('href'))
             latitude.append(lat)
             longitude.append(lon)
