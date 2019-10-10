@@ -3,7 +3,7 @@ import csv
 class Scrape:
     def __init__(self, url):
         self.url = url
-        self.CHROME_DRIVER_PATH = '.chromedriver'
+        self.CHROME_DRIVER_PATH = 'chromedriver'
 
     def write_output(self, data):
         with open('data.csv', mode='w') as output_file:
