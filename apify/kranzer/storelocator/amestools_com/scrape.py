@@ -17,10 +17,10 @@ class Scrape(base.Spider):
         raw_json = re.findall(r'maplistScriptParamsKo = (\{.+?\});\n', raw_json)
         if raw_json:
             json_body = json.loads(raw_json[0])
-            pprint(json_body.get('KOObject', ["noting"])[0].get('locations', {})[-2])
             for result in json_body.get('KOObject', ["noting"])[0].get('locations', {}):
                 i = base.Item(result)
                 i.add_value('locator_domain', base_url)
+                i.add_value('page_url', base_url)
                 i.add_value('location_name', result.get('title',''), lambda x: x.strip())
                 i.add_value('latitude', result.get('latitude', ''), lambda x: x.strip())
                 i.add_value('longitude', result.get('longitude', ''), lambda x: x.strip())
