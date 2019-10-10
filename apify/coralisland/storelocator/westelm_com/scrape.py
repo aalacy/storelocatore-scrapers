@@ -94,6 +94,8 @@ def fetch_data():
             store_hours = []
             for hour in store['regular_hours']:
                 store_hours.append(validate(hour['display_day']) + ' ' + validate(hour['display_start_time']) + '-' + validate(hour['display_end_time']))
+            if get_value(store['slug']) == 'scarsdale-at-vernon-hills':
+                store_hours = 'Sun 11:00AM-6:00PM Mon-Sat 10:00AM-7:00PM'
             if len(store_hours) > 0:
                 output.append(get_value(store_hours)) #opening hours
                 output_list.append(output)
