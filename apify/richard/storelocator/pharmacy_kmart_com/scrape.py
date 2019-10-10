@@ -1,6 +1,6 @@
 import json
-import sgzip
 
+import sgzip
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -35,44 +35,44 @@ class Scraper(Scrape):
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
+        zipcodes = sgzip.for_radius(50) + ["25304", "03784"]
 
         for zip_search in sgzip.for_radius(50):
-            url = f'https://pharmacy.kmart.com/RxServices/kmartrx/fetchPharmFinderGB?finderInput={zip_search}'
+            url = f"https://pharmacy.kmart.com/RxServices/kmartrx/fetchPharmFinderGB?finderInput={zip_search}"
             driver.get(url)
-            stores.extend(json.loads(driver.find_element_by_css_selector('pre').text))
-
+            stores.extend(json.loads(driver.find_element_by_css_selector("pre").text))
 
         for store in stores:
-            if store['unitNumber'] not in seen:
+            if store["unitNumber"] not in seen:
                 # Store ID
-                location_id = store['unitNumber']
+                location_id = store["unitNumber"]
 
                 # Name
                 location_title = store["name"]
 
                 # Street
-                street_address = store['address']
+                street_address = store["address"]
 
                 # Country
-                country = 'US'
+                country = "US"
 
                 # State
-                state = store['state']
+                state = store["state"]
 
                 # city
-                city = store['city']
+                city = store["city"]
 
                 # zip
-                zipcode = store['zipcode']
+                zipcode = store["zipcode"]
 
                 # Lat
-                lat = store['latitude']
+                lat = store["latitude"]
 
                 # Long
-                lon = store['longitude']
+                lon = store["longitude"]
 
                 # Phone
-                phone = store['storePhoneNumber']
+                phone = store["storePhoneNumber"]
 
                 # hour
                 hour = store["pharmacyHours"]
@@ -89,20 +89,20 @@ class Scraper(Scrape):
                 phone_numbers.append(phone)
                 cities.append(city)
                 countries.append(country)
-                seen.append(store['unitNumber'])
+                seen.append(store["unitNumber"])
 
         for (
-                locations_title,
-                street_address,
-                city,
-                state,
-                zipcode,
-                phone_number,
-                latitude,
-                longitude,
-                hour,
-                location_id,
-                country,
+            locations_title,
+            street_address,
+            city,
+            state,
+            zipcode,
+            phone_number,
+            latitude,
+            longitude,
+            hour,
+            location_id,
+            country,
         ) in zip(
             locations_titles,
             street_addresses,
@@ -135,7 +135,6 @@ class Scraper(Scrape):
                     ]
                 )
                 seen.append(location_id)
-
 
 
 scrape = Scraper(URL)
