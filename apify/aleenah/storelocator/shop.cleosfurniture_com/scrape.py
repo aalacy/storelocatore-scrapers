@@ -38,7 +38,6 @@ def fetch_data():
     locs=[]
     street = []
     cities = []
-
     phones = []
     zips = []
     long = []
@@ -70,7 +69,10 @@ def fetch_data():
 
         data=info[0].text.split("\n")[4].split(",")
         cities.append(data[0])
-        zips.append(data[1].split(" ")[2])
+        try:
+            zips.append(data[1].split(" ")[2])
+        except:
+            zips.append("<MISSING>")
         """     to access location
         geomap = driver.find_elements_by_class_name('google-maps-link')
         print(str(info.text))
