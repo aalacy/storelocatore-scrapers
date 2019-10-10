@@ -22,7 +22,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+        writer.writerow(["locator_domain", "page_url" , "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
@@ -40,76 +40,79 @@ def fetch_data():
     data = []
     driver.get("https://www.skyzone.com/locations/")
     time.sleep(10)
-    text = driver.find_element_by_xpath("//body/script[@type='text/javascript']").get_attribute('innerHTML')
-    text_1 = text.split("window.SkyZone")[4][13:-5]
-    req_json = json.loads(text_1)
+    req_json = driver.execute_script("return window.SkyZone.locations")
     df = pd.DataFrame(
         columns=['Latitude', 'Longitude', 'City', 'id', 'Street_address', 'Name', 'PhoneNumber', 'postalCode', 'State',
-                 'URL', 'hours_of_operation'])
+                 'URL', 'hours_of_operation', 'Page_url'])
     count = 0
     for i in req_json:
-        lat = i['latitude']
-        lon = i['longitude']
-        street_addr = i['street_address']
-        location_name = i['name']
-        phone = i['phone']
-        city = i['city']
-        state = i['state']
-        zipcode = i['postal_code']
-        store_id = i['id']
-        url = "https://www.skyzone.com" + i['home_path']
-        if (street_addr == ""):
-            street_addr = '<MISSING>'
-        if (city == ""):
-            city = '<MISSING>'
-        if (zipcode == ""):
-            zipcode = '<MISSING>'
-        if (phone == ""):
-            phone = '<MISSING>'
-        if (state == ""):
-            state = '<MISSING>'
-        try:
-            driver2.get(url)
-            # time.sleep(10)
-            tim = driver2.find_element_by_xpath(
-                "(//a[contains(@class,'hero-details__detail-item')][contains(@href,'hours')])").get_attribute(
-                'textContent').strip()
-            hours_of_op = tim
-        except:
-            hours_of_op = '<MISSING>'
-            'NoSuchElementException'
-        li = pd.DataFrame(
-            [[lat, lon, city, store_id, street_addr, location_name, phone, zipcode, state, url, hours_of_op]],
-            columns=['Latitude', 'Longitude', 'City', 'id', 'Street_address', 'Name', 'PhoneNumber', 'postalCode',
-                     'State', 'URL', 'hours_of_operation'])
-        df = df.append(li)
-        df.reset_index(inplace=True, drop=True)
-        try:
-            loc_type = df.iloc[i]['LocType']
-        except:
-            loc_type = '<MISSING>'
-        data.append([
-            'https://www.skyzone.com/',
-            location_name,
-            street_addr,
-            city,
-            state,
-            zipcode,
-            'US',
-            store_id,
-            phone,
-            loc_type,
-            lat,
-            lon,
-            hours_of_op
-        ])
-        count = count + 1
-        print(count)
+        if i['status'] == 'coming_soon':
+            pass
+        else:
+            lat = i['latitude']
+            lon = i['longitude']
+            street_addr = i['street_address']
+            location_name = i['name']
+            phone = i['phone']
+            city = i['city']
+            state = i['state']
+            zipcode = i['postal_code']
+            store_id = i['id']
+            url = "https://www.skyzone.com" + i['home_path']
+            page_url = 'https://www.skyzone.com/locations/'
+            if (street_addr == ""):
+                street_addr = '<MISSING>'
+            if (city == ""):
+                city = '<MISSING>'
+            if (zipcode == ""):
+                zipcode = '<MISSING>'
+            if (phone == ""):
+                phone = '<MISSING>'
+            if (state == ""):
+                state = '<MISSING>'
+            try:
+                driver2.get(url)
+                # time.sleep(10)
+                tim = driver2.find_element_by_xpath(
+                    "(//a[contains(@class,'hero-details__detail-item')][contains(@href,'hours')])").get_attribute(
+                    'textContent').strip()
+                hours_of_op = tim
+            except:
+                hours_of_op = '<MISSING>'
+                'NoSuchElementException'
+            li = pd.DataFrame(
+                [[lat, lon, city, store_id, street_addr, location_name, phone, zipcode, state, url, hours_of_op, page_url]],
+                columns=['Latitude', 'Longitude', 'City', 'id', 'Street_address', 'Name', 'PhoneNumber', 'postalCode',
+                         'State', 'URL', 'hours_of_operation','Page_url'])
+            df = df.append(li)
+            df.reset_index(inplace=True, drop=True)
+            try:
+                loc_type = df.iloc[i]['LocType']
+            except:
+                loc_type = '<MISSING>'
+            data.append([
+                'https://www.skyzone.com/',
+                page_url,
+                location_name,
+                street_addr,
+                city,
+                state,
+                zipcode,
+                'US',
+                store_id,
+                phone,
+                loc_type,
+                lat,
+                lon,
+                hours_of_op
+            ])
+            count = count + 1
+            print(count)
 
     for i in range(len(data)):
         try:
-            if (data[i][4] in canada_states):
-                data[i][6] = 'CA'
+            if (data[i][5] in canada_states):
+                data[i][7] = 'CA'
                 print(i)
         except:
             'TypeError'
