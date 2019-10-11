@@ -94,13 +94,15 @@ request(url,(err,res,html)=>{
                       
                                   phone: phone,
                       
-                                  location_type: 'epicwingsnthings',
-
-                                  hours_of_operation: hour,
+                                  location_type: '<MISSING>',                                  
                       
                                   latitude: latitude,
                       
-                                  longitude: longitude 
+                                  longitude: longitude,
+
+                                  hours_of_operation: hour,
+
+                                  page_url:link 
                       
                               });
 

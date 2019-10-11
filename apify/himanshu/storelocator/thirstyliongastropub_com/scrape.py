@@ -25,19 +25,29 @@ def fetch_data():
     }
     
     arr=['arizona','colorado',"oregon",'texas']
-
+    mapLat =[]
+    mapLng =[]
     store_name=[]
     store_detail=[]
     return_main_object=[]
+    hours1 =[]
     for p in arr:
         base_url= "https://www.thirstyliongastropub.com/"+str(p)
         r = requests.get(base_url)
         soup= BeautifulSoup(r.text,"lxml")
-  
-
+        new_name = str(p)
         k=(soup.find_all("div",{"class":"sqs-block html-block sqs-block-html"}))
-    
+        lat = (soup.find_all("div",{"class":"sqs-block map-block sqs-block-map"}))
+        for i in lat:
+            json1 = json.loads(i.attrs['data-block-json'])
+            mapLat.append(json1['location']['mapLat'])
+            mapLng.append(json1['location']['mapLng'])
+
+
+
+        # print("================",str(p))
         for i in k:
+            
             p = i.find_all("p")
             for p1 in p:
                 if "ADDRESS" in p1.text:
@@ -56,18 +66,17 @@ def fetch_data():
                             phone = "<MISSING>"
 
                         hours=(" ".join(list(i.stripped_strings)[3:][:7]).replace("PHONE: 817.283.9000 Free Valet Parking on Friday & Saturday Nights",""))
-                        store_name.append(st)
-                        tem_var.append(st)
-                        tem_var.append(city)
-                        tem_var.append(state)
-                        tem_var.append(zip1)
+                        store_name.append(new_name.encode('ascii', 'ignore').decode('ascii').strip())
+                        tem_var.append(st.encode('ascii', 'ignore').decode('ascii').strip())
+                        tem_var.append(city.encode('ascii', 'ignore').decode('ascii').strip())
+                        tem_var.append(state.encode('ascii', 'ignore').decode('ascii').strip())
+                        tem_var.append(zip1.encode('ascii', 'ignore').decode('ascii').strip())
                         tem_var.append("US")
                         tem_var.append("<MISSING>")
                         tem_var.append(phone.replace("TBD","<MISSING>"))
                         tem_var.append("thirstyliongastropub")
-                        tem_var.append("<MISSING>")
-                        tem_var.append("<MISSING>")
-                        tem_var.append(hours)
+                      
+                        hours1.append(hours)
                         store_detail.append(tem_var)
                     else:
                         st = list(i.stripped_strings)[1].split("\xa0")[0].replace("|","").split(",")[0]
@@ -78,27 +87,32 @@ def fetch_data():
                         hours = " ".join(list(i.stripped_strings)[3:][:-2])
                         
               
-                        store_name.append(st)
-                        tem_var.append(st)
-                        tem_var.append(city)
-                        tem_var.append(state)
-                        tem_var.append(zip1)
+                        store_name.append(new_name.encode('ascii', 'ignore').decode('ascii').strip())
+                        tem_var.append(st.encode('ascii', 'ignore').decode('ascii').strip())
+                        tem_var.append(city.encode('ascii', 'ignore').decode('ascii').strip())
+                        tem_var.append(state.encode('ascii', 'ignore').decode('ascii').strip())
+                        tem_var.append(zip1.encode('ascii', 'ignore').decode('ascii').strip())
                         tem_var.append("US")
                         tem_var.append("<MISSING>")
                         tem_var.append(phone.replace("TBD","<MISSING>"))
-                        tem_var.append("thirstyliongastropub")
                         tem_var.append("<MISSING>")
-                        tem_var.append("<MISSING>")
-                        tem_var.append(hours)
+
+                        hours1.append(hours)
                         store_detail.append(tem_var)
                     
-
     for i in range(len(store_name)):
         store = list()
         store.append("https://www.thirstyliongastropub.com")
-        store.append(store_name[i])
+        store.append(store_name[i].encode('ascii', 'ignore').decode('ascii').strip())
         store.extend(store_detail[i])
-        return_main_object.append(store) 
+        store.append(mapLat[i])
+        store.append(mapLng[i])
+        store.append(hours1[i].encode('ascii', 'ignore').decode('ascii').strip())
+        # store.append(url[i])
+        if  "3077 W. Frye Rd  Chandler" in store or "21001 North Tatum" in store or "Grandscape -The Colony" in store or "15900 La Cantera Pkwy" in store:
+            pass
+        else: 
+            return_main_object.append(store) 
     
     return return_main_object
 
@@ -109,3 +123,5 @@ def scrape():
 
 
 scrape()
+
+
