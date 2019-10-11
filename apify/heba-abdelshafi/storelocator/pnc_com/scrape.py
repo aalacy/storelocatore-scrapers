@@ -7,7 +7,7 @@ options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
-#driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe', options=options)
+#driver=webdriver.Chrome('C:\chromedriver.exe', options=options)
 driver = webdriver.Chrome("chromedriver", options=options)
 
 
@@ -19,19 +19,39 @@ def fetch_data():
                
     states=[i.text for i in driver.find_elements_by_xpath('//div[@class="desktopView"]//a[@class="ng-binding"]')]
     
-    for state in states:
+    for state in states[0:3]:
         driver.get('https://apps.pnc.com/locator/#/browse/{}'.format(state))
         sleep(3)
         cities=[(' ').join(i.text.split()[:-1]) for i in driver.find_elements_by_xpath('//div[@class="desktopView"]//a[@class="ng-binding"]')]
         no_of_branches=[int(i.text.split()[-1][1]) for i in driver.find_elements_by_xpath('//div[@class="desktopView"]//a[@class="ng-binding"]')]
-        
+
         for index,city in enumerate(cities):
-            url='https://apps.pnc.com/'   
-            driver.get('https://apps.pnc.com/locator/#/browse/{}/{}'.format(state,city))
-            sleep(5)
-            if no_of_branches[index]>1:
-                for i in range (1,no_of_branches[index]+1): 
-                    location_data=driver.find_element_by_xpath('//div[@class="desktopView"]//div[@class="card ng-scope"][{}]'.format(i)).text.split('\n')
+            try:
+                url='https://apps.pnc.com/'   
+                driver.get('https://apps.pnc.com/locator/#/browse/{}/{}'.format(state,city))
+                sleep(5)
+                if no_of_branches[index]>1:
+                    for i in range (1,no_of_branches[index]+1): 
+                        location_data=driver.find_element_by_xpath('//div[@class="desktopView"]//div[@class="card ng-scope"][{}]'.format(i)).text.split('\n')
+                        if len (location_data)==7:
+                            data['locator_domain'].append(url)
+                            data['state'].append(state)
+                            data['city'].append(city)
+                            data['location_name'].append(location_data[0])
+                            data['location_type'].append(location_data[1].split()[-1])
+                            data['street_address'].append(location_data[2])
+                            data['zip'].append(location_data[3].split()[-1])
+                            data['phone'].append(location_data[4])
+                            data['hours_of_operation'].append(location_data[5])
+                            data['latitude'].append('<MISSING>')
+                            data['longitude'].append('<MISSING>')
+                            data['store_number'].append('<MISSING>')
+                            data['country_code'].append('US')
+                        else:
+                            pass
+                    
+                else:
+                    location_data=driver.find_element_by_xpath('//div[@class="desktopView"]//div[@class="card ng-scope"]').text.split('\n')
                     if len (location_data)==7:
                         data['locator_domain'].append(url)
                         data['state'].append(state)
@@ -41,34 +61,17 @@ def fetch_data():
                         data['street_address'].append(location_data[2])
                         data['zip'].append(location_data[3].split()[-1])
                         data['phone'].append(location_data[4])
-                        data['hours_of_operation'].append(location_data[5])
+                        data['hours_of_operation'].append(location_data[5].split(' ',3)[-1])
                         data['latitude'].append('<MISSING>')
                         data['longitude'].append('<MISSING>')
                         data['store_number'].append('<MISSING>')
                         data['country_code'].append('US')
                     else:
                         pass
-                    print(location_data)
+                    
+            except:
+                pass
                 
-            else:
-                location_data=driver.find_element_by_xpath('//div[@class="desktopView"]//div[@class="card ng-scope"]').text.split('\n')
-                if len (location_data)==7:
-                    data['locator_domain'].append(url)
-                    data['state'].append(state)
-                    data['city'].append(city)
-                    data['location_name'].append(location_data[0])
-                    data['location_type'].append(location_data[1].split()[-1])
-                    data['street_address'].append(location_data[2])
-                    data['zip'].append(location_data[3].split()[-1])
-                    data['phone'].append(location_data[4])
-                    data['hours_of_operation'].append(location_data[5].split(' ',3)[-1])
-                    data['latitude'].append('<MISSING>')
-                    data['longitude'].append('<MISSING>')
-                    data['store_number'].append('<MISSING>')
-                    data['country_code'].append('US')
-                else:
-                    pass
-                print(location_data)
     driver.close()
     return data
     

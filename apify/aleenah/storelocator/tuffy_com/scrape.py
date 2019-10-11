@@ -47,8 +47,11 @@ def fetch_data():
 
     for us in US_states:
         url="https://www.tuffy.com/location_search?zip_code="+us
-        page_url.append(url)
+
         driver.get(url)
+        inp=driver.find_element_by_xpath('/html/body/div[3]/main/section[1]/div/form/fieldset/input')
+        inp.click()
+        time.sleep(0.1)
 
         try:
             divs=driver.find_element_by_xpath('//div[@class="col contact-info-hlder"]')
@@ -57,8 +60,7 @@ def fetch_data():
 
                 loc=div.find_element_by_tag_name("h2").get_attribute("innerText")
                 loc=re.sub(r'\d+',"",loc).strip()
-                if loc == "TUFFY FORT MYERS (DANIELS PKWY)":
-                    print("gottcha")
+
                 if loc in locs:
                     continue
                 locs.append(loc)
@@ -97,10 +99,8 @@ def fetch_data():
                     street.append(addr.replace(c,"").strip())
                 lat.append(z.latitude)
                 long.append(z.longitude)
-                if len(locs) != len(street):
-                    print(locs)
-                    print(street)
-                    print(timing)
+                page_url.append(url)
+
 
         except:
            continue
@@ -123,6 +123,7 @@ def fetch_data():
         row.append(lat[i])  # lat
         row.append(long[i])  # long
         row.append(timing[i])  # timing
+        row.append(page_url[i])  # page_url
 
         all.append(row)
     return all

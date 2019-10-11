@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -26,6 +26,9 @@ def fetch_data():
         for city in data[state]["properties"]:
             location_request = requests.get(data[state]["properties"][city]["link"])
             location_soup = BeautifulSoup(location_request.text,"lxml")
+            if location_soup.find("h1",{'class':"cobble-font"}):
+                if "Coming Soon".lower() in location_soup.find("h1",{'class':"cobble-font"}).text.lower():
+                    continue
             store_name = "".join(list(location_soup.find("h2",{'class':'cobble-font'}).stripped_strings))
             store_city = store_name.split(",")[0]
             store_state = store_name.split(",")[-1]
@@ -51,12 +54,12 @@ def fetch_data():
             store.append("US")
             store.append(data[state]["properties"][city]["page_id"])
             store.append(phone if phone != "" else "<MISSING>")
-            store.append("quicklyusa")
+            store.append("<MISSING>")
             store.append(lat if lat != "" else "<MISSING>")
             store.append(lng if lng != "" else "<MISSING>")
-            store.append(hours if hours != "" else "<MISSING>")
-            return_main_object.append(store)
-    return return_main_object
+            store.append("<MISSING>")
+            store.append(data[state]["properties"][city]["link"])
+            yield store
 
 def scrape():
     data = fetch_data()

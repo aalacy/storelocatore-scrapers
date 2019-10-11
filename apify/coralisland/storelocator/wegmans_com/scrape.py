@@ -87,7 +87,7 @@ def fetch_data():
         output.append(get_value(store.xpath('.//meta[@name="name"]/@content'))) #location name
         output.append(get_value(store.xpath('.//meta[@name="address"]/@content'))) #address
         output.append(get_value(store.xpath('.//meta[@name="city"]/@content'))) #city
-        output.append(get_value(store.xpath('.//meta[@name="state"]/@content'))) #state
+        output.append(get_value(store.xpath('.//meta[@name="stateAbbreviation"]/@content'))) #state
         output.append(get_value(store.xpath('.//meta[@name="zip"]/@content'))) #zipcode  
         output.append('US') #country code
         output.append(get_value(store.xpath('.//meta[@name="locationNumber"]/@content'))) #store_number
@@ -96,13 +96,14 @@ def fetch_data():
         geo_loc = validate(store.xpath('.//meta[@name="location"]/@content')).split('-0')
         output.append(geo_loc[0]) #latitude
         output.append('-'+geo_loc[1]) #longitude
-        store_hours = validate(store.xpath('.//meta[@name="description"]/@content')).split('Store Hours:')[-1]
-        if store_hours != '':
-            if 'Call' in store_hours:
-                store_hours = store_hours.split('Call')[0]
-            output.append(get_value(store_hours)) #opening hours
-            output_list.append(output)
-            print(output)
+        # store_hours = validate(store.xpath('.//meta[@name="description"]/@content')).split('Store Hours:')[-1]
+        store_hours = validate(store.xpath('.//div[@class="address-info"]/div/text()'))
+        # if store_hours != '':
+        if 'Call' in store_hours:
+            store_hours = store_hours.split('Call')[0]
+        output.append(get_value(store_hours)) #opening hours
+        output_list.append(output)
+        print(output)
     return output_list
 
 def scrape():

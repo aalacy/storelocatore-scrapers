@@ -62,8 +62,10 @@ def fetch_data():
             url=div.find_element_by_tag_name("a").get_attribute("href")
             page_url.append(url)
     print(len(page_url))
+    i=1
     for url in page_url:
-
+            print(i)
+            i+=1
             driver.get(url)
             divs=driver.find_element_by_tag_name("main")
             divs=divs.find_element_by_xpath('//div[@class="container-fluid store-info-main"]')
@@ -89,7 +91,15 @@ def fetch_data():
                 phones.append("<MISSING>")
             try:
                 divs.find_element_by_xpath('//i[@class="am-icon-jade-arrow-right am-icon"]').click()
-                timing.append(divs.find_element_by_xpath('//div[@class="ds-list-week"]').text.replace("\n"," "))
+                days=divs.find_element_by_xpath('//div[@class="ds-list-week"]').find_elements_by_class_name("ds-single-day")
+                tim=""
+                for day in days:
+                    tim+=day.text + " "
+                tim=tim.strip().replace("\n"," ")
+                if tim=="":
+                    tim="<MISSING>"
+                timing.append(tim)
+
             except:
                 timing.append("<MISSING>")
             try:
@@ -100,13 +110,6 @@ def fetch_data():
             except:
                 lat.append("<MISSING>")
                 long.append("<MISSING>")
-
-            time.sleep(0.5)
-
-
-
-
-
 
     all = []
     for i in range(0, len(locs)):

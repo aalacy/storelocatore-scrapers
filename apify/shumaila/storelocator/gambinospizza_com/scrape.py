@@ -87,6 +87,7 @@ def fetch_data():
                         hours = hlist[start:end]
                         hours = hours.replace("\t", "")
 
+
                     except:
 
                         driver = get_driver()
@@ -188,6 +189,9 @@ def fetch_data():
                     start = hours.find("||")
                     if start != -1:
                         hours = hours[0:start]
+
+                    hours = re.sub('[^A-Za-z0-9-|: ]+', '', hours)
+
 
                     flag = 8
                     print(link)

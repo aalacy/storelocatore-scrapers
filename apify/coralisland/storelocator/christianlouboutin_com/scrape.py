@@ -74,7 +74,7 @@ def fetch_data():
     }
     source = session.get('http://us.christianlouboutin.com/ot_en/storelocator/north-america/united-states').text
     response = etree.HTML(source)
-    store_list = response.xpath('//a[@class="item"]/@href')
+    store_list = eliminate_space(response.xpath('//a[@class="item"]/@href'))
     for store_link in store_list:
         if 'http' not in store_link:
             store_link = base_url + store_link
@@ -113,7 +113,7 @@ def fetch_data():
 
     source = session.get('http://us.christianlouboutin.com/ot_en/storelocator/north-america/canada').text
     response = etree.HTML(source)
-    store_list = response.xpath('//a[@class="item"]/@href')
+    store_list = eliminate_space(response.xpath('//a[@class="item"]/@href'))
     for store_link in store_list:
         if 'http' not in store_link:
             store_link = base_url + store_link
@@ -123,7 +123,7 @@ def fetch_data():
         output.append(store_link) # page url
         output.append(get_value(store.xpath('.//div[@id="store-information"]//htag1[@itemprop="name"]//text()'))) #location name
         city = get_value(store.xpath('.//div[@id="store-information"]//span[@class="city"]//text()'))
-        zipcode = eliminate_space(get_value(store.xpath('.//div[@id="store-information"]//span[@class="address2"]//text()')).replace(city, '').replace(',', '').split(' '))
+        zipcode = eliminate_space(get_value(store.xpath('.//div[@id="store-information"]//span[@class="address2"]//text()')).replace(city, '').replace(',', '').replace('CA', '').split(' '))
         if len(zipcode) > 2:
             output.append(get_value(store.xpath('.//div[@id="store-information"]//span[@class="address1"]//text()'))) #address            
             output.append(city) #city
@@ -133,7 +133,7 @@ def fetch_data():
             output.append(get_value(store.xpath('.//div[@id="store-information"]//span[@class="address1"]//text()'))) #address            
             output.append(city) #city
             output.append('<MISSING>') #state
-            output.append(validate(zipcode)) #zipcode        
+            output.append(validate(zipcode)) #zipcode  
         output.append('CA') #country code
         output.append("<MISSING>") #store_number
         output.append(get_value(store.xpath('.//div[@id="store-information"]//span[@itemprop="telephone"]//text()'))) #phone
