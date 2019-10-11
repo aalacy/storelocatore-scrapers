@@ -1,7 +1,11 @@
-"locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
-"www.petrosbrand.com","Petros Winery","3360 Foxen Canyon Rd."," Los Olivos","CA","93441","US","<MISSING>","805.680.5417","<MISSING>","34.6795476","-120.1276687","['Hours  MONDAY - WEDNESDAY Open for appointments only THURSDAY 12pm – 7pm FRIDAY - SUNDAY 11am – 8pm  Reserve Now ']"
-"www.petrosbrand.com","Petros Century City","Westfield Century City"," Los Angeles","CA","90067","US","<MISSING>","310.277-3876","<MISSING>","34.059261","-118.4223153","['Hours  SUNDAY – THURSDAY 11am – 10pm FRIDAY & SATURDAY 11am – 11pm  LUNCH Open – 4pm DINNER 4pm – Close HAPPY HOUR 3pm – 4pm (everyday) ']"
-"www.petrosbrand.com","Petros Manhattan Beach","451 Manhattan "," Manhattan ","CA","90266","US","<MISSING>","310.545.4100","<MISSING>","33.886161","-118.4105147","['Hours  MONDAY – THURSDAY 11am – 11pm FRIDAY 11am – 12am SATURDAY 10am – 12am SUNDAY 10am – 11pm  LUNCH Open – 4pm DINNER 4pm – Close BRUNCH Open – 4pm (Sat & Sun) ']"
-"www.petrosbrand.com","ES CHOPHOUSE","131 West Grand Ave"," El Segundo","CA","90245","US","<MISSING>","310.322.6200","<MISSING>","33.919194","-118.4188687","['Hours  MONDAY – SATURDAY 4pm – 9:30pm ']"
-"www.petrosbrand.com","Petros Kafe Solvang","487 Atterdag Road"," Solvang","CA","93463","US","<MISSING>","805.686.5455","<MISSING>","34.5956083","-120.1444293","['Hours  SUNDAY 10am – 9pm MONDAY-THURSDAY 11am – 9pm FRIDAY 11am – 10pm SATURDAY 10am – 10pm  BREAKFAST 10am – 11am (Sat. & Sun.) LUNCH 11am – 4pm DINNER 4pm – Close ']"
-"www.petrosbrand.com","Petros Santa Barbara","1316 State St."," Santa Barbara","CA","93101","US","<MISSING>","805.899.9100","<MISSING>","34.4248531","-119.708277","['Hours  OPEN WEEKLY ']"
+"locator_domain","page_url","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
+"www.petrosbrand.com","https://www.petrosbrand.com/locations/petros-century-city","Petros Century City
+","Westfield Century City 10250 Santa Monica Blvd Space 2790","Los Angeles","CA","90067","US","<MISSING>","310.277-3876","<MISSING>","34.059261","-118.4223153","Hours  SUNDAY – THURSDAY 11am – 10pm FRIDAY & SATURDAY 11am – 11pm  LUNCH Open – 4pm DINNER 4pm – Close HAPPY HOUR 3pm – 4pm (everyday) "
+"www.petrosbrand.com","https://www.petrosbrand.com/locations/es-chophouse","ES CHOPHOUSE
+","131 West Grand Ave.","El Segundo","CA","90245","US","<MISSING>","310.322.6200","<MISSING>","33.919194","-118.4188687","Hours  MONDAY – SATURDAY 4pm – 9:30pm "
+"www.petrosbrand.com","https://www.petrosbrand.com/locations/petros-manhattan-beach","Petros Manhattan Beach
+","451 Manhattan Beach Blvd. B110","Manhattan Beach","CA","90266","US","<MISSING>","310.545.4100","<MISSING>","33.886161","-118.4105147","Hours  MONDAY – THURSDAY 11am – 11pm FRIDAY 11am – 12am SATURDAY 10am – 12am SUNDAY 10am – 11pm  LUNCH Open – 4pm DINNER 4pm – Close BRUNCH Open – 4pm (Sat & Sun) "
+"www.petrosbrand.com","https://www.petrosbrand.com/locations/petros-kafe-solvang","Petros Kafe Solvang
+","487 Atterdag Road","Solvang","CA","93463","US","<MISSING>","805.686.5455","<MISSING>","34.5956083","-120.1444293","Hours  SUNDAY 10am – 9pm MONDAY-THURSDAY 11am – 9pm FRIDAY 11am – 10pm SATURDAY 10am – 10pm  BREAKFAST 10am – 11am (Sat. & Sun.) LUNCH 11am – 4pm DINNER 4pm – Close "
+"www.petrosbrand.com","https://www.petrosbrand.com/locations/petros-santa-barbara","Petros Santa Barbara
+","1316 State St.","Santa Barbara","CA","93101","US","<MISSING>","805.686.5455","<MISSING>","34.4248531","-119.708277","Hours  OPEN WEEKLY "
