@@ -1,4 +1,1 @@
-selenium 3.141.0
-csv
-re
-time
+selenium==3.141.0
