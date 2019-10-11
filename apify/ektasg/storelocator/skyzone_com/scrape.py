@@ -46,7 +46,7 @@ def fetch_data():
                  'URL', 'hours_of_operation', 'Page_url'])
     count = 0
     for i in req_json:
-        if i['status'] == 'coming_soon':
+        if i['status'] == 'coming_soon' or i['status'] == 'closed':
             pass
         else:
             lat = i['latitude']
