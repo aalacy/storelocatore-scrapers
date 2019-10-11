@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -40,8 +40,6 @@ def fetch_data():
         store.append(store_data["city"] if store_data["city"] != "" else "<MISSING>")
         store.append(store_data["state"] if store_data["state"] != "" else "<MISSING>")
         store.append(store_data["zipcode"] if store_data["zipcode"] != "" else "<MISSING>")
-        if len(store[-1]) == 4:
-            store[-1] = "<MISSING>"
         store.append("US" if store_data["country"] == "USA" else "CA")
         if store[-1] == "CA":
             if len(store[-2]) > 8:
@@ -53,8 +51,8 @@ def fetch_data():
         store.append(store_data["latitude"])
         store.append(store_data["longitude"])
         store.append(hours)
-        return_main_object.append(store)
-    return return_main_object
+        store.append(base_url + store_data["url"])
+        yield store
 
 def scrape():
     data = fetch_data()

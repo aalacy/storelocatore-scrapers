@@ -12,28 +12,25 @@ options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 #driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
 driver = webdriver.Chrome("chromedriver", options=options)
+#driver2 = webdriver.Chrome("C:\chromedriver.exe", options=options)
+driver2 = webdriver.Chrome("chromedriver", options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def parse_geo(url):
-    lon = re.findall(r'2d{1}(-?\d*.{1}\d*)!{1}', url)[0]
-    lat = re.findall(r'3d{1}(-?\d*.{1}\d*)!{1}', url)[0]
+    lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
+    lat = re.findall(r'\@(-?[\d\.]*)', url)[0]
     return lat, lon
 
-def parse_geo2(url):
-        a = re.findall(r'\&center=(-?[\d\.]*,(--?[\d\.]*))', url)[0]
-        lat = a[0].split("%2C")[0]
-        lon = a[0].split("%2C")[1]
-        return lat, lon
 
 def fetch_data():
     # Your scraper here
@@ -46,33 +43,40 @@ def fetch_data():
     location_name = [location_names[i].text for i in range(0,len(location_names))]
     for i in range(0,len(names)):
         driver.get(names[i])
+        page_url = names[i]
         time.sleep(5)
         try:
-            geomap = driver.find_element_by_css_selector('div.wpb_map_wraper > iframe').get_attribute('data-lazy-src')
-            lat,lon = parse_geo(geomap)
+            geomap = driver.find_element_by_css_selector('div.wpb_text_column.wpb_content_element.red-icons > div > p > strong > a:nth-child(3)').get_attribute('href')
+            driver2.get(geomap)
+            time.sleep(4)
+            lat,lon = parse_geo(driver2.current_url)
             phone = driver.find_element_by_css_selector('div.wpb_text_column.wpb_content_element.red-icons > div > p >a').text
             address = driver.find_element_by_css_selector('div.wpb_text_column.wpb_content_element.red-icons > div > p > strong > a:nth-child(3)').text
             tagged = usaddress.tag(address)[0]
             state = tagged['StateName']
             city = tagged['PlaceName']
             zipcode = tagged['ZipCode']
+            hours_of_op = '<MISSING>'
             try:
                 street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + \
                               tagged['StreetNamePostType'].split('\n')[0]
             except:
                 street_addr = tagged['AddressNumber'] + " " + tagged['StreetNamePreType'] + " " + tagged['StreetName']
         except:
-            phone = driver.find_element_by_css_selector('section.lemon--section__373c0__fNwDM.u-space-b3.border-color--default__373c0__2oFDT > div > div:nth-child(1) > div > div.lemon--div__373c0__1mboc.arrange-unit__373c0__1piwO.arrange-unit-fill__373c0__17z0h.border-color--default__373c0__2oFDT > p:nth-child(2)').text
-            geomap1 = driver.find_element_by_xpath("//img[contains(@src,'googleapis')]").get_attribute('src')
-            lat = geomap1.split('center=')[1].split('%2C')[0]
-            lon = geomap1.split('center=')[1].split('%2C')[1].split('&')[0]
-            street_addr = driver.find_element_by_css_selector('address.lemon--address__373c0__2sPac > p:nth-child(1) > span').text
-            state_city_zip = driver.find_element_by_css_selector('address.lemon--address__373c0__2sPac > p:nth-child(2) > span').text
+            phone = driver.find_element_by_css_selector('ul.R7Di0e').text
+            geomap1 = driver.find_element_by_xpath("//*[@id='details']/div[2]/div[2]/div/a").get_attribute('href')
+            driver2.get(geomap1)
+            time.sleep(4)
+            lat, lon = parse_geo(driver2.current_url)
+            street_addr = driver.find_element_by_css_selector('address.qhkvMe > div:nth-child(1)').text
+            state_city_zip = driver.find_element_by_css_selector('address.qhkvMe > div:nth-child(2)').text
             city = state_city_zip.split(',')[0]
             zipcode = state_city_zip.split(',')[1].split(" ")[-1]
             state = state_city_zip.split(',')[1].split(" ")[-2]
+            hours_of_op = driver.find_element_by_xpath("//table[contains(@itemprop,'openingHours')]").text
         data.append([
              'https://www.wildwillysburgers.com/',
+              page_url,
               '<MISSING>',
               street_addr,
               city,
@@ -84,16 +88,17 @@ def fetch_data():
               '<MISSING>',
               lat,
               lon,
-              '<MISSING>'
+              hours_of_op
             ])
 
     i = 0
     while i < len(data):
-        data[i][1] = location_name[i]
+        data[i][2] = location_name[i]
         i += 1
 
     time.sleep(3)
     driver.quit()
+    driver2.quit()
     return data
 
 def scrape():

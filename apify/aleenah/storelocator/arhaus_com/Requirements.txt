@@ -2,3 +2,4 @@ selenium 3.141.0
 csv
 re
 bs4 0.0.1 py 3.7
+requests

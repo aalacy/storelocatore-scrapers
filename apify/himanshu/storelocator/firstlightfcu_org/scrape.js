@@ -48,10 +48,11 @@ request(url,(err,res,html)=>{
                 country_code: 'US',
                 store_number:'<MISSING>',
                 phone:phone,
-                location_type:'firstlightfcu',
+                location_type:'<MISSING>',
                 latitude:'<MISSING>',
                 longitude :'<MISSING>',
-                hours_of_operation:hour
+                hours_of_operation:hour,
+                page_url:'<MISSING>'
                 
                 });  
             

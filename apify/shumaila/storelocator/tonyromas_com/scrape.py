@@ -19,7 +19,7 @@ def write_output(data):
 data = []
 endprint = []
 total = 0
-url = 'https://locations.bannerbank.com/'
+url = 'https://locations.tonyromas.com/'
 
 def fetch_data():
     temp1 =loadmain("https://locations.tonyromas.com/united-states")

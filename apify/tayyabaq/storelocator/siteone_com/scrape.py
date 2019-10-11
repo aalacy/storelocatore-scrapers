@@ -46,7 +46,7 @@ def fetch_data():
             store_number.append(driver.find_element_by_class_name('store-number-class').text)
             phone.append(driver.find_element_by_xpath('//a[contains(@class,"tel-phone")]').text)
             hours_of_operation.append(driver.find_element_by_xpath('//div[contains(@class,"detailSection")]').text)
-            address = driver.find_element_by_xpath('//li[@class="row"]/li').text)
+            address = driver.find_element_by_xpath('//li[@class="row"]/li').text
             street_address.append(address.split("\n")[0])
             city.append(address.split("\n")[1].split(",")[0])
             state.append(address.split("\n")[1].split(",")[1].split()[0])

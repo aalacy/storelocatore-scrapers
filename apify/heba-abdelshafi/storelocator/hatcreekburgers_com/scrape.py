@@ -15,7 +15,7 @@ driver=webdriver.Chrome('C:\chromedriver.exe')#, options=options)
 
 def write_output(data):
     df=pd.DataFrame(data)
-    df.to_csv('data.csv', index=False)
+    df.to_csv('data.csv', index=False,encoding='utf-8-sig')
 
 def fetch_data():
     data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[],'page_url':[]}
@@ -46,6 +46,25 @@ def fetch_data():
             except:
                 data['longitude'].append('<INACCESSIBLE>')
                 data['latitude'].append('<INACCESSIBLE>')
+                    
+        else:
+            driver.get(url)
+            data['page_url'].append(url)
+            data['locator_domain'].append('https://hatcreekburgers.com/')
+            data['country_code'].append('US')
+            data['store_number'].append('<MISSING>')
+            data['location_name'].append(driver.find_element_by_xpath('//span[@class="fl-heading-text"]').text)
+            sub_data=driver.find_element_by_xpath('//div[@class="fl-col-group fl-node-5c61ec33c8ebb fl-col-group-nested fl-col-group-custom-width"]').text.split('\n')
+            data['street_address'].append(sub_data[1])
+            data['city'].append(sub_data[2].split(',')[0])
+            data['state'].append(sub_data[2].split(',')[1].split()[0])
+            data['zip'].append(sub_data[2].split(',')[1].split()[1])
+            data['hours_of_operation'].append(sub_data[4])
+            data['location_type'].append(driver.find_element_by_xpath('//meta[@itemprop="name"]').get_attribute('content'))
+            data['phone'].append('<MISSING>')
+            #geo=driver.find_element_by_xpath('//div[@class="navigate"]/a[@target="_blank"]').get_attribute('href')
+            data['longitude'].append('<INACCESSIBLE>')
+            data['latitude'].append('<INACCESSIBLE>')
 
 
     driver.close()

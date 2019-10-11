@@ -66,13 +66,15 @@ def write_output(data):
 def fetch_data():
     output_list = []
     url = "https://www.signsnow.com/all-locations"
+    history = []
     page_url = ''
     session = requests.Session()
     source = session.get(url).text
     response = etree.HTML(source)
     store_list = response.xpath('//div[@class="innerbody"]//a/@href')
     for store_link in store_list:
-        if store_link != '#':
+        if store_link != '#' and store_link not in history:
+            history.append(store_link)
             if 'http' not in store_link:
                 store_link = base_url + store_link
             store = etree.HTML(session.get(store_link).text)

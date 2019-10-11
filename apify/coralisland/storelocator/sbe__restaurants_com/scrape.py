@@ -50,7 +50,8 @@ def fetch_data():
         store = etree.HTML(session.get(store_link).text)        
         output = []
         output.append(base_url) # url
-        output.append((eliminate_space(store.xpath('.//div[@class="address_hours center"]//span[contains(@class, "city")]//text()'))[0].replace(',', ''))) #location name
+        loc_name = eliminate_space(store_link.split('/'))[-1].replace('-', ' ').upper()
+        output.append(loc_name) #location name
         street = validate(store.xpath('.//div[@class="address_hours center"]//span[contains(@class, "address1")]//text()'))
         if ':' in street:
             street = street.split(':')[1]

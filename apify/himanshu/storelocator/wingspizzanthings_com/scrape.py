@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
+
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -23,29 +23,33 @@ def fetch_data():
     r = requests.get("http://wingspizzanthings.com/locations.html",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
-    for location in soup.find("map",{'id':"map1"}).find_all("area",{"href":re.compile(".")})[:-1]:
-        location_request = requests.get(base_url + location['href'],headers=headers)
-        location_soup = BeautifulSoup(location_request.text,"lxml")
-        for store in location_soup.find("div",{'id':"divMain"}).find_all("div",recursive=False):
-            if len(store.find_all("p",{"class":"Address"})) > 1:
-                location_details = list(store.stripped_strings)
-                if len(location_details[3].split(",")) == 1:
-                    location_details.insert(1,"")
-                store = []
-                store.append("http://wingspizzanthings.com")
-                store.append(" ".join(location_details[0:2]))
-                store.append(location_details[2])
-                store.append(location_details[3].split(",")[0])
-                store.append(location_details[3].split(",")[1].split(" ")[-2])
-                store.append(location_details[3].split(",")[1].split(" ")[-1])
-                store.append("US")
-                store.append("<MISSING>")
-                store.append(" ".join(location_details[4:7]).replace("Phone: ","").replace("FOOD ","").split("Fax")[0] if len(location_details) > 5 else " ".join(location_details[4:6]).replace("Phone: ","").replace("FOOD ","").split("Fax")[0])
-                store.append("wings pizza n things")
-                store.append("<MISSING>")
-                store.append("<MISSING>")
-                store.append("<MISSING>")
-                return_main_object.append(store)
+    for map_part in soup.find_all("map",{'id':re.compile("map")}):
+        for location in map_part.find_all("area",{"href":re.compile(".")}):
+            print(base_url + location['href'])
+            location_request = requests.get(base_url + location['href'],headers=headers)
+            location_soup = BeautifulSoup(location_request.text,"lxml")
+            for store in location_soup.find("div",{'id':"divMain"}).find_all("div",recursive=False):
+                if len(store.find_all("p",{"class":"Address"})) > 1:
+                    location_details = list(store.stripped_strings)
+                    if len(location_details) < 3:
+                        continue
+                    if len(location_details[3].split(",")) == 1:
+                        location_details.insert(1,"")
+                    store = []
+                    store.append("http://wingspizzanthings.com")
+                    store.append(" ".join(location_details[0:2]))
+                    store.append(location_details[2])
+                    store.append(location_details[3].split(",")[0])
+                    store.append(location_details[3].split(",")[1].split(" ")[-2])
+                    store.append(location_details[3].split(",")[1].split(" ")[-1])
+                    store.append("US")
+                    store.append("<MISSING>")
+                    store.append(" ".join(location_details[4:7]).replace("Phone: ","").replace("FOOD ","").split("Fax")[0] if len(location_details) > 5 else " ".join(location_details[4:6]).replace("Phone: ","").replace("FOOD ","").split("Fax")[0])
+                    store.append("wings pizza n things")
+                    store.append("<MISSING>")
+                    store.append("<MISSING>")
+                    store.append("<MISSING>")
+                    return_main_object.append(store)
     return return_main_object
 
 def scrape():
