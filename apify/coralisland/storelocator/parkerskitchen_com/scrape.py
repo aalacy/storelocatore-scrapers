@@ -49,15 +49,22 @@ def fetch_data():
     store_list = json.loads(request.text)
     for store in store_list:
         phone = ''
-        store_hours = ''
+        hours = ''
         store_name = get_value(store['name']).replace('&#8217;', "'")        
         details = eliminate_space(etree.HTML(session.get(validate(store['web'])).text).xpath('.//div[@id="locations-text"]//text()'))
         for idx, de in enumerate(details):
             if 'phone' in de.lower():
                 phone = validate(de.split('Phone:')[1])
             if 'hour' in de.lower():
-                store_hours = validate(details[idx:])
+                hours = details[idx+1:]
                 break
+        store_hours = validate(hours)
+        for h_idx, hour in enumerate(hours):
+            if 'kitchen' in hour.lower() or 'drive' in hour.lower():                
+                store_hours = validate(hours[:h_idx])
+                break
+        if 'kitchen' in store_hours.lower():
+            pdb.set_trace()
         output = []
         output.append(base_url) # url
         output.append(store_name) #location name
@@ -66,12 +73,12 @@ def fetch_data():
         output.append(get_value(store['state'])) #state
         output.append(get_value(store['postal'])) #zipcode
         output.append('US') #country code
-        output.append('<MISSING>') #store_number
+        output.append(store_name.split('#')[-1]) #store_number
         output.append(get_value(phone)) #phone
         output.append("Southwest GA Oil S'S food stores") #location type
         output.append(get_value(store['lat'])) #latitude
         output.append(get_value(store['lng'])) #longitude
-        output.append(get_value(store_hours)) #opening hours        
+        output.append(get_value(store_hours)) #opening hours     
         output_list.append(output)
     return output_list
 

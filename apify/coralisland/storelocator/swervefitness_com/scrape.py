@@ -95,11 +95,11 @@ def fetch_data():
         output.append("<MISSING>") #latitude
         output.append("<MISSING>") #longitude
         store_hours = []
-        hours = store.xpath('.//table[@class="scheduleTable"]//tbody//tr//td')
-        days_of_week = eliminate_space(store.xpath('.//table[@class="scheduleTable"]//span[@class="thead-dow"]//text()'))
-        for idx, day in enumerate(days_of_week):
-            hour = day + ' ' + validate(eliminate_space(hours[idx].xpath('.//text()')))
-            store_hours.append(hour)
+        # hours = store.xpath('.//table[@class="scheduleTable"]//tbody//tr//td')
+        # days_of_week = eliminate_space(store.xpath('.//table[@class="scheduleTable"]//span[@class="thead-dow"]//text()'))
+        # for idx, day in enumerate(days_of_week):
+        #     hour = day + ' ' + validate(eliminate_space(hours[idx].xpath('.//text()')))
+        #     store_hours.append(hour)
         output.append(get_value(', '.join(store_hours))) #opening hours
         output_list.append(output)
     return output_list

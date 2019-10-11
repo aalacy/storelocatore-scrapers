@@ -5,11 +5,11 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -31,14 +31,14 @@ def fetch_data():
             store = []
             store.append("https://www.oktire.com")
             store.append(store_data["name"])
-            store.append(store_data["street"] + " " + store_data["Street_2"] + " " + store_data["Street_3"])
+            store.append(store_data["street"])
             store.append(store_data["City"])
             store.append(store_data["StateProvince"])
             store.append(store_data["ZIPPostal_Code"] if len(store_data["ZIPPostal_Code"]) != 6 else store_data["ZIPPostal_Code"][0:3] + " " + store_data["ZIPPostal_Code"][3:])
             store.append("CA")
             store.append(store_data["id"])
             store.append(store_data["phone"]["formatted"] if store_data["phone"]["formatted"]  != "" else "<MISSING>")
-            store.append("ok tire")
+            store.append("<MISSING>")
             store.append(store_data["Latitude"])
             store.append(store_data["Longitude"])
             hours = ""
@@ -46,8 +46,9 @@ def fetch_data():
             for key in store_hours:
                 hours = hours + " " + store_hours[key]["label"] + " " + store_hours[key]["hours"]
             store.append(hours if hours  != "" else "<MISSING>")
-            return_main_object.append(store)
-    return return_main_object
+            store.append("<MISSING>")
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            yield store
 
 def scrape():
     data = fetch_data()

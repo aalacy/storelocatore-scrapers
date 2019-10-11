@@ -71,20 +71,21 @@ def fetch_data():
     response = etree.HTML(source)
     store_list = response.xpath('//div[@class="single_place_on_all"]//h4//a/@href')
     for store_link in store_list:
-        store = eliminate_space(etree.HTML(session.get(store_link).text).xpath('.//div[@class="listing-main-content"]//text()'))
+        store = etree.HTML(session.get(store_link).text)
+        details = eliminate_space(store.xpath('.//div[@class="listing-main-content"]//text()'))
         output = []
         address = ''
         phone = ''
         store_hours = ''
-        for idx, st in enumerate(store):
+        for idx, st in enumerate(details):
             if 'phone' in st.lower():
-                address = ', '.join(store[1:idx])
-                phone = store[idx+1]
+                address = ', '.join(details[1:idx])
+                phone = details[idx+1]
             if 'hours' in st.lower():
-                store_hours = store[idx+1]
+                store_hours = details[idx+1]
                 break
         output.append(base_url) # url
-        output.append(store[0]) #location name
+        output.append(details[0]) #location name
         address = parse_address(address)
         output.append(address['street']) #address
         output.append(address['city']) #city
@@ -94,8 +95,8 @@ def fetch_data():
         output.append("<MISSING>") #store_number
         output.append(get_value(phone)) #phone
         output.append("Ultimart in Wisconsin - The Ultimate Convenience") #location type
-        output.append("<MISSING>") #latitude
-        output.append("<MISSING>") #longitude
+        output.append(validate(store.xpath('.//div[@class="apus-single-listing"]/@data-latitude'))) #latitude
+        output.append(validate(store.xpath('.//div[@class="apus-single-listing"]/@data-longitude'))) #longitude        
         output.append(get_value(store_hours)) #opening hours
         output_list.append(output)
     return output_list

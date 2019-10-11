@@ -5,11 +5,11 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -29,7 +29,7 @@ def fetch_data():
         store_data = data[key]
         store = []
         store.append("https://www.origins.com")
-        store.append(store_data["ADDRESS"].strip())
+        store.append(store_data["DOORNAME"].strip())
         store.append((store_data["ADDRESS"] + " " + store_data["ADDRESS2"]).strip())
         store.append(store_data["CITY"] if store_data["CITY"] != "" else "<MISSING>")
         store.append(store_data["STATE_OR_PROVINCE"] if store_data["STATE_OR_PROVINCE"] != "" else "<MISSING>")
@@ -47,7 +47,8 @@ def fetch_data():
         store.append("origins")
         store.append(store_data["LATITUDE"])
         store.append(store_data["LONGITUDE"])
-        store.append(BeautifulSoup(store_data["STORE_HOURS"],"lxml").get_text() if store_data["STORE_HOURS"] != "" else "<MISSING>")
+        store.append(" ".join(list(BeautifulSoup(store_data["STORE_HOURS"],"lxml").stripped_strings)).replace("\xa0"," ") if store_data["STORE_HOURS"] != "" else "<MISSING>")
+        store.append("<MISSING>")
         return_main_object.append(store)
     return return_main_object
 

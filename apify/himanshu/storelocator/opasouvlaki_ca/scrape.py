@@ -3,14 +3,13 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -46,6 +45,7 @@ def fetch_data():
         hours = hours + " saturday " + store_data["saturday"]["open"] + " - " + store_data["saturday"]["close"]
         hours = hours + " sunday " + store_data["sunday"]["open"] + " - " + store_data["sunday"]["close"]
         store.append(hours if hours != "" else "<MISSING>")
+        store.append("<MISSING>")
         return_main_object.append(store)
     return return_main_object
 
