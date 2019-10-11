@@ -45,6 +45,8 @@ class Scraper(Scrape):
 
         for dealer in dealers:
             if dealer['id'] not in self.seen:
+                driver.get('https://' + dealer['website'] + '/dealership/about.htm')
+
                 # Store ID
                 location_id = dealer['id']
 
@@ -58,7 +60,10 @@ class Scraper(Scrape):
                 street_address = dealer['street']
 
                 # Hour
-                hour = '<MISSING>'
+                try:
+                    hour = driver.find_element_by_css_selector('div.hours-default.ddc-content.ddc-box-1.h-100').get_attribute('textContent')
+                except:
+                    hour = '<MISSING>'
 
                 # Country
                 country = 'US'
