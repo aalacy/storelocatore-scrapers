@@ -2,7 +2,8 @@ import time
 import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options 
-import re 
+import re
+import usaddress
 
 options = Options()
 options.add_argument('--headless')
@@ -22,7 +23,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url" , "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -38,71 +39,75 @@ def parse_geo(url):
 def fetch_data():
     data=[]
     driver.get("https://www.petrosbrand.com/locations")
-    li=[]
-    abc=driver.find_elements_by_xpath("//ul[contains(@class,'mm-listview')]//a")
-    for i in abc:
-        k=i.get_attribute('href')
-        li.append(k)
-    li=[li[3],li[8],li[9],li[10],li[11],li[12]]
-    hours=[]
-    street=[]
-    loc_name=[]
-    geo_url1=[]
-    phon=[]
-    lati=['<MISSING>' for i in range(len(li))]
-    lngi=['<MISSING>' for i in range(len(li))]
+    stores=driver.find_elements_by_xpath("//div[contains(@class,'col-sm-6')]//a")
+    li = [stores[i].get_attribute('href') for i in range(0,len(stores))]
     for i in range(len(li)):
         driver.get(li[i])
+        time.sleep(5)
+        page_url = li[i]
         store_opening_hours=driver.find_element_by_xpath("//div[@class='text-box']/div[@class='field field--name-field-text field--type-text-long field--label-hidden field--item']").get_attribute("textContent")
-        hours.append(store_opening_hours)
+        hour = store_opening_hours.replace('\n', ' ')
         location_name=driver.find_element_by_xpath('//h1[@class="page-header"]').get_attribute("textContent")
-        street_address=driver.find_element_by_xpath("//div[@class='container']//p").get_attribute("textContent")
-        street.append(street_address)
-        loc_name.append(location_name)
-        geomaps = driver.find_elements_by_xpath("//a[contains(@href,'//goo.gl/maps')]")
-        geo_url = [geomaps[i].get_attribute('href') for i in range(0, len(geomaps))]
-        geo_url1.append(geo_url)
+        print("location_name:     " , location_name)
+        address=driver.find_element_by_xpath("//div[@class='container']//p").get_attribute("textContent")
+        tagged = usaddress.tag(address)[0]
         try:
-            phone_no=driver.find_element_by_xpath("//div[@class='field field--name-field-text2 field--type-text-long field--label-hidden field--item']").get_attribute("textContent").replace("\t","").split()[-4]
+            street_addr = tagged['Recipient'] + " "+ tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + \
+                          tagged['StreetNamePostType'].split('\n')[0] + " " + \
+                          tagged['OccupancyType'] + " " + tagged['OccupancyIdentifier'].split('\n')[0]
         except:
-            phone_no=driver.find_element_by_xpath("//div[@data-sr-id=9]").get_attribute("textContent").replace("\t","").split()[-4]
-        phon.append(phone_no)
-    for i in range(0, len(geo_url1)):
-        print(i)
-        driver2.get(geo_url1[i][0])
-        time.sleep(10)
+            try:
+                street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + tagged['StreetNamePostType'].split('\n')[0] + " " + tagged['OccupancyIdentifier'].split('\n')[0]
+            except:
+                try:
+                    street_addr = tagged['AddressNumber'] + " " + tagged['StreetNamePreDirectional'] + " " + tagged['StreetName'] + " " + tagged['StreetNamePostType'].split('\n')[0]
+                except:
+                    try:
+                        street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + tagged['StreetNamePostDirectional'].split('\n')[0] + " " +tagged['StreetNamePostType'].split('\n')[0]
+                    except:
+                        try:
+                            street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + tagged['StreetNamePostDirectional'].split('\n')[0]
+                        except:
+                            try:
+                                street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + tagged['StreetNamePostType'].split('\n')[0]
+                            except:
+                                street_addr = tagged['AddressNumber'] + " " + tagged['StreetName']
+        state = tagged['StateName']
+        zipcode = tagged['ZipCode']
+        city = tagged['PlaceName']
+        geomap = driver.find_element_by_xpath("//a[contains(@href,'//goo.gl/maps')]").get_attribute('href')
+        driver2.get(geomap)
+        time.sleep(5)
         lat, lon = parse_geo(driver2.current_url)
-        lati[i] = lat
-        lngi[i] = lon
-    street[2]=street[2].replace('.',',')
-    street[2]=street[2].replace('Beach',',')
-    street[3]=street[3].replace('.',',')
-    
-    for i in range(len(li)):
-        name=loc_name[i]
-        street1=street[i].split(',')[0]
-        state=street[i].split(',')[len(street[i].split(','))-1].split(" ")[1]
-        zipcode=street[i].split(',')[len(street[i].split(','))-1].split(" ")[2]
-        city=street[i].split(',')[len(street[i].split(','))-2]
-        lat=lati[i]
-        lng=lngi[i]
-        hour=[hours[i].replace('\n',' ')]
-        country='US'
-        phone=phon[i]
+        try:
+            loc_text = driver.find_elements_by_css_selector('div.field.field--name-field-text.field--type-text-long.field--label-hidden.field--item')
+        except:
+            loc_text = driver.find_elements_by_css_selector('div.field.field--name-field-text2.field--type-text-long.field--label-hidden.field--item')
 
+        for loc in loc_text:
+            try:
+                element = loc.find_element_by_css_selector('h2').text
+                if element.lower() == 'location':
+                    phone_no = loc.find_element_by_css_selector('p:nth-child(3)').text.splitlines()[0]
+                    break
+            except:
+                pass
+
+        country = 'US'
         data.append([
             'www.petrosbrand.com',
-            name,
-            street1,
+            page_url,
+            location_name,
+            street_addr,
             city,
             state,
             zipcode,
             country,
             '<MISSING>',
-            phone,
+            phone_no,
             '<MISSING>',
             lat,
-            lng,
+            lon,
             hour                     
            ])
 
@@ -115,6 +120,5 @@ def fetch_data():
 def scrape():
         data = fetch_data()
         write_output(data)
-
 
 scrape()

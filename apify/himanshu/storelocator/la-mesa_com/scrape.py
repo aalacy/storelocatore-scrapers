@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -34,7 +34,7 @@ def fetch_data():
         phone = location_soup.find_all("a",{"href":re.compile("tel:")})[-1].text
         store = []
         store.append("https://la-mesa.com")
-        store.append("<MISSING>")
+        store.append(location_soup.find("span",{'class':'brown-bg-h1'}).text)
         store.append(location_details[1])
         store.append(location_details[2].split(",")[0])
         store.append(location_details[2].split(",")[-1].split(" ")[-2])
@@ -57,8 +57,8 @@ def fetch_data():
             store.append(location_data["provider"]["geo"]["longitude"])
         hours = " ".join(list(location_soup.find("h4",text=re.compile("Hours of Operation")).parent.stripped_strings)[1:])
         store.append(hours if hours else "<MISSING>")
-        return_main_object.append(store)
-    return return_main_object
+        store.append(base_url + location["href"])
+        yield store
 
 def scrape():
     data = fetch_data()

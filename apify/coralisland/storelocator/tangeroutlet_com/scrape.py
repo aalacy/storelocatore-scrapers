@@ -86,7 +86,7 @@ def fetch_data():
         else:
             output.append('US') #country code
         output.append("<MISSING>") #store_number
-        output.append(validate(store.xpath('.//span[@class="phone"]//text()'))) #phone
+        output.append(validate(store.xpath('.//span[@class="phone"]//text()')).split('/')[0]) #phone
         output.append("Tanger Outlets") #location type
         output.append("<MISSING>") #latitude
         output.append("<MISSING>") #longitude

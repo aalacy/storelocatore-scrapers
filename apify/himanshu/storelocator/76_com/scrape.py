@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -23,10 +23,18 @@ def fetch_data():
     credential = credentials_request.json()["credentials"]
     return_main_object = []
     addresses = []
-    cords = sgzip.coords_for_radius(200)
-    for cord in cords:
-        base_url = "https://www.76.com"
-        r = requests.get("https://spatial.virtualearth.net/REST/v1/data/a1ed23772f5f4994a096eaa782d07cfb/US_BrandedSites/Sites?spatialFilter=nearby(" + str(cord[0]) + ","+ str(cord[1]) + ",200.00)&$filter=Brand%20eq%20%27U76%27&$format=json&$inlinecount=allpages&$select=*,__Distance&key=" + credential + "&$top=1000",headers=headers)
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 250
+    MAX_DISTANCE = 250
+    coord = search.next_coord()
+    while coord:
+        result_coords = []
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        x = coord[0]
+        y = coord[1]
+        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        r = requests.get("https://spatial.virtualearth.net/REST/v1/data/a1ed23772f5f4994a096eaa782d07cfb/US_BrandedSites/Sites?spatialFilter=nearby(" + str(x) + ","+ str(y) + ",250.00)&$filter=Brand%20eq%20%27U76%27&$format=json&$inlinecount=allpages&$select=*,__Distance&key=" + credential + "&$top=250",headers=headers)
         data = r.json()["d"]["results"]
         for store_data in data:
             store = []
@@ -45,11 +53,21 @@ def fetch_data():
             store.append(store_data["CountryRegion"])
             store.append(store_data["EntityID"])
             store.append(store_data["Phone"] if store_data["Phone"] else "<MISSING>")
-            store.append("76")
+            store.append("<MISSING>")
             store.append(store_data["Latitude"])
             store.append(store_data["Longitude"])
             store.append("<MISSING>")
+            store.append("<MISSING>")
             yield store
+        if len(data) < MAX_RESULTS:
+            print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif len(data) == MAX_RESULTS:
+            print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_coord()
 
 def scrape():
     data = fetch_data()
