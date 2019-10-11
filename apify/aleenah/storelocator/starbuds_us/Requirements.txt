@@ -1,4 +1,2 @@
-csv
-re
-bs4 0.0.1 py 3.7
-requests
+requests==2.22.0
+bs4==0.0.1
