@@ -2,86 +2,118 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
-import io
 import json
+# import sgzip
+# import time
+
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    base_url = "https://childrenslighthouse.com/find-a-daycare"
-    r = requests.get(base_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
-    exists = soup.find('select', {'class', 'all_regions_list'})
-    if exists:
-        for data in exists.findAll('option'):
-            if data.get('value') is None:
-                if "area" in data.get_text():
-                    pass
-                else:
-                    state = data.get_text().strip()
-            else:
-                data_url = "https://childrenslighthouse.com/" + data.get('value').strip()
-                print(data_url)
-                city = data.get_text().strip()
-                soup_url = requests.get(data_url, headers=headers)
-                detail_soup = BeautifulSoup(soup_url.text, "lxml")
-                detail_exists = detail_soup.find('section', {'class', 'regions_list'})
-                if detail_exists:
-                    for values in detail_exists.findAll('div', {'class', 'region_location'}):
-                        if values.select('.region_loc_title_holder'):
-                            location_name = values.select('.region_loc_title_holder')[0].get_text().strip()
-                        else:
-                            location_name = "<MISSING>"
-                        if values.select('.region_loc_phone'):
-                            phone = values.select('.region_loc_phone')[0].get_text().strip()
-                            if len(phone) < 2:
-                                phone = "<MISSING>"
-                            else:
-                                phone = values.select('.region_loc_phone')[0].get_text().strip()
-                        else:
-                            phone = "<MISSING>"
-                        if values.select('.region_loc_address'):
-                            adddress = values.select('.region_loc_address')[0].get_text().strip().replace('\n\t\t\t\t\t\t', '').strip().split(',')
-                            street_address = adddress[0]
-                            state = adddress[-1].strip().split(' ')[0]
-                            zip = adddress[-1].strip().split(' ')[1]
-                        else:
-                            street_address = "<MISSING>"
-                            state = "<MISSING>"
-                            zip = "<MISSING>"
-                        store = []
-                        store.append(base_url)
-                        store.append(location_name)
-                        store.append(street_address)
-                        store.append(city)
-                        store.append(state)
-                        store.append(zip)
-                        store.append("US")
-                        store.append("<MISSING>")
-                        store.append(phone)
-                        store.append("Child Day Care - Children's Lighthouse")
-                        store.append("<MISSING>")
-                        store.append("<MISSING>")
-                        store.append("<MISSING>")
-                        return_main_object.append(store)
-                else:
-                    pass
-        return return_main_object
+    addresses = []
+
+
+
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+        "accept": "application/json, text/javascript, */*; q=0.01",
+        # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    }
+
+    # it will used in store data.
+    base_url = 'http://www.childrenslighthouse.com/'
+    locator_domain = "http://www.childrenslighthouse.com/"
+    location_name = ""
+    street_address = "<MISSING>"
+    city = "<MISSING>"
+    state = "<MISSING>"
+    zipp = "<MISSING>"
+    country_code = "US"
+    store_number = "<MISSING>"
+    phone = "<MISSING>"
+    location_type = "<MISSING>"
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
+    raw_address = ""
+    hours_of_operation = "<MISSING>"
+    page_url = "<MISSING>"
+
+    r_loc= requests.get('https://childrenslighthouse.com/find-a-daycare')
+    soup_loc= BeautifulSoup(r_loc.text,'lxml')
+    select = soup_loc.find('select',class_='all_regions_list').find('option',{'value':'hoover-childcare-near-me'})
+
+    s1 = base_url + select.text.lower().strip()+"Al"
+
+    r1 = requests.get(s1,headers=headers)
+    soup = BeautifulSoup(r1.text,'lxml')
+    info= soup.find('div',class_= "school_contact_information")
+    list_info = list(info.stripped_strings)
+    location_name = list_info[0]
+    phone = list_info[1]
+    street_address = list_info[3]
+    city = list_info[-1].split(',')[0]
+    state = list_info[-1].split(',')[-1].split()[0]
+    zipp = list_info[-1].split(',')[-1].split()[-1]
+    page_url = s1
+    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+    store = ["<MISSING>" if x == "" else x for x in store]
+
+    # print("data = " + str(store))
+    # print(
+    #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+    return_main_object.append(store)
+
+
+    r= requests.post('https://childrenslighthouse.com/ajax/locations.php',headers = headers)
+    json_data = r.json()
+
+    for z in json_data:
+        store_number = z['ID']
+        location_name = z['name']
+        street_address = z['address']
+        city = z['city']
+        state = z['state']
+        zipp = z['zip']
+        phone = z['phone']
+        latitude = z['lat']
+        longitude = z['lon']
+        page_url = base_url + z['website']
+
+
+
+
+        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+        store = ["<MISSING>" if x == "" else x for x in store]
+
+        # print("data = " + str(store))
+        # print(
+        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+        return_main_object.append(store)
+
+    return return_main_object
+
+
 
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
+
 scrape()
