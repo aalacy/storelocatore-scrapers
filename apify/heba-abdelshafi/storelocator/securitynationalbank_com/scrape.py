@@ -9,7 +9,7 @@ options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
-driver=webdriver.Chrome('C:\chromedriver.exe', options=options)
+driver=webdriver.Chrome('C:\chromedriver.exe')#, options=options)
 #driver = webdriver.Chrome("chromedriver", options=options)
 
 
@@ -56,11 +56,12 @@ def fetch_data():
             data['location_type'].append(i[-1])
 
     for url in data['page_url']:
-       driver.get(url)
-       data['hours_of_operation'].append(driver.find_element_by_xpath('//div[@class="small-6 columns "]/p[@class="fw-light"]').text)
-  
-    
-    
+        driver.get(url)
+        try:
+            data['hours_of_operation'].append(driver.find_element_by_xpath('//div[contains(@class,"small-6 columns ")]/p[@class="fw-light"]').text)
+        except:
+            data['hours_of_operation'].append('<MISSING>')
+            
     driver.close()
     return data
 
