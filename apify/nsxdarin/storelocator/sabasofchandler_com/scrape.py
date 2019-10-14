@@ -41,6 +41,7 @@ def fetch_data():
             next(lines)
             next(lines)
             hours = next(lines).split('">')[1].split('<')[0]
+            hours = hours + '; ' + next(lines).split('<')[0]
         if 'href="tel:' in line:
             phone = line.split('href="tel:')[1].split('"')[0]
     yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
