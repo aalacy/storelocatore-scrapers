@@ -1,4 +1,2 @@
-selenium 3.141.0
-csv
-re
-pyzipcode3 2.2
+selenium==3.141.0
+pyzipcode3==2.2
