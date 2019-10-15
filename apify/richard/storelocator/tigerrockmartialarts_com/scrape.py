@@ -41,7 +41,7 @@ class Scraper(Scrape):
             "sec-fetch-site": "same-origin",
         }
 
-        for zip_search in sgzip.for_radius(100):
+        for zip_search in sgzip.for_radius(200):
             params = (("geolocate", zip_search), ("radius", "400"))
 
             response = requests.get(
