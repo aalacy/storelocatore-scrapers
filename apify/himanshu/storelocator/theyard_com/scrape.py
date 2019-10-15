@@ -37,7 +37,7 @@ def fetch_data():
                 if "https://theyard.com/philadelphia-coworking-office-space/center-city/" in p1.a['href'] or "https://theyard.com/boston-coworking-office-space/back-bay" in p1.a['href']:
                     pass
                 else:
-                    print(p1.a['href'])
+                    # print(p1.a['href'])
                     base_url1= p1.a['href']
                     r = requests.get(base_url1)
                     soup1= BeautifulSoup(r.text,"lxml")
@@ -50,6 +50,13 @@ def fetch_data():
                             print(j.a['href'])
                             r1 = requests.get(j.a['href'])
                             soup2= BeautifulSoup(r1.text,"lxml")
+
+                            json1 = soup2.find_all("script",{"type":"application/ld+json"})[1]
+                            telephone = json.loads(json1.text)
+                            if "telephone" in telephone:
+                                phone = telephone['telephone']
+                            else:
+                                phone = "(212) 602-1953"
                             time = ''
                             for h in soup2.find("header",{"class":"content"}).find_all("li"):
                                 time = time + ' ' +(h.text)
@@ -73,13 +80,12 @@ def fetch_data():
                             tem_var.append(zip1)
                             tem_var.append("US")
                             tem_var.append("<MISSING>")
-                            tem_var.append("<MISSING>")
+                            tem_var.append(phone)
                             tem_var.append("<MISSING>")
                             tem_var.append(lat)
                             tem_var.append(lng)
                             tem_var.append(time.strip())
                             tem_var.append(j.a['href'])
-                            print(tem_var)
                             store_detail.append(tem_var)
                             # exit()
     
@@ -88,7 +94,6 @@ def fetch_data():
         store.append("https://theyard.com")
         store.append(name_store[i])
         store.extend(store_detail[i])
-
         return_main_object.append(store)
     return return_main_object
 
