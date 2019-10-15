@@ -8,3 +8,5 @@ Remember to update `requirements.txt` with all dependencies needed to run your s
 Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
+
+comment: same lat & lng and  website has put the same iframe on two different location
