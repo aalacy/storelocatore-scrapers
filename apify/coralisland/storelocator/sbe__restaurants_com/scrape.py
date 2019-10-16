@@ -63,7 +63,7 @@ def fetch_data():
             output.append(zipcode) #zipcode
             output.append('US') #country code
             output.append("<MISSING>") #store_number
-            output.append(validate(store.xpath('.//div[@class="large"]//a/text()'))) #phone
+            output.append(validate(store.xpath('.//div[@class="large"]//a/text()')[0])) #phone            
             output.append("Ciel Spa at Delano South Beach | Restaurants") #location type
             output.append("<MISSING>") #latitude
             output.append("<MISSING>") #longitude
