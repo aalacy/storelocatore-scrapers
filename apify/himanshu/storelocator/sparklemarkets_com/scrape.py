@@ -2,111 +2,117 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
+# import json
+# import sgzip
+# import time
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    base_url ='https://www.sparklemarkets.com/'
-    bb = 'www.sparklemarkets.com'
     return_main_object = []
-
-    r = requests.get(base_url+'/locations')
-
-    soup = BeautifulSoup(r.text,"lxml")
-    # getmain = soup.find('div',{'id':'comp-jqwqcz74inlineContent'}).find_all('a')['href']
-    # getmain = soup.find('div',{'class':'style-jqwqcz7u1inlineContent'}).find_all('div',{'role':'row'}).find_all('a',{'class':'g-transparent-a style-jqwqvzxplink'})
-    getmain = soup.find_all('a',{'class':'g-transparent-a style-jqwqvzxplink'})
-        # .find_all('a',{'class':'g-transparent-a'})
-
-    if getmain != None and getmain != "":
-
-        for i in getmain:
-                v = i['href'].split('/')[2]
-                if v in bb:
-                    getcontent = requests.get(i['href'])
-                    soup = BeautifulSoup(getcontent.text,"lxml")
-                    for p in soup.find_all("p",{"class":"font_7"}):
-                            if p != None:
-                                a_data = list(p.stripped_strings)
-
-                                if len(a_data) > 0:
-
-                                    locator_domain = base_url
-                                    location_name = soup.find('h1',{'class':'font_2'}).text
-                                   
-                                    if a_data[0] == 'Address:':
-
-                                        a = a_data[1].replace('\xa0','').strip().split(',')
-                                        
-                                        if len(a) == 4:
-                                            street_address = a[0]+a[1]
-                                            city = a[2]
-                                            
-                                            state = a[3].strip().split(' ')[0]
-                                            zip = a[3].strip().split(' ')[1]
-                                            
-                                        elif len(a) == 3:
-
-                                            street_address = a[0]
-                                            city = a[1]
-                                            s = a[2].strip()
-                                            state = [s[i:i+2] for i in range(0, len(s), 2)][0]
-                                            zip = [s[i:i+2] for i in range(0, len(s), 2)][-3]+[s[i:i+2] for i in range(0, len(s), 2)][-2]+[s[i:i+2] for i in range(0, len(s), 2)][-1]
-                                           
-                                        elif len(a) == 2:
-                                            street_address = a[0]
-                                            s = a[1].strip()
-                                            city = '<MISSING>'
-                                            state = [s[i:i+2] for i in range(0, len(s), 2)][0]
-                                            zip = [s[i:i+2] for i in range(0, len(s), 2)][-3]+[s[i:i+2] for i in range(0, len(s), 2)][-2]+[s[i:i+2] for i in range(0, len(s), 2)][-1]
-                                       
-                                        country_code = 'NY'
-                                        store_number = '<MISSING>'
-                                        phone = a_data[3]
-                                        location_type = 'sparklemarkets'
-                                        latitude = '<MISSING>'
-                                        longitude = '<MISSING>'
+    addresses = []
 
 
-                                        if a_data[4] == 'Hours:':
-                                            
-                                            hours_of_operation = a_data[5]
 
-                                        elif a_data[6] == 'Hours:':
-                                            hours_of_operation = a_data[7]
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+        "accept": "application/json, text/javascript, */*; q=0.01",
+        # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    }
 
-                                        elif a_data[8] == 'Hours:':
-                                            hours_of_operation = a_data[9]
-                                        
-                                        
-                                        store = []
-                                        store.append(locator_domain if locator_domain else '<MISSING>')
-                                        store.append(location_name if location_name else '<MISSING>')
-                                        store.append(street_address if street_address else '<MISSING>')
-                                        store.append(city if city else '<MISSING>')
-                                        store.append(state if state else '<MISSING>')
-                                        store.append(zip if zip else '<MISSING>')
-                                        store.append(country_code if country_code else '<MISSING>')
-                                        store.append(store_number if store_number else '<MISSING>')
-                                        store.append(phone if phone else '<MISSING>')
-                                        store.append(location_type if location_type else '<MISSING>')
-                                        store.append(latitude if latitude else '<MISSING>')
-                                        store.append(longitude if longitude else '<MISSING>')                                        
-                                        store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-                                        return_main_object.append(store)
-        return return_main_object
+    # it will used in store data.
+    locator_domain = "https://www.sparklemarkets.com/"
+    location_name = ""
+    street_address = "<MISSING>"
+    city = "<MISSING>"
+    state = "<MISSING>"
+    zipp = "<MISSING>"
+    country_code = "US"
+    store_number = "<MISSING>"
+    phone = "<MISSING>"
+    location_type = "<MISSING>"
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
+    raw_address = ""
+    hours_of_operation = "<MISSING>"
+    page_url = "<MISSING>"
+
+
+
+    r= requests.get('https://www.sparklemarkets.com/locations',headers = headers)
+    soup = BeautifulSoup(r.text,'lxml')
+
+    for a  in soup.find_all(lambda tag: (tag.name == "a") and "Details" in tag.text):
+        if a['href'].split('/')[-1]:
+            # print(a['href'])
+            r_soup = requests.get(a['href'],headers = headers)
+            soup_loc = BeautifulSoup(r_soup.text,'lxml')
+            location_name = soup_loc.h1.text.encode('ascii', 'ignore').decode('ascii').strip()
+
+            add = soup_loc.find('p',class_='font_7')
+            phone= add.find(lambda tag: (tag.name == "span") and "Phone:" in tag.text).nextSibling.encode('ascii', 'ignore').decode('ascii').strip()
+            hours_of_operation = add.find(lambda tag: (tag.name == "span") and "Hours:" in tag.text).nextSibling.replace('\xa0','')
+            page_url = a['href']
+            span = add.find(lambda tag: (tag.name == "span") and "Address:" in tag.text).nextSibling
+            address = span.split(',')
+            if len(address) == 2:
+                street_address = " ".join(address[0].split()[:-1]).encode('ascii', 'ignore').decode('ascii').strip()
+                city = "".join(address[0].split()[-1].encode('ascii', 'ignore').decode('ascii').strip())
+                state = address[-1].split()[0].encode('ascii', 'ignore').decode('ascii').strip()
+                zipp= address[-1].split()[-1].encode('ascii', 'ignore').decode('ascii').strip()
+
+            else:
+                street_address = " ".join(address[:-2]).encode('ascii', 'ignore').decode('ascii').strip()
+                city = address[1].encode('ascii', 'ignore').decode('ascii').strip()
+                state = address[-1].split()[0].encode('ascii', 'ignore').decode('ascii').strip()
+                zipp = address[-1].split()[-1].encode('ascii', 'ignore').decode('ascii').strip()
+        else:
+
+            add = a.find_parent('div',class_='style-jqwqcz8f1inlineContent')
+            location_name = add.h4.text.strip()
+            # print(location_name)
+            address = add.find('div',class_="style-jqwqcz971")
+            list_address= list(address.stripped_strings)
+            street_address = list_address[0]
+            city = list_address[1].split(',')[0]
+            state = list_address[1].split(',')[1].split()[0]
+            zipp = list_address[1].split(',')[1].split()[-1]
+            phone = list_address[-1]
+            hours_of_operation = "<MISSING>"
+            page_url = "<MISSING>"
+
+
+
+        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+        store = ["<MISSING>" if x == "" else x for x in store]
+
+        # print("data = " + str(store))
+        # print(
+        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+        return_main_object.append(store)
+
+    return return_main_object
+
+
+
 
 def scrape():
     data = fetch_data()
-    # print(data)
     write_output(data)
+
 
 scrape()

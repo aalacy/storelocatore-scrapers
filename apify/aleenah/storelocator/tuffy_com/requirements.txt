@@ -1,0 +1,2 @@
+selenium==3.141.0
+pyzipcode3==2.2

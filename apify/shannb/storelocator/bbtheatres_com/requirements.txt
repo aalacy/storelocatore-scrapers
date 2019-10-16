@@ -4,5 +4,4 @@ xlsxwriter
 phonenumbers
 us
 zipcodes
-csv
 

@@ -2,7 +2,11 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.support.wait import WebDriverWait
 import json
+import time
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -13,14 +17,26 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Firefox(executable_path='./geckodriver', options=options)
 
 def fetch_data():
+    print("start")
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://orvis.com"
-    r = requests.get("https://stores.orvis.com/",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
+    driver = get_driver()
+    driver.get("https://stores.orvis.com/")
+    WebDriverWait(driver, 25).until(lambda x: x.find_element_by_xpath("//a[@href='https://stores.orvis.com/']"))
+    print("start 1")
+    time.sleep(10)
+    soup = BeautifulSoup(driver.page_source,"lxml")
     return_main_object = []
     geo_object = {}
     addresses = []
@@ -29,8 +45,12 @@ def fetch_data():
             location_list = script.text.split("regionData:")[1].split("alias:")[1:-1]
             for i in range(len(location_list)):
                 state = location_list[i].split("}")[0].replace("'","").replace(" ","")
-                state_request = requests.get("https://stores.orvis.com/" + state)
-                state_soup = BeautifulSoup(state_request.text,"lxml")
+                print(state)
+                print("https://stores.orvis.com/" + state)
+                driver.get("https://stores.orvis.com/" + state)
+                WebDriverWait(driver, 25).until(lambda x: x.find_element_by_xpath("//a[@href='https://stores.orvis.com/']"))
+                time.sleep(5)
+                state_soup = BeautifulSoup(driver.page_source,"lxml")
                 for script1 in state_soup.find_all("script"):
                     if "var contentString =" in script1.text:
                         for geo_location in script1.text.split("var contentString =")[1:]:
@@ -40,6 +60,7 @@ def fetch_data():
                             geo_object[store_name] = [lat,lng]
                 for location in state_soup.find_all("div",{"class":"OSL-results-column-wrapper"})[1:]:
                     name = location.find("h4",{"class":"margin-bottom-5"}).text
+                    print(name)
                     address = list(location.find("p",{"class":"margin-bottom-10"}).stripped_strings)
                     if location.find("a",text=re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")):
                         phone = location.find("a",text=re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")).text
@@ -70,7 +91,7 @@ def fetch_data():
                     if "(" in store[-1] and ")" in store[-1]:
                         if store[-1].split("(")[1].split(")")[0].isdigit() == False:
                             store[-1] = store[-1].split("(")[0]
-                    store.append("orvis")
+                    store.append("<MISSING>")
                     for key in geo_object:
                         if key in name:
                             store.append(geo_object[key][0])
@@ -82,6 +103,7 @@ def fetch_data():
                         store.append("<INACCESSIBLE>")
                     store.append(hours)
                     store.append("https://stores.orvis.com/" + state)
+                    print(store)
                     yield store
 
 def scrape():

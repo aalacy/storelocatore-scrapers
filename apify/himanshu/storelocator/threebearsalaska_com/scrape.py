@@ -21,7 +21,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
 
-    # print("soup ===  first")
+
 
     base_url = "https://threebearsalaska.com/"
     r = requests.get("https://threebearsalaska.com/", headers=headers)
@@ -57,6 +57,9 @@ def fetch_data():
             location_url = script['href']
             r_location = requests.get(location_url, headers=headers)
             soup_location = BeautifulSoup(r_location.text, "lxml")
+
+            latitude = soup_location.text.split('"lat":"')[1].split('"')[0]
+            longitude = soup_location.text.split('"lng":"')[1].split('"')[0]
 
             tag_address = soup_location.find(
                 lambda tag: (tag.name == "strong" or tag.name == "h2") and "Physical Address" in tag.text)

@@ -29,7 +29,7 @@ def fetch_data():
                         locs.append(line.split('<loc>')[1].split('<')[0])
         print(str(len(locs)) + ' Locations Found...')
     for loc in locs:
-        website = 'westernunion.com'
+        website = 'westernunion.ca'
         typ = 'Location'
         store = '<MISSING>'
         hours = '<MISSING>'

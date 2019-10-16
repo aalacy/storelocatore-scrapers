@@ -2,78 +2,132 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
-import io
 import json
+# import sgzip
+# import time
 
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    base_url = "https://www.northernlightspizza.com/locations/"
-    r = requests.get(base_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
-    address = []
-    exists = soup.select('.col-xs-12.col-sm-6.col-sd-4.col-md-3.col-xl-4')
-    if exists:
-        for values in soup.select('.col-xs-12.col-sm-6.col-sd-4.col-md-3.col-xl-4'):
-            if values.select('.listing__heading'):
-                city = values.select('.listing__heading')[0].get_text()
-            else:
-                city = '<MISSING>'
-            if values.select('.listing__detail'):
-                location_name = values.select('.listing__detail')[0].get_text()
-            else:
-                pass
-            if values.find('a'):
-                phone = values.find('a').get_text()
-            else:
-                phone = '<MISSING>'
+    addresses = []
 
-            StAndPin = values.select('.listing__contact')[0].select('.listing__detail')[1].get_text().strip()
-            stAndPins = StAndPin.replace('\n', ' ').split(' ')
-            if stAndPins[-1].isdigit():
-                zip = stAndPins[-1]
-                state = "Iowa"
-            else:
-                zip = '<MISSING>'
-                state = "Iowa"
-            street_address = stAndPins[0] + "," + (' ').join(stAndPins[1:])
-            hours_val = values.select('.listing__hours')
-            if hours_val:
-                hours_of_operation = hours_val[0].select('.listing__detail')[0].get_text().replace('\n', ', ')[2:]
-            else:
-                hours_of_operation = '<MISSING>'
 
-            store = []
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zip)
-            store.append("US")
-            store.append("<MISSING>")
-            store.append(phone)
-            store.append("Northern Lights Pizza Company® Your Home of the TastyCrust")
-            store.append("<INACCESSIBLE>")
-            store.append("<INACCESSIBLE>")
-            store.append(hours_of_operation)
-            return_main_object.append(store)
-        return return_main_object
+
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+        "accept": "application/json, text/javascript, */*; q=0.01",
+        # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    }
+
+    # it will used in store data.
+    locator_domain = "https://www.northernlightspizza.com/"
+    location_name = ""
+    street_address = "<MISSING>"
+    city = "<MISSING>"
+    state = "<MISSING>"
+    zipp = "<MISSING>"
+    country_code = "US"
+    store_number = "<MISSING>"
+    phone = "<MISSING>"
+    location_type = "<MISSING>"
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
+    raw_address = ""
+    hours_of_operation = "<MISSING>"
+    page_url = "<MISSING>"
+
+
+
+    r= requests.get('https://www.northernlightspizza.com/locations/',headers = headers)
+    soup = BeautifulSoup(r.text,'html.parser')
+    zip = soup.find_all('div',class_='row flex-container')[-1].find_all('div',class_='col-xl-2')[0:2]
+
+
+    script = soup.find_all('script')[-7]
+    script_text = script.text.split('var wpgmaps_localize_marker_data = ')[-1].split(';')[0]
+    json_data = eval(script_text)
+    for x in json_data['2']:
+        location_name = json_data['2'][x]['title']
+        street_address = json_data['2'][x]['address'].split(',')[0]
+        city =  json_data['2'][x]['address'].split(',')[1]
+        state_zipp = json_data['2'][x]['address'].split(',')[2].split()
+        if len(state_zipp) ==2:
+            state = json_data['2'][x]['address'].split(',')[2].split()[0]
+            zipp = json_data['2'][x]['address'].split(',')[2].split()[-1]
+        else:
+            zipp ="<MISSING>"
+        latitude = json_data['2'][x]['lat']
+        longitude = json_data['2'][x]['lng']
+        other = json_data['2'][x]['desc'].split('\n')
+        phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), " ".join(other))
+        phone = phone_list[0]
+        if len(other)  >= 4:
+            hours_of_operation = " ".join(other[2:])
+        else:
+            hours_of_operation = "<MISSING>"
+        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+        store = ["<MISSING>" if x == "" else x for x in store]
+
+        # print("data = " + str(store))
+        # print(
+        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+        return_main_object.append(store)
+
+
+
+        # print(zipp)
+    for x in json_data['3']:
+        # print(json_data['3'][x])
+        # print('~~~~~~~~~~~~~~')
+        location_name = json_data['3'][x]['title']
+        street_address = address = json_data['3'][x]['address'].split(',')[0]
+        city = json_data['3'][x]['address'].split(',')[1]
+        state_zipp =  json_data['3'][x]['address'].split(',')[2].split()
+        if len(state_zipp) ==2:
+            state = json_data['3'][x]['address'].split(',')[2].split()[0]
+            zipp = json_data['3'][x]['address'].split(',')[2].split()[-1]
+        else:
+            for i in zip:
+                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(i.text))
+            zipp = us_zip_list[0]
+        latitude = json_data['3'][x]['lat']
+        longitude = json_data['3'][x]['lng']
+        other = json_data['3'][x]['desc'].split('\n')
+        phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), " ".join(other))
+        phone = phone_list[0]
+
+        if len(other) >=4:
+             hours_of_operation = " ".join(other[2:])
+        else:
+            hours_of_operation = "<MISSING>"
+        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+        store = ["<MISSING>" if x == "" else x for x in store]
+
+        # print("data = " + str(store))
+        # print(
+        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+        return_main_object.append(store)
+
+    return return_main_object
+
+
 
 
 def scrape():

@@ -46,6 +46,29 @@ def fetch_data():
 
     for sl in statel:
         h5s = sl.find_all("h5")
+        ps=sl.find_all('p',{'class','big'})
+        for p in ps:
+            addr=p.text.replace("View on Map","").strip()
+            addr=addr.split(",")
+            z= re.findall(r'[0-9]{5}',addr[-1].strip())
+            if z==[]:
+                zips.append("<MISSING>")
+                states.append(addr[-1])
+
+            else:
+                zips.append(z[0])
+                states.append(addr[-1].replace(z[0],""))
+            del addr[-1]
+            if "Great Falls" in addr[-1]:
+                cities.append("Great Falls")
+            else:
+                cities.append(addr[-1])
+                del addr[-1]
+            st=""
+            for ad in addr:
+                st+= ad
+
+            street.append(st.replace("Great Falls",""))
         for h in h5s:
             a= h.find("a")
             locs.append(a.text)
@@ -54,24 +77,10 @@ def fetch_data():
     for url in page_url:
         driver.get(url)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-        l=soup.find('h2',{'class':'elementor-heading-title elementor-size-default'}).text.split(",")[0]
-        print(l)
+
         spans = soup.find_all('span', {'class': 'elementor-icon-list-text'})
-        addr=spans[0].text
-
         phones.append(re.sub(r'[\{\}a-z ]*',"",spans[1].text.strip()))
-        z= re.findall(r'[0-9]{5}',addr)[-1]
-        try:
-            s=re.findall(r'[A-Z]{2}',addr)[-1]
-            street.append(addr.replace(l, "").replace(z, "").replace(s, "").replace(",", "").strip())
-        except:
-            s="<MISSING>"
-            street.append(addr.replace(l,"").replace(z,"").replace(",","").strip())
 
-
-        cities.append(l)
-        states.append(s)
-        zips.append(z)
         try:
             div = driver.find_element_by_xpath("/html/body/div[1]/div[1]/div/div/div/section[4]")
         except:

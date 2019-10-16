@@ -27,13 +27,15 @@ def fetch_data():
     data = "action=get_properties_for_map"
     base_url = "https://www.stayboarders.com"
     r = requests.post("https://www.staycobblestone.com/wp-admin/admin-ajax.php", headers=headers, data = data)
+    print(r)
     soup = BeautifulSoup(r.text, "lxml")
     data = json.loads(soup.text)
     for r in data:
         p_data = data[r]['properties']
         for p in p_data:
             in_data = p_data[p]
-
+            if in_data["status"] != "open":
+                continue
             location_name = in_data['type']
             if (location_name == ''):
                 location_name = "<MISSING>"
