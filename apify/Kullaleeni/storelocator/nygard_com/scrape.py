@@ -14,7 +14,10 @@ def fetch_data():
     url = "https://www.nygard.com/en-ca/LocateStore"
     locator_domain = url
     data = []
-    driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
+    try:
+        driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
+    except:
+        driver = webdriver.Chrome()
     driver.get(url)
     time.sleep(3)
 

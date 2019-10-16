@@ -55,9 +55,13 @@ def fetch_data():
             data['phone'].append((' ').join(re.findall(r'[0-9]+',i[3])))
             data['location_type'].append(i[-1])
             
-   for url in data['page_url']:
-       driver.get(url)
-       data['hours_of_operation'].append(driver.find_element_by_xpath('//div[@class="small-6 columns "]/p[@class="fw-light"]').text)
+
+    for url in data['page_url']:
+        driver.get(url)
+        try:
+            data['hours_of_operation'].append(driver.find_element_by_xpath('//div[contains(@class,"small-6 columns ")]/p[@class="fw-light"]').text)
+        except:
+            data['hours_of_operation'].append('<MISSING>')
           
     
     driver.close()
