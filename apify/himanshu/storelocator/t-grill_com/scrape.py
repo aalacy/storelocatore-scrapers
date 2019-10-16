@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -20,7 +20,7 @@ def fetch_data():
     r = requests.get(base_url+'/locations/')
     soup=BeautifulSoup(r.text,'lxml')
     main=soup.find('div',id="container-mid-inner").find('table').find_all('tr')
-    print(len(main))
+    # print(len(main))
     i=0
     ph=[]
     nm=[]
@@ -45,10 +45,12 @@ def fetch_data():
     for i in range(len(nm)):
         name=nm[i]
         address=ad[i].strip()
-        phone=ph[i]
+        phone=ph[i].replace('435-67FRESH (','').replace(')','').replace('(','')
         ctt=ct[i].strip().split(' ')
         zip=ctt[-1].strip()
         del ctt[-1]
+        if ctt[-1]=='':
+            del ctt[-1]
         state=ctt[-1].replace('.','').strip()
         del ctt[-1]
         city=' '.join(ctt).replace(',','').strip()
@@ -67,10 +69,11 @@ def fetch_data():
         store.append(country if country else "<MISSING>")
         store.append(storeno if storeno else "<MISSING>")
         store.append(phone if phone else "<MISSING>")
-        store.append("t-grill")
+        store.append("<MISSING>")
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
         store.append(hour if hour.strip() else "<MISSING>")
+        store.append('http://t-grill.com/locations/')
         return_main_object.append(store)
     return return_main_object
 

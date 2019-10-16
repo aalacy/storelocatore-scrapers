@@ -25,6 +25,7 @@ def fetch_data():
     soup = BeautifulSoup(page.text, "html.parser")
     repo_list = soup.findAll('script', {'type': 'application/ld+json'})
     coordlist =  soup.findAll('li', {'class': 'location-list__item js-location-list-item'})
+    titlelist = soup.findAll('p', {'class': 'location-city'})
 
     cleanr = re.compile('<.*?>')
     pattern = re.compile(r'\s\s+')
@@ -33,10 +34,7 @@ def fetch_data():
 
         detail = str(repo_list[n])
 
-        start = detail.find('"name"')
-        start = detail.find(':', start) + 3
-        end = detail.find('"', start)
-        title = detail[start:end]
+
         start = detail.find('"telephone"')
         start = detail.find(':', start) + 3
         end = detail.find('"', start)
@@ -80,6 +78,7 @@ def fetch_data():
         hours = hours.replace('"', "")
         hours = hours.replace(',', " ")
 
+        title = titlelist[n].text
         lat = coordlist[n]['data-coords-lat']
         longt = coordlist[n]['data-coords-lng']
 
@@ -97,7 +96,7 @@ def fetch_data():
         print("...............................")
         p += 1
         data.append([
-            url,
+            'https://gloriascuisine.com/',
             url,
             title,
             street,

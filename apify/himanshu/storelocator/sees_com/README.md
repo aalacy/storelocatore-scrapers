@@ -9,4 +9,4 @@ Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
  
- Found 5 addresses with no number this website and i check data is true validate count mistake
+addresses with no number and same lat & lng and it seems like there are more locations in California then the count i checked some of the entries and they all are on the site

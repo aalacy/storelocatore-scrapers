@@ -75,7 +75,7 @@ def fetch_data():
         for day in days_of_week:
             store_hours += day.capitalize() + ' ' + store[day+'-hours'] + ', '
         output.append(get_value(store_hours[:-2])) #opening hours
-        if '159-23' not in store['name']:
+        if '(' not in get_value(city):
             output_list.append(output)
     return output_list
 

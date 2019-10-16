@@ -44,6 +44,7 @@ def fetch_data():
         else:
             tem_var =[]
             location_name = li.text
+            # print(location_name)
             address_tmp =i.find_all('p')[1]
             address1 = i.find_all('p')[1].text.strip().split(',')
             if(len(address1)==3):
@@ -86,6 +87,50 @@ def fetch_data():
             r1 = requests.get(link, headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
             phone1 = soup1.find_all('div', {'class': 'contact-info'})
+            hour1 =  soup1.find('div', {'class': 'about-location'})
+            hour2 = list(hour1.stripped_strings)
+           
+            if(len(hour2)==4):
+                hour= '<MISSING>'
+            elif(len(hour2)==6 or len(hour2)==5 or len(hour2)==11 or len(hour2)==17):
+                hour = '<MISSING>'
+            elif(len(hour2)==7):
+                hour3= hour2[1]+' '+hour2[2]
+                if(len(hour3)< 50):
+                    hour= hour2[1]+' '+hour2[2]+' '+hour2[3]+' '+hour2[4].split('Try')[0]
+                   
+                elif(len(hour3)< 200 and len(hour3)>100 ):
+                    hour= hour2[1]+' '+hour2[2].split('Enjoy')[0]
+                  
+                else:
+                    hour = '<MISSING>'
+            elif(len(hour2)==9):
+                hour3= hour2[1]+' '+hour2[2]
+                if(len(hour3)< 50):
+                    hour= hour2[1]+' '+hour2[2]+' '+hour2[3]
+                else:
+                    hour = '<MISSING>'    
+            elif(len(hour2)==12):
+                hour= hour2[1]+' '+hour2[2]+' '+hour2[3]
+                # print(hour)
+            elif(len(hour2)==13):
+                hour= hour2[1]+' '+hour2[2]+' '+hour2[3]
+            elif(len(hour2)==15):
+                hour3= hour2[1]+' '+hour2[2]  
+                if(len(hour3)> 320 and len(hour3)<330 ):
+                    hour= hour2[1]
+                else:
+                    hour = '<MISSING>'
+            elif(len(hour2)==18):
+                hour= hour2[2]+' '+hour2[3]
+            elif(len(hour2)==21):
+                hour= hour2[4]               
+            elif(len(hour2)==24):
+                hour= hour2[2]+' '+hour2[3].split('*HOURS')[0] 
+            elif(len(hour2)==28):
+                hour= hour2[6]+' '+hour2[7].split(', (June,')[0]
+                  
+                
             # .replace('Contact InformationPhone: 908-393-2928','<MISSING>')
                 
             if(len(phone1)==2):
@@ -109,7 +154,7 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append("<MISSING>")
             tem_var.append("<MISSING>")
-            tem_var.append('<INACCESSIBLE>')
+            tem_var.append(hour)
             tem_var.append(page_url)
             
 
