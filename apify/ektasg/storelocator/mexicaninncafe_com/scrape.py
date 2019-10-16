@@ -18,7 +18,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url" , "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -35,6 +35,7 @@ def fetch_data():
     count=0
     data=[]
     driver.get("https://www.mexicaninncafe.com/locations")
+    page_url = "https://www.mexicaninncafe.com/locations"
     time.sleep(10)
     columns = driver.find_elements_by_css_selector('div.col.sqs-col-4.span-4')
     hours_of_op_all = driver.find_element_by_css_selector('div.sqs-block.html-block.sqs-block-html > div > p:nth-child(2)').text + \
@@ -78,6 +79,7 @@ def fetch_data():
             hours_of_op = hours_of_op_all
         data.append([
                 'https://www.mexicaninncafe.com/',
+                page_url,
                 location_name[i],
                 street_addr[i],
                 city[i],
@@ -89,7 +91,7 @@ def fetch_data():
                 '<MISSING>',
                 lat[i],
                 lng[i],
-                hours_of_op
+                hours_of_op.replace("\n", " ")
             ])
         count = count + 1
         print(count)
