@@ -1,45 +1,86 @@
 import csv
 import requests
-from bs4 import BeautifulSoup
-import re
 import json
+import sgzip
+from bs4 import BeautifulSoup
+import time
+from random import randrange
+import re
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
     headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.zipscarwash.com"
-    r = requests.get("https://zipscarwash.com/wp-admin/admin-ajax.php?action=store_search&lat=0&lng=0&max_results=1000000&radius=1000000&autoload=1",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
-    location_list = r.json()
-    for store_data in location_list:
-        store = []
-        store.append("https://www.zipscarwash.com")
-        store.append(store_data['store'])
-        store.append(store_data["address"] + store_data["address2"])
-        store.append(store_data['city'])
-        store.append(store_data['state'])
-        store.append(store_data["zip"] if store_data["zip"] != None and store_data["zip"] != "" else "<MISSING>")
-        store.append("US")
-        store.append(store_data["id"])
-        store.append(store_data["phone"] if store_data["phone"] != "" else "<MISSING>")
-        store.append("zips car wash")
-        store.append(store_data["lat"])
-        store.append(store_data["lng"])
-        store.append(" ".join(list(BeautifulSoup(store_data["hours"],"lxml").stripped_strings)) if store_data["hours"] != None else "<MISSING>")
-        return_main_object.append(store)
-    return return_main_object
+    addresses = []
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 8
+    coord = search.next_coord()
+    while coord:
+        result_coords = []
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        x = coord[0]
+        y = coord[1]
+        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        r = requests.get("https://www.zipscarwash.com/locations?field_map_proximity-lat=" + str(x) + "&field_map_proximity-lng=" + str(y) + "&field_map_proximity=1500000",headers=headers)
+        soup = BeautifulSoup(r.text,"lxml")
+        for location in soup.find_all("div",{"class":"views-col"}):
+            geo_location = location.find("a",text="Directions")["href"]
+            lat = geo_location.split("lat=")[1].split("&")[0]
+            lng = geo_location.split("long=")[1].split("&")[0]
+            result_coords.append((lat, lng))
+            store = []
+            name = " ".join(list(location.find("div",{"class":"views-field-title"}).stripped_strings))
+            address = " ".join(list(location.find("span",{"class":"address-line1"}).stripped_strings))
+            city = " ".join(list(location.find("span",{"class":"locality"}).stripped_strings))
+            state = " ".join(list(location.find("span",{"class":"administrative-area"}).stripped_strings))
+            store_zip = " ".join(list(location.find("span",{"class":"postal-code"}).stripped_strings))
+            page_url = base_url + location.find("a")["href"]
+            if location.find("a",{"href":re.compile("tel:")}):
+                phone = location.find("a",{"href":re.compile("tel:")}).text
+            else:
+                phone = "<MISSING>"
+            store = []
+            store.append("https://www.zipscarwash.com")
+            store.append(name)
+            store.append(address)
+            if store[-1] in addresses:
+                continue
+            addresses.append(store[-1])
+            store.append(city)
+            store.append(state)
+            store.append(store_zip if store_zip else "<MISSING>")
+            store.append("US")
+            store.append(page_url.split("/")[-1])
+            store.append(phone)
+            store.append("<MISSING>")
+            store.append(geo_location.split("lat=")[1].split("&")[0])
+            store.append(geo_location.split("long=")[1].split("&")[0])
+            location_request = requests.get(page_url,headers=headers)
+            location_soup = BeautifulSoup(location_request.text,"lxml")
+            hours = " ".join(list(location_soup.find("div",{"class":"office-hours"}).stripped_strings))
+            store.append(hours.replace("  ","") if hours else "<MISSING>")
+            store.append(page_url)
+            print(store)
+            yield store
+        if len(soup.find_all("div",{"class":"views-col"})) == MAX_RESULTS:
+            print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_coord()
 
 def scrape():
     data = fetch_data()

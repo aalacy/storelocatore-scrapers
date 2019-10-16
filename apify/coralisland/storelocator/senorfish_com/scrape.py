@@ -77,7 +77,7 @@ def fetch_data():
         output.append(base_url) # url
         output.append(store[0]) #location name
         if len(details) != 5:
-            address = parse_address( ''.join(details[:2]).replace('.', ''))
+            address = parse_address(', '.join(details[:2]).replace('.', ''))
             output.append(address['street']) #address
             output.append(address['city']) #city
             output.append(address['state']) #state
@@ -86,7 +86,7 @@ def fetch_data():
             output.append("<MISSING>") #store_number
             output.append(details[2]) #phone
         else:
-            address = parse_address( ''.join(details[:2]).replace('.', ''))
+            address = parse_address(', '.join(details[:2]).replace('.', ''))
             output.append(details[0]) #address
             address = eliminate_space(details[1].split(' '))
             output.append(validate(address[:-2])) #city

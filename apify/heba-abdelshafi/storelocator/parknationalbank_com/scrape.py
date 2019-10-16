@@ -31,7 +31,6 @@ def fetch_data():
         data['store_number'].append('<MISSING>')
         data['latitude'].append('<MISSING>')
         data['longitude'].append('<MISSING>')
-        data['hours_of_operation'].append('<INACCESSIBLE>')
         if 'ank' in i[1]:
             data['location_name'].append(i[0]+' '+i[1])
             data['street_address'].append(i[2])
@@ -56,7 +55,14 @@ def fetch_data():
             data['phone'].append((' ').join(re.findall(r'[0-9]+',i[3])))
             data['location_type'].append(i[-1])
 
-     
+
+    for url in data['page_url']:
+        driver.get(url)
+        try:
+            data['hours_of_operation'].append(driver.find_element_by_xpath('//div[contains(@class,"small-6 columns ")]/p[@class="fw-light"]').text)
+        except:
+            data['hours_of_operation'].append('<MISSING>')
+      
     
     driver.close()
     return data

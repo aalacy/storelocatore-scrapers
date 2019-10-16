@@ -48,12 +48,15 @@ def parse_detail(store, link):
     country = eliminate_space(link.split('/'))[2].upper()
     output.append(country) #country code
     output.append(get_value(store.xpath('.//div[@class="logistics-detail-store-id hidden-xs hidden-sm"]//text()')).split('#')[-1]) #store_number
-    output.append(get_value(store.xpath('.//span[@itemprop="telephone"]//text()'))) #phone
+    phone = eliminate_space(store.xpath('.//span[@itemprop="telephone"]//text()'))
+    if len(phone) > 1:
+        phone = phone[0]
+    output.append(get_value(phone)) #phone
     output.append("Sears Optical | Eye Care & Quality Eyewear") #location type
     geo = validate(store.xpath('.//link[@itemprop="map"]//@href')).split('center=')[1].split('&channel')[0].split('%2C')
     output.append(geo[0]) #latitude
     output.append(geo[1]) #longitude
-    output.append(get_value(eliminate_space(store.xpath('.//table[@class="c-location-hours-details"]//tbody//text()')))) #opening hours
+    output.append(get_value(eliminate_space(store.xpath('.//div[@class="hours-section hidden-xs"]//table[@class="c-location-hours-details"]//tbody//text()')))) #opening hours
     # if 'Coming Soon' not in output[1] and 'Closed' not in output[1]:
     return output
     # else:

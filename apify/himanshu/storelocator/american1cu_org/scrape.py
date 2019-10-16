@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -20,7 +20,7 @@ def write_output(data):
 def fetch_data():
     base_url= "https://www.american1cu.org/locations"
     r = requests.get(base_url)
-  
+    address123 =[]
     soup= BeautifulSoup(r.text.replace('<div class="listbox" />','<div class="listbox" >'),"lxml")
     store_name=[]
     store_detail=[]
@@ -34,7 +34,7 @@ def fetch_data():
     log1 = []
     st1 = []
     main_st =[]
-    address123 =[]
+    
     k1 = requests.get("https://www.american1cu.org/locations?search=&state=&options%5B%5D=atms&options%5B%5D=shared_branches")
     soup1= BeautifulSoup(k1.text.replace('<div class="listbox" />','<div class="listbox" >'),"lxml")
     listbox = (soup1.find_all("div",{"class":"listbox"}))
@@ -131,9 +131,9 @@ def fetch_data():
             zip1 = list(i.stripped_strings)[3].split(',')[1].split( )[1]
             hours = "<MISSING>"
             location_type = "American 1 Credit Union ATMs"
-        st1.append(st)
+        # st1.append(st)
 
-  
+
         store_name.append(name)
         tem_var.append(st)
         tem_var.append(city)
@@ -143,25 +143,30 @@ def fetch_data():
         tem_var.append("<MISSING>")
         tem_var.append(phone)
         tem_var.append(location_type)
-
         for p in range(len(main_st)):
             if st==main_st[p]:
-                # print(st,"+=======",main_st[p])
                 tem_var.append(lat1[p])
                 tem_var.append(log1[p])
         tem_var.append(hours if hours else "<MISSING>" )
+        
+        if len(tem_var)==13:
+            del tem_var[-2]
+            del tem_var[-2]
+      
+            # print((tem_var))
         store_detail.append(tem_var)
+        
 
+        # print(tem_var)
     for i in range(len(store_name)):
        store = list()
        store.append("http://spartannash.com")
        store.append(store_name[i])
        store.extend(store_detail[i])
+       store.append("https://www.american1cu.org/location")
        if store[2] in address123:
             continue
-        
        address123.append(store[2])
-    #    print(store)
        return_main_object.append(store)
     return return_main_object
    

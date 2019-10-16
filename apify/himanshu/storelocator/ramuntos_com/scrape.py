@@ -12,7 +12,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -22,94 +22,101 @@ def fetch_data():
     base_url= "https://ramuntos.com/locations/"
     r = requests.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
-    lat =[]
-    log =[]
-    hours =[]
-    name3 = []
-    k=(soup.find_all("div",{"class":"entry-content"}))
 
-    for i in k:
-
-        lat1  =  i.find_all("div",{"class":"et_pb_map_pin"})
-        for j in lat1:
-            name3.append(j.text.replace("Ramunto's ","").replace("\n",'').replace(" ( Jiffy)",'').replace("Quechee (Jiffymart)","").strip())
+    k=soup.find_all("div",{"class":"entry-content"})
+    for j in range(1,12):
+        k1 = soup.find("div",{'class':"et_pb_row et_pb_row_"+str(j)})
+        # name = list(k1.stripped_strings)[0]
+        v = list(k1.stripped_strings)
+        tem_var =[]
+        if "(Jiffy Mart)" in v:
             
-            lat.append(j['data-lat'])
-            log.append(j['data-lng'])
+            lat = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lat'])
+            lng = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lng'])
+            phone = (v[-3].replace("\xa0","").replace("Phone:",""))
+            hours = (v[-4])
+            city = v[3].split(",")[0]
+            state = v[3].split(",")[1].split( )[0]
+            state = v[3].split(",")[1].split( )[0]
+            zip1 = v[3].split(",")[1].split( )[1]
+            st = v[2]
+            name = (" ".join(v[:2]))
+        else:
+            if len(v)==7:
+                lat = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lat'])
+                lng = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lng'])
+                st=v[1]
+                name = v[0]
+                city = v[2].split(',')[0]
+                state = v[2].split(',')[1].split( )[0]
+                zip1 = v[2].split(',')[1].split( )[1]
+                hours = v[3]
+                phone = v[-2]
+                # print(lat)
+                # print("=====7",zip1)
+            elif len(v)==9:
+                lat = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lat'])
+                lng = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lng'])
+                name = v[0]
+                st = v[1]
+                city = v[2].split(',')[1]
+                state = v[2].split(',')[1].split( )[0]
+                zip1 = v[2].split(',')[1].split( )[1]
+                hours = (" ".join(v[3:7]))
+                phone = v[-2]
+                # print(lat)
+                # print("=====9",zip1)
 
-       
-        p  =  i.find_all("div",{"class":"et_pb_text_inner"})
-        for p1 in p:
-            tem_var =[]
-            if len(list(p1.stripped_strings)) != 1:
-                data = list(p1.stripped_strings)
-                stopwords = "(Jiffy Mart)"
-                new_words = [word for word in data if word not in stopwords]
-                stopwords = "Jiffy Mart Website"
-                new_words1 = [word for word in new_words if word not in stopwords]
-                stopwords = "www.ramuntos.com/bennington-vt"
-                new_words2 = [word for word in new_words1 if word not in stopwords]
-                if "232 Grove Street, Brandon, VT 05733" in  (new_words) or "89 VT Rte. 103, Chester, VT 05143" in (new_words):
-                    street_address = new_words2[1].split(",")[0]
-                    city =new_words2[1].split(",")[1]
-                    state = new_words2[1].split(",")[2].split( )[0]
-                    zipcode = new_words2[1].split(",")[2].split( )[1]
-                    hours.append(new_words2[2])
-                    phone = new_words2[-1]
-                    tem_var.append(street_address)
-                    tem_var.append(city)
-                    tem_var.append(state)
-                    tem_var.append(zipcode)
-                    tem_var.append("US")
-                    tem_var.append("<MISSING>")
-                    tem_var.append(phone)
-                    tem_var.append("ramuntos")
-                    store_detail.append(tem_var)
-                    store_name.append(new_words2[0])
-                else:
-                    store_name.append(new_words2[0])
-                    street_address = new_words2[1]
-                    city =  new_words2[2].split(',')[0]
-                    state = new_words2[2].split(',')[1].split( )[0]
-                    zipcode = new_words2[2].split(',')[1].split( )[1]
-                    if (new_words2[-1].split("Phone:\xa0"))[0]:
-                        phone = (new_words2[-1].split("Phone:\xa0")[0].replace("Phone: ",""))
-                    else:
-                        phone = (new_words2[-1].split("Phone:\xa0")[1])
-                    hours.append(" ".join(new_words2[3:-1]).replace("Phone:",""))
-                    tem_var.append(street_address)
-                    tem_var.append(city)
-                    tem_var.append(state)
-                    tem_var.append(zipcode)
-                    tem_var.append("US")
-                    tem_var.append("<MISSING>")
-                    tem_var.append(phone)
-                    tem_var.append("ramuntos")
-                    store_detail.append(tem_var)  
+            elif len(v)==6:
+                lat = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lat'])
+                lng = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lng'])
+                name = v[0]
+                st = v[1].split(',')[0]
+                city = v[1].split(',')[1]
+                state = v[1].split(',')[2].split( )[0]
+                zip1 = v[1].split(',')[2].split( )[1]
+                hours = v[2]
+                phone = v[4]
+                # print(v[1].split(',')[2].split( )[0])
+                # print(lat)
+                # print("=====6",zip1)
+               
+            elif len(v)==8:
+                lat = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lat'])
+                lng = (k1.find("div",{"class":"et_pb_map_pin"}).attrs['data-lng'])
+                name = v[0]
+                # print(v)
+                st = v[1].split(',')[0]
+                city = v[2].split(',')[0]
+                state = v[2].split(',')[1].split( )[0]
+                zip1 = v[2].split(',')[1].split( )[1]
+                hours = v[3]
+                phone = v[5]
+                # print(lat)
+                # print("=====8",zip1)
+        tem_var.append("https://ramuntos.com")
+        tem_var.append(name)
+        tem_var.append(st)
+        tem_var.append(city)
+        tem_var.append(state)
+        tem_var.append(zip1)
+        tem_var.append("US")
+        tem_var.append("<MISSING>")
+        tem_var.append(phone.replace("Phone: ",""))
+        tem_var.append("ramuntos")
+        tem_var.append(lat)
+        tem_var.append(lng)
+        tem_var.append(hours)
+        tem_var.append("https://ramuntos.com/locations/")
+        if "519 Main Street" in tem_var:
+            tem_var[-2] = hours[-2].replace("0","Open 7 days a week. Mon – Thurs: 11am – 10pm Friday & Saturday: 11am – 11pm Sunday: 11am – 9pm")
 
-    
-    res = list(OrderedDict.fromkeys(name3))[:-1]              
-    res1 = list(OrderedDict.fromkeys(lat))
-    res2 = list(OrderedDict.fromkeys(log))     
-   
-    for i in range(len(store_name)):
-        store = list()
-        store.append("https://ramuntos.com")
-        store.append(store_name[i])
-        store.extend(store_detail[i])
+        
+        yield tem_var
+        # store_detail.append(tem_var) 
+                
 
-        for j in range(0,14):
-            if store_name[i] == res[j]:
-                store.append(res1[j].replace("44.450207","42.88439").replace("43.8016109","43.802345").replace("44.4454432","44.450207"))
-                store.append(res2[j].replace("-73.1101539999999","-72.55651").replace("-73.0952237","-73.096565").replace("-73.09919400000001","-73.11015399999997"))
-
-        store.append(hours[i])
-        return_main_object.append(store) 
-
-    return return_main_object
+    # return return_main_object
 
 
 def scrape():

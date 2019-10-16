@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -26,6 +26,8 @@ def fetch_data():
         if "window.__NUXT__=" in script.text:
             location_list = json.loads(script.text.split("window.__NUXT__=")[1].split("};")[0] + "}")["data"][0]["locations"]
             for store_data in location_list:
+                if "Coming Soon".lower() in store_data["stageText"].lower():
+                    continue
                 store = []
                 store.append("https://shred415.com")
                 store.append(store_data['name'])
@@ -36,12 +38,12 @@ def fetch_data():
                 store.append("US")
                 store.append(store_data["id"])
                 store.append(store_data["phone"].replace("\u202d","").replace("\u200d","") if store_data["phone"] != "" else "<MISSING>")
-                store.append("shred 415")
+                store.append("<MISSING>")
                 store.append(store_data["latitude"])
                 store.append(store_data["longitude"])
                 store.append("<MISSING>")
-                return_main_object.append(store)
-    return return_main_object
+                store.append("https://shred415.com/locations")
+                yield store
 
 def scrape():
     data = fetch_data()

@@ -12,7 +12,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -67,7 +67,7 @@ def fetch_data():
             mon_time = 'Mon: ' + Sat[0] + ' - ' + Mon[1]
         hour = mon_time+', '+tue_time+', '+wed_time+', '+thu_time+', '+fri_time+', '+sat_time+', '+sun_time
         if (hour == '' or hour is None):
-            hour = "<MISSING>";
+            hour = "<MISSING>"
         return_object = []
         return_object.append(base_url)
         return_object.append(location_name)
@@ -79,11 +79,11 @@ def fetch_data():
         return_object.append(store_number)
         return_object.append(phone)
         return_object.append("Ulta Beauty")
-        return_object.append("<MISSING>")
-        return_object.append("<MISSING>")
+        return_object.append(store_data["geo"][1])
+        return_object.append(store_data["geo"][0])
         return_object.append(hour)
-        return_main_object.append(return_object)
-    return return_main_object
+        return_object.append("<MISSING>")
+        yield return_object
 
 
 def scrape():

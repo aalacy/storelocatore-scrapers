@@ -5,11 +5,11 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -38,7 +38,7 @@ def fetch_data():
             store.append("US")
             store.append("<MISSING>")
             store.append(location_soup.find("span",{"itemprop":"telephone"}).text)
-            store.append("aqua aston")
+            store.append("<MISSING>")
             for script in location_soup.find_all("script"):
                 if "&lat=" in script.text:
                     lat = script.text.split("&lat=")[1].split("&")[0]
@@ -46,27 +46,28 @@ def fetch_data():
             store.append(lat)
             store.append(lng)
             store.append("<MISSING>")
-            return_main_object.append(store)
+            store.append(base_url + location["href"])
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            yield store
         else:
             store_data = json.loads(location_soup.find("script",{'type':"application/ld+json"}).text, strict=False)
-            if store_data["address"]["addressLocality"] == "":
-                continue
             store = []
             store.append("https://www.aquaaston.com")
             store.append(location.text)
             store.append(store_data["address"]["streetAddress"])
-            store.append(store_data["address"]["addressLocality"])
-            store.append(store_data["address"]["addressRegion"])
-            store.append(store_data["address"]["postalCode"])
+            store.append(store_data["address"]["addressLocality"] if store_data["address"]["addressLocality"] else "<MISSING>")
+            store.append(store_data["address"]["addressRegion"] if store_data["address"]["addressRegion"] else "<MISSING>")
+            store.append(store_data["address"]["postalCode"] if store_data["address"]["postalCode"] else "<MISSING>")
             store.append("US")
             store.append("<MISSING>")
             store.append(store_data["telephone"])
-            store.append("aqua aston")
+            store.append("<MISSING>")
             store.append(store_data["hasMap"].split("q=")[1].split(",")[0])
             store.append(store_data["hasMap"].split("q=")[1].split(",")[1])
             store.append("<MISSING>")
-            return_main_object.append(store)
-    return return_main_object
+            store.append(base_url + location["href"])
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            yield store
 
 def scrape():
     data = fetch_data()

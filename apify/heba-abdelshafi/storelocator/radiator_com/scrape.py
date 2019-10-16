@@ -28,7 +28,7 @@ def fetch_data():
         data['phone'].append(i.split('|')[-1])
         #data['zip'].append(i.split('|')[1].split(',')[-1].split()[-1])
         #data['street_address'].append(i.split('|')[1].split(',')[:-1])
-        data['country_code'].append('US')
+        #data['country_code'].append('US')
         data['store_number'].append('<MISSING>')
         data['location_type'].append('<MISSING>')
         data['hours_of_operation'].append('<MISSING>')
@@ -44,7 +44,19 @@ def fetch_data():
         data['street_address'].append(driver.find_element_by_xpath('//span[@class="address-address"]').text)
         data['zip'].append(driver.find_element_by_xpath('//span[@class="address-zip"]').text)
         
-        
+    us_status=['alabama', 'alaska', 'arizona', 'arkansas', 'armed forces america', 'armed forces europe', 'armed forces pacific', 'california', 'colorado', 'connecticut', 'delaware', 'district of columbia', 'florida', 'georgia', 'hawaii', 'idaho', 'illinois', 'indiana', 'iowa', 'kansas', 'kentucky', 'louisiana', 'maine', 'maryland', 'massachusetts', 'michigan', 'minnesota', 'mississippi', 'missouri', 'montana', 'nebraska', 'nevada', 'new hampshire', 'new jersey', 'new mexico', 'new york', 'north carolina', 'north dakota', 'ohio', 'oklahoma', 'oregon', 'pennsylvania', 'rhode island', 'south carolina', 'south dakota', 'tennessee', 'texas', 'utah', 'vermont', 'virginia', 'washington', 'west virginia', 'wisconsin', 'wyoming']
+    can_status=['province', 'alberta', 'british columbia', 'manitoba', 'new brunswick', 'newfoundland and labrador', 'northwest territories', 'nova scotia', 'nunavut', 'ontario', 'prince edward island', 'quebec', 'saskatchewan', 'yukon']
+    
+    for ind,i in enumerate(data['state']):
+        i=i.lower()
+        if i in can_status:
+            data['country_code'].append('CAN')
+        elif i in us_status:
+            data['country_code'].append('US')
+        else:
+            data['country_code'].append('US')
+            
+   
     driver.close()
     return data
 

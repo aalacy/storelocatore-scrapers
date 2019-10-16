@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -45,7 +45,8 @@ def fetch_data():
             store.append("<MISSING>")
             store.append("<MISSING>")
             store.append("<MISSING>")
-            return_main_object.append(store)
+            store.append("<MISSING>")
+            yield store
         else:
             location_request = requests.get(base_url + location.find("a")["href"],headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
@@ -55,6 +56,8 @@ def fetch_data():
             else:
                 phone = location_soup.find("a",{"href":re.compile("tel:")}).text.strip().replace("TACO","8226")
             hours = " ".join(list(location_soup.find("div",{"class":'contact_details_sec'}).find_all("p")[5].stripped_strings))
+            if hours == "":
+               hours = " ".join(list(location_soup.find("div",{"class":'contact_details_sec'}).find_all("p")[4].stripped_strings)) 
             address = " ".join(list(location.find_all("p")[0].stripped_strings))
             store_zip = " ".join(list(location.find_all("p")[2].stripped_strings))
             if store_zip == "":
@@ -67,6 +70,8 @@ def fetch_data():
             store.append(address)
             store.append(city_state.split(",")[0])
             store.append(city_state.split(",")[1])
+            if store[-2] in store[-3]:
+                store[-3] = store[-3].replace(store[-2],"").replace(store[-1],"").replace(",","")
             store.append(store_zip)
             store.append("US")
             store.append("<MISSING>")
@@ -79,9 +84,9 @@ def fetch_data():
                 geo_location = location_soup.find("iframe")["src"]
                 store.append(geo_location.split("!3d")[1].split("!")[0])
                 store.append(geo_location.split("!2d")[1].split("!")[0])
-            store.append(hours if hours != "" else "<MISSING>")
-            return_main_object.append(store)
-    return return_main_object
+            store.append(hours.replace("–","-") if hours != "" else "<MISSING>")
+            store.append(base_url + location.find("a")["href"])
+            yield store
 
 def scrape():
     data = fetch_data()
