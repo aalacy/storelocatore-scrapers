@@ -53,6 +53,8 @@ def fetch_data():
         state = state_city_zip.split(" ")[-2]
         city = state_city_zip.split(",")[0]
         phone = text[3]
+        #store_id = driver.find_element_by_partial_link_text('Buy Classes').get_attribute('href').split('studioid=')[1].split('&')[0]
+        store_id = driver.find_element_by_xpath("//a[contains(@href,'studioid=')]").get_attribute('href').split('studioid=')[1].split('&')[0]
         geomap = driver.find_element_by_css_selector('div.footer-logo > p > a:nth-child(8)').get_attribute('href')
         driver2.get(geomap)
         time.sleep(5)
@@ -66,7 +68,7 @@ def fetch_data():
               state,
               zipcode,
               'US',
-              '<MISSING>',
+              store_id,
               phone,
               '<MISSING>',
               lat,
