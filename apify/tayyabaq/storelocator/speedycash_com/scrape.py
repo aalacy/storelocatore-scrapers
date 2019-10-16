@@ -53,7 +53,7 @@ def fetch_data():
     for n in range(0,len(street_address)):
         data.append([
             'https://www.speedycash.com',
-            'https://www.speedycash.com/find-a-store/'
+            'https://www.speedycash.com/find-a-store/',
             location_name[n],
             street_address[n],
             city[n],
