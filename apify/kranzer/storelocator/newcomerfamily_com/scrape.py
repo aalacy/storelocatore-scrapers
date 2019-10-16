@@ -51,8 +51,9 @@ class Scrape(base.Spider):
                     i.add_value('street_address', loc[:-1], lambda x: ', '.join(x))
                 i.add_value('longitude', centroid_map.get('1', ("<MISSING>", "<MISSING>"))[1])
                 i.add_value('latitude', centroid_map.get('1', ("<MISSING>", "<MISSING>"))[0])
-                if i.as_dict()['locator_domain'].replace(selector['url'], '').strip() not in crawled:
-                    crawled.append(i.as_dict()['locator_domain'].replace(selector['url'], '').strip())
+                crawled_val = i.as_dict()['page_url'].split('location/')[1]
+                if crawled_val not in crawled:
+                    crawled.append(crawled_val)
                     yield i
 
 
