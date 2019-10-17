@@ -67,7 +67,7 @@ def fetch_data():
         print("...........................")
         p += 1
         data.append([
-            url,
+            'https://greendragon.com/',
             link,
             title,
             street,

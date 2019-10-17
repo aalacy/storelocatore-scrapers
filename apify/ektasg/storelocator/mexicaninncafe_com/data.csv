@@ -1,37 +1,10 @@
-"locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
-"https://www.mexicaninncafe.com/","BEDFORD","1400 Airport Freeway","Bedford","TX","76022","US","<MISSING>","(817) 545-4700","<MISSING>","32.8371753","-97.1487687","
-Sunday-Thursday 11 am - 9 pm
-Friday-Saturday 11 am - 10 pm     Happy Hour
-Monday-Friday 3 pm - 6 pm"
-"https://www.mexicaninncafe.com/","LAKE WORTH","6709 Lake Worth Boulevard","Lake Worth","TX","76135","US","<MISSING>","(817) 237-7691","<MISSING>","32.8129516","-97.43648759999996","
-Sunday-Thursday 11 am - 9 pm
-Friday-Saturday 11 am - 10 pm     Happy Hour
-Monday-Friday 3 pm - 6 pm"
-"https://www.mexicaninncafe.com/","CAMP BOWIE","5716 Camp Bowie Boulevard","Fort Worth","TX","76107","US","<MISSING>","(817) 731-1126","<MISSING>","32.72982233038702","-97.36943888330076","
-Sunday-Thursday 11 am - 9 pm
-Friday-Saturday 11 am - 10 pm     Happy Hour
-Monday-Friday 3 pm - 6 pm"
-"https://www.mexicaninncafe.com/","BURLESON","13155 South Freeway","Burleson","TX","76028","US","<MISSING>","(817) 447-7661","<MISSING>","32.5669803","-97.31794660000003","
-Sunday-Thursday 11 am - 9 pm
-Friday-Saturday 11 am - 10 pm     Happy Hour
-Monday-Friday 3 pm - 6 pm"
-"https://www.mexicaninncafe.com/","EAST LANCASTER","2700 East Lancaster Avenue","Fort Worth","TX","76103","US","<MISSING>","(817) 534-2512","<MISSING>","32.7425882","-97.28792199999998","
-Sunday-Thursday 11 am - 9 pm
-Friday-Saturday 11 am - 10 pm     Happy Hour
-Monday-Friday 3 pm - 6 pm"
-"https://www.mexicaninncafe.com/","EIGHTH AVE","1625 8th Ave","Fort Worth","TX","76104","US","<MISSING>","(817) 927-8541","<MISSING>","32.7267939","-97.34344139999996","
-Sunday-Thursday 11 am - 9 pm
-Friday-Saturday 11 am - 10 pm     Happy Hour
-Monday-Friday 3 pm - 6 pm"
-"https://www.mexicaninncafe.com/","KELLER","680 South Main Street","Keller","TX","76248","US","<MISSING>","(817) 898-7079","<MISSING>","32.926589","-97.254772","
-Sunday-Thursday 11 am - 9 pm
-Friday-Saturday 11 am - 10 pm     Happy Hour
-Monday-Friday 3 pm - 6 pm"
-"https://www.mexicaninncafe.com/","HULEN","5017 South Hulen Street","Fort Worth","TX","76132","US","<MISSING>","(817) 346-7815","<MISSING>","32.6739836","-97.39838680000003","
-Sunday-Thursday 11 am - 9 pm
-Friday-Saturday 11 am - 10 pm     Happy Hour
-Monday-Friday 3 pm - 6 pm"
-"https://www.mexicaninncafe.com/","NORTH HENDERSON","612 North Henderson Street","Fort Worth","TX","76107","US","<MISSING>","(817) 336-2164","<MISSING>","32.7594481","-97.34357499999999","
-Sunday-Thursday 11 am - 8 pm
-Friday-Saturday 11 am - 8 pm     Happy Hour
-Monday-Friday 3 pm - 6 pm"
+"locator_domain","page_url","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
+"https://www.mexicaninncafe.com/","https://www.mexicaninncafe.com/locations","BEDFORD","1400 Airport Freeway","Bedford","TX","76022","US","<MISSING>","(817) 545-4700","<MISSING>","32.8371753","-97.1487687"," Sunday-Thursday 11 am - 9 pm Friday-Saturday 11 am - 10 pm     Happy Hour Monday-Friday 3 pm - 6 pm"
+"https://www.mexicaninncafe.com/","https://www.mexicaninncafe.com/locations","LAKE WORTH","6709 Lake Worth Boulevard","Lake Worth","TX","76135","US","<MISSING>","(817) 237-7691","<MISSING>","32.8129516","-97.43648759999996"," Sunday-Thursday 11 am - 9 pm Friday-Saturday 11 am - 10 pm     Happy Hour Monday-Friday 3 pm - 6 pm"
+"https://www.mexicaninncafe.com/","https://www.mexicaninncafe.com/locations","CAMP BOWIE","5716 Camp Bowie Boulevard","Fort Worth","TX","76107","US","<MISSING>","(817) 731-1126","<MISSING>","32.72982233038702","-97.36943888330076"," Sunday-Thursday 11 am - 9 pm Friday-Saturday 11 am - 10 pm     Happy Hour Monday-Friday 3 pm - 6 pm"
+"https://www.mexicaninncafe.com/","https://www.mexicaninncafe.com/locations","BURLESON","13155 South Freeway","Burleson","TX","76028","US","<MISSING>","(817) 447-7661","<MISSING>","32.5669803","-97.31794660000003"," Sunday-Thursday 11 am - 9 pm Friday-Saturday 11 am - 10 pm     Happy Hour Monday-Friday 3 pm - 6 pm"
+"https://www.mexicaninncafe.com/","https://www.mexicaninncafe.com/locations","EAST LANCASTER","2700 East Lancaster Avenue","Fort Worth","TX","76103","US","<MISSING>","(817) 534-2512","<MISSING>","32.7425882","-97.28792199999998"," Sunday-Thursday 11 am - 9 pm Friday-Saturday 11 am - 10 pm     Happy Hour Monday-Friday 3 pm - 6 pm"
+"https://www.mexicaninncafe.com/","https://www.mexicaninncafe.com/locations","EIGHTH AVE","1625 8th Ave","Fort Worth","TX","76104","US","<MISSING>","(817) 927-8541","<MISSING>","32.7267939","-97.34344139999996"," Sunday-Thursday 11 am - 9 pm Friday-Saturday 11 am - 10 pm     Happy Hour Monday-Friday 3 pm - 6 pm"
+"https://www.mexicaninncafe.com/","https://www.mexicaninncafe.com/locations","KELLER","680 South Main Street","Keller","TX","76248","US","<MISSING>","(817) 898-7079","<MISSING>","32.926589","-97.254772"," Sunday-Thursday 11 am - 9 pm Friday-Saturday 11 am - 10 pm     Happy Hour Monday-Friday 3 pm - 6 pm"
+"https://www.mexicaninncafe.com/","https://www.mexicaninncafe.com/locations","HULEN","5017 South Hulen Street","Fort Worth","TX","76132","US","<MISSING>","(817) 346-7815","<MISSING>","32.6739836","-97.39838680000003"," Sunday-Thursday 11 am - 9 pm Friday-Saturday 11 am - 10 pm     Happy Hour Monday-Friday 3 pm - 6 pm"
+"https://www.mexicaninncafe.com/","https://www.mexicaninncafe.com/locations","NORTH HENDERSON","612 North Henderson Street","Fort Worth","TX","76107","US","<MISSING>","(817) 336-2164","<MISSING>","32.7594481","-97.34357499999999"," Sunday-Thursday 11 am - 8 pm Friday-Saturday 11 am - 8 pm     Happy Hour Monday-Friday 3 pm - 6 pm"

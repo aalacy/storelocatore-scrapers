@@ -1,9 +1,3 @@
-"locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
-"http://midorisushi.net/","SHERMAN OAKS","13905 Ventura Blvd.","Sherman Oaks","CA","91423","US","<MISSING>","T: 818.789.1188","<MISSING>","34.140519","-118.385565","M-Th: 12pm-10pm
-Fri: 12pm-10:30pm
-Sat: 12pm-10:30pm
-Sun: 12pm-10pm"
-"http://midorisushi.net/","ENCINO","17047 Ventura Blvd.","Encino","CA","91316","US","<MISSING>","T: 818.995.0888","<MISSING>","34.148771","-118.435633","M-Th: 12pm-10pm
-Fri: 12pm-10:30pm
-Sat: 12pm-10:30pm
-Sun: 12pm-10pm"
+"locator_domain","page_url","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
+"http://midorisushi.net/","http://midorisushi.net/locations.html?20190601","SHERMAN OAKS","13905 Ventura Blvd.","Sherman Oaks","CA","91423","US","<MISSING>","T: 818.789.1188","<MISSING>","34.140519","-118.385565","M-Th: 12pm-10pm Fri: 12pm-10:30pm Sat: 12pm-10:30pm Sun: 12pm-10pm"
+"http://midorisushi.net/","http://midorisushi.net/locations.html?20190601","ENCINO","17047 Ventura Blvd.","Encino","CA","91316","US","<MISSING>","T: 818.995.0888","<MISSING>","34.148771","-118.435633","M-Th: 12pm-10pm Fri: 12pm-10:30pm Sat: 12pm-10:30pm Sun: 12pm-10pm"

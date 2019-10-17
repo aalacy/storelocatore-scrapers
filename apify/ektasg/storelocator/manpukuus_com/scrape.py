@@ -22,7 +22,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
@@ -53,6 +53,7 @@ def fetch_data():
     for i in range(len(li_url)):
         li = []
         driver.get(li_url[i])
+        page_url = li_url[i]
         sn = driver.find_element_by_xpath("//h2")
         location_name = sn.get_attribute('textContent')
         info = driver.find_elements_by_xpath("//div//p//span")
@@ -67,21 +68,32 @@ def fetch_data():
         for j in range(len(info)):
             li.append(info[j].get_attribute('textContent'))
         hours_of_operation = li[2:]
+        str1 =" "
+        str2 = str1.join(hours_of_operation).replace('\\xa', " ")
+        try:
+            store_id_info= driver.execute_script("return window.OT.Widget")
+            store_id = store_id_info['options']['restaurantId']
+        except:
+            store_id ='<MISSING>'
         data.append([
             'www.manpukuus.com',
+            page_url,
             location_name,
             street_address,
             city,
             state,
             zipcode,
             country,
-            '<MISSING>',
+            store_id,
             phone,
             '<MISSING>',
             latitude,
             longitude,
-            hours_of_operation
+            str2
         ])
+
+    time.sleep(3)
+    driver.quit()
     return data
 
 

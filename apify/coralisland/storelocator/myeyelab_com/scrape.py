@@ -8,6 +8,10 @@ import json
 base_url = 'https://www.myeyelab.com/'
 
 def validate(item):    
+    if item == None:
+        item = ''
+    if type(item) == int or type(item) == float:
+        item = str(item)
     if type(item) == list:
         item = ' '.join(item)
     return item.replace(u'\u2013', '-').encode('ascii', 'ignore').encode("utf8").strip()
@@ -37,31 +41,33 @@ def fetch_data():
     output_list = []
     url = "https://www.myeyelab.com/wp-admin/admin-ajax.php"
     headers={
-        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "cookie": "PHPSESSID=9498d8c3f310d131eb6f18b4f375428f; gclid=undefined; _gcl_au=1.1.270807480.1567276928; _ga=GA1.2.1245547417.1567276928; _gid=GA1.2.732769914.1567276928; _hjid=627595e1-43fa-472e-b8ea-8810f6c343a6; _hjIncludedInSample=1; _fbp=fb.1.1567276929766.1440445499; __zlcmid=u3iVHICLo1D5sL; _gat_UA-38131623-1=1",
+        'accept': 'application/json, text/javascript, */*; q=0.01',
+        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'cookie': '__zlcmid=u3iVHQUo3gQSjf; PHPSESSID=e2595350be5ebf75a31fbe178c8e065f; gclid=undefined',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36',
+        'x-requested-with': 'XMLHttpRequest'
         }
     form_data = {
         "action": "somel_geo_store_list",
-        "nonce": "4da222d7a9"
+        "nonce": "69b8a277b1"
     }
-    request = requests.post(url, headers=headers, data=form_data)
-    store_list = json.loads(request.text)['data']['stores']
+    request = requests.post(url, headers=headers, data=form_data)    
+    store_list = json.loads(request.text.replace('\\"', '')[2:])['data']['stores']
     for store in store_list:
         output = []
         hours = etree.HTML(store['sl_hours']).xpath('.//text()')
-
         output.append(base_url)
-        output.append(validate(store['sl_web_name']))
-        output.append(validate(store['sl_address']))
-        output.append(validate(store['sl_city']))
-        output.append(validate(store['sl_state']))
-        output.append(validate(store['sl_zip']))
-        output.append(validate(store['sl_country']))
-        output.append(validate(store['sl_id']))
-        output.append(validate(store['sl_phone']))
+        output.append(get_value(store['sl_web_name']))
+        output.append(get_value(store['sl_address']))
+        output.append(get_value(store['sl_city']))
+        output.append(get_value(store['sl_state']))
+        output.append(get_value(store['sl_zip']))
+        output.append(get_value(store['sl_country']))
+        output.append(get_value(store['sl_id']))
+        output.append(get_value(store['sl_phone']))
         output.append("My Eyelab - The Optical Retail Industry")
-        output.append(validate(store['sl_latitude']))
-        output.append(validate(store['sl_longitude']))
+        output.append(get_value(store['sl_latitude']))
+        output.append(get_value(store['sl_longitude']))
         output.append(get_value(hours))
         output_list.append(output)
     return output_list
