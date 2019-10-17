@@ -1,4 +1,4 @@
-FROM node:10-alpine
+FROM safegraph/apify-python:latest
 
 COPY . ./
 
