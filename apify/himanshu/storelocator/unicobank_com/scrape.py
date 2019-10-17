@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -27,24 +27,19 @@ def fetch_data():
     ck = soup.find('div',{'class':'fusion-no-small-visibility'}).find_all('div',{'class':'fusion-column-wrapper'})
    
     for target_list in ck:
+       
         if target_list.find('h2',{'class':'title-heading-center'}) != None:
                 location_name = target_list.find('h2',{'class':'title-heading-center'}).text.strip()
                 
                 main_arry = target_list.find_all('div',{'class':'fusion-clearfix'})
                 addr = main_arry[1].find_all('p')[0].text.strip().split('\n')
                 
-                if main_arry[1].find_all('p')[0].find('a') != None:
-
-                    latitude =  main_arry[1].find_all('p')[0].find('a')['href'].split('@')[1].split(',')[0]
+                # latitude = "<MISSING>"
+                # longitude = "<MISSING>"
+                # if main_arry[1].find_all('p')[0].find('a') != None:                
+                latitude =  target_list.find_all('a')[0]['href'].split('@')[1].split(',')[0]
                 
-                    longitude =   main_arry[1].find_all('p')[0].find('a')['href'].split('@')[1].split(',')[1]
-
-                else:
-
-                    latitude ="<MISSING>"
-                    longitude = "<MISSING>"
-
-                
+                longitude =  target_list.find_all('a')[0]['href'].split('@')[1].split(',')[1]                
                                 
                 if  len(addr) == 3:
                         
@@ -72,9 +67,9 @@ def fetch_data():
                 
                 country_code = 'US'
                 store_number = '<MISSING>'
-                location_type = 'unicobank'
-                hours_of_operation = ' '.join(main_arry[0].text.strip().split('\n')).strip()
-                
+                location_type = ''
+                hours_of_operation = ' '.join(main_arry[0].text.strip().split('\n')).strip().replace("xa",'')
+                page_url = '<MISSING>'
         
                 store=[]
                 store.append(locator_domain if locator_domain else '<MISSING>')
@@ -90,8 +85,9 @@ def fetch_data():
                 store.append(latitude if latitude else '<MISSING>')
                 store.append(longitude if longitude else '<MISSING>')
                 store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-                return_main_object.append(store)  
-    return return_main_object    
+                store.append(page_url  if page_url else '<MISSING>')
+                print("data=====",store);
+                yield store
                 
 def scrape():
     data = fetch_data()    

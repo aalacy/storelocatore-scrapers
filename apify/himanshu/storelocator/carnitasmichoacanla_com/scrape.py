@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -74,19 +74,18 @@ def fetch_data():
     for i in range(len(name_store)):
         store = list()
         store.append("https://carnitasmichoacanla.com/")
-        store.append(name_store[i])
+        store.append('<MISSING>')
         store.extend(store_detail[i])
         store.append("US")
         store.append("<MISSING>")
         store.append(phone_no[i])
-        store.append("carnitasmichoacanla")
+        store.append("<MISSING>")
         store.append(latitude[i])
         store.append(longitude[i])
         store.append(hours[i])
+        store.append('https://carnitasmichoacanla.com/locations/')
         # print(hours[i])
-        return_main_object.append(store)
-    
-    return return_main_object
+        yield store
 
 
 def scrape():
