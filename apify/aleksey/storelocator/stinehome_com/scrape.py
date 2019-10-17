@@ -7,15 +7,14 @@ from selenium.webdriver.support.ui import Select
 
 options = Options() 
 options.add_argument('--headless')
-options.add_argument('--no-sandbox')                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
-#driver = webdriver.Chrome('/bin/chromedriver', options=options)
-driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=options)
+driver = webdriver.Chrome('chromedriver', options=options)
 
 BASE_URL = 'https://www.stinehome.com/stores'
 
 PROVINCES = {
-    'AB': 'Alberta',                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+    'AB': 'Alberta',
     'BC': 'British Columbia',
     'MB': 'Manitoba',
     'NB': 'New Brunswick',
@@ -29,6 +28,7 @@ PROVINCES = {
     'SK': 'Saskatchewan',
     'YT': 'Yukon'
 }
+
 STATES = {
     'AK': 'Alaska',
     'AL': 'Alabama',
