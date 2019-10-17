@@ -9,18 +9,18 @@ options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
-driver=webdriver.Chrome('C:\chromedriver.exe', options=options)
+driver=webdriver.Chrome('C:\chromedriver.exe')#, options=options)
 #driver = webdriver.Chrome("chromedriver", options=options)
 
 
 def write_output(data):
     df=pd.DataFrame(data)
-    df.to_csv('data.csv', index=False,encoding='utf-8-sig')
+    df.to_csv('data.csv', index=False,encoding='utf-8')
 
 def fetch_data():
     data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[],'page_url':[]}
     driver.get('https://originalbuscemis.com/locations/')
-    
+
     for i in driver.find_elements_by_xpath('//div[@class="results_wrapper"]'):
         data['location_name'].append(i.find_element_by_css_selector('span[class="location_name"]').text)
         data['street_address'].append(i.find_element_by_css_selector('span[class="slp_result_address slp_result_street"]').text)

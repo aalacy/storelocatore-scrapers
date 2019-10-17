@@ -49,7 +49,14 @@ def fetch_data():
             }
 
             request = requests.post(url, json=data)
-            store_list = json.loads(request.text)['storesType']
+
+            source = json.loads(request.text)
+
+            if 'storesType' not in source.keys():
+                continue
+
+            store_list = source['storesType']
+
             if 'stores' not in store_list.keys():
                 continue
 

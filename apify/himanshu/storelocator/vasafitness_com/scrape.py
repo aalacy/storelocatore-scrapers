@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -25,6 +25,8 @@ def fetch_data():
     for location in soup.find_all("div",{'class':"marker"}):
         location_request = requests.get(location.find("a")["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
+        if location_soup.find("h4",text=re.compile("Coming Soon")):
+            continue
         name = location_soup.find("h1",{'class':"enjoy-the-ride"}).text
         address = list(location_soup.find("div",{'class':"loc-address"}).stripped_strings)
         hours = " ".join(list(location_soup.find("div",{'id':"loc-accordion"}).stripped_strings))
@@ -42,12 +44,14 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(phone)
-        store.append("vasa fitness")
+        store.append("<MISSING>")
         store.append(location["data-latt"])
         store.append(location["data-lngg"])
         store.append(hours)
-        return_main_object.append(store)
-    return return_main_object
+        if store[-1].count("Closed") > 6:
+            continue
+        store.append(location.find("a")["href"])
+        yield store
 
 def scrape():
     data = fetch_data()

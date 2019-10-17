@@ -76,7 +76,7 @@ def fetch_data():
         print(".............................")
         p += 1
         data.append([
-            url,
+            'https://greensnaturalfoods.com/',
             url,
             title,
             street,

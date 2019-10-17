@@ -18,7 +18,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -36,8 +36,9 @@ def fetch_data():
     driver.get("https://www.cnbbank.bank/who-we-are/locations/")
     time.sleep(10)
     stores = driver.find_elements_by_css_selector('div.col-sm-4.col-md-3.map-item')
-
+    count=0
     for store in stores:
+        page_url ="https://www.cnbbank.bank/who-we-are/locations/"
         location_name = store.find_element_by_css_selector('h3 > a').text
         lat = store.get_attribute('data-lat')
         lon = store.get_attribute('data-lng')
@@ -64,6 +65,7 @@ def fetch_data():
         zipcode = tagged['ZipCode']
         data.append([
              'https://www.cnbbank.bank/',
+              page_url,
               location_name,
               street_addr,
               city,
@@ -77,6 +79,8 @@ def fetch_data():
               lon,
               '<MISSING>'
             ])
+        count+=1
+        print(count)
 
     name = [stores[i].find_element_by_css_selector('h3 > a').get_attribute('href') for i in range(0, len(stores))]
     for i in range(0, len(name)):
@@ -91,7 +95,7 @@ def fetch_data():
                 hours_of_op = hours_of_op + hours_of_ops[j].text
         except:
             hours_of_op = '<MISSING>'
-        data[i][12] = hours_of_op
+        data[i][13] = hours_of_op
 
     time.sleep(3)
     driver.quit()

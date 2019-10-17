@@ -94,8 +94,6 @@ def check_zip(x):
 
 
 
-
-
 def phone_check(x):
     if x != "<MISSING>":
         #print(x)
@@ -115,7 +113,11 @@ def fetch_data():
     
     
     #df_us_list = pd.read_csv("/home/srek/xyz/Odetta/US_states.csv")
-    driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
+    #driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
+    try:
+        driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
+    except:
+        driver = webdriver.Chrome()
     
     data = []
     url = "https://www.ppgpaints.com/store-locator"

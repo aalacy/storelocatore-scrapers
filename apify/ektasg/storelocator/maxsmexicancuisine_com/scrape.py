@@ -18,7 +18,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -35,6 +35,7 @@ def fetch_data():
         count=0
         data=[]
         driver.get("https://www.maxsmexicancuisine.com/contact")
+        page_url = "https://www.maxsmexicancuisine.com/contact"
         time.sleep(10)
         stores = driver.find_elements_by_css_selector('div.txtNew')
         for store in stores:
@@ -52,6 +53,7 @@ def fetch_data():
                 lat,lon = parse_geo(geomap)
                 data.append([
                         'https://www.maxsmexicancuisine.com/',
+                        page_url,
                         location_name,
                         street_addr,
                         city,

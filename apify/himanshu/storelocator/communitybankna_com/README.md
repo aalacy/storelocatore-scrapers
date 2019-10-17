@@ -7,4 +7,4 @@ Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
-invalid latitude on the website.
+address with no number,invalid zip,same lat & lng and i checked some of the entries and all of them seems to be on the locator

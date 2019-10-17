@@ -7,18 +7,15 @@ from selenium.webdriver.support.ui import Select
 
 options = Options() 
 options.add_argument('--headless')
-options.add_argument('--no-sandbox')                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
-#driver = webdriver.Chrome('/bin/chromedriver', options=options)
-driver = webdriver.Chrome('/usr/local/bin/chromedriver', options=options)
-driver2 = webdriver.Chrome('/usr/local/bin/chromedriver', options=options)
-
-#BASE_URL = 'https://www.bubbagump.com/locations.asp'
+driver = webdriver.Chrome('chromedriver', options=options)
+driver2 = webdriver.Chrome('chromedriver', options=options)
 BASE_URL = 'http://sweetfactorycandy.ca'
 BASE_URL2 = 'http://sweetfactorycandy.ca/contact'
 
 PROVINCES = list({
-    'AB': 'Alberta',                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+    'AB': 'Alberta',
     'BC': 'British Columbia',
     'MB': 'Manitoba',
     'NB': 'New Brunswick',
@@ -32,6 +29,7 @@ PROVINCES = list({
     'SK': 'Saskatchewan',
     'YT': 'Yukon'
 }.keys())
+
 STATES = list({
     'AK': 'Alaska',
     'AL': 'Alabama',

@@ -29,7 +29,8 @@ def fetch_data():
         tem_var =[]
         r1 = requests.get(i['permalink'],headers=headers)
         soup= BeautifulSoup(r1.text,"lxml")
-        hours = (" ".join(list(soup.find("div",{'class':"hours"}).stripped_strings)).replace("Daniel W. Newberry, O.D.","").replace("Joe Ellis, O.D. Laurel Morris, O.D. Michael Case, O.D.","").replace("Mark Owens, O.D. David Tucker, O.D. Chelsey Johnson, O.D. Justin Travis, O.D.","").replace("Ben Leonard, O.D.","").replace("Donise Sheridan, O.D. Landon Brewer, O.D.","").replace("David Jaco, O.D.",""))
+        hours = (" ".join(list(soup.find("div",{'class':"hours"}).stripped_strings)).replace("Daniel W. Newberry, O.D.","").replace("Joe Ellis, O.D. Laurel Morris, O.D. Michael Case, O.D.","").replace("Mark Owens, O.D. David Tucker, O.D. Chelsey Johnson, O.D. Justin Travis, O.D.","").replace("Ben Leonard, O.D.","").replace("Donise Sheridan, O.D. Landon Brewer, O.D.","").replace("David Jaco, O.D.","").replace("Mark Owens, O.D. David Tucker, O.D. Justin Travis, O.D.",''))
+        # print(hours)
         # exit()
         # hours = " ".join(list(soup.find("table",{"class":"table-borderless table-condensed table hours-list"}).stripped_strings))
         tem_var.append("https://www.ecak.com")
@@ -48,7 +49,8 @@ def fetch_data():
         tem_var.append(i['permalink'])
         # print(tem_var)
         return_main_object.append(tem_var)
-        
+        print(str(tem_var))
+
 
     return return_main_object
 
