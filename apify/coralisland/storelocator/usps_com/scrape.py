@@ -67,7 +67,7 @@ def write_output(data):
 def fetch_data():
     output_list = []
     history = []
-    with open('../cities.json') as data_file:    
+    with open('cities.json') as data_file:    
         city_list = json.load(data_file)  
     url = "https://tools.usps.com/UspsToolsRestServices/rest/POLocator/findLocations"
     headers = {       

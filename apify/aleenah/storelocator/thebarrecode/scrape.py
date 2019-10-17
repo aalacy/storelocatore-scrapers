@@ -41,6 +41,23 @@ def fetch_data():
     divs = soup.find_all('div', {'class': 'studio-box studio-box-toprow studio-column'})
     divs+= soup.find_all('div', {'class': 'studio-box studio-column'})
     print(len(divs))
+    sa = soup.find_all('a',{'class':'hoveranchor'})
+    print(len(sa))
+    for a in sa:
+        url="https://www.thebarrecode.com/studios/"+a.get("href")
+        page_url.append(url)
+        driver.get(url)
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        try:
+            div = soup.find('div', {'class': 'studio-column-66'}).find_all('div')[1]
+            data= div.get("data-mapdata")
+            lat.append( re.findall(r'.*"coordinates":\[-?[\d\.]*,(-?[\d\.]*)', data)[0])
+            long.append(re.findall(r'.*"coordinates":\[(-?[\d\.]*),', data)[0])
+        except:
+            lat.append("<MISSING>")
+            long.append("<MISSING>")
+
+
 
     for div in divs:
         tex = div.text.strip().split("\n")
@@ -81,10 +98,10 @@ def fetch_data():
         row.append(ids[i])  # store #
         row.append(phones[i])  # phone
         row.append("<MISSING>")  # type
-        row.append("<MISSING>")  # lat
-        row.append("<MISSING>")  # long
+        row.append(lat[i])  # lat
+        row.append(long[i])  # long
         row.append("<MISSING>")  # timing
-        row.append("https://www.thebarrecode.com/studios/")  # page url
+        row.append(page_url[i])  # page url
 
         all.append(row)
     return all
