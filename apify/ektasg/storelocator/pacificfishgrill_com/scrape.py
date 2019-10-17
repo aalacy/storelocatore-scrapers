@@ -51,9 +51,13 @@ def fetch_data():
                               tagged['StreetNamePostType'].split('\n')[0]+ " " + \
                               tagged['OccupancyType'] + " " + tagged['OccupancyIdentifier'].split('\n')[0]
             except:
-                 street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + \
-                                              tagged['StreetNamePostType'].split('\n')[0] + " " + \
-                                              tagged['OccupancyType'] + " " + tagged['OccupancyIdentifier'].split('\n')[0]
+                try:
+                    street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + \
+                                  tagged['StreetNamePostType'].split('\n')[0] + " " + tagged['OccupancyIdentifier'].split('\n')[0]
+                except:
+                     street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + \
+                                                  tagged['StreetNamePostType'].split('\n')[0] + " " + \
+                                                  tagged['OccupancyType'] + " " + tagged['OccupancyIdentifier'].split('\n')[0]
             geomap = store.find_element_by_css_selector('div > p:nth-child(1) > a:nth-child(2)').get_attribute('href')
             driver2.get(geomap)
             time.sleep(5)
@@ -81,6 +85,7 @@ def fetch_data():
 
     time.sleep(3)
     driver.quit()
+    driver2.quit()
     return data
 
 def scrape():
