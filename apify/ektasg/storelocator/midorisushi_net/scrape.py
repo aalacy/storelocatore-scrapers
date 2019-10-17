@@ -17,7 +17,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url" , "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -35,9 +35,10 @@ def fetch_data():
     count=0
     data=[]
     driver.get("http://midorisushi.net/locations.html?20190601")
+    page_url = "http://midorisushi.net/locations.html?20190601"
     time.sleep(10)
 
-    hours_of_op = driver.find_element_by_css_selector('div.time').text
+    hours_of_op = driver.find_element_by_css_selector('div.time').text.replace("\n", " ")
 
     driver.switch_to.frame(0)
     time.sleep(3)
@@ -74,6 +75,7 @@ def fetch_data():
     for i in range(0,len(location_name)):
         data.append([
                 'http://midorisushi.net/',
+                page_url,
                 location_name[i],
                 street_addr[i],
                 city[i],

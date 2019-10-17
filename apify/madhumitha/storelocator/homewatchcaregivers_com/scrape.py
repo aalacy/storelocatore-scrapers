@@ -26,6 +26,7 @@ def fetch_data():
             city = l['data-city']
             lat = l['data-latitude']
             lon = l['data-longitude']
+            store_number = l['data-loc-id']
             location_name = l['data-name'].strip()
             country = l['data-country'].strip()
             if country == 'usa':
@@ -45,7 +46,7 @@ def fetch_data():
             zipcode = re.split('\.', city_data)[-1].strip()
             state = re.split('\.', city_data)[-2].strip()
             phone = l.find('a', attrs = {'class':'phone'}).text.strip()
-            store_number = location_type = hours_of_operation = MISSING
+            location_type = hours_of_operation = MISSING
             data.append([DOMAIN, location_name, street_address, city, state, zipcode, country, store_number, phone, location_type, lat, lon, hours_of_operation])
         except requests.exceptions.RequestException:
             pass

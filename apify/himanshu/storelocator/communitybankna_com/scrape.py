@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -21,9 +21,8 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
     scripts = soup.find_all("script")
     return_main_object = []
-    data = json.loads(soup.find("locations")["location-data"])
-    for i in range(len(data)):
-        current_store = data[i]
+    data = json.loads(soup.find("locations")["location-data"])["locations"]
+    for current_store in data:
         store = []
         store.append("https://cbna.com")
         store.append(current_store["title"])
@@ -33,8 +32,8 @@ def fetch_data():
         store.append(current_store["address"]["zip"])
         store.append("US")  
         store.append(current_store["id"])
-        store.append(current_store["branchPhoneNumber"] if "branchPhoneNumber" in current_store else "<MISSING>")
-        store.append("community bank")
+        store.append(current_store["branchPhoneNumber"] if "branchPhoneNumber" in current_store and current_store["branchPhoneNumber"] else "<MISSING>")
+        store.append("<MISSING>")
         store.append(current_store["address"]["lat"])
         store.append(current_store["address"]["lng"])
         hours = ""
@@ -47,8 +46,8 @@ def fetch_data():
         elif "notes" in current_store:
             hours = current_store["notes"][0]
         store.append(hours if hours != "" else "<MISSING>")
-        return_main_object.append(store)
-    return return_main_object
+        store.append("<MISSING>")
+        yield store
 
 def scrape():
     data = fetch_data()
