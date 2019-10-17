@@ -38,7 +38,7 @@ def fetch_data():
             try:
                 store = driver.execute_script("return wpslMap_0;")
                 json_data = store['locations']
-                location_name = json_data[0]['store']
+                location_name = json_data[0]['store'].replace("&#038;", " ")
                 street_addr = json_data[0]['address'] + json_data[0]['address2']
                 city = json_data[0]['city']
                 state = json_data[0]['state']
@@ -47,7 +47,7 @@ def fetch_data():
                 lng = json_data[0]['lng']
                 store_id = json_data[0]['id']
                 phone = driver.find_element_by_css_selector('span.location-phone').text
-                hours_of_op = driver.find_element_by_css_selector('div.vc_row.wpb_row.vc_inner.vc_row-fluid.locationBtnRow > div > div > div > div >  div > p').text.split(phone)[1]
+                hours_of_op = driver.find_element_by_css_selector('div.vc_row.wpb_row.vc_inner.vc_row-fluid.locationBtnRow > div > div > div > div >  div > p').text.split(phone)[1].replace("\n", " ")
                 data.append([
                     'http://oreganos.com/',
                     page_url,
