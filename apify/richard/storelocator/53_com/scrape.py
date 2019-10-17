@@ -11,7 +11,6 @@ class Scraper(Scrape):
     def __init__(self, url):
         Scrape.__init__(self, url)
         self.data = []
-        self.block = ['https://www.miravalspamonarchbeach.com/', 'https://www.miravalstkitts.com/']
         self.seen = []
 
     def fetch_data(self):
@@ -44,10 +43,12 @@ class Scraper(Scrape):
                 ('q', zipcode_search),
                 ('types', '3233|3234|3235'),
             )
-
-            data = requests.get('https://tcjl25l2al.execute-api.us-east-1.amazonaws.com/prod', headers=headers, params=params).json()['locations']
-            stores.extend(data)
-            print(f"{len(data)} locations scraped for {zipcode_search}")
+            try:
+                data = requests.get('https://tcjl25l2al.execute-api.us-east-1.amazonaws.com/prod', headers=headers, params=params).json()['locations']
+                stores.extend(data)
+                print(f"{len(data)} locations scraped for {zipcode_search}")
+            except:
+                pass
 
         for store in stores:
             store = store['loc']

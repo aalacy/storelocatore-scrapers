@@ -47,7 +47,7 @@ class Scraper(Scrape):
             location_title = store.find_element_by_css_selector('span.storeName').text
 
             # Street
-            street_address = store.find_element_by_css_selector('div.panel-body > p > span:nth-of-type(1)').get_attribute('textContent')
+            street_address = store.find_element_by_css_selector('div.panel-body > p > span:nth-of-type(1)').get_attribute('textContent').replace('\n', ' ')
 
             # city
             city = store.find_element_by_css_selector('div.panel-body > p > span:nth-of-type(2)').get_attribute('textContent')
@@ -68,7 +68,7 @@ class Scraper(Scrape):
             phone = store.find_element_by_css_selector('div.phone > a > span').get_attribute('textContent')
 
             # Hour
-            hour = store.find_element_by_css_selector('div.hours').get_attribute('textContent')
+            hour = store.find_element_by_css_selector('div.hours').get_attribute('textContent').replace('\n', ' ')
 
             # Country
             country = 'CA'
