@@ -13,7 +13,7 @@ import time
 
 def fetch_data():
     data = []
-    driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
+    driver = webdriver.Chrome()
         
     df_zips = pd.read_csv("./US_states.csv")["Zip_Range"].tolist()
     for z in range(len(df_zips)):
@@ -49,6 +49,8 @@ def fetch_data():
                         #latitude = stores[s]['data-latitude']
                         #longitude = stores[s]['data-longitude']
                         location_name = stores[s].find("span",attrs={"class":"info-window-heading"}).text
+                        location_link = "https://www.ymca.net" + stores[s].find("span",attrs={"class":"info-window-heading"}).find("a").get("href")
+                        
                         add_ph =  list(filter(None,stores[s].find("span",attrs={"class":"info-window-body"}).text.replace("\n","").split("                    ")))
                         add_ph = [i.strip() for i in add_ph]
                         if "phone" in add_ph[-1].lower():
@@ -57,7 +59,20 @@ def fetch_data():
                         city,[state,zipcode] = add_ph[-1].strip().split(",")[0],  add_ph[-1].strip().split(",")[1].strip().split(" ")
                         add_ph.remove(add_ph[-1])
                         street_address = ",".join(add_ph).strip()
+                        
+                        driver.get(location_link)
+                        time.sleep(2)
+                        soup_loc = BeautifulSoup(driver.page_source)
+                        lat_lon = soup_loc.find("div",attrs={"id":"y-profile-position"})
+                        
+                        latitude = lat_lon["data-latitude"]
+                        longitude = lat_lon["data-longitude"]
                         #print(city)
+                        p_list  = soup_loc.find_all("p")
+                        hours_of_operation = [p.text for p in p_list if "Hours of Operation:".lower() in p.text.lower()]
+                        hours_of_operation = [h.strip() for h in hours_of_operation[0].split("\n") if h.strip() != ""]
+                        
+                        
                         country_code = "US"
                         data_record = {}
                         data_record['locator_domain'] = locator_domain
@@ -70,9 +85,9 @@ def fetch_data():
                         data_record['store_number'] = '<MISSING>'
                         data_record['phone'] = phone   
                         data_record['location_type'] = '<MISSING>'
-                        data_record['latitude'] = '<MISSING>'
-                        data_record['longitude'] = '<MISSING>'
-                        data_record['hours_of_operation'] = '<MISSING>'
+                        data_record['latitude'] = latitude
+                        data_record['longitude'] = longitude
+                        data_record['hours_of_operation'] = ",".join(hours_of_operation)
                         data_record['page_url'] = '<MISSING>'
                         data.append(data_record)
                         #print(len(data))
@@ -83,7 +98,11 @@ def fetch_data():
             
     return data
     
-    
+
+
+
+
+
 def write_output(data):
     df_data = pd.DataFrame(columns=['locator_domain','location_name','street_address','city','state','zip','country_code','store_number','phone','location_type','latitude','longitude','hours_of_operation'])
     
@@ -95,7 +114,9 @@ def write_output(data):
     df_data = df_data.replace(r'^\s*$', "<MISSING>", regex=True)
     df_data = df_data.drop_duplicates(["location_name","street_address"])
     df_data['zip'] = df_data.zip.astype(str)
-    df_data.to_csv('./data.csv',index = 0,header=True)
+    df_data.to_csv('./data_v4.csv',index = 0,header=True,columns=['locator_domain','location_name','street_address','city',
+                                                               'state','zip','country_code','store_number','phone','location_type',
+                                                               'latitude','longitude','hours_of_operation','page_url'])
 
 def scrape():
     data = fetch_data()

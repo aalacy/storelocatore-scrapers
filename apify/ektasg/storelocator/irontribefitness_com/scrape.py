@@ -110,6 +110,7 @@ def fetch_data():
                     city = address.split(" ")[-3]
                     street_addr = address.split(",")[0].replace(city, '')
                 phone = driver2.find_element_by_xpath("//a[contains(@href, 'tel:')]").text
+                store_id = driver2.find_element_by_xpath("//link[contains(@rel, 'shortlink')]").get_attribute('href').split('p=')[1]
                 try:
                     geomap = driver2.find_element_by_xpath("//a[contains(@href,'https://maps.google.com/maps?ll=')]").get_attribute('href')
                     lat,lon = parse_geo(geomap)
@@ -125,7 +126,7 @@ def fetch_data():
                       state,
                       zipcode,
                       'US',
-                      '<MISSING>',
+                      store_id,
                       phone,
                       '<MISSING>',
                       lat,
