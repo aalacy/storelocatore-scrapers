@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=",")
 
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 
         # print("data::" + str(data))
         for i in data or []:
@@ -36,11 +36,12 @@ def fetch_data():
     country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "pizzanine"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
+    page_url = "<MISSING>"
 
     r = requests.get(
         "https://api.storepoint.co/v1/15acd219ce19bf/locations?rq", headers=headers)
@@ -110,7 +111,7 @@ def fetch_data():
             "   " + f'saturday: {x["saturday"]}' + \
             "    " + f'sunday: {x["sunday"]}'
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
         store = ["<MISSING>" if x == "" else x for x in store]
 
         if store[2] in addresses:

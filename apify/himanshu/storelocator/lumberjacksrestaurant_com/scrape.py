@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -26,6 +26,13 @@ def fetch_data():
     return_main_object=[]
     phone =[]
     hours =[]
+    mk= []
+    for id,x in enumerate(soup.find_all('script')):
+        if id == 57:
+
+            for vn in json.loads(x.text.strip().split('map_locations = ')[1].split('\nvar global_map_settings =')[0].replace('null,','').replace(',null','').replace(';','')):
+                mk.append(vn['lat']+','+vn['lng'])
+
     k = soup.find_all("div",{"class":"motopress-code-obj"})
 
     for i in k:
@@ -44,7 +51,7 @@ def fetch_data():
                 if "Grass Valley" in list(j.stripped_strings):
                     pass
                 else:
-                    store_name.append(list(j.stripped_strings)[0])
+                    store_name.append(list(j.stripped_strings)[0].capitalize())
                     street_address = list(j.stripped_strings)[1]
                     city = list(j.stripped_strings)[2].split(",")[0]
                     state =list(j.stripped_strings)[2].split(",")[1].split( )[0]
@@ -58,28 +65,27 @@ def fetch_data():
                     tem_var.append(zipcode)
                     tem_var.append("US")
                     tem_var.append("<MISSING>")
+
                     store_detail.append(tem_var)
 
     hours.insert(8,"Sun - Sat 7 am to 3 pm")
-
+    m = 0
     for i in range(len(store_name)):
         store = list()
         store.append("http://www.lumberjacksrestaurant.com")
         store.append(store_name[i])
         store.extend(store_detail[i])
         store.append(phone[i])
-        store.append("lumberjacksrestaurant")
-        if i==0:
-            print(i)
-            store.append("39.23867449999999")
-            store.append("-121.03553520000003")
-        else:
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            
+        store.append("<MISSING>")
+
+        store.append(mk[m].split(',')[0])
+        store.append(mk[m].split(',')[1])
+
 
         store.append(hours[i])
-        return_main_object.append(store) 
+        store.append(base_url)
+        return_main_object.append(store)
+        m+=1
 
     return return_main_object
 
