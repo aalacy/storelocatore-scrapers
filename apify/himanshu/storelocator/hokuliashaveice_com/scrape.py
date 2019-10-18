@@ -39,7 +39,7 @@ def fetch_data():
     city = "<MISSING>"
     state = "<MISSING>"
     zipp = "<MISSING>"
-    country_code = ""
+    country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
     location_type = "<MISSING>"
@@ -101,12 +101,12 @@ def fetch_data():
                 city = add[-2].strip()
                 state = add[-1].split()[0]
                 zipp = add[-1].split()[-1]
-                # print(street_address ,zipp,city,state)
+                # print(zipp,state)
         elif len(add_list) ==3:
-            # print(address)
-            # print(len(address))
+            # print(add_list)
+            # print(len(add_list))
             # print('~~~~~~~~~~~~~~~~~~~~~~~~')
-            if " 1143 Prince Ave" != add_list[0]:
+            if " 1143 Prince Ave" not in add_list[0] and " 3341 Lexington Road" not in add_list[0]:
                 location_name = add_list[0].strip()
                 street_address = add_list[1]
                 city = add_list[2].split(',')[0]
@@ -116,28 +116,43 @@ def fetch_data():
                 us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(sz))
                 if us_zip_list != []:
                     zipp = us_zip_list[0]
+                    # print(zipp)
                 else:
                     m = re.findall(r'\d', sz)
                     zip = "".join(m)
                     # print(zip.split())
                     if zip.split() != []:
                         zipp= zip
+                        # print(zipp)
+                    else :
+                        zipp = "<MISSING>"
+
                 if len(sz.split()) ==2:
                     state = sz.split()[0].strip()
+                    # print(state)
                 else:
                     # a = re.findall(r'^\w+$',sz)
                     if zip.split() != []:
                         state = sz.split(zip)[0].strip()
+                        # print(state)
                     else:
                         state = sz.strip()
+                # print(state,zipp)
                 # print(street_address +"|"+city+"|"+state+"|"+zipp +"|"+location_name)
                 # print(state)
             else:
+                # print(add_list)
+                # print(len(add_list))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~')
                 street_address = add_list[0].strip()
-                city= add_list[1].split(',')[0]
-                state = add_list[1].split(',')[-1]
-                zipp = "<MISSING>"
-                location_name = add_list[-1].replace('(',"").replace(')','').strip()
+                city="Athens"
+                state = "GA"
+                zipp_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), " ".join(add_list))
+                if zipp_list == []:
+                    zipp  = "<MISSING>"
+                else:
+                    zipp = zipp_list[0]
+                location_name = city
                 # print(street_address +"|"+city+"|"+state+"|"+zipp +"|"+location_name)
         elif len(add_list) == 4:
             # print(add_list)
@@ -164,6 +179,7 @@ def fetch_data():
             zipp = add_list[3].split(',')[1].split()[-1].strip()
         else:
             continue
+        # print(zipp)
         # print(street_address +" | "+city+" | "+state+" | "+zipp +" | "+location_name)
         phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), info.split('message:')[-1])
         if phone_list !=[]:
@@ -171,42 +187,56 @@ def fetch_data():
         else:
             phone = "<MISSING>"
         hours = " ".join(info.split('message:')[-1].split('<br />')[-2:]).split('<br>')
-        # print(hours)
-        # print(len(hours))
-        # print('~~~~~~~~~~~~')
-        if len(hours) ==2:
-            hours_of_operation = hours[0].strip()
-            # print(hours_of_operation)
+
+        if "Check for " in  " ".join(hours) or "Call for" in  " ".join(hours):
+            hours_of_operation = "<MISSING>"
+
+
         else:
             # print(hours)
             # print(len(hours))
             # print('~~~~~~~~~~~~')
-            hours_list = hours[1].strip()
-            # print(hours_list.split())
-            if hours_list.split() != []:
 
-                if len(hours_list.split()) >1:
-                    p =re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),str(hours_list))
-                    if p ==[]:
-                        hours_of_operation = hours_list
-                    else:
-                        p1 = "".join(p)
-                        # print(hours_list.split(p1))
-                        h = hours_list.split(p1)[-1].split()
-                        if h == []:
-                            hours_of_operation = "<MISSING>"
+
+            if len(hours) ==2:
+                hours_of_operation = hours[0].strip()
+                # print(hours_of_operation)
+            else:
+                # print(hours)
+                # print(len(hours))
+                # print('~~~~~~~~~~~~')
+                hours_list = hours[1].strip()
+                # print(hours_list.split())
+                if hours_list.split() != []:
+
+                    if len(hours_list.split()) >1:
+                        p =re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),str(hours_list))
+                        if p ==[]  :
+                            hours_of_operation = hours_list
+                            # print(hours_of_operation)
                         else:
-                            hours_of_operation = hours_list.split(p1)[-1].strip()
+                            p1 = "".join(p)
+                            # print(hours_list.split(p1))
+                            h = hours_list.split(p1)[-1].split()
+                            if h == []:
+                                hours_of_operation = "<MISSING>"
+                            else:
+                                hours_of_operation = hours_list.split(p1)[-1].strip()
+                                # print(hours_of_operation)
 
+                    else:
+                        hours_of_operation = "<MISSING>"
                 else:
                     hours_of_operation = "<MISSING>"
-            else:
-                hours_of_operation = "<MISSING>"
-        print(hours_of_operation)
+        # print(hours_of_operation)
+
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
         store = ["<MISSING>" if x == "" or x == None or x == "." else x for x in store]
+        # if street_address in addresses:
+        #     continue
+        # addresses.append(street_address)
 
         print("data = " + str(store))
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

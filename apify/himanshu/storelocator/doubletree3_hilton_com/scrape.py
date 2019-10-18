@@ -40,7 +40,7 @@ def fetch_data():
             }
             while True:
                 try:
-                    print(request_data)
+                    # print(request_data)
                     location_json_request = requests.post("https://www.hilton.com/graphql/customer?pod=brands&type=GetHotelInfo",data=request_data,headers=request_header)
                     location_url = location_json_request.json()["data"]["hotel"]["homepageUrl"]
                     location_request = requests.get(location_url,headers=headers)

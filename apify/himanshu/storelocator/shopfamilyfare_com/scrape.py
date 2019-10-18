@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -21,6 +21,7 @@ def fetch_data():
 
     store_name=[]
     store_detail=[]
+    addresses =[]
     return_main_object=[]
     for  q  in range(0,10):
         base_url= "https://www.shopfamilyfare.com/locations?page="+str(q+1)
@@ -42,7 +43,35 @@ def fetch_data():
                 city = list(address.stripped_strings)[1].split(',')[0]
                 state = " ".join(list(address.stripped_strings)[1].split(',')[1].split( )[:-1])
                 zipcode = list(address.stripped_strings)[1].split(',')[1].split( )[-1]
-            
+                r = requests.get(j.find('p', {'class': 'details'}).find('a')['href'])
+                soup = BeautifulSoup(r.text, "lxml")
+                jk = soup.find('table', {'class': 'hours'}).find_all('tr', {'class': 'hidden-xs'})
+                vk = []
+                for x in jk:
+                    jk = ''
+                    if x.find('td', {'scope': 'rowgroup'}) != None:
+                        jk = x.find('td', {'scope': 'rowgroup'}).text.strip()
+                    ck = ''
+                    if x.find('td', {'data-title': 'Grocery'}) != None:
+                        ck = x.find('td', {'data-title': 'Grocery'}).text.strip()
+                    mk = ''
+                    if x.find('td', {'data-title': 'Pharmacy'}) != None:
+                        mk = x.find('td', {'data-title': 'Pharmacy'}).text.strip()
+                    pk = ''
+                    if x.find('td', {'data-title': 'Fuel'}) != None:
+                        pk = x.find('td', {'data-title': 'Fuel'}).text.strip()
+
+                    vk.append(jk + ' GROCERY HOURS :' + ck + ' PHARMACY HOURS :' + mk + ' FUEL HOURS :' + pk)
+
+                hours = ' '.join(vk)
+
+                lat = soup.find('div', {'id': 'map-canvas'})['data-latitude']
+                long = soup.find('div', {'id': 'map-canvas'})['data-longitude']
+                page_url = base_url
+
+                if address1 in addresses:
+                    continue
+                addresses.append(address1)
                 
                 tem_var.append(address1)
                 tem_var.append(city)
@@ -52,9 +81,10 @@ def fetch_data():
                 tem_var.append("<MISSING>")
                 tem_var.append(phone)
                 tem_var.append("shopfamilyfare")
-                tem_var.append("<MISSING>")
-                tem_var.append("<MISSING>")
+                tem_var.append(lat)
+                tem_var.append(long)
                 tem_var.append(hours)
+                tem_var.append(page_url)
                 store_detail.append(tem_var)
 
     
@@ -63,9 +93,8 @@ def fetch_data():
         store.append("https://www.shopfamilyfare.com")
         store.append(store_name[i])
         store.extend(store_detail[i])
-        return_main_object.append(store)
-    
-    return return_main_object
+        print("data===",str(store))
+        yield store
 
 
 def scrape():
@@ -74,3 +103,5 @@ def scrape():
 
 
 scrape()
+
+
