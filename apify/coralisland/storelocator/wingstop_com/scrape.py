@@ -58,12 +58,6 @@ def parse_address(address):
         'zipcode' : get_value(zipcode)
     }
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
     output_list = []
@@ -76,42 +70,41 @@ def fetch_data():
     endDateTime = datetime.datetime.strftime(tomorrow,'%Y%m%d')
     page_url = 'https://www.wingstop.com/order'
     session = requests.Session()
-    for city in city_list:
-        url = 'https://api.wingstop.com/restaurants/near?lat='+str(city['latitude'])+'&long='+str(city['longitude'])+'&radius=500&limit=500&nomnom=calendars&nomnom_calendars_from='+startDateTime+'&nomnom_calendars_to='+endDateTime
-        request = session.get(url)
-        store_list = json.loads(request.text)['restaurants']
-        for store in store_list:
-            if get_value(store['id']) not in history:
-                history.append(get_value(store['id']))
-                output = []
-                output.append(base_url) # url
-                output.append(page_url) # page url
-                output.append(get_value(store['name'])) #location name
-                output.append(get_value(store['streetaddress'])) #address
-                output.append(get_value(store['city'])) #city
-                output.append(get_value(store['state'])) #state
-                output.append(get_value(store['zip'])) #zipcode
-                output.append(get_value(store['country'])) #country code
-                output.append(get_value(store['id'])) #store_number
-                output.append(get_value(store['telephone'])) #phone
-                output.append(get_value(store['storename'])) #location type
-                output.append(get_value(store['latitude'])) #latitude
-                output.append(get_value(store['longitude'])) #longitude
-                store_hours = []
-                if 'calendars' in store and len(store['calendars']['calendar']) > 0:                    
-                    for hour in store['calendars']['calendar'][0]['ranges']:
-                        start = validate(hour['start']).split(' ')[-1]
-                        end = validate(hour['end']).split(' ')[-1]
-                        if end == '00:00':
-                            end = 'midnight'
-                        store_hours.append(validate(hour['weekday']) + ' ' + start + '-' + end)
-                output.append(get_value(store_hours)) #opening hours        
-                output_list.append(output)
-                print(output)
-    return output_list
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        for city in city_list:
+            url = 'https://api.wingstop.com/restaurants/near?lat='+str(city['latitude'])+'&long='+str(city['longitude'])+'&radius=500&limit=500&nomnom=calendars&nomnom_calendars_from='+startDateTime+'&nomnom_calendars_to='+endDateTime
+            request = session.get(url)
+            store_list = json.loads(request.text)['restaurants']
+            for store in store_list:
+                if get_value(store['id']) not in history:
+                    history.append(get_value(store['id']))
+                    output = []
+                    output.append(base_url) # url
+                    output.append(page_url) # page url
+                    output.append(get_value(store['name'])) #location name
+                    output.append(get_value(store['streetaddress'])) #address
+                    output.append(get_value(store['city'])) #city
+                    output.append(get_value(store['state'])) #state
+                    output.append(get_value(store['zip'])) #zipcode
+                    output.append(get_value(store['country'])) #country code
+                    output.append(get_value(store['id'])) #store_number
+                    output.append(get_value(store['telephone'])) #phone
+                    output.append(get_value(store['storename'])) #location type
+                    output.append(get_value(store['latitude'])) #latitude
+                    output.append(get_value(store['longitude'])) #longitude
+                    store_hours = []
+                    if 'calendars' in store and len(store['calendars']['calendar']) > 0:                    
+                        for hour in store['calendars']['calendar'][0]['ranges']:
+                            start = validate(hour['start']).split(' ')[-1]
+                            end = validate(hour['end']).split(' ')[-1]
+                            if end == '00:00':
+                                end = 'midnight'
+                            store_hours.append(validate(hour['weekday']) + ' ' + start + '-' + end)
+                    output.append(get_value(store_hours)) #opening hours        
+                    # output_list.append(output)
+                    # print(output)
+                    writer.writerow(output)
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
-
-scrape()
+fetch_data()
