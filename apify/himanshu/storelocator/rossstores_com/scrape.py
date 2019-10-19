@@ -93,7 +93,7 @@ def fetch_data():
             store.append(latitude if latitude else '<MISSING>')
             store.append(longitude if longitude else '<MISSING>')
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-            store.append(page_url if page_url else '<MISSING>')
+            store.append('<MISSING>')
             # print("===", str(store))
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store

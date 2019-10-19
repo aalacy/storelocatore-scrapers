@@ -60,27 +60,35 @@ def fetch_data():
     script_text = script.text.split('var wpgmaps_localize_marker_data = ')[-1].split(';')[0]
     json_data = eval(script_text)
     for x in json_data['2']:
+        # print(json_data['2'][x])
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~`')
         location_name = json_data['2'][x]['title']
         street_address = json_data['2'][x]['address'].split(',')[0]
+
         city =  json_data['2'][x]['address'].split(',')[1]
         state_zipp = json_data['2'][x]['address'].split(',')[2].split()
         if len(state_zipp) ==2:
             state = json_data['2'][x]['address'].split(',')[2].split()[0]
             zipp = json_data['2'][x]['address'].split(',')[2].split()[-1]
         else:
+            state = "".join(state_zipp)
             zipp ="<MISSING>"
         latitude = json_data['2'][x]['lat']
         longitude = json_data['2'][x]['lng']
         other = json_data['2'][x]['desc'].split('\n')
+        # print(other)
+        # print('~~~~~~~~~~~~~~~~~')
         phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), " ".join(other))
         phone = phone_list[0]
-        if len(other)  >= 4:
+        if len(other)  > 3:
             hours_of_operation = " ".join(other[2:])
+            # print(hours_of_operation)
         else:
             hours_of_operation = "<MISSING>"
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
         store = ["<MISSING>" if x == "" else x for x in store]
+        print(street_address +"   |  "+ hours_of_operation)
 
         # print("data = " + str(store))
         # print(
@@ -101,17 +109,17 @@ def fetch_data():
         if len(state_zipp) ==2:
             state = json_data['3'][x]['address'].split(',')[2].split()[0]
             zipp = json_data['3'][x]['address'].split(',')[2].split()[-1]
+            # print(street_address,zipp)
         else:
-            for i in zip:
-                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(i.text))
-            zipp = us_zip_list[0]
+            state = "".join(state_zipp)
+            zipp = "<MISSING>"
         latitude = json_data['3'][x]['lat']
         longitude = json_data['3'][x]['lng']
         other = json_data['3'][x]['desc'].split('\n')
         phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), " ".join(other))
         phone = phone_list[0]
 
-        if len(other) >=4:
+        if len(other) >3:
              hours_of_operation = " ".join(other[2:])
         else:
             hours_of_operation = "<MISSING>"

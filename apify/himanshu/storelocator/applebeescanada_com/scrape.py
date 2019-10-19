@@ -11,7 +11,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -20,14 +20,15 @@ def fetch_data():
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-    base_url = "http://www.applebeescanada.com/restaurants/location-finder"
-    r = requests.get(base_url, headers=headers)
+    base_url = "http://www.applebeescanada.com/"
+    get_url = "http://www.applebeescanada.com/restaurants/location-finder"
+    r = requests.get(get_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     exists = soup.find('div', {'class', 'location'})
     for data in exists.findAll('a'):
         if data.get('href') == '' or data.get('href') is None:
-            city = data.get_text().strip()
+            state = data.get_text().strip()
         else:
             data_url = "http://www.applebeescanada.com" + data.get('href')
             print(data_url)
@@ -38,6 +39,12 @@ def fetch_data():
                 location_name = detail_soup.find('h1').get_text().strip()
                 address = detail_block.find('h5').get_text().strip().split(',')
                 street_address = ''.join(address[:-1]).strip()
+                if address[0][0:2].isdigit():
+                    city = address[-2]
+                elif "Sunridge Mall" in address[0]:
+                    city = address[-3]
+                else:
+                    city = address[0]
                 zip = address[-1].strip()
                 phone = detail_block.find('h5').find_next('h3').get_text().strip()[5:]
                 if "Meet" in detail_block.find('h5').find_next('p').find_next('p').get_text().strip():
@@ -45,19 +52,20 @@ def fetch_data():
                 else:
                     hours_of_operation = detail_block.find('h5').find_next('p').get_text().strip() + ", " + detail_block.find('h5').find_next('p').find_next('p').get_text().strip()
                 store = []
-                store.append(data_url)
+                store.append(base_url)                
                 store.append(location_name)
                 store.append(street_address)
                 store.append(city)
-                store.append("<MISSING>")
+                store.append(state)
                 store.append(zip)
                 store.append("CA")
                 store.append("<MISSING>")
                 store.append(phone)
-                store.append("Applebees Grill & Bar")
+                store.append("<MISSING>")
                 store.append("<MISSING>")
                 store.append("<MISSING>")
                 store.append(hours_of_operation)
+                store.append(data_url)
                 return_main_object.append(store)
             else:
                 pass

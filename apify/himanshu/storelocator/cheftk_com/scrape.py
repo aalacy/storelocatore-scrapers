@@ -26,7 +26,7 @@ def fetch_data():
 
 
     main=soup.find_all('div',{'class':"wsb-element-text"})
-    i= 0
+    i = 0
     for dt in main:
         if dt.find('div',{"class":"txt"})!=None and dt.find('span',{'class':"editor_color_white"})!=None:
             arr=list(dt.stripped_strings)
@@ -61,9 +61,14 @@ def fetch_data():
             country = "US"
             lat = ''
             lng = ''
-            if i in range(0,len(bk)):
-                lat=bk[i].strip().split(',')[0].replace('lat:','').strip()
-                lng=bk[i].strip().split(',')[1].replace('lng:','').strip()
+
+            if i == 2:
+                lat=bk[0].strip().split(',')[0].replace('lat:','').strip()
+                lng=bk[0].strip().split(',')[1].replace('lng:','').strip()
+            if i == 3:
+
+                lat = bk[1].strip().split(',')[0].replace('lat:', '').strip()
+                lng = bk[1].strip().split(',')[1].replace('lng:', '').strip()
 
             page_url = base_url+"/contact-us.html"
             store=[]
@@ -76,7 +81,7 @@ def fetch_data():
             store.append(country if country else "<MISSING>")
             store.append(storeno if storeno else "<MISSING>")
             store.append(phone if phone else "<MISSING>")
-            store.append("cheftk")
+            store.append("<MISSING>")
             store.append(lat if lat else "<MISSING>")
             store.append(lng if lng else "<MISSING>")
             store.append(hour if hour.strip() else "<MISSING>")
