@@ -60,7 +60,9 @@ Apify.main(async () => {
         await page.waitFor(5000);
       }
       if (request.userData.urlType === 'detail') {
+        console.log(request.url);
         /* eslint-disable camelcase */
+        await page.waitForSelector(countrySelector, { waitUntil: 'load', timeout: 0 });
         const countryRaw = await page.$eval(countrySelector, e => e.innerText);
         const country_code = formatCountry(countryRaw);
         // Only get US and Canada hotels

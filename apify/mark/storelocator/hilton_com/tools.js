@@ -1,8 +1,9 @@
 const formatCountry = (string) => {
-  if (string === 'USA') {
+  const lowerCase = string.toLowerCase();
+  if (lowerCase === 'usa') {
     return 'US';
   }
-  if (string === 'Canada') {
+  if (lowerCase === 'canada') {
     return 'CA';
   }
   return undefined;
