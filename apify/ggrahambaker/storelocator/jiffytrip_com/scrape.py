@@ -20,7 +20,7 @@ def fetch_data():
 
     to_scrape = locator_domain + ext
     page = requests.get(to_scrape)
-    print(to_scrape)
+
     assert page.status_code == 200
     
     soup = BeautifulSoup(page.content, 'html.parser')
