@@ -1,6 +1,3 @@
-import json
-import re
-
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -13,7 +10,17 @@ class Scraper(Scrape):
     def __init__(self, url):
         Scrape.__init__(self, url)
         self.data = []
-        self.block = ['https://www.miravalspamonarchbeach.com/', 'https://www.miravalstkitts.com/']
+        self.block = ['https://www.miravalstkitts.com/']
+        self.exceptions = {
+            "https://www.miravalspamonarchbeach.com/": {
+                "title": "Miraval Life in Balance Spa - Monarch Beach",
+                "address": "One Monarch Beach Resort",
+                "city": "Dana Point",
+                "state": "California",
+                "zip": "92629",
+                "number": "800-722-1543"
+            }
+        }
         self.seen = []
 
     def fetch_data(self):
@@ -42,13 +49,15 @@ class Scraper(Scrape):
         stores = [info.get_attribute('href') for info in driver.find_elements_by_css_selector('div.modal--row > div.modal--column > ul > li > a')]
 
         for store in stores:
-            if store not in self.block and store not in self.seen:
+            store = store.strip()
+            if store not in self.block and store not in self.exceptions and store not in self.seen:
+                print(f"Now scraping {store}")
                 driver.get(store)
 
                 loc_info = driver.find_element_by_css_selector('div.footer--column > p').get_attribute('innerHTML').split('<br>')
                 latlng_info  = [script for script in driver.find_elements_by_css_selector('head.at-element-marker > script')]
-                script_data = [info for info in latlng_info  if info.get_attribute('type') == 'application/ld+json']
-                latlng_data = json.loads(re.sub('<script.+>', '', script_data[-1].get_attribute('outerHTML').replace('</script>', '')))
+                # script_data = [info for info in latlng_info  if info.get_attribute('type') == 'application/ld+json']
+                # latlng_data = json.loads(re.sub('<script.+>', '', script_data[-1].get_attribute('outerHTML').replace('</script>', '')))
 
                 self.seen.append(store)
                 # Store ID
@@ -75,15 +84,17 @@ class Scraper(Scrape):
                 # State
                 state = loc_info[2].strip()[:-5].split(',')[-1].strip()
 
-                if 'telephone' in latlng_data.keys():
+                try:
                     # Phone
-                    phone = latlng_data['telephone']
+                    phone = driver.find_element_by_css_selector('a.call-button > noscript').get_attribute('textContent')
+                except:
+                    phone = '<MISSING>'
 
-                    # Lat
-                    lat = latlng_data['geo']['latitude']
+                # Lat
+                lat = '<MISSING>'
 
-                    # Long
-                    lon = latlng_data['geo']['longitude']
+                # Long
+                lon = '<MISSING>'
 
                 # Hour
                 hour = 'Always Open'
@@ -104,6 +115,61 @@ class Scraper(Scrape):
                 cities.append(city)
                 countries.append(country)
                 location_types.append(location_type)
+
+            elif store in self.exceptions.keys() and store not in self.seen:
+                print(f"Now scraping {store}")
+
+                # Store ID
+                location_id = '<MISSING>'
+
+                # Type
+                location_type = 'Wellness and Resort'
+
+                # Name
+                location_title = self.exceptions[store]['title']
+
+                # Street
+                street_address = self.exceptions[store]['address']
+
+                # city
+                city = self.exceptions[store]['city']
+
+                # zip
+                zipcode = self.exceptions[store]['zip']
+
+                # State
+                state = self.exceptions[store]['state']
+
+                # Phone
+                phone = self.exceptions[store]['number']
+
+                # Lat
+                lat = '<MISSING>'
+
+                # Long
+                lon = '<MISSING>'
+
+                # Hour
+                hour = 'Always Open'
+
+                # Country
+                country = 'USA'
+
+                # Store data
+                locations_ids.append(location_id)
+                locations_titles.append(location_title)
+                street_addresses.append(street_address)
+                states.append(state)
+                zip_codes.append(zipcode)
+                hours.append(hour)
+                latitude_list.append(lat)
+                longitude_list.append(lon)
+                phone_numbers.append(phone)
+                cities.append(city)
+                countries.append(country)
+                location_types.append(location_type)
+                self.seen.append(store)
+
 
         for (
                 locations_title,
