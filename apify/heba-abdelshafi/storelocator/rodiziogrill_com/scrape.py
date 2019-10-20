@@ -10,8 +10,8 @@ options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
-driver=webdriver.Chrome('C:\chromedriver.exe', options=options)
-#driver = webdriver.Chrome("chromedriver", options=options)
+#driver=webdriver.Chrome('C:\chromedriver.exe', options=options)
+driver = webdriver.Chrome("chromedriver", options=options)
 
 
 def write_output(data):
@@ -27,8 +27,8 @@ def replace(string, substitutions):
 def fetch_data():
     data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[],'page_url':[]}
     driver.get('https://www.rodiziogrill.com/locations.aspx')
-    
-    
+
+
     location_data_urls=[]
     location_cities=[]
     for i in driver.find_elements_by_xpath('//div[@class="row"]//ul/li'):
@@ -36,7 +36,7 @@ def fetch_data():
         if ('COMING SOON' not in location_name):
             location_cities.append(location_name)
             location_data_urls.append(i.find_element_by_css_selector('a').get_attribute('href'))
-            
+
     for ind,i in enumerate(location_data_urls):
         driver.get(i)
         data['location_name'].append('Rodizio Grill'+' - '+location_cities[ind])
@@ -61,7 +61,7 @@ def fetch_data():
         geo=re.sub('[A-Za-z)(]','',re.findall(r"LatLng\(-?[\d\.]+,\s-?[\d\.]+\)", source)[0])
         data['longitude'].append(geo.split(',')[1])
         data['latitude'].append(geo.split(',')[0])
-    
+
     driver.close()
     return data
 

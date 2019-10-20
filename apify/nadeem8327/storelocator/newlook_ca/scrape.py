@@ -10,7 +10,7 @@ options = webdriver.ChromeOptions()
 prefs= {"profile.default_content_setting_values.geolocation":2}
 options.add_experimental_option("prefs",prefs)
 options.add_argument("--headless")
-driver=webdriver.Chrome('/home/nadeem/Downloads/chromedriver',options=options)
+driver=webdriver.Chrome('chromedriver',options=options)
 
 url = "https://www.newlook.ca/en/stores"
 driver.get(url)

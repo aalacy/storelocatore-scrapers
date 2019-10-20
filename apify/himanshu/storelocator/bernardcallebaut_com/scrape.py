@@ -130,13 +130,13 @@ def fetch_data():
                     else:
                         street_address = " ".join(list_d[2:7]).replace('Phone','').strip()
 
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                             store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+                store = [locator_domain.capitalize(), location_name.capitalize(), street_address, city.capitalize(), state.capitalize(), zipp, country_code,
+                             store_number, phone, location_type, latitude, longitude, hours_of_operation.replace('/',''),page_url]
                 store = ["<MISSING>" if x == ""  else x for x in store]
 
-                # print("data = " + str(store))
-                # print(
-                #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                print("data = " + str(store))
+                print(
+                    '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)
 

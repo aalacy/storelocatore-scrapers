@@ -3,11 +3,14 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+# import sgzip
+# import time
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
@@ -18,74 +21,90 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url= "https://dostoros.com/locations"
-    r = requests.get(base_url)
-    soup= BeautifulSoup(r.text,"lxml")
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
-    k=soup.find_all("div",{'class':"half"})
-    hours =[]
-    lat1 =[]
-    lng1 =[]
-    url=[]
-    for i in k:
-        # print(i.a['href'])
-        r = requests.get("https://dostoros.com"+i.a['href'])
-        # print("https://dostoros.com"+i.a['href'])
-        soup1= BeautifulSoup(r.text,"lxml")
-        k1=soup1.find_all("div",{"class":"address"})
-        h2=soup1.find_all("div",{"class":"hours"})
-        name1=soup1.find_all("div",{"class":"name"})
-        for lat in soup1.find_all("div",{'class':'mapit'}):
-            if len(lat.a['href'].split('@')) ==2:
-                lat1.append(lat.a['href'].split('@')[1].split(',')[0])
-                lng1.append(lat.a['href'].split('@')[1].split(',')[1])
+    return_main_object = []
+    addresses = []
+
+
+
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+        "accept": "application/json, text/javascript, */*; q=0.01",
+        # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    }
+
+    # it will used in store data.
+    locator_domain = "https://www.dostoros.com"
+    location_name = ""
+    street_address = "<MISSING>"
+    city = "<MISSING>"
+    state = "<MISSING>"
+    zipp = "<MISSING>"
+    country_code = "US"
+    store_number = "<MISSING>"
+    phone = "<MISSING>"
+    location_type = "<MISSING>"
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
+    raw_address = ""
+    hours_of_operation = "<MISSING>"
+    page_url = "<MISSING>"
+
+
+
+    r= requests.get('https://www.dostoros.com/locations',headers = headers)
+    soup = BeautifulSoup(r.text,'lxml')
+    a = soup.find('div',class_='locations').find('div',class_='columns').find_all('a')
+    for i in a:
+        # print()
+        r = requests.get('https://www.dostoros.com'+i['href'],headers = headers)
+        soup = BeautifulSoup(r.text,'lxml')
+        info = soup.find('div',class_= 'locations').find('div',class_='columns').find('div',class_='list').find('div',class_='copy og')
+        for loc in info.find_all('div',class_='place'):
+            location_name = loc['data-name']
+            address = loc.find('div',class_='info').find('div',class_='address')
+            list_address = list(address.stripped_strings)
+            street_address = list_address[1]
+            csz = list_address[2].split(',')
+            if len(csz) ==2:
+                city = csz[0]
+                state = csz[1].split()[0]
+                zipp = csz[1].split()[-1]
             else:
-                lat1.append("<MISSING>")
-                lng1.append("<MISSING>")
+                city = " ".join(csz[0].split()[:2])
+                state = csz[0].split()[2]
+                zipp = csz[0].split()[-1]
+            hours = loc.find('div',class_='info').find('div',class_='hours')
+            list_hours = list(hours.stripped_strings)
+            if "hours" == list_hours[0] or "Now Open" == list_hours[0]:
+                hours_of_operation = " ".join(list_hours[1:])
+                # print(hours_of_operation)
+            else:
+                hours_of_operation = "<MISSING>"
+            coords = loc.find('div',class_='info').find('div',class_='mapit').a['href'].split('@')[-1].split('/')[0].split(',')
+            if len(coords) >1:
+                latitude = coords[0].strip()
+                longitude =coords[1].strip()
+            else:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
 
-        for j in name1:
-            store_name.append(list(j.stripped_strings)[0])
-           
-        for j in h2:
-            hours.append(" ".join(list(j.stripped_strings)))
-        for index,j in enumerate(k1):
-            tem_var=[]
-            st = list(j.stripped_strings)[1]
-            city= list(j.stripped_strings)[2].split(",")[0].replace(" NY 10025","")
-            zip1 = list(j.stripped_strings)[2].split( )[-1]
-            state = list(j.stripped_strings)[2].split( )[-2]
-           
 
-            tem_var.append(st)
-            tem_var.append(city)
-            tem_var.append(state)
-            tem_var.append(zip1)
-            tem_var.append("US")
-            tem_var.append("<MISSING>")
-            tem_var.append("<INACCESSIBLE>")
-            tem_var.append("dostoros")
-            # tem_var.append(lat1)
-            # tem_var.append(lng1)
-            # tem_var.append(hours[index])
-            url.append("https://dostoros.com"+i.a['href'])
-            store_detail.append(tem_var)
-            
 
-   
-    for i in range(len(store_name)):
-        store = list()
-        store.append("https://dostoros.com")
-        store.append(store_name[i])
-        store.extend(store_detail[i])
-        store.append(lat1[i])
-        store.append(lng1[i])
-        store.append(hours[i].replace("Work or live in the area? Email info@dostoros.com to be added to our pre-opening event list!","<MISSING>"))
-        store.append(url[i])
-        return_main_object.append(store) 
+
+            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+            store = ["<MISSING>" if x == "" or x == None or x == "." else x for x in store]
+
+            print("data = " + str(store))
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+            return_main_object.append(store)
+
+
 
     return return_main_object
+
+
 
 
 def scrape():
@@ -94,5 +113,3 @@ def scrape():
 
 
 scrape()
-
-

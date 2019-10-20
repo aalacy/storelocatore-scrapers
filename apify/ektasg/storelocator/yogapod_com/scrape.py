@@ -53,44 +53,48 @@ def fetch_data():
             try:
                 street_addr = tagged['BuildingName'].split('\n')[0] + " " + tagged['AddressNumber'] + " " + \
                               tagged['StreetNamePreDirectional'] + " " + tagged['StreetName'] + " " + \
-                              tagged['OccupancyType'] + " " + tagged['OccupancyIdentifier']
+                              tagged['OccupancyType'] + " " + tagged['OccupancyIdentifier'].split('\n')[0]
             except:
                 try:
                     street_addr = tagged['AddressNumber'] + " " + tagged['StreetNamePreDirectional'] + " " + tagged[
                     'StreetName'] + " " + tagged['StreetNamePostType'].split('\n')[0]
                 except:
                     try:
-                        street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + \
-                                      tagged['StreetNamePostType'].split('\n')[0] + " " + tagged[
-                                          'StreetNamePostDirectional'] + " " + tagged['OccupancyIdentifier']
+                        street_addr = tagged['AddressNumber'] + " " + tagged['StreetNamePreType'] + " " + \
+                                      tagged['StreetName'] + " " + tagged['OccupancyIdentifier'].split('\n')[0]
                     except:
                         try:
-                            street_addr = tagged['AddressNumber'] + " " + tagged['StreetNamePreDirectional'] + " " + tagged[
-                                'StreetName'] + " " + tagged['StreetNamePostType'].split('\n')[0]
+                            street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + \
+                                          tagged['StreetNamePostType'].split('\n')[0] + " " + tagged[
+                                              'StreetNamePostDirectional'] + " " + tagged['OccupancyIdentifier'].split('\n')[0]
                         except:
                             try:
-                                street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + \
-                                              tagged['StreetNamePostDirectional'].split('\n')[0] + " " + \
-                                              tagged['StreetNamePostType'].split('\n')[0]
+                                street_addr = tagged['AddressNumber'] + " " + tagged['StreetNamePreDirectional'] + " " + tagged[
+                                    'StreetName'] + " " + tagged['StreetNamePostType'].split('\n')[0]
                             except:
                                 try:
                                     street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + \
-                                                  tagged['StreetNamePostType'].split('\n')[0] + " " + \
-                                                  tagged['OccupancyIdentifier'].split('\n')[0]
+                                                  tagged['StreetNamePostDirectional'].split('\n')[0] + " " + \
+                                                  tagged['StreetNamePostType'].split('\n')[0]
                                 except:
                                     try:
                                         street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + \
-                                                      tagged['StreetNamePostType'].split('\n')[0]
+                                                      tagged['StreetNamePostType'].split('\n')[0] + " " + \
+                                                      tagged['OccupancyIdentifier'].split('\n')[0]
                                     except:
                                         try:
-                                            street_addr = tagged['AddressNumber'] + " " + tagged[
-                                                'StreetNamePreType'] + " " + tagged['StreetName'] + " " + tagged[
-                                                              'StreetNamePostDirectional']
+                                            street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + \
+                                                          tagged['StreetNamePostType'].split('\n')[0]
                                         except:
                                             try:
-                                                street_addr = tagged['AddressNumber'] + " " + tagged['StreetName']
+                                                street_addr = tagged['AddressNumber'] + " " + tagged[
+                                                    'StreetNamePreType'] + " " + tagged['StreetName'] + " " + tagged[
+                                                                  'StreetNamePostDirectional']
                                             except:
-                                                street_addr = '<MISSING>'
+                                                try:
+                                                    street_addr = tagged['AddressNumber'] + " " + tagged['StreetName']
+                                                except:
+                                                    street_addr = '<MISSING>'
 
             state = tagged['StateName']
             city = tagged['PlaceName']
@@ -126,7 +130,7 @@ def fetch_data():
                 'https://www.yogapod.com/',
                 page_url,
                 location_name,
-                street_addr,
+                street_addr.replace("\n", " "),
                 city,
                 state,
                 zipcode,
@@ -136,7 +140,7 @@ def fetch_data():
                 '<MISSING>',
                 lat,
                 lon,
-                hours_of_op
+                hours_of_op.replace("\n", " ")
             ])
             count = count + 1
             print(count)

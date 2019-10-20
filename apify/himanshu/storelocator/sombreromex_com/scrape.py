@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -39,7 +39,7 @@ def fetch_data():
     country_code = ""
     store_number = "<MISSING>"
     phone = ""
-    location_type = "sombreromex"
+    location_type = "<MISSING>"
     latitude = ""
     longitude = ""
     hours_of_operation = ""
@@ -48,14 +48,31 @@ def fetch_data():
         # for script in soup.find_all('div', {'mmtl-content'}):
         list_store_data = list(script.stripped_strings)
 
-        cityTag = script.parent.find('div', {'class': 'mmtl-col mmtl-col-sm-12'})
-        if cityTag is not None:
-            city = cityTag.text.strip()
+        # cityTag = script.parent.find('div', {'class': 'mmtl-col mmtl-col-sm-12'})
+        # # print(cityTag)
+        # if cityTag is not None:
+        #     city = cityTag.text.strip()
+
 
         # print(" city === " + str(city))
 
         # if len(list_store_data) == 1:
         #     city = list_store_data[0]
+        if script.find(lambda tag: (tag.name == "a") and "More Info" in tag.text) is not None:
+            url = script.find(lambda tag: (tag.name == "a") and "More Info" in tag.text)['href'].split('//')
+            if len(url) ==1:
+                page_url = base_url + "".join(url)
+            else:
+                page_url = "".join(url)
+        else:
+            page_url = "<MISSING>"
+        # print(page_url)
+
+
+
+
+
+
 
         if len(list_store_data) > 1:
 
@@ -84,23 +101,44 @@ def fetch_data():
                 list_store_data.remove('Order Online')
 
             # print(str(len(list_store_data)) + ' = list_store_data ===== ' + str(list_store_data))
+            # print('~~~~~~~~~~~~~~~~')
 
             if len(list_store_data) > 3:
+                # print(str(len(list_store_data)) + ' = list_store_data ===== ' + str(list_store_data))
+                # print(list_store_data[1].split(','))
+                # print('~~~~~~~~~~~~~~~~')
                 location_name = list_store_data[0]
                 phone = list_store_data[-2]
                 hours_of_operation = list_store_data[-1]
                 # city = location_name
 
                 if len(list_store_data[1].split(',')) > 1:
-                    street_address = list_store_data[1].split(',')[0]
+                    st_address = list_store_data[1].split(',')[0].split()
+                    # print(st_address)
+                    # print(len(st_address))
+                    # print(('~~~~~~~~~~~~~~~~`'))
+                    if len(st_address) >4:
+                        street_address = " ".join(st_address[:-2])
+                        city = " ".join(st_address[-2:]).replace('Ave','').strip()
+                        # print(street_address +"/"+city)
+                    else:
+                        street_address = " ".join(st_address).strip()
+                        city = " ".join(list_store_data[1].split(',')[1].split()[:2])
+
                     zipp = list_store_data[1].split(',')[1].split(' ')[-1]
                     state = list_store_data[1].split(',')[1].split(' ')[-2]
+                    # print(zipp,state)
                 else:
-                    street_address = list_store_data[1][:-8].strip()
-                    state = list_store_data[1][-8:-6]
-                    zipp = list_store_data[1][-5:]
+                    street_address = " ".join(list_store_data[1].split()[:-4])
+                    city =  " ".join(list_store_data[1].split()[-4:-2])
+                    state = list_store_data[1].split()[-2]
+                    zipp = list_store_data[1].split()[-1]
+
 
             else:
+                # print(str(len(list_store_data)) + ' = list_store_data ===== ' + str(list_store_data))
+                # # print(list_store_data[1].split(','))
+                # print('~~~~~~~~~~~~~~~~')
                 hours_of_operation = list_store_data[-1]
                 phone = list_store_data[-2]
 
@@ -108,11 +146,14 @@ def fetch_data():
                 state = list_store_data[0].split(',')[-1].split(' ')[-2]
 
                 if len(list_store_data[0].split(',')) > 1:
-                    street_address = list_store_data[0].split(',')[0]
+                    street_address =  " ".join(list_store_data[0].split(',')[0].split()[:-1])
+                    city =  "".join(list_store_data[0].split(',')[0].split()[-1])
                 else:
-                    street_address = ' '.join(list_store_data[0].split(',')[0].split(' ')[:-2])
+                    street_address = ' '.join(list_store_data[0].split(',')[0].split(' ')[:-3])
+                    city = ''.join(list_store_data[0].split(',')[0].split(' ')[-3])
 
                 location_name = street_address.split(' ')[-1]
+                # print(street_address +"|"+city)
                 # city = location_name
 
             # city = city.split("–")[0]
@@ -129,7 +170,7 @@ def fetch_data():
             # print(str(len(list_store_data)) + " = script ------- " + str(list_store_data))
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
             # print("data = " + str(store))
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

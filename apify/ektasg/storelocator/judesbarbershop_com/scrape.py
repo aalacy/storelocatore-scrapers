@@ -40,8 +40,11 @@ def fetch_data():
     time.sleep(10)
 
     stores = driver.find_elements_by_css_selector('li.elementor-icon-list-item > a')
+    store1 = driver.find_elements_by_css_selector('h4.elementor-heading-title.elementor-size-default > a')
     names = [stores[i].get_attribute('href') for i in range(0, len(stores))]
+    names.append(store1[1].get_attribute('href'))
     location_name = [stores[i].text for i in range(0, len(stores))]
+    location_name.append(store1[1].text)
 
     hours_of_op_general = driver.find_element_by_css_selector('div.elementor-element.elementor-element-7a1824e6.elementor-widget.elementor-widget-text-editor').text
     hours_of_op_cel_north = driver.find_element_by_css_selector('div.elementor-element.elementor-element-66947a9f.elementor-widget.elementor-widget-text-editor').text
@@ -87,7 +90,7 @@ def fetch_data():
                 count+=1
                 print(count)
             else:
-                break
+                pass
 
     time.sleep(3)
     driver.quit()

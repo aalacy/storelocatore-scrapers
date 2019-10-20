@@ -57,17 +57,11 @@ def parse_address(address):
         'zipcode' : get_value(zipcode)
     }
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        for row in data:
-            writer.writerow(row)
 
 def fetch_data():
     output_list = []
     history = []
-    with open('../cities.json') as data_file:    
+    with open('cities.json') as data_file:    
         city_list = json.load(data_file)  
     url = "https://tools.usps.com/UspsToolsRestServices/rest/POLocator/findLocations"
     headers = {       
@@ -79,53 +73,54 @@ def fetch_data():
     }
     page_url = 'https://tools.usps.com/find-location.htm'
     session = requests.Session()
-    for city in city_list:
-        payload = {
-            "maxDistance": "100",
-            "requestCity": city['city'],
-            "requestRefineHours": "",
-            "requestRefineTypes": "",
-            "requestServices": "",
-            "requestState": city['state'],
-            "requestType": "po"
-        }
-        request = session.post(url, headers=headers, data=json.dumps(payload))
-        store_list = json.loads(request.text)['locations']        
-        for store in store_list:
-            if get_value(store['locationID']) not in history:                
-                history.append(get_value(store['locationID']))
-                output = []
-                output.append(base_url) # url
-                output.append(page_url) # page url
-                output.append(get_value(store['locationName'])) #location name
-                output.append(get_value(store['address1'])) #address
-                output.append(get_value(store['city'])) #city
-                output.append(get_value(store['state'])) #state
-                zipcode = store['zip5']
-                if 'zip4' in store:
-                    zipcode += '-' + store['zip4']
-                output.append(get_value(zipcode)) #zipcode
-                output.append('US') #country code
-                output.append(get_value(store['locationID'])) #store_number
-                output.append(get_value(store['phone'])) #phone
-                output.append('Usps') #location type
-                output.append(get_value(store['latitude'])) #latitude
-                output.append(get_value(store['longitude'])) #longitude
-                store_hours = []
-                if len(store['locationServiceHours']) > 0:
-                    for hour in store['locationServiceHours'][0]['dailyHoursList']:
-                        if len(hour['times']) > 0:
-                            duration = validate(hour['times'][0]['open']) + '-' + validate(hour['times'][0]['close'])
-                        else:
-                            duration = 'closed'
-                        store_hours.append(validate(hour['dayOfTheWeek'] + ' ' + duration))            
-                output.append(get_value(store_hours)) #opening hours
-                output_list.append(output)  
-                print(output)                    
-    return output_list
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        for city in city_list:
+            payload = {
+                "maxDistance": "100",
+                "requestCity": city['city'],
+                "requestRefineHours": "",
+                "requestRefineTypes": "",
+                "requestServices": "",
+                "requestState": city['state'],
+                "requestType": "po"
+            }
+            request = session.post(url, headers=headers, data=json.dumps(payload))
+            store_list = json.loads(request.text)['locations']        
+            for store in store_list:
+                if get_value(store['locationID']) not in history:                
+                    history.append(get_value(store['locationID']))
+                    output = []
+                    output.append(base_url) # url
+                    output.append(page_url) # page url
+                    output.append(get_value(store['locationName'])) #location name
+                    output.append(get_value(store['address1'])) #address
+                    output.append(get_value(store['city'])) #city
+                    output.append(get_value(store['state'])) #state
+                    zipcode = store['zip5']
+                    if 'zip4' in store:
+                        zipcode += '-' + store['zip4']
+                    output.append(get_value(zipcode)) #zipcode
+                    output.append('US') #country code
+                    output.append(get_value(store['locationID'])) #store_number
+                    output.append(get_value(store['phone'])) #phone
+                    output.append('Usps') #location type
+                    output.append(get_value(store['latitude'])) #latitude
+                    output.append(get_value(store['longitude'])) #longitude
+                    store_hours = []
+                    if len(store['locationServiceHours']) > 0:
+                        for hour in store['locationServiceHours'][0]['dailyHoursList']:
+                            if len(hour['times']) > 0:
+                                duration = validate(hour['times'][0]['open']) + '-' + validate(hour['times'][0]['close'])
+                            else:
+                                duration = 'closed'
+                            store_hours.append(validate(hour['dayOfTheWeek'] + ' ' + duration))            
+                    output.append(get_value(store_hours)) #opening hours
+                    # output_list.append(output)  
+                    # print(output)  
+                    writer.writerow(output)
 
-def scrape():
-    data = fetch_data()
-    write_output(data)
 
-scrape()
+fetch_data()
+

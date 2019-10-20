@@ -2,6 +2,7 @@ import time
 import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import usaddress
 
 
 options = Options()
@@ -39,17 +40,59 @@ def fetch_data():
             lat = store.find_element_by_css_selector('div.location-address').get_attribute('data-lat')
             lng = store.find_element_by_css_selector('div.location-address').get_attribute('data-lng')
             address = info[1]
-            street_address = address.split(",")[0]
-            city = address.split(",")[1]
-            state = address.split(" ")[-2]
-            zipcode = address.split(" ")[-1]
+            tagged = usaddress.tag(address)[0]
+            try:
+                street_addr = tagged['AddressNumber'] + " " + \
+                              tagged['StreetName'] + " " + tagged['StreetNamePostType'].split('\n')[0]+ " " + \
+                              tagged['OccupancyType'] + " " + tagged['OccupancyIdentifier']
+            except:
+                try:
+                    street_addr = tagged['AddressNumber'] + " " + tagged['StreetNamePreDirectional'] + " " + tagged[
+                        'StreetName'] + " " + tagged['StreetNamePostType'].split('\n')[0]
+                except:
+                    try:
+                        street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + \
+                                      tagged['OccupancyType'].split('\n')[0] + " " + tagged['OccupancyIdentifier']
+                    except:
+                        try:
+                            street_addr = tagged['AddressNumber'] + " " + tagged['StreetNamePreDirectional'] + " " + \
+                                          tagged[
+                                              'StreetName'] + " " + tagged['StreetNamePostType'].split('\n')[0]
+                        except:
+                            try:
+                                street_addr = tagged['AddressNumber'] + " " + tagged['StreetNamePreDirectional'] + " " + \
+                                              tagged['StreetName'] + " " + \
+                                              tagged['StreetNamePostType'].split('\n')[0] + " " + \
+                                                tagged['OccupancyType'] + " " + tagged['OccupancyIdentifier']
+                            except:
+                                try:
+                                    street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + \
+                                                  tagged['StreetNamePostType'].split('\n')[0] + " " + \
+                                                  tagged['OccupancyIdentifier'].split('\n')[0]
+                                except:
+                                    try:
+                                        street_addr = tagged['AddressNumber'] + " " + tagged['StreetName'] + " " + \
+                                                      tagged['StreetNamePostType'].split('\n')[0]
+                                    except:
+                                        try:
+                                            street_addr = tagged['AddressNumber'] + " " + tagged[
+                                                'StreetNamePreType'] + " " + tagged['StreetName'] + " " + tagged[
+                                                              'StreetNamePostDirectional']
+                                        except:
+                                            try:
+                                                street_addr = tagged['AddressNumber'] + " " + tagged['StreetName']
+                                            except:
+                                                street_addr = '<MISSING>'
+            state = tagged['StateName']
+            city = tagged['PlaceName']
+            zipcode = tagged['ZipCode']
             phone = info[2]
             hours_of_op = info[3] +" " + info[4]
             data.append([
                  'https://paninikabobgrill.com/',
                   page_url,
                   location_name,
-                  street_address,
+                  street_addr,
                   city,
                   state,
                   zipcode,

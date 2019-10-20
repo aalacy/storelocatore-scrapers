@@ -9,7 +9,7 @@ import  pprint
 
 
 def write_output(data):
-    with open('kwi.csv', mode='w') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -95,10 +95,10 @@ def fetch_data():
                     yield store
             
             if len(k) < MAX_RESULTS:
-                print("max distance update")
+                # print("max distance update")
                 search.max_distance_update(MAX_DISTANCE)
             elif len(k) == MAX_RESULTS:
-                print("max count update")
+                # print("max count update")
                 search.max_count_update(result_coords)
             else:
                 raise Exception("expected at most " + str(MAX_RESULTS) + " results")

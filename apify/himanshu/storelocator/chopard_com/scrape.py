@@ -1,107 +1,115 @@
+
 import csv
 import requests
 from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
-# import time
-
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
-
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
-    return_main_object = []
+    # zips = sgzip.for_radius(100)
+
+    # print(sgzip.coords_for_radius(50))
     addresses = []
+    return_main_object = []
+    header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
+    base_url = 'https://www.chopard.com/'
+
+    con = []
+
+    get_data_url = 'https://www.chopard.com/intl/storelocator'
+
+    r = requests.get(get_data_url, headers=header)
+
+    soup = BeautifulSoup(r.text, "lxml")
+    jk = json.loads(soup.find('select', {'class': 'country-field'}).find_previous('script').text.replace(
+        'var preloadedStoreList =', '').replace(';', '').strip())
 
 
 
-    headers = {
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
-        "accept": "application/json, text/javascript, */*; q=0.01",
-        # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    }
+    for vj in jk['stores']:
+        try:
+            if vj['country_id'] in ["US","CA"]:
+                # print(vj['country_id'])
 
-    # it will used in store data.
-    locator_domain = "https://www.chopard.com/"
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = ""
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
+                locator_domain = base_url
+
+                location_name = vj['name'].encode('ascii', 'ignore').decode('ascii').strip()
+                street_address = vj['address_1'].encode('ascii', 'ignore').decode('ascii').strip()
+
+                city = vj['city'].encode('ascii', 'ignore').decode('ascii').strip()
+                state = ''
+                zip = ''
+                if 'zipcode' in vj:
+                    if vj['zipcode'] != None:
+                        zip =  vj['zipcode'].encode('ascii', 'ignore').decode('ascii').strip()
 
 
+                store_number = vj['store_code'].encode('ascii', 'ignore').decode('ascii').strip()
+                country_code = vj['country_id'].encode('ascii', 'ignore').decode('ascii').strip()
+                phone = vj['phone'].encode('ascii', 'ignore').decode('ascii').strip().replace(' /-','')
+                location_type = 'chopard'
+                latitude = vj['lat'].encode('ascii', 'ignore').decode('ascii').strip()
+                longitude = vj['lng'].encode('ascii', 'ignore').decode('ascii').strip()
 
-    r= requests.get('https://www.chopard.com/us/storelocator',headers = headers)
-    soup = BeautifulSoup(r.text,'lxml')
-    script = soup.find_all('script',{'type':'text/javascript'})[-6]
-    # script_text = '"stores":'+script.text.split('"stores":')[-1].split(']')[0]+']'
-    script_text = script.text.split('=')[-1].split(';')[0]
-    # print(script.text)
-    # print(script_text)
-    json_data = json.loads(script_text)
-    # print(json_data['stores'])
-    for x in json_data['stores']:
-        page_url = x['details_url']
-        store_number =x['store_code']
-        location_name = x['name']
-        if x['address_2'] ==None and x['address_3'] == None:
-            street_address = x['address_1']
-        elif x['address_2'] !=None and x['address_3'] == None:
-            street_address = x['address_1'] + x['address_2']
-        elif x['address_1'] !=None and x['address_2'] !=None and x['address_3'] !=None :
-            street_address = x['address_1'] + x['address_2'] + x['address_3']
-        city = x['city']
-        zipp = x['zipcode']
-        # print(zipp)
-        latitude = x['lat']
-        longitude = x['lng']
-        phone = x['phone']
-        country_code = x['country_id']
-        # print(street_address)
+                if street_address in addresses:
+                    continue
+                addresses.append(street_address)
+
+                r = requests.get(vj['details_url']
+                                 , headers=header)
+                soup = BeautifulSoup(r.text, "lxml")
+                h = soup.find_all('div',{'class':'data-block'})[1].find('p',class_='opening')
+                if h is not None:
+                    h1 = h.nextSibling.nextSibling
+                    h_list = list(h1.stripped_strings)
+                    hours_of_operation = " ".join(h_list)
+
+
+                else:
+                    # print(page_url)
+                    hours_of_operation = "<MISSING>"
+                # print(hours_of_operation)
 
 
 
+                store = []
+                store.append(locator_domain if locator_domain else '<MISSING>')
+                store.append(location_name if location_name else '<MISSING>')
+                store.append(street_address if street_address else '<MISSING>')
+                store.append(city if city else '<MISSING>')
+                store.append(state if state else '<MISSING>')
+                store.append(zip if zip else '<MISSING>')
+                store.append(country_code if country_code else '<MISSING>')
+                store.append(store_number if store_number else '<MISSING>')
+                store.append(phone if phone else '<MISSING>')
+                store.append(location_type if location_type else '<MISSING>')
+                store.append(latitude if latitude else '<MISSING>')
+                store.append(longitude if longitude else '<MISSING>')
 
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-        store = ["<MISSING>" if x == "" or x == None or x == "." else x for x in store]
+                store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+                # print('===',str(store))
 
-        # print("data = " + str(store))
-        # print(
-        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-        return_main_object.append(store)
+                return_main_object.append(store)
 
 
+        except:
+            continue
 
-    return return_main_object
 
-
+    return  return_main_object
 
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
