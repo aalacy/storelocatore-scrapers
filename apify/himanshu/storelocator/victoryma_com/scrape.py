@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -44,7 +44,12 @@ def fetch_data():
             street_address = address[0].strip()
         # print(city,state,street_address,)
         city = soup.find('span', {'class': 'address'}).text.strip().split(',')[-2].strip()
-        state = soup.find('span', {'class': 'address'}).text.strip().split(',')[-1].strip().split(' ')[0].replace('\t','')
+        st = soup.find('span', {'class': 'address'}).text.strip().split(',')[-1].strip().split(' ')[0].replace('\t','')
+        if "Spain".lower() == st.lower():
+            state = "<MISSING>"
+        else:
+            state = st
+        # print(state)
 
         zip = soup.find('span', {'class': 'address'}).text.strip().split(',')[-1].strip().split(' ')[1].replace('\t','')
         store_number = '<MISSING>'
@@ -59,7 +64,7 @@ def fetch_data():
 
             db.append(i.text.strip().replace(" ", ""))
 
-        hours_of_operation = ' '.join(db).replace('\n','').replace('\t',' ').replace('    ','')
+        hours_of_operation = ' '.join(db).replace('\n','').replace('\t',' ')
 
 
 
@@ -76,7 +81,6 @@ def fetch_data():
         store.append(location_type if location_type else '<MISSING>')
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
-        store.append('<MISSING>')
 
         store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
         # print("data == "+str(store))

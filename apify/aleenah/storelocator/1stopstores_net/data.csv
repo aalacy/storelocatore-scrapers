@@ -1,6 +1,12 @@
-"locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation","page_url"
-"https://www.theoceanaire.com","Reynoldsville","<MISSING>","<MISSING>","<MISSING>","<MISSING>","US","<MISSING>","<INACCESSIBLE>","<MISSING>","<MISSING>","<MISSING>","Mon - Thurs CLOSED Fri CLOSED Sat CLOSED Sun CLOSED","https://www.theoceanaire.com"
-"https://www.theoceanaire.com","Grampian","<MISSING>","<MISSING>","<MISSING>","<MISSING>","US","<MISSING>","<INACCESSIBLE>","<MISSING>","<MISSING>","<MISSING>","Mon - Fri 5AM - 10PM Sat 6AM - 10PM Sunday 7AM - 10PM","https://www.theoceanaire.com"
-"https://www.theoceanaire.com","Sykesville","<MISSING>","<MISSING>","<MISSING>","<MISSING>","US","<MISSING>","<INACCESSIBLE>","<MISSING>","<MISSING>","<MISSING>","Mon - Wed 6AM - 9PM Thurs - Sat 6AM - 10PM Sun 7AM - 10PM","https://www.theoceanaire.com"
-"https://www.theoceanaire.com","Dubois / Treasure Lake","<MISSING>","<MISSING>","<MISSING>","<MISSING>","US","<MISSING>","<INACCESSIBLE>","<MISSING>","<MISSING>","<MISSING>","Mon - Fri 6AM - 10PM Sat & Sun 7AM - 10PM","https://www.theoceanaire.com"
-"https://www.theoceanaire.com","Brookville","<MISSING>","<MISSING>","<MISSING>","<MISSING>","US","<MISSING>","<INACCESSIBLE>","<MISSING>","<MISSING>","<MISSING>","<MISSING>","https://www.theoceanaire.com"
+"locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation","page_url"
+
+"https://1stopstores.net","Reynoldsville","<MISSING>","<MISSING>","<MISSING>","<MISSING>","US","<MISSING>","<INACCESSIBLE>","<MISSING>","<MISSING>","<MISSING>","Mon - Thurs CLOSED Fri CLOSED Sat CLOSED Sun CLOSED","https://1stopstores.net"
+
+"https://1stopstores.net","Grampian","<MISSING>","<MISSING>","<MISSING>","<MISSING>","US","<MISSING>","<INACCESSIBLE>","<MISSING>","<MISSING>","<MISSING>","Mon - Fri 5AM - 10PM Sat 6AM - 10PM Sunday 7AM - 10PM","https://1stopstores.net"
+
+"https://1stopstores.net","Sykesville","<MISSING>","<MISSING>","<MISSING>","<MISSING>","US","<MISSING>","<INACCESSIBLE>","<MISSING>","<MISSING>","<MISSING>","Mon - Wed 6AM - 9PM Thurs - Sat 6AM - 10PM Sun 7AM - 10PM","https://1stopstores.net"
+
+"https://1stopstores.net","Dubois / Treasure Lake","<MISSING>","<MISSING>","<MISSING>","<MISSING>","US","<MISSING>","<INACCESSIBLE>","<MISSING>","<MISSING>","<MISSING>","Mon - Fri 6AM - 10PM Sat & Sun 7AM - 10PM","https://1stopstores.net"
+
+"https://1stopstores.net","Brookville","<MISSING>","<MISSING>","<MISSING>","<MISSING>","US","<MISSING>","<INACCESSIBLE>","<MISSING>","<MISSING>","<MISSING>","<MISSING>","https://1stopstores.net"
+

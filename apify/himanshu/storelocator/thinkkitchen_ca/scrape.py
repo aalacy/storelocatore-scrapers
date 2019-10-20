@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -19,53 +19,59 @@ def write_output(data):
 
 def fetch_data():
   
-    base_url= "http://www.thinkkitchen.us/#social-media"
+    base_url= "http://thinkkitchen.ca/en/storelocator.php"
     r = requests.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
-  
-    hours = []
-    name_store=[]
-    store_detail=[]
-
     return_main_object=[]
-    # k = (soup.find_all("div",{"class":"sqs-block-content"}))
-    k = soup.find_all("div",{'class':"textwidget"})
-
+    k = soup.find("div",{'class':"layer1"}).find_all("div",{"class":"content","id":"laye1i"})[:7]
     for i in k:
-        tem_var=[]
-        if len(list(i.stripped_strings)) !=1:
-            name = list(i.stripped_strings)[0]
-
-            stopwords ='NOW OPEN'
-            v= list(i.stripped_strings)
-            new_words = [word for word in v if word not in stopwords]
-            stopwords ='(opening Oct 30/2017)'
-
-            new_words1 = [word for word in new_words if word not in stopwords]
-            st = new_words1[2]
-            city = new_words1[3].split(',')[0]
-            state=(new_words1[3].split(',')[1].replace("H4P 1M7",""))
-            zip1 = (new_words1[4].split( )[-1].replace("Canada","H4P 1M7"))
-         
-            if len(zip1) !=5:
-                contry="CA"
-            else:
-                contry="US"
-
-
-            tem_var.append("http://www.thinkkitchen.us")
-            tem_var.append(name)
-            tem_var.append(st)
+        st = i.text.replace("  ","").strip().replace("\n",",").split(",,")
+        for j in range(len(st)):
+            tem_var=[]
+            v = st[j].split(",")
+            if v[0]==' ':
+                del v[0]
+            if len(v)==2:
+                name = (v[0])
+                full_address1 = v[-1].split("Mon")[0].encode('ascii', 'ignore').decode('ascii').strip().replace("(","").replace(")"," ").replace("?","")
+                phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(full_address1))[-1]
+                zip1 = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(full_address1))[-1]
+                state_list = re.findall(r' ([A-Z]{2}) ', str(full_address1))[-1]
+                address = full_address1.replace(phone_list,"").replace(zip1,"").replace(state_list,"").split("  ")[0].replace("Winnipeg","")
+                city = (full_address1.replace(phone_list,"").replace(zip1,"").replace(state_list,"").replace(address,"").strip()).strip()
+                hours = (" ".join(v[-1].split("Mon")[1:]).replace(".-","Mon-").replace(". - ","Mon-").replace("?","").replace("|"," ").encode('ascii', 'ignore').decode('ascii').strip())
+            if len(v)==3:
+                name = (v[0])
+                full_address =(v[-1].split("Mon")[0].encode('ascii', 'ignore').decode('ascii').strip().replace("?","").replace("("," ").replace(")"," ").replace("BCV4M 0B3","BC  V4M 0B3"))
+                ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(full_address))
+                state_list = re.findall(r' ([A-Z]{2}) ', str(full_address))
+                hours_list = (v[-1].split("Mon")[1:])
+                if hours_list:
+                    hours  =" ".join(hours_list).replace(". - ","Mon ").replace(".-","Mon").replace("-Wed","Mon-Wed").replace("|"," ").replace("?","").replace("  "," ").replace("/","").encode('ascii', 'ignore').decode('ascii').strip()
+                
+                zip1 = (ca_zip_list[-1])
+                if state_list:
+                    state = state_list[-1]
+                phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(full_address))[-1]
+                city = full_address.replace(phone_list,"").replace(state,"").replace(zip1,"").replace("Boulevard Laurier ","<MISSING>").replace("Sault Ste. ","").replace("BC","<MISSING>").strip()
+                address = (v[1:][0].replace("2700","2700, Boulevard Laurier").replace("293 Bay Street","293 Bay Street, Sault Ste").encode('ascii', 'ignore').decode('ascii').strip())
+ 
+  
+            tem_var.append("http://thinkkitchen.ca")
+            tem_var.append(name.replace("\n","").strip().lstrip())
+            tem_var.append(address)
             tem_var.append(city)
             tem_var.append(state.replace(".",""))
             tem_var.append(zip1)
-            tem_var.append(contry)
+            tem_var.append("CA")
+            tem_var.append("<MISSING>")
+            tem_var.append(phone_list)
             tem_var.append("<MISSING>")
             tem_var.append("<MISSING>")
-            tem_var.append("thinkkitchen")
             tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
+            tem_var.append(hours if hours else "<MISSING>")
+            tem_var.append("http://thinkkitchen.ca/en/storelocator.php")
+            # print(tem_var)
             return_main_object.append(tem_var)
    
     return return_main_object
@@ -77,4 +83,7 @@ def scrape():
 
 
 scrape()
+
+
+
 

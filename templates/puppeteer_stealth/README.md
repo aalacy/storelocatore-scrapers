@@ -10,7 +10,7 @@ Apify test account information:
 Token: iZH7QL3aoPb3wvq9TdkJFRDLC
 
 Running the crawler with proxy enabled:
-`apify init && USE_PROXY=true APIFY_PROXY_PASSWORD=XbAAL4ZhCkWkGFTD3HHTuTgHb apify run --purge`
+`apify init && USE_PROXY=true APIFY_PROXY_PASSWORD=HKT2ZAHSvokX3hLibngLgo5nT apify run --purge`
 
 Remember to update `package.json` with all dependencies needed to run your scraper.
 Please make sure that:

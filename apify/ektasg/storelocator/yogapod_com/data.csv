@@ -1,46 +1,14 @@
 "locator_domain","page_url","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
-"https://www.yogapod.com/","https://www.yogapod.com/tucson/","tucson","St. Philip’s Plaza 4280 N Campbell Suite 130
-","Tucson","AZ","85718","US","<MISSING>","520.261.0728","<MISSING>","32.2856135","-110.9450778","Monday 5:30AM – 7:00PM; Child Care 8:00AM – 12:00PMTuesday 5:30AM – 7:00PM; Child Care 8:00AM – 12:00PMWednesday 5:30AM – 7:00PM; Child Care 8:00AM – 12:00PMThursday 5:30AM – 7:00PM; Child Care 8:00AM – 12:00PMFriday 5:30AM – 7:00PM; Child Care 8:00AM – 12:00PMSaturday 7:00AM – 12:00PM; Child Care 7:00AM – 12:00PMSunday 7:00AM – 12:00PM; Child Care 7:00AM – 12:00PM"
-"https://www.yogapod.com/","https://www.yogapod.com/boulder/","boulder","1890 30th Street","Boulder","CO","80301","US","<MISSING>","303.444.4232","<MISSING>","40.0193731","-105.2546118","Monday - Friday 6:00 AM — 9:00 PM
-Saturday - Sunday 8:00 AM — 6:30 PM"
-"https://www.yogapod.com/","https://www.yogapod.com/denverwest/","denverwest","14500 W Colfax Dr","Lakewood","CO","80401","US","<MISSING>","303.590.1590","<MISSING>","39.7311208","-105.1622356","Monday - Thursday 6:00 AM — 9:00 PM
-Friday 6:00 AM — 7:30 PM
-Saturday - Sunday 9:00 AM — 6:30 PM"
-"https://www.yogapod.com/","https://www.yogapod.com/fortcollins","fortcollins","3300 S College Ave","Fort Collins","CO","80525","US","<MISSING>","970.829.8751","<MISSING>","40.5414208","-105.0786733","Monday 5:45 AM — 8:30 PM
-Tuesday 5:30 AM — 8:30 PM
-Wednesday 5:45 AM — 8:30 PM
-Thursday 5:30 AM — 8:30 PM
-Friday 5:45 AM — 8:00 PM
-Saturday 8:00 AM — 6:30 PM
-Sunday 9:15 AM — 7:30 PM"
+"https://www.yogapod.com/","https://www.yogapod.com/tucson/","tucson","St. Philip’s Plaza 4280 N Campbell Suite 130","Tucson","AZ","85718","US","<MISSING>","520.261.0728","<MISSING>","32.2856135","-110.9450778","Monday 5:30AM – 7:00PM; Child Care 8:00AM – 12:00PMTuesday 5:30AM – 7:00PM; Child Care 8:00AM – 12:00PMWednesday 5:30AM – 7:00PM; Child Care 8:00AM – 12:00PMThursday 5:30AM – 7:00PM; Child Care 8:00AM – 12:00PMFriday 5:30AM – 7:00PM; Child Care 8:00AM – 12:00PMSaturday 7:00AM – 12:00PM; Child Care 7:00AM – 12:00PMSunday 7:00AM – 12:00PM; Child Care 7:00AM – 12:00PM"
+"https://www.yogapod.com/","https://www.yogapod.com/boulder/","boulder","1890 30th Street","Boulder","CO","80301","US","<MISSING>","303.444.4232","<MISSING>","40.0193731","-105.2546118","Monday - Friday 6:00 AM — 9:00 PM Saturday - Sunday 8:00 AM — 6:30 PM"
+"https://www.yogapod.com/","https://www.yogapod.com/denverwest/","denverwest","14500 W Colfax Dr","Lakewood","CO","80401","US","<MISSING>","303.590.1590","<MISSING>","39.7311208","-105.1622356","Monday - Thursday 6:00 AM — 9:00 PM Friday 6:00 AM — 7:30 PM Saturday - Sunday 9:00 AM — 6:30 PM"
+"https://www.yogapod.com/","https://www.yogapod.com/fortcollins","fortcollins","3300 S College Ave","Fort Collins","CO","80525","US","<MISSING>","970.829.8751","<MISSING>","40.5414208","-105.0786733","Monday 5:45 AM — 8:30 PM Tuesday 5:30 AM — 8:30 PM Wednesday 5:45 AM — 8:30 PM Thursday 5:30 AM — 8:30 PM Friday 5:45 AM — 8:00 PM Saturday 8:00 AM — 6:30 PM Sunday 9:15 AM — 7:30 PM"
 "https://www.yogapod.com/","https://www.yogapod.com/lowry/","lowry","101 N Ulster Ct","Denver","CO","80230","US","<MISSING>","720.372.7129","<MISSING>","39.7228764","-104.8961345","Monday 6:30 AM – 8:45 PMTuesday 6:00 AM – 8:45 PMWednesday 6:30 AM – 8:45 PMThursday 6:00 AM – 8:45 PMFriday 6:30 AM – 6:00 PMSaturday 9:00 AM – 5:45 PMSunday 9:00 AM – 6:00 PM"
-"https://www.yogapod.com/","https://www.yogapod.com/southglenn/","southglenn","6870 S University Blvd","Centennial","CO","80122","US","<MISSING>","303.221.4035","<MISSING>","39.5920812","-104.9614383","Monday 5:30 AM — 8:15 PM
-Tuesday 6:00 AM — 7:15 PM
-Wednesday 5:30 AM — 8:15 PM
-Thursday 6:00 AM — 7:15 PM
-Friday 5:30 AM — 6:45 PM
-Saturday 7:30 AM — 6:15 PM
-Sunday 7:30 AM — 7:30 PM"
-"https://www.yogapod.com/","https://www.yogapod.com/westminster/","westminster","10450 Town Center Dr 200","Westminster","CO","80021","US","<MISSING>","720.216.0322","<MISSING>","39.8882994","-105.0788243","Monday 5:30 AM — 8:15 PM
-Tuesday 6:00 AM — 7:15 PM
-Wednesday 5:30 AM — 8:15 PM
-Thursday 6:00 AM — 7:15 PM
-Friday 5:30 AM — 6:45 PM
-Saturday 7:30 AM — 6:15 PM
-Sunday 7:30 AM — 7:30 PM"
+"https://www.yogapod.com/","https://www.yogapod.com/southglenn/","southglenn","6870 S University Blvd","Centennial","CO","80122","US","<MISSING>","303.221.4035","<MISSING>","39.5920812","-104.9614383","Monday 5:30 AM — 8:15 PM Tuesday 6:00 AM — 7:15 PM Wednesday 5:30 AM — 8:15 PM Thursday 6:00 AM — 7:15 PM Friday 5:30 AM — 6:45 PM Saturday 7:30 AM — 6:15 PM Sunday 7:30 AM — 7:30 PM"
+"https://www.yogapod.com/","https://www.yogapod.com/westminster/","westminster","10450 Town Center Dr 200","Westminster","CO","80021","US","<MISSING>","720.216.0322","<MISSING>","39.8882994","-105.0788243","Monday 5:30 AM — 8:15 PM Tuesday 6:00 AM — 7:15 PM Wednesday 5:30 AM — 8:15 PM Thursday 6:00 AM — 7:15 PM Friday 5:30 AM — 6:45 PM Saturday 7:30 AM — 6:15 PM Sunday 7:30 AM — 7:30 PM"
 "https://www.yogapod.com/","https://www.yogapod.com/gainesville/","gainesville","University Towne Center 3045 SW 34th Suite 24","Gainesville","FL","32608","US","<MISSING>","(352) 792-6373","<MISSING>","29.6255944","-82.3728327","Monday 6:00 AM – 9:00 PMTuesday 6:00 AM – 9:00 PMWednesday 6:00 AM – 9:00 PMThursday 6:00 AM – 9:00 PM"
 "https://www.yogapod.com/","https://www.yogapod.com/austin/","austin","9333 Research Blvd C-200","Austin","TX","78759","US","<MISSING>","512.856.4486","<MISSING>","30.3840225","-97.7409607","Monday 6:00 AM – 9:00 PMTuesday 6:00 AM – 9:00 PMWednesday 6:00 AM – 9:00 PMThursday 6:00 AM – 9:00 PM"
-"https://www.yogapod.com/","https://www.yogapod.com/CollegeStation/","CollegeStation","3995 6","College Station","TX","77845","US","<MISSING>","979.693.3837","<MISSING>","30.5861307","-96.2856583","Monday 6:00 AM — 8:30 PM
-Tuesday 7:30 AM — 9:00 PM
-Wednesday 5:30 AM — 9:00 PM
-Thursday 7:30 AM — 9:00 PM
-Friday 5:30 AM — 6:00 PM
-Saturday 8:00 AM — 5:30 PM
-Sunday 12:00 AM — 8:00 PM"
+"https://www.yogapod.com/","https://www.yogapod.com/CollegeStation/","CollegeStation","3995 Hwy 6 # 100","College Station","TX","77845","US","<MISSING>","979.693.3837","<MISSING>","30.5861307","-96.2856583","Monday 6:00 AM — 8:30 PM Tuesday 7:30 AM — 9:00 PM Wednesday 5:30 AM — 9:00 PM Thursday 7:30 AM — 9:00 PM Friday 5:30 AM — 6:00 PM Saturday 8:00 AM — 5:30 PM Sunday 12:00 AM — 8:00 PM"
 "https://www.yogapod.com/","https://www.yogapod.com/TheWoodlands/","TheWoodlands","6777 Woodlands Pkwy # 204","The Woodlands","TX","77382","US","<MISSING>","936.270.8002","<MISSING>","30.1801697","-95.5412532","<MISSING>"
-"https://www.yogapod.com/","https://www.yogapod.com/WestHouston/","WestHouston","10455 Briar Forest Dr # 200b","Houston","TX","77042","US","<MISSING>","713.497.5397","<MISSING>","29.7469253","-95.5598139","Monday - Friday 5:30 AM — 9:00 PM
-Saturday 7:30 AM — 7:30 PM
-Sunday 9:00 AM — 6:30 PM"
-"https://www.yogapod.com/","https://www.yogapod.com/reno/","reno","13981 S Virginia St","Reno","NV","89511","US","<MISSING>","775.420.4363","<MISSING>","39.4043941","-119.7528808","Monday - Friday 5:30 AM — 9:00 PM
-Saturday 7:30 AM — 7:30 PM
-Sunday 9:00 AM — 6:30 PM"
+"https://www.yogapod.com/","https://www.yogapod.com/WestHouston/","WestHouston","10455 Briar Forest Dr # 200b","Houston","TX","77042","US","<MISSING>","713.497.5397","<MISSING>","29.7469253","-95.5598139","Monday - Friday 5:30 AM — 9:00 PM Saturday 7:30 AM — 7:30 PM Sunday 9:00 AM — 6:30 PM"
+"https://www.yogapod.com/","https://www.yogapod.com/reno/","reno","13981 S Virginia St","Reno","NV","89511","US","<MISSING>","775.420.4363","<MISSING>","39.4043941","-119.7528808","Monday - Friday 5:30 AM — 9:00 PM Saturday 7:30 AM — 7:30 PM Sunday 9:00 AM — 6:30 PM"

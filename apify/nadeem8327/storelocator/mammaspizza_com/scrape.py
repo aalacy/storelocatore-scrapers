@@ -10,7 +10,7 @@ options = webdriver.ChromeOptions()
 prefs= {"profile.default_content_setting_values.geolocation":2}
 options.add_argument("--headless")
 options.add_experimental_option("prefs",prefs)
-driver=webdriver.Chrome('/home/nadeem/Downloads/chromedriver',options=options)
+driver=webdriver.Chrome('chromedriver',options=options)
 
 url = "https://mammaspizza.com/locations/"
 driver.get(url)

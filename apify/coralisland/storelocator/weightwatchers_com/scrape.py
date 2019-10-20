@@ -67,7 +67,7 @@ def write_output(data):
 def fetch_data():
     output_list = []
     history = []
-    with open('../states.json') as data_file:    
+    with open('states.json') as data_file:    
         state_list = json.load(data_file)
     session = requests.Session()
     headers = {

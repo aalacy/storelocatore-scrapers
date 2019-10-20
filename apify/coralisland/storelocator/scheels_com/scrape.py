@@ -65,7 +65,7 @@ def write_output(data):
 
 def fetch_data():
     output_list = []
-    with open('../states.json') as data_file:    
+    with open('states.json') as data_file:    
         state_list = json.load(data_file)
     session = requests.Session()
     url = "https://www.scheels.com/on/demandware.store/Sites-scheels-Site/en_US/Stores-FindStores?format=ajax"

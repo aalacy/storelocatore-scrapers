@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -35,6 +35,8 @@ def fetch_data():
             for location in data[key]["items"][state]["items"]:
                 store_data = data[key]["items"][state]["items"][location]
                 name = store_data["title"]
+                if "Opening Soon".lower() in store_data["notes"].lower():
+                    continue
                 store = []
                 store.append("https://www.dolcegabbana.com")
                 store.append(store_data["title"] if store_data["title"] != "" else "<MISSING>")
@@ -47,14 +49,14 @@ def fetch_data():
                 store.append(current_country)
                 store.append(store_data["real_id"])
                 store.append(store_data["phone"] if store_data["phone"] != "" else "<MISSING>")
-                store.append("dolce & gabbana")
+                store.append("<MISSING>")
                 store.append(store_data["latitude"])
                 store.append(store_data["longitude"])
                 store.append("<MISSING>")
                 for i in range(len(store)):
                     store[i] = store[i].replace('–',"-")
-                return_main_object.append(store)
-    return return_main_object
+                store.append("<MISSING>")
+                yield store
 
 def scrape():
     data = fetch_data()

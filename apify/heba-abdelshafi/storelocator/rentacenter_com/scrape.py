@@ -3,6 +3,10 @@ from time import sleep
 import pandas as pd
 import re
 
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 from selenium.webdriver.chrome.options import Options
 options = Options()
 options.add_argument('--headless')
@@ -20,9 +24,9 @@ def write_output(data):
 def fetch_data():
     data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[]}
     driver.get('https://locations.rentacenter.com/')
-    
+
     states_urls=[i.get_attribute('href') for i in driver.find_elements_by_xpath('//li[@class="list-group-item"]/a')]
-    
+
     for state in states_urls:
         driver.get(state)
         sleep(5)
@@ -31,12 +35,14 @@ def fetch_data():
             for i in range(2,100):
                 driver.find_element_by_xpath('//li/a[@class="left"][text()={}]'.format(i)).click()
                 for j in driver.find_elements_by_xpath('//div[@class="street"]/a'):
-                    location_data_urls.append(j.get_attribute('href'))           
+                    location_data_urls.append(j.get_attribute('href'))
         except:
             pass
-        
+
         for url in location_data_urls:
             driver.get(url)
+            sleep(3)
+            element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[@class="list-data"]')))
             location_data=driver.find_element_by_xpath('//div[@class="list-data"]').text.split('\n')
             data['street_address'].append(location_data[0])
             data['location_name'].append(location_data[0])
