@@ -11,6 +11,7 @@ options = webdriver.ChromeOptions()
 prefs= {"profile.default_content_setting_values.geolocation":2}
 options.add_argument("--headless")
 options.add_argument('--disable-dev-shm-usage')
+options.add_argument('--no-sandbox')
 options.add_experimental_option("prefs",prefs)
 driver=webdriver.Chrome('chromedriver',options=options)
 
