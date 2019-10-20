@@ -26,7 +26,6 @@ def fetch_data():
             if 'search.html' not in locurl:
                 locs.append(locurl) 
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         r2 = session.get(loc, headers=headers)
         website = 'bk.com'
         typ = 'Restaurant'

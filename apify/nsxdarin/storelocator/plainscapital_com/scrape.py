@@ -17,7 +17,7 @@ def write_output(data):
 def fetch_data():
     ids = []
     url = 'https://www.plainscapital.com/Umbraco/Api/LocationsApi/GetLocations'
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     array = json.loads(r.content)
     for item in array:
         name = item['name'].encode('utf-8')
