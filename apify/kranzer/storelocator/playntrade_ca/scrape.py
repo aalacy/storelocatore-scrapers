@@ -33,6 +33,7 @@ class Scrape(base.Spider):
                 else:
                     tup = re.findall(r'(.+),\s(Sherbrooke),\s(.+)', loc.replace('\r', '').strip())
                     if tup:
+                        i.add_value('street_address', tup[0][0])
                         i.add_value('city', tup[0][1])
                         i.add_value('state', "QC")
                         i.add_value('zip', tup[0][2], lambda x: x.upper())
