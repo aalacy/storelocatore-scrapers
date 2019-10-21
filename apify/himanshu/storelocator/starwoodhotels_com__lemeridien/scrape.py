@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -39,7 +39,7 @@ def fetch_data():
                     continue
                 store = []
                 store.append("https://le-meridien.marriott.com")
-                store.append(current_store["name"])
+                store.append(current_store["name"].replace("é","e"))
                 store.append(current_store["address"])
                 store.append(json_data["cities"][current_store["city"]]["name"] if current_store["city"] != None and current_store["city"] != "" else "<MISSING>")
                 store.append(current_store["state"] if current_store["state"] != None and current_store["state"] != "" else "<MISSING>")
@@ -47,12 +47,12 @@ def fetch_data():
                 store.append(current_store["country"])  
                 store.append("<MISSING>")
                 store.append(current_store["phone"])
-                store.append("le meridien")
+                store.append("<MISSING>")
                 store.append(current_store["latitude"])
                 store.append(current_store["longitude"])
                 store.append("<MISSING>")
-                return_main_object.append(store)
-    return return_main_object
+                store.append("<MISSING>")
+                yield store
 
 def scrape():
     data = fetch_data()

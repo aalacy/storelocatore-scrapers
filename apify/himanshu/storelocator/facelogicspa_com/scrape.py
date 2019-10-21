@@ -139,7 +139,7 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(phone)
-        store.append("<MISSING>")
+        store.append("Facelogic Spa")
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append(hours_of_operation)
