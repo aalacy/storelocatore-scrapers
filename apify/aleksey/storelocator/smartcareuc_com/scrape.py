@@ -33,13 +33,10 @@ def fetch_data():
     # data = []
     data = [[0]*13 for i in range(100)]
     options = Options() 
-    # options.add_argument('--headless')
-    # options.add_argument('--no-sandbox')
-    # options.add_argument('--disable-dev-shm-usage')
-    options.add_argument("--start-maximized")
-    # driver = webdriver.Chrome('/usr/local/bin/chromedriver', chrome_options=options)
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Chrome('chromedriver', options=options)
-    # driver = webdriver.Chrome('./chromedriver.exe', chrome_options=options)
 
     driver.get('https://www.peachtreemed.com/location/')
     try:

@@ -2,6 +2,9 @@ from selenium import webdriver
 import pandas as pd
 import re
 
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 from selenium.webdriver.chrome.options import Options
 options = Options()
@@ -20,8 +23,8 @@ def write_output(data):
 
 def fetch_data():
     data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[],'page_url':[]}
-    driver.get('https://richlandbank.com/locations/?view=all')    
-    
+    driver.get('https://richlandbank.com/locations/?view=all')
+
     location_data=[i.text.split('\n') for i in driver.find_elements_by_xpath('//div[@class="branch-info-container"]')]
     data['page_url']=[i.get_attribute('href') for i in driver.find_elements_by_xpath('//span[@class="sub-head fw-light"]/a')]
 
@@ -44,7 +47,7 @@ def fetch_data():
                 except:
                     data['location_type'].append('<MISSING>')
             else:
-                data['phone'].append('<MISSING>')            
+                data['phone'].append('<MISSING>')
                 data['location_type'].append(i[-1])
         else:
             data['location_name'].append(i[0])
@@ -58,12 +61,14 @@ def fetch_data():
 
     for url in data['page_url']:
         driver.get(url)
+        sleep(3)
+        element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[contains(@class,"small-6 columns ")]/p[@class="fw-light"]')))
         try:
             data['hours_of_operation'].append(driver.find_element_by_xpath('//div[contains(@class,"small-6 columns ")]/p[@class="fw-light"]').text)
         except:
             data['hours_of_operation'].append('<MISSING>')
-      
-    
+
+
     driver.close()
     return data
 

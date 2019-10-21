@@ -12,7 +12,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -33,11 +33,27 @@ def fetch_data():
             try:
                 # store_request = requests.get('https://www.wyndhamhotels.com/en-ca/hotels/99778')
                 store_request = requests.get('https://www.wyndhamhotels.com' + semi_parts.find("a")['href'])
+                # print(store_request)
             except Exception as e:
                 # print('error =>' + str(e))
                 if(str(e) == "Exceeded 30 redirects."):
                     continue
+            # print('https://www.wyndhamhotels.com' + semi_parts.find("a")['href'])
             store_soup = BeautifulSoup(store_request.text, "lxml")
+            page_url = 'https://www.wyndhamhotels.com' + semi_parts.find("a")['href']
+            if store_soup.find('script',{'type':'application/ld+json'}) is not None:
+                script = store_soup.find('script',{'type':'application/ld+json'})
+                coords= json.loads(script.text)
+
+                latitude = coords['geo']['latitude']
+                longitude = coords['geo']['longitude']
+
+                # print(latitude,longitude,page_url)
+                # print('~~~~~~~~~~~~~~~~~~~~~')
+            else:
+                latitude  = "<MISSING>"
+                longitude = "<MISSING>"
+
 
             if (store_soup.find("div", {"class": "property-info"})):
                 locationDetails = store_soup.find("div", {"class": "property-info"})
@@ -69,10 +85,13 @@ def fetch_data():
                 return_object.append(country)
                 return_object.append("<MISSING>")
                 return_object.append(phone)
-                return_object.append("daysinn")
                 return_object.append("<MISSING>")
+                return_object.append(latitude)
+                return_object.append(longitude)
                 return_object.append("<MISSING>")
-                return_object.append("<MISSING>")
+                return_object.append(page_url)
+                # print("===="+str(return_object))
+                # print('~~~~~~~~~~~~~~~~~~`')
                 return_main_object.append(return_object)
                 # print(return_object)
 

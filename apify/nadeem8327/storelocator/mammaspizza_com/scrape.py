@@ -5,21 +5,25 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.proxy import Proxy,ProxyType
 import time
-import re #for regular expression
+import re
+
 options = webdriver.ChromeOptions()
 prefs= {"profile.default_content_setting_values.geolocation":2}
 options.add_argument("--headless")
+options.add_argument('--disable-dev-shm-usage')
+options.add_argument('--no-sandbox')
 options.add_experimental_option("prefs",prefs)
-driver=webdriver.Chrome('/home/nadeem/Downloads/chromedriver',options=options)
+driver=webdriver.Chrome('chromedriver',options=options)
 
 url = "https://mammaspizza.com/locations/"
 driver.get(url)
 html = driver.execute_script("return document.body.innerHTML")
-#html = requests.get(url)
+
 soup = BeautifulSoup(html,"html.parser")
 all_rec = soup.find_all(name="div",attrs={"class":"location-item"})
 hed=["locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude",
            "longitude","hours_of_operation"]
+
 with open("data.csv",mode="w") as file:
     fl_writer=csv.writer(file,delimiter=',')
     fl_writer.writerow(hed)
@@ -53,10 +57,6 @@ with open("data.csv",mode="w") as file:
         contact_number = contact_number.replace("(","")
         contact_number = contact_number.replace(")","")
         contact_number = contact_number.replace("---","-")
-        #print("contact number ",contact_number, "HRS ",hours_of_operation)
-
-
-
         data=["www_mammaspizza_com",location_type,street_address,city,"<MISSING>","<MISSING>","CA",store_number,contact_number,"<MISSING>","<MISSING>",
          "<MISSING>",hours_of_operation]
 

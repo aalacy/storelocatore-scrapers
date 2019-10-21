@@ -1,28 +1,44 @@
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+
 import re
 from bs4 import BeautifulSoup
 import time
+import requests
+import os
+from torrequest import TorRequest
 
 
-options = Options()
+"""options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
-#driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
+options.add_argument('--window-size=1920,1080')
+options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36")
+driver = webdriver.Chrome("chromedriver", options=options)"""
 
-def scroll():
+
+session = requests.Session()
+
+session.trust_env=False
+proxy_password = os.environ["PROXY_PASSWORD"]
+proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
+proxies = {
+    'http': proxy_url,
+    'https': proxy_url
+}
+session.proxies = proxies
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+"""def scroll(q):
     height = driver.execute_script("return document.body.scrollHeight")
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(2)
+        time.sleep(q)
 
         new_height = driver.execute_script("return document.body.scrollHeight")
         if new_height == height:
             break
-        height = new_height
+        height = new_height"""
 
 
 def write_output(data):
@@ -55,48 +71,51 @@ def fetch_data():
     urls=["https://www.crateandbarrel.com/stores/list-province/canada-stores","https://www.crateandbarrel.com/stores/list-state/retail-stores"]
 
     for url in urls:
-        driver = webdriver.Chrome(executable_path='chromedriver.exe')
-        driver.implicitly_wait(10)
-        driver.get(url)
-        scroll()
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        driver.close()
+        print(url)
+        print("HERE")
+        session.get(url, headers=headers)
+        #time.sleep(2)
+        print("HERE2")
+        print(session.driver.page_source)
 
-        div = soup.find('div',{'class':'state-list'})
-        sa= div.find_all("a")
-        for a in sa:
-            state_url.append(a.get("href"))
+
+        s=session.driver.execute_script("return Crate.Model.StateList")
+        #driver.close()
+        for a in s:
+            print(a)
+            if "canada" in url:
+                state_url.append("https://www.crateandbarrel.com/stores/list-province/canada-stores/"+a['Key'])
+            else:
+                state_url.append("https://www.crateandbarrel.com/stores/list-state/retail-stores/"+a['Key'])
+
+
+
+
+
 
     for url in state_url:
-        url = "https://www.crateandbarrel.com"+url
-        driver = webdriver.Chrome(executable_path='chromedriver.exe')
-        driver.implicitly_wait(10)
-        driver.get(url)
-        scroll()
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        print(soup)
-        #driver.close()
-        print(driver.execute_script("return Crate.Model.StoreList") )
-        div = driver.find_element_by_class_name('main-body-container')
-        scripts = div.find_element_by_xpath("//script[@type='application/ld+json']")
-        #scripts = re.findall(r'<script type="application/ld\+json">(.*)</script>',str(soup))
-        print(len(scripts))
-        del scripts[-1]
-        del scripts[-1]
-        del scripts[-1]
 
-        for script in scripts:
-            tex=script.text
-            types.append(re.findall(r'.*"@type":"([^"]*)"', tex)[0])
-            locs.append(re.findall(r'.*"name":"([^"]*)"', tex)[0])
-            phones.append(re.findall(r'.*"telephone":"([^"]*)"', tex)[0])
-            timing.append(re.findall(r'.*"openingHours":\["(.*)"\],', tex)[0])
-            cities.append(re.findall(r'.*"addressLocality":"([^"]*)"', tex)[0])
-            states.append(re.findall(r'.*"addressRegion":"([^"]*)"', tex)[0])
-            zips.append(re.findall(r'.*"postalCode":"([^"]*)"', tex)[0])
-            street.append(re.findall(r'.*"streetAddress":"([^"]*)"', tex,re.DOTALL)[0].replace("\n"," "))
-            lat.append(re.findall(r'.*"latitude":(-?[\d\.]*)', tex)[0])
-            long.append(re.findall(r'.*"longitude":(-?[\d\.]*)', tex)[0])
+        print(url)
+        session.get(url, headers=headers)
+        time.sleep(2)
+        #scroll()
+        stores=session.driver.execute_script("return Crate.Model.StoreList")
+        times=session.driver.find_elements_by_class_name("hours")
+        #driver.close()
+        for yim in times:
+            timing.append(yim.text.replace("\n"," "))
+
+        for store in stores:
+
+            ids.append(store["StoreNumber"])
+            locs.append(store['Name'])
+            phones.append(store['PhoneAreacode']+"-"+store['PhonePrefix']+'-'+store['PhoneSuffix'])
+            cities.append(store['City'])
+            states.append(store['State'])
+            zips.append(store['Zip'])
+            street.append(store['Address1']+store['Address2'])
+            lat.append(store['StoreLat'])
+            long.append(store['StoreLong'])
             if "canada" in url:
                 countries.append("CA")
             else:
@@ -113,9 +132,9 @@ def fetch_data():
         row.append(states[i])
         row.append(zips[i])
         row.append(countries[i])
-        row.append("<MISSING>")  # store #
+        row.append(ids[i])  # store #
         row.append(phones[i])  # phone
-        row.append(types[i])  # type
+        row.append("<MISSING>")  # type
         row.append(lat[i])  # lat
         row.append(long[i])  # long
         row.append(timing[i])  # timing

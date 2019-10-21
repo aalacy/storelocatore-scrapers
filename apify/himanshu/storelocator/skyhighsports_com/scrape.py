@@ -12,7 +12,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -38,7 +38,7 @@ def fetch_data():
                     detail_soup = BeautifulSoup(detail_url.text, "lxml")
                     if detail_soup.select('#hours'):
                         if detail_soup.select('.phone_number'):
-                            phone = detail_soup.select('.phone_number')[0].get_text().strip().replace('JUMP','')
+                            phone = detail_soup.select('.phone_number')[0].get_text().strip()
                             state = state_dict[state_name]
                         else:
                             phone = "<MISSING>"
@@ -57,19 +57,20 @@ def fetch_data():
                         else:
                             hours_of_operation = "<MISSING>"
                         store = []
-                        store.append(data_url)
+                        store.append(base_url)                        
                         store.append(location_name)
-                        store.append("<MISSING>")
+                        store.append("<INACCESSIBLE>")
                         store.append(city)
                         store.append(state)
                         store.append("<MISSING>")
                         store.append("US")
                         store.append("<MISSING>")
                         store.append(phone)
-                        store.append("Sky High Sports")
+                        store.append("<MISSING>")
                         store.append("<INACCESSIBLE>")
                         store.append("<INACCESSIBLE>")
                         store.append(hours_of_operation)
+                        store.append(data_url)
                         return_main_object.append(store)
                     else:
                         pass

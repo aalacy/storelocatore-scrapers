@@ -17,7 +17,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain","page_url" , "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -33,8 +33,10 @@ def fetch_data():
     # Your scraper here
     data=[]
     driver.get("https://www.miranchitorestaurants.com/Home")
+    page_url = "https://www.miranchitorestaurants.com/Home"
     time.sleep(10)
     stores = driver.find_elements_by_css_selector('div.rp-directions-location')
+    count =0
     for store in stores:
         location_name = store.find_element_by_css_selector('h1.rp-directions-location-name').text
         print(location_name)
@@ -44,22 +46,28 @@ def fetch_data():
         zipcode = state_city_zip.split(',')[1].split(' ')[-1]
         state = state_city_zip.split(',')[1].split(' ')[-2]
         phone = store.find_element_by_css_selector('div:nth-child(4)').text
-        hours_of_op =  driver.find_element_by_css_selector('div.rp-hours-of-operation-store').text
+        store_id = store.find_element_by_css_selector('a.rp-directions-locations-link-anchor.rp-directions-locations-link')\
+            .get_attribute('id').split("link-")[1]
+        hours_of_op =  driver.find_element_by_css_selector('div.rp-hours-of-operation-store').text.replace("\n", " ")
         data.append([
              'https://www.miranchitorestaurants.com/',
+              page_url,
               location_name,
               street_addr,
               city,
               state,
               zipcode,
               'US',
-              '<MISSING>',
+              store_id,
               phone,
               '<MISSING>',
               '<MISSING>',
               '<MISSING>',
               hours_of_op
             ])
+        count+=1
+        print(count)
+
 
     time.sleep(3)
     driver.quit()
