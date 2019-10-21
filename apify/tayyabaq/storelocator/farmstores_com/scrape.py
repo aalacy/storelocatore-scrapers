@@ -2,7 +2,7 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import re, time, pgeocode
+import re, time
 
 def write_output(data):
     with open('data.csv', mode='wb') as output_file:
@@ -37,7 +37,6 @@ def fetch_data():
             city.append(stores[n].text.split()[-3])
             state.append(stores[n].text.split()[-2])
             zipcode.append(stores[n].text.split()[-1])
-    nomi = pgeocode.Nominatim('US')
     loc = driver.find_elements_by_class_name('loc-title')
     location_name = [loc[n].text for n in range(0,len(loc))]
     hours = driver.find_elements_by_class_name('location-hours')
