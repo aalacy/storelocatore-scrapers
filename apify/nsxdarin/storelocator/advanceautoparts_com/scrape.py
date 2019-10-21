@@ -127,7 +127,6 @@ def fetch_data():
                     state = 'PR'
                 yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         typ = 'Advance Auto Parts'
         r = session.get(loc, headers=headers)
         name = ''
