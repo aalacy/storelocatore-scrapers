@@ -52,7 +52,7 @@ def fetch_data():
     all = []
     for i in range(0, len(locs)):
         row = []
-        row.append("https://www.theoceanaire.com")
+        row.append("https://1stopstores.net")
         row.append(locs[i])
         row.append("<MISSING>")
         row.append("<MISSING>")
@@ -65,7 +65,7 @@ def fetch_data():
         row.append("<MISSING>")  # lat
         row.append("<MISSING>")  # long
         row.append(timing[i])  # timing
-        row.append("https://www.theoceanaire.com")  # page url
+        row.append("https://1stopstores.net")  # page url
 
         all.append(row)
     return all

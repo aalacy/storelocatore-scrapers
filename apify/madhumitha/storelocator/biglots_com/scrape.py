@@ -70,7 +70,7 @@ def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -84,7 +84,8 @@ def fetch_data():
     for l in loc_url:
         try:
             if len(re.split('/', l['href'])) >=6:
-                res = requests.get(l['href'])
+                page_url = l['href']
+                res = requests.get(page_url)
                 l_soup = BeautifulSoup(res.content, "html.parser")
                 location_name = l_soup.find('h1', attrs = {'class':'Hero-title'}).text.strip()
                 street_address = l_soup.find('span', attrs = {'class':'c-address-street-1'}).text.strip()
@@ -95,13 +96,14 @@ def fetch_data():
                 phone = l_soup.find('div', attrs = {'class':'Phone-display Phone-display--withLink'}).text.strip()
                 lat = l_soup.find('span', attrs = {'class':'c-js-distance-container'})['data-latitude']
                 lon = l_soup.find('span', attrs = {'class':'c-js-distance-container'})['data-longitude']
+                store_number = l_soup.find('button', attrs = {'class':'Hero-button js-favorite-store'})['value']
                 hrs = l_soup.findAll('tr', attrs = {'itemprop':'openingHours'})
                 hours_of_operation = ''
                 for h in  hrs:
                     if h['content']:
                         hours_of_operation = hours_of_operation + h['content'] + ',' 
-                store_number = location_type = MISSING
-                data.append([DOMAIN, location_name, street_address, city, state, zipcode, 'US', store_number, phone, location_type, lat, lon, hours_of_operation])
+                location_type = MISSING
+                data.append([DOMAIN, page_url, location_name, street_address, city, state, zipcode, 'US', store_number, phone, location_type, lat, lon, hours_of_operation])
         except requests.exceptions.RequestException:
             pass
     return data

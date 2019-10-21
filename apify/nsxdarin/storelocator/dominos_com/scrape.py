@@ -34,7 +34,6 @@ def fetch_data():
                     locs.append(line2.replace('\r','').replace('\n','').replace('\t','').strip())
         print('%s Locations Found...' % str(len(locs)))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             if '"branchCode":"' in line2:

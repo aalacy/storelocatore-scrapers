@@ -14,6 +14,8 @@ opts.add_argument('disable-infobars')
 opts.add_argument("user-agent="+"sara")
 opts.add_argument("ignore-certificate-errors")
 opts.add_argument("--headless")
+opts.add_argument('--no-sandbox')
+opts.add_argument('--disable-dev-shm-usage')
 capabilities = webdriver.DesiredCapabilities.CHROME
 driver=webdriver.Chrome('chromedriver',options=opts,desired_capabilities=capabilities)
 url = "https://www.nandos.ca/eat/restaurants"

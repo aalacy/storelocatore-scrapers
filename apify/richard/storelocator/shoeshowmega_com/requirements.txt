@@ -1,1 +1,6 @@
 selenium==3.141.0
+<<<<<<< HEAD
+requests
+=======
+sgzip
+>>>>>>> 7a42a07f38baec0e95bcb25d0230db602a0213d3

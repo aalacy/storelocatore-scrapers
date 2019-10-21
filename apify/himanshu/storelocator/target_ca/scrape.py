@@ -13,7 +13,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -32,8 +32,11 @@ def minute_to_hours(time):
 
 
 def fetch_data():
-    zips = sgzip.for_radius(100)
-    # zips = sgzip.coords_for_radius(50)
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 20
+    MAX_DISTANCE = 100
+    zip_code = search.next_zip()
 
     
     return_main_object = []
@@ -48,84 +51,75 @@ def fetch_data():
   
         
     }
-
-    # it will used in store data.
-    # locator_domain = "https://www.drmartens.com"
-    # location_name = ""
-    # street_address = "<MISSING>"
-    # city = "<MISSING>"
-    # state = "<MISSING>"
-    # zipp = "<MISSING>"
-    # country_code = "US"
-    # store_number = "<MISSING>"
-    # phone = "<MISSING>"
-    # location_type = "drmartens"
-    # latitude = "<MISSING>"
-    # longitude = "<MISSING>"
-    # raw_address = ""
-    # hours_of_operation = "<MISSING>"
     address=[]
-    for zip_code in zips:
+    while zip_code:
+
+        r = requests.get(
+            'https://redsky.target.com/v3/stores/nearby/'+ str(zip_code) +'?key=eb2551e4accc14f38cc42d32fbc2b2ea&limit='+str(MAX_RESULTS)+'&within='+str(MAX_DISTANCE)+'&unit=kilometer',
+            headers=headers,
+       
+        )
+        soup= BeautifulSoup(r.text,"lxml")
+        result_coords = []
+        k = json.loads(soup.text)
+
         try:
-            r = requests.get(
-                'https://redsky.target.com/v3/stores/nearby/'+ zip_code +'?key=eb2551e4accc14f38cc42d32fbc2b2ea&limit=20&within=100&unit=mile',
-                headers=headers,
-        
-            )
-            soup= BeautifulSoup(r.text,"lxml")
-            k = json.loads(soup.text)
-        
-            
+
             # if k !=[]:
             time =''
             if k != None and k !=[]:
                 for i in k:
-                    
+                    current_results_len = len(i['locations'])  # need to update with no of count.
+
                     for j in i['locations']:
+
                         tem_var=[]
-                    #     print(j['address']['city'])
-                    # exit()
-                        # if 'hours' in i and i['hours'] !=None:
-                        #     for j in i['hours']:
-                        #         time = time +' ' +(j['day']+ ' '+j['formattedTime'])
-                        # else:
-                        #     time = ''
+
                         h1 = j['rolling_operating_hours']['regular_event_hours']['days']
                         time =''
                         for h in h1:
-                            if "begin_time" in h['hours'][0]    and "end_time" in h['hours'][0]:
+                            if 'begin_time' in h['hours'][0] and 'end_time' in  h['hours'][0]['end_time']:
                                 time = h['hours'][0]['begin_time']+ ' '+ h['hours'][0]['end_time']
-                            else:
-                                time ="<MISSING>"
-                            
                         # exit()
                         tem_var.append("https://www.target.ca")
+                        street  = j['address']['address_line1']
+                        if street in addresses:
+                            continue
+                        addresses.append(street)
                         tem_var.append(j['location_names'][0]['name'] if j['location_names'][0]['name'] else "<MISSING>" )
-                        tem_var.append(j['address']['address_line1']if j['address']['address_line1'] else "<MISSING>" )
+                        tem_var.append(street if street else "<MISSING>" )
                         tem_var.append(j['address']['city'].strip() if j['address']['city'].strip() else "<MISSING>")
                         tem_var.append(j['address']['region'] if j['address']['region'] else "<MISSING>")
                 
 
                         tem_var.append(j['address']['postal_code'] if j['address']['postal_code']  else "<MISSING>")
-                        tem_var.append("US")
+                        if 'county' in j['address']:
+                            tem_var.append(j['address']['county'])
+                        else:
+                            tem_var.append('<MISSING>')
                         tem_var.append("<MISSING>")
                         
                         tem_var.append(j['contact_information']['telephone_number'] if j['contact_information']['telephone_number'] else "<MISSING>")
-                        tem_var.append("target")
+                        tem_var.append("<MISSING>")
+                        result_coords.append((j['geographic_specifications']['latitude'], j['geographic_specifications']['longitude']))
                         tem_var.append(j['geographic_specifications']['latitude'] if j['geographic_specifications']['latitude'] else "<MISSING>" )
                         tem_var.append(j['geographic_specifications']['longitude'] if j['geographic_specifications']['longitude'] else "<MISSING>" )
                         tem_var.append(time if time else "<MISSING>" )
-                        
-                        if tem_var[3] in addresses:
-                            continue
-                        addresses.append(tem_var[3])
-                        return_main_object.append(tem_var) 
-        except:
-            continue
-        
-    return return_main_object
-
-
+                        tem_var.append('https://redsky.target.com/v3/stores/nearby/'+ str(zip_code) +'?key=eb2551e4accc14f38cc42d32fbc2b2ea&limit='+str(MAX_RESULTS)+'&within='+str(MAX_DISTANCE)+'&unit=kilometer' )
+                        yield tem_var
+                        print(tem_var)
+                        # yield store
+                    if current_results_len < MAX_RESULTS:
+                        # print("max distance update")
+                        search.max_distance_update(MAX_DISTANCE)
+                    elif current_results_len == MAX_RESULTS:
+                        # print("max count update")
+                        search.max_count_update(result_coords)
+                    else:
+                        raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+                    zip_code = search.next_zip()
+        except:            
+            break
             
 
 def scrape():

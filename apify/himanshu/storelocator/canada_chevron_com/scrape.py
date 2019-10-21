@@ -30,7 +30,7 @@ def fetch_data():
             del t[-1]
         if "Telephone:" not in t[-1]:
             del t[-1]
-        phone=t[-1].replace('Telephone:','').replace('\xa0','').strip()
+        phone=t[-1].replace('Telephone:','').replace('\xa0','')
         del t[-1]
         city=t[-1].split(',')[0]    
                 

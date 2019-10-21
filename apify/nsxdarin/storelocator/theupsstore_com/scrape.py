@@ -31,7 +31,6 @@ def fetch_data():
                     locs.append(lurl)
     print('Found %s Locations...' % (str(len(locs))))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         website = 'theupsstore.com'
         country = ''
         lat = ''

@@ -11,7 +11,7 @@ const loccitaneUS = 'https://usa.loccitane.com/doc/GlobalCache/OCC/SiteMaps/Site
 const loccitaneCA = 'https://ca.loccitane.com/doc/GlobalCache/OCC/SiteMaps/Sitemap_Stores_19.xml';
 
 Apify.main(async () => {
-  const browser = await Apify.launchPuppeteer({ headless: false });
+  const browser = await Apify.launchPuppeteer({ headless: true });
   const p = await browser.newPage();
   await p.setJavaScriptEnabled(true);
   await p.goto(loccitaneUS, { waitUntil: 'load', timeout: 0 });
@@ -43,7 +43,8 @@ Apify.main(async () => {
     launchPuppeteerOptions: {
       headless: false,
       useChrome: true,
-      stealth: true,
+			stealth: true,
+			headless: true
     },
     gotoFunction: async ({
       request, page,

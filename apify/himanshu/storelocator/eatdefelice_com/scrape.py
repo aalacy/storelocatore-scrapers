@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -19,8 +19,9 @@ def fetch_data():
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-    base_url = "http://eatdefelice.com/locations/"
-    r = requests.get(base_url, headers=headers)
+    base_url = "http://eatdefelice.com/"
+    get_url = "http://eatdefelice.com/locations/"
+    r = requests.get(get_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     for data in soup.findAll('td', {'class', 'bodytxt'}):
@@ -50,6 +51,7 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append("<MISSING>")
                 store.append(soup.select('span.bodytxt')[0].get_text().replace('\n', ''))
+                store.append(get_url)
                 return_main_object.append(store)
             i = i + 1
     return return_main_object

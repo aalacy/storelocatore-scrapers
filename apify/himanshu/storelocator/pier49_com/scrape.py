@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -41,12 +41,15 @@ def fetch_data():
     country_code = ""
     store_number = "<MISSING>"
     phone = ""
-    location_type = "pier49"
+    location_type = "<MISSING>"
     latitude = ""
     longitude = ""
     hours_of_operation = ""
+    page_url=""
 
     for script in soup.find_all('div', {'class': re.compile('row_inner col_align_middle gutter-none')}):
+        # coords = soup.find(lambda tag: (tag.name == "a" and "Google Maps" in tag.text))
+        # print(coords)
         list_store_data = list(script.stripped_strings)
         # print(str(len(list_store_data))+' == list_store_data === '+str(list_store_data))
         if len(list_store_data) > 0 :
@@ -78,13 +81,16 @@ def fetch_data():
                 city = list_store_data[3].split(',')[0]
                 zipp = list_store_data[3].split(',')[1].strip().split(' ')[-1]
                 state = list_store_data[3].split(',')[1].strip().split(' ')[-2]
-                hours_of_operation = ",".join(list_store_data[4:])
+                hours_of_operation= ",".join(list_store_data[4:]).replace('ORDER ONLINE (NEW!)','').strip()
+                # print(hours_of_operation)
+
             except:
                 street_address = '<MISSING>'
                 city = '<MISSING>'
                 zipp = '<MISSING>'
                 state = '<MISSING>'
                 hours_of_operation = ",".join(list_store_data[2:])
+                # print(hours_of_operation)
 
             country_code = 'US'
             store_number = '<MISSING>'
@@ -92,7 +98,8 @@ def fetch_data():
             longitude = '<MISSING>'
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+            store = ["<MISSING>" if x == None or x == '' else x for x in store]
 
             # print("data = " + str(store))
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

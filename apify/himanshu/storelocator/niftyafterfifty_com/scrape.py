@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -19,8 +19,9 @@ def fetch_data():
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-    base_url = "https://www.niftyafterfifty.com/locations"
-    r = requests.get(base_url, headers=headers)
+    base_url= "https://www.niftyafterfifty.com/"
+    get_url = "https://www.niftyafterfifty.com/locations"
+    r = requests.get(get_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     exists = soup.findAll('p', {'class', 'font_8'})
@@ -57,7 +58,19 @@ def fetch_data():
             if "fax" not in data.find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip():
                 hours_of_operation = data.find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip()
             elif "_______" in data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip() or len(data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip()) < 10 or "Fitness Hours:" in data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip() or "Nifty People" in data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip() or "TUCSON" in data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip():
-                hours_of_operation = "<MISSING>"
+                hours = data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text()
+                if "Hours" in hours:
+                    if hours.split('\n')[0].split(',')[0] == "Fitness Hours:":
+                        if data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p'):
+                            if "am" in data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text():
+                                hours_of_operation = data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().split('\n')[0].split(',')[0] + ", " + data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text()
+                            else:
+                                hours_of_operation = data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().split('\n')[0].split(',')[0]
+                    else:
+                        if "am" in data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text():
+                            hours_of_operation = hours.split('\n')[0].split(',')[0] + ", " + data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text()
+                        else:
+                            hours_of_operation = hours.split('\n')[0].split(',')[0]
             else:
                 hours_of_operation = data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip().replace("\n", ',').strip()
             store = []
@@ -74,6 +87,7 @@ def fetch_data():
             store.append("<MISSING>")
             store.append("<MISSING>")
             store.append(hours_of_operation)
+            store.append(get_url)
             return_main_object.append(store)
         else:
             pass
