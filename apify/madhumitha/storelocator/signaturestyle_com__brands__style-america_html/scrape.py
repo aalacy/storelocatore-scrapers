@@ -42,7 +42,6 @@ def fetch_data():
                         if page_soup.find('h2', attrs = {'class':'hidden-xs salontitle_salonlrgtxt'}) is None:
                             continue
                         location_name = page_soup.find('h2', attrs = {'class':'hidden-xs salontitle_salonlrgtxt'}).text.strip()
-                        i = int(i) + int(1) 
                         phone = page_soup.find('a', attrs = {'id':'sdp-phone'}).text.strip()
                         street_address = page_soup.find('span', attrs = {'itemprop':'streetAddress'}).text.strip()
                         city = page_soup.find('span', attrs = {'itemprop':'addressLocality'}).text.strip()
