@@ -32,19 +32,27 @@ class Scrape(base.Spider):
             i.add_xpath('phone', '(./td[1]//text())[last()]', base.get_first, lambda x: x.replace('\n', ''))
             index = None
             loc = [l.replace('\n','') for l in href.xpath('./td[1]//text()')]
+            loc = [l for l in loc if l]
             for l in loc:
                 tup = re.findall(r'(.+?),\s?([A-z][A-z]|Missouri)\s(\d+)', l)
                 if tup:
                     i.add_value('city', tup[0][0])
-                    i.add_value('state', tup[0][1], lambda x: x.upper())
+                    i.add_value('state', tup[0][1], lambda x: x.upper(), lambda x: "MO" if x == "MISSOURI" else x)
                     i.add_value('zip', tup[0][2])
                     i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
                     index = loc.index(l)
                     break
+                else:
+                    tup = re.findall(r'(.+?),\s?([A-z][A-z]|Missouri)', l)
+                    if tup:
+                        i.add_value('city', tup[0][0])
+                        i.add_value('state', tup[0][1], lambda x: x.upper(), lambda x: "MO" if x == "MISSOURI" else x)
+                        i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
+                        index = loc.index(l)
+                        break
+
             if index:
                 i.add_value('street_address', loc[index-1])
-            else:
-                continue
 
             i.add_value('longitude', centroid_map.get('1', ("<MISSING>", "<MISSING>"))[0])
             i.add_value('latitude', centroid_map.get('1', ("<MISSING>", "<MISSING>"))[1])
