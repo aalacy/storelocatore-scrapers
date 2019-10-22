@@ -1,9 +1,13 @@
 import aiohttp
 import asyncio
+import sgzip
 
 from Scraper import Scrape
-from uszipcode import SearchEngine
 
+# from uszipcode import SearchEngine
+# search = SearchEngine(simple_zipcode=True)
+# zip_list = search.by_coordinates(39.122229, -77.133578, radius=99999999999, returns=999999999999)
+# zipcode_list = [zipcode.zipcode for zipcode in zip_list]
 
 URL = "https://www.53.com/"
 
@@ -38,8 +42,10 @@ class Scraper(Scrape):
             except:
                 if iteration == 3:
                     print(f'Last try: Tried getting info {iteration} time(s) for {zipcode}.')
+                    break
                 else:
                     print(f'Tried getting info {iteration} time(s) for {zipcode}.')
+                    await asyncio.sleep(2)
                 pass
         if data:
             if 'locations' in data.keys():
@@ -50,9 +56,7 @@ class Scraper(Scrape):
 
 
     async def get_all_locations(self):
-        search = SearchEngine(simple_zipcode=True)
-        zip_list = search.by_coordinates(39.122229, -77.133578, radius=99999999999, returns=999999999999)
-        zipcode_list = [zipcode.zipcode for zipcode in zip_list]
+        zipcode_list = [zipcode for zipcode in sgzip.for_radius(50)]
         await asyncio.gather(*[self.get_locations(zipcode) for zipcode in zipcode_list])
 
 
