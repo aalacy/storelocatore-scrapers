@@ -1,4 +1,4 @@
-import requests_async as requests
+import aiohttp
 import asyncio
 
 from Scraper import Scrape
@@ -28,8 +28,10 @@ class Scraper(Scrape):
             ('q', zipcode),
             ('types', '3233|3234|3235'),
         )
-        data = await requests.get('https://tcjl25l2al.execute-api.us-east-1.amazonaws.com/prod', headers=self.headers, params=params)
-        data = data.json()
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            async with session.get(url='https://tcjl25l2al.execute-api.us-east-1.amazonaws.com/prod', params=params, verify_ssl=False) as data:
+                # data = await requests.get('https://tcjl25l2al.execute-api.us-east-1.amazonaws.com/prod', headers=self.headers, params=params)
+                data = await data.json()
         if 'locations' in data.keys():
             self.stores.extend(data['locations'])
             print(f"{len(data)} locations scraped for {params[0][1]}")
