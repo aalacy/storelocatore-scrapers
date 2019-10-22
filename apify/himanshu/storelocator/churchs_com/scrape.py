@@ -27,7 +27,7 @@ def fetch_data():
         locator_domain = base_url
 
         location_name = val['properties']['name']
-        street_address = val['properties']['addressLine1']
+        street_address = val['properties']['addressLine1'] + ' ' + val['properties']['addressLine2']
         city = val['properties']['city']
         state = val['properties']['province']
         zip = val['properties']['postalCode']
@@ -35,20 +35,27 @@ def fetch_data():
         country_code = 'US'
         phone = val['properties']['phoneNumber']
         location_type = '<MISSING>'
-        if val['geometry']['coordinates'] != []:
+        if len(val['geometry']['coordinates']) == 1:
+            
             latitude = val['geometry']['coordinates'][0]
+            
             longitude = val['geometry']['coordinates'][1]
-            if "-" in str(latitude):
-                latitude = val['geometry']['coordinates'][1]
-                longitude = val['geometry']['coordinates'][0]
         else:
             latitude = '<MISSING>'
             longitude = '<MISSING>'
+
+
+        
+
         if(len(val['properties']['hoursOfOperation']['Sun']) == 1):
             sunday  = ' '.join(val['properties']['hoursOfOperation']['Sun'][0])
         else:
             sunday = "<MISSING>"
+
+        
+
         hours_of_operation = 'Mon '+' '.join(val['properties']['hoursOfOperation']['Mon'][0]) + ' Tue '+' '.join(val['properties']['hoursOfOperation']['Tue'][0]) + ' Wed '+' '.join(val['properties']['hoursOfOperation']['Wed'][0]) + ' Thu '+' '.join(val['properties']['hoursOfOperation']['Thu'][0]) + ' Fri '+' '.join(val['properties']['hoursOfOperation']['Fri'][0]) + ' Sat '+' '.join(val['properties']['hoursOfOperation']['Sat'][0]) + ' Sun :'+sunday
+        page_url = location_url
 
         if street_address in addresses:
             continue
@@ -68,9 +75,14 @@ def fetch_data():
         store.append(longitude if longitude else '<MISSING>')
         
         store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-        store.append('<MISSING>')
-        
-        yield store
+        store.append(page_url  if page_url else '<MISSING>')
+
+        # print("====", str(store))
+        return_main_object.append(store)
+    return return_main_object
+
+    
+   
 
 
 def scrape():

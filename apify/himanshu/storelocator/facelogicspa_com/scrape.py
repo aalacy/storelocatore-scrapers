@@ -27,7 +27,7 @@ def fetch_data():
     for links in exists[0].findAll('a'):
         if "http" in links.get('href'):
             detail_page_url = links.get('href')
-            print(links.get('href'))
+            # print(links.get('href'))
             if "Clovis" in links.get('href'):
                 contact_url_details = requests.get("http://www.facelogicclovis.com/pages/contact", headers=headers)
                 contact_url_soup = BeautifulSoup(contact_url_details.text, "lxml")
@@ -115,7 +115,8 @@ def fetch_data():
                 city = links.get_text()
                 state = address[1].strip().split(' ')[0]
                 zip = address[1].strip().split(' ')[1]
-                phone = contact_url_soup.select(".et_pb_all_tabs")[0].select('.et_pb_tab_content')[1].get_text().replace("\n", '').split("Email:")[0][15:]
+                phone = contact_url_soup.select(".et_pb_all_tabs")[0].select('.et_pb_tab_content')[1].get_text().replace("\n", '').split("Email:")[0][14:]
+
                 hours_of_operation = contact_url_soup.select(".et_pb_all_tabs")[0].select('.et_pb_tab_content')[2].get_text().replace('\n', ' ').strip().split(": CLOSED Note:")[0]
         else:
             detail_page_url = "http://www.facelogicspa.com" + links.get('href')
@@ -127,8 +128,9 @@ def fetch_data():
             city = links.get_text()
             state = address[-1].strip().split(' ')[0]
             zip = address[-1].strip().split(' ')[1]
-            phone = detail_soup.select('.mt20.mb20')[0].find('p').next_sibling.strip()[3:]
+            phone = (detail_soup.select('.mt20.mb20')[0].find('p').next_sibling.strip()[3:]).replace('FACE ', '')
             hours_of_operation = "<MISSING>"
+        street_address = street_address.replace(u'\xa0', u' ')
         store = []
         store.append(base_url)
         store.append(location_name)

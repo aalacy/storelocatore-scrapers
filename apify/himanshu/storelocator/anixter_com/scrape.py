@@ -7,6 +7,10 @@ import re
 import json
 import time
 from random import randrange
+import platform
+import time
+
+system = platform.system()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -23,7 +27,10 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
-    return webdriver.Firefox(executable_path='./geckodriver', options=options)
+    if "linux" in system.lower():
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)
+    else:
+        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def fetch_data():
     headers = {
@@ -41,6 +48,7 @@ def fetch_data():
         r = s.get("https://www.anixter.com/bin/locationList?locationPath=/content/anixter/en_us/about-us/contact-us/global-locations-contact-info/" + country,headers=headers)
         for state in r.json():
             state_request = s.get(base_url + state["href"],headers=headers)
+            time.sleep(1.2)
             state_soup = BeautifulSoup(state_request.text,"lxml")
             for location in state_soup.find_all("a",{"title":"More Details"}):
                 # print(base_url + location["href"])
@@ -48,7 +56,7 @@ def fetch_data():
                 location_soup = BeautifulSoup(location_request.text,"lxml")
                 iframe_url = repr(location_soup.find_all("iframe")[-1]["src"]).replace('"',"").replace(r"\r","").replace(r"\n","")
                 # print(iframe_url)
-                random_number = randrange(3,6)
+                random_number = randrange(5,10)
                 time.sleep(random_number)
                 if iframe_url[1] == "/":
                     location_details = list(location_soup.find("table").stripped_strings)

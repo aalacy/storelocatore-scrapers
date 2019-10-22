@@ -76,6 +76,7 @@ def fetch_data():
                     street_address= list_d[1]
                     phone =list_d[3]
                     hours_of_operation = " ".join(list_d[6:8])
+
                     # print(location_name,city,state,street_address,phone,hours_of_operation,country_code)
                 elif len(list_d) ==11:
 
@@ -85,6 +86,8 @@ def fetch_data():
                     street_address = list_d[2]
                     phone = list_d[4]
                     hours_of_operation = " ".join(list_d[7:9])
+
+
                 elif len(list_d) == 12:
                     location_name = list_d[0]
                     city = list_d[0]
@@ -92,6 +95,8 @@ def fetch_data():
                     street_address = " ".join(list_d[1:3])
                     phone = list_d[4]
                     hours_of_operation = " ".join(list_d[7:9])
+
+
                 elif len(list_d) ==13:
                     location_name = list_d[0]
                     city = list_d[0]
@@ -100,12 +105,27 @@ def fetch_data():
                     # print(cs)
                     if len(cs) ==1:
                         city = "".join(cs).strip()
-                        state = heading
+                        state = heading.lower()
                     else:
                         city = cs[0].strip()
                         state = cs[-1].split(',')[-1].strip()
                         # print(city,state)
-                    street_address = " ".join(list_d[1:4]).replace('—','').replace('Store Hours','').replace('Phone','')
+                    address = " ".join(list_d[1:4]).replace('—','').replace('Store Hours','').replace('Phone','')
+                    # print(street_address.split())
+                    # print(len(street_address.split()))
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    if len(address.split())  == 10 or len(address.split()) == 9:
+                        street_address = " ".join(address.split()[5:])
+
+                    elif len(address.split()) == 7:
+                        street_address = " ".join(address.split()[3:]).replace('#113A,','').strip()
+
+                    elif len(address.split()) ==6 or len(address.split()) == 5:
+                        street_address = " ".join(address.split()[1:]).replace('Village','').replace('Heights','').replace('Corners','').strip()
+
+                    else:
+                        street_address = " ".join(address.split())
+                        # print(street_address)
                     phone = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")," ".join(list_d))[0]
                     # print(phone)
                     hours_of_operation = " ".join(list_d).split('Store Hours')[-1].split('Holiday')[0].strip()
@@ -116,9 +136,10 @@ def fetch_data():
                     location_name = " ".join(list_d[:2])
                     city = list_d[0]
                     state = heading
-                    street_address = " ".join(list_d[2:4]).replace('—','')
+                    street_address = " ".join(list_d[2:4]).replace('—','').replace('#107, ','').strip()
                     phone= re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")," ".join(list_d))[0]
                     hours_of_operation = " ".join(list_d).split('Store Hours')[1].split('Holiday')[0]
+
                 else:
                     location_name = " ".join(list_d[:2])
                     city = list_d[0]
@@ -126,17 +147,22 @@ def fetch_data():
                     phone =  re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")," ".join(list_d))[0]
                     hours_of_operation = " ".join(list_d).split('Store Hours')[1].split('Holiday')[0]
                     if "CALGARY" != list_d[0]:
-                        street_address = list_d[2]
+                        street_address = list_d[2].replace('#520, ','')
+                        # print(street_address)
+
                     else:
-                        street_address = " ".join(list_d[2:7]).replace('Phone','').strip()
+                        street_address = " ".join(list_d[4:7]).replace('Phone','').strip()
 
-                store = [locator_domain.capitalize(), location_name.capitalize(), street_address, city.capitalize(), state.capitalize(), zipp, country_code,
-                             store_number, phone, location_type, latitude, longitude, hours_of_operation.replace('/',''),page_url]
-                store = ["<MISSING>" if x == ""  else x for x in store]
 
-                print("data = " + str(store))
-                print(
-                    '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                             store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+                store = ["<MISSING>" if x == ""  else x.capitalize() for x in store]
+
+                # print(location_name +" | "+street_address)
+
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)
 

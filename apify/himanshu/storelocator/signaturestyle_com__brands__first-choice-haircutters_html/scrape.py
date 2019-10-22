@@ -3,13 +3,14 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import time
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -22,6 +23,7 @@ def fetch_data():
     r = requests.get("https://www.signaturestyle.com/salon-directory.html",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
+    addresses = []
     divs = soup.find("div",{'class':"content parsys"}).find_all("div",recursive=False)[1:]
     for i in range(0,len(divs),2):
         country = ""
@@ -31,12 +33,34 @@ def fetch_data():
             else:
                 country = "CA"
             for state in divs[i+1].find_all("a",{"class":"btn btn-primary"}):
-                state_request = requests.get("https://www.signaturestyle.com" + state["href"],headers=headers)
-                state_soup = BeautifulSoup(state_request.text,"lxml")
+                state_count = 0
+                while True:
+                    try:
+                        state_request = requests.get("https://www.signaturestyle.com" + state["href"],headers=headers)
+                        state_soup = BeautifulSoup(state_request.text,"lxml")
+                        break
+                    except:
+                        state_count = state_count + 1
+                        if state_count > 10:
+                            print("stopping request for " + str("https://www.signaturestyle.com" + state["href"]))
+                            break
+                        time.sleep(2)
+                        continue
                 for table in state_soup.find_all("table"):
                     for location in table.find_all("a"):
-                        location_request = requests.get("https://www.signaturestyle.com" + location["href"],headers=headers)
-                        location_soup = BeautifulSoup(location_request.text,"lxml")
+                        location_count = 0
+                        while True:
+                            try:
+                                location_request = requests.get("https://www.signaturestyle.com" + location["href"],headers=headers)
+                                location_soup = BeautifulSoup(location_request.text,"lxml")
+                                break
+                            except:
+                                location_count = location_count + 1
+                                if location_count > 10:
+                                    print("stopping request for " + str("https://www.signaturestyle.com" + location["href"]))
+                                    break
+                                time.sleep(2)
+                                continue
                         if location_soup.find("div",{'class':"h2 h3"}) == None:
                             continue
                         name = " ".join(list(location_soup.find("div",{'class':"h2 h3"}).stripped_strings))
@@ -52,18 +76,21 @@ def fetch_data():
                         store.append("https://www.signaturestyle.com")
                         store.append(name.replace("\xa0"," "))
                         store.append(street_address)
+                        if store[-1] in addresses:
+                            continue
+                        addresses.append(store[-1])
                         store.append(city)
                         store.append(state)
                         store.append(store_zip)
                         store.append(country)
                         store.append("<MISSING>")
                         store.append(phone if phone != "" else "<MISSING>")
-                        store.append("signature style")
+                        store.append("<MISSING>")
                         store.append(lat)
                         store.append(lng)
                         store.append(hours if hours != "" else "<MISSING>")
-                        return_main_object.append(store)
-    return return_main_object
+                        store.append("https://www.signaturestyle.com" + location["href"])
+                        yield store
 
 def scrape():
     data = fetch_data()

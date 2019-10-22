@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -45,7 +45,7 @@ def fetch_data():
                 location_details.append(list(details.stripped_strings)[1:])
             store = []
             store.append("https://www.eggharborcafe.com")
-            store.append(location_details[0][0])
+            store.append(location_details[0][-1].split(",")[0])
             store.append(" ".join(location_details[0][1:-1]) if len(location_details[0]) == 3 else " ".join(location_details[0][0:-1]))
             store.append(location_details[0][-1].split(",")[0])
             store.append(location_details[0][-1].split(",")[1].split(" ")[-2])
@@ -53,12 +53,12 @@ def fetch_data():
             store.append("US")
             store.append("<MISSING>")
             store.append(location_details[1][0])
-            store.append("egg harbor cafe")
+            store.append("<MISSING>")
             store.append(geo_object[store[2]][0])
             store.append(geo_object[store[2]][1])
             store.append(" ".join(location_details[-1]))
-            return_main_object.append(store)
-    return return_main_object
+            store.append("https://www.eggharborcafe.com/our-locations")
+            yield store
 
 def scrape():
     data = fetch_data()

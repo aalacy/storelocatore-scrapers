@@ -24,29 +24,31 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
 
-    base_url = "https://urbanbricks.com"
+    base_url = "https://urbanbrickspizza.com/"
     r = requests.get(base_url +'/locations' , headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     for part in soup.find_all("div", {"class": "main_color av_default_container_wrap container_wrap fullsize"}):
         for semi_part in part.find_all("div", {"class": "flex_column"}):
             temp_storeaddresss = list(semi_part.stripped_strings)
+
             lat = "<MISSING>"
             lag = "<MISSING>"
             if(len(temp_storeaddresss) > 2 ):
+
                 if 'DIRECTIONS' in temp_storeaddresss:
                     temp_storeaddresss.remove('DIRECTIONS');
                     url = semi_part.find("a",{"class" : "avia-color-grey"})['href']
                     lat_find = url.split("@")
                     if(len(lat_find) == 2):
                         lat = lat_find[1].split(",")[0]
-                        lag = lat_find[1].split(",")[1].replace('+','')
+                        lag = lat_find[1].split(",")[1]
                     if 'THE RIM' in temp_storeaddresss:
                         lat_val = url.split("=")[1]
                         lat_val = lat_val.replace('(', ' ')
                         lat_val = lat_val.replace(')', ' ')
                         lat = lat_val.split(",")[0]
-                        lag = lat_val.split(",")[1].replace('+','')
+                        lag = lat_val.split(",")[1]
                 if 'COMING SOON!' in temp_storeaddresss:
                     temp_storeaddresss.remove('COMING SOON!');
                 if 'CATERING' in temp_storeaddresss:

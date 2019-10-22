@@ -29,11 +29,13 @@ def fetch_data():
     r = requests.post("https://www.staycobblestone.com/wp-admin/admin-ajax.php", headers=headers, data = data)
     soup = BeautifulSoup(r.text, "lxml")
     data = json.loads(soup.text)
+
     for r in data:
         p_data = data[r]['properties']
         for p in p_data:
             in_data = p_data[p]
-
+            if in_data["status"] != "open":
+                continue
             location_name = in_data['type']
             if (location_name == ''):
                 location_name = "<MISSING>"
@@ -64,6 +66,7 @@ def fetch_data():
             lag = in_data['longitude']
             if (lag == ''):
                 lag = "<MISSING>"
+
             return_object = []
             return_object.append(base_url)
             return_object.append(location_name)
@@ -74,7 +77,7 @@ def fetch_data():
             return_object.append("US")
             return_object.append(store_id)
             return_object.append(phone)
-            return_object.append("Cobblestone Hotels")
+            return_object.append("Staycenter Stone")
             return_object.append(lat)
             return_object.append(lag)
             return_object.append("<MISSING>")

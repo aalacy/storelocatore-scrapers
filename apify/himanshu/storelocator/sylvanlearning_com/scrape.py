@@ -11,7 +11,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -28,14 +28,14 @@ def fetch_data():
     for data in exists.findAll('a'):
         if data.get('href') is not None:
             data_url = "https://www.sylvanlearning.com" + data.get('href')
-            print(data_url)
+            # print(data_url)
             detail_url = requests.get(data_url, headers=headers, verify=False)
             detail_soup = BeautifulSoup(detail_url.text, "lxml")
             if detail_soup.find('div', {'class', 'locationResults'}):
                 for values in detail_soup.findAll('div', {'class', 'locationResults'}):
                     if values.find('div', {'class', 'locationName'}):
                         location_name = values.find('div', {'class', 'locationName'}).get_text().strip().replace("\n", " ")
-                        print(location_name)
+                        # print(location_name)
                         address = re.sub(' +', ' ', values.find('div', {'class', 'locationAddress'}).find('p').get_text().strip().replace("\r\n", ' ').strip().replace("\n", ",").strip()).split(',')
                         street_address = ' '.join(address[:-2])
                         city = address[-3].strip()
@@ -56,7 +56,8 @@ def fetch_data():
                         store.append("US")
                         store.append("<MISSING>")
                         store.append(phone)
-                        store.append("Sylvan Learning")
+                        store.append("<MISSING>")
+                        store.append("<MISSING>")
                         store.append("<MISSING>")
                         store.append("<MISSING>")
                         store.append("<MISSING>")
