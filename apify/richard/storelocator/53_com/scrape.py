@@ -1,7 +1,7 @@
-import sgzip
 import requests
 
 from Scraper import Scrape
+from uszipcode import SearchEngine
 
 
 URL = "https://www.53.com/"
@@ -29,6 +29,9 @@ class Scraper(Scrape):
         location_types = []
         stores = []
 
+        search = SearchEngine(simple_zipcode=True)
+        zipcode_list = search.by_coordinates(39.122229, -77.133578, radius=99999999999, returns=999999999999)
+
         headers = {
             'Accept': 'application/json, text/javascript, */*; q=0.01',
             'Referer': 'https://locations.53.com/search.html',
@@ -38,7 +41,8 @@ class Scraper(Scrape):
             'Sec-Fetch-Mode': 'cors',
         }
 
-        for zipcode_search in sgzip.for_radius(50):
+        for zipcode_search in zipcode_list:
+            zipcode_search = zipcode_search.zipcode
             params = (
                 ('q', zipcode_search),
                 ('types', '3233|3234|3235'),

@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -21,16 +21,26 @@ def fetch_data():
     base_url= "https://www.cfcu.org/locations"
     r = requests.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
+    
     store_name=[]
     store_detail=[]
     return_main_object=[]
 
     k= (soup.find_all("div",{"class":"loc_list"}))
-    
-   
 
+    kk = soup.find('div',{'class':'pinned'}).find_next('script').text.split('var point = new google.maps.LatLng')
+    main = []  
+    for key,val in enumerate(kk):
+            if key != 0:
+                bb = val.split(';')[0].replace(')','').replace('(','').strip(',')
+                if bb in main:
+                    continue                
+                main.append(val.split(';')[0].replace(')','').replace('(','').strip(','))
+                
+    
     for i in k:
         p =i.find_all("div",{"class":'listbox'})
+        i = 0
         for j in p:
             tem_var=[]
             name = list(j.stripped_strings)[0]
@@ -55,8 +65,10 @@ def fetch_data():
             if v[0] =="Coin Counter":
                 del v[0]
             hours = " ".join(v)
+            latitude = main[i].split(',')[0]
+            longitute = main[i].split(',')[1]
+
             
-    
 
             tem_var.append("https://www.cfcu.org")
             tem_var.append(name)
@@ -67,15 +79,17 @@ def fetch_data():
             tem_var.append("US")
             tem_var.append("<MISSING>")
             tem_var.append(phone)
-            tem_var.append("cfcu")
             tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
+            tem_var.append(latitude)
+            tem_var.append(longitute)
             tem_var.append(hours)
-            print(tem_var)
-            return_main_object.append(tem_var)
-        
+            tem_var.append(base_url)
+            # print(tem_var)
+                    
+            yield tem_var    
+            i+=1
 
-    return return_main_object
+    
 
 
 def scrape():

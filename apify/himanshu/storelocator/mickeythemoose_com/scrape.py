@@ -18,13 +18,14 @@ def fetch_data():
     base_url = "https://mickeythemoose.com"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
-        "Content-Type":'application/x-www-form-urlencoded; charset=UTF-8',
+        "content-type":'application/x-www-form-urlencoded; charset=UTF-8',
         "origin": "https://mickeythemoose.com",
         "x-requested-with": "XMLHttpRequest",
-        "x-wp-nonce": "82137680ac",
-        "x-wpgmza-action-nonce": "48f1dad054"
+        "x-wp-nonce": "0f3f23cdf8",
+        "x-wpgmza-action-nonce": "24a3c3c318"
    }
     r = requests.post("https://mickeythemoose.com/wp-json/wpgmza/v1/marker-listing/",headers=headers,data='phpClass=WPGMZA%5CMarkerListing%5CBasicTable&start=0&length=10000&map_id=1').json()
+    # print(r)
     return_main_object = []
     for loc in r['meta']:
         r1=requests.get(loc['link'])
@@ -62,6 +63,9 @@ def fetch_data():
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
         store.append(hour if hour else "<MISSING>")
+
+        print("data ==== "+str(store))
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
     return return_main_object
 

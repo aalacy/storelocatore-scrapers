@@ -33,22 +33,23 @@ class Scraper(Scrape):
             'Authorization': 'Bearer 3a1fbd8bd8285a5ebe9010b17959d62fed27abc42059373f3789023bb7863a06',
             'Accept': 'application/json, text/plain, */*',
             'Referer': 'https://www.medmen.com/stores',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36',
             'DNT': '1',
         }
 
         params = (
-            ('include', '2'),
             ('content_type', 'store'),
         )
 
         stores = requests.get('https://cdn.contentful.com/spaces/1ehd3ycc3wzr/environments/master/entries', headers=headers, params=params).json()['items']
 
+        print(f"{len(stores)} locations scraped.")
+
 
         for store in stores:
             store = store['fields']
 
-            if 'comingSoon' not in store.keys():
+            if 'comingSoon' not in store.keys() or not store['comingSoon']:
 
                 # Store ID
                 location_id = store['placeId']
@@ -152,5 +153,3 @@ class Scraper(Scrape):
 
 scrape = Scraper(URL)
 scrape.scrape()
-
-

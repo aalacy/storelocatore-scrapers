@@ -89,7 +89,7 @@ class Scraper(Scrape):
             lon = store['lng']
 
             # Hour
-            hour = store['hours']
+            hour = '\n'.join([f"{hour['day']}: {hour['begin']} to {hour['end']}" for hour in store['hours'] if hour['begin'] != ""])
 
             # Country
             country = 'US'

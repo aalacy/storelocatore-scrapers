@@ -6,7 +6,7 @@ from selenium.webdriver.chrome.options import Options
 
 
 COMPANY_URL = "https://drmarklynn.com/"
-CHROME_DRIVER_PATH = "./chromedriver"
+CHROME_DRIVER_PATH = "chromedriver"
 
 
 def write_output(data):

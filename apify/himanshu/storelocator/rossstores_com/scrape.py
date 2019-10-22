@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import csv
 import requests
 from bs4 import BeautifulSoup
@@ -19,7 +13,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -38,12 +32,17 @@ def minute_to_hours(time):
 
 
 def fetch_data():
-    zips = sgzip.for_radius(100)
+    search = sgzip.ClosestNSearch()
+    search.initialize()
     
     return_main_object = []
     addresses = []
     store_name=[]
     store_detail=[]
+    result_coords = []
+    MAX_RESULTS = 1000
+    MAX_DISTANCE = 5000
+    current_results_len = 0  # need to update with no of count.
   
 
     headers = {
@@ -52,81 +51,62 @@ def fetch_data():
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
 
-    # it will used in store data.
-    locator_domain = "https://www.drmartens.com"
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "drmartens"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-    address=[]
-    for zip_code in zips:
+    zip_code = search.next_zip()
+    while zip_code:
         # print("zips === " + str(zip_code))
-        r = requests.get(
-            'https://hosted.where2getit.com/rossdressforless/2014/ajax?xml_request=<request><appkey>097D3C64-7006-11E8-9405-6974C403F339</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>1000</limit><geolocs><geoloc><addressline>'+str(zip_code)+'</addressline><country>US</country></geoloc></geolocs><searchradius>100</searchradius></formdata></request>',
+        r = requests.get('https://hosted.where2getit.com/rossdressforless/2014/ajax?xml_request=<request><appkey>097D3C64-7006-11E8-9405-6974C403F339</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>'+str(MAX_RESULTS)+'</limit><geolocs><geoloc><addressline>'+str(zip_code)+'</addressline><country>US</country></geoloc></geolocs><searchradius>'+str(MAX_DISTANCE)+'</searchradius></formdata></request>',
             headers=headers)
         
         soup= BeautifulSoup(r.text,"lxml")
-        
-        monday=soup.find_all("monday")
-        tuesday=soup.find_all("tuesday")
-        wednesday=soup.find_all("wednesday")
-        thursday=soup.find_all("thursday")
-        friday = soup.find_all("friday")
-        saturday=soup.find_all("saturday")
-        sunday=soup.find_all("sunday")
-        # print(soup.find_all("friday"))
-        st1 = soup.find_all("address1")
-        city1 = soup.find_all("city")
-        state1 = soup.find_all("state")
-        name1 = soup.find_all("name")
-        phone1 = soup.find_all("phone")
-        postalcode1= soup.find_all("postalcode")
-        latitude1 = soup.find_all("latitude")
-        longitude1 = soup.find_all("longitude")
-
-    
-        for index,i in enumerate(st1):
-            tem_var=[]
-            hours = (monday[index].text + ' ' + tuesday[index].text + ' '+wednesday[index].text + ' '+ thursday[index].text + ' ' +friday[index].text + ' '+ saturday[index].text+ ' '+sunday[index].text)
-
-            tem_var.append("https://www.rossstores.com")
-            tem_var.append(name1[index].text)
-            tem_var.append(st1[index].text)
-            tem_var.append(city1[index].text)
-            tem_var.append(state1[index].text)
-            tem_var.append(postalcode1[index].text)
-            tem_var.append("US")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-
-            tem_var.append("rossstores")
-            tem_var.append(latitude1[index].text)
-            tem_var.append(longitude1[index].text)
-            tem_var.append(hours)
-           
-            
-            if tem_var[3] in address:
+        current_results_len = len(soup.find_all('poi'))
+        for x in soup.find_all('poi'):
+            locator_domain = 'https://www.rossstores.com/'
+            location_name = x.find('name').text.strip()
+            street_address = x.find('address1').text.strip()
+            city = x.find('city').text.strip()
+            state = x.find('state').text.strip()
+            zip = x.find('postalcode').text.strip()
+            country_code = x.find('country').text.strip()
+            store_number = '<MISSING>'
+            phone = x.find('phone').text.strip()
+            phone = x.find('phone').text.strip()
+            location_type = '<MISSING>'
+            latitude = x.find('latitude').text.strip()
+            longitude = x.find('longitude').text.strip()
+            result_coords.append((latitude, longitude))
+            if street_address in addresses:
                 continue
-        
-            address.append(tem_var[3])
-
-            return_main_object.append(tem_var) 
-            
-        
-               
-
-           
-
-    return return_main_object
+            addresses.append(street_address)
+            hours_of_operation = 'sunday:' + x.find('sunday').text.strip() + ' monday : ' + x.find('monday').text.strip() + ' tuesday :' + x.find('tuesday').text.strip() + ' wednesday:' + x.find('wednesday').text.strip() + ' tuesday: ' + x.find('tuesday').text.strip() + ' friday: ' + x.find('friday').text.strip() + ' saturday: ' + x.find('saturday').text.strip()
+            page_url = "https://hosted.where2getit.com/rossdressforless/2014/ajax?xml_request=<request><appkey>097D3C64-7006-11E8-9405-6974C403F339</appkey><formdata id='locatorsearch'><dataview>store_default</dataview><limit>1000</limit><geolocs><geoloc><addressline>"+str(zip_code)+"</addressline><country>US</country></geoloc></geolocs><searchradius>100</searchradius></formdata></request>"
+            store = []
+            store.append(locator_domain if locator_domain else '<MISSING>')
+            store.append(location_name if location_name else '<MISSING>')
+            store.append(street_address if street_address else '<MISSING>')
+            store.append(city if city else '<MISSING>')
+            store.append(state if state else '<MISSING>')
+            store.append(zip if zip else '<MISSING>')
+            store.append(country_code if country_code else '<MISSING>')
+            store.append(store_number if store_number else '<MISSING>')
+            store.append(phone if phone else '<MISSING>')
+            store.append(location_type if location_type else '<MISSING>')
+            store.append(latitude if latitude else '<MISSING>')
+            store.append(longitude if longitude else '<MISSING>')
+            store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+            store.append('<MISSING>')
+            # print("===", str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            yield store
+        if current_results_len < MAX_RESULTS:
+            # print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            # print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        zip_code = search.next_zip()
+        # break
 
 
 def scrape():

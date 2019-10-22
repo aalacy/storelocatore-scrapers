@@ -82,19 +82,58 @@ class Scraper(Scrape):
                 # Country
                 country = 'USA'
 
-                # Store data
-                locations_ids.append(location_id)
-                locations_titles.append(location_title)
-                street_addresses.append(street_address)
-                states.append(state)
-                zip_codes.append(zipcode)
-                hours.append(hour)
-                latitude_list.append(lat)
-                longitude_list.append(lon)
-                phone_numbers.append(phone)
-                cities.append(city)
-                countries.append(country)
-                location_types.append(location_type)
+            else:
+                address_info = driver.find_element_by_css_selector('div.containedContent > p:nth-of-type(2)').get_attribute('textContent').replace('Address: ', '').split(',')
+
+                # Store ID
+                location_id = '<MISSING>'
+
+                # Type
+                location_type = '<MISSING>'
+
+                # Name
+                location_title = "Schuylkill Valley Sports in Pottstown, PA"
+
+                # Street
+                street_address = "18 W Lightcap Rd Suite 1005"
+
+                # city
+                city = "Pottstown"
+
+                # zip
+                zipcode = "19464"
+
+                # State
+                state = "PA"
+
+                # Lat
+                lat = '<MISSING>'
+
+                # Long
+                lon = '<MISSING>'
+
+                # Phone
+                phone = "<MISSING>"
+
+                # Hour
+                hour = "<MISSING>"
+
+                # Country
+                country = 'USA'
+
+            # Store data
+            locations_ids.append(location_id)
+            locations_titles.append(location_title)
+            street_addresses.append(street_address)
+            states.append(state)
+            zip_codes.append(zipcode)
+            hours.append(hour)
+            latitude_list.append(lat)
+            longitude_list.append(lon)
+            phone_numbers.append(phone)
+            cities.append(city)
+            countries.append(country)
+            location_types.append(location_type)
 
         for (
                 locations_title,
