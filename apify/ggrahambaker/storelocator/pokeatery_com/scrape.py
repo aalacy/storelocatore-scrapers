@@ -2,6 +2,7 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.action_chains import ActionChains
 import usaddress
 
 def parse_addy(addy):
@@ -67,18 +68,29 @@ def fetch_data():
     driver.get(locator_domain + ext)
 
     link_list = []
-    main = driver.find_element_by_css_selector('section.page__content.js-post-gallery.cf')
-    hrefs = main.find_elements_by_css_selector('a')
-    for href in hrefs:
-        link_list.append(href.get_attribute('href'))
+
+    loc_drop = driver.find_element_by_id("menu-item-528")
+
+    hover = ActionChains(driver).move_to_element(loc_drop)
+    hover.perform()
+    locs = loc_drop.find_element_by_css_selector("ul").find_elements_by_css_selector('li')
+    for l in locs:
+        link_list.append(l.find_element_by_css_selector('a').get_attribute('href'))
+
 
     all_store_data = []
     for link in link_list:
         driver.get(link)
         driver.implicitly_wait(10)
-        main = driver.find_element_by_css_selector('div.grid__item.eight-twelfths.palm-one-whole').text.split('\n')
-        location_name = driver.find_element_by_css_selector('h1.headline__primary').text
 
+        start = link.find('.com/') + len('.com/')
+        location_name = link[start:-1].replace('-', ' ')
+
+        main = driver.find_element_by_css_selector('div.grid__item.eight-twelfths.palm-one-whole').text.split('\n')
+
+
+        if 'Coming Soon' in main[0]:
+            continue
         if len(main) == 12:
             hours = main[1]
             if 'Daily' not in hours:
@@ -99,6 +111,12 @@ def fetch_data():
 
             raw_phone = main[1][end_address:end_phone]
             phone_number = raw_phone[: raw_phone.find('-') + 5]
+
+        elif len(main) == 6:
+            hours = main[1] + ' ' + main[2] + ' ' + main[3]
+            street_address, city, state, zip_code = parse_addy(main[4])
+            phone_number = '<MISSING>'
+
 
         else:
             hours = main[1] + ' ' + main[2]

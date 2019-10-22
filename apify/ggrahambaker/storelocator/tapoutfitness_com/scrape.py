@@ -62,12 +62,14 @@ def fetch_data():
         driver.get(link)
         driver.implicitly_wait(10)
         cont = driver.find_element_by_css_selector('p.medium').text.split('\n')
-
+        if 'JAKARTA' in cont[1]:
+            break
         start_idx = link.find('//')
         end_idx = link.find('.')
         location_name = link[start_idx + 2: end_idx]
 
         street_address = cont[0]
+
         city, state, zip_code = addy_ext(cont[1])
         hours = ''
         for h in cont[2:]:
