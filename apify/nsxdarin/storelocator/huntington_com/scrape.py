@@ -18,14 +18,14 @@ def write_output(data):
 
 def fetch_data():
     url = 'https://www.huntington.com/~/media/SEO_Files/sitemap'
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     locs = []
     for line in r.iter_lines():
         if '<loc>https://www.huntington.com/Community/branch-info?locationId=' in line:
             locs.append(line.split('>')[1].split('<')[0])
     for loc in locs:
         print('Pulling Location %s...' % loc)
-        r2 = session.get(loc, headers=headers)
+        r2 = session.get(loc, headers=headers, verify=False)
         lines = r2.iter_lines()
         hours = ''
         typ = 'Branch'
