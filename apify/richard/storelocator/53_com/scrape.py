@@ -1,4 +1,5 @@
-import requests
+import requests_async as requests
+import asyncio
 
 from Scraper import Scrape
 from uszipcode import SearchEngine
@@ -12,6 +13,34 @@ class Scraper(Scrape):
         Scrape.__init__(self, url)
         self.data = []
         self.seen = []
+        self.stores = []
+        self.headers = {
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Referer': 'https://locations.53.com/search.html',
+            'Origin': 'https://locations.53.com',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+            'DNT': '1',
+            'Sec-Fetch-Mode': 'cors',
+        }
+
+    async def get_locations(self, zipcode):
+        params = (
+            ('q', zipcode),
+            ('types', '3233|3234|3235'),
+        )
+        data = await requests.get('https://tcjl25l2al.execute-api.us-east-1.amazonaws.com/prod', headers=self.headers, params=params)
+        data = data.json()
+        if 'locations' in data.keys():
+            self.stores.extend(data['locations'])
+            print(f"{len(data)} locations scraped for {params[0][1]}")
+        else:
+            print(f"0 locations scraped for {params[0][1]}")
+
+    async def get_all_locations(self):
+        search = SearchEngine(simple_zipcode=True)
+        zipcode_list = [zipcode.zipcode for zipcode in search.by_coordinates(39.122229, -77.133578, radius=99999999999, returns=999999999999)]
+        await asyncio.gather(*[self.get_locations(zipcode) for zipcode in zipcode_list])
+
 
     def fetch_data(self):
         # store data
@@ -27,34 +56,13 @@ class Scraper(Scrape):
         hours = []
         countries = []
         location_types = []
-        stores = []
 
-        search = SearchEngine(simple_zipcode=True)
-        zipcode_list = search.by_coordinates(39.122229, -77.133578, radius=99999999999, returns=999999999999)
+        # asyncio.run(self.get_all_locations())
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.get_all_locations())
 
-        headers = {
-            'Accept': 'application/json, text/javascript, */*; q=0.01',
-            'Referer': 'https://locations.53.com/search.html',
-            'Origin': 'https://locations.53.com',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
-            'DNT': '1',
-            'Sec-Fetch-Mode': 'cors',
-        }
 
-        for zipcode_search in zipcode_list:
-            zipcode_search = zipcode_search.zipcode
-            params = (
-                ('q', zipcode_search),
-                ('types', '3233|3234|3235'),
-            )
-            try:
-                data = requests.get('https://tcjl25l2al.execute-api.us-east-1.amazonaws.com/prod', headers=headers, params=params).json()['locations']
-                stores.extend(data)
-                print(f"{len(data)} locations scraped for {zipcode_search}")
-            except:
-                pass
-
-        for store in stores:
+        for store in self.stores:
             store = store['loc']
 
             if store['id'] not in self.seen:

@@ -1,2 +1,4 @@
 selenium==3.141.0
 uszipcode
+asyncio
+requests_async
