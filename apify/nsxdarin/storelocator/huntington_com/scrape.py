@@ -24,7 +24,6 @@ def fetch_data():
         if '<loc>https://www.huntington.com/Community/branch-info?locationId=' in line:
             locs.append(line.split('>')[1].split('<')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         r2 = session.get(loc, headers=headers, verify=False)
         lines = r2.iter_lines()
         hours = ''
