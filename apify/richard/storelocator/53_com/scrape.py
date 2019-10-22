@@ -28,14 +28,26 @@ class Scraper(Scrape):
             ('q', zipcode),
             ('types', '3233|3234|3235'),
         )
-        try:
+        data = None
+        for iteration in range(1, 4):
             async with aiohttp.ClientSession(headers=self.headers) as session:
                 async with session.get(url='https://tcjl25l2al.execute-api.us-east-1.amazonaws.com/prod', params=params, verify_ssl=False) as data:
-                    data = await data.json()
-            self.stores.extend(data['locations'])
-            print(f"{len(data)} locations scraped for {params[0][1]}")
-        except:
-            print(f"0 locations scraped for {params[0][1]}")
+                    try:
+                        data = await data.json()
+                        break
+                    except:
+                        if iteration == 3:
+                            print(f'Last try: Tried getting info {iteration} time(s) for {zipcode}.')
+                        else:
+                            print(f'Tried getting info {iteration} time(s) for {zipcode}.')
+                        pass
+        if data:
+            if 'locations' in data.keys():
+                self.stores.extend(data['locations'])
+                print(f"{len(data)} locations scraped for {params[0][1]}")
+            else:
+                print(f"0 locations scraped for {params[0][1]}")
+
 
     async def get_all_locations(self):
         search = SearchEngine(simple_zipcode=True)
