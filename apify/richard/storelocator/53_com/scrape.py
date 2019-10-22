@@ -38,7 +38,8 @@ class Scraper(Scrape):
 
     async def get_all_locations(self):
         search = SearchEngine(simple_zipcode=True)
-        zipcode_list = [zipcode.zipcode for zipcode in search.by_coordinates(39.122229, -77.133578, radius=99999999999, returns=999999999999)]
+        zip_list = search.by_coordinates(39.122229, -77.133578, radius=99999999999, returns=999999999999)
+        zipcode_list = [zipcode.zipcode for zipcode in zip_list]
         await asyncio.gather(*[self.get_locations(zipcode) for zipcode in zipcode_list])
 
 
@@ -57,10 +58,7 @@ class Scraper(Scrape):
         countries = []
         location_types = []
 
-        # asyncio.run(self.get_all_locations())
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.get_all_locations())
-
+        asyncio.run(self.get_all_locations())
 
         for store in self.stores:
             store = store['loc']
@@ -166,6 +164,6 @@ class Scraper(Scrape):
                 )
 
 
-
 scrape = Scraper(URL)
 scrape.scrape()
+
