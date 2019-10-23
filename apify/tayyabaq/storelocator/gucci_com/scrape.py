@@ -56,8 +56,7 @@ def fetch_data():
                 phone.append('<MISSING>')
         else:
             phone.append('<MISSING>')
-    print len(phone)
-    for n in range(0,len(street_address)): 
+    for n in ranrge(0,len(street_address)): 
         data.append([
             'https://www.gucci.com',
             'https://www.gucci.com/us/en/store',
