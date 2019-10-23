@@ -1,8 +1,0 @@
-"locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
-"http://pizzafusion.com/locations/","Fort Lauderdale","1013 N. Federal Hwy. Fort","Lauderdale","FL","33304","US","<MISSING>","954-358-5353 ","<MISSING>","26.138112","-80.12158","Sunday - Thursday: 11am - 9pm Friday-Saturday: 11am - 10pm      "
-"http://pizzafusion.com/locations/","Fort Myers","12901 McGregor Blvd","Fort Myers","FL","33919","US","<MISSING>","239-337-7979   ","<MISSING>","26.553023","-81.910672","Monday - Saturday: 11am - 10pm   Sunday: 11am - 9pm   "
-"http://pizzafusion.com/locations/","Naples","2146 Tamiami Trail N","Naples","FL","34102","US","<MISSING>","239-262-8111   ","<MISSING>","26.17314","-81.799506","Monday - Saturday: 11am - 10pm   Sunday: 11am - 9pm   "
-"http://pizzafusion.com/locations/","Weston","2378 Weston Rd.","Weston","FL","33326","US","004  ","954-641-5353 ","<MISSING>","26.089529","-80.371642","Sunday - Thursday: 11am - 10pm Friday-Saturday: 11am - 11pm  "
-"http://pizzafusion.com/locations/","Ridgewood","33 Godwin Ave.","Ridgewood","NJ","07450","US","005 ","201-445-9010 ","<MISSING>","40.979056","-74.123039","Sunday - Thursday: 11am - 10pm Friday-Saturday: 11am - 10pm  "
-"http://pizzafusion.com/locations/","Old Dominion University","4417 Monarch Way","Norfolk","VA","34102","US","<MISSING>","757-683-4782","<MISSING>","<MISSING>","<MISSING>","7 Days: 11am - 10pm "
-"http://pizzafusion.com/locations/","Case Western Reserve University","10900 Euclid Ave","Cleveland","OH","44106","US","019 ","216-368-6274  ","<MISSING>","<MISSING>","<MISSING>","Monday - Friday: 10:30am - 3:00pm  "
