@@ -6,6 +6,8 @@ import json
 import sgzip
 
 
+
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -24,8 +26,11 @@ def fetch_data():
     output=[]
     zips=sgzip.for_radius(100)
     for zp in zips:
-        r = requests.get(base_url+'/DealerSearchHandler.ashx?zip='+zp+'&hasCycles=false&hasAtvs=false&hasScooters=false&hasMarine=false&hasAuto=true&maxResults=4&country=en')
-        soup=BeautifulSoup(r.text,'lxml')
+        try:
+            r = requests.get(base_url+'/DealerSearchHandler.ashx?zip='+zp+'&hasCycles=false&hasAtvs=false&hasScooters=false&hasMarine=false&hasAuto=true&maxResults=4&country=en')
+            soup=BeautifulSoup(r.text,'lxml')
+        except:
+            continue
         for loc in soup.find_all('dealerinfo'):
             name=loc.find('name').text.strip()
             address=loc.find('address').text.strip().lower()
@@ -79,7 +84,7 @@ def fetch_data():
                                     kk.append(str(b.replace("5","3"))," close ")
                                 else:
 
-                                    kk.append(str(b) + " <INACCESSIBLE>")
+                                    kk.append(str(b) + " close ")
                             else:
 
                                 if b == 13:
@@ -111,7 +116,7 @@ def fetch_data():
                                 else:
                                     kk.append(str(b) + " open ")
                         else:
-                            kk.append('<INACCESSIBLE>')
+                            kk.append('close')
             if kk != []:
 
                 hour = ' , '.join(kk)

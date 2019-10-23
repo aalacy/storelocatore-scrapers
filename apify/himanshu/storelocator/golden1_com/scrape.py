@@ -38,13 +38,15 @@ def fetch_data():
     while coords:
         # print("zip_code === " + str(coords))
         # print("ramiang zip =====" + str(search.current_zip))
+        try:
+            data  = "lat="+str(coords[0])+"&lng="+str(coords[1])+"&searchby=ESC%7CATMSF%7CCOOP%7CCUSC%7C&SearchKey=&rnd=1566557208502"
+            # data = "address=11756&lat=40.7226698&lng=-73.51818329999998&searchby=ESC%7CATMSF%7CCOOP%7CCUSC%7C&rnd=1571729652978"
+            location_url = 'https://golden1.locatorsearch.com/GetItems.aspx'
+            r = requests.post(location_url, headers=header, data=data)
 
-        data  = "lat="+str(coords[0])+"&lng="+str(coords[1])+"&searchby=ESC%7CATMSF%7CCOOP%7CCUSC%7C&SearchKey=&rnd=1566557208502"
-        # data = "address=11756&lat=40.7226698&lng=-73.51818329999998&searchby=ESC%7CATMSF%7CCOOP%7CCUSC%7C&rnd=1571729652978"
-        location_url = 'https://golden1.locatorsearch.com/GetItems.aspx'
-        r = requests.post(location_url, headers=header, data=data)
-
-        soup = BeautifulSoup(r.text, "html.parser")
+            soup = BeautifulSoup(r.text, "html.parser")
+        except:
+            continue
         data_len = len(soup.find_all('marker'))
         for idx, v in enumerate(soup.find_all('marker')):
 
@@ -72,7 +74,7 @@ def fetch_data():
                 if '-' in zip:
                     zip = ''
 
-            country_code = 'USA'
+            country_code = 'US'
             store_number = '<MISSING>'
             phone = '<MISSING>'
             location_type = '<MISSING>'
@@ -101,7 +103,7 @@ def fetch_data():
 
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
             store.append(page_url if page_url else '<MISSING>')
-            print("data====", str(store))
+            # print("data====", str(store))
             yield store
         if data_len < MAX_RESULTS:
             # print("max distance update")

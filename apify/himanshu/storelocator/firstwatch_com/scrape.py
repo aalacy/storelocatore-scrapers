@@ -5,7 +5,7 @@ import re
 import json
 import sgzip
 def write_output(data):
-    with open('firstwatch.csv', 'w') as output_file:
+    with open('data.csv', 'w') as output_file:
         writer = csv.writer(output_file, delimiter=",")
 
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
@@ -69,7 +69,7 @@ def fetch_data():
                 city = location['city']
                 state = location['state']
                 zipp = location['zip']
-                print(zipp)
+                # print(zipp)
                 latitude = location['latitude']
                 longitude = location['longitude']
                 phone = location['phone']
@@ -100,8 +100,8 @@ def fetch_data():
                     continue
                 addresses.append(street_address)
 
-                print("data = " + str(store))
-                print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)
 

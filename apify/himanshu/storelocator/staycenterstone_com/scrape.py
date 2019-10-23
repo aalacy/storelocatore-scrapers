@@ -12,7 +12,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -80,6 +80,7 @@ def fetch_data():
             return_object.append("Staycenter Stone")
             return_object.append(lat)
             return_object.append(lag)
+            return_object.append("<MISSING>")
             return_object.append("<MISSING>")
             return_main_object.append(return_object)
     return return_main_object

@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -24,6 +24,8 @@ def fetch_data():
     for li in main:
         r1 = requests.get(li['href'])
         soup1=BeautifulSoup(r1.text,'lxml')
+
+        # exit()
         if soup1.find('div',{'class':"fl-node-5724cee2beac3"})!=None:
             main1=soup1.find('div',{'class':"fl-node-5724cee2beac3"}).find_all('p')
             name=list(soup1.find('div',{"class":"fl-node-5724e69d76150"}).stripped_strings)[0].strip()
@@ -97,6 +99,14 @@ def fetch_data():
             country="US"
             lat=''
             lng=''
+            # print(name)
+            # print(soup1.find('p', {'style': 'text-align: center;'}).text)
+            phone = soup1.find('p', {'style': 'text-align: center;'}).text.replace('Phone: ', '').split('~')[0].replace('Phone:', '').strip().strip()
+            if '&' in phone:
+                phone  = phone.split('&')[0].strip()
+                
+            page_url = base_url+'/store-finder/'
+            # print('~~~~~~~~~~~~~~~~~~')
             store=[]
             store.append(base_url)
             store.append(name if name else "<MISSING>")
@@ -107,10 +117,11 @@ def fetch_data():
             store.append(country if country else "<MISSING>")
             store.append("<MISSING>")
             store.append(phone if phone else "<MISSING>")
-            store.append("tcmarkets")
+            store.append("<MISSING>")
             store.append(lat if lat else "<MISSING>")
             store.append(lng if lng else "<MISSING>")
             store.append(hour if hour else "<MISSING>")
+            store.append(page_url if page_url else "<MISSING>")
             return_main_object.append(store)
     return return_main_object
 

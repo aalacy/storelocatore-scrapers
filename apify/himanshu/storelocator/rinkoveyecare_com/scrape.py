@@ -34,7 +34,6 @@ def fetch_data():
                 time.sleep(2)
                 cord_count = cord_count + 1
                 if cord_count > 10:
-                    # print("failed to get this cord " + str("https://www.rinkoveyecare.com/wp-json/352inc/v1/locations/coordinates?lat=" + str(cord[0]) + "&lng=" + str(cord[1])))
                     break
                 continue
         if r.text == "null":

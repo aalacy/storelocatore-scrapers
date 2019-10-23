@@ -12,12 +12,16 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",'raw_address'])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",'raw_address','page_url'])
         # Body
         for row in data:
             writer.writerow(row)
 
-
+def Enquiry(lis1):
+    if len(lis1) == 0:
+        return 0
+    else:
+        return 1
 def fetch_data():
     return_main_object = []
     headers = {
@@ -56,22 +60,35 @@ def fetch_data():
                 if 'ONLINE ORDERS' in temp_storeaddresss:
                     temp_storeaddresss.remove('ONLINE ORDERS');
                 location_name = temp_storeaddresss[0]
-                row = temp_storeaddresss[1:]
+                row_add = temp_storeaddresss[1:]
+                row = ' '.join(map(str, row_add))
+                phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(temp_storeaddresss))
+                if Enquiry(phone_list):
+                    phone = phone_list[0]
+                else:
+                    phone = "<MISSING>"
+
+                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(temp_storeaddresss))
+                if Enquiry(us_zip_list):
+                    zip = us_zip_list[-1]
+                else:
+                    zip = "<MISSING>"
                 return_object = []
                 return_object.append(base_url)
                 return_object.append(location_name)
                 return_object.append("<INACCESSIBLE>")
                 return_object.append("<INACCESSIBLE>")
                 return_object.append("<INACCESSIBLE>")
-                return_object.append("<INACCESSIBLE>")
+                return_object.append(zip)
                 return_object.append("US")
                 return_object.append("<MISSING>")
+                return_object.append(phone)
                 return_object.append("<MISSING>")
-                return_object.append("Ueban brick")
                 return_object.append(lat)
                 return_object.append(lag)
                 return_object.append("<MISSING>")
                 return_object.append(row)
+                return_object.append("<MISSING>")
                 return_main_object.append(return_object)
     return return_main_object
 
@@ -80,3 +97,4 @@ def scrape():
     write_output(data)
 
 scrape()
+

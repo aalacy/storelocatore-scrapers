@@ -3,8 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-# import sgzip
-# import time
+
 
 
 def write_output(data):
@@ -50,15 +49,12 @@ def fetch_data():
     page_url = "<MISSING>"
 
 
+    get_data_url = 'https://www.chopard.com/intl/storelocator'
+    r = requests.get(get_data_url, headers=headers)
 
-    r= requests.get('https://www.chopard.com/us/storelocator?country=US&address=79782',headers = headers)
-    soup = BeautifulSoup(r.text,'lxml')
-    script = soup.find_all('script',{'type':'text/javascript'})[-6]
-    # print(script)
-    script_text = script.text.split('=')[-1].split(';')[0]
-    # print(script_text)
-    json_data = json.loads(script_text)
-    # print(json_data['stores'])
+    soup = BeautifulSoup(r.text, "lxml")
+    json_data = json.loads(soup.find('select', {'class': 'country-field'}).find_previous('script').text.replace(
+        'var preloadedStoreList =', '').replace(';', '').strip())
     for x in json_data['stores']:
         try:
             if x['country_id'] in ['US' ,'CA']:
@@ -100,8 +96,8 @@ def fetch_data():
                          store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
                 store = ["<MISSING>" if x == "" or x == None or x == "." else x for x in store]
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                print("data = " + str(store))
+                print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)
         except:

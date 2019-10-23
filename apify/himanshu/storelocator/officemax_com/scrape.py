@@ -25,8 +25,9 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 70
-    MAX_DISTANCE = 250
+    store_list=[]
+    MAX_RESULTS = 1000
+    MAX_DISTANCE = 500
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
 
@@ -37,10 +38,10 @@ def fetch_data():
 
     while coord:
         result_coords = []
-
+        # print("ramiang zip =====" + str(search.current_zip))
         lat = coord[0]
         lng = coord[1]
-        addresssss =[]
+        addresses =[]
         address2=[]
         city2=[]
         state2 =[]
@@ -62,11 +63,10 @@ def fetch_data():
         return_main_object =[]
         store_detail =[]
         store_name=[]
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
-        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
-        # print(coord)
+        
 
-        location_url = 'https://storelocator.officedepot.com/ajax?xml_request= <request><appkey>AC2AD3C2-C08F-11E1-8600-DCAD4D48D7F4</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>250</limit><geolocs><geoloc><longitude>'+str(lng)+'</longitude><latitude>'+str(lat)+'</latitude></geoloc></geolocs><searchradius>20|35|50|100|250</searchradius></formdata></request>'
+
+        location_url = 'https://storelocator.officedepot.com/ajax?&xml_request=<request><appkey>AC2AD3C2-C08F-11E1-8600-DCAD4D48D7F4</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>500</limit><geolocs><geoloc><addressline>'+str(search.current_zip)+'</addressline><longitude>'+str(lng)+'</longitude><latitude>'+str(lat)+'</latitude></geoloc></geolocs><searchradius>2000</searchradius><where><or><nowdocs><eq></eq></nowdocs><expanded_furn><eq></eq></expanded_furn><usps><eq></eq></usps><shredding><eq></eq></shredding><selfservews><eq></eq></selfservews><photoprint><eq></eq></photoprint><expandedbb><eq></eq></expandedbb><warranty_carry><eq></eq></warranty_carry><cellphonerepair><in></in></cellphonerepair><techtradein><eq></eq></techtradein><techrecycling><eq></eq></techrecycling><techzone><eq></eq></techzone><selfservprinting><eq></eq></selfservprinting><usps_mail><eq></eq></usps_mail><coworking><eq></eq></coworking></or><icon><eq></eq></icon></where></formdata></request>'
         try:
             r = requests.get(location_url, headers=headers)
         except:
@@ -94,13 +94,8 @@ def fetch_data():
         fri1 = soup.find_all("fri")
         sat1 = soup.find_all("sat")
         sun1 = soup.find_all("sun")
-        
-        # json_data = r.json()
-        # json_data = json.loads(r_utf)
-        # print("json_Data === " + str(json_data))
-        current_results_len = int(len(address1))  # it always need to set total len of record.
-        # print("current_results_len === " + str(current_results_len))
-      
+     
+        current_results_len = int(len(address1))  # it always need to set total len of record.      
         for mon in mons:
             mons2.append(mon.text)
         for tues in tuess:
@@ -149,27 +144,25 @@ def fetch_data():
         
 
         for i in range(len(address2)):
-            new_list=[]
-            new_list.append("https://www.officedepot.com")
-            new_list.append(store_name[i].capitalize() if store_name[i].capitalize() else "<MISSING>")
-            new_list.append(address2[i])
-            new_list.append(city2[i].capitalize())
-            new_list.append(state2[i])
-            new_list.append(postalcode2[i])
-            new_list.append(country2[i])
-            new_list.append(store_no2[i])
-            new_list.append(phone2[i])
-            new_list.append("<MISSING>")
-            new_list.append(latitude2[i])
-            new_list.append(longitude2[i])
-            new_list.append(hours2[i].strip())
-            new_list.append("https://www.officedepot.com/storelocator/findStore.do")
-            # print("========================",new_list)
-            if new_list[2] in addresssss:
-                continue
-            addresssss.append(new_list[2])
-            yield new_list
-
+            locator_domain = ("https://www.officedepot.com")
+            location_name = store_name[i] if store_name[i] else "<MISSING>" 
+            street_address = (address2[i])
+            city = (city2[i])
+            state = (state2[i])
+            zipp = postalcode2[i]
+            country_code = (country2[i])
+            store_number = (store_no2[i])
+            phone = (phone2[i])
+            location_type = ("<MISSING>")
+            latitude = (latitude2[i])
+            longitude = (longitude2[i])
+            hours_of_operation = (hours2[i].strip())
+            page_url = ("https://www.officedepot.com/storelocator/findStore.do")
+            result_coords.append((latitude, longitude))
+            store_list1 = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+            store_list.append(store_list1)
+            # print(store_list1) 
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
@@ -180,7 +173,15 @@ def fetch_data():
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         coord = search.next_coord()
         # break
-
+    # print(len(store_list))
+    for i in range(len(store_list)):
+        temp = store_list[i]
+        # print(temp)
+        if temp[2] in addresses:
+            continue
+        addresses.append(temp[2])
+        return_main_object.append(temp)
+    return return_main_object
 
 def scrape():
     data = fetch_data()
