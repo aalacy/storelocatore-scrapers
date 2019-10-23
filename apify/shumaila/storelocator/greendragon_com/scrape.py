@@ -54,17 +54,7 @@ def fetch_data():
         hours = re.sub(pattern, "", hours)
         phone = phone.replace("\n","")
 
-        print(title)
-        print(street)
-        print(city)
-        print(state)
-        print(pcode)
-        print(phone)
-        print(lat)
-        print(longt)
-        print(hours)
-        print(p)
-        print("...........................")
+       
         p += 1
         data.append([
             'https://greendragon.com/',
