@@ -58,7 +58,7 @@ class Scraper(Scrape):
             # Country
             country = location['address']['country']
 
-            if country in ['USA', 'Canada']:
+            if not store['properties']['locationID'][0].isalpha():
                 store = store['properties']
                 print(f"Now scraping {store['locationName']}")
 
