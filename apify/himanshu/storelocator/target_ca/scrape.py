@@ -53,21 +53,24 @@ def fetch_data():
     }
     address=[]
     while zip_code:
-
-        r = requests.get(
-            'https://redsky.target.com/v3/stores/nearby/'+ str(zip_code) +'?key=eb2551e4accc14f38cc42d32fbc2b2ea&limit='+str(MAX_RESULTS)+'&within='+str(MAX_DISTANCE)+'&unit=kilometer',
-            headers=headers,
-       
-        )
-        soup= BeautifulSoup(r.text,"lxml")
-        result_coords = []
-        k = json.loads(soup.text)
+        try:
+            r = requests.get(
+                'https://redsky.target.com/v3/stores/nearby/'+ str(zip_code) +'?key=eb2551e4accc14f38cc42d32fbc2b2ea&limit='+str(MAX_RESULTS)+'&within='+str(MAX_DISTANCE)+'&unit=kilometer',
+                headers=headers,
+        
+            )
+            soup= BeautifulSoup(r.text,"lxml")
+            result_coords = []
+            k = json.loads(soup.text)
+        except:
+            continue
 
 
 
         # if k !=[]:
         time =''
         if k != None and k !=[]:
+            
             for i in k:
                 current_results_len = len(i['locations'])  # need to update with no of count.
 
@@ -94,9 +97,9 @@ def fetch_data():
 
                     tem_var.append(j['address']['postal_code'] if j['address']['postal_code']  else "<MISSING>")
                     if 'county' in j['address']:
-                        tem_var.append(j['address']['county'])
+                        tem_var.append('US')
                     else:
-                        tem_var.append('<MISSING>')
+                        tem_var.append('US')
                     tem_var.append("<MISSING>")
                        
                     tem_var.append(j['contact_information']['telephone_number'] if j['contact_information']['telephone_number'] else "<MISSING>")
@@ -106,14 +109,17 @@ def fetch_data():
                     tem_var.append(j['geographic_specifications']['longitude'] if j['geographic_specifications']['longitude'] else "<MISSING>" )
                     tem_var.append(time if time else "<MISSING>" )
                     tem_var.append('https://redsky.target.com/v3/stores/nearby/'+ str(zip_code) +'?key=eb2551e4accc14f38cc42d32fbc2b2ea&limit='+str(MAX_RESULTS)+'&within='+str(MAX_DISTANCE)+'&unit=kilometer' )
+                    
+                    
+
                     yield tem_var
 
                     # yield store
                 if current_results_len < MAX_RESULTS:
-                    # print("max distance update")
+                   # print("max distance update")
                     search.max_distance_update(MAX_DISTANCE)
                 elif current_results_len == MAX_RESULTS:
-                    # print("max count update")
+                   # print("max count update")
                     search.max_count_update(result_coords)
                 else:
                     raise Exception("expected at most " + str(MAX_RESULTS) + " results")

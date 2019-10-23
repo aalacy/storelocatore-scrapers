@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -31,31 +31,27 @@ def fetch_data():
     store_detail=[]
     return_main_object=[]
     hours =[]
+    longitude=[]
+    latitude=[]
+    hours1=[]
     r1 = requests.post(base_url,headers=headers)
     soup2= BeautifulSoup(r.text,"lxml")
     script = soup2.find_all("script",{"type":"text/javascript"})
-    # for j in script:
-    #     if "var marcadores" in j.text:
-    #         con = j.text.split("var marcadores = [")[1].split("//end marcadores")[0].replace("];",'').strip()[:-1]
-          
-    #         print(con)
-            # for index,j in enumerate(con):
-            #     print(j)
-            # for j in con:
-            #     for p in j.split("contenido:"):
-    #                 print(p)
-                # for j in con:
-                #     print(j)
+    for j in script:
+        if "var marcadores" in j.text:
+            con = j.text.split("var marcadores = [")[1].split("//end marcadores")[0].replace("];",'').strip()[:-1]
+            for geo_loc in con.split("positionMarcadores:")[1:]:
+                latitude.append(geo_loc.split("lat : ")[1].strip().split(",")[0].strip().replace("\t",""))
+                longitude.append(geo_loc.split("lng : ")[1].strip().split(",")[0].strip().replace("}","").replace("\t",""))
+       
+  
     k= soup.find_all("div",{"class":"main_content"})
-
-
-   
     for i in k:
         name = i.find_all("h2",{"itemprop":"name"})
         
-        for n in name:
+        for index,n in enumerate(name):
             tem_var=[]
-            name=(n.text.replace('\n',""))
+            name=(n.text.replace('\n',"").replace("\t","").strip())
             base_url1= n.a['href']
             r = requests.get(base_url1,headers=headers)
             soup1= BeautifulSoup(r.text,"lxml")
@@ -88,8 +84,7 @@ def fetch_data():
                 del v1[0]
             hours = " ".join(v1)
             
-        tem_var.append("https://www.costulessdirect.com")
-        tem_var.append(name)
+        store_name.append(name)
         tem_var.append(st)
         tem_var.append(city)
         tem_var.append(state)
@@ -97,11 +92,22 @@ def fetch_data():
         tem_var.append("US")
         tem_var.append("<MISSING>")
         tem_var.append(phone.replace("Mountain/San Antonio. In the Superior supermarket shopping center","909-218-8631"))
-        tem_var.append("costulessdirect")
-        tem_var.append("<INACCESSIBLE>")
-        tem_var.append("<INACCESSIBLE>")
-        tem_var.append(hours)
-        return_main_object.append(tem_var)
+        tem_var.append("<MISSING>")
+        hours1.append(hours.replace("/",""))
+        store_detail.append(tem_var)
+        
+    for i in range(len(store_name)):
+       store = list()
+       store.append("https://www.costulessdirect.com")
+       store.append(store_name[i])
+       store.extend(store_detail[i])
+       store.append(latitude[i])
+       store.append(longitude[i])
+       store.append(hours1[i])
+       store.append("https://www.costulessdirect.com/resources/locations")
+       #print(store)
+
+       return_main_object.append(store)
    
     return return_main_object
 

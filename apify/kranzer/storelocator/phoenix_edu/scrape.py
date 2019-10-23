@@ -5,8 +5,6 @@ from lxml import html
 import base
 import requests, json
 from urllib.parse import urljoin
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 
 
 class Scrape(base.Spider):

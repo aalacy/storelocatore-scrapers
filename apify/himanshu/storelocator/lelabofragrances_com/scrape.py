@@ -6,13 +6,17 @@ import json
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import time
+import platform
+import time
+
+system = platform.system()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -23,7 +27,10 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
-    return webdriver.Firefox(options=options,executable_path="./geckodriver")
+    if "linux" in system.lower():
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)
+    else:
+        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def fetch_data():
     driver = get_driver()
@@ -39,7 +46,8 @@ def fetch_data():
     driver.find_element_by_xpath("//div[@data-value='US']").click()
     driver.find_element_by_css_selector(".form-btn.gatracking").click()
     driver.find_element_by_xpath("//button[@id='storeSearch.country-dropdown-selected']").click()
-    driver.find_element_by_xpath("//button[@tabindex='534']").click()
+    time.sleep(2)
+    driver.find_element_by_xpath("//div[@id='storeSearch.country-dropdown']//button[@data-value='US']").click()
     soup = BeautifulSoup(driver.page_source, "lxml")
     for script in soup.find_all("script"):
         if "storeObjects.push(" in script.text:
@@ -66,10 +74,12 @@ def fetch_data():
                 store.append("US")
                 store.append(store_id if store_id else "<MISSING>")
                 store.append(phone if phone else "<MISSING>")
-                store.append("le labo")
+                store.append("<MISSING>")
                 store.append(lat)
                 store.append(lng)
                 store.append(hours if hours else "<MISSING>")
+                store.append("https://www.lelabofragrances.com/front/app/store/search?execution=e1s1")
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
                 yield store
     driver.find_element_by_xpath("//button[@id='storeSearch.country-dropdown-selected']").click()
     driver.find_element_by_xpath("//button[@data-value='CANADA']").click()
@@ -99,10 +109,12 @@ def fetch_data():
                 store.append("CA")
                 store.append(store_id if store_id else "<MISSING>")
                 store.append(phone if phone else "<MISSING>")
-                store.append("le labo")
+                store.append("<MISSING>")
                 store.append(lat)
                 store.append(lng)
                 store.append(hours if hours else "<MISSING>")
+                store.append("https://www.lelabofragrances.com/front/app/store/search?execution=e1s1")
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
                 yield store
 
 def scrape():

@@ -47,9 +47,12 @@ def fetch_data():
     for cord in coords:
         try:
             r =requests.get('https://www.firstwatch.com/api/get_locations.php?latitude='+str(cord[0])+'&longitude='+str(cord[1]),headers = headers)
+
+
             location_list = r.json()
         except:
             continue
+        # print('https://www.firstwatch.com/api/get_locations.php?latitude='+str(cord[0])+'&longitude='+str(cord[1]))
         if location_list != []:
             for location in location_list:
                 # print(location['zip'])
@@ -66,11 +69,19 @@ def fetch_data():
                 city = location['city']
                 state = location['state']
                 zipp = location['zip']
+                # print(zipp)
                 latitude = location['latitude']
                 longitude = location['longitude']
                 phone = location['phone']
                 page_url = "https://www.firstwatch.com/locations/"+location['slug']
-                hours_of_operation = location['open'].replace('@','at')
+                if "OPEN NOW" not in location['open'] and 'open' not in location['open']  and "CLOSED" not in location['open']:
+
+                    hours_of_operation = location['open'].replace('@','at')
+                    # print(hours_of_operation)
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                else:
+                    hours_of_operation = "<MISSING>"
+                # print(hours_of_operation)
                 # print(page_url)
                 # hours = requests.get(page_url,headers = headers)
                 # soup = BeautifulSoup(hours.text,'lxml')
@@ -89,9 +100,8 @@ def fetch_data():
                     continue
                 addresses.append(street_address)
 
-                print("data = " + str(store))
-                print(
-                    '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)
 

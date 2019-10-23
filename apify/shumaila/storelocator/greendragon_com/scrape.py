@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re
+import usaddress
 
 
 def write_output(data):
@@ -30,41 +31,71 @@ def fetch_data():
     pattern = re.compile(r'\s\s+')
     for repo in repo_list:
         link = repo['href']
-        print(link)
+
         title = repo.text
         page = requests.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
         maindiv = soup.find('div', {'class': 'location-details'})
-        street = maindiv.find('meta', {'itemprop': 'streetAddress'})
-        street = street['content']
-        city = maindiv.find('meta', {'itemprop': 'addressLocality'})
-        city = city['content']
-        state = maindiv.find('meta', {'itemprop': 'addressRegion'})
-        state = state['content']
-        pcode = maindiv.find('meta', {'itemprop': 'postalCode'})
-        pcode = pcode['content']
-        lat = maindiv.find('meta', {'itemprop': 'latitude'})
-        lat = lat['content']
-        longt = maindiv.find('meta', {'itemprop': 'longitude'})
-        longt = longt['content']
+
+
         detail = maindiv.findAll('p')
+        address = detail[0].text
+        address = re.sub(pattern,"", address)
+        address = address.lstrip()
+        if address.find("(") > -1:
+            address = address[0:address.find("(")]
+        address = usaddress.parse(address)
+
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
+        while i < len(address):
+            temp = address[i]
+            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or \
+                    temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
+                "USPSBoxID") != -1:
+                street = street + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
+            i += 1
+        try:
+            frames = soup.find('iframe')
+            coord = str(frames['src'])
+            start = coord.find('!1d') + 3
+            end = coord.find('!2d', start)
+            lat = coord[start:end]
+            start = end + 3
+            end = coord.find('!3f', start)
+            longt = coord[start:end]
+            lat = lat[0:8]
+            longt = longt[0:10]
+        except:
+            lat = "<MISSING>"
+            longt = "<MISSING>"
+
+
+
         phone = detail[1].text
         hours = detail[2].text
         phone = re.sub(pattern, "", phone)
         hours = re.sub(pattern, "", hours)
         phone = phone.replace("\n","")
+        street = street.lstrip()
+        city = city.lstrip()
+        city = city.replace(",", "")
+        state = state.lstrip()
+        pcode = pcode.lstrip()
 
-        print(title)
-        print(street)
-        print(city)
-        print(state)
-        print(pcode)
-        print(phone)
-        print(lat)
-        print(longt)
-        print(hours)
-        print(p)
-        print("...........................")
+
+
+
+
         p += 1
         data.append([
             'https://greendragon.com/',

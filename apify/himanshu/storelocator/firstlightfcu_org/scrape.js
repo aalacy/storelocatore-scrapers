@@ -38,6 +38,8 @@ request(url,(err,res,html)=>{
               var city_tmp = $('#branch').find('.col-md-6:nth-child(3)').find('.city_state_zip').text();
               var hour = $('#branch').find('.col-md-6:nth-child(3)').find('.hours').text().replace(/\n/g, '');
               var phone = $('#branch').find('.col-md-6:nth-child(3)').find('.phone').text().replace('Phone:','').trim();
+              var lat = $('script').html()
+              console.log(lat)
               items.push({
                 locator_domain : 'https://www.firstlightfcu.org',
                 location_name : location_name,

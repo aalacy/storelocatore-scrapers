@@ -23,7 +23,7 @@ def fetch_data():
     r = requests.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
   
-
+    jj= []
     k = (soup.find_all("div",{"class":"sqs-col-4"}))
     for x in k:
         for y in x.find_all('div',{'class':'sqs-block-html'}):
@@ -32,12 +32,18 @@ def fetch_data():
 
             street_address = y.find('p')
             cnv  = str(street_address).replace('<br/>','%%')
-
+            jj.append(soup.find_all('script', {'type': 'application/ld+json'}))
             soup = BeautifulSoup(cnv, "lxml")
             street_address = soup.text.split('%%')[0]
+
             if location_name == 'STEUBENVILLE*':
-                street_address = 'STEUBENVILLE, OH'
-                
+
+                db = json.loads(jj[0][2].text)
+
+                street_address = db['address'].split('\n')[0] + ' ' + db['address'].split('\n')[1].strip().split(',')[0]
+
+
+
             phone = ''
             if '.' in soup.text.split('%%')[1]:
                 phone  = soup.text.split('%%')[1]
@@ -73,7 +79,7 @@ def fetch_data():
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
             store.append(page_url if hours_of_operation else '<MISSING>')
 
-            print("data====",str(store))
+            # print("data====",str(store))
             yield store
 
 def scrape():

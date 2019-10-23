@@ -1,7 +1,9 @@
 import csv
-import urllib2
+import urllib3
 import requests
 import json
+
+requests.packages.urllib3.disable_warnings()
 
 session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -18,14 +20,13 @@ def write_output(data):
 
 def fetch_data():
     url = 'https://www.huntington.com/~/media/SEO_Files/sitemap'
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     locs = []
     for line in r.iter_lines():
         if '<loc>https://www.huntington.com/Community/branch-info?locationId=' in line:
             locs.append(line.split('>')[1].split('<')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
-        r2 = session.get(loc, headers=headers)
+        r2 = session.get(loc, headers=headers, verify=False)
         lines = r2.iter_lines()
         hours = ''
         typ = 'Branch'

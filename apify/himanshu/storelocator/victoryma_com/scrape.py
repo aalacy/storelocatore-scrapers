@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -23,6 +23,22 @@ def fetch_data():
     base_url = "https://victoryma.com/"
     r = requests.get(base_url, headers=header)
     soup = BeautifulSoup(r.text, "lxml")
+    script = soup.find_all('script')[-1]
+    # print(script)
+    script_text = script.text.split('var sites = ')[-2].split(';')[0].split('\n')
+    script_text = [x for x in script_text if x.strip()]
+
+    del script_text[0]
+    del script_text[-1]
+    c =[]
+    for i in script_text :
+        list_i = i.replace('    [','').split('],')
+
+        lat= list_i[0].split(',')[2].replace("'",'')
+        lon = list_i[0].split(',')[3].replace("'",'')
+        c.append(lat)
+        c.append(lon)
+
 
 
 
@@ -31,6 +47,7 @@ def fetch_data():
 
 
 
+        # print(coord)
         r = requests.get(base_url + val['href'], headers=header)
         soup = BeautifulSoup(r.text, "lxml")
         locator_domain = base_url
@@ -55,16 +72,19 @@ def fetch_data():
         store_number = '<MISSING>'
         phone = soup.find('span',{'class':'no'}).text
         country_code = 'US'
-        location_type = 'victoryma'
-        latitude = '<MISSING>'
-        longitude = '<MISSING>'
+        location_type = '<MISSING>'
+
+        page_url = base_url + val['href']
         hour = soup.find('ul',{'class':'working-hours'}).find_all('a')
         db = []
         for i in hour:
 
             db.append(i.text.strip().replace(" ", ""))
 
-        hours_of_operation = ' '.join(db).replace('\n','').replace('\t',' ')
+        hours_of_operation = ' '.join(db).replace('\n',' ').replace('\t','')
+        latitude = c.pop(0)
+        longitude= c.pop(0)
+        # print(latitude,longitude)
 
 
 
@@ -82,7 +102,9 @@ def fetch_data():
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
 
+
         store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
+        store.append(page_url if page_url else '<MISSING>')
         # print("data == "+str(store))
         # print('~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)

@@ -112,7 +112,8 @@ def fetch_data():
                     elif "Phone" in location_details[k]:
                         phone = location_details[k].split("\xa0")[0].split("Phone")[1].strip()
                         if phone == "":
-                            phone = location_details[k].split("\xa0")[1]
+                            if len(location_details[k].split("\xa0")) > 1: 
+                                phone = location_details[k].split("\xa0")[1]
                 store.append(phone if phone!= "" else "<MISSING>")
                 store.append("<MISSING>")
                 geo_location = location_soup.find_all("iframe")[-1]["src"]

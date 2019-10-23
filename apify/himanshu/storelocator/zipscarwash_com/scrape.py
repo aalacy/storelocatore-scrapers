@@ -30,10 +30,10 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         r = requests.get("https://www.zipscarwash.com/locations?field_map_proximity-lat=" + str(x) + "&field_map_proximity-lng=" + str(y) + "&field_map_proximity=1500000",headers=headers)
         soup = BeautifulSoup(r.text,"lxml")
         for location in soup.find_all("div",{"class":"views-col"}):
@@ -73,10 +73,10 @@ def fetch_data():
             hours = " ".join(list(location_soup.find("div",{"class":"office-hours"}).stripped_strings))
             store.append(hours.replace("  ","") if hours else "<MISSING>")
             store.append(page_url)
-            print(store)
+            # print(store)
             yield store
         if len(soup.find_all("div",{"class":"views-col"})) == MAX_RESULTS:
-            print("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

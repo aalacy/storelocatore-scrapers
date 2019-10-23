@@ -23,19 +23,24 @@ class Scrape(base.Spider):
             i.add_xpath('phone', './/span[@class="info"]/text()[2]', base.get_first, lambda x: x.replace('\r', '').replace('\n','').strip())
             loc = s.xpath('.//span[@class="info"]/text()[1]')[0]
             if loc:
-                tup = re.findall(r'(.+),\s(.+?),\s([A-Z][A-Z])\s(.+)', loc.replace('\r', '').strip())
-                if tup:
-                    i.add_value('street_address', tup[0][0])
-                    i.add_value('city', tup[0][1])
-                    i.add_value('state', tup[0][2], lambda x: x.upper())
-                    i.add_value('zip', tup[0][3])
-                    i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
+                if i.as_dict()['location_name'] != "Canton":
+                    tup = re.findall(r'(.+),?\s(.+?),\s([A-Z][A-Z])\s(.+)', loc.replace('\r', '').strip())
+                    if tup:
+                        i.add_value('street_address', tup[0][0])
+                        i.add_value('city', tup[0][1])
+                        i.add_value('state', tup[0][2], lambda x: x.upper())
+                        i.add_value('zip', tup[0][3])
+                        i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
+                    else:
+                        pass
                 else:
-                    continue
+                    i.add_value('street_address', loc)
+                    i.add_value('city', 'Canton')
+                    i.add_value('state', 'MI')
+                    i.add_value('country_code', 'US')
 
             i.add_value('latitude', "<INACCESSIBLE>")
             i.add_value('longitude', "<INACCESSIBLE>")
-            print(i)
             yield i
 
 

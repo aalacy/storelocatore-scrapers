@@ -37,6 +37,9 @@ def fetch_data():
     #Driver
     driver = get_driver()
     driver.get('http://keyfood.mywebgrocer.com/StoreLocator.aspx?s=723953668&g=2d6a1d25-bf8f-4056-8736-269d1b9db7cf&uc=581EF7')
+    wait = WebDriverWait(driver, 10)
+    men_menu = wait.until(ec.visibility_of_element_located((By.XPATH, "//select[@name='selStates']/option")))
+    ActionChains(driver).move_to_element(men_menu).perform()
     state_opt = driver.find_elements_by_xpath("//select[@name='selStates']/option")
     state_options = [state_opt[n].text for n in range(0,len(state_opt))]
     for n in range(1,len(state_options)):

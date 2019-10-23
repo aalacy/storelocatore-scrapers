@@ -44,10 +44,10 @@ def fetch_data():
     zipcode = [zipcodes[n].text for n in range(0,len(zipcodes))]
     phones = driver.find_elements_by_xpath("//span[@itemprop='telephone']")
     for n in range(0,len(phones)):
-	if (phones[n].text!=[]) and (phones[n].text!=""):
-		phone.append(phones[n].text)
-	else:
-		phone.append('<MISSING>')
+        if (phones[n].text!=[]) and (phones[n].text!=""):
+            phone.append(phones[n].text)
+        else:
+            phone.append('<MISSING>')
     geomap = driver.find_elements_by_xpath("//a[contains(@href,'https://maps.google.com/')]")
     for n in range(0,len(geomap)):
         lat,lon = parse_geo(geomap[n].get_attribute('href'))
@@ -56,7 +56,7 @@ def fetch_data():
     for n in range(0,len(street_address)):
         data.append([
             'http://johnnysmarkets.com',
-	    'http://johnnysmarkets.com/#locations'
+	    'http://johnnysmarkets.com/#locations',
             location_name[n],
             street_address[n],
             city[n],

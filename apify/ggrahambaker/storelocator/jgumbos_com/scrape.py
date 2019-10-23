@@ -7,6 +7,13 @@ from selenium.common.exceptions import NoSuchElementException
 import re
 import usaddress
 
+def addy_ext(addy):
+    address = addy.split(',')
+    city = address[0]
+    state_zip = address[1].strip().split(' ')
+    state = state_zip[0]
+    zip_code = state_zip[1]
+    return city, state, zip_code
 
 def get_driver():
     options = Options()
@@ -70,13 +77,18 @@ def fetch_data():
         driver.get(state)
         driver.implicitly_wait(10)
         main = driver.find_element_by_css_selector('div.post-content')
-        stores = main.find_elements_by_css_selector('h3')
+        stores = main.find_elements_by_css_selector('a')
         if len(stores) == 0:
             continue
 
         for store in stores:
             try:
-                store_links.append(store.find_element_by_css_selector('a').get_attribute('href'))
+                link = store.get_attribute('href')
+                if '.png' in link:
+                    continue
+                if link in store_links:
+                    continue
+                store_links.append(link)
             except NoSuchElementException:
                 print('no a tag')
 
@@ -89,52 +101,59 @@ def fetch_data():
         cont = main.find_element_by_css_selector('div.fusion-column-wrapper').text.split('\n')
 
         if len(cont) > 1:
-            location_name = cont[0]
-            hours = hours_extract(cont)
+            if 'Now Open' in cont[-1]:
+                location_name = cont[0]
+                street_address = cont[1]
+                city, state, zip_code = addy_ext(cont[2])
+                hours = '<MISSING>'
+            else:
+                location_name = cont[0]
+                hours = hours_extract(cont)
 
-            addy_cut = 0
-            for i, add in enumerate(cont):
-                result1 = re.compile('\d{3}\-\d{3}')
-                result2 = re.compile('\(\d{3}\)\ \d{3}')
-                for m in result1.finditer(add):
-                    phone_number = add[m.start():]
-                    addy_cut = i
-                for m in result2.finditer(add):
-                    phone_number = add[m.start():]
-                    addy_cut = i
+                addy_cut = 0
+                for i, add in enumerate(cont):
+                    result1 = re.compile('\d{3}\-\d{3}')
+                    result2 = re.compile('\(\d{3}\)\ \d{3}')
+                    for m in result1.finditer(add):
+                        phone_number = add[m.start():]
+                        addy_cut = i
+                    for m in result2.finditer(add):
+                        phone_number = add[m.start():]
+                        addy_cut = i
 
-            clean_cont = cont[1:addy_cut]
-            addy_string = ''
-            zip_re = re.compile('\d{5}')
-            to_break = False
-            for i, addy in enumerate(clean_cont):
-                if to_break:
-                    break
+                clean_cont = cont[1:addy_cut]
+                addy_string = ''
+                zip_re = re.compile('\d{5}')
+                to_break = False
+                for i, addy in enumerate(clean_cont):
+                    if to_break:
+                        break
 
-                addy_string += addy + ' '
-                for m in zip_re.finditer(addy):
-                    if m.group():
-                        to_break = True
+                    addy_string += addy + ' '
+                    for m in zip_re.finditer(addy):
+                        if m.group():
+                            to_break = True
 
-            parsed_add = usaddress.tag(addy_string)[0]
 
-            street_address = ''
+                parsed_add = usaddress.tag(addy_string)[0]
 
-            if 'AddressNumber' in parsed_add:
-                street_address += parsed_add['AddressNumber'] + ' '
-            if 'StreetNamePreDirectional' in parsed_add:
-                street_address += parsed_add['StreetNamePreDirectional'] + ' '
-            if 'StreetName' in parsed_add:
-                street_address += parsed_add['StreetName'] + ' '
-            if 'StreetNamePostType' in parsed_add:
-                street_address += parsed_add['StreetNamePostType'] + ' '
-            if 'OccupancyType' in parsed_add:
-                street_address += parsed_add['OccupancyType'] + ' '
-            if 'OccupancyIdentifier' in parsed_add:
-                street_address += parsed_add['OccupancyIdentifier'] + ' '
-            city = parsed_add['PlaceName']
-            state = parsed_add['StateName']
-            zip_code = parsed_add['ZipCode']
+                street_address = ''
+
+                if 'AddressNumber' in parsed_add:
+                    street_address += parsed_add['AddressNumber'] + ' '
+                if 'StreetNamePreDirectional' in parsed_add:
+                    street_address += parsed_add['StreetNamePreDirectional'] + ' '
+                if 'StreetName' in parsed_add:
+                    street_address += parsed_add['StreetName'] + ' '
+                if 'StreetNamePostType' in parsed_add:
+                    street_address += parsed_add['StreetNamePostType'] + ' '
+                if 'OccupancyType' in parsed_add:
+                    street_address += parsed_add['OccupancyType'] + ' '
+                if 'OccupancyIdentifier' in parsed_add:
+                    street_address += parsed_add['OccupancyIdentifier'] + ' '
+                city = parsed_add['PlaceName']
+                state = parsed_add['StateName']
+                zip_code = parsed_add['ZipCode']
 
             store_number = '<MISSING>'
             lat = '<MISSING>'
@@ -145,10 +164,9 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                           store_number, phone_number, location_type, lat, longit, hours]
 
-            print()
-            print(store_data)
-            print()
+
             all_store_data.append(store_data)
+
 
     driver.quit()
     return all_store_data

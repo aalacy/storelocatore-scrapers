@@ -62,18 +62,6 @@ def fetch_data():
         longt = detail['data-lng']
 
 
-        print(title)
-        print(street)
-        print(city)
-        print(state)
-        print(pcode)
-        print(phone)
-        print(lat)
-        print(longt)
-        print(hours)
-        print(p)
-
-        print(".............................")
         p += 1
         data.append([
             'https://greensnaturalfoods.com/',

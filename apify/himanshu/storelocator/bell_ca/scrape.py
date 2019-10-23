@@ -10,6 +10,7 @@ import os
 
 session = requests.Session()
 proxy_password = os.environ["PROXY_PASSWORD"]
+print(proxy_password)
 proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
 proxies = {
     'http': proxy_url,
