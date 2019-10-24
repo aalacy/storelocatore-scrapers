@@ -25,8 +25,8 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     chrome_path = '/Users/Dell/local/chromedriver'
-    return webdriver.Chrome(chrome_path, chrome_options=options)
-    #return webdriver.Chrome('chromedriver', chrome_options=options)
+    #return webdriver.Chrome(chrome_path, chrome_options=options)
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 
 def fetch_data():
