@@ -10,7 +10,6 @@ function convertPolygon(esriJson) {
 	const reprojected = reproject.reproject(geoJson, epsg['EPSG:3857'], epsg['EPSG:4326']);
 	const wkt = new wicket.Wkt();
 	const parsed = wkt.fromObject(reprojected);
-	console.log(parsed.components)
 	return parsed.write();
 }
 
