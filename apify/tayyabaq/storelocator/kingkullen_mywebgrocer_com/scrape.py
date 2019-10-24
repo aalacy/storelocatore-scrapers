@@ -52,7 +52,7 @@ def fetch_data():
         lat_lon = driver.find_elements_by_class_name('SingleItemLinkText')
         for n in range(0,len(lat_lon)):
             lat,lon = parse_geo(lat_lon[n].get_attribute('href'))
-            latitude.append(lat.replace(",","")
+            latitude.append(lat.replace(",",""))
             longitude.append(lon)
         address2=driver.find_elements_by_xpath("//div[@class='StoreAddress']/p[2]")
         address1 = driver.find_elements_by_xpath("//div[@class='StoreAddress']/p[1]")
