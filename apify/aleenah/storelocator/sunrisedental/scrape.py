@@ -24,7 +24,7 @@ def write_output(data):
                 writer.writerow(row)
             except:
                 row[-2]=row[-2].replace("\u0335","")
-                print(row)
+                #print(row)
                 writer.writerow(row)
 
 
