@@ -17,6 +17,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def unique_list(l):
+    ulist = []
+    [ulist.append(x) for x in l if x not in ulist]
+    return ulist
 
 def fetch_data():
     # header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5','Accept':'application/json, text/javascript, */*; q=0.01'}
@@ -39,7 +43,9 @@ def fetch_data():
             
 
             if len(b) == 5:
+
                 del b[0]
+
                 if b[-1] == 'United Kingdom':
                     country_code = 'US'
                 else:
@@ -50,8 +56,6 @@ def fetch_data():
 
                 
             elif len(b) == 4:
-                
-                                    
                 if b[-1] == 'United Kingdom':
                     country_code = 'US'
                 else:
@@ -86,11 +90,18 @@ def fetch_data():
 
             hours_of_operation = ''
             page_url = 'https://www.rolex.com/rolex-dealers/dealer-locator/retailers-details/' + str(vj['urlRolex'])
+            if state.isspace():
+                print(state.split(' ')[-1])
+                state = state.split(' ')[-1]
+            else:
+                state = state
             if soup1.find('span',{'itemprop':'openingHours'}) != None:
                 hours_of_operation = soup1.find('span',{'itemprop':'openingHours'}).text.encode('ascii', 'ignore').decode('ascii').strip()
             if(b[-1] == 'United States' or b[-1] == 'Canada'):
                 if len(state.split(' ')) == 2:
                     state = state.split(' ')[1]
+                
+                state = ' '.join(unique_list(state.split()))
                 store = []
                 store.append(locator_domain if locator_domain else '<MISSING>')
                 store.append(location_name if location_name else '<MISSING>')

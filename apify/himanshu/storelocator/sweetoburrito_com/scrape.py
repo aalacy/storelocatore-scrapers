@@ -19,9 +19,8 @@ def fetch_data():
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-    get_url = "https://sweetoburrito.com/locations/"
-    base_url = "https://sweetoburrito.com"
-    r = requests.get(get_url, headers=headers)
+    base_url = "https://sweetoburrito.com/locations/"
+    r = requests.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     exists = soup.find('main')
@@ -50,7 +49,7 @@ def fetch_data():
                 hours_of_operation = address.split(":")[0][:-8]
                 if "Address:" in data.select('.iconbox_content_container')[0].get_text().strip()[7:]:
                     addre = data.select('.iconbox_content_container')[0].get_text().strip()[7:].split('Address:')[1].split('for')[0].replace('Online', '').replace('Order', '').split(',')
-                    print
+
                     street_address = addre[0].strip()
                     zip = "<MISSING>"
                 else:
@@ -95,21 +94,31 @@ def fetch_data():
                         else:
                             street_address = strt_address.split('Mon')[0].strip()
                         zip = "<MISSING>"
+            if ' ' in zip:
+                zip = zip.strip().split(' ')[-1]
+            if state in street_address:
+                street_address =  street_address.split(state)[0]
+
+            if zip in street_address:
+                street_address = street_address.split(zip)[0]
+
+            if 'Idaho' in street_address:
+                street_address = street_address.split('Idaho')[0]
             store = []
             store.append(base_url)
             store.append(location_name)
-            store.append(street_address)
+            store.append(street_address.replace('703-763-3516',''))
             store.append(city)
             store.append(state)
             store.append(zip)
             store.append("US")
             store.append("<MISSING>")
             store.append(phone)
-            store.append("Sweeto Burrito")
+            store.append("<MISSING>")
             store.append("<MISSING>")
             store.append("<MISSING>")
             store.append(hours_of_operation)
-            store.append(get_url)
+            store.append(base_url)
             return_main_object.append(store)
         return return_main_object
     else:

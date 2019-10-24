@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import time
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -14,6 +14,38 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
+def request_wrapper(url,method,headers,data=None):
+   request_counter = 0
+   if method == "get":
+       while True:
+           try:
+               r = requests.get(url,headers=headers)
+               return r
+               break
+           except:
+               time.sleep(2)
+               request_counter = request_counter + 1
+               if request_counter > 10:
+                   return None
+                   break
+   elif method == "post":
+       while True:
+           try:
+               if data:
+                   r = requests.post(url,headers=headers,data=data)
+               else:
+                   r = requests.post(url,headers=headers)
+               return r
+               break
+           except:
+               time.sleep(2)
+               request_counter = request_counter + 1
+               if request_counter > 10:
+                   return None
+                   break
+   else:
+       return None
 
 
 def fetch_data():
@@ -50,11 +82,11 @@ def fetch_data():
     page_url = "<MISSING>"
     total_hits = 20
     lastHit = 0
-
+    addresses = []
     while total_hits == 20:
-        r = requests.get(
+        r = request_wrapper(
             "https://www.ubs.com/locations/_jcr_content.lofisearch?a=bound&l=en&ucountry=ch&swlat=21.870172551137664&swlong=136.36625000000004&nelat=52.112245213927324&nelong=32.303750000000036&lat=37.09024&long=-95.71289100000001&searchCountry=US&o=" + str(
-                lastHit), headers=headers)
+                lastHit),"get", headers=headers)
         json_data = r.json()
 
         # firstHit = json_data['hits']['firstHit']
@@ -87,7 +119,7 @@ def fetch_data():
 
             # print('hours_url === ' + hours_url)
 
-            r_hours = requests.get(hours_url, headers=headers)
+            r_hours = request_wrapper(hours_url,"get",headers=headers)
 
             # print('r_hours source Data === ' + str(r_hours.json()))
             # print('fields ==== ' + str(json_item['fields']))
@@ -135,7 +167,9 @@ def fetch_data():
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
             # print("data = " + str(store))
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
