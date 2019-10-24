@@ -18,7 +18,6 @@ def write_output(data):
     df=pd.DataFrame(data)
     df.to_csv('data.csv', index=False)
 
-
 def replace(string, substitutions):
     substrings = sorted(substitutions, key=len, reverse=True)
     regex = re.compile('|'.join(map(re.escape, substrings)))
@@ -27,8 +26,6 @@ def replace(string, substitutions):
 def fetch_data():
     data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[],'page_url':[]}
     driver.get('https://www.rodiziogrill.com/locations.aspx')
-
-
     location_data_urls=[]
     location_cities=[]
     for i in driver.find_elements_by_xpath('//div[@class="row"]//ul/li'):
@@ -64,7 +61,6 @@ def fetch_data():
 
     driver.close()
     return data
-
 
 def scrape():
     data = fetch_data()
