@@ -4,12 +4,20 @@ const esriUtils = require('@esri/arcgis-to-geojson-utils');
 const epsg = require('epsg');
 const reproject = require('reproject');
 const wicket = require('wicket');
+const polygonCenter = require('geojson-polygon-center')
 
-function convertPolygon(esriJson) {
+function esriJsonEpsg3857ToGeojsonEpsg4326(esriJson) {
 	const geoJson = esriUtils.arcgisToGeoJSON(esriJson);
-	const reprojected = reproject.reproject(geoJson, epsg['EPSG:3857'], epsg['EPSG:4326']);
+	return reproject.reproject(geoJson, epsg['EPSG:3857'], epsg['EPSG:4326']);
+}
+
+function geoJsonToCentroid(geoJson) {
+	return polygonCenter(geoJson).coordinates;
+}
+
+function geoJsonToWkt(geoJson) {
 	const wkt = new wicket.Wkt();
-	const parsed = wkt.fromObject(reprojected);
+	const parsed = wkt.fromObject(geoJson);
 	return parsed.write();
 }
 
@@ -34,7 +42,11 @@ async function scrape(){
 								resolve(items)
 							}
 							else{
-								items.push({
+								const esriJson = data['feature']['geometry'];
+								const geoJson = esriJsonEpsg3857ToGeojsonEpsg4326(esriJson);
+								const centroid = geoJsonToCentroid(geoJson);
+								const polygonWkt = geoJsonToWkt(geoJson);
+								const item = {
 									locator_domain: "https://www.tpl.org",
 									location_name:data["feature"]["attributes"]["Park_Name"]?data["feature"]["attributes"]["Park_Name"]:"<MISSING>",
 									street_address: data["feature"]["attributes"]["Park_Address_1"]?data["feature"]["attributes"]["Park_Address_1"]:"<MISSING>",
@@ -45,12 +57,13 @@ async function scrape(){
 									store_number:data["feature"]["attributes"]["ParkID"]?data["feature"]["attributes"]["ParkID"]:"<MISSING>",
 									phone:"<MISSING>",
 									location_type: "<MISSING>",
-									latitude: "<MISSING>",
-									longitude: "<MISSING>",
+									latitude: centroid[1],
+									longitude: centroid[0],
 									hours_of_operation:"<MISSING>",
 									page_url:`https://server3.tplgis.org/arcgis3/rest/services/ParkServe/ParkServe_Parks/MapServer/0/${cnt}?f=pjson`,
-									wkt:convertPolygon(data['feature']['geometry'])
-								});
+									wkt:polygonWkt
+								}
+								items.push(item);
 								req=req-1
 							}
 						}
@@ -59,7 +72,6 @@ async function scrape(){
 						}
 					})
 					cnt=cnt+1;
-					console.log(cnt);
 				}
 			}
 		},5000)
