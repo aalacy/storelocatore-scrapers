@@ -66,6 +66,7 @@ def fetch_data():
             longitude[n],
             '<INACCESSIBLE>'
         ])
+    driver.quit()
     return data
 
 def scrape():
