@@ -44,7 +44,7 @@ def fetch_data():
         lon = driver.find_elements_by_xpath('//span[@class="longitude"]/span')
         for n in range(0,len(loc)):
             location_name.append(loc[n].text)
-            street_address.append(address.split("\n")[0])
+            street_address.append(address[n].text.split("\n")[0])
             city.append(cities[n].text)
             state.append(states[n].text)
             phone.append(phones[n].text)
