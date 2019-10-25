@@ -25,23 +25,22 @@ var items=[]
 var stop=false
 var cnt=1
 var req=1
+let errors = 0;
 
 async function scrape(){
-	return new Promise(async (resolve,reject)=>{
-		setInterval(()=>{
-			for(i=0;i<500;i++){
-				if(req<500){
-
+	return new Promise(async (resolve,reject) => {
+		setInterval(()=> {
+			for (i=0;i<500;i++) {
+				if (req<500) {
 					req=req+1;
 					request(`https://server3.tplgis.org/arcgis3/rest/services/ParkServe/ParkServe_Parks/MapServer/0/${cnt}?f=pjson`,(err,res)=>{
-						try{
+						try {
 							var data=JSON.parse(res.body)
-							if(data.hasOwnProperty("error")){
+							if (data.hasOwnProperty("error")) {
 								stop=true
 								clearInterval(this)
 								resolve(items)
-							}
-							else{
+							} else {
 								const esriJson = data['feature']['geometry'];
 								const geoJson = esriJsonEpsg3857ToGeojsonEpsg4326(esriJson);
 								const centroid = geoJsonToCentroid(geoJson);
@@ -66,9 +65,11 @@ async function scrape(){
 								items.push(item);
 								req=req-1
 							}
-						}
-						catch(exce){
+						} catch(exce) {
+							console.log(res.body);
 							console.log(exce);
+							errors++;
+							console.log(`error count: ${errors}`);
 						}
 					})
 					cnt=cnt+1;
@@ -77,6 +78,7 @@ async function scrape(){
 		},5000)
 	});
 }
+
 Apify.main(async () => {
 	const data = await scrape();
 	await Apify.pushData(data);
