@@ -33,7 +33,7 @@ function parseResult(data, itemIndex) {
 	const geoJson = esriJsonEpsg3857ToGeojsonEpsg4326(esriJson);
 	const centroid = geoJsonToCentroid(geoJson);
 	let polygonWkt = geoJsonToWkt(geoJson);
-	if (polygonWkt.length() > 100000) {
+	if (polygonWkt.length > 100000) {
 		console.log('found a large wkt!');
 		polygonWkt = '<MISSING>'
 	}
