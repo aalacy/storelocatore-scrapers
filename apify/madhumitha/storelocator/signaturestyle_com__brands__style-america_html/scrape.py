@@ -63,6 +63,7 @@ def fetch_data():
                         loc_tag = loc_map.find('script', attrs = {'type':'text/javascript'}).text.strip()
                         latlng = re.findall('[-+]?[0-9]*\.?[0-9]+', loc_tag)
                         lat = latlng[-2].strip()
+                        lon = latlng[-1].strip()
                         location_type = MISSING
                         data.append([DOMAIN, page_url, location_name, street_address, city, state, zipcode, country, store_number, phone, location_type, lat, lon, hours_of_operation])
         except requests.exceptions.RequestException:
