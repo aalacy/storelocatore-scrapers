@@ -99,6 +99,6 @@ Apify.main(async () => {
 		}
 		startIndex += BATCH_SIZE;
 		console.log(`${currentBatch.length} items retrieved`);
-		await Apify.pushData(data);
+		await Apify.pushData(currentBatch);
 	}
 });
