@@ -32,7 +32,11 @@ function parseResult(data, itemIndex) {
 	const esriJson = data['feature']['geometry'];
 	const geoJson = esriJsonEpsg3857ToGeojsonEpsg4326(esriJson);
 	const centroid = geoJsonToCentroid(geoJson);
-	const polygonWkt = geoJsonToWkt(geoJson);
+	let polygonWkt = geoJsonToWkt(geoJson);
+	if (polygonWkt.length() > 100000) {
+		console.log('found a large wkt!');
+		polygonWkt = '<MISSING>'
+	}
 	const item = {
 		locator_domain: "https://www.tpl.org",
 		location_name:data["feature"]["attributes"]["Park_Name"]?data["feature"]["attributes"]["Park_Name"]:"<MISSING>",
