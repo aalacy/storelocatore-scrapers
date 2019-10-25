@@ -42,8 +42,13 @@ def fetch_data():
     timing = []
     ids=[]
     page_url=[]
-    urls=["https://sunrisedental.com/directory/locations/all-locations?p=1","https://sunrisedental.com/directory/locations/all-locations?p=2","https://sunrisedental.com/directory/locations/all-locations?p=3"]
-
+    urls=[]
+    driver.get("https://sunrisedental.com/directory/locations/all-locations")
+    sa=driver.find_element_by_xpath("/html/body/div[1]/div[2]/div/div[1]/div/article/div/div/div[2]/div[2]/div/div[2]/div[4]/div[2]/div").find_elements_by_tag_name("a")
+    for a in sa:
+        if re.findall(r'[0-9]+',a.text) !=[]:
+            urls.append("https://sunrisedental.com/directory/locations/all-locations?p="+a.text)
+            
     for url in urls:
         driver.get(url)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
