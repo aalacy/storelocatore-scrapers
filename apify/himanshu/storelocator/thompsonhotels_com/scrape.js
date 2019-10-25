@@ -34,6 +34,7 @@ request(url,(err,res,html)=>{
               var address = address_tmp[1].replace(/<[^>]*>?/gm, '').trim();
               var city_tmp = address_tmp[2].replace(/<[^>]*>?/gm, '').trim();
               var city_tmp1 = city_tmp.split(',');
+              
               if (city_tmp1.length == 2){
                 var city =city_tmp1[0];
                 var state_tmp = city_tmp1[1];
@@ -57,6 +58,7 @@ request(url,(err,res,html)=>{
                 var city =city_tmp1[0];
                 var state = '<MISSING>';
                 var zip = '<MISSING>';
+                
               }
                else if (city_tmp1.length == 3){
                 var city =city_tmp1[0];
@@ -81,8 +83,19 @@ request(url,(err,res,html)=>{
              
 
               var phone_tmp = $('.sec-2').find('a:nth-child(3)').text();
-              var phone = phone_tmp.replace('infodc@thompsonhotels.com','');
+              var phone = phone_tmp.replace('infodc@thompsonhotels.com','<MISSING>');
+              if(zip.length == 5 || zip == '<MISSING>' ){
+
+                var country_code = 'US';
+               
+              }
+
+             
+              else{
+                var country_code = 'CA';
+              }
               
+
                
               items.push({  
 
@@ -98,19 +111,21 @@ request(url,(err,res,html)=>{
 
                 zip:  zip,
 
-                country_code: 'US',
+                country_code: country_code,
 
                 store_number: '<MISSING>',
 
                 phone: phone,
 
-                location_type: 'thompsonhotels',
+                location_type: '<MISSING>',
 
                 latitude: '<MISSING>',
 
                 longitude: '<MISSING>', 
 
-                hours_of_operation: '<MISSING>'}); 
+                hours_of_operation: '<MISSING>',
+              
+                page_url : link}); 
              
               
                 mainhead(i+1);

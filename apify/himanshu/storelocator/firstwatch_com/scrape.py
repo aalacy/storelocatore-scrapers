@@ -54,56 +54,61 @@ def fetch_data():
             continue
         # print('https://www.firstwatch.com/api/get_locations.php?latitude='+str(cord[0])+'&longitude='+str(cord[1]))
         if location_list != []:
+
             for location in location_list:
                 # print(location['zip'])
                 # us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(location['zip']))[0]
                 # ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(location['zip']))[0]
                 # if location['zip'] not in[us_zip_list,ca_zip_list]:
                 #     continue
-                location_name = location['name']
-                store_number = location['corporate_id']
-                if location['address_extended'] ==None :
-                    street_address = location['address']
-                else:
-                    street_address = location['address'] + " "+location['address_extended']
-                city = location['city']
-                state = location['state']
-                zipp = location['zip']
-                # print(zipp)
-                latitude = location['latitude']
-                longitude = location['longitude']
-                phone = location['phone']
-                page_url = "https://www.firstwatch.com/locations/"+location['slug']
-                if "OPEN NOW" not in location['open'] and 'open' not in location['open']  and "CLOSED" not in location['open']:
+                try:
+                    location_name = location['name']
+                    store_number = location['corporate_id']
+                    if location['address_extended'] ==None :
+                        street_address = location['address']
+                    else:
+                        street_address = location['address'] + " "+location['address_extended']
+                    city = location['city']
+                    state = location['state']
+                    zipp = location['zip']
+                    print(zipp)
+                    latitude = location['latitude']
+                    longitude = location['longitude']
+                    phone = location['phone']
+                    page_url = "https://www.firstwatch.com/locations/"+location['slug']
 
-                    hours_of_operation = location['open'].replace('@','at')
+                    # if "OPEN NOW" not in location['open'] and 'open' not in location['open']  and "CLOSED" not in location['open']:
+
+                    #     hours_of_operation = location['open'].replace('@','at')
+                    #     # print(hours_of_operation)
+                    #     # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # else:
+                    #     hours_of_operation = "<MISSING>"
+
+                    hours = requests.get(page_url,headers = headers)
+                    soup = BeautifulSoup(hours.text,'lxml')
+                    h_list = soup.find('script',{'id':'locations-detail'})
+                    if h_list != None:
+                        h1 = "Open Daily"+h_list.text.split('Open Daily')[-1].split('<br>')[0]
+                        h2 = "Closed on"+h_list.text.split('Open Daily')[-1].split('<br>')[1].split('Closed on')[1].split('</p>')[0].replace('&amp;',"and")
+                        hours_of_operation = h1 + " "+h2
+                    else:
+                        hours_of_operation = "<MISSING>"
                     # print(hours_of_operation)
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                else:
-                    hours_of_operation = "<MISSING>"
-                # print(hours_of_operation)
-                # print(page_url)
-                # hours = requests.get(page_url,headers = headers)
-                # soup = BeautifulSoup(hours.text,'lxml')
-                # h_list = soup.find('script',{'id':'locations-detail'})
-                # if h_list != None:
-                #     h1 = "Open Daily"+h_list.text.split('Open Daily')[-1].split('<br>')[0]
-                #     h2 = "Closed on"+h_list.text.split('Open Daily')[-1].split('<br>')[1].split('Closed on')[1].split('</p>')[0].replace('&amp;',"and")
-                #     hours_of_operation = h1 + " "+h2
-                # else:
-                #     hours_of_operation = "<MISSING>"
+                    # print('~~~~~~~~~~~~~~')
+                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+                    store = ["<MISSING>" if x == "" or x == None else x for x in store]
+                    if street_address in addresses:
+                        continue
+                    addresses.append(street_address)
 
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-                store = ["<MISSING>" if x == "" or x == None else x for x in store]
-                if street_address in addresses:
+                    #print("data = " + str(store))
+                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+                    return_main_object.append(store)
+                except:
                     continue
-                addresses.append(street_address)
-
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-                return_main_object.append(store)
 
     return return_main_object
 
