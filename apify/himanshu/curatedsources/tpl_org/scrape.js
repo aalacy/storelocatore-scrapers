@@ -21,10 +21,10 @@ function geoJsonToWkt(geoJson) {
 	return parsed.write();
 }
 
-var items=[]
-var stop=false
-var cnt=1
-var req=1
+let items=[]
+let stop=false
+let cnt=1
+let req=1
 let errors = 0;
 
 async function scrape(){
@@ -35,7 +35,7 @@ async function scrape(){
 					req=req+1;
 					request(`https://server3.tplgis.org/arcgis3/rest/services/ParkServe/ParkServe_Parks/MapServer/0/${cnt}?f=pjson`,(err,res)=>{
 						try {
-							var data=JSON.parse(res.body)
+							let data=JSON.parse(res.body)
 							if (data.hasOwnProperty("error")) {
 								stop=true
 								clearInterval(this)
