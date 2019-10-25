@@ -104,10 +104,26 @@ def fetch_data():
 
             if 'Idaho' in street_address:
                 street_address = street_address.split('Idaho')[0]
+
+            id_id  = str(data.find('a')['href'].split('/')[-1].strip())
+            lat = '<MISSING>'
+            lng ='<MISSING>'
+            db =  requests.get('https://roxberry-api-ordering.crispnow.com/crispGetRestaurants?sid=ea543a90-1c79-4a6d-8179-fca50a481e60').json()
+
+            for id,val in enumerate(db['restaurants']):
+                bb = str(val['restaurantId'])
+                if id_id in bb:
+
+
+                    lat = val['restaurantLatitude']
+                    lng = val['restaurantLongitude']
+
+                # if id in x;
+
             store = []
             store.append(base_url)
             store.append(location_name)
-            store.append(street_address.replace('703-763-3516',''))
+            store.append(street_address)
             store.append(city)
             store.append(state)
             store.append(zip)
@@ -115,8 +131,8 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(phone)
             store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append("<MISSING>")
+            store.append(lat)
+            store.append(lng)
             store.append(hours_of_operation)
             store.append(base_url)
             return_main_object.append(store)

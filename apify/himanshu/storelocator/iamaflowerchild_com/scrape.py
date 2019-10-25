@@ -32,7 +32,7 @@ def minute_to_hours(time):
 
 
 def fetch_data():
-    # print(zips)
+   
 
     return_main_object = []
     addresses = []
@@ -45,7 +45,9 @@ def fetch_data():
     soup= BeautifulSoup(r.text,"lxml")
     k =(json.loads(soup.text))
     for i in k['data']:
-        
+        r1 = requests.get(i['permalink'],headers=headers)
+        soup1= BeautifulSoup(r1.text,"lxml")
+       
         if "statusIndicationMessageFriendly" in i['location'] and  i['location']['statusIndicationMessageFriendly'] == "Opening Soon": 
             pass
         else:
@@ -69,38 +71,13 @@ def fetch_data():
                 phone = i['location']['phone']
             else:
                 phone = "<MISSING>"
-            # lat1 =i['location']['coordinates']
-            # if "0" in str(i['location']['coordinates'][0]):
-            #     lat = "<MISSING>"
-            #     lng = "<MISSING>"
-            # else:
-            #     lat = i['location']['coordinates'][0]
-            #     lng = i['location']['coordinates'][1]
-
-            time = ''
-            time1 =''
-            if  "hours" in i['location']:
-                if "Restaurant Hours" in i['location']['hours']:
-                    if "Daily" in i['location']['hours']['Restaurant Hours'] or "Breakfast" in i['location']['hours']:
-                        if "Breakfast" in i['location']['hours']:
-                            if "Sat - Sun" in i['location']['hours']['Breakfast']:
-                                time = 'Sat - Sun'+' ' +(i['location']['hours']['Breakfast']['Sat - Sun'])
-                            else:
-                                time ='Daily' + ' '+(i['location']['hours']['Breakfast']['Daily'])
-                        time1 = 'Daily' + ' '+(i['location']['hours']['Restaurant Hours']['Daily'] +' '+time)
-                    else:
-                        time1 = 'Daily' + ' '+ i['location']['hours']['Restaurant Hours']['Daily ']   
-            else:
-                time1 = "<MISSING>"
+           
             r1 = requests.get(i['permalink'],headers=headers)
             soup1= BeautifulSoup(r1.text,"lxml")
             json1 = json.loads(soup1.find("script",{'type':"application/ld+json"}).text)
             lat = json1['geo']['latitude']
-            lng = json1['geo']['longitude']
-            # print(json1['geo']['latitude'])
-            # print(soup1.find("script",{'type':"application/ld+json"}).text)
-            # print(i['permalink'])
-            # exit()
+            lng = json1['geo']['longitude']          
+            time1 = soup1.find("ul",{"class":"location-hours"}).text.strip().replace("\n","").replace('Daily','Daily ')            
             tem_var.append("https://www.iamaflowerchild.com")
             tem_var.append(name)
             tem_var.append(st)
@@ -114,8 +91,7 @@ def fetch_data():
             tem_var.append(lat)
             tem_var.append(lng)
             tem_var.append(time1 if time1 else "<MISSING>")
-            tem_var.append(i['permalink'])
-            # print(tem_var)
+            tem_var.append(i['permalink'])           
             if tem_var[2] in addresses:
                 continue
             addresses.append(tem_var[2])
