@@ -7,6 +7,7 @@ const polygonCenter = require('geojson-polygon-center')
 const axios = require('axios');
 const {default: PQueue} = require('p-queue');
 const axiosRetry = require('axios-retry');
+const simplify = require('@turf/simplify');
 
 axiosRetry(axios, { retries: 3, shouldResetTimeout: true, retryCondition: (error) => {
   return axiosRetry.isNetworkOrIdempotentRequestError(error) || error.code === 'ECONNABORTED';
@@ -23,6 +24,9 @@ function geoJsonToCentroid(geoJson) {
 
 function geoJsonToWkt(geoJson) {
 	const wkt = new wicket.Wkt();
+	if (JSON.stringify(geoJson).length > 250000) {
+		geoJson = simplify(geoJson, { tolerance: 0.00001, highQualify: true });
+	}
 	const parsed = wkt.fromObject(geoJson);
 	return parsed.write();
 }
@@ -33,10 +37,6 @@ function parseResult(data, itemIndex) {
 	const geoJson = esriJsonEpsg3857ToGeojsonEpsg4326(esriJson);
 	const centroid = geoJsonToCentroid(geoJson);
 	let polygonWkt = geoJsonToWkt(geoJson);
-	if (polygonWkt.length > 450000) {
-		console.log('found a large wkt!');
-		polygonWkt = '<MISSING>'
-	}
 	const item = {
 		locator_domain: "https://www.tpl.org",
 		location_name:data["feature"]["attributes"]["Park_Name"]?data["feature"]["attributes"]["Park_Name"]:"<MISSING>",
