@@ -2,7 +2,6 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException
 import usaddress
 
 
@@ -26,7 +25,6 @@ def write_output(data):
             writer.writerow(row)
 
 
-
 def parse_addy(addy):
     parsed_add = usaddress.tag(addy)[0]
 
@@ -46,69 +44,73 @@ def parse_addy(addy):
         street_address += parsed_add['OccupancyType'] + ' '
     if 'OccupancyIdentifier' in parsed_add:
         street_address += parsed_add['OccupancyIdentifier'] + ' '
-    city = parsed_add['PlaceName']
-    state = parsed_add['StateName']
-    zip_code = parsed_add['ZipCode']
+
+    street_address = street_address.strip()
+    city = parsed_add['PlaceName'].strip()
+    state = parsed_add['StateName'].strip()
+    zip_code = parsed_add['ZipCode'].strip()
 
     return street_address, city, state, zip_code
 
 
 def fetch_data():
-    locator_domain = 'http://www.myjhfamilystores.com/'
-    ext = 'locations/'
+    locator_domain = 'https://uni-mart.com/'
+    ext = 'locations'
 
     driver = get_driver()
     driver.get(locator_domain + ext)
 
-    main = driver.find_element_by_css_selector('div.et_pb_row.et_pb_row_2')
-
-    hrefs = main.find_elements_by_css_selector("a")
-
+    loc_cont = driver.find_element_by_id('resulttop')
+    locs = loc_cont.find_elements_by_css_selector('span.mytool')
     link_list = []
-    for h in hrefs:
-        link_list.append(h.get_attribute('href'))
+    for l in locs:
+        links = l.find_elements_by_css_selector('a')
+
+        coords = links[0].get_attribute('onclick').split('"')[1].split(',')
+        link = links[1].get_attribute('href')
+
+        link_list.append([link, coords])
 
     all_store_data = []
     for link in link_list:
-
-        driver.get(link)
+        driver.get(link[0])
         driver.implicitly_wait(10)
 
+        lat = link[1][0]
+        longit = link[1][1]
 
-        try:
-            cont = driver.find_element_by_css_selector(
-            'div.et_pb_column.et_pb_column_3_4.et_pb_column_1.et_pb_css_mix_blend_mode_passthrough.et-last-child').text.split(
-            '\n')
-        except NoSuchElementException:
-            continue
-        location_name = cont[0]
+        addy = driver.find_element_by_css_selector('div.address').find_element_by_css_selector(
+            'span.locationaddress').text.replace('\n', ' ')
 
-        addy_phone = cont[1].split('|')
+        addy = addy.replace('United States', '').strip()
 
-        addy = addy_phone[0]
-
-        street_address, city, state, zip_code = parse_addy(addy)
-        phone_number = addy_phone[1].replace('PHONE:', '').strip()
-
-        href = driver.find_element_by_xpath("//a[contains(@href, 'maps.google')]").get_attribute('href')
-
-        start = href.find('?ll=')
-        if start > 0:
-            end = href.find('&z=')
-            coords = href[start + 4: end].split(',')
-            lat = coords[0]
-            longit = coords[1]
-
+        if '2693 Route 940 Pocono Summit' in addy:
+            street_address = '2693 Route 940'
+            city = 'Pocono Summit'
+            state = 'Pennsylvania'
+            zip_code = '18346'
+        elif '1440 Easton Road RTE 611' in addy:
+            street_address = '1440 Easton Road RTE 611'
+            city = 'Riegelsville'
+            state = 'Pennsylvania'
+            zip_code = '18930'
+        elif '16067 Ohio 170' in addy:
+            street_address = '16067 Ohio 170'
+            city = 'Calcutta'
+            state = 'Ohio'
+            zip_code = '43920'
         else:
-            lat = '<MISSING>'
-            longit = '<MISSING>'
+            street_address, city, state, zip_code = parse_addy(addy)
+
+        cut = link[0].find('uni-mart-') + len('uni-mart-')
+        location_name = link[0][cut:]
 
         country_code = 'US'
 
+        phone_number = '<MISSING>'
         location_type = '<MISSING>'
-        page_url = link
+        page_url = link[0]
         hours = '<MISSING>'
-
         store_number = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
