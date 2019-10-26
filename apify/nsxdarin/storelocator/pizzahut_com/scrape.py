@@ -53,7 +53,6 @@ def fetch_data():
                             if lurl not in locs:
                                 locs.append(lurl)
         for loc in locs:
-            print('Pulling Location %s...' % loc)
             r3 = session.get(loc, headers=headers)
             lines = r3.iter_lines()
             country = 'US'
