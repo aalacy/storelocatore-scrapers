@@ -47,11 +47,11 @@ def fetch_data():
     url = "https://www.pizzapizza.ca/locations/"
     
     data_out = []
-    driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
+    driver = webdriver.Chrome()
     driver.get(url)
     time.sleep(5)
     
-    city_list = pd.read_csv("./CA_City_List.csv").City_State.tolist()
+    city_list = pd.read_csv(r"./CA_City_List.csv").City_State.tolist()
     
     for st in range(0,len(city_list),5):
         time.sleep(5)

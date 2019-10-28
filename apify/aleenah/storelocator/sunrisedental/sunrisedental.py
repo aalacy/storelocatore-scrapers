@@ -24,7 +24,6 @@ def write_output(data):
                 writer.writerow(row)
             except:
                 row[-2]=row[-2].replace("\u0335","")
-                #print(row)
                 writer.writerow(row)
 
 
@@ -42,7 +41,13 @@ def fetch_data():
     timing = []
     ids=[]
     page_url=[]
-    urls=["https://sunrisedental.com/directory/locations/all-locations?p=1","https://sunrisedental.com/directory/locations/all-locations?p=2","https://sunrisedental.com/directory/locations/all-locations?p=3"]
+    urls=[]
+    driver.get("https://sunrisedental.com/directory/locations/all-locations")
+    sa=driver.find_element_by_xpath("/html/body/div[1]/div[2]/div/div[1]/div/article/div/div/div[2]/div[2]/div/div[2]/div[4]/div[2]/div").find_elements_by_tag_name("a")
+    for a in sa:
+        if re.findall(r'[0-9]+',a.text) !=[]:
+            urls.append("https://sunrisedental.com/directory/locations/all-locations?p="+a.text)
+    #urls=["https://sunrisedental.com/directory/locations/all-locations?p=1","https://sunrisedental.com/directory/locations/all-locations?p=2","https://sunrisedental.com/directory/locations/all-locations?p=3"]
 
     for url in urls:
         driver.get(url)
@@ -59,14 +64,17 @@ def fetch_data():
         long += re.findall(r'"lng":(-?[\d\.]*)', script)
         lids = re.findall(r'"#sabai-entity-content-([0-9]+) .sabai-directory-title', script)
         ids+=lids
-        print(len(lids))
 
+        print(len(lids))
         for id in lids:
 
 
             div = driver.find_element_by_id('sabai-entity-content-'+id)
             #div = div.find('div', {'class': "sabai-entity sabai-entity-type-content sabai-entity-bundle-name-directory-listing sabai-entity-bundle-type-directory-listing sabai-entity-mode-summary sabai-clearfix sabai-directory-no-image"})
-            page_url.append(url)
+            urll = div.find_element_by_class_name('sabai-directory-title').find_element_by_tag_name("a").get_attribute("href")
+            page_url.append(urll)
+
+
             locs.append(div.find_element_by_class_name('sabai-directory-title').text)
             addr= div.find_element_by_class_name('sabai-directory-location').text.replace(", USA","").replace(", United States","")
             addr=addr.split(",")
@@ -94,11 +102,15 @@ def fetch_data():
             street.append(st)
             phones.append(div.find_element_by_class_name('sabai-directory-contact-tel').text)
 
+    for url in page_url:
+
+            driver.get(url)
+            
             try:
-                timing.append(div.find_element_by_class_name('sabai-directory-body').text)
+                tim = driver.find_element_by_id('sabai-entity-content-'+ids[page_url.index(url)]).find_element_by_class_name("sabai-directory-body").text
+                timing.append(re.findall(r'(.*pm)',tim,re.DOTALL)[0].replace("\n"," "))
             except:
                 timing.append("<MISSING>")
-
 
 
     all = []

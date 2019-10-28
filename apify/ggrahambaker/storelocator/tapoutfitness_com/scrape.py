@@ -18,7 +18,9 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
+                         "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -88,8 +90,9 @@ def fetch_data():
         location_type = '<MISSING>'
         store_number = '<MISSING>'
         country_code = 'US'
+        page_url = link
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
+                      store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
 
     driver.quit()

@@ -93,7 +93,6 @@ def fetch_data():
             output.append(get_value(store.xpath('.//span[@id="longitude"]//text()'))) #longitude
             output.append(get_value(eliminate_space(store.xpath('.//span[@id="officehours"]//text()')))) #opening hours
             output_list.append(output)
-            print(output)
         else:
             name = get_value(store.xpath('.//div[@class="hero-caption-content"]//h3//text()'))
             output.append(name) #location name
@@ -112,7 +111,6 @@ def fetch_data():
             store_hours = eliminate_space(store.xpath('.//div[@class="span9"]//p')[1].xpath('.//text()'))
             output.append(get_value(store_hours)) #opening hours
             output_list.append(output)
-            print(output)
     return output_list
 
 def scrape():

@@ -109,7 +109,6 @@ def fetch_data():
                 output.append("<MISSING>") #longitude
                 output.append("<MISSING>") #opening hours
                 output_list.append(output)
-                print(output)
     return output_list
 
 def scrape():

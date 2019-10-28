@@ -117,8 +117,7 @@ def fetch_data():
                 store_hours = eliminate_space(more_info.xpath('.//div[@class=" _13CMA _1JtW7 _2VF_A _2wqvV"]//text()'))
                 output.append(get_value(store_hours)) #opening hours
             except Exception as e:
-                pdb.set_trace()
-        print(output)
+                pass
         output_list.append(output)
     return output_list
 
