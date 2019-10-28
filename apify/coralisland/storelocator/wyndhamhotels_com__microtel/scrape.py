@@ -111,8 +111,6 @@ def fetch_data():
             output.append(longitude) #longitude
             output.append(hours) #opening hours
             output_list.append(output)
-            print(output)
-
     return output_list
 
 def scrape():

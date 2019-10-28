@@ -104,7 +104,6 @@ def fetch_data():
                             store_hours.append(validate(hour['weekday']) + ' ' + start + '-' + end)
                     output.append(get_value(store_hours)) #opening hours        
                     # output_list.append(output)
-                    # print(output)
                     writer.writerow(output)
 
 fetch_data()
