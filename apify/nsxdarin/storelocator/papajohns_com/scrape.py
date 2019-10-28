@@ -24,7 +24,6 @@ def fetch_data():
             if lurl.count('/') > 5:
                 locs.append(lurl)
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         store = ''
@@ -42,8 +41,8 @@ def fetch_data():
         lat = ''
         lng = ''
         for line2 in lines:
-            if "dimension5', '" in line2:
-                store = line2.split("dimension5', '")[1].split("'")[0]
+            if '{"ids":' in line2:
+                store = line2.split('{"ids":')[1].split(',')[0]
             if name == '' and '"LocationName-geo">' in line2:
                 name = "Papa John's Pizza " + line2.split('"LocationName-geo">')[1].split('<')[0]
             if '<meta itemprop="streetAddress" content="' in line2:
@@ -55,14 +54,14 @@ def fetch_data():
             if '<meta itemprop="latitude" content="' in line2:
                 lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
                 lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]
-            if hours == '' and '{"day":"MONDAY","' in line2:
-                hours = 'Mon: ' + line2.split('{"day":"MONDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line2.split('{"day":"MONDAY","')[1].split('{"end":')[1].split(',')[0]
-                hours = hours + '; Tue: ' + line2.split('{"day":"TUESDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line2.split('{"day":"TUESDAY","')[1].split('{"end":')[1].split(',')[0]
-                hours = hours + '; Wed: ' + line2.split('{"day":"WEDNESDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line2.split('{"day":"WEDNESDAY","')[1].split('{"end":')[1].split(',')[0]
-                hours = hours + '; Thu: ' + line2.split('{"day":"THURSDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line2.split('{"day":"THURSDAY","')[1].split('{"end":')[1].split(',')[0]
-                hours = hours + '; Fri: ' + line2.split('{"day":"FRIDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line2.split('{"day":"FRIDAY","')[1].split('{"end":')[1].split(',')[0]
-                hours = hours + '; Sat: ' + line2.split('{"day":"SATURDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line2.split('{"day":"SATURDAY","')[1].split('{"end":')[1].split(',')[0]
-                hours = hours + '; Sun: ' + line2.split('{"day":"SUNDAY","')[1].split('"start":')[1].split('}')[0] + '-' + line2.split('{"day":"SUNDAY","')[1].split('{"end":')[1].split(',')[0]
+            if hours == '' and 'data-day-of-week-end-index="' in line2:
+                hours = 'Mon: ' + line2.split('content="Mo ')[1].split('"')[0]
+                hours = hours + '; Tue: ' + line2.split('content="Tu ')[1].split('"')[0]
+                hours = hours + '; Wed: ' + line2.split('content="We ')[1].split('"')[0]
+                hours = hours + '; Thu: ' + line2.split('content="Th ')[1].split('"')[0]
+                hours = hours + '; Fri: ' + line2.split('content="Fr ')[1].split('"')[0]
+                hours = hours + '; Sat: ' + line2.split('content="Sa ')[1].split('"')[0]
+                hours = hours + '; Sun: ' + line2.split('content="Su ')[1].split('"')[0]
         if hours == '':
             hours = '<MISSING>'
         if add != '':

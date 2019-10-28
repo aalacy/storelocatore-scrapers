@@ -67,6 +67,7 @@ def fetch_data():
     state = list_info[-1].split(',')[-1].split()[0]
     zipp = list_info[-1].split(',')[-1].split()[-1]
     page_url = s1
+
     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
     store = ["<MISSING>" if x == "" else x for x in store]
@@ -92,6 +93,7 @@ def fetch_data():
         latitude = z['lat']
         longitude = z['lon']
         page_url = base_url + z['website']
+        # print(city,state,zipp)
 
 
 

@@ -114,13 +114,11 @@ def fetch_data():
             if newcoord not in coords:
                 coords.append(newcoord)
     while len(coords) > 0:
-        print('%s Remaining...' % str(len(coords)))
         x = coords[0].split(',')[0]
         y = coords[0].split(',')[1]
         coords.pop(0)
         latround = round(float(x), 2)
         lnground = round(float(y), 2)
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://www.starbucks.ca/bff/locations?lat=' + str(x) + '&lng=' + str(y)
         r = session.get(url, headers=headers)
         array = json.loads(r.content)

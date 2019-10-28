@@ -7,6 +7,7 @@ import sgzip
 import time
 from random import randrange
 import os
+import unicodedata
 
 session = requests.Session()
 proxy_password = os.environ["PROXY_PASSWORD"]
@@ -41,10 +42,10 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         random_number = randrange(5,10)
         time.sleep(random_number)
         r = session.get("https://bellca.know-where.com/bellca/cgi/selection?lang=en&loadedApiKey=main&ll=" + str(coord[0]) + "%2C" + str(coord[1]) + "&stype=ll&async=results",headers=headers)
@@ -78,13 +79,17 @@ def fetch_data():
             hours = " ".join(list(location.find("ul",{"class":'rsx-sl-store-list-hours'}).stripped_strings))
             store.append(hours if hours != "" else "<MISSING>")
             store.append("<MISSING>")
-            print(store)
+            for i in range(len(store)):
+                if type(store[i]) == str:
+                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            # print(store)
             yield store
         if len(soup.find_all("li",{"class":"rsx-sl-store-list-store"})) < MAX_RESULTS:
-            print("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(soup.find_all("li",{"class":"rsx-sl-store-list-store"})) == MAX_RESULTS:
-            print("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

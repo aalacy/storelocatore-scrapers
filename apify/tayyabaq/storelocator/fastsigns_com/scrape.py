@@ -33,7 +33,7 @@ def fetch_data():
     stores_text = [stores[n].text for n in range(0,len(stores))]
     country = driver.find_elements_by_xpath('//tbody/tr/td[5]')
     address_type = driver.find_elements_by_xpath('//tbody/tr/td[2]')
-    for n in range(0,50):
+    for n in range(0,len(stores_href)):
         if ('COMING SOON' not in address_type[n].text) and (('US' in country[n].text) or ('CA' in country[n].text)):
             links.append(stores_href[n])
             location_name.append(stores_text[n])

@@ -21,7 +21,7 @@ def fetch_data():
 
     store_name=[]
     store_detail=[]
-    addresses =[]
+    addressess =[]
     return_main_object=[]
     for  q  in range(0,10):
         base_url= "https://www.shopfamilyfare.com/locations?page="+str(q+1)
@@ -31,48 +31,52 @@ def fetch_data():
         for i in k:
             st = i.find_all("div",{"class":"brief"})
             names = i.find_all("h3")
-
             for name in names:
                 store_name.append(name.text.replace("\n",""))
-            for j in st:
+
+            for index,j in enumerate(st):
                 tem_var =[]
                 address = j.find('p',{"class":"address"})
                 phone  = j.find('p',{"class":"phone"}).text.replace("\n","")
-                hours = j.find('p',{"class":"hours"}).text.replace("\n","")
+                # hours = j.find('p',{"class":"hours"}).text.replace("\n","")
                 address1 = list(address.stripped_strings)[0]
                 city = list(address.stripped_strings)[1].split(',')[0]
                 state = " ".join(list(address.stripped_strings)[1].split(',')[1].split( )[:-1])
                 zipcode = list(address.stripped_strings)[1].split(',')[1].split( )[-1]
                 r = requests.get(j.find('p', {'class': 'details'}).find('a')['href'])
                 soup = BeautifulSoup(r.text, "lxml")
+                print(j.find('p', {'class': 'details'}).find('a')['href'])
                 jk = soup.find('table', {'class': 'hours'}).find_all('tr', {'class': 'hidden-xs'})
                 vk = []
                 for x in jk:
                     jk = ''
                     if x.find('td', {'scope': 'rowgroup'}) != None:
                         jk = x.find('td', {'scope': 'rowgroup'}).text.strip()
+                    
                     ck = ''
                     if x.find('td', {'data-title': 'Grocery'}) != None:
-                        ck = x.find('td', {'data-title': 'Grocery'}).text.strip()
+                        ck =' GROCERY HOURS :' + x.find('td', {'data-title': 'Grocery'}).text.strip()
                     mk = ''
                     if x.find('td', {'data-title': 'Pharmacy'}) != None:
-                        mk = x.find('td', {'data-title': 'Pharmacy'}).text.strip()
+                        mk =' PHARMACY HOURS :'  +  x.find('td', {'data-title': 'Pharmacy'}).text.strip()
                     pk = ''
                     if x.find('td', {'data-title': 'Fuel'}) != None:
-                        pk = x.find('td', {'data-title': 'Fuel'}).text.strip()
+                        pk =' FUEL HOURS :' + x.find('td', {'data-title': 'Fuel'}).text.strip()
 
-                    vk.append(jk + ' GROCERY HOURS :' + ck + ' PHARMACY HOURS :' + mk + ' FUEL HOURS :' + pk)
+                    vk.append(jk  + ck  + mk  + pk)
 
                 hours = ' '.join(vk)
+                # print(hours)
 
                 lat = soup.find('div', {'id': 'map-canvas'})['data-latitude']
-                long = soup.find('div', {'id': 'map-canvas'})['data-longitude']
+                long1 = soup.find('div', {'id': 'map-canvas'})['data-longitude']
                 page_url = base_url
 
-                if address1 in addresses:
-                    continue
-                addresses.append(address1)
-                
+                # if address1 in addresses:
+                #     continue
+                # addresses.append(address1)
+                tem_var.append("https://www.shopfamilyfare.com")
+                tem_var.append(store_name[index])
                 tem_var.append(address1)
                 tem_var.append(city)
                 tem_var.append(state)
@@ -80,23 +84,27 @@ def fetch_data():
                 tem_var.append("US")
                 tem_var.append("<MISSING>")
                 tem_var.append(phone)
-                tem_var.append("shopfamilyfare")
+                tem_var.append("<MISSING>")
                 tem_var.append(lat)
-                tem_var.append(long)
+                tem_var.append(long1)
                 tem_var.append(hours)
-                tem_var.append(page_url)
-                store_detail.append(tem_var)
+                tem_var.append(j.find('p', {'class': 'details'}).find('a')['href'])
+                print("===============================")
+                if tem_var[2] in addressess:
+                    continue
+                addressess.append(tem_var[2])
+                yield tem_var
+    #             store_detail.append(tem_var)
 
-    
-    for index,i in enumerate(range(len(store_name))):
-        store = list()
-        store.append("https://www.shopfamilyfare.com")
-        store.append(store_name[i])
-        store.extend(store_detail[i])
-        print("data===",str(store))
-        yield store
-
-
+    # print("==========",store_detail)
+    # print("=====================================",store_name)
+    # for i in range(len(store_name)):
+    #     store = list()
+    #     store.append("https://www.shopfamilyfare.com")
+    #     store.append(store_name[i])
+    #     store.extend(store_detail[i])
+    #     print("data===",str(store))
+    #     yield store
 def scrape():
     data = fetch_data()
     write_output(data)

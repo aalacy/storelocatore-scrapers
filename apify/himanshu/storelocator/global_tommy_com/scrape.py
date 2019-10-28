@@ -3,90 +3,103 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import unicodedata
+import sgzip
+from shapely.prepared import prep
+from shapely.geometry import Point
+from shapely.geometry import mapping, shape
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
+countries = {}
+
+def getcountrygeo():
+   data = requests.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
+   for feature in data["features"]:
+       geom = feature["geometry"]
+       country = feature["properties"]["ADMIN"]
+       countries[country] = prep(shape(geom))
+
+def getplace(lat, lon):
+   point = Point(float(lon), float(lat))
+   for country, geom in countries.items():
+       if geom.contains(point):
+           return country
+   return "unknown"
 
 def fetch_data():
+    getcountrygeo()
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-
-    # print("soup ===  first")
-
-    base_url = "https://global.tommy.com"
-    r = requests.get("http://global.tommy.com/int/en/stores?storecountry=United+States", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-
     return_main_object = []
-    #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
-    # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
-
-    # it will used in store data.
-    locator_domain = base_url
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "global_tommy"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-
-    # print("soup ==== " + str(soup))
-
-    for script in soup.find_all('div', {'class': 'store-info'}):
-        list_address = list(script.stripped_strings)
-
-        city = script.find("dd", {"class": "location"}).text.split(",")[0]
-        country_code = "US"
-        street_address = script.find("dd", {"class": "street"}).text
-        phone = script.find("dd", {"class": "phone"}).text
-        hours_of_operation = script.find("dd", {"class": "hours"}).text
-
-        if city is None or len(city) == 0:
-            city = "<MISSING>"
-
-        if street_address is None or len(street_address) == 0:
-            street_address = "<MISSING>"
-
-        if phone is None or len(phone) == 0:
-            phone = "<MISSING>"
-
-        if hours_of_operation is None or len(hours_of_operation) == 0:
-            hours_of_operation = "<MISSING>"
-
-        location_name = city
-        # print("location ===== "+str(script.find("dd",{"class":"location"}).text))
-        # print("street ===== "+str(script.find("dd",{"class":"street"}).text))
-        # print("phone ===== "+str(script.find("dd",{"class":"phone"}).text))
-        # print("hours ===== "+str(script.find("dd",{"class":"hours"}).text))
-
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation]
-
-        # print("data = " + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-        return_main_object.append(store)
-
-    return return_main_object
-
+    addresses = []
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 20
+    coord = search.next_coord()
+    while coord:
+        result_coords = []
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        x = coord[0]
+        y = coord[1]
+        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        r = requests.get("https://global.tommy.com/en_int/api/store_finder?lat="+ str(x) + "&lng=" + str(y) + "&radius=50000000",headers=headers)
+        data = r.json()["data"]
+        for store_data in data:
+            country = store_data["title"].split(",")[0]
+            if "US" not in country and "CA" not in country:
+                continue
+            lat = store_data["lat"]
+            lng = store_data["lng"]
+            result_coords.append((lat, lng))
+            country_name = getplace(lat, lng)
+            if "United States of America" != country_name and "Canada" != country_name:
+                continue
+            store = []
+            location_soup = BeautifulSoup(store_data["html"]["store_block"],"lxml")
+            name = location_soup.find("h3").text.strip()
+            phone_split = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),store_data["html"]["store_block"])
+            if phone_split:
+                phone = phone_split[0]
+            else:
+                phone = "<MISSING>"
+            hours = " ".join(list(location_soup.find("div",{"class":'store-openinghours'}).stripped_strings))
+            store.append("https://global.tommy.com")
+            store.append(name)
+            store.append(",".join(store_data["title"].split(",")[1:-2]).strip().replace("\n",""))
+            if store[-1] in addresses:
+                continue
+            addresses.append(store[-1])
+            store.append(store_data["title"].split(",")[-2])
+            store.append(store_data["title"].split(",")[-1])
+            store.append("<MISSING>")
+            store.append("US" if country_name == "United States of America" else "CA")
+            store.append(store_data["id"])
+            store.append(phone if phone and "," not in phone else "<MISSING>")
+            store.append("<MISSING>")
+            store.append(lat)
+            store.append(lng)
+            store.append(hours if hours and hours != "Opening hours" else "<MISSING>")
+            store.append("<MISSING>")
+            for i in range(len(store)):
+                if type(store[i]) == str:
+                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            yield store
+        if len(data) == MAX_RESULTS:
+            print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_coord()
 
 def scrape():
     data = fetch_data()

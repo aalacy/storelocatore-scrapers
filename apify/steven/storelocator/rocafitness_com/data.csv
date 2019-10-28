@@ -1,4 +1,0 @@
-locator_domain,location_name,street_address,city,state,zip,country_code,store_number,phone,location_type,latitude,longitude,hours_of_operation
-http://rocafitness.com//Locations.aspx?id=1,ROCA - Montwood,12145 Montwood,El Paso,TX,79936,US,<MISSING>,(915)921-ROCK,Fitness Location,<MISSING>,<MISSING>,Monday–Thursday:4:30AM–11PM; Friday:4:30AM–8:00PM; Saturday:8:00AM–6:00PM; Sunday:9:00AM–6:00PM
-http://rocafitness.com//Locations.aspx?id=3,ROCA - Pan Am,9585 Plaza Circle,El Paso,TX,79927,US,<MISSING>,(915)858-ROCK,Fitness Location,<MISSING>,<MISSING>,Monday–Thursday:4:30AM–11PM; Friday:4:30AM–8:00PM; Saturday:8:00AM–6:00PM; Sunday:9:00AM–6:00PM
-http://rocafitness.com//Locations.aspx?id=9,Corporate Office,121 Paragon Ln Bldg C,El Paso,TX,79912,US,<MISSING>,(915)534-9090,Corporate Office,<MISSING>,<MISSING>,Monday-Thursday9:00AM-6PM; Friday:8:00AM-5PM

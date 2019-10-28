@@ -59,8 +59,11 @@ def fetch_data():
         stores = driver.find_elements_by_css_selector('div.storename')
         for store in stores:
             link = store.find_element_by_css_selector('a').get_attribute('href')
+            if 'madison' in link:
+                continue
             if link not in store_link:
                 store_link.append(link)
+
             else:
                 continue
 

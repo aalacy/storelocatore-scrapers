@@ -111,6 +111,12 @@ def fetch_data():
         if hours == '':
             hours = '<MISSING>'
 
+
+        loc_info = driver.find_element_by_id('location').find_element_by_css_selector('h2').text
+
+        if 'COMING' in loc_info or 'OPENING' in loc_info:
+            hours = loc_info
+
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'

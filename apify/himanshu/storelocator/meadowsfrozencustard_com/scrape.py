@@ -156,9 +156,13 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append(hour)
             tem_var.append(page_url)
+            if "Canberra" in tem_var:
+                pass
+            else:
+                
             
 
-            return_main_object.append(tem_var)
+                return_main_object.append(tem_var)
                    
  
     return return_main_object

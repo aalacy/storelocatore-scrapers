@@ -7,6 +7,9 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
 import json
 import time
+import platform
+
+system = platform.system()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -23,7 +26,10 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
-    return webdriver.Firefox(executable_path='./geckodriver', options=options)
+    if "linux" in system.lower():
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)
+    else:
+        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def fetch_data():
     print("start")
@@ -45,8 +51,8 @@ def fetch_data():
             location_list = script.text.split("regionData:")[1].split("alias:")[1:-1]
             for i in range(len(location_list)):
                 state = location_list[i].split("}")[0].replace("'","").replace(" ","")
-                print(state)
-                print("https://stores.orvis.com/" + state)
+                # print(state)
+                # print("https://stores.orvis.com/" + state)
                 driver.get("https://stores.orvis.com/" + state)
                 WebDriverWait(driver, 25).until(lambda x: x.find_element_by_xpath("//a[@href='https://stores.orvis.com/']"))
                 time.sleep(5)
@@ -60,7 +66,7 @@ def fetch_data():
                             geo_object[store_name] = [lat,lng]
                 for location in state_soup.find_all("div",{"class":"OSL-results-column-wrapper"})[1:]:
                     name = location.find("h4",{"class":"margin-bottom-5"}).text
-                    print(name)
+                    # print(name)
                     address = list(location.find("p",{"class":"margin-bottom-10"}).stripped_strings)
                     if location.find("a",text=re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")):
                         phone = location.find("a",text=re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")).text
@@ -103,7 +109,7 @@ def fetch_data():
                         store.append("<INACCESSIBLE>")
                     store.append(hours)
                     store.append("https://stores.orvis.com/" + state)
-                    print(store)
+                    # print(store)
                     yield store
 
 def scrape():

@@ -46,11 +46,14 @@ def fetch_data():
                 lat = line2.split(',"latitude":"')[1].split('"')[0]
                 lng = line2.split('"longitude":"')[1].split('"')[0]
                 phone = line2.split('"telephone":"')[1].split('"')[0]
-            if '<span class="day">' in line2:
-                if hours == '':
-                    hours = line2.split('<span class="day">')[1].split('<')[0] + ' ' + line2.split('<span class="time">')[1].split('<')[0]
-                else:
-                    hours = hours + '; ' + line2.split('<span class="day">')[1].split('<')[0] + ' ' + line2.split('<span class="time">')[1].split('<')[0]
+            if '<dt class="day">' in line2:
+                items = line2.split('<dt class="day">')
+                for item in items:
+                    if '<dd class="time">' in item:
+                        if hours == '':
+                            hours = item.split('<')[0] + ' ' + item.split('<dd class="time">')[1].split('<')[0]
+                        else:
+                            hours = hours + '; ' + item.split('<')[0] + ' ' + item.split('<dd class="time">')[1].split('<')[0]
             if '<meta about="/store/hungry-howies-' in line2:
                 store = line2.split('<meta about="/store/hungry-howies-')[1].split('"')[0]
         if hours == '':

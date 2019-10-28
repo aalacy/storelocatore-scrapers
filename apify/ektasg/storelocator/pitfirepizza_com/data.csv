@@ -1,8 +1,0 @@
-"locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude","longitude","hours_of_operation"
-"www.pitfirepizza.com","WEST LA","2018 WESTWOOD BLVD","LOS ANGELES","CA","90025","US","<MISSING>","310.481.9860","<MISSING>","34.0465079","-118.4358761","MON-THURS: 11-10 FRI-SAT: 11-11, SUN: 12-9"
-"www.pitfirepizza.com","MAR VISTA","12924 WASHINGTON BLVD","LOS ANGELES","CA","90066","US","<MISSING>","424.835.4088","<MISSING>","33.994683","-118.430815","MON-THURS: 11-10 FRI-SAT: 11-11, SUN: 12-10"
-"www.pitfirepizza.com","COSTA MESA","353 EAST 17TH STREET","COSTA MESA","CA","92627","US","<MISSING>","949.313.6333","<MISSING>","33.6316319","-117.915842","MON-THURS: 12-10 FRI-SAT: 12-11, SUN:12-10"
-"www.pitfirepizza.com","MANHATTAN BEACH","401 MANHATTAN BEACH BLVD.","MANHATTAN BEACH","CA","90266","US","<MISSING>","310.359.9555","<MISSING>","33.885825","-118.408713","MON-SAT: 11-10 SUN: 11-9"
-"www.pitfirepizza.com","PASADENA","730 S. ARROYO PARKWAY","['PASADENA']","CA","91105","US","<MISSING>","626.376.9005","<MISSING>","34.1331852","-118.1492052","SUN-THURS: 11-10 FRI-SAT: 11-11"
-"www.pitfirepizza.com","WESTLAKE VILLAGE","966 S. WESTLAKE BLVD.","THOUSAND OAKS","CA","91361","US","<MISSING>","805.409.4181","<MISSING>","34.154492","-118.8272624","SUN-THURS: 11-9 FRI-SAT: 11-10"
-"www.pitfirepizza.com","FAIRFAX","801 N. FAIRFAX AVE. #101","LOS ANGELES","CA","90046","US","<MISSING>","323.544.6240","<MISSING>","34.0857457","-118.3638865","MON-THURS: 10:30-8:30 FRI: 10:30-9"

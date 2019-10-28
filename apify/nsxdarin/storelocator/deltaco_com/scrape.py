@@ -33,11 +33,11 @@ def fetch_data():
         if "<span class='day'>" in line:
             days = line.split("<span class='day'>")
             for day in days:
-                if '<span class="hours">' in day:
+                if '<span class="hours' in day:
                     if hours == '':
-                        hours = day.split('<')[0] + ' ' + day.split('<span class="hours">')[1].split('<')[0].strip()
+                        hours = day.split('<')[0] + ' ' + day.split('<span class="hours')[1].split('">')[1].split('<')[0].strip()
                     else:
-                        hours = hours + '; ' + day.split('<')[0] + ' ' + day.split('<span class="hours">')[1].split('<')[0].strip()
+                        hours = hours + '; ' + day.split('<')[0] + ' ' + day.split('<span class="hours')[1].split('">')[1].split('<')[0].strip()
         if '<h3 class="store-info-location-address body-font black-text">' in line:
             add = line.split('<h3 class="store-info-location-address body-font black-text">')[1].split('<')[0]
             city = line.split('<br/>')[1].split(',')[0]
