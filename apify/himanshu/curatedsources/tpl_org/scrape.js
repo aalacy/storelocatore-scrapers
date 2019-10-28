@@ -77,6 +77,9 @@ const BASE_URL = 'https://server3.tplgis.org/arcgis3/rest/services/ParkServe/Par
 let errors = 0;
 async function scrapeItem(itemIndex) {
 	if (itemIndex % 1000 == 0) console.log(itemIndex);
+	if (itemIndex >= 128000 && itemIndex <= 129000) {
+		return undefined;
+	}
 	try {
 		const url = `${BASE_URL}/${itemIndex}?f=pjson`;
 		const response = await got(url, { timeout: { lookup: 10000, connect: 10000, secureConnect: 10000, response: 20000 }, retry: { retries: 3, errorCodes: ['ETIMEDOUT', 'ECONNRESET', 'EADDRINUSE', 'ECONNREFUSED', 'EPIPE', 'ENOTFOUND', 'ENETUNREACH', 'EAI_AGAIN', 'ECONNABORTED']}, json: true});
