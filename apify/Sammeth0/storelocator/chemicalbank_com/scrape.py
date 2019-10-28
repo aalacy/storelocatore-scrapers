@@ -2,7 +2,6 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import re
 import ast
 
 def get_driver():
