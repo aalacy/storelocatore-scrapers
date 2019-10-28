@@ -3,9 +3,9 @@ const esriUtils = require('@esri/arcgis-to-geojson-utils');
 const epsg = require('epsg');
 const reproject = require('reproject');
 const wicket = require('wicket');
-const polygonCenter = require('geojson-polygon-center')
 const {default: PQueue} = require('p-queue');
 const simplify = require('@turf/simplify');
+const centroid = require('@turf/centroid').default;
 const got = require('got');
 
 function esriJsonEpsg3857ToGeojsonEpsg4326(esriJson) {
@@ -14,7 +14,7 @@ function esriJsonEpsg3857ToGeojsonEpsg4326(esriJson) {
 }
 
 function geoJsonToCentroid(geoJson) {
-	return polygonCenter(geoJson).coordinates;
+	return centroid(geoJson).geometry.coordinates;
 }
 
 function geoJsonToWkt(geoJson) {
@@ -30,8 +30,8 @@ function parseCityState(data) {
 	try {
 		let cityState = data["feature"]["attributes"]["Park_UrbanArea"];
 		let parts = cityState.split(',')
-		let parsedState = parts[parts.length - 1].trim();
-		let parsedCity = parts.slice(0,-1).join(',').trim();
+		let parsedState = parts[parts.length - 1].trim().split('-')[0].trim();
+		let parsedCity = parts.slice(0,-1).join(',').trim().split('-')[0].trim();
 		return {
 			city: parsedCity,
 			state: parsedState
@@ -51,7 +51,8 @@ function parseResult(data, itemIndex) {
 	const centroid = geoJsonToCentroid(geoJson);
 	let polygonWkt = geoJsonToWkt(geoJson);
 	const parsedCityState = parseCityState(data);
-	const locationName = data["feature"]["attributes"]["Park_Name"]?data["feature"]["attributes"]["Park_Name"]:"<MISSING>";
+	let locationName = data["feature"]["attributes"]["Park_Name"];
+	if (!locationName || !locationName.trim()) locationName = '<MISSING>';
 	const item = {
 		locator_domain: "https://www.tpl.org",
 		location_name: locationName,
