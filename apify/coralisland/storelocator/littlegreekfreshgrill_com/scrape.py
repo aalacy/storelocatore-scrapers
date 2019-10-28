@@ -91,7 +91,6 @@ def fetch_data():
         store_hours = eliminate_space(store.xpath('.//div[@id="store_hours_of_operation"]//text()'))
         output.append(get_value(store_hours)) #opening hours
         output_list.append(output)
-        print(output)        
     return output_list
 
 def scrape():

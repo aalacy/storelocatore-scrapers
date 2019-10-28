@@ -96,7 +96,6 @@ def fetch_data():
                     output.append(get_value(store['longitude'])) #longitude        
                     output.append(get_value(store_hours)) #opening hours
                     writer.writerow(output)
-                    print(output)
                     # output_list.append(output)
 
 def scrape():
