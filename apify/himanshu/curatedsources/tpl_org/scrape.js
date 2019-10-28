@@ -4,14 +4,9 @@ const epsg = require('epsg');
 const reproject = require('reproject');
 const wicket = require('wicket');
 const polygonCenter = require('geojson-polygon-center')
-const axios = require('axios');
 const {default: PQueue} = require('p-queue');
-const axiosRetry = require('axios-retry');
 const simplify = require('@turf/simplify');
-
-axiosRetry(axios, { retries: 3, shouldResetTimeout: true, retryCondition: (error) => {
-  return axiosRetry.isNetworkOrIdempotentRequestError(error) || error.code === 'ECONNABORTED';
-}});
+const got = require('got');
 
 function esriJsonEpsg3857ToGeojsonEpsg4326(esriJson) {
 	const geoJson = esriUtils.arcgisToGeoJSON(esriJson);
@@ -31,18 +26,38 @@ function geoJsonToWkt(geoJson) {
 	return parsed.write();
 }
 
+function parseCityState(data) {
+	try {
+		let cityState = data["feature"]["attributes"]["Park_UrbanArea"];
+		let parts = cityState.split(',')
+		let parsedState = parts[parts.length - 1].trim();
+		let parsedCity = parts.slice(0,-1).join(',').trim();
+		return {
+			city: parsedCity,
+			state: parsedState
+		};
+	} catch(ex) {
+		return {
+			city: '<MISSING>',
+			state: '<MISISNG>'
+		};
+	}
+}
+
 function parseResult(data, itemIndex) {
 	const parkId = data["feature"]["attributes"]["ParkID"]?data["feature"]["attributes"]["ParkID"]:"<MISSING>"
 	const esriJson = data['feature']['geometry'];
 	const geoJson = esriJsonEpsg3857ToGeojsonEpsg4326(esriJson);
 	const centroid = geoJsonToCentroid(geoJson);
 	let polygonWkt = geoJsonToWkt(geoJson);
+	const parsedCityState = parseCityState(data);
+	const locationName = data["feature"]["attributes"]["Park_Name"]?data["feature"]["attributes"]["Park_Name"]:"<MISSING>";
 	const item = {
 		locator_domain: "https://www.tpl.org",
-		location_name:data["feature"]["attributes"]["Park_Name"]?data["feature"]["attributes"]["Park_Name"]:"<MISSING>",
-		street_address: data["feature"]["attributes"]["Park_Address_1"]?data["feature"]["attributes"]["Park_Address_1"]:"<MISSING>",
-		city:data["feature"]["attributes"]["Park_UrbanArea"]?data["feature"]["attributes"]["Park_UrbanArea"]: "<MISSING>",
-		state:data["feature"]["attributes"]["Park_UrbanArea"]?data["feature"]["attributes"]["Park_UrbanArea"]:"<MISSING>",
+		location_name: locationName,
+		street_address: data["feature"]["attributes"]["Park_Address_1"]?data["feature"]["attributes"]["Park_Address_1"]:locationName,
+		city:parsedCityState.city,
+		state:parsedCityState.state,
 		zip:"<MISSING>",
 		country_code:"US",
 		store_number:parkId,
@@ -61,11 +76,11 @@ const BASE_URL = 'https://server3.tplgis.org/arcgis3/rest/services/ParkServe/Par
 
 let errors = 0;
 async function scrapeItem(itemIndex) {
-	if (itemIndex % 1000 == 0) console.log(itemIndex);
+	if (itemIndex % 100 == 0) console.log(itemIndex);
 	try {
 		const url = `${BASE_URL}/${itemIndex}?f=pjson`;
-		const res = await axios.get(url, { timeout: 20000 });
-		const data = res.data;
+		const response = await got(url, { timeout: { lookup: 10000, connect: 10000, secureConnect: 10000, response: 20000 }, retry: { retries: 3, errorCodes: ['ETIMEDOUT', 'ECONNRESET', 'EADDRINUSE', 'ECONNREFUSED', 'EPIPE', 'ENOTFOUND', 'ENETUNREACH', 'EAI_AGAIN', 'ECONNABORTED']}, json: true});
+		const data = response.body;
 		if (!data || data.hasOwnProperty("error")) {
 			return undefined;
 		} else {
@@ -73,7 +88,6 @@ async function scrapeItem(itemIndex) {
 		}
 	} catch(exce) {
 		console.log(`itemIndex: ${itemIndex}`);
-		if (typeof res !== 'undefined') console.log(res.body);
 		console.log(exce);
 		errors++;
 		console.log(`error count: ${errors}`);
@@ -81,7 +95,7 @@ async function scrapeItem(itemIndex) {
 }
 
 async function scrapeBatch(startIndex, size) {
-	const queue = new PQueue({concurrency: 100});
+	const queue = new PQueue({concurrency: 70});
 	let promises = [];
 	for (let i = 0; i < size; i++) {
 		const itemIndex = startIndex + i;
@@ -91,7 +105,7 @@ async function scrapeBatch(startIndex, size) {
 	return results.filter((result) => !!result);
 }
 
-const BATCH_SIZE = 10000;
+const BATCH_SIZE = 1000;
 
 Apify.main(async () => {
 	let stop = false;
@@ -103,6 +117,6 @@ Apify.main(async () => {
 		}
 		startIndex += BATCH_SIZE;
 		console.log(`${currentBatch.length} items retrieved`);
-		await Apify.pushData(currentBatch);
+		//await Apify.pushData(currentBatch);
 	}
 });
