@@ -3,9 +3,9 @@ const esriUtils = require('@esri/arcgis-to-geojson-utils');
 const epsg = require('epsg');
 const reproject = require('reproject');
 const wicket = require('wicket');
-const polygonCenter = require('geojson-polygon-center')
 const {default: PQueue} = require('p-queue');
 const simplify = require('@turf/simplify');
+const centroid = require('@turf/centroid').default;
 const got = require('got');
 
 function esriJsonEpsg3857ToGeojsonEpsg4326(esriJson) {
@@ -14,7 +14,7 @@ function esriJsonEpsg3857ToGeojsonEpsg4326(esriJson) {
 }
 
 function geoJsonToCentroid(geoJson) {
-	return polygonCenter(geoJson).coordinates;
+	return centroid(geoJson).geometry.coordinates;
 }
 
 function geoJsonToWkt(geoJson) {
@@ -30,11 +30,11 @@ function parseCityState(data) {
 	try {
 		let cityState = data["feature"]["attributes"]["Park_UrbanArea"];
 		let parts = cityState.split(',')
-		let parsedState = parts[parts.length - 1].trim();
-		let parsedCity = parts.slice(0,-1).join(',').trim();
+		let parsedState = parts[parts.length - 1].trim().split('-')[0].trim();
+		let parsedCity = parts.slice(0,-1).join(',').trim().split('-')[0].trim();
 		return {
-			city: parsedCity,
-			state: parsedState
+			city: sanitize(parsedCity, '<MISSING>'),
+			state: sanitize(parsedState, '<MISSING>')
 		};
 	} catch(ex) {
 		return {
@@ -44,6 +44,12 @@ function parseCityState(data) {
 	}
 }
 
+function sanitize(str, defaultValue) {
+	if (!str) return defaultValue;
+	let stripped = str.replace(/(\r\n|\n|\r)/gm,"").trim();
+	return stripped ? stripped : defaultValue;
+}
+
 function parseResult(data, itemIndex) {
 	const parkId = data["feature"]["attributes"]["ParkID"]?data["feature"]["attributes"]["ParkID"]:"<MISSING>"
 	const esriJson = data['feature']['geometry'];
@@ -51,11 +57,12 @@ function parseResult(data, itemIndex) {
 	const centroid = geoJsonToCentroid(geoJson);
 	let polygonWkt = geoJsonToWkt(geoJson);
 	const parsedCityState = parseCityState(data);
-	const locationName = data["feature"]["attributes"]["Park_Name"]?data["feature"]["attributes"]["Park_Name"]:"<MISSING>";
+	let locationName = sanitize(data["feature"]["attributes"]["Park_Name"], '<MISSING>');
+	let streetAddress = sanitize(data["feature"]["attributes"]["Park_Address_1"], locationName);
 	const item = {
 		locator_domain: "https://www.tpl.org",
 		location_name: locationName,
-		street_address: data["feature"]["attributes"]["Park_Address_1"]?data["feature"]["attributes"]["Park_Address_1"]:locationName,
+		street_address: streetAddress, 
 		city:parsedCityState.city,
 		state:parsedCityState.state,
 		zip:"<MISSING>",
@@ -63,8 +70,8 @@ function parseResult(data, itemIndex) {
 		store_number:parkId,
 		phone:"<MISSING>",
 		location_type: "<MISSING>",
-		latitude: centroid[1],
-		longitude: centroid[0],
+		latitude: centroid[1] ? centroid[1] : '<MISSING>',
+		longitude: centroid[0] ? centroid[0] : '<MISSING>',
 		hours_of_operation:"<MISSING>",
 		page_url:`https://server3.tplgis.org/arcgis3/rest/services/ParkServe/ParkServe_Parks/MapServer/0/${itemIndex}?f=pjson`,
 		wkt:polygonWkt
