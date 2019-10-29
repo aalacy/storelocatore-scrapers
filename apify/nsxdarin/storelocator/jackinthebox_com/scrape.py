@@ -64,6 +64,10 @@ def fetch_data():
                 lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
                 lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]
         country = 'US'
+        if phone == '':
+            phone = '<MISSING>'
+        if hours == '':
+            hours = '<MISSING>'
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
