@@ -3,8 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import ast
-
+import sgzip
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -12,55 +11,114 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
+def request_wrapper(url,method,headers,data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url,headers=headers)
+                return r
+                break
+            except:
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url,headers=headers,data=data)
+                else:
+                    r = requests.post(url,headers=headers)
+                return r
+                break
+            except:
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
 
 def fetch_data():
     return_main_object = []
     headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        "content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+    }
+    hour_headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
-
     base_url = "https://www.theupsstore.com"
-    r = requests.get(base_url + '/about/new-locations', headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    for parts in soup.find_all("div", {"id": "ctl01_FWTxtContentDetailOne_ctl00"}):
-        for semi_part in parts.find_all("p")[1:]:
-            return_object = []
-            if not (semi_part.find_all("strong")):
-                string = list(semi_part.stripped_strings)
-               # print(string)
-            else:
-                string = list(semi_part.stripped_strings)
-                del string[0]
-            location_name = string[0]
-            street_address = string[1]
-            city = string[2].split(",")[0]
-            state_zip = string[2].split(",")[1]
-            state = state_zip.split(" ")[1]
-            store_zip = state_zip.split(" ")[2]
-            if(len(string[0].split("#")) == 2):
-                store_number = string[0].split("#")[1]
-            else:
-                store_number= "<MISSING>"
-            return_object.append(base_url)
-            return_object.append(location_name)
-            return_object.append(street_address)
-            return_object.append(city)
-            return_object.append(state)
-            return_object.append(store_zip)
-            return_object.append("US")
-            return_object.append(store_number)
-            return_object.append("<MISSING>")
-            return_object.append("The Ups Store")
-            return_object.append("<MISSING>")
-            return_object.append("<MISSING>")
-            return_object.append("<MISSING>")
-            return_main_object.append(return_object)
-    return return_main_object
+    addresses = []
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 30
+    MAX_DISTANCE = 350.0
+    zip = search.next_zip()
+    while zip:
+        result_coords = []
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print('Pulling zip %s...' % (str(zip)))
+        data = "ctl01%24SearchBy=rbLocation&ctl01%24tbSearchText=" + str(zip) + "&ctl01%24tbSearchTextByStore=" + str(zip) + "&ctl01%24hdLatLon=&hdEmailThankYouRedirect=&__EVENTTARGET=ctl01%24btnSearch&__ASYNCPOST=true"
+        # print(data)
+        r = request_wrapper("https://www.theupsstore.com/tools/find-a-store","post",headers=headers,data=data)
+        if r == None:
+            print("failed to load " + str(data))
+            zip = search.next_zip()
+            continue
+        soup = BeautifulSoup(r.text,"lxml")
+        data = json.loads(soup.find("input",{"id":"MapPointData"})["value"])
+        # print("stop")
+        for store_data in data:
+            lat = store_data["Latitude"]
+            lng = store_data["Longitude"]
+            result_coords.append((lat, lng))
+            store = []
+            store.append("https://www.theupsstore.com")
+            store.append("<MISSING>")
+            store.append(store_data["Address"])
+            if store[-1] in addresses:
+                continue
+            addresses.append(store[-1])
+            store.append(store_data["City"])
+            store.append(store_data["State"])
+            store.append(store_data["Zip"])
+            store.append("US")
+            store.append(store_data["StoreNum"])
+            store.append(store_data["Phone"] if "Phone" in store_data and store_data["Phone"] else "<MISSING>")
+            store.append("<MISSING>")
+            store.append(lat)
+            store.append(lng)
+            hours_request = request_wrapper(store_data["StoreURL"],"get",headers=hour_headers)
+            if hours_request == None:
+                print("failed to load " + str(store_data["StoreURL"]))
+                continue
+            hours_soup = BeautifulSoup(hours_request.text,"lxml")
+            hours = " ".join(list(hours_soup.find("div",{'class':"Hours--location"}).stripped_strings))
+            for hour in hours_soup.find("div",{"class":"Hours--location"}).find_all("div",{"class":"OpenStatus-summary"}):
+                hours = hours.replace(" ".join(list(hour.stripped_strings)),"")
+            store.append(hours.replace("  "," ") if hours != "" else "<MISSING>")
+            store.append(store_data["StoreURL"])
+            # print(store)
+            yield store
+        if len(data) < MAX_RESULTS:
+            # print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif len(data) == MAX_RESULTS:
+            # print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        zip = search.next_zip()
+
+
 def scrape():
     data = fetch_data()
     write_output(data)

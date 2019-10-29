@@ -29,7 +29,6 @@ def fetch_data():
         y = coord[1]
         latround = round(float(x), 2)
         lnground = round(float(y), 2)
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://www.starbucks.com/bff/locations?lat=' + str(x) + '&lng=' + str(y)
         r = session.get(url, headers=headers)
         array = json.loads(r.content)
@@ -116,7 +115,6 @@ def fetch_data():
         coords.pop(0)
         latround = round(float(x), 2)
         lnground = round(float(y), 2)
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://www.starbucks.com/bff/locations?lat=' + str(x) + '&lng=' + str(y)
         r = session.get(url, headers=headers)
         array = json.loads(r.content)

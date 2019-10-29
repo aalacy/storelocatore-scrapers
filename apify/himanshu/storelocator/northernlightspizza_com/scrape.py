@@ -53,7 +53,24 @@ def fetch_data():
 
     r= requests.get('https://www.northernlightspizza.com/locations/',headers = headers)
     soup = BeautifulSoup(r.text,'html.parser')
-    zip = soup.find_all('div',class_='row flex-container')[-1].find_all('div',class_='col-xl-2')[0:2]
+    l_title = soup.find('div',class_ = 'locations__title').find_next('div',class_='row flex-container').find_all('div',class_='col-xl-4')
+    h1 = l_title[1]
+    hh1 = BeautifulSoup(h1.text,'lxml')
+    list_h1 = list(hh1.stripped_strings)
+    hours1  = list_h1[0].split('Hours')[-1].strip().replace('\n','\t')
+    h2 = l_title[3]
+    hh2= BeautifulSoup(h2.text,'lxml')
+    list_h2 = list(hh2.stripped_strings)
+    hours2  = list_h2[0].split('Hours')[-1].strip().replace('\n','\t')
+    h = []
+    h.append(hours1)
+    h.append(hours2)
+    # print(h.pop(0))
+    # print(h.pop(0))
+
+
+
+
 
 
     script = soup.find_all('script')[-7]
@@ -64,6 +81,7 @@ def fetch_data():
         # print('~~~~~~~~~~~~~~~~~~~~~~~~~`')
         location_name = json_data['2'][x]['title']
         street_address = json_data['2'][x]['address'].split(',')[0]
+        # print(street_address)
 
         city =  json_data['2'][x]['address'].split(',')[1]
         state_zipp = json_data['2'][x]['address'].split(',')[2].split()
@@ -80,15 +98,20 @@ def fetch_data():
         # print('~~~~~~~~~~~~~~~~~')
         phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), " ".join(other))
         phone = phone_list[0]
-        if len(other)  > 3:
+        if len(other)  > 3 and "3306 Indianola Ave" not in street_address and '1237 Grand Ave' not in street_address:
             hours_of_operation = " ".join(other[2:])
-            # print(hours_of_operation)
+            # print(street_address +" | " +hours_of_operation)
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        elif len(other)  > 3 and "3306 Indianola Ave"  in street_address or '1237 Grand Ave'  in street_address:
+            hours_of_operation = h.pop(0)
+
+
         else:
             hours_of_operation = "<MISSING>"
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
         store = ["<MISSING>" if x == "" else x for x in store]
-        print(street_address +"   |  "+ hours_of_operation)
+        # print(street_address +"   |  "+ hours_of_operation)
 
         # print("data = " + str(store))
         # print(
@@ -98,7 +121,13 @@ def fetch_data():
 
 
 
-        # print(zipp)
+    z= []
+    for zip in soup.find_all('div',class_='row flex-container')[-1].find_all('div',class_='col-xl-2')[0:2]:
+        zip_list  = list(zip.stripped_strings)
+        zi = zip_list[5].split()[-1]
+        z.append(zi)
+    z.reverse()
+
     for x in json_data['3']:
         # print(json_data['3'][x])
         # print('~~~~~~~~~~~~~~')
@@ -112,7 +141,11 @@ def fetch_data():
             # print(street_address,zipp)
         else:
             state = "".join(state_zipp)
-            zipp = "<MISSING>"
+            zipp = z.pop(0)
+
+            # print(street_address,zipp)
+
+
         latitude = json_data['3'][x]['lat']
         longitude = json_data['3'][x]['lng']
         other = json_data['3'][x]['desc'].split('\n')

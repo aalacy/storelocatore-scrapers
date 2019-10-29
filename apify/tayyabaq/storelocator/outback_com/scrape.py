@@ -37,7 +37,6 @@ def fetch_data():
     state_options = [state_opt[n].text for n in range(0,len(state_opt))]
     for n in range(1,len(state_options)):
         time.sleep(3)
-        print (state_options[n])
         driver.find_element_by_xpath("//select[contains(@class,'glf-icon_close')]/option[text()='%s']"%state_options[n]).click()
         driver.wait(3)
         location = driver.find_elements_by_class_name('ng-binding')

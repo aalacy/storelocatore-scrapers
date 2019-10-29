@@ -43,7 +43,8 @@ Apify.main(async () => {
     launchPuppeteerOptions: {
       headless: false,
       useChrome: true,
-      stealth: true,
+			stealth: true,
+			headless: true
     },
     gotoFunction: async ({
       request, page,

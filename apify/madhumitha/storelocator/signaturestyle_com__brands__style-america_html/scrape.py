@@ -8,7 +8,7 @@ DOMAIN = 'https://www.signaturestyle.com'
 MISSING = '<MISSING>'
 
 def write_output(data):
-    with open('data.csv', mode='w', newline='') as output_file:
+    with open('data.csv', mode='w', encoding='utf-8', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
@@ -42,7 +42,6 @@ def fetch_data():
                         if page_soup.find('h2', attrs = {'class':'hidden-xs salontitle_salonlrgtxt'}) is None:
                             continue
                         location_name = page_soup.find('h2', attrs = {'class':'hidden-xs salontitle_salonlrgtxt'}).text.strip()
-                        i = int(i) + int(1) 
                         phone = page_soup.find('a', attrs = {'id':'sdp-phone'}).text.strip()
                         street_address = page_soup.find('span', attrs = {'itemprop':'streetAddress'}).text.strip()
                         city = page_soup.find('span', attrs = {'itemprop':'addressLocality'}).text.strip()
@@ -64,6 +63,7 @@ def fetch_data():
                         loc_tag = loc_map.find('script', attrs = {'type':'text/javascript'}).text.strip()
                         latlng = re.findall('[-+]?[0-9]*\.?[0-9]+', loc_tag)
                         lat = latlng[-2].strip()
+                        lon = latlng[-1].strip()
                         location_type = MISSING
                         data.append([DOMAIN, page_url, location_name, street_address, city, state, zipcode, country, store_number, phone, location_type, lat, lon, hours_of_operation])
         except requests.exceptions.RequestException:

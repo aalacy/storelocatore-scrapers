@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import time
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,6 +16,37 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def request_wrapper(url,method,headers,data=None):
+   request_counter = 0
+   if method == "get":
+       while True:
+           try:
+               r = requests.get(url,headers=headers)
+               return r
+               break
+           except:
+               time.sleep(2)
+               request_counter = request_counter + 1
+               if request_counter > 10:
+                   return None
+                   break
+   elif method == "post":
+       while True:
+           try:
+               if data:
+                   r = requests.post(url,headers=headers,data=data)
+               else:
+                   r = requests.post(url,headers=headers)
+               return r
+               break
+           except:
+               time.sleep(2)
+               request_counter = request_counter + 1
+               if request_counter > 10:
+                   return None
+                   break
+   else:
+       return None
 
 def fetch_data():
     base_url= "https://locator.chase.com/?locale=en_US"
@@ -27,17 +58,21 @@ def fetch_data():
     result =[]
     addresses=[]
     k= soup.find_all("a",{"class":"Directory-listLink"})
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+    }
    
     for index,i in enumerate(k):
-        print(i.text)
+        # print(i.text)
         
         if i.text=="Washington, D.C.":
-            r = requests.get("https://locator.chase.com/"+i['href'])
+            r = request_wrapper("https://locator.chase.com/"+i['href'],"get",headers=headers)
             soup7= BeautifulSoup(r.text,"lxml")
             link5 = soup7.find_all("a",{"class":"Teaser-titleLink Link--inverse Text--bold","data-ya-track":"businessname"})
 
             for l in link5:
-                r = requests.get("https://locator.chase.com"+l['href'].replace("..",""))
+                r = request_wrapper("https://locator.chase.com"+l['href'].replace("..",""),"get",headers=headers)
                 soup10= BeautifulSoup(r.text,"lxml")
                 name = (soup10.find("h1",{"class":"Core-title"}).text)
                 street_address = soup10.find("span",{"class":"c-address-street-1"}).text
@@ -77,7 +112,7 @@ def fetch_data():
                 tem_var.append("https://locator.chase.com/"+i['href'])
                 store_detail.append(tem_var)
         else:
-            r = requests.get("https://locator.chase.com/"+i['href'])
+            r = request_wrapper("https://locator.chase.com/"+i['href'],"get",headers=headers)
             soup1= BeautifulSoup(r.text,"lxml")
             link = soup1.find_all("a",{"class":"Directory-listLink"})
             if len(link) != 0:
@@ -88,7 +123,7 @@ def fetch_data():
                     if data_count == "1":
                         tem_var =[]
                         new_link =  "https://locator.chase.com/"+j['href'].replace("..","")
-                        r = requests.get(new_link)
+                        r = request_wrapper(new_link,"get",headers=headers)
                         soup2= BeautifulSoup(r.text,"lxml")
                         latitude = (soup2.find("meta",{"itemprop":"latitude"}).attrs['content'])
                         longitude = (soup2.find("meta",{"itemprop":"longitude"}).attrs['content'])
@@ -129,16 +164,16 @@ def fetch_data():
                         tem_var.append(hours +' '+ time)
                         tem_var.append("https://locator.chase.com/"+j['href'].replace("..",""))
                         store_detail.append(tem_var)
-                        print(tem_var)
+                        # print(tem_var)
                     else:
                         new_link =  "https://locator.chase.com/"+j['href'].replace("..","")
-                        r = requests.get(new_link)
+                        r = request_wrapper(new_link,"get",headers=headers)
                         soup4= BeautifulSoup(r.text,"lxml")
                         link2 = soup4.find_all("a",{"class":"Teaser-titleLink"})
                         for j in link2:
                             tem_var=[]
                             street_address1=''
-                            r = requests.get("https://locator.chase.com/"+j['href'].replace("..",""))
+                            r = request_wrapper("https://locator.chase.com/"+j['href'].replace("..",""),"get",headers=headers)
                             soup5= BeautifulSoup(r.text,"lxml")
                             name = (soup5.find("h1",{"class":"Core-title"}).text)
                             street_address = soup5.find("span",{"class":"c-address-street-1"}).text
@@ -177,11 +212,11 @@ def fetch_data():
                             tem_var.append(hours + ' ' +time)
                             tem_var.append("https://locator.chase.com/"+j['href'].replace("..",""))
                             store_detail.append(tem_var)
-                            print(tem_var)
+                            # print(tem_var)
             else:
                 tem_var=[]
                 street_address1=''
-                r = requests.get("https://locator.chase.com/"+i['href'])
+                r = request_wrapper("https://locator.chase.com/"+i['href'],"get",headers=headers)
                 soup6= BeautifulSoup(r.text,"lxml")
                 name = (soup6.find("h1",{"class":"Core-title"}).text)
                 street_address = soup6.find("span",{"class":"c-address-street-1"}).text
@@ -220,7 +255,7 @@ def fetch_data():
                 tem_var.append(hours + ' '+time)
                 tem_var.append("https://locator.chase.com/"+i['href'])
                 store_detail.append(tem_var)
-                print(tem_var)
+                # print(tem_var)
         
     # print("======================",len(store_name)) 
     # print(len(store_detail))            
@@ -231,7 +266,7 @@ def fetch_data():
        store.extend(store_detail[i])
        if  store[2] in result:
            continue
-       result.append(store[3])
+       result.append(store[2])
        return_main_object.append(store)
       
     return return_main_object

@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -19,57 +19,73 @@ def fetch_data():
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
+    
+    
     base_url = "https://www.eurekapizza.com/locations/"
     r = requests.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
+
     return_main_object = []
-    data = soup.select('.vc_row.wpb_row.vc_row-fluid')
-    for values in data:
-        details = values.select('.vc_col-sm-6')
-        for val in details:
-            location_name = val.find('h2').get_text()
-            street_address = val.find('h5').find_next('p').get_text()
-            city_state_pin = val.find('h5').find_next('p').find_next('p').get_text()
-            city_state_pin_values = city_state_pin.split(' ')
-            city = ' '.join(city_state_pin_values[:-2])[:-1]
-            state = city_state_pin_values[-2]
-            zip = city_state_pin_values[-1]
-            store_val = val.select('.vc_btn3-container.vc_btn3-center')[0].find('a').get('href')
-            if store_val[-4:].isdigit():
-                store_number = store_val[-4:]
-            else:
-                store_number = store_val[-7:-3]
-            phone_value = val.select('.vc_btn3-container.vc_btn3-center')[0].find_next('div').find('p')
-            if 'Phone:' in phone_value:
-                phone = phone_value.split('[')[0]
-            else:
-                phone_data = val.select('.vc_btn3-container.vc_btn3-center')[0].find_next('div').text
-                phone = phone_data.split('[')[0]
-            latLongDetails = val.find('h5').find_next('p').find_next('p').find_next('p').find('a').get('href')
-            if '@' in latLongDetails:
-                latLong = latLongDetails.split('@')
-                latitude = latLong[1].split(',')[0]
-                longitude = latLong[1].split(',')[1]
-            else:
-                latitude = "<INACCESSIBLE>"
-                longitude ="<INACCESSIBLE>"
-            hours_of_operation = val.find('h5').find_next('h5').find_next('p').get_text() + ", " + val.find('h5').find_next('h5').find_next('p').find_next('p').get_text()
-            store = []
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zip)
-            store.append("US")
-            store.append(store_number)
-            store.append(phone)
-            store.append("Eureka Pizza")
-            store.append(latitude)
-            store.append(longitude)
-            store.append(hours_of_operation)
-            return_main_object.append(store)
+    data = soup.find("div", {"id": "1260607478"})
+
+    for semi_part in data.find_all("div", {"class": "dmRespCol"}):
+        try:
+            if(semi_part.find("div",{"class":"dmNewParagraph"})):
+                inner_semi = semi_part.find("div",{"class":"dmNewParagraph"})
+                temp_storeaddresss = list(inner_semi.stripped_strings)
+                if(len(temp_storeaddresss) != 1):
+                    location_name = temp_storeaddresss[0]
+                    street_address = temp_storeaddresss[1]
+                    city = temp_storeaddresss[2].split(",")[0]
+                    state_zip = temp_storeaddresss[2].split(",")[1]
+                    state = state_zip.split(" ")[1]
+                    zip = state_zip.split(" ")[2]
+                    lat = semi_part.find("div",{"class":"inlineMap"})['data-lat']
+                    lng = semi_part.find("div",{"class":"inlineMap"})['data-lng']
+                    link = semi_part.find("a",{"class":"dmDefaultGradient"})['href']
+                    if("http" in link):
+                        page_url = link
+                        store_request = requests.get(link)
+                        store_soup = BeautifulSoup(store_request.text, "lxml")
+
+                        if(store_soup.find("td",{"id":"ctl00_BP_Content_uRestaurantHeader_tdHours"})):
+                            inner_semi_hr = store_soup.find("td",{"id":"ctl00_BP_Content_uRestaurantHeader_tdHours"})
+                            temp_hr = list(inner_semi_hr.stripped_strings)
+                            hour = ' '.join(map(str, temp_hr))
+
+                        elif(store_soup.find("div",{"class":"restaurant-hours hours"})):
+                            inner_semi_hr = store_soup.find("div",{"class":"restaurant-hours hours"})
+                            temp_hr = list(inner_semi_hr.stripped_strings)
+                            hour = ' '.join(map(str, temp_hr))
+                        else:
+                            hour = "<MISSING>"
+                    else:
+                        hour = "<MISSING>"
+                        page_url = "<MISSING>"
+                    phone = list(semi_part.find_all("span", {"class": "text"})[1].stripped_strings)[0]
+
+                    return_object = []
+                    return_object.append(base_url)
+                    return_object.append(location_name)
+                    return_object.append(street_address)
+                    return_object.append(city)
+                    return_object.append(state)
+                    return_object.append(zip)
+                    return_object.append("US")
+                    return_object.append("<MISSING>")
+                    return_object.append(phone)
+                    return_object.append("<MISSING>")
+                    return_object.append(lat)
+                    return_object.append(lng)
+                    return_object.append(hour)
+                    return_object.append(page_url)
+                    return_main_object.append(return_object)
+                
+            
+        except:
+            continue
     return return_main_object
+        
 
 def scrape():
     data = fetch_data()

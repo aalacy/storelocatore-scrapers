@@ -138,7 +138,6 @@ def fetch_data():
                     store_hours = []
                     output.append(get_value(store_hours)) #opening hours
                     output_list.append(output)
-                    print(output)
     return output_list
 
 def scrape():

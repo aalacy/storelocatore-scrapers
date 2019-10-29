@@ -42,7 +42,7 @@ def fetch_data():
     country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "<MISSING>"
+    location_type = "sparklemarkets"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
@@ -59,15 +59,16 @@ def fetch_data():
             # print(a['href'])
             r_soup = requests.get(a['href'],headers = headers)
             soup_loc = BeautifulSoup(r_soup.text,'lxml')
-            location_name = soup_loc.h1.text.encode('ascii', 'ignore').decode('ascii').strip()
+            location_name = soup_loc.h1.text.encode('ascii', 'ignore').decode('ascii').strip().capitalize()
 
             add = soup_loc.find('p',class_='font_7')
             phone= add.find(lambda tag: (tag.name == "span") and "Phone:" in tag.text).nextSibling.encode('ascii', 'ignore').decode('ascii').strip()
-            hours_of_operation = add.find(lambda tag: (tag.name == "span") and "Hours:" in tag.text).nextSibling.replace('\xa0','')
+            hours_of_operation = add.find(lambda tag: (tag.name == "span") and "Hours:" in tag.text).nextSibling.replace('\xa0','').replace('|','')
             page_url = a['href']
             span = add.find(lambda tag: (tag.name == "span") and "Address:" in tag.text).nextSibling
             address = span.split(',')
             if len(address) == 2:
+
                 street_address = " ".join(address[0].split()[:-1]).encode('ascii', 'ignore').decode('ascii').strip()
                 city = "".join(address[0].split()[-1].encode('ascii', 'ignore').decode('ascii').strip())
                 state = address[-1].split()[0].encode('ascii', 'ignore').decode('ascii').strip()
@@ -75,9 +76,10 @@ def fetch_data():
 
             else:
                 street_address = " ".join(address[:-2]).encode('ascii', 'ignore').decode('ascii').strip()
-                city = address[1].encode('ascii', 'ignore').decode('ascii').strip()
+                city = address[-2].encode('ascii', 'ignore').decode('ascii').strip()
                 state = address[-1].split()[0].encode('ascii', 'ignore').decode('ascii').strip()
                 zipp = address[-1].split()[-1].encode('ascii', 'ignore').decode('ascii').strip()
+                # print(city)
         else:
 
             add = a.find_parent('div',class_='style-jqwqcz8f1inlineContent')
@@ -92,6 +94,7 @@ def fetch_data():
             phone = list_address[-1]
             hours_of_operation = "<MISSING>"
             page_url = "<MISSING>"
+
 
 
 

@@ -15,7 +15,7 @@ def fetch_data():
     data = []
     driver = webdriver.Chrome()
         
-    df_zips = pd.read_csv("./US_states.csv")["Zip_Range"].tolist()
+    df_zips = pd.read_csv(r"./US_states.csv")["Zip_Range"].tolist()
     for z in range(len(df_zips)):
         try:
             min_z,max_z = df_zips[z].split("-")

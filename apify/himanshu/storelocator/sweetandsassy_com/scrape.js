@@ -65,11 +65,12 @@ request(url,(err,res,html)=>{
           var latitude = obj.attr('data-latitude');
 
           var phone = obj.find('.bottom').find('a').text().trim();
-         var longitude = obj.attr('data-longitude');
+          var longitude = obj.attr('data-longitude');
           var store_number = obj.attr('data-zip');
           var location_name = obj.attr('data-title');
           var link_tmp = obj.attr('data-href');
           var link = base_url+link_tmp;
+          
 
           request(link,(err,res,html)=>{
 
@@ -78,7 +79,15 @@ request(url,(err,res,html)=>{
                 const $  =cheerio.load(html);
                 
 
-                var hour = $('.search-area').find('.hours-detail').text().replace(/\s/g,'').trim();
+                var hour_tmp = $('.search-area').find('.hours-detail').text().replace(/\s/g,'').trim();
+                if (hour_tmp!=''){
+                  var hour = $('.search-area').find('.hours-detail').text().replace(/\s/g,'').trim();
+                }
+                else
+                {
+                  var hour = '<MISSING>'
+                }
+
 
            
 
@@ -103,13 +112,15 @@ request(url,(err,res,html)=>{
       
                   phone: phone,
       
-                  location_type: 'sweetandsassy',
+                  location_type: '<MISSING>',
       
                   latitude: latitude,
       
                   longitude: longitude, 
       
-                  hours_of_operation: hour}); 
+                  hours_of_operation: hour,
+                  
+                  page_url:link}); 
 
                  
       
