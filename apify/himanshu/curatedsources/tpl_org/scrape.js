@@ -33,8 +33,8 @@ function parseCityState(data) {
 		let parsedState = parts[parts.length - 1].trim().split('-')[0].trim();
 		let parsedCity = parts.slice(0,-1).join(',').trim().split('-')[0].trim();
 		return {
-			city: parsedCity,
-			state: parsedState
+			city: sanitize(parsedCity, '<MISSING>'),
+			state: sanitize(parsedState, '<MISSING>')
 		};
 	} catch(ex) {
 		return {
@@ -44,6 +44,12 @@ function parseCityState(data) {
 	}
 }
 
+function sanitize(str, defaultValue) {
+	if (!str) return defaultValue;
+	let stripped = str.replace(/(\r\n|\n|\r)/gm,"").trim();
+	return stripped ? stripped : defaultValue;
+}
+
 function parseResult(data, itemIndex) {
 	const parkId = data["feature"]["attributes"]["ParkID"]?data["feature"]["attributes"]["ParkID"]:"<MISSING>"
 	const esriJson = data['feature']['geometry'];
@@ -51,12 +57,12 @@ function parseResult(data, itemIndex) {
 	const centroid = geoJsonToCentroid(geoJson);
 	let polygonWkt = geoJsonToWkt(geoJson);
 	const parsedCityState = parseCityState(data);
-	let locationName = data["feature"]["attributes"]["Park_Name"];
-	if (!locationName || !locationName.trim()) locationName = '<MISSING>';
+	let locationName = sanitize(data["feature"]["attributes"]["Park_Name"], '<MISSING>');
+	let streetAddress = sanitize(data["feature"]["attributes"]["Park_Address_1"], locationName);
 	const item = {
 		locator_domain: "https://www.tpl.org",
 		location_name: locationName,
-		street_address: data["feature"]["attributes"]["Park_Address_1"]?data["feature"]["attributes"]["Park_Address_1"]:locationName,
+		street_address: streetAddress, 
 		city:parsedCityState.city,
 		state:parsedCityState.state,
 		zip:"<MISSING>",
@@ -64,8 +70,8 @@ function parseResult(data, itemIndex) {
 		store_number:parkId,
 		phone:"<MISSING>",
 		location_type: "<MISSING>",
-		latitude: centroid[1],
-		longitude: centroid[0],
+		latitude: centroid[1] ? centroid[1] : '<MISSING>',
+		longitude: centroid[0] ? centroid[0] : '<MISSING>',
 		hours_of_operation:"<MISSING>",
 		page_url:`https://server3.tplgis.org/arcgis3/rest/services/ParkServe/ParkServe_Parks/MapServer/0/${itemIndex}?f=pjson`,
 		wkt:polygonWkt
