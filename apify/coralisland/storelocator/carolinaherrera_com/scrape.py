@@ -105,7 +105,6 @@ def fetch_data():
                 output.append(get_value(store_hours)) #opening hours
                 if get_value(store['city']) != 'Sao Paolo':
                     output_list.append(output)
-                    print(output)
     return output_list
 
 def scrape():

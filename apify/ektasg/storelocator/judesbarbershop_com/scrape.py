@@ -61,7 +61,11 @@ def fetch_data():
                 state_city_zip = address[1].text
                 zipcode = state_city_zip.split(" ")[-1]
                 state = state_city_zip.split(" ")[-2]
-                city = state_city_zip.split(" ")[-3]
+                city_list = state_city_zip.split(" ")[:-2]
+                if len(city_list) == 1:
+                    city = city_list[0]
+                else:
+                    city = city_list[0] + " " + city_list[1]
                 phone = driver2.find_element_by_xpath("//a[contains(@href, 'tel:')]").text
                 geomap = driver2.find_element_by_xpath("//a[contains(@href,'https://www.google.com/maps')]").get_attribute('href')
                 lat,lon = parse_geo(geomap)

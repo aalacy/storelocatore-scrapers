@@ -16,6 +16,35 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def request_wrapper(url,method,headers,data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url,headers=headers)
+                return r
+                break
+            except:
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url,headers=headers,data=data)
+                else:
+                    r = requests.post(url,headers=headers)
+                return r
+                break
+            except:
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
 
 def fetch_data():
     return_main_object = []
@@ -35,14 +64,18 @@ def fetch_data():
     zip = search.next_zip()
     while zip:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
-        print('Pulling zip %s...' % (str(zip)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print('Pulling zip %s...' % (str(zip)))
         data = "ctl01%24SearchBy=rbLocation&ctl01%24tbSearchText=" + str(zip) + "&ctl01%24tbSearchTextByStore=" + str(zip) + "&ctl01%24hdLatLon=&hdEmailThankYouRedirect=&__EVENTTARGET=ctl01%24btnSearch&__ASYNCPOST=true"
-        print(data)
-        r = requests.post("https://www.theupsstore.com/tools/find-a-store",headers=headers,data=data)
+        # print(data)
+        r = request_wrapper("https://www.theupsstore.com/tools/find-a-store","post",headers=headers,data=data)
+        if r == None:
+            print("failed to load " + str(data))
+            zip = search.next_zip()
+            continue
         soup = BeautifulSoup(r.text,"lxml")
         data = json.loads(soup.find("input",{"id":"MapPointData"})["value"])
-        print("stop")
+        # print("stop")
         for store_data in data:
             lat = store_data["Latitude"]
             lng = store_data["Longitude"]
@@ -63,19 +96,23 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(lat)
             store.append(lng)
-            hours_request = requests.get(store_data["StoreURL"],headers=hour_headers)
+            hours_request = request_wrapper(store_data["StoreURL"],"get",headers=hour_headers)
+            if hours_request == None:
+                print("failed to load " + str(store_data["StoreURL"]))
+                continue
             hours_soup = BeautifulSoup(hours_request.text,"lxml")
             hours = " ".join(list(hours_soup.find("div",{'class':"Hours--location"}).stripped_strings))
             for hour in hours_soup.find("div",{"class":"Hours--location"}).find_all("div",{"class":"OpenStatus-summary"}):
                 hours = hours.replace(" ".join(list(hour.stripped_strings)),"")
             store.append(hours.replace("  "," ") if hours != "" else "<MISSING>")
             store.append(store_data["StoreURL"])
+            # print(store)
             yield store
         if len(data) < MAX_RESULTS:
-            print("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(data) == MAX_RESULTS:
-            print("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

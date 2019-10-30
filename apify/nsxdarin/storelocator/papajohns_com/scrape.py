@@ -24,7 +24,6 @@ def fetch_data():
             if lurl.count('/') > 5:
                 locs.append(lurl)
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         store = ''

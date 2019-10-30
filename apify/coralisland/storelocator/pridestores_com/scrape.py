@@ -120,8 +120,7 @@ def fetch_data():
             output.append(get_value(store['field_id_56'])) #longitude
             if 'subway' in validate(store_hours).lower():
                 store_hours = validate(store_hours).lower().split('subway')[0]
-            output.append(get_value(store_hours)) #opening hours
-            print(output)
+            output.append(get_value(store_hours)) #opening hours            
             output_list.append(output)
     return output_list
 
