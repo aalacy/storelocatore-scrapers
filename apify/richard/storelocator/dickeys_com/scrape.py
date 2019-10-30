@@ -76,7 +76,7 @@ class Scraper(Scrape):
 
 
         for store in stores:
-            if store['body']['store_number'] not in self.seen and store['body']['active']:
+            if store['body']['store_number'] not in self.seen and (store['body']['active'] if 'active' in store['body'].keys() else True):
                 # hour
                 hour = ' '.join(store['meta']['open_close_info'])
 

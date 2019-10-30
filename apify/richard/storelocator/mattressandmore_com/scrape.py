@@ -26,6 +26,7 @@ class Scraper(Scrape):
         hours = []
         countries = []
         location_types = []
+        page_urls = []
 
         options = Options()
         options.add_argument("--headless")
@@ -40,6 +41,9 @@ class Scraper(Scrape):
         for store in stores:
             # Store ID
             location_id = '<MISSING>'
+
+            #Page Url
+            page_url = store.find_element_by_css_selector('a.read-more').get_attribute('href')
 
             # Type
             location_type = 'Mattress Retail'
@@ -69,7 +73,7 @@ class Scraper(Scrape):
             lon = store.find_element_by_css_selector('div.ffo-store-loc > a').get_attribute('href').split('/')[-1].split(',+')[1]
 
             # Hour
-            hour = store.find_element_by_css_selector('div.ffo-store-hours > p').get_attribute('textContent')
+            hour = ' '.join([hour.get_attribute('textContent') for hour in store.find_elements_by_css_selector('div.ffo-store-hours > p')])
 
             # Country
             country = 'USA'
@@ -87,9 +91,11 @@ class Scraper(Scrape):
             cities.append(city)
             countries.append(country)
             location_types.append(location_type)
+            page_urls.append(page_url)
 
         for (
                 locations_title,
+                page_url,
                 street_address,
                 city,
                 state,
@@ -103,6 +109,7 @@ class Scraper(Scrape):
                 location_type,
         ) in zip(
             locations_titles,
+            page_urls,
             street_addresses,
             cities,
             states,
@@ -121,6 +128,7 @@ class Scraper(Scrape):
                 self.data.append(
                     [
                         self.url,
+                        page_url,
                         locations_title,
                         street_address,
                         city,
