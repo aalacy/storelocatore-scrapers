@@ -53,10 +53,10 @@ def fetch_data():
         cont = l.text.split('\n')
         cut = cont[0].find('(')
         location_name = cont[0][:cut].strip()
-
-        store_number = cont[0][cut + 1:-1].replace('#', '')
-        if 'Signature' in store_number:
+        if 'Burgerville' in  cont[0]:
             store_number = '<MISSING>'
+        else:
+            store_number = cont[0][cut + 1:-1].replace('#', '')
 
         street_address = cont[2]
         city, state, zip_code = addy_ext(cont[3])
