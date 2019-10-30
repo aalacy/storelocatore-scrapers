@@ -10,12 +10,13 @@ import pandas as pd
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
+import os
 
 def fetch_data():
     data = []
     driver = webdriver.Chrome()
         
-    df_zips = pd.read_csv(r"./US_states.csv")["Zip_Range"].tolist()
+    df_zips = pd.read_csv(os.path.join(os.getcwd(),"US_states.csv"))["Zip_Range"].tolist()
     for z in range(len(df_zips)):
         try:
             min_z,max_z = df_zips[z].split("-")

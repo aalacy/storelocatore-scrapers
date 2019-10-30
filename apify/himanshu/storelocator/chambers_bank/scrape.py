@@ -48,7 +48,8 @@ def fetch_data():
         street_address = val.find('p',{'class':'address'}).text.split('\n')[0].strip()
         city =  val.find('p',{'class':'address'}).text.split('\n')[1].strip().split(',')[0].strip()
         state = val.find('p',{'class':'address'}).text.split('\n')[1].strip().split(',')[1].strip().split(' ')[0].strip()
-        zip = '<MISSING>'
+        zip = (val.find('p',{'class':'address'}).text.split('\n')[1].strip().split(",")[-1].split( )[-1].replace("AR","<MISSING>"))
+        # zip = '<MISSING>'
         store_number = '<MISSING>'
         phone = val.find('p',{'class':'address'}).find_next('p').text.replace('Phone:','').strip()
         country_code = 'US'        
