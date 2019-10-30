@@ -15,12 +15,15 @@ def write_output(data):
 
 def fetch_data():
     url = 'https://www.pandaexpress.com/sitemap.xml'
+    mexico = ['bn','c1','df','du','gu','gt','i1','ka','l1','m1','mx','o1','qr','s1','sc','sa','se','t1']
     locs = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if ' <loc>https://www.pandaexpress.com/userlocation/' in line and '/  /' not in line:
             lurl = line.split('<loc>')[1].split('<')[0]
-            locs.append(lurl)
+            st = lurl.split('https://www.pandaexpress.com/userlocation/')[1].split('/')[1].upper()
+            if st not in mexico:
+                locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     canada = ['AB','BC','MB','QC','NB','NL','NS','ON','PE','SK','YT','NU','NT']
     for loc in locs:
@@ -34,7 +37,6 @@ def fetch_data():
             country = 'US'
         zc = ''
         phone = ''
-        print('Pulling Location %s...' % loc)
         website = 'pandaexpress.com'
         typ = 'Restaurant'
         hours = ''
