@@ -98,7 +98,6 @@ def fetch_data():
         locs = driver.find_elements_by_css_selector('div.grid-item.span4')
 
         for loc in locs:
-            name = loc.find_element_by_css_selector('div.grid-content').find_element_by_css_selector('img').get_attribute('title')
             img_url = loc.find_element_by_css_selector('div.grid-content').find_element_by_css_selector(
                 'img').get_attribute('src')
 

@@ -59,6 +59,7 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(locator_domain + ext)
+    driver.implicitly_wait(30)
 
     loc_cont = driver.find_element_by_id('resulttop')
     locs = loc_cont.find_elements_by_css_selector('span.mytool')
@@ -66,18 +67,18 @@ def fetch_data():
     for l in locs:
         links = l.find_elements_by_css_selector('a')
 
-        coords = links[0].get_attribute('onclick').split('"')[1].split(',')
+        #coords = links[0].get_attribute('onclick').split('"')[1].split(',')
         link = links[1].get_attribute('href')
 
-        link_list.append([link, coords])
+        link_list.append(link)
 
     all_store_data = []
     for link in link_list:
-        driver.get(link[0])
+        driver.get(link)
         driver.implicitly_wait(10)
 
-        lat = link[1][0]
-        longit = link[1][1]
+        lat = '<MISSING>' #link[1][0]
+        longit = '<MISSING>' #link[1][1]
 
         addy = driver.find_element_by_css_selector('div.address').find_element_by_css_selector(
             'span.locationaddress').text.replace('\n', ' ')
