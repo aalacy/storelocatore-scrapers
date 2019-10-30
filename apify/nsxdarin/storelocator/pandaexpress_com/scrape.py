@@ -21,7 +21,7 @@ def fetch_data():
     for line in r.iter_lines():
         if ' <loc>https://www.pandaexpress.com/userlocation/' in line and '/  /' not in line:
             lurl = line.split('<loc>')[1].split('<')[0]
-            st = lurl.split('https://www.pandaexpress.com/userlocation/')[1].split('/')[1].upper()
+            st = lurl.split('https://www.pandaexpress.com/userlocation/')[1].split('/')[1]
             if st not in mexico:
                 locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
