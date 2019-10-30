@@ -58,7 +58,7 @@ def fetch_data():
             city[n],
             state[n],
             zipcode[n],
-            'US',
+            'US'
             '<MISSING>',
             phone[n],
             '<MISSING>',
@@ -66,7 +66,6 @@ def fetch_data():
             longitude[n],
             '<INACCESSIBLE>'
         ])
-    driver.quit()
     return data
 
 def scrape():
