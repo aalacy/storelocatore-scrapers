@@ -63,8 +63,6 @@ def fetch_data():
     divs = driver.find_elements_by_css_selector('div.hidden-phone')
     hours = ''
 
-
-
     for div in divs:
         if 'Restaurant Hours:' in div.text:
             hours = div.text.replace('Restaurant Hours:', '').replace('\n', ' ').strip()
@@ -97,10 +95,20 @@ def fetch_data():
         select.select_by_value('0')
         driver.implicitly_wait(10)
 
-        locs = driver.find_elements_by_css_selector('div.grid-item-name')
+        locs = driver.find_elements_by_css_selector('div.grid-item.span4')
+
         for loc in locs:
-            location_name = loc.find_element_by_css_selector('h8').text
-            divs = loc.find_elements_by_css_selector('div')
+            name = loc.find_element_by_css_selector('div.grid-content').find_element_by_css_selector('img').get_attribute('title')
+            img_url = loc.find_element_by_css_selector('div.grid-content').find_element_by_css_selector(
+                'img').get_attribute('src')
+
+            if 'comingsoon' in img_url:
+                continue
+
+            cont = loc.find_element_by_css_selector('div.grid-item-name')
+            location_name = cont.find_element_by_css_selector('h8').text
+
+            divs = cont.find_elements_by_css_selector('div')
             addy = divs[0].text.replace('\n', ' ')
 
             street_address, city, state, zip_code = parse_addy(addy)
