@@ -4,10 +4,10 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='wb') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
-        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             if row:
@@ -24,7 +24,11 @@ def fetch_data():
     driver = get_driver()
     driver.get('http://fastrip.com/index.php/store-locations')
     time.sleep(3)
+    driver.find_element_by_xpath('//select[@id="radiusSelect"]/option[5]').click()
+    time.sleep(2)
     stores = driver.find_elements_by_class_name('loc-address')
+    tags = driver.find_elements_by_class_name('loc-tags')
+    location_type = [tags[n].text for n in range(0,len(tags))]
     for n in range(0,len(stores)-1):
         try:
             state.append(stores[n].text.split(",")[2].split()[0].split(".")[0].upper())
@@ -45,16 +49,15 @@ def fetch_data():
     for n in range(0,len(street_address)): 
         data.append([
             'http://fastrip.com',
-            'http://fastrip.com/index.php/store-locations',
             location_name[n],
             street_address[n],
             city[n],
             state[n],
             zipcode[n],
             'US',
-            '<MISSING>',
-            phone[n],
             store_number[n],
+            phone[n],
+            location_type[n],
             '<MISSING>',
             '<MISSING>',
             '<MISSING>'
