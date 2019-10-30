@@ -25,6 +25,7 @@ def fetch_data():
     driver.get('http://fastrip.com/index.php/store-locations')
     time.sleep(3)
     driver.find_element_by_xpath('//select[@id="radiusSelect"]/option[5]').click()
+    time.sleep(2)
     stores = driver.find_elements_by_class_name('loc-address')
     tags = driver.find_elements_by_class_name('loc-tags')
     location_type = [tags[n].text for n in range(0,len(tags))]
