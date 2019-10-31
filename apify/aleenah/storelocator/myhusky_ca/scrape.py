@@ -1,16 +1,7 @@
 import csv
 import requests
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 import time
 
-
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36')
-driver = webdriver.Chrome("chromedriver", options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
