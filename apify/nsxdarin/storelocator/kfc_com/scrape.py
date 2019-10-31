@@ -24,6 +24,7 @@ def fetch_data():
                 locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
+        print(loc)
         name = ''
         hours = ''
         add = ''
@@ -54,13 +55,16 @@ def fetch_data():
                     phone = line2.split('<div class="Phone-linkWrapper"><a class="Phone-link" href="tel:+1')[1].split('"')[0]
                 except:
                     phone = ''
-                days = line2.split('<div class="Core-secSection-openHours"><span class="c-hours-today js-hours-today" data-days=')[1].split('data-utc')[0].split('"day":"')
-                for day in days:
-                    if '"start"' in day:
-                        if hours == '':
-                            hours = day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
-                        else:
-                            hours = hours + '; ' + day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                try:
+                    days = line2.split('<div class="Core-secSection-openHours"><span class="c-hours-today js-hours-today" data-days=')[1].split('data-utc')[0].split('"day":"')
+                    for day in days:
+                        if '"start"' in day:
+                            if hours == '':
+                                hours = day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                            else:
+                                hours = hours + '; ' + day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                except:
+                    hours = '<MISSING>'
             if '<meta itemprop="latitude" content="' in line2:
                 lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
                 lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]
@@ -68,6 +72,8 @@ def fetch_data():
             store = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
+        if hours == '':
+            hours = '<MISSING>'
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
