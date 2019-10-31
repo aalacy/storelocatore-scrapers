@@ -27,15 +27,15 @@ def get_driver():
     return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def fetch_data():
-    data=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
+    data=[]; page_url=[];location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
     driver = get_driver()
     driver.get('https://hotdogonastick.olo.com/locations')
     location = driver.find_elements_by_xpath('//a[contains(@href,"/locations/")]')
     location_href=[location[n].get_attribute('href') for n in range(0,len(location))]
-    for n in range(0,len(location_href)):
-        driver.get(location_href[n])
+    for m in range(0,len(location_href)):
+        driver.get(location_href[m])
         time.sleep(3)
-        loc = driver.find_elements_by_xpath('//li[@class="vcard"]/h2/a/span')
+        loc = driver.find_elements_by_xpath('//li[@class="vcard"]/h2')
         address =driver.find_elements_by_xpath('//div[contains(@class,"streetaddress")]')
         cities = driver.find_elements_by_class_name('locality')
         states = driver.find_elements_by_class_name('region')
@@ -43,10 +43,10 @@ def fetch_data():
         hours = driver.find_elements_by_class_name('location-hours')
         lat = driver.find_elements_by_xpath('//span[@class="latitude"]/span')
         lon = driver.find_elements_by_xpath('//span[@class="longitude"]/span')
-        for n in range(0,len(loc)):
+        for n in range(0,len(address)):
             location_name.append(loc[n].text)
-            page_url.append(location_href[n])
-            street_address.append(address.split("\n")[0])
+            page_url.append(location_href[m])
+            street_address.append(address[n].text.split("\n")[0])
             city.append(cities[n].text)
             state.append(states[n].text)
             phone.append(phones[n].text)
