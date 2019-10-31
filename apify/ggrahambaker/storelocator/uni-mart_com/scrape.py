@@ -66,8 +66,6 @@ def fetch_data():
     link_list = []
     for l in locs:
         links = l.find_elements_by_css_selector('a')
-
-        #coords = links[0].get_attribute('onclick').split('"')[1].split(',')
         link = links[1].get_attribute('href')
 
         link_list.append(link)

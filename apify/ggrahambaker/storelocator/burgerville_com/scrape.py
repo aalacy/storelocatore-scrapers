@@ -2,7 +2,7 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+import time
 
 def get_driver():
     options = Options()
@@ -50,32 +50,43 @@ def fetch_data():
     locs = main.find_elements_by_css_selector('div.results_wrapper')
     all_store_data = []
     for l in locs:
+        loc_name = l.find_element_by_css_selector('span.location_name')
+        driver.execute_script("arguments[0].click();", loc_name)
+        time.sleep(2)
+
+        street_address = driver.find_element_by_css_selector('span#slp_bubble_address').text + ' '
+        street_address += driver.find_element_by_css_selector('span#slp_bubble_address2').text
+        street_address = street_address.strip()
+
+        city = driver.find_element_by_css_selector('span#slp_bubble_city').text
+        state = driver.find_element_by_css_selector('span#slp_bubble_state').text
+        zip_code = driver.find_element_by_css_selector('span#slp_bubble_zip').text
+        phone_number = driver.find_element_by_css_selector('span#slp_bubble_phone').text.replace('Phone', '').strip()
+
+
+        hours = driver.find_element_by_css_selector('span.location_detail_hours').text.replace('\n', ' ').replace('\\n', ' ').strip()
+
+
         cont = l.text.split('\n')
         cut = cont[0].find('(')
         location_name = cont[0][:cut].strip()
-        if 'Burgerville' in  cont[0]:
+        if 'Signature' in cont[0]:
             store_number = '<MISSING>'
         else:
             store_number = cont[0][cut + 1:-1].replace('#', '')
-
-        street_address = cont[2]
-        city, state, zip_code = addy_ext(cont[3])
-        if len(cont) == 7:
-            phone_number = cont[4]
-        else:
-            phone_number = cont[5]
 
         country_code = 'US'
 
         location_type = '<MISSING>'
         page_url = '<MISSING>'
-        hours = '<MISSING>'
         longit = '<MISSING>'
         lat = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
+        print(store_data)
         all_store_data.append(store_data)
+        time.sleep(2)
 
     driver.quit()
     return all_store_data
