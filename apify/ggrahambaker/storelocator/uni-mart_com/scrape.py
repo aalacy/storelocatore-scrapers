@@ -2,8 +2,10 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import usaddress
 
+from selenium.common.exceptions import NoSuchElementException
+import usaddress
+import time
 
 def get_driver():
     options = Options()
@@ -60,8 +62,14 @@ def fetch_data():
     driver = get_driver()
     driver.get(locator_domain + ext)
     driver.implicitly_wait(30)
+    not_found_result_top = True
+    while not_found_result_top:
+        try:
+            loc_cont = driver.find_element_by_id('resulttop')
+            not_found_result_top = False
+        except NoSuchElementException:
+            time.sleep(5)
 
-    loc_cont = driver.find_element_by_id('resulttop')
     locs = loc_cont.find_elements_by_css_selector('span.mytool')
     link_list = []
     for l in locs:
