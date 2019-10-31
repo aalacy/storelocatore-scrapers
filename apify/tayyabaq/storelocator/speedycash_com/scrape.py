@@ -58,7 +58,7 @@ def fetch_data():
             city[n],
             state[n],
             zipcode[n],
-            'US'
+            'US',
             '<MISSING>',
             phone[n],
             '<MISSING>',
