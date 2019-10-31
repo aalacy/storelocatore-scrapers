@@ -58,8 +58,9 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append(phone if phone else "<MISSING>")
                 store.append("<MISSING>")
-                store.append(store_data["latitude"])
-                store.append(store_data["longitude"])
+                print(store_data)
+                store.append(store_data["lat"])
+                store.append(store_data["lng"])
                 store.append(hours if hours else "<MISSING>")
                 store.append(page_url)
                 yield store

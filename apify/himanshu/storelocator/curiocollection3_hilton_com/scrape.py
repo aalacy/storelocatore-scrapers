@@ -38,10 +38,10 @@ def fetch_data():
                 "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
                 "content-type": "application/json"
             }
-            print(address)
+           # print(address)
             location_json_request = requests.post("https://www.hilton.com/graphql/customer?pod=brands&type=GetHotelInfo",data=request_data,headers=request_header)
             location_url = location_json_request.json()["data"]["hotel"]["homepageUrl"]
-            print(location_url)
+           # print(location_url)
             location_request = requests.get(location_url,headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             if location_soup.find("h1",text=re.compile("You've stumped us")):

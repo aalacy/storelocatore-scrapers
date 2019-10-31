@@ -29,7 +29,7 @@ def fetch_data():
     stores = driver.find_elements_by_class_name('loc-address')
     tags = driver.find_elements_by_class_name('loc-tags')
     location_type = [tags[n].text for n in range(0,len(tags))]
-    for n in range(0,len(stores)-1):
+    for n in range(0,len(stores)):
         try:
             state.append(stores[n].text.split(",")[2].split()[0].split(".")[0].upper())
             city.append(stores[n].text.split(",")[1])
