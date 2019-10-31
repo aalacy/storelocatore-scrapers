@@ -15,75 +15,60 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def parser(location_soup,url):
+    street_address = " ".join(list(location_soup.find("span",{'class':"c-address-street-1"}).stripped_strings))
+    if location_soup.find("span",{'class':"c-address-street-2"}) != None:
+        street_address = street_address + " " +  " ".join(list(location_soup.find("span",{'class':"c-address-street-2"}).stripped_strings))
+    name = "<MISSING>"
+    city = location_soup.find("span",{'class':"c-address-city"}).text
+    state = location_soup.find("abbr",{'class':"c-address-state"}).text
+    store_zip = location_soup.find("span",{'class':"c-address-postal-code"}).text
+    if location_soup.find("div",{'itemprop':"telephone"}) == None:
+        phone = "<MISSING>"
+    else:
+        phone = location_soup.find("div",{'itemprop':"telephone"}).text
+    hours = " ".join(list(location_soup.find("table",{'class':"c-hours-details"}).stripped_strings))
+    lat = location_soup.find("meta",{'itemprop':"latitude"})["content"]
+    lng = location_soup.find("meta",{'itemprop':"longitude"})["content"]
+    store = []
+    store.append("https://churchs.com")
+    store.append(name)
+    store.append(street_address)
+    store.append(city)
+    store.append(state)
+    store.append(store_zip)
+    store.append("US")
+    store.append("<MISSING>")
+    store.append(phone if phone != "" else "<MISSING>")
+    store.append("<MISSING>")
+    store.append(lat)
+    store.append(lng)
+    store.append(hours)
+    store.append(url)
+    print(store)
+    return store
+
 def fetch_data():
-    header = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+    }
+    base_url = "https://mbfinancial.com"
+    r = requests.get("https://locations.churchs.com",headers=headers)
+    soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
-    base_url = "https://locations.churchs.com/"
-    location_url = 'https://locations.churchs.com/api/5a6ba1f67735c821781c7dea/locations-details'
-    r = requests.get(location_url,headers = header).json()
-    addresses = []
-
-    for val in r['features']:
-        locator_domain = base_url
-
-        location_name = val['properties']['name']
-        street_address = val['properties']['addressLine1'] + ' ' + val['properties']['addressLine2']
-        city = val['properties']['city']
-        state = val['properties']['province']
-        zip = val['properties']['postalCode']
-        store_number = '<MISSING>'
-        country_code = 'US'
-        phone = val['properties']['phoneNumber']
-        location_type = '<MISSING>'
-        if len(val['geometry']['coordinates']) == 1:
-            
-            latitude = val['geometry']['coordinates'][0]
-            
-            longitude = val['geometry']['coordinates'][1]
-        else:
-            latitude = '<MISSING>'
-            longitude = '<MISSING>'
-
-
-        
-
-        if(len(val['properties']['hoursOfOperation']['Sun']) == 1):
-            sunday  = ' '.join(val['properties']['hoursOfOperation']['Sun'][0])
-        else:
-            sunday = "<MISSING>"
-
-        
-
-        hours_of_operation = 'Mon '+' '.join(val['properties']['hoursOfOperation']['Mon'][0]) + ' Tue '+' '.join(val['properties']['hoursOfOperation']['Tue'][0]) + ' Wed '+' '.join(val['properties']['hoursOfOperation']['Wed'][0]) + ' Thu '+' '.join(val['properties']['hoursOfOperation']['Thu'][0]) + ' Fri '+' '.join(val['properties']['hoursOfOperation']['Fri'][0]) + ' Sat '+' '.join(val['properties']['hoursOfOperation']['Sat'][0]) + ' Sun :'+sunday
-        page_url = location_url
-
-        if street_address in addresses:
-            continue
-        addresses.append(street_address)
-        store=[]
-        store.append(locator_domain if locator_domain else '<MISSING>')
-        store.append(location_name if location_name else '<MISSING>')
-        store.append(street_address if street_address else '<MISSING>')
-        store.append(city if city else '<MISSING>')
-        store.append(state if state else '<MISSING>')
-        store.append(zip if zip else '<MISSING>')
-        store.append(country_code if country_code else '<MISSING>')
-        store.append(store_number if store_number else '<MISSING>')
-        store.append(phone if phone else '<MISSING>')
-        store.append(location_type if location_type else '<MISSING>')
-        store.append(latitude if latitude else '<MISSING>')
-        store.append(longitude if longitude else '<MISSING>')
-        
-        store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-        store.append(page_url  if page_url else '<MISSING>')
-
-        # print("====", str(store))
-        return_main_object.append(store)
-    return return_main_object
-
-    
-   
-
+    for states in soup.find_all("a",{'class':"Directory-listLink"}):
+        state_request = requests.get("https://locations.churchs.com/" + states["href"])
+        state_soup = BeautifulSoup(state_request.text,"lxml")
+        for city in state_soup.find_all("a",{'class':"Directory-listLink"}):
+            print("https://locations.churchs.com/" + city["href"].replace("../",""))
+            city_request = requests.get("https://locations.churchs.com/" + city["href"].replace("../",""))
+            city_soup = BeautifulSoup(city_request.text,"lxml")
+            for location in city_soup.find_all("a",{'class':"Teaser-titleLink"}):
+                print("https://locations.churchs.com/" + location["href"].replace("../",""))
+                location_request = requests.get("https://locations.churchs.com/" + location["href"].replace("../",""))
+                location_soup = BeautifulSoup(location_request.text,"lxml")
+                store_data = parser(location_soup,"https://locations.churchs.com/" + location["href"].replace("../",""))
+                yield store_data
 
 def scrape():
     data = fetch_data()  

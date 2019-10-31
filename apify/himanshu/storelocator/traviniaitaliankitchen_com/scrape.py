@@ -55,11 +55,13 @@ def fetch_data():
             state = new_words1[3].split(',')[1].split( )[0]
             zip1 = new_words1[3].split(',')[1].split( )[1]
             hours = (" ".join(new_words1[5:][:-1]).replace("VIEW OUR MENU Click to hear our Radio Spot 1",""))
+            lat = soup1.find("div",{"class":"google-maps-link"})
+            print(lat)
             
           
    
            
-            tem_var.append(tem_var)
+            
             tem_var.append("https://www.traviniaitaliankitchen.com")
             tem_var.append(st)
             tem_var.append(city)
@@ -93,4 +95,7 @@ def scrape():
 
 
 scrape()
+
+
+
 
