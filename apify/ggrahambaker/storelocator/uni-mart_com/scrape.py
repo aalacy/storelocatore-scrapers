@@ -109,14 +109,14 @@ def fetch_data():
         else:
             street_address, city, state, zip_code = parse_addy(addy)
 
-        cut = link[0].find('uni-mart-') + len('uni-mart-')
-        location_name = link[0][cut:]
+        cut = link.find('uni-mart-')
+        location_name = link[cut:].replace('-', ' ')
 
         country_code = 'US'
 
         phone_number = '<MISSING>'
         location_type = '<MISSING>'
-        page_url = link[0]
+        page_url = link
         hours = '<MISSING>'
         store_number = '<MISSING>'
 
