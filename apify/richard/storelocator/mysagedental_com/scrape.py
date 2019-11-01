@@ -45,6 +45,7 @@ class Scraper(Scrape):
 
             # Page url
             page_url = store['properties']['locpage']
+            print(f"Now scraping {page_url}")
 
             # Type
             location_type = store['properties']['category']
