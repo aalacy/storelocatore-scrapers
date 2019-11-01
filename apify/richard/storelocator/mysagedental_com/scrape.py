@@ -1,5 +1,6 @@
 import requests
 
+from bs4 import BeautifulSoup
 from Scraper import Scrape
 
 
@@ -26,6 +27,7 @@ class Scraper(Scrape):
         hours = []
         countries = []
         location_types = []
+        page_urls = []
 
         headers = {
             'Sec-Fetch-Mode': 'cors',
@@ -40,6 +42,9 @@ class Scraper(Scrape):
         for store in stores:
             # Store ID
             location_id = '<MISSING>'
+
+            # Page url
+            page_url = store['properties']['locpage']
 
             # Type
             location_type = store['properties']['category']
@@ -69,7 +74,8 @@ class Scraper(Scrape):
             lon = store['geometry']['coordinates'][0]
 
             # Hour
-            hour = 'By appointment'
+            soup = BeautifulSoup(requests.get(page_url).content)
+            hour = soup.find("div", class_="locHours").getText().strip().replace('\n', '').replace('\t', '')
 
             # Country
             country = 'US'
@@ -87,9 +93,11 @@ class Scraper(Scrape):
             cities.append(city)
             countries.append(country)
             location_types.append(location_type)
+            page_urls.append(page_url)
 
         for (
                 locations_title,
+                page_url,
                 street_address,
                 city,
                 state,
@@ -103,6 +111,7 @@ class Scraper(Scrape):
                 location_type,
         ) in zip(
             locations_titles,
+            page_urls,
             street_addresses,
             cities,
             states,
@@ -115,26 +124,24 @@ class Scraper(Scrape):
             countries,
             location_types,
         ):
-            if country == "<MISSING>":
-                pass
-            else:
-                self.data.append(
-                    [
-                        self.url,
-                        locations_title,
-                        street_address,
-                        city,
-                        state,
-                        zipcode,
-                        country,
-                        location_id,
-                        phone_number,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hour,
-                    ]
-                )
+            self.data.append(
+                [
+                    self.url,
+                    page_url,
+                    locations_title,
+                    street_address,
+                    city,
+                    state,
+                    zipcode,
+                    country,
+                    location_id,
+                    phone_number,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hour,
+                ]
+            )
 
 
 scrape = Scraper(URL)
