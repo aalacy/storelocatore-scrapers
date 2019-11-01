@@ -30,10 +30,11 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+       # print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
         print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+       # print("https://spatial.virtualearth.net/REST/v1/data/a1ed23772f5f4994a096eaa782d07cfb/US_BrandedSites/Sites?spatialFilter=nearby(" + str(x) + ","+ str(y) + ",250.00)&$filter=Brand%20eq%20%27U76%27&$format=json&$inlinecount=allpages&$select=*,__Distance&key=" + credential + "&$top=250")
         r = requests.get("https://spatial.virtualearth.net/REST/v1/data/a1ed23772f5f4994a096eaa782d07cfb/US_BrandedSites/Sites?spatialFilter=nearby(" + str(x) + ","+ str(y) + ",250.00)&$filter=Brand%20eq%20%27U76%27&$format=json&$inlinecount=allpages&$select=*,__Distance&key=" + credential + "&$top=250",headers=headers)
         data = r.json()["d"]["results"]
         for store_data in data:
@@ -57,13 +58,14 @@ def fetch_data():
             store.append(store_data["Latitude"])
             store.append(store_data["Longitude"])
             store.append("<MISSING>")
-            store.append("<MISSING>")
+            page_url = "https://www.76.com/station/" + store_data["Brand"] + "-" + store_data["Name"].replace(" ","-") + "-" + store_data["EntityID"]
+            store.append(page_url)
             yield store
         if len(data) < MAX_RESULTS:
-            print("max distance update")
+            #print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(data) == MAX_RESULTS:
-            print("max count update")
+           # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

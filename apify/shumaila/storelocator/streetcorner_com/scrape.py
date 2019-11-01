@@ -75,33 +75,34 @@ def fetch_data():
                 pcode = "<MISSING>"
 
 
-            print(title)
-            print(street)
-            print(city)
-            print(state)
-            print(pcode)
-            print(phone)
-            print(lat)
-            print(longt)
-            print(p)
-            print("....................")
+            #print(title)
+            #print(street)
+            #print(city)
+            #print(state)
+            #print(pcode)
+            #print(phone)
+            #print(lat)
+            #print(longt)
+            #print(p)
+            #print("....................")
             p += 1
-            data.append([
-                'https://www.streetcorner.com/',
-                'https://www.streetcorner.com/consumer/',
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                'US',
-                "<MISSING>",
-                phone,
-                "<MISSING>",
-                lat,
-                longt,
-                "<MISSING>"
-            ])
+            if title.find("Coming Soon") == -1:
+                data.append([
+                    'https://www.streetcorner.com/',
+                    'https://www.streetcorner.com/consumer/',
+                    title,
+                    street,
+                    city,
+                    state,
+                    pcode,
+                    'US',
+                    "<MISSING>",
+                    phone,
+                    "<MISSING>",
+                    lat,
+                    longt,
+                    "<MISSING>"
+                ])
 
 
         else:

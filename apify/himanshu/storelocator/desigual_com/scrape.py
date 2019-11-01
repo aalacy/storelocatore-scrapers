@@ -3,13 +3,15 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import sgzip
+
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -18,47 +20,52 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-    base_url = "https://www.desigual.com"
-    r = requests.get("https://www.desigual.com/en_US/stores/world/",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
-    for country in soup.find("div",{'class':"world-list"}).find_all("a"):
-        if country.text == "USA":
-            current_country = "US"
-        elif country.text == "Canada":
-            current_country = "CA"
-        else:
-            continue
-        country_request = requests.get(base_url + country["href"],headers=headers)
-        country_soup = BeautifulSoup(country_request.text,"lxml")
-        for location in country_soup.find_all("li",{"class":"grid-mobile-cols-10 grid-tablet-cols-333"}):
-            location_request = requests.get(base_url + location.find("a")["href"],headers=headers)
-            location_soup = BeautifulSoup(location_request.text,"lxml")
-            for script in location_soup.find_all("script"):
-                if "window.dgl.storeLocatorDetail = " in script.text:
-                    store_data = json.loads(script.text.split("window.dgl.storeLocatorDetail = ")[-1].split("};")[0] + "}")
+    addresses = []
+    coords = sgzip.coords_for_radius(200)
+    for coord in coords:
+        #print("https://www.desigual.com/on/demandware.store/Sites-dsglcom_prod_at-Site/de_AT/Stores-FindStores?showMap=true&radius=200&showOnlyAllowDevosStores=false&showOfficialStores=false&showOutlets=false&showAuthorized=false&lat="+ str(coord[0]) + "&long=" + str(coord[1]))
+        r = requests.get("https://www.desigual.com/on/demandware.store/Sites-dsglcom_prod_at-Site/de_AT/Stores-FindStores?showMap=true&radius=200&showOnlyAllowDevosStores=false&showOfficialStores=false&showOutlets=false&showAuthorized=false&lat="+ str(coord[0]) + "&long=" + str(coord[1]),headers=headers)
+        data = r.json()["stores"]
+        for store_data in data:
+            if store_data["countryCode"] not in ["US","CA"]:
+                continue
             store = []
             store.append("https://www.desigual.com")
             store.append(store_data["name"])
-            store.append(store_data["displayAddress"])
-            store.append(store_data["cityName"])
-            store.append("<MISSING>")
-            store.append(store_data["postalCode"])
-            store.append(current_country)
-            store.append(store_data["id"])
-            store.append(store_data["phoneNumber"] if "phoneNumber" in store_data else "<MISSING>")
-            store.append("desigual")
-            store.append(store_data["coordinates"]["latitude"] if store_data["coordinates"] != {} else "<MISSING>")
-            store.append(store_data["coordinates"]["longitude"] if store_data["coordinates"] != {} else "<MISSING>")
-            hours = ""
-            hours = hours + " Mon - Sat: " + store_data["workingHoursOpen"] + " - " + store_data["workingHoursClose"]
-            if store_data["openOnSunday"] == True:
-                hours = hours + " Open on Sundays: Yes "
+            store.append(store_data["address1"] + " " + store_data["address2"] if store_data["address2"] else store_data["address1"])
+            if store[-1] in addresses:
+                continue
+            addresses.append(store[-1])
+            if store_data["city"]:
+                store.append(store_data["city"] if store_data["city"] else "<MISSING>")
+            elif "cityExternalName" in store_data:
+                store.append(store_data["cityExternalName"] if store_data["cityExternalName"] else "<MISSING>")
             else:
-                hours = hours + " Open on Sundays: No "
-            store.append(hours)
-            return_main_object.append(store)
-    return return_main_object
+                store.append("<MISSING>")
+            store.append(store_data["locationSapCode"]  if "locationSapCode" in store_data else "<MISSING>")
+            store.append(store_data["postalCode"] if store_data["postalCode"] else "<MISSING>")
+            if store[-1] == "<MISSING>":
+                store.append(store_data["countryCode"])
+            else:
+                store.append(store_data["countryCode"] if store_data["postalCode"].replace("-","").replace(" ","").isdigit() else "CA")
+            if store[-1] == "CA":
+                store[-2] = store[-2].upper()
+            store.append("<MISSING>")
+            store.append(store_data["phone"] if "phone" in store_data and store_data["phone"] and store_data["phone"] != "Not Available" else "<MISSING>")
+            store.append("<MISSING>")
+            store.append(store_data["latitude"])
+            store.append(store_data["longitude"])
+            hours = ""
+            days = {1:"Sunday",2:"Monday",3:"Tuesday",4:"Wednesday",5:"Thursday",6:"Friday",7:"Saturday"}
+            if "schedule" in store_data and store_data["schedule"]:
+                store_hours = store_data["schedule"]
+                for hour in store_hours:
+                    hours = hours + " " + days[hour["dayNumber"]] + hour["value"]
+            store.append(hours if hours != "" else "<MISSING>")
+            store.append("<MISSING>")
+            #print(store)
+            yield store
 
 def scrape():
     data = fetch_data()

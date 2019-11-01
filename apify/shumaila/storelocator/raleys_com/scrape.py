@@ -53,7 +53,17 @@ def fetch_data():
         address = repo.find('address').text
         address = re.sub(pattern, " ", address)
         phone = repo.find('a').text
-        hours = repo.find('div', {'class': 'box'}).text
+        det = repo.findAll('div', {'class': 'box'})
+        hours = det[0].text
+        mainltype = det[1]
+        try:
+            li_list = mainltype.findAll('li')
+            ltype = ""
+            for locs in li_list:
+                ltype = ltype + locs.text + "|"
+        except:
+            ltype = "<MISSING>"
+
         hours = re.sub(pattern," ", hours)
         hours = hours.replace("\n", "")
         phone = re.sub(pattern,"",phone)
@@ -95,19 +105,24 @@ def fetch_data():
         pcode = pcode.lstrip()
         if len(phone) < 5:
             phone = "<MISSING>"
-        print(title)
+        if len(ltype) < 3:
+            ltype = "<MISSING>"
+        else:
+            ltype = ltype[0:len(ltype)-1]
 
-        print(street)
-        print(city)
-        print(state)
-        print(pcode)
-        print(phone)
-        print(lat)
-        print(longt)
-        print(hours)
-        print(p)
+        #print(title)
+        #print(street)
+        #print(city)
+        #print(state)
+        #print(pcode)
+        #print(phone)
+        #print(lat)
+        #print(longt)
+        #print(hours)
+        #print(ltype)
+        #print(p)
         p += 1
-        print(("............................."))
+        #print(("............................."))
         data.append([
             'https://www.raleys.com/',
             link,
@@ -119,7 +134,7 @@ def fetch_data():
             "US",
             "<MISSING>",
             phone,
-            "<MISSING>",
+            ltype,
             lat,
             longt,
             hours

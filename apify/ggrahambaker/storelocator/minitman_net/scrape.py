@@ -47,7 +47,8 @@ def fetch_data():
     locs = table.find_elements_by_css_selector('span.location_name')
     all_store_data = []
     for loc in locs:
-        loc.click()
+        driver.execute_script("arguments[0].click();", loc)
+
         time.sleep(2)
 
         cont = driver.find_element_by_css_selector('div#sl_info_bubble').text.split('\n')
@@ -68,7 +69,7 @@ def fetch_data():
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
 
-        time.sleep(1)
+        time.sleep(3)
 
     driver.quit()
     return all_store_data
