@@ -14,7 +14,7 @@ latitude='MISSING'
 longitude='MISSING'
 
 
-csv_file = open('data2.csv', 'w', encoding='utf-8')
+csv_file = open('data.csv', 'w', encoding='utf-8')
 fieldnames=['locator_domain','page_url','location_name','street_address','city','state','zip','country_code','store_number','phone','location_type','latitude','longitude','hours_of_operation','page_url']
 csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames, escapechar='"',lineterminator = '\n')
 csv_writer.writeheader()
