@@ -64,9 +64,7 @@ class Scraper(Scrape):
 
             # Type
             location_type = (
-                "Vending Machine"
-                if "outpost" in store["name"].lower()
-                else "Restaurant"
+                "sg Outpost" if "outpost" in store["name"].lower() else "Restaurant"
             )
 
             # Name
