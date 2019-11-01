@@ -63,7 +63,11 @@ class Scraper(Scrape):
             location_id = store["asset_ids"][0]
 
             # Type
-            location_type = "<MISSING>"
+            location_type = (
+                "Vending Machine"
+                if "outpost" in store["name"].lower()
+                else "Restaurant"
+            )
 
             # Name
             location_title = store["name"]
@@ -90,7 +94,11 @@ class Scraper(Scrape):
             phone = store["phone"]
 
             # Hour
-            hour = store['store_hours'] if store['store_hours'] and len(store['store_hours'].strip()) > 0 else '<MISSING>'
+            hour = (
+                store["store_hours"]
+                if store["store_hours"] and len(store["store_hours"].strip()) > 0
+                else "<MISSING>"
+            )
 
             # Country
             country = "US"
