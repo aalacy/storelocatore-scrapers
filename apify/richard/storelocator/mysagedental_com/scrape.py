@@ -1,6 +1,8 @@
 import requests
 
 from Scraper import Scrape
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 
 URL = "https://mysagedental.com/"
@@ -26,6 +28,13 @@ class Scraper(Scrape):
         hours = []
         countries = []
         location_types = []
+        page_urls = []
+
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         headers = {
             'Sec-Fetch-Mode': 'cors',
@@ -40,6 +49,10 @@ class Scraper(Scrape):
         for store in stores:
             # Store ID
             location_id = '<MISSING>'
+
+            # Page url
+            page_url = store['properties']['locpage']
+            print(f"Now scraping {page_url}")
 
             # Type
             location_type = store['properties']['category']
@@ -69,7 +82,8 @@ class Scraper(Scrape):
             lon = store['geometry']['coordinates'][0]
 
             # Hour
-            hour = 'By appointment'
+            driver.get(page_url)
+            hour = driver.find_element_by_css_selector('div.locHours').get_attribute('textContent').strip().replace('\n', '').replace('\t', '')
 
             # Country
             country = 'US'
@@ -87,9 +101,11 @@ class Scraper(Scrape):
             cities.append(city)
             countries.append(country)
             location_types.append(location_type)
+            page_urls.append(page_url)
 
         for (
                 locations_title,
+                page_url,
                 street_address,
                 city,
                 state,
@@ -103,6 +119,7 @@ class Scraper(Scrape):
                 location_type,
         ) in zip(
             locations_titles,
+            page_urls,
             street_addresses,
             cities,
             states,
@@ -115,26 +132,26 @@ class Scraper(Scrape):
             countries,
             location_types,
         ):
-            if country == "<MISSING>":
-                pass
-            else:
-                self.data.append(
-                    [
-                        self.url,
-                        locations_title,
-                        street_address,
-                        city,
-                        state,
-                        zipcode,
-                        country,
-                        location_id,
-                        phone_number,
-                        location_type,
-                        latitude,
-                        longitude,
-                        hour,
-                    ]
-                )
+            self.data.append(
+                [
+                    self.url,
+                    page_url,
+                    locations_title,
+                    street_address,
+                    city,
+                    state,
+                    zipcode,
+                    country,
+                    location_id,
+                    phone_number,
+                    location_type,
+                    latitude,
+                    longitude,
+                    hour,
+                ]
+            )
+
+        driver.quit()
 
 
 scrape = Scraper(URL)
