@@ -86,7 +86,7 @@ class Scraper(Scrape):
             phone = store['phone']
 
             # Hour
-            hour = store['store_hours']
+            hour = store['store_hours'] if store['store_hours'] and len(store['store_hours'].strip()) > 0 else '<MISSING>'
 
             # Country
             country = 'US'
