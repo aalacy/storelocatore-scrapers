@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -50,10 +50,12 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(address[-1] if "Coming" not in address[-1] else "<MISSING>")
-        store.append("no grease")
+        store.append("<MISSING>")
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append(store_hours)
+        store.append("http://nogrease.com/locations")
+        store = [x.replace("–","-") for x in store]
         return_main_object.append(store)
     return return_main_object
 

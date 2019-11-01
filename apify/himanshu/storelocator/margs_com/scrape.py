@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -34,6 +34,8 @@ def fetch_data():
             location_link = location.find("a")["href"]
             location_request = requests.get(location_link,headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
+            if location_soup.find("span",text=re.compile("OPENING")):
+                continue
             if location_soup.find("span",text=re.compile("Coming Soon")):
                 continue
             location_details = []
@@ -45,7 +47,7 @@ def fetch_data():
                     break
             location_details[3] = location_details[3].replace("\xa0"," ")
             store = []
-            store.append("https://www.margs.com/locations")
+            store.append("https://www.margs.com")
             store.append(location_details[1])
             store.append(location_details[2])
             store.append(location_details[3].split(",")[0])
@@ -54,13 +56,20 @@ def fetch_data():
             store.append("US")
             store.append("<MISSING>")
             store.append(location_details[5])
-            store.append("margs")
+            if store[-1] == "":
+                #print(store)
+                phone = location_soup.find("span",text=re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"))
+                if phone:
+                    store[-1] = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),phone)[0]
+            store.append("<MISSING>")
             store.append(geo_locations[0].split("/@")[1].split(",")[0])
             store.append(geo_locations[0].split("/@")[1].split(",")[1])
             del geo_locations[0]
-            store.append(" ".join(location_details[7:]).replace("\xa0"," "))
-            return_main_object.append(store)
-    return return_main_object
+            store.append(" ".join(location_details[7:]).replace("\xa0"," ").replace("–","-"))
+            if store[-1] == "":
+                store[-1] = "<MISSING>"
+            store.append(location_link)
+            yield store
 
 def scrape():
     data = fetch_data()

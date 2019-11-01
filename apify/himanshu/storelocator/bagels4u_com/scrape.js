@@ -30,7 +30,7 @@ request(url,(err,res,html)=>{
                                      
                             var tmp = main.eq(i).children('p');
                             
-                            var location_name =  main.eq(i).find('p:nth-child(1)').text().replace('Bagels-4-U','').replace('of ',''); 
+                            var location_name =  main.eq(i).find('p:nth-child(1)').text().replace('Bagels-4-U','').replace('of ','').trim(); 
                            if(tmp.length == 5){
                                
                               var address = main.eq(i).find('p:nth-child(2)').text().replace('Pheasant Run Plaza','177 Washington Valley Road').trim();
@@ -71,8 +71,8 @@ request(url,(err,res,html)=>{
                               var zip = state_tmp3[2];
                               var phone = main.eq(i).find('p:nth-child(4)').text().replace('Bernardsville, NJ 07924','(908) 221-0080').replace('Tel.:','').trim();
                             }
-                            if(!unique.includes(location_name)){
-                              unique.push(location_name);
+                            if(location_name!== 'Headquarters'){
+                             
                               items.push({  
 
                                 locator_domain: 'https://www.bagels4u.com/', 
@@ -93,13 +93,15 @@ request(url,(err,res,html)=>{
                     
                                 phone: phone,
                     
-                                location_type: 'bagels4u',
+                                location_type: '<MISSING>',
                     
                                 latitude: '<MISSING>',
                     
                                 longitude: '<MISSING>', 
                     
-                                hours_of_operation: '<MISSING>'});
+                                hours_of_operation: '<MISSING>',
+                                
+                                page_url:'<MISSING>'});
                             }
                               
 
@@ -133,6 +135,7 @@ Apify.main(async () => {
     const data = await scrape();
     
     await Apify.pushData(data);
+   
     
   
   });
