@@ -72,7 +72,7 @@ def fetch_data():
                 if state_list:
                     state = state_list[-1]
       
-                tem_var.append("https://gpminvestments.com")
+                tem_var.append("https://ezmart.com")
                 tem_var.append(response_json['7'][i]['title'])
                 tem_var.append("<INACCESSIBLE>")
                 tem_var.append("<INACCESSIBLE>")

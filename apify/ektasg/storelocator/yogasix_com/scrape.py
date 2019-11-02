@@ -22,7 +22,13 @@ def parse_geo(url):
         lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
     except:
         lon = re.findall(r'\,(-?[\d\.]*)', url)[0]
-    lat = re.findall(r'\@(-?[\d\.]*)', url)[0]
+    try:
+        lat = re.findall(r'\@(-?[\d\.]*)', url)[0]
+    except:
+        try:
+            lat = re.findall(r'/@(-?[\d\.]*)', url)[0]
+        except:
+            lat = '<MISSING>'
     return lat, lon
 
 
@@ -60,7 +66,7 @@ def fetch_data():
         driver2.get(names[i])
         time.sleep(5)
         page_url = names[i]
-        print(page_url)
+        #print(page_url)
         try:
             store_name = driver2.find_element_by_css_selector('div.hero__title-copy').text
         except:

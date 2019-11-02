@@ -29,36 +29,25 @@ def fetch_data():
 		name=location_names.text
 		cities=div.find(class_="dual-column__col1")
 		address=cities.h4.text.split('\n')[0].strip()
-		print(address)
 		city=cities.h4.text.split('\n')[1].split(',')[0].strip()
 		state=cities.h4.text.split('\n')[1].split(',')[1].strip()
 		zip=cities.h4.text.split('\n')[1].split(',')[2].strip()
-		storeno=cities.h4.text.split('\n')[0].strip().split(' ')[0]
-		num=cities.h4.text.split('\n')[0].strip().split(' ')[1].split(' ')[0]
-		if len(num)==1:
-			storeno=storeno+num
-		print(storeno)
 		phone=cities.p.contents[0]
 		atms=div.find(class_="branch-location__24-hr-services")
-		yes_atm=atms.find(class_='fa fa-check-circle')
-		location_type_atm=atms.text.strip()
-		if (yes_atm!=''):
-			atm=0
-			if location_type_atm.find('ATM')!=-1 :
-				atm=1
+		atm=atms.findAll(class_="branch-location__service")
+		location_type=''
+		for a in atm:
+			no_atm=a.find(class_='error fa fa-times-circle')
+			type_a=a.text.strip().replace('\n',' ').replace(':',' ')
+			if (no_atm==None):
+				location_type=location_type+type_a
 		branchs=soup.find(class_="branch-location__special-services")
-		yes_branch=branchs.find(class_='fa fa-check-circle')
-		location_type_branch=branchs.text.strip()
-		if (yes_branch!=''):
-			branch=0
-			if location_type_branch.find('Branch')!=-1 :
-				branch=1
-		if ((atm ==1) and (branch ==1)):
-			location_type='ATM|Branch'
-		elif atm==1:
-			location_type='ATM'
-		elif branch==1:
-			location_type='Branch'
+		branch=branchs.findAll(class_="branch-location__service")
+		for b in branch:
+			no_branch=b.find(class_='error fa fa-times-circle')
+			type_b=b.text.strip().replace('\n',' ').replace(':',' ')
+			if (no_branch==None):
+				location_type=location_type+type_b
 		hour=cities.find(class_='branch-location__hours').text.strip().replace('\n',' ').replace(',',' ')
 		ll=str(soupll.find(class_="map__data location-marker-data")).find(name.split(' ')[0])
 		if ll==-1:
@@ -72,13 +61,13 @@ def fetch_data():
 		country='US'
 		store=[]
 		store.append(base_url)
-		store.append(name if name else "<MISSING>")
+		store.append(name.encode("ascii", "ignore").decode("ascii", "replace") if name.encode("ascii", "ignore").decode("ascii", "replace") else "<MISSING>")
 		store.append(address if address else "<MISSING>")
 		store.append(city if city else "<MISSING>")
 		store.append(state if state else "<MISSING>")
 		store.append(zip if zip else "<MISSING>")
 		store.append(country if country else "<MISSING>")
-		store.append(storeno if storeno else "<MISSING>")
+		store.append("<MISSING>")
 		store.append(phone if phone else "<MISSING>")
 		store.append(location_type if location_type else "<MISSING>" )
 		store.append(lat if lat else "<MISSING>")

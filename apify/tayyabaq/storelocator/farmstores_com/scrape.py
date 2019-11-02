@@ -2,7 +2,8 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import re, time
+import re, time, requests
+from bs4 import BeautifulSoup
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,13 +22,20 @@ def get_driver():
     return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def fetch_data():
-    data=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
+    data=[]; location_name=[];store_no=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
+    r = requests.get('http://www.farmstores.com/locations/')
+    soup = BeautifulSoup(r.content, 'html.parser')
+    script = soup.findAll('script')
+    lat=re.findall(r'\>","[\d.*]*\","',str(script))
+    lon = re.findall(r'\","-[\d.*]*\"',str(script)) 
     driver = get_driver()
     driver.get('http://www.farmstores.com/locations/')
     time.sleep(3)
     loc = driver.find_elements_by_class_name('loc-title')
     location = [loc[n].text for n in range(0,len(loc))]
     stores = driver.find_elements_by_class_name('location-address')
+    hour = driver.find_elements_by_class_name('location')
+    hours = [hour[n].text for n in range(0,len(hour))]
     for n in range(0,len(stores)-1):
         if 'COMING SOON' not in location[n]: 
             try:
@@ -41,14 +49,20 @@ def fetch_data():
                 state.append(stores[n].text.split()[-2])
                 zipcode.append(stores[n].text.split()[-1])
             location_name.append(location[n])
-    hours = driver.find_elements_by_class_name('location-hours')
-    hours_of_operation = [hours[n].text for n in range(0,len(hours))]
-    phones = driver.find_elements_by_class_name('location')
-    for n in range(0,len(phones)):
-        if 'Phone' in phones[n].text:
-            phone.append(phones[n].text.split("\n")[3].split('Phone:')[1].strip())
-        else:
-            phone.append('<MISSING>')
+            latitude.append(lat[n].replace('>","','').replace('","',""))
+            longitude.append(lon[n].replace('","',"").replace('"',""))
+            try:
+                store_no.append(location[n].split("(")[1].replace(")",""))
+            except:
+                store_no.append("<MISSING>")
+            if 'Hours' in hours[n]:
+                hours_of_operation.append(str("Hours: "+hours[n].split("Hours:")[1]))
+            else:
+                hours_of_operation.append("<MISSING>")
+            if 'Phone:' in hours[n]:
+                phone.append(str("Phone: "+hours[n].split("Phone:")[1].split("Hours:")[0].strip()))
+            else:
+                phone.append("<MISSING>")
     for n in range(0,len(street_address)): 
         data.append([
             'https://www.farmstores.com',
@@ -58,11 +72,11 @@ def fetch_data():
             state[n],
             zipcode[n],
             'US',
-            '<MISSING>',
+            store_no[n],
             phone[n],
             '<MISSING>',
-            '<MISSING>',
-            '<MISSING>',
+            latitude[n],
+            longitude[n],
             hours_of_operation[n]
         ])
     driver.quit()

@@ -54,7 +54,7 @@ def fetch_data():
                         lat = lat_val.split(",")[0]
                         lag = lat_val.split(",")[1]
                 if 'COMING SOON!' in temp_storeaddresss:
-                    temp_storeaddresss.remove('COMING SOON!');
+                    continue
                 if 'CATERING' in temp_storeaddresss:
                     temp_storeaddresss.remove('CATERING');
                 if 'ONLINE ORDERS' in temp_storeaddresss:

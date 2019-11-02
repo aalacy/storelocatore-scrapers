@@ -3,14 +3,14 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import unicodedata
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -21,7 +21,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    print("soup ===  first")
+    # print("soup ===  first")
 
     base_url = "https://www.rachellebery.ca"
     r = requests.get("https://www.rachellebery.ca/trouver-un-magasin/", headers=headers)
@@ -41,11 +41,12 @@ def fetch_data():
     country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "rachellebery"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
+    page_url = "<MISSING>"
 
     datapath_url = soup.text.split('datapath":"')[1].split('"')[0].replace("\\", "")
 
@@ -85,11 +86,14 @@ def fetch_data():
         # print(" === data ==== " + str(hours_of_operation))
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
         # print("data = " + str(store))
         # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         return_main_object.append(store)
 
     return return_main_object

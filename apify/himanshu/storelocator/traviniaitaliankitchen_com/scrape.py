@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -55,12 +55,23 @@ def fetch_data():
             state = new_words1[3].split(',')[1].split( )[0]
             zip1 = new_words1[3].split(',')[1].split( )[1]
             hours = (" ".join(new_words1[5:][:-1]).replace("VIEW OUR MENU Click to hear our Radio Spot 1",""))
-            
-          
-   
+
+
+            lat = soup1.find("iframe")['src'].split('2d')
+            new_late = soup1.find("iframe")['src']
+            kp = re.findall(r'[-+]?\d*\.\d+',new_late)
+            lng = kp[1]
+            if kp[0]=="99132.1996659177":
+                del kp[0]
+
+            if kp[0]=="-77.58972826832132":
+                del kp[0]
+            lat = (kp[0])
+    
            
-            tem_var.append(tem_var)
             tem_var.append("https://www.traviniaitaliankitchen.com")
+            tem_var.append(name)
+
             tem_var.append(st)
             tem_var.append(city)
             tem_var.append(state)
@@ -68,10 +79,12 @@ def fetch_data():
             tem_var.append("US")
             tem_var.append("<MISSING>")
             tem_var.append(phone)
-            tem_var.append("traviniaitaliankitchen")
             tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
+            tem_var.append(lat)
+            tem_var.append(lng)
             tem_var.append(hours)
+            tem_var.append(base_url1)
+            print(tem_var)
             return_main_object.append(tem_var)
                             
   
@@ -93,4 +106,7 @@ def scrape():
 
 
 scrape()
+
+
+
 

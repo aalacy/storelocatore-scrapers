@@ -68,7 +68,8 @@ def fetch_data():
             phone = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
-        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if add != '':
+            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

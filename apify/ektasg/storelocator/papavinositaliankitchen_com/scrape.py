@@ -32,6 +32,11 @@ def fetch_data():
     hours_of_op = driver.find_element_by_css_selector('div.opening_hours_wrapper').text.replace("\n", " ")
     for store in stores:
             location_name = store.find_element_by_css_selector('h4').get_attribute('textContent')
+            flag = store.find_element_by_css_selector('h4 >img').get_attribute('src')
+            if 'spmapflag' in flag:
+                loc_type = 'Spageddies'
+            else:
+                loc_type = 'PapaVinos'
             print("location_name........" , location_name)
             address = store.find_element_by_css_selector('div.desc > strong').get_attribute('textContent').splitlines()
             street_addr = address[0]
@@ -51,7 +56,7 @@ def fetch_data():
                   'US',
                   '<MISSING>',
                   phone,
-                  '<MISSING>',
+                  loc_type,
                   '<MISSING>',
                   '<MISSING>',
                   hours_of_op

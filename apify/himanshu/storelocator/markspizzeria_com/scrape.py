@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -41,7 +41,7 @@ def fetch_data():
     country_code = ""
     store_number = "<MISSING>"
     phone = ""
-    location_type = "markspizzeria"
+    location_type = "<MISSING>"
     latitude = ""
     longitude = ""
     hours_of_operation = ""
@@ -55,7 +55,7 @@ def fetch_data():
         list_store_address = list(soup_store.find('div', {'class': 'col-10 postal-address'}).stripped_strings)
         street_address = list_store_address[0]
         city = list_store_address[1]
-        location_name = list_store_address[1]
+        location_name = script.find("h1").text.strip()
         state = list_store_address[2]
         zipp = list_store_address[3]
 
@@ -78,7 +78,7 @@ def fetch_data():
         # print('list_store_address = ' + str(list_store_address))
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation,store_url]
 
         if str(store[2]) + str(store[-3]) not in addresses:
             addresses.append(str(store[2]) + str(store[-3]))

@@ -2,8 +2,10 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import usaddress
 
+from selenium.common.exceptions import NoSuchElementException
+import usaddress
+import time
 
 def get_driver():
     options = Options()
@@ -59,25 +61,30 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(locator_domain + ext)
+    driver.implicitly_wait(30)
+    not_found_result_top = True
+    while not_found_result_top:
+        try:
+            loc_cont = driver.find_element_by_id('resulttop')
+            not_found_result_top = False
+        except NoSuchElementException:
+            time.sleep(5)
 
-    loc_cont = driver.find_element_by_id('resulttop')
     locs = loc_cont.find_elements_by_css_selector('span.mytool')
     link_list = []
     for l in locs:
         links = l.find_elements_by_css_selector('a')
-
-        coords = links[0].get_attribute('onclick').split('"')[1].split(',')
         link = links[1].get_attribute('href')
 
-        link_list.append([link, coords])
+        link_list.append(link)
 
     all_store_data = []
     for link in link_list:
-        driver.get(link[0])
+        driver.get(link)
         driver.implicitly_wait(10)
 
-        lat = link[1][0]
-        longit = link[1][1]
+        lat = '<MISSING>' #link[1][0]
+        longit = '<MISSING>' #link[1][1]
 
         addy = driver.find_element_by_css_selector('div.address').find_element_by_css_selector(
             'span.locationaddress').text.replace('\n', ' ')
@@ -102,16 +109,16 @@ def fetch_data():
         else:
             street_address, city, state, zip_code = parse_addy(addy)
 
-        cut = link[0].find('uni-mart-') + len('uni-mart-')
-        location_name = link[0][cut:]
+        cut = link.find('uni-mart-')
+        location_name = link[cut:].replace('-', ' ')
 
         country_code = 'US'
 
         phone_number = '<MISSING>'
         location_type = '<MISSING>'
-        page_url = link[0]
+        page_url = link
         hours = '<MISSING>'
-        store_number = '<MISSING>'
+        store_number = link[cut + len('uni-mart-'):]
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
