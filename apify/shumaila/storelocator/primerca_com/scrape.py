@@ -1,7 +1,4 @@
 
-#http://www.primerica.com/public/locations.html
-#https://pterrys.com
-
 # Import libraries
 import requests
 from bs4 import BeautifulSoup
@@ -19,8 +16,8 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     chrome_path = '/Users/Dell/local/chromedriver'
-    return webdriver.Chrome(chrome_path)
-    #return webdriver.Chrome('chromedriver')
+    #return webdriver.Chrome(chrome_path)
+    return webdriver.Chrome('chromedriver')
 
 
 def write_output(data):
