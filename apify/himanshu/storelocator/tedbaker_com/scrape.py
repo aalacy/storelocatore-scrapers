@@ -45,7 +45,7 @@ def fetch_data():
         store.append("<INACCESSIBLE>")
         store.append("<INACCESSIBLE>")
         store.append(store_data["address"]["country"]["isocode"])
-        store.append(store_data["openingHours"]["code"])
+        store.append(store_data["openingHours"]["code"].replace("US",""))
         store.append(store_data["address"]["phone"] if "phone" in store_data["address"] and store_data["address"]["phone"] != "" and store_data["address"]["phone"] != None else "<MISSING>")
         store.append("<MISSING>")
         store.append(store_data["geoPoint"]["latitude"])

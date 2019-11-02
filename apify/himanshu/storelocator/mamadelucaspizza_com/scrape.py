@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
+
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -31,7 +31,7 @@ def handle_store(store_data,country_code):
     store.append(country_code)
     store.append(store_data["id"])
     store.append(store_data["phone"] if store_data["phone"] else "<MISSING>")
-    store.append("mama deluca's pizza")
+    store.append("<MISSING>")
     store.append("<MISSING>")
     store.append("<MISSING>")
     hours = ""
@@ -41,7 +41,7 @@ def handle_store(store_data,country_code):
         store.append("<MISSING>")
     else:
         store.append(" ".join(list(location_soup.find("div",{'class':"hours"}).stripped_strings)))
-    store.append("<MISSING>")
+    store.append("https://mamadelucaspizza.com/locations/")
     return store
 
 def fetch_data():

@@ -24,7 +24,7 @@ def fetch_data():
     r = requests.get("https://ravecinemas.com/full-theatre-list",headers=headers,verify=False)
     soup = BeautifulSoup(r.text,"lxml")
     for location in soup.find("div",{"class":"columnList wide"}).find_all("a"):
-        print(base_url + location["href"])
+        # print(base_url + location["href"])
         location_request = requests.get(base_url + location["href"],headers=headers,verify=False)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         if location_soup.find("div",{"class":"theatreMap"}) == None:

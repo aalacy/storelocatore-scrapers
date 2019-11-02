@@ -12,7 +12,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -27,36 +27,49 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     address = []
-    data = soup.findAll('h1')
-    for values in data:
-        street_city_st_zip = values.find_next('div', {'class', 'featured_block_text'}).find('h3').get_text()
-        pin_st_city_loc = street_city_st_zip.split(' ')
-        if pin_st_city_loc[-1].isdigit():
-            location_name = values.get_text().strip()
-            street_address = (' ').join(pin_st_city_loc[:-3]).strip()
-            city = pin_st_city_loc[-3][:-1].strip()
-            state = pin_st_city_loc[-2].strip()
-            zip = pin_st_city_loc[-1].strip()
-        phone_number = values.find_next('div', {'class', 'featured_block_text'}).find('h3').find_next('h3').get_text()
-        if not phone_number.isspace():
-            phone = phone_number.strip()[5:]
-            
+    # data = soup.findAll('h1')
+    for div in soup.find("div",{'class':'middle_inner'}).find_all("div",recursive=False):
+        if div.find("h1") == None:
+            continue
+        if div.find_next_sibling("div").find("iframe") == None:
+            continue
+        name = div.find("h1").text.strip()
+        geo_request = requests.get(div.find_next_sibling("div").find("iframe")["src"],headers=headers)
+        geo_soup = BeautifulSoup(geo_request.text,"lxml")
+        for script in geo_soup.find_all("script"):
+            if "initEmbed" in script.text:
+                geo_data = json.loads(script.text.split("initEmbed(")[1].split(");")[0])[21][3][0][1]
+                lat = json.loads(script.text.split("initEmbed(")[1].split(");")[0])[21][3][0][2][0]
+                lng = json.loads(script.text.split("initEmbed(")[1].split(");")[0])[21][3][0][2][1]
+        street_address = geo_data.split(",")[1]
+        city = geo_data.split(",")[2]
+        store_zip_split = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"),geo_data)
+        if store_zip_split:
+            store_zip = store_zip_split[-1]
+        else:
+            store_zip = "<MISSING>"
+        state_split = re.findall("([A-Z]{2})",geo_data)
+        if state_split:
+            state = state_split[-1]
+        else:
+            state = "<MISSING>"
+        phone = div.find_next_sibling("div").find("a",{"href":re.compile("tel:")})["href"].replace("tel:","")
         store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zip)
+        store.append("https://nynypizzeria.com")
+        store.append(name.strip())
+        store.append(street_address.strip())
+        store.append(city.strip())
+        store.append(state.strip())
+        store.append(store_zip.strip())
         store.append("US")
         store.append("<MISSING>")
         store.append(phone)
-        store.append("New York Pizza")
-        store.append("<INACCESSIBLE>")
-        store.append("<INACCESSIBLE>")
         store.append("<MISSING>")
-        return_main_object.append(store)
-    return return_main_object
+        store.append(lat)
+        store.append(lng)
+        store.append("<MISSING>")
+        store.append("https://nynypizzeria.com/locations")
+        yield store
 
 
 def scrape():

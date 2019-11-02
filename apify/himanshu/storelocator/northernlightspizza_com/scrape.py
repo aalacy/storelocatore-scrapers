@@ -47,7 +47,7 @@ def fetch_data():
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
+    page_url = "https://www.northernlightspizza.com/locations/"
 
 
 
@@ -116,7 +116,8 @@ def fetch_data():
         # print("data = " + str(store))
         # print(
         #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
+        store = [x.replace("–","-") for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         return_main_object.append(store)
 
 
@@ -163,9 +164,10 @@ def fetch_data():
         # print("data = " + str(store))
         # print(
         #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
+        store = [x.replace("–","-") for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         return_main_object.append(store)
-
+    
     return return_main_object
 
 
