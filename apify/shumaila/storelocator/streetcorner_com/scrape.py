@@ -86,7 +86,7 @@ def fetch_data():
                     pcode = '0' + pcode
 
             hours = hours.encode('ascii', 'ignore').decode('ascii')
-            print(hours)
+            #print(hours)
             p += 1
             if title.find("Coming Soon") == -1:
                 data.append([
