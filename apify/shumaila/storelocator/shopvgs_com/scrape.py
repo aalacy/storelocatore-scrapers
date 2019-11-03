@@ -94,12 +94,14 @@ def fetch_data():
         try:
             hours = ""
             hdetail = soup.find('table', {'class': 'table table-striped responsive hours'})
-            rows = hdetail.findAll('tr', {'class': 'hidden-xs'})
+            hdetail = hdetail.find('tbody')
+            rows = hdetail.findAll('tr')
             for row in rows:
                 # print(row.text)
                 td = row.findAll('td')
                 hours = hours + td[0].text + "  " + td[1].text + "|"
 
+            hours = hours[0:len(hours) - 1]
             hours = hours.lstrip()
             hours = re.sub(pattern, " ", hours)
             hours = re.sub("\n", "", hours)

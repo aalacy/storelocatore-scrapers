@@ -27,10 +27,10 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         r = requests.get("https://www.ritasice.com/wp-admin/admin-ajax.php?action=ritas_store_locator_function&latitude=" + str(x) + "&longitude="+ str(y),headers=headers)
         soup = BeautifulSoup(r.text,"lxml")
         for script in soup.find_all("script"):
@@ -67,7 +67,7 @@ def fetch_data():
                     if store[-1] in addresses:
                         continue
                     addresses.append(store[-1])
-                    store.append(city)
+                    store.append(city.strip())
                     store.append(state)
                     store.append(store_zip)
                     store.append("US")
@@ -77,6 +77,8 @@ def fetch_data():
                     store.append(lat)
                     store.append(lng)
                     store.append(hours if hours != "" else "<MISSING>")
+                    if store[-1].count("CLOSED") > 12:
+                        continue
                     store.append(page_url)
                     yield store
         # print("max count update")

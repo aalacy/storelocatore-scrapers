@@ -57,9 +57,16 @@ def fetch_data():
         except:
             phone = "<MISSING>"
         try:
-            hours = repo.find('strong').text
-            hours = re.sub(pattern,"|",hours)
-            hours = hours[1:len(hours)-1]
+            hours = repo.findAll('strong')
+            if len(hours) == 1:
+                hours = hours[0].text
+                hours = re.sub(pattern,"|",hours)
+                hours = hours[1:len(hours)-1]
+            else:
+                hours = hours[1].text
+                hours = re.sub(pattern, "|", hours)
+                hours = hours[1:len(hours) - 1]
+
         except:
             hours = "<MISSING>"
 

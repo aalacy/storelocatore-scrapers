@@ -51,122 +51,147 @@ def fetch_data():
 
 
 
-    r= requests.get('https://www.cococochocolatiers.com/locations/',headers = headers)
+    r= requests.get('https://cococochocolatiers.com/pages/locations',headers = headers)
     soup = BeautifulSoup(r.text,'html.parser')
-    div = soup.find('div',class_='vc_tta-panels')
-    for body in div.find_all('div',class_='vc_tta-panel'):
-        heading = body.find('div',class_='vc_tta-panel-heading').text.strip()
-        for d in body.find_all('div',class_='vc_col-sm-3'):
-            list_d = list(d.stripped_strings)
-            if list_d != []:
-                # print(list_d)
-                # print(len(list_d))
-                # print('~~~~~~~~~~~~~~~~~~')
+    for url in soup.find('div',class_='PageContent PageContent--narrow Rte').find_all('h5'):
+        loc_url = url.a['href']
+        # print(page_url)
+        if "United States" == url.text:
+            country_code = "US"
+        else:
+            country_code = "CA"
+        page_url= loc_url
+        r_loc= requests.get(loc_url,headers = headers)
+        soup_loc = BeautifulSoup(r_loc.text,'lxml')
+        try:
+            div = soup_loc.find('div',class_='easyslider-contents')
+            for info in div.find_all('div',class_='easyslider-item'):
+                l_name = info.find('div',class_='easyslider-header').text.strip()
+                # city = location_name[0].split('/')[1].split(',')[0]
+                # state = location_name[0].split('/')[1].split(',')[-1]
+                # print(location_name)
+                content = info.find('div',class_='easyslider-content')
+                for details in content.find_all('p'):
+                    list_details = list(details.stripped_strings)
+                    list_details = [el.replace('\xa0',' ') for el in list_details]
+                    if "Location" in " ".join(list_details):
+                       list_details.remove('Location')
+                    if len(list_details) ==5:
+                        street_address = list_details[0].split(',')[0].strip()
+                        city = list_details[0].split(',')[-1].split()[0].strip()
+                        state  = list_details[0].split(',')[-1].split()[1].strip()
+                        zipp = " ".join(list_details[0].split(',')[-1].split()[2:]).strip()
+                        location_name  = city
+                        phone =re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_details[1]))[0]
+                        hours_of_operation = " ".join(list_details[3:]).strip()
+                        # print(street_address+" | "+city+" | "+state+" | "+zipp+" | "+location_name+" | "+phone+" | "+hours_of_operation)
+                    elif len(list_details) ==6:
+                        tag_address = list_details[0].split(',')
+                        if len(tag_address) >2:
+                            street_address = tag_address[0] + " "+tag_address[1]
+                        else:
+                            street_address = tag_address[0].strip()
+                        csz = tag_address[-1].split()
+                        if len(csz) == 2:
+                            city = csz[0].strip()
+                            state = csz[-1].strip()
+                            zipp = "<MISSING>"
+                        elif  len(csz) == 3:
+                            city = csz[0] + " "+csz[1]
+                            state = csz[-1].strip()
+                            zipp= "<MISSING>"
+                        else:
+                            city = csz[0].strip()
+                            state = csz[1]
+                            zipp= " ".join(csz[2:]).strip()
+                        location_name = city
+                        phone = list_details[2].strip()
+                        hours_of_operation = ",".join(list_details[4:]).strip()
+                        # print(street_address+" | "+city+" | "+state+" | "+zipp+" | "+location_name+" | "+phone+" | "+hours_of_operation)
+                    elif len(list_details) ==7:
+
+                        if "Domestic Terminal, Pre-security" in " ".join(list_details):
+                            list_details.remove('Domestic Terminal, Pre-security')
+                        if "Departures Level" in " ".join(list_details):
+                            list_details.remove('Departures Level – Gate A, Calgary International Airport')
+
+                        # print(list_details)
+                        # print(len(list_details))
+                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        tag_address = " ".join(list_details[:2]).strip().replace('Phone','').split(',')
+                        if "Southcentre Mall" in tag_address[0]:
+                            tag_address.remove('Southcentre Mall')
+                        if len(tag_address) == 1:
+                            l_name = info.find('div',class_='easyslider-header').text.strip()
+
+                            city = l_name.split('/')[1].split(',')[0].strip()
+                            state = l_name.split('/')[1].split(',')[-1].strip()
 
 
-                if "UNITED STATES" == heading:
-                    country_code = "US"
-
-                else:
-                    country_code = "CA"
-                if len(list_d) ==10:
-                    location_name = list_d[0].capitalize()
-                    city = list_d[0].capitalize()
-                    state= heading.capitalize()
-                    street_address= list_d[1].capitalize()
-                    phone =list_d[3]
-                    hours_of_operation = " ".join(list_d[6:8])
-
-                    # print(location_name,city,state,street_address,phone,hours_of_operation,country_code)
-                elif len(list_d) ==11:
-
-                    location_name = " ".join(list_d[:2]).capitalize()
-                    city = list_d[0].capitalize()
-                    state= heading.capitalize()
-                    street_address = list_d[2].capitalize()
-                    phone = list_d[4]
-                    hours_of_operation = " ".join(list_d[7:9])
+                            zipp = "<MISSING>"
+                            # print(zipp)
+                            location_name = city
+                            street_address = tag_address[0]
 
 
-                elif len(list_d) == 12:
-                    location_name = list_d[0].capitalize()
-                    city = list_d[0].capitalize()
-                    state= heading.capitalize()
-                    street_address = " ".join(list_d[1:3]).capitalize()
-                    phone = list_d[4]
-                    hours_of_operation = " ".join(list_d[7:9])
 
 
-                elif len(list_d) ==13:
-                    location_name = list_d[0].capitalize()
-                    city = list_d[0].capitalize()
-                    state = "<MISSING>"
-                    cs =list_d[0].split('/')
-                    # print(cs)
-                    if len(cs) ==1:
-                        city = "".join(cs).strip().capitalize()
-                        state = heading.capitalize()
+                        elif len(tag_address) ==2:
+                            street_address = tag_address[0].strip()
+                            city  = tag_address[-1].split()[0].strip()
+                            state = tag_address[-1].split()[1].strip()
+                            zipp=" ".join(tag_address[-1].split()[2:]).strip()
+                            location_name = city
+                        else:
+                            street_address = " ".join(tag_address[:2]).strip()
+                            city = tag_address[2].strip()
+                            state = tag_address[3].strip()
+                            zipp= tag_address[-1].strip()
+                            location_name = city
+                        # print(street_address+" | "+city+" | "+state+" | "+zipp)
+                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
+                        phone = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(" ".join(list_details).split('Phone')[-1]))[0]
+                        hours_of_operation = " ".join(list_details).split('Hours')[-1].strip()
+
                     else:
-                        city = cs[0].strip().capitalize()
-                        state = cs[-1].split(',')[-1].strip().capitalize()
-                        # print(city,state)
-                    address = " ".join(list_d[1:4]).replace('—','').replace('Store Hours','').replace('Phone','')
-                    # print(street_address.split())
-                    # print(len(street_address.split()))
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    if len(address.split())  == 10 or len(address.split()) == 9:
-                        street_address = " ".join(address.split()[5:]).capitalize()
+                        if "International Departure Level" in " ".join(list_details):
+                            list_details.remove('International Departure Level, Post-security')
+                        if "Calgary International Airport" in " ".join(list_details):
+                            list_details.remove('Calgary International Airport')
+                        # print(list_details)
+                        # print(len(list_details))
+                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        street_address =" ".join(list_details[0].split(',')[:-1]).strip()
 
-                    elif len(address.split()) == 7:
-                        street_address = " ".join(address.split()[3:]).replace('#113A,','').strip().capitalize()
+                        if len(list_details[0].split(',')[-1].split()) !=2:
 
-                    elif len(address.split()) ==6 or len(address.split()) == 5:
-                        street_address = " ".join(address.split()[1:]).replace('Village','').replace('Heights','').replace('Corners','').strip().capitalize()
-
-                    else:
-                        street_address = " ".join(address.split()).capitalize()
-                        # print(street_address)
-                    phone = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")," ".join(list_d))[0]
-                    # print(phone)
-                    hours_of_operation = " ".join(list_d).split('Store Hours')[-1].split('Holiday')[0].strip()
-                    # print(location_name,city,state,street_address,phone,hours_of_operation,country_code)
+                            city = list_details[0].split(',')[-1].split()[0]
+                            state = list_details[0].split(',')[-1].split()[1]
+                            zipp = " ".join(list_details[0].split(',')[-1].split()[-2:]).strip()
+                        else:
+                            city = list_details[0].split(',')[-1].split()[0]
+                            state = list_details[0].split(',')[-1].split()[1]
+                            zipp = "<MISSING>"
+                        phone = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(" ".join(list_details).split('Phone')[-1]))[0]
+                        hours_of_operation = " ".join(list_details).split('Hours')[-1].strip()
 
 
-                elif len(list_d) ==14:
-                    location_name = " ".join(list_d[:2]).capitalize()
-                    city = list_d[0].capitalize()
-                    state = heading.capitalize()
-                    street_address = " ".join(list_d[2:4]).replace('—','').replace('#107, ','').strip().capitalize()
-                    phone= re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")," ".join(list_d))[0]
-                    hours_of_operation = " ".join(list_d).split('Store Hours')[1].split('Holiday')[0]
+                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                                 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+                    store = ["<MISSING>" if x == ""  else x for x in store]
 
-                else:
-                    location_name = " ".join(list_d[:2]).capitalize()
-                    city = list_d[0].capitalize()
-                    state = heading.capitalize()
-                    phone =  re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")," ".join(list_d))[0]
-                    hours_of_operation = " ".join(list_d).split('Store Hours')[1].split('Holiday')[0]
-                    if "CALGARY" != list_d[0]:
-                        street_address = list_d[2].replace('#520, ','').capitalize()
-                        # print(street_address)
+                    # print(location_name +" | "+street_address)
 
-                    else:
-                        street_address = " ".join(list_d[4:7]).replace('Phone','').strip().capitalize()
+                    # print("data = " + str(store))
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+                    return_main_object.append(store)
 
 
-
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                             store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-                store = ["<MISSING>" if x == ""  else x for x in store]
-
-                # print(location_name +" | "+street_address)
-
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-                return_main_object.append(store)
-
-
+        except:
+            # print(loc_url)
+            # print('~~~~~~~~~~~~~~~~~~~~~')
+            continue
 
     return return_main_object
 
