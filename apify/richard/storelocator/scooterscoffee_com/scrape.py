@@ -141,7 +141,7 @@ class Scraper(Scrape):
             self.data.append(
                 [
                     self.url,
-                    page_urls,
+                    page_url,
                     locations_title,
                     street_address,
                     city,

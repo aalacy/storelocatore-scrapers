@@ -26,6 +26,7 @@ class Scraper(Scrape):
         hours = []
         countries = []
         location_types = []
+        page_urls = []
 
         headers = {
             'authority': 'truenorthstores.com',
@@ -64,6 +65,9 @@ class Scraper(Scrape):
 
             # Type
             location_type = 'Coffee'
+
+            # Page url
+            page_url = store['permalink']
 
             # Name
             location_title = store['title']
@@ -108,9 +112,11 @@ class Scraper(Scrape):
             cities.append(city)
             countries.append(country)
             location_types.append(location_type)
+            page_urls.append(page_url)
 
         for (
                 locations_title,
+                page_url,
                 street_address,
                 city,
                 state,
@@ -124,6 +130,7 @@ class Scraper(Scrape):
                 location_type,
         ) in zip(
             locations_titles,
+            page_urls,
             street_addresses,
             cities,
             states,
@@ -139,6 +146,7 @@ class Scraper(Scrape):
             self.data.append(
                 [
                     self.url,
+                    page_url,
                     locations_title,
                     street_address,
                     city,

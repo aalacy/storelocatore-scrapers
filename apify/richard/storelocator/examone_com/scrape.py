@@ -29,6 +29,7 @@ class Scraper(Scrape):
         countries = []
         location_types = []
         stores = []
+        page_urls = []
 
         options = Options()
         options.add_argument("--headless")
@@ -46,6 +47,9 @@ class Scraper(Scrape):
             if store['qsl_id'] not in self.seen:
                 # Store ID
                 location_id = store['qsl_id']
+
+                # Page url
+                page_url = '<MISSING>'
 
                 # Type
                 location_type = 'Pawn Shop'
@@ -82,6 +86,7 @@ class Scraper(Scrape):
 
                 # Store data
                 locations_ids.append(location_id)
+                page_urls.append(page_url)
                 locations_titles.append(location_title)
                 street_addresses.append(street_address)
                 states.append(state)
@@ -97,6 +102,7 @@ class Scraper(Scrape):
 
         for (
                 locations_title,
+                page_url,
                 street_address,
                 city,
                 state,
@@ -110,6 +116,7 @@ class Scraper(Scrape):
                 location_type,
         ) in zip(
             locations_titles,
+            page_urls,
             street_addresses,
             cities,
             states,
@@ -125,6 +132,7 @@ class Scraper(Scrape):
             self.data.append(
                 [
                     self.url,
+                    page_url,
                     locations_title,
                     street_address,
                     city,

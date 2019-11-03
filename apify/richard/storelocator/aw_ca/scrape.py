@@ -26,6 +26,7 @@ class Scraper(Scrape):
         hours = []
         countries = []
         location_types = []
+        page_urls = []
 
         headers = {
             'Referer': 'https://web.aw.ca/en/locations/',
@@ -42,6 +43,9 @@ class Scraper(Scrape):
 
             # Store ID
             location_id = store['restnum']
+
+            # Page url
+            page_url = '<MISSING>'
 
             # Type
             location_type = 'Fast Food'
@@ -86,9 +90,11 @@ class Scraper(Scrape):
             cities.append(city)
             countries.append(country)
             location_types.append(location_type)
+            page_urls.append(page_url)
 
         for (
                 locations_title,
+                page_url,
                 street_address,
                 city,
                 state,
@@ -102,6 +108,7 @@ class Scraper(Scrape):
                 location_type,
         ) in zip(
             locations_titles,
+            page_urls,
             street_addresses,
             cities,
             states,
@@ -117,6 +124,7 @@ class Scraper(Scrape):
             self.data.append(
                 [
                     self.url,
+                    page_url,
                     locations_title,
                     street_address,
                     city,

@@ -25,6 +25,7 @@ class Scraper(Scrape):
         hours = []
         countries = []
         location_types = []
+        page_urls = []
 
         cookies = {
             '_ga': 'GA1.3.76618974.1572065565',
@@ -62,6 +63,9 @@ class Scraper(Scrape):
             # Type
             location_type = 'Pawn Shop'
 
+            # Page url
+            page_url = '<MISSING>'
+
             # Name
             location_title = store['brand']
 
@@ -94,6 +98,7 @@ class Scraper(Scrape):
 
             # Store data
             locations_ids.append(location_id)
+            page_urls.append(page_url)
             locations_titles.append(location_title)
             street_addresses.append(street_address)
             states.append(state)
@@ -108,6 +113,7 @@ class Scraper(Scrape):
 
         for (
                 locations_title,
+                page_url,
                 street_address,
                 city,
                 state,
@@ -121,6 +127,7 @@ class Scraper(Scrape):
                 location_type,
         ) in zip(
             locations_titles,
+            page_urls,
             street_addresses,
             cities,
             states,
@@ -136,6 +143,7 @@ class Scraper(Scrape):
             self.data.append(
                 [
                     self.url,
+                    page_url,
                     locations_title,
                     street_address,
                     city,
