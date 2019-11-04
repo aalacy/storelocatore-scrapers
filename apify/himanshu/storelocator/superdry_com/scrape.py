@@ -61,9 +61,10 @@ def fetch_data():
 
 
         r = requests.get('https://www.superdry.com/index.php?option=com_store_collect&lng='+str(zip_code[1])+'&lat='+str(zip_code[0])+'&format=raw&task=nearest',headers = headers)
-
+        
         try:
             json_data = r.json()
+            print(json_data)
         except:
 
             continue

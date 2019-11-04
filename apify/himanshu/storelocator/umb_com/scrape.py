@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -42,6 +42,8 @@ def fetch_data():
             vr = requests.get(link,headers = header)
             soup = BeautifulSoup(vr.text,"lxml")
 
+            geo_location = json.loads(soup.find('div',{'id':"gmap"}).find("script").text.split("defaultData = ")[1].split('};')[0] + "}")["markerData"][0]
+
             locator_domain = 'https://www.umb.com/'
             location_name  = link.split('/')[-2]
             fb = soup.find('div',{'class':'address'}).find_all('div')
@@ -55,9 +57,9 @@ def fetch_data():
             phone = soup.find('div',{'class':'map-list-links'}).find('a',{'class':'phone'}).text
             country_code = 'US'
             
-            location_type = 'umb'
-            latitude = '<MISSING>'
-            longitude = '<MISSING>'
+            location_type = '<MISSING>'
+            latitude = geo_location["lat"]
+            longitude = geo_location["lng"]
             hours_of_operation = ' '.join(list(soup.find_all('script')[7].stripped_strings)).split(';')[1].split('=')[1]
            
            
@@ -92,10 +94,9 @@ def fetch_data():
             store.append(longitude if longitude else '<MISSING>')
             
             store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
-            
+            store.append(link)
 
-            return_main_object.append(store)
-    return return_main_object
+            yield store
         
 def scrape():
     data = fetch_data()  

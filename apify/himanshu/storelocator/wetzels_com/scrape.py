@@ -62,6 +62,10 @@ def fetch_data():
         phone = location_data["Telephone"]
         latitude = location_data["Latitude"]
         longitude = location_data["Longitude"]
+        if latitude == "0.0000000000":
+            latitude = "<INACCESSIBLE>"
+        if longitude == "0.0000000000":
+            longitude = "<INACCESSIBLE>"
         location_type = ",".join(location_data["LocationTypes"])
         us_zipp_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(location_data["City"]))
         ca_zipp_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(location_data["City"]))

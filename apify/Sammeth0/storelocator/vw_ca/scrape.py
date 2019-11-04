@@ -54,12 +54,12 @@ def fetch_data():
 		states.append(stores[i:].split('%22province%22:%22')[1].split('%22,')[0].replace('%20',' '))
 	for i in zips_pos:
 		zips.append(stores[i:].split('%22postalCode%22:%22')[1].split('%22%7D')[0].replace('%20',' '))
-	for i in addresses_pos:
-		storeno.append(stores[i:].split('%22address%22:%7B%22street%22:%22')[1].split('%22,')[0].split('%20')[0])
+	#for i in addresses_pos:
+	#	storeno.append(stores[i:].split('%22address%22:%7B%22street%22:%22')[1].split('%22,')[0].split('%20')[0])
 	for i in phones_pos:
 		phones.append(stores[i:].split('%22phoneNumber%22:%22')[1].split('%22,')[0])
 	for i in types_pos:
-		types.append(stores[i:].split('%22type%22:%22Point%22%7D,%22services%22:%5B%22')[1].split('%22,')[0].replace('%20',' ').replace('%22',' '))
+		types.append(stores[i:].split('%22type%22:%22Point%22%7D,%22services%22:%5B%22')[1].split(',%22departments')[0].replace(',%22SERVICE%22,',' ').replace(',','').replace('%22',' ').replace('%5D',''))
 	for i in lat_long_pos:
 		lat.append(stores[i:].split('%22geoPosition%22:%7B%22coordinates%22:%5B')[1].split(',')[0])
 	for i in lat_long_pos:
@@ -75,7 +75,7 @@ def fetch_data():
 		store.append(states[i] if states[i] else "<MISSING>")
 		store.append(zips[i] if zips[i] else "<MISSING>")
 		store.append('CA')
-		store.append(storeno[i] if (storeno[i] and not(storeno[i] in storeno))  else "<MISSING>")
+		store.append("<MISSING>")
 		store.append(phones[i] if phones[i] else "<MISSING>")
 		store.append(types[i] if types[i] else "<MISSING>" )
 		store.append(lat[i] if lat[i] else "<MISSING>")

@@ -44,7 +44,7 @@ def fetch_data():
     country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "castledental"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
@@ -73,13 +73,19 @@ def fetch_data():
                         r_loc_json = r_loc.json()
                     except:
                         continue
+                    # print('https://api.smilebrands.com/public/facility/id/'+str(store_id))
                     # print(r_loc_json['data'])
                     # print("~~~~~~~~~~~~~~~~~~~")
                     if  r_loc_json['data']:
                         store_number = r_loc_json['data']['id']
                         # print(store_number)
                         location_name = r_loc_json['data']['name']
-                        street_address = r_loc_json['data']['address']
+                        if  " " != r_loc_json['data']['careOf'] or  r_loc_json['data']['careOf'] != None:
+                            street_address = r_loc_json['data']['address'] + " "+r_loc_json['data']['careOf'].strip()
+                        else:
+                            street_address =  r_loc_json['data']['address']
+                        # print(street_address)
+
                         city = r_loc_json['data']['city']
                         state = r_loc_json['data']['state']
                         zipp = r_loc_json['data']['zip']
