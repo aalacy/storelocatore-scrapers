@@ -64,7 +64,7 @@ def fetch_data():
         links = [stores[n].get_attribute('href') for n in range(0,len(stores))]
         for n in range(0,len(links)):
             driver.get(links[n])
-            hours_of_operation.append(driver.find_element_by_class_name('store-detail-store-hours-hour').text)
+            hours_of_operation.append(driver.find_element_by_class_name('store-detail-store-hours-table').text)
     for n in range(0,len(street_address)): 
         data.append([
             'https://www.gucci.com',
@@ -89,4 +89,3 @@ def scrape():
     write_output(data)
    
 scrape()
-
