@@ -1,79 +1,119 @@
-import bs4 as bs
-import urllib.request
+import requests
 from bs4 import BeautifulSoup
 from lxml import html
 import csv
-import pandas as pd
 
+def get_driver():
+    options = Options() 
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-locator_domain='centurynationalbank_com'
-page_url='https://centurynationalbank.com/locations/'
-country_code='US'
-latitude='MISSING'
-longitude='MISSING'
+        # Header
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        # Body
+        for row in data:
+            writer.writerow(row)
 
+def fetch_data():
 
-csv_file = open('data2.csv', 'w', encoding='utf-8')
-fieldnames=['locator_domain','page_url','location_name','street_address','city','state','zip','country_code','store_number','phone','location_type','latitude','longitude','hours_of_operation','page_url']
-csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames, escapechar='"',lineterminator = '\n')
-csv_writer.writeheader()
+# Begin scraper
 
-
-source = urllib.request.urlopen(page_url).read()
-soup = bs.BeautifulSoup(source,'lxml')
-
-stores=soup.findAll(class_="medium-6 columns")
-for store in stores:
-	try:
-		location_names=store.findAll(class_="sub-head fw-light")
-		for name in location_names:
-			location_name=name.a.text
-	except:
-		location_name='MISSING'
-		
-	street_addresses=store.findAll(class_="branch-address fw-light")
-	for address in street_addresses:
-		try:
-			street_address=' '.join(address.contents[0].split(' ')[1::]).replace(',',' ').replace('\n','')
-		except:
-			street_address='MISSING'
-		try:
-			city=address.contents[2].split(',')[0].replace(',',' ').replace('\n','')
-		except:
-			city='MISSING'
-		try:
-			state=address.contents[2].split(',')[1].strip().split(' ')[0].replace(',',' ').replace('\n','')
-		except:
-			state='MISSING'
-		try:
-			zip=address.contents[2].split(',')[1].strip().split(' ')[1].replace(',',' ').replace('\n','')
-		except:
-			zip='MISSING'
-		try:
-			phone=address.get_text().split()[5].replace(',',' ').replace('\n','')
-		except:
-			phone='MISSING'
-		try:
-			store_number=address.contents[0].split(' ')[0].strip().replace(',',' ').replace('\n','')
-		except:
-			store_number='MISSING'
-			
-		hours=store.findAll(class_="large-6 small-6 columns")
-		for hour in hours:
-			try:
-				hours_of_operation=hour.text.replace(',',' ').replace('\n','')
-			except:
-				hours_of_operation='MISSING'
-				
-		location_types=store.findAll(class_='large-4 columns')
-		for type in location_types:
-			try:
-				location_type=type.text.replace(',',' ').replace('\n','')
-			except:
-				location_type='MISSING'
-		
-		data={'locator_domain':locator_domain,'page_url':page_url,'location_name':location_name,'street_address':street_address,'city':city,'state':state,'zip':zip,'country_code':country_code,'store_number':store_number,'phone':phone,'location_type':location_type,'latitude':latitude,'longitude':longitude,'hours_of_operation':hours_of_operation,'page_url':page_url}
-		csv_writer.writerow(data)
 	
-csv_file.close()
+	
+	base_url ="https://www.centurynationalbank.com"
+	return_main_object=[]
+	location_names=[]
+	bank_name=[]
+	street_addresses=[]
+	location_types=[]
+	nums=[]
+	hours=[]
+	lats_lngs=[]
+	soup=[]
+	page_url=[]
+	data = []
+	
+	for url in range(15):
+		page_url.append("https://centurynationalbank.com/locations/page/"+str(url+1)+"/?place&latitude&longitude&type=location#038;latitude&longitude&type=location")
+		soup.append(BeautifulSoup(requests.get(page_url[url]).text,'lxml'))
+		
+		
+		location_names.append(soup[url].findAll(class_="sub-head fw-light"))
+		street_addresses.append(soup[url].findAll(class_="branch-address fw-light"))
+		location_types.append(soup[url].findAll(class_='large-4 columns'))
+		nums.append(soup[url].findAll(class_="links fw-light"))
+		hours.append(soup[url].findAll(class_="large-6 small-6 columns"))
+		lats_lngs.append(soup[url].findAll(class_="medium-6 columns "))
+		
+		for i in range(len(location_names[url])):
+			
+			locs = []
+			streets= []
+			states=[]
+			cities = []
+			types=[]
+			phones = []
+			zips = []
+			longs = []
+			lats = []
+			timing = []
+			ids=[]
+			
+		
+			if location_names[url][i].find("a")!=None:
+				locs.append(location_names[url][i].a.text+' '+str(lats_lngs[url]).split('"parent_bank_name":"')[i+1].split('"')[0])
+			else:
+				locs.append(location_names[url][i].find("span").text+' '+str(lats_lngs[url]).split('"parent_bank_name":"')[i+1].split('"')[0])
+				
+			streets.append(street_addresses[url][i].contents[0].strip().replace('\n',''))
+			cities.append(street_addresses[url][i].contents[2].split(',')[0].replace(',',' ').replace('\n',''))
+			states.append(street_addresses[url][i].contents[2].split(',')[1].strip().split(' ')[0].replace(',',' ').replace('\n',''))
+			zips.append(street_addresses[url][i].contents[2].split(',')[1].strip().split(' ')[1].replace(',',' ').replace('\n',''))
+			ids.append(str(nums[url][i]).split('data-locationid="')[1].split('"')[0])
+			if street_addresses[url][i].find("a")!=None:
+				phones.append(street_addresses[url][i].a.get_text().replace(',',' ').replace('\n',''))
+			else:
+				phones.append("<MISSING>")
+			types.append(location_types[url][i].text.replace(',',' ').replace('\n',''))
+			lats.append(str(lats_lngs[url]).split('"lat":"')[i+1].split('"')[0])
+			longs.append(str(lats_lngs[url]).split('"lng":"')[i+1].split('"')[0])
+			try:
+				timing.append(hours[url][i].text.replace(',',' ').replace('\n',''))
+			except:
+				timing.append("<MISSING>")
+	
+		
+			for l in range(len(locs)):
+				row = []
+				row.append(base_url)
+				row.append(locs[l] if locs[l] else "<MISSING>")
+				row.append(streets[l] if streets[l] else "<MISSING>")
+				row.append(cities[l] if cities[l] else "<MISSING>")
+				row.append(states[l] if states[l] else "<MISSING>")
+				row.append(zips[l] if zips[l] else "<MISSING>")
+				row.append("US")
+				row.append(ids[l] if ids[l] else "<MISSING>")
+				row.append(phones[l] if phones[l] else "<MISSING>")
+				row.append(types[l] if types[l] else "<MISSING>")
+				row.append(lats[l] if lats[l] else "<MISSING>")
+				row.append(longs[l] if longs[l] else "<MISSING>")
+				row.append(timing[l] if timing[l] else "<MISSING>") 
+				row.append(page_url[url])
+				
+				data.append(row)
+	
+    # End scraper
+	return data
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()

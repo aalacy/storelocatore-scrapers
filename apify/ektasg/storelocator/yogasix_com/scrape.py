@@ -22,7 +22,13 @@ def parse_geo(url):
         lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
     except:
         lon = re.findall(r'\,(-?[\d\.]*)', url)[0]
-    lat = re.findall(r'\@(-?[\d\.]*)', url)[0]
+    try:
+        lat = re.findall(r'\@(-?[\d\.]*)', url)[0]
+    except:
+        try:
+            lat = re.findall(r'/@(-?[\d\.]*)', url)[0]
+        except:
+            lat = '<MISSING>'
     return lat, lon
 
 
@@ -55,12 +61,11 @@ def fetch_data():
 
     stores = driver.find_elements_by_xpath("//a[contains(@class,'button button--primary location-search-list__cta')]")
     names = [stores[i].get_attribute("href") for i in range(0, len(stores))]
-    #print("LINKS....." , names)
-    for i in range(0, len(names)):
+    for i in range(4,7):
         driver2.get(names[i])
         time.sleep(5)
         page_url = names[i]
-        print(page_url)
+        #print(page_url)
         try:
             store_name = driver2.find_element_by_css_selector('div.hero__title-copy').text
         except:
@@ -69,10 +74,12 @@ def fetch_data():
             pass
         else:
             try:
-                store_opening_hours =driver2.find_element_by_css_selector('div.map__days').get_attribute('textContent').replace("\n"," ")
+                hours_elems =driver2.find_elements_by_css_selector('div.map__days')
+                store_opening_hours =""
+                for j in range(len(hours_elems)):
+                    store_opening_hours = store_opening_hours + " " + hours_elems[j].get_attribute('textContent').replace("\n"," ")
             except:
                 store_opening_hours = '<MISSING>'
-
             try:
                 phone_no =driver2.find_element_by_xpath("//a[contains(@href,'tel:')]").get_attribute('textContent').replace("\n","")
             except:
@@ -96,7 +103,7 @@ def fetch_data():
                   city,
                   state,
                   zipcode,
-                  'CA',
+                  'US',
                   '<MISSING>',
                   phone_no,
                   '<MISSING>',

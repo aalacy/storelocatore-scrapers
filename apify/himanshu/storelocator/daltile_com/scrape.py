@@ -49,7 +49,7 @@ def fetch_data():
 
     app_key = soup_appkey.text.split("appkey: '")[1].split("'")[0]
 
-    print("r_appKey === " + str(app_key))
+    # print("r_appKey === " + str(app_key))
 
     for zip_code in zips:
         print(zip_code)
@@ -62,6 +62,7 @@ def fetch_data():
                                '"geolocs":{"geoloc":[{"addressline":"' + str(zip_code) + '","country":"","latitude":"",'
                                                                                          '"longitude":""}]},"searchradius":"100"}}}')
         json_data = r.json()
+       
 
         # it will used in store data.
         locator_domain = base_url

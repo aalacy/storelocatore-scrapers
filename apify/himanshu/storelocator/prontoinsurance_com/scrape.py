@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -24,6 +24,12 @@ def fetch_data():
     return_main_object = []
     addresses = []
     for location in soup.find_all("div",{'class':"location-tab"}):
+        page_url = "https://products.prontoinsurance.com" + location.find("a",{"class":'details-link'})["href"]
+        location_request = requests.get(page_url,headers=headers)
+        location_soup = BeautifulSoup(location_request.text,"lxml")
+        hours = ""
+        for hour in location_soup.find_all("h5",text=re.compile("Hours")):
+            hours = hours + " " + " ".join(list(hour.parent.stripped_strings))
         name = location.find('h5').text
         address_1 = location.find('span',{'class':"address1"}).text
         address_2 = location.find('span',{'class':"address2"}).text
@@ -46,16 +52,19 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(phone if phone != "" else "<MISSING>")
-        store.append("pronto insurance")
+        store.append("<MISSING>")
         if "-"  not in location["data-lat"]:
             store.append(location["data-lat"])
             store.append(location["data-lng"])
         else:
             store.append(location["data-lng"])
             store.append(location["data-lat"])
-        store.append("<MISSING>")
-        return_main_object.append(store)
-    return return_main_object
+        store.append(hours if hours else "<MISSING>")
+        store.append(page_url)
+        for i in range(len(store)):
+            if store[i] == "":
+                store[i] = "<MISSING>"
+        yield store
 
 def scrape():
     data = fetch_data()

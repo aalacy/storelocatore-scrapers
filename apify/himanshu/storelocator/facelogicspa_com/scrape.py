@@ -98,7 +98,7 @@ def fetch_data():
                 contact_url_details = requests.get("https://www.salonvision.com/facelogictx/", headers=headers)
                 contact_url_soup = BeautifulSoup(contact_url_details.text, "lxml")
                 address = contact_url_soup.select("#footerinfo")[0].get_text().replace("\r\n", '').split("|")
-                location_name = address[0].replace("\n", '').split(',')[0].strip()
+                location_name = "<MISSING>"
                 street_address = address[0].replace("\n", '').split(',')[1].strip() + " " + address[1].strip().split(',')[0].strip()
                 city = links.get_text()
                 state = address[1].strip().split(',')[1].strip().split(' ')[0].strip()
@@ -110,7 +110,7 @@ def fetch_data():
                 contact_url_details = requests.get("https://facelogicspawaco.com/contact-us/", headers=headers)
                 contact_url_soup = BeautifulSoup(contact_url_details.text, "lxml")
                 address = contact_url_soup.select(".et_pb_all_tabs")[0].select('.et_pb_tab_content')[0].get_text().replace("\n", '').split(',')
-                location_name = address[0]
+                location_name = "<MISSING>"
                 street_address = address[0]
                 city = links.get_text()
                 state = address[1].strip().split(' ')[0]
@@ -123,7 +123,7 @@ def fetch_data():
             detail_url = requests.get("http://www.facelogicspa.com" + links.get('href'), headers=headers)
             detail_soup = BeautifulSoup(detail_url.text, "lxml")
             address = detail_soup.select('.mt20.mb20')[0].find('p').get_text().replace('\r\n', '').strip().replace("         ", '').split(',')
-            location_name = address[0]
+            location_name = "<MISSING>"
             street_address = ''.join(address[:-1])
             city = links.get_text()
             state = address[-1].strip().split(' ')[0]
@@ -141,12 +141,13 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(phone)
-        store.append("Facelogic Spa")
+        store.append("<MISSING>")
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append(hours_of_operation)
         store.append(detail_page_url)
         return_main_object.append(store)
+
     return return_main_object
 
 def scrape():

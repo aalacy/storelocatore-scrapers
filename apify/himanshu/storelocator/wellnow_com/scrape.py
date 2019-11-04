@@ -45,7 +45,7 @@ def fetch_data():
                 city = address.split(",")[1]
                 street_address = address.split(",")[0]
                 phone = location_soup.find("a",{'href':re.compile("tel:")}).text.strip()
-                hours = location_soup.find("address").find("h5").text.strip()
+                hours = location_soup.find("address").find("h5").text.strip().replace('Accepting walk-in patients and online check-ins ',"")
                 name = location_soup.find("p",{"class":"h2"}).text.strip()
                 store = []
                 store.append("https://wellnow.com")
@@ -58,10 +58,12 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append(phone if phone else "<MISSING>")
                 store.append("<MISSING>")
-                store.append(store_data["latitude"])
-                store.append(store_data["longitude"])
+                store.append(store_data["lat"])
+                store.append(store_data["lng"])
                 store.append(hours if hours else "<MISSING>")
                 store.append(page_url)
+                store = [x.replace("–","-") if type(x) == str else x for x in store]
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
                 yield store
 
 def scrape():

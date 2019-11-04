@@ -74,7 +74,7 @@ def fetch_data():
                 phone = "<MISSING>"
             hours = " ".join(list(location_soup.find("div",{"class":'store-openinghours'}).stripped_strings))
             store.append("https://global.tommy.com")
-            store.append(name)
+            store.append("<MISSING>")
             store.append(",".join(store_data["title"].split(",")[1:-2]).strip().replace("\n",""))
             if store[-1] in addresses:
                 continue
@@ -95,7 +95,7 @@ def fetch_data():
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
             yield store
         if len(data) == MAX_RESULTS:
-            print("max count update")
+            #print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

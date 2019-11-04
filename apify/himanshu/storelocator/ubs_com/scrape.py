@@ -126,6 +126,8 @@ def fetch_data():
             try:
                 json_hours_data = r_hours.json()
 
+                page_url = "https://www.ubs.com" + json_hours_data["poDs"][0]["url"]
+
                 hours_of_operation = ""
                 phone = json_hours_data['telephoneNumber']
 

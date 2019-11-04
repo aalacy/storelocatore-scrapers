@@ -4,6 +4,10 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
+from urllib3.exceptions import InsecureRequestWarning
+import unicodedata
+
+requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,13 +28,19 @@ def fetch_data():
     r = requests.get("https://ravecinemas.com/full-theatre-list",headers=headers,verify=False)
     soup = BeautifulSoup(r.text,"lxml")
     for location in soup.find("div",{"class":"columnList wide"}).find_all("a"):
-        print(base_url + location["href"])
+        # print(base_url + location["href"])
         location_request = requests.get(base_url + location["href"],headers=headers,verify=False)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         if location_soup.find("div",{"class":"theatreMap"}) == None:
             continue
         geo_location = location_soup.find("div",{"class":"theatreMap"}).find("img")["data-src"]
-        location_details = json.loads(location_soup.find("script",{"type":"application/ld+json"}).text)
+        for script in location_soup.find_all("script",{"type":"application/ld+json"}):
+            try:
+                location_details = json.loads(script.text)
+                if "screenCount" in location_details:
+                    break
+            except:
+                continue
         address = location_details["address"][0]
         store = []
         store.append("https://ravecinemas.com")
@@ -49,6 +59,11 @@ def fetch_data():
         store.append(geo_location.split("&pp=")[1].split(",")[1].split("&")[0] if geo_location.split("&pp=")[1].split(",")[1].split("&")[0] else "<MISSING>")
         store.append("<MISSING>")
         store.append(base_url + location["href"])
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         yield store
 
 def scrape():
