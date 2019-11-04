@@ -1,5 +1,6 @@
 import requests
 
+from datetime import datetime
 from Scraper import Scrape
 
 URL = "https://www.elpolloloco.com/"
@@ -56,59 +57,60 @@ class Scraper(Scrape):
         stores = response.json()
 
         for store in stores:
-            # Store ID
-            location_id = store[0]
+            if datetime.strptime(store[10], '%Y-%m-%d %H:%M:%S.%f') <= datetime.now():
+                # Store ID
+                location_id = store[0]
 
-            # Page url
-            page_url = '<MISSING>'
+                # Page url
+                page_url = '<MISSING>'
 
-            # Type
-            location_type = 'Restaurant'
+                # Type
+                location_type = 'Restaurant'
 
-            # Name
-            location_title = f'El Pollo Loco - {store[3]}'
+                # Name
+                location_title = f'El Pollo Loco - {store[3]}'
 
-            # Street
-            street_address = store[1] + store[2]
+                # Street
+                street_address = store[1] + store[2]
 
-            # city
-            city = store[3]
+                # city
+                city = store[3]
 
-            # zip
-            zipcode = store[5]
+                # zip
+                zipcode = store[5]
 
-            # State
-            state = store[4]
+                # State
+                state = store[4]
 
-            # Phone
-            phone = store[6]
+                # Phone
+                phone = store[6]
 
-            # Lat
-            lat = store[8]
+                # Lat
+                lat = store[8]
 
-            # Long
-            lon = store[9]
+                # Long
+                lon = store[9]
 
-            # Hour
-            hour = ' '.join(store[13]) if len(' '.join(store[13]).strip()) != 0 else '<MISSING>'
+                # Hour
+                hour = ' '.join(store[13]) if len(' '.join(store[13]).strip()) != 0 else '<MISSING>'
 
-            # Country
-            country = store[15].split('/')[0]
+                # Country
+                country = store[15].split('/')[0]
 
-            # Store data
-            locations_ids.append(location_id)
-            page_urls.append(page_url)
-            locations_titles.append(location_title)
-            street_addresses.append(street_address)
-            states.append(state)
-            zip_codes.append(zipcode)
-            hours.append(hour)
-            latitude_list.append(lat)
-            longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
-            location_types.append(location_type)
+                # Store data
+                locations_ids.append(location_id)
+                page_urls.append(page_url)
+                locations_titles.append(location_title)
+                street_addresses.append(street_address)
+                states.append(state)
+                zip_codes.append(zipcode)
+                hours.append(hour)
+                latitude_list.append(lat)
+                longitude_list.append(lon)
+                phone_numbers.append(phone)
+                cities.append(city)
+                countries.append(country)
+                location_types.append(location_type)
 
         for (
                 locations_title,
