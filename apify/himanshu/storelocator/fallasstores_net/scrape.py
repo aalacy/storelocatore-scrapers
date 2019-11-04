@@ -1,11 +1,10 @@
 import csv
 import time
-
 import requests
 from bs4 import BeautifulSoup
 import re
 import json
- 
+
 
 
 def write_output(data):
@@ -56,9 +55,35 @@ def fetch_data():
         street_address = location["address_line_1"]
         if "address_line_2" in location and location["address_line_2"]:
             street_address += " " + location["address_line_2"]
-        city = location["city"]
-        state = location["state"]
-        zipp = location["postcode"]
+        if street_address == None:
+            street_address = location['address'].split(',')[0].strip()
+
+
+        if location["city"] != None:
+            city = location['city']
+        else:
+            city = location['address'].split(',')[1].strip()
+        if location["state"] != None:
+            state = location["state"]
+            zip = location["postcode"]
+        else:
+            sz = location['address'].split(',')[2].split()
+            # print(sz)
+            if len(sz) ==2:
+                state = sz[0].strip()
+                zip = sz[-1].strip()
+
+            else:
+                state = sz[0].strip()
+                zip =location['address'].split(',')[-1].strip()
+        if len(zip) ==3:
+            zipp= "00"+zip
+        else:
+            zipp = zip
+
+        # print(street_address +"|"+city+"|"+state+"|"+zipp)
+
+
         latitude = location["lat"]
         longitude = location["lng"]
         phone = location["phone"]

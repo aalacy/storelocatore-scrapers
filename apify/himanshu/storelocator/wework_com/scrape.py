@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import io
+import unicodedata
 import json
 
 def write_output(data):
@@ -10,75 +11,60 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
     headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.wework.com/locations"
     r = requests.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     address = []
-    exists = soup.find('div', {'class', 'countryList__ScrollContainer-mkgten-0'})
-    if exists:
-        i = 0
-        for data in exists.findAll('a'):
-            city = data.get_text()
-            print("================================================")
-            print("https://www.wework.com" + data.get('href'))
-            print("================================================")
-            detail_url = requests.get("https://www.wework.com" + data.get('href'), headers=headers)
-            detail_soup = BeautifulSoup(detail_url.text, "lxml")
-            if detail_soup.findAll('a', {'class', 'ray-card--link'}):
-                for details in detail_soup.findAll('a', {'class', 'ray-card--link'}):
-                    print(i)
-                    print("----------------------------------------------------------------------")
-                    print("https://www.wework.com" + details.get('href'))
-                    print("----------------------------------------------------------------------")
-                    detail_page_url = requests.get("https://www.wework.com" + details.get('href'), headers=headers)
-                    detail_page_soup = BeautifulSoup(detail_page_url.text, "lxml")
-                    if detail_page_soup.find('address', {'class', 'building-address'}):
-                        location_name = detail_page_soup.find('h1').get_text().strip()
-                        address = detail_page_soup.find('address', {'class', 'building-address'}).get_text().strip().replace('\n', '').replace('        ', ' ').split(' ')
-                        street_address = ' '.join(address[:-2][:-1])
-                        state = address[-2]
-                        zip = address[-1]
-                        if detail_page_soup.find('span', {'class', 'ray-text--body-small'}):
-                            if detail_page_soup.find('span', {'class', 'ray-text--body-small'}).find('a'):
-                                if detail_page_soup.find('span', {'class', 'ray-text--body-small'}).find('a').get_text().strip()[-1].isdigit():
-                                    phone = detail_page_soup.find('span', {'class', 'ray-text--body-small'}).find('a').get_text().strip()
-                            else:
-                                pass
-                        else:
-                            phone = "<MISSING>"
-                        store = []
-                        store.append("https://www.wework.com" + details.get('href'))
-                        store.append(location_name)
-                        store.append(street_address)
-                        store.append(city)
-                        store.append(state)
-                        store.append(zip)
-                        store.append("US")
-                        store.append("<MISSING>")
-                        store.append(phone)
-                        store.append("WeWork")
-                        store.append("<MISSING>")
-                        store.append("<MISSING>")
-                        store.append("<MISSING>")
-                        return_main_object.append(store)
-                    else:
-                        print("Not Found")
-                        pass
-                i = i + 1
-            else:
-                print("Not Found detail URL")
-                pass
-        return return_main_object
+    for country in soup.find_all("h3"):
+        if country.text == "United States":
+            country_code = "US"
+        elif country.text == "Canada":
+            country_code = "US"
+        else:
+            continue
+        for city in country.find_next_sibling("ul").find_all("a"):
+            city_request = requests.get("https://www.wework.com" + city["href"],headers=headers)
+            city_soup = BeautifulSoup(city_request.text,"lxml")
+            for locaion in city_soup.find_all("a",{"class":'ray-card'}):
+                page_url = "https://www.wework.com" + locaion["href"]
+                location_request = requests.get(page_url,headers=headers)
+                location_soup = BeautifulSoup(location_request.text,"lxml")
+                for script in location_soup.find_all("script",{"type":'application/ld+json'}):
+                    json_data = json.loads(script.text)
+                    if "address" in json_data:
+                        break
+                name = location_soup.find("div",{"class":'lead-form-building-name'}).text.strip()
+                store = []
+                store.append("https://www.wework.com")
+                store.append(name)
+                store.append(json_data["address"]["streetAddress"].split("\n")[0])
+                store.append(json_data["address"]["addressLocality"] if json_data["address"]["addressLocality"] else "<MISSING>")
+                store.append(json_data["address"]["addressRegion"] if json_data["address"]["addressRegion"] else "<MISSING>")
+                store.append(json_data["address"]["postalCode"] if json_data["address"]["postalCode"] else "<MISSING>")
+                store.append(json_data["address"]["addressCountry"])
+                store.append("<MISSING>")
+                store.append(json_data["telephone"] if json_data["telephone"] else "<MISSING>")
+                store.append("<MISSING>")
+                store.append(json_data["geo"]["latitude"])
+                store.append(json_data["geo"]["longitude"])
+                store.append("<MISSING>")
+                store.append(page_url)
+                for i in range(len(store)):
+                    if type(store[i]) == str:
+                        store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+                store = [x.replace("–","-") if type(x) == str else x for x in store]
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                yield store
 
 def scrape():
     data = fetch_data()

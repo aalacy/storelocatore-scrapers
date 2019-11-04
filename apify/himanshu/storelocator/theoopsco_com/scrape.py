@@ -24,19 +24,31 @@ def fetch_data():
     r = requests.get("https://www.theoopsco.com/our-locations", headers=header)
     soup = BeautifulSoup(r.text, "lxml")
     for x in soup.find_all('div',{'class':'c4inlineContent'}):
+
         locator_domain  = base_url
-        location_name = x.text.strip().split('\n')[0].strip()
-        street_address = x.text.strip().split('\n')[1].strip()
-        city = ''
+        location_name = x.text.strip().split('\n')[0].strip().encode('ascii', 'ignore').decode('ascii').strip()
+
+        street_address = x.text.strip().split('\n')[1].strip().encode('ascii', 'ignore').decode('ascii').strip()
+        city = location_name
         state = ''
         zip = ''
         country_code = 'US'
         store_number = ''
-        phone = x.text.strip().split('\n')[2].strip()
+        phone = x.text.strip().split('\n')[2].strip().encode('ascii', 'ignore').decode('ascii').strip()
         location_type = '<MISSING>'
         latitude = ''
         longitude = ''
-        hours_of_operation =  x.text.strip().split('\n')[5].strip() + ' ' +x.text.strip().split('\n')[6].strip() + ' ' +x.text.strip().split('\n')[7].strip()
+        hours = x.find(lambda tag: (tag.name == "p" ) and "Store Hours" in tag.text)
+        hr = []
+        for h in hours.find_all_next('p'):
+            list_h = list(h.stripped_strings)
+            list_h = [el.replace('\xa0',' ') for el in list_h]
+            if list_h == []:
+                break
+            hr.append("".join(list_h))
+        hours_of_operation = " ".join(hr)
+
+
         page_url = "https://www.theoopsco.com/our-locations"
 
 
@@ -58,6 +70,8 @@ def fetch_data():
         store.append(hours_of_operation if hours_of_operation else '<MISSING>')
         store.append(page_url if page_url else '<MISSING>')
         return_main_object.append(store)
+        # print(" data=="+str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     return return_main_object
 
 
@@ -68,3 +82,5 @@ def scrape():
 
 
 scrape()
+
+

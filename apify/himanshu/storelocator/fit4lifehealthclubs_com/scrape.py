@@ -3,16 +3,14 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import unicodedata
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open('data.csv', 'w') as output_file:
+        writer = csv.writer(output_file, delimiter=",")
 
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-
-        # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
 
@@ -43,12 +41,14 @@ def fetch_data():
                 
                 r1 = requests.get(link, headers=headers)
                 soup1 = BeautifulSoup(r1.text, "lxml")
+                if soup1.find("span",text=re.compile(" OPENING ")):
+                        continue
                 address_tmp = soup1.find_all('div',{'class':'wpb_text_column'})
                 lng = soup1.find_all('iframe')[1]['src'].split('!2d')[1].split('!3d')[0]             
                 lat = soup1.find_all('iframe')[1]['src'].split('!2d')[1].split('!3d')[1].split('!')[0]
                
               
-                tem_var =[]
+                store =[]
                 if(len(address_tmp) ==11):
                         address_tmp1= address_tmp[3]
                         address_tmp2=list(address_tmp1.stripped_strings)                       
@@ -177,33 +177,26 @@ def fetch_data():
                         phone = phone_tmp1[1]
                         hour = address_tmp[-1].text.strip().replace('\n','').strip().replace('\xa0','').strip().replace('        ','')
                         
-                tem_var.append('https://fit4lifehealthclubs.com/')
-                tem_var.append(location_name)
-                tem_var.append(address)
-                tem_var.append(city)
-                tem_var.append(state) 
-                tem_var.append(zip1)
-                tem_var.append('US')
-                tem_var.append("<MISSING>")
-                tem_var.append(phone)
-                tem_var.append("<MISSING>")
-                tem_var.append(lat)
-                tem_var.append(lng)
-                tem_var.append(hour)
-                tem_var.append(link) 
-                print(tem_var)              
-                return_main_object.append(tem_var) 
-              
-               
-
-
-
-       
-         
-                   
- 
-    return return_main_object
-
+                store.append('https://fit4lifehealthclubs.com/')
+                store.append(location_name)
+                store.append(address)
+                store.append(city)
+                store.append(state) 
+                store.append(zip1)
+                store.append('US')
+                store.append("<MISSING>")
+                store.append(phone)
+                store.append("<MISSING>")
+                store.append(lat)
+                store.append(lng)
+                store.append(hour)
+                store.append(link)
+                for i in range(len(store)):
+                        if type(store[i]) == str:
+                                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+                store = [x.replace("–","-") if type(x) == str else x for x in store]
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                yield store
 
 def scrape():
     data = fetch_data()
