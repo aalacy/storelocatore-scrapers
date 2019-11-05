@@ -61,7 +61,7 @@ def fetch_data():
 
     stores = driver.find_elements_by_xpath("//a[contains(@class,'button button--primary location-search-list__cta')]")
     names = [stores[i].get_attribute("href") for i in range(0, len(stores))]
-    for i in range(4,7):
+    for i in range(len(names)):
         driver2.get(names[i])
         time.sleep(5)
         page_url = names[i]
