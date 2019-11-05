@@ -72,7 +72,15 @@ class Scraper(Scrape):
             lon = store['longitude']
 
             # Hour
-            hour = store['hours'][0]
+            hour = ' '.join([
+                'Sunday: ' + store['hours'][0],
+                'Monday: ' + store['hours'][1],
+                'Tuesday: ' + store['hours'][2],
+                'Wednesday: ' + store['hours'][3],
+                'Thursday: ' + store['hours'][4],
+                'Friday: ' + store['hours'][5],
+                'Saturday: ' + store['hours'][6],
+                ])
 
             # Country
             country = 'US'

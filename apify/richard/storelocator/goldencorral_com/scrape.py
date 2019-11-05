@@ -39,10 +39,10 @@ class Scraper(Scrape):
             driver.get(store_link)
 
             # Store ID
-            location_id = '<MISSING>'
+            location_id = store_link.replace('https://', '').strip('/').split('/')[2]
 
             # Page url
-            page_url = store_link.replace('https://', '').strip('/').split('/')[2]
+            page_url = store_link
 
             # Type
             location_type = 'Restaurant'
