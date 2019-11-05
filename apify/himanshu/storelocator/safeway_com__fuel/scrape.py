@@ -12,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -30,7 +30,7 @@ def convert_time(time):
     return str(hour) + ":" + str(time)[-2:] + " " + is_am
 
 
-def parser(location_soup):
+def parser(location_soup,page_url):
     street_address = " ".join(list(location_soup.find("span",{'class':"c-address-street-1"}).stripped_strings))
     if location_soup.find("span",{'class':"c-address-street-2"}) != None:
         street_address = street_address + " " +  " ".join(list(location_soup.find("span",{'class':"c-address-street-2"}).stripped_strings))
@@ -46,7 +46,7 @@ def parser(location_soup):
     hours = hours + " " + location_soup.find("h2",{"class":"LocationInfo-hoursTitle"}).text.strip() + " " + " ".join(list(location_soup.find("table",{'class':"c-location-hours-details"}).stripped_strings))
     if location_soup.find("div",{'data-analytics-type':"nap"}):
         pharmacy_id = location_soup.find("div",{'data-analytics-type':"nap"})["data-pharmacy-id"]
-        hours_request = requests.get("https://local.safeway.com/pharmacydata/" + str(pharmacy_id).lower() + ".html",headers=headers)
+        hours_request = requests.get("https://local.safeway.com/pharmacydata/" + str(pharmacy_id).lower() + ".json",headers=headers)
         hour_data = hours_request.json()["hours"]["days"]
         hours = hours + " Pharmacy Hours "
         for hour in hour_data:
@@ -70,6 +70,7 @@ def parser(location_soup):
     store.append(lat)
     store.append(lng)
     store.append(hours)
+    store.append(page_url)
     return store
 
 def fetch_data():
@@ -79,26 +80,26 @@ def fetch_data():
     return_main_object = []
     for states in soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
         if states["href"].count("/") == 4:
-            location_request = requests.get("https://local.safeway.com/" + states["href"].replace("../",""))
+            location_request = requests.get("https://local.safeway.com/" + states["href"].replace("../",""),headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
-            store_data = parser(location_soup)
+            store_data = parser(location_soup,"https://local.safeway.com/" + states["href"].replace("../",""))
             yield store_data
         else:
-            state_request = requests.get("https://local.safeway.com/" + states["href"])
+            state_request = requests.get("https://local.safeway.com/" + states["href"],headers=headers)
             state_soup = BeautifulSoup(state_request.text,"lxml")
             for city in state_soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
                 if city["href"].count("/") == 4:
-                    location_request = requests.get("https://local.safeway.com/" + city["href"].replace("../",""))
+                    location_request = requests.get("https://local.safeway.com/" + city["href"].replace("../",""),headers=headers)
                     location_soup = BeautifulSoup(location_request.text,"lxml")
-                    store_data = parser(location_soup)
+                    store_data = parser(location_soup,"https://local.safeway.com/" + city["href"].replace("../",""))
                     yield store_data
                 else:
-                    city_request = requests.get("https://local.safeway.com/" + city["href"].replace("../",""))
+                    city_request = requests.get("https://local.safeway.com/" + city["href"].replace("../",""),headers=headers)
                     city_soup = BeautifulSoup(city_request.text,"lxml")
                     for location in city_soup.find_all("a",{'class':"Teaser-nameLink"}):
-                        location_request = requests.get("https://local.safeway.com/" + location["href"].replace("../",""))
+                        location_request = requests.get("https://local.safeway.com/" + location["href"].replace("../",""),headers=headers)
                         location_soup = BeautifulSoup(location_request.text,"lxml")
-                        store_data = parser(location_soup)
+                        store_data = parser(location_soup,"https://local.safeway.com/" + location["href"].replace("../",""))
                         yield store_data
 
 def scrape():

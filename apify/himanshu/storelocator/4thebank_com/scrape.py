@@ -3,7 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import sgzip
+import unicodedata
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -11,44 +12,69 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    base_url= "https://www.4thebank.com/locations/?atm=&branch=&loc=&state="
-    r = requests.get(base_url)
-    soup= BeautifulSoup(r.text,"lxml")
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
-    marker  = soup.find_all("marker")
-    for i in marker:
-        tem_var =[]
-        if i['lobbyhours']:
-            time = i['lobbyhours'].replace("<br/>",'').replace("\n"," ").replace("<br>"," ")+ ' ' +" ".join(i['driveuphours'].split("<br/>")).replace("\n","").replace("<br/>","")
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+    }
+    return_main_object = []
+    addresses = []
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 100
+    MAX_DISTANCE = 500
+    coord = search.next_coord()
+    while coord:
+        result_coords = []
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        x = coord[0]
+        y = coord[1]
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        r = requests.get("https://www.busey.com/_/api/branches/" + str(x) + "/" + str(y) + "/500",headers=headers)
+        data = r.json()["branches"]
+        for store_data in data:
+            lat = store_data["lat"]
+            lng = store_data["long"]
+            result_coords.append((lat, lng))
+            store = []
+            store.append("https://www.busey.com")
+            store.append(store_data["name"])
+            store.append(store_data["address"])
+            if store[-1] in addresses:
+                continue
+            addresses.append(store[-1])
+            store.append(store_data["city"]  if store_data["city"] else "<MISSING>")
+            store.append(store_data["state"]  if store_data["state"] else "<MISSING>")
+            store.append(store_data["zip"] if store_data["zip"] else "<MISSING>")
+            store.append("US")
+            store.append("<MISSING>")
+            store.append(store_data["phone"] if "phone" in store_data and store_data["phone"] else "<MISSING>")
+            store.append("<MISSING>")
+            store.append(lat)
+            store.append(lng)
+            hours = " ".join(list(BeautifulSoup(store_data["description"],"lxml").stripped_strings))
+            store.append(hours if hours else "<MISSING>")
+            store.append("<MISSING>")
+            for i in range(len(store)):
+                if type(store[i]) == str:
+                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            store = [x.replace("–","-") if type(x) == str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            yield store
+        if len(data) < MAX_RESULTS:
+            #print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif len(data) == MAX_RESULTS:
+            #print("max count update")
+            search.max_count_update(result_coords)
         else:
-            time = "<MISSING>"
-        tem_var.append("https://www.4thebank.com")
-        tem_var.append(i['name'])
-        tem_var.append(i['address'])
-        tem_var.append(i['city'])
-        tem_var.append(i['state'])
-        tem_var.append(i['zipcode'])
-        tem_var.append("US")
-        tem_var.append("<MISSING>")
-        tem_var.append(i['phone'] if i['phone'] else "<MISSING>")
-        tem_var.append("4thebank")
-        tem_var.append(i['lat'])
-        tem_var.append(i['lng'])
-        tem_var.append(time if time else "<MISSING>")
-        return_main_object.append(tem_var)
-       
-
-    return return_main_object
-
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_coord()
 
 def scrape():
     data = fetch_data()

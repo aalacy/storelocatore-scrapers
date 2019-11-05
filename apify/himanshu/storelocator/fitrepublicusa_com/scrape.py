@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import unicodedata
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,41 +30,45 @@ def fetch_data():
     
 
     for i in k:
-        tem_var=[]
-        link =  i.find_all("a")[0]['href'].split("map=")[-1]
-        if "https://her.is/2Gi0H5Y" in link:
-            lat = "<MISSING>"
-            lng = "<MISSING>"
+        store=[]
+        link =  i.find("a")['href']
+        if "map=" in link:
+            lat = i.find("a")['href'].split("map=")[-1].split(',')[0]
+            lng = i.find("a")['href'].split("map=")[-1].split(',')[1]
+        elif len(i.find_all("a")) > 1 and "map=" in i.find_all("a")[1]["href"]:
+            lat = i.find_all("a")[1]['href'].split("map=")[-1].split(',')[0]
+            lng = i.find_all("a")[1]['href'].split("map=")[-1].split(',')[1]
         else:
-            lat = i.find_all("a")[0]['href'].split("map=")[-1].split(',')[0]
-            lng = i.find_all("a")[0]['href'].split("map=")[-1].split(',')[1]
-            print( i.find_all("a")[0]['href'].split("map=")[-1].split(',')[1])
-        
+            lat = "<MISSING>"
+            lng = '<MISSING>'
         name = list(i.stripped_strings)[0]
         st = list(i.stripped_strings)[1].split("-")[0]
         phone = "-".join(list(i.stripped_strings)[1].split("-")[1:]).strip()
         city = list(i.stripped_strings)[2].split(",")[0]
         state = list(i.stripped_strings)[2].split(",")[1].split( )[0]
         zip1 = list(i.stripped_strings)[2].split(",")[1].split( )[-1].replace("MO","64468")
-        print("================")
+        # print("================")
 
-        tem_var.append("https://www.fitrepublicusa.com")
-        tem_var.append(name)
-        tem_var.append(st)
-        tem_var.append(city)
-        tem_var.append(state)
-        tem_var.append(zip1)
-        tem_var.append("US")
-        tem_var.append("<MISSING>")
-        tem_var.append(phone)
-        tem_var.append("<MISSING>")
-        tem_var.append(lat)
-        tem_var.append(lng)
-        tem_var.append("<MISSING>")
-        tem_var.append("https://www.fitrepublicusa.com/locations")
-        print(tem_var)
-        return_main_object.append(tem_var)
-    return return_main_object
+        store.append("https://www.fitrepublicusa.com")
+        store.append(name)
+        store.append(st)
+        store.append(city)
+        store.append(state)
+        store.append(zip1)
+        store.append("US")
+        store.append("<MISSING>")
+        store.append(phone)
+        store.append("<MISSING>")
+        store.append(lat)
+        store.append(lng)
+        store.append("<MISSING>")
+        store.append("https://www.fitrepublicusa.com/locations")
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        yield store
 
 
 def scrape():
