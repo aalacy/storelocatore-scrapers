@@ -1,5 +1,3 @@
-import requests
-
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -11,7 +9,6 @@ class Scraper(Scrape):
     def __init__(self, url):
         Scrape.__init__(self, url)
         self.data = []
-        self.seen = []
 
     def fetch_data(self):
         # store data
@@ -27,28 +24,7 @@ class Scraper(Scrape):
         hours = []
         countries = []
         location_types = []
-        stores = []
         page_urls = []
-        store_hours = {}
-
-        headers = {
-            'authority': 'www.goldencorral.com',
-            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.70 Safari/537.36',
-            'dnt': '1',
-            'accept': '*/*',
-            'sec-fetch-site': 'same-origin',
-            'sec-fetch-mode': 'cors',
-            'referer': 'https://www.goldencorral.com/locations/',
-            'accept-encoding': 'gzip, deflate, br',
-            'accept-language': 'en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7',
-            'cookie': '_ga=GA1.2.8386502.1571548028; _gcl_au=1.1.1596113616.1571548029; _fbp=fb.1.1571548029699.1130326595; _gid=GA1.2.729568158.1572068476; _gat=1',
-        }
-        stores.extend(requests.get('https://www.goldencorral.com/wp-json/locator/v1/search/46.06/-109.14/42.61/-125.12/49.32/-93.17/', headers=headers).json())
-        stores.extend(requests.get('https://www.goldencorral.com/wp-json/locator/v1/search/38.85/-107.91/34.99/-123.89/42.51/-91.94/', headers=headers).json())
-        stores.extend(requests.get('https://www.goldencorral.com/wp-json/locator/v1/search/33.3/-105.31/29.17/-121.29/37.24/-89.34/', headers=headers).json())
-        stores.extend(requests.get('https://www.goldencorral.com/wp-json/locator/v1/search/31.22/-84.22/27/-100.19/35.26/-68.24/', headers=headers).json())
-        stores.extend(requests.get('https://www.goldencorral.com/wp-json/locator/v1/search/38.76/-83.78/34.89/-99.75/42.43/-67.81/', headers=headers).json())
-        stores.extend(requests.get('https://www.goldencorral.com/wp-json/locator/v1/search/43.93/-82.09/40.35/-98.07/47.31/-66.12/', headers=headers).json())
 
         options = Options()
         options.add_argument("--headless")
@@ -61,73 +37,63 @@ class Scraper(Scrape):
         for store_link in store_links:
             print(f'Getting info for store {store_link}')
             driver.get(store_link)
-            link = store_link.replace('https://', '').strip('/').split('/')[2]
+
+            # Store ID
+            location_id = '<MISSING>'
+
+            # Page url
+            page_url = store_link.replace('https://', '').strip('/').split('/')[2]
+
+            # Type
+            location_type = 'Restaurant'
+
+            # Name
+            location_title = driver.find_element_by_css_selector('h1.heading-m').get_attribute('textContent')
+
+            # Street
+            street_address = ' '.join(driver.find_element_by_css_selector('div.location-detail-info-container > address').get_attribute('innerHTML').split('<br>')[:-1])
+
+            # city
+            city = driver.find_element_by_css_selector('div.location-detail-info-container > address').get_attribute('innerHTML').split('<br>')[1].split(',')[0]
+
+            # zip
+            zipcode = driver.find_element_by_css_selector('div.location-detail-info-container > address').get_attribute('innerHTML').split('<br>')[1].split(',')[1][-5:]
+
+            # State
+            state = driver.find_element_by_css_selector('div.location-detail-info-container > address').get_attribute('innerHTML').split('<br>')[1].split(',')[1][:-5].strip()
+
+            # Phone
+            phone = driver.find_element_by_css_selector('a.tel').get_attribute('textContent')
+
+            # Lat
+            lat = driver.find_element_by_css_selector('div.location-detail-info-container > address').get_attribute('data-lat')
+
+            # Long
+            lon = driver.find_element_by_css_selector('div.location-detail-info-container > address').get_attribute('data-lng')
+
+            # Hour
             try:
                 hour = driver.find_element_by_css_selector('ul.location-detail-hours').get_attribute('textContent')
             except:
                 hour = '<MISSING>'
-            store_hours[link] = {
-                'hour': hour,
-                'store_link': store_link
-            }
 
+            # Country
+            country = 'US'
 
-        for store in stores:
-            if store['opening_soon'] != "1" and store['customer'] not in self.seen:
-                # Store ID
-                location_id = store['customer']
-
-                # Page url
-                page_url = store_hours[location_id]['store_link']
-
-                # Type
-                location_type = 'Restaurant'
-
-                # Name
-                location_title = store['company']
-
-                # Street
-                street_address = store['address']
-
-                # city
-                city = store['city']
-
-                # zip
-                zipcode = store['zip']
-
-                # State
-                state = store['state']
-
-                # Phone
-                phone = store['phone']
-
-                # Lat
-                lat = store['lat']
-
-                # Long
-                lon = store['lng']
-
-                # Hour
-                hour = store_hours[location_id]['hour']
-
-                # Country
-                country = 'US'
-
-                # Store data
-                locations_ids.append(location_id)
-                locations_titles.append(location_title)
-                street_addresses.append(street_address)
-                states.append(state)
-                zip_codes.append(zipcode)
-                hours.append(hour)
-                latitude_list.append(lat)
-                longitude_list.append(lon)
-                phone_numbers.append(phone)
-                cities.append(city)
-                countries.append(country)
-                location_types.append(location_type)
-                page_urls.append(page_url)
-                self.seen.append(store['customer'])
+            # Store data
+            locations_ids.append(location_id)
+            locations_titles.append(location_title)
+            street_addresses.append(street_address)
+            states.append(state)
+            zip_codes.append(zipcode)
+            hours.append(hour)
+            latitude_list.append(lat)
+            longitude_list.append(lon)
+            phone_numbers.append(phone)
+            cities.append(city)
+            countries.append(country)
+            location_types.append(location_type)
+            page_urls.append(page_url)
 
         for (
                 locations_title,
