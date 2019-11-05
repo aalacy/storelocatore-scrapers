@@ -37,7 +37,7 @@ def fetch_data():
             lng.append(i['lng'])
             # print(i["phone"])
             name1.append(i["phone"])
-   
+
 
     # print(len(lat))
     db =  soup.find_all('div',{'class':'location'})
@@ -46,22 +46,27 @@ def fetch_data():
         locator_domain = base_url
         location_name = val.find_previous('h3').text.strip()
         street_address = val.find('p',{'class':'address'}).text.split('\n')[0].strip()
-        city =  val.find('p',{'class':'address'}).text.split('\n')[1].strip().split(',')[0].strip()
-        state = val.find('p',{'class':'address'}).text.split('\n')[1].strip().split(',')[1].strip().split(' ')[0].strip()
-        zip = '<MISSING>'
+        city =  val.find('p',{'class':'address'}).text.split('\n')[1].strip().split(',')[0].strip().replace('AR 72837','').strip()
+
+        if len(val.find('p',{'class':'address'}).text.split('\n')[1].strip().split(',')) >1:
+            state = val.find('p',{'class':'address'}).text.split('\n')[1].strip().split(',')[1].split()[0].strip()
+        else:
+            state = val.find('p',{'class':'address'}).text.split('\n')[1].strip().split(',')[0].split()[-2].strip()
+        zip = (val.find('p',{'class':'address'}).text.split('\n')[1].strip().split(",")[-1].split( )[-1].replace("AR","<MISSING>"))
+        # print(city +" | "+state+" | "+zip)
         store_number = '<MISSING>'
         phone = val.find('p',{'class':'address'}).find_next('p').text.replace('Phone:','').strip()
-        country_code = 'US'        
+        country_code = 'US'
         location_type = '<MISSING>'
         # latitude = ''
         # longitude = ''
-        
+
         for i in range(len(name1)):
             if name1[i]==phone:
                 # print(street_address)
                 latitude.append(lat[index])
                 longitude.append(lng[index])
-        
+
         hours_of_operation = val.find_all('div',{'class':'hours-row'})
         bn = []
         for target_list in hours_of_operation:
@@ -82,7 +87,7 @@ def fetch_data():
         store.append(location_type if location_type else '<MISSING>')
         store.append(latitude[index] if latitude[index] else '<MISSING>')
         store.append(longitude[index] if longitude[index]  else '<MISSING>')
-        
+
         store.append(hours_of_operation  if hours_of_operation else '<MISSING>')
         store.append(page_url  if page_url else '<MISSING>')
         if "1900 East Oak Street" in store:
@@ -92,11 +97,11 @@ def fetch_data():
         return_main_object.append(store)
     # print(len(latitude))
     return return_main_object
-    
-        
+
+
 def scrape():
-    data = fetch_data()  
-    
+    data = fetch_data()
+
     write_output(data)
 
 scrape()

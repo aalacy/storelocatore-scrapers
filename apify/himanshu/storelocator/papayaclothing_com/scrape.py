@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -27,23 +27,25 @@ def fetch_data():
     return_main_object = []
     location_list = r.json()["stores"]
     for i in range(len(location_list)):
-            store_data = location_list[i]
-            store = []
-            store.append("https://www.papayaclothing.com")
-            store.append(store_data["name"])
-            store.append(store_data["address1"] + store_data["address2"] if "address2" in store_data and store_data["address2"] != None else store_data["address1"])
-            store.append(store_data["city"])
-            store.append(store_data["state"])
-            store.append(store_data["zipcode"])
-            store.append("US")
-            store.append("<MISSING>")
-            store.append(store_data["telephone"])
-            store.append("papaya")
-            store.append(store_data["lat"])
-            store.append(store_data["lng"])
-            store.append("<MISSING>")
-            return_main_object.append(store)
-    return return_main_object
+        store_data = location_list[i]
+        store = []
+        store.append("https://www.papayaclothing.com")
+        store.append(store_data["name"])
+        if "(opening" in store[-1]:
+            continue
+        store.append(store_data["address1"] + store_data["address2"] if "address2" in store_data and store_data["address2"] != None else store_data["address1"])
+        store.append(store_data["city"])
+        store.append(store_data["state"])
+        store.append(store_data["zipcode"] if store_data["zipcode"] else '<MISSING>')
+        store.append("US")
+        store.append("<MISSING>")
+        store.append(store_data["telephone"] if store_data["telephone"] else "<MISSING>")
+        store.append("papaya")
+        store.append(store_data["lat"])
+        store.append(store_data["lng"])
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        yield store
 
 def scrape():
     data = fetch_data()

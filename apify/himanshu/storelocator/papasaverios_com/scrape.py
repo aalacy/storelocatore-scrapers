@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -33,6 +33,8 @@ def fetch_data():
         store = []
         store.append("https://papasaverios.com")
         store.append(location_details[0])
+        if "COMING SOON" in store[-1]:
+            continue
         if len(address.split(",")) == 4:
             store.append(" ".join(address.split(",")[:-2]))
             store.append(address.split(",")[2])
@@ -47,12 +49,14 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(location_details[2].split("Phone:")[1] if "Coming Soon!" not in location_details[2].split("Phone:")[1] else "<MISSING>")
-        store.append("papa saverio's")
+        store.append("<MISSING>")
         store.append(geo_location.split("q=loc:")[1].split(",")[0])
         store.append(geo_location.split("q=loc:")[1].split(",")[1])
         store.append(" ".join(location_details[6:]) if " ".join(location_details[6:]) != "" else "<MISSING>")
-        return_main_object.append(store)
-    return return_main_object
+        store.append("https://papasaverios.com/all-locations")
+        store = [x.replace("–","-") for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        yield store
 
 def scrape():
     data = fetch_data()

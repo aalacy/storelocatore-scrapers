@@ -33,6 +33,8 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
 
     for part in soup.find_all("div", {"class": "main_color av_default_container_wrap container_wrap fullsize"}):
+        state = part.find_previous_sibling("div")["id"]
+        state2 = part.find_previous_sibling("div").find("h1").text.upper()
         for semi_part in part.find_all("div", {"class": "flex_column"}):
             temp_storeaddresss = list(semi_part.stripped_strings)
 
@@ -54,20 +56,19 @@ def fetch_data():
                         lat = lat_val.split(",")[0]
                         lag = lat_val.split(",")[1]
                 if 'COMING SOON!' in temp_storeaddresss:
-                    temp_storeaddresss.remove('COMING SOON!');
+                    continue
                 if 'CATERING' in temp_storeaddresss:
                     temp_storeaddresss.remove('CATERING');
                 if 'ONLINE ORDERS' in temp_storeaddresss:
                     temp_storeaddresss.remove('ONLINE ORDERS');
                 location_name = temp_storeaddresss[0]
                 row_add = temp_storeaddresss[1:]
-                row = ' '.join(map(str, row_add))
+                row = ' '.join(map(str, row_add)).split(" Phone ")[0]
                 phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(temp_storeaddresss))
                 if Enquiry(phone_list):
                     phone = phone_list[0]
                 else:
                     phone = "<MISSING>"
-
                 us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(temp_storeaddresss))
                 if Enquiry(us_zip_list):
                     zip = us_zip_list[-1]
@@ -75,22 +76,21 @@ def fetch_data():
                     zip = "<MISSING>"
                 return_object = []
                 return_object.append(base_url)
-                return_object.append(location_name)
+                return_object.append(location_name.capitalize())
                 return_object.append("<INACCESSIBLE>")
                 return_object.append("<INACCESSIBLE>")
-                return_object.append("<INACCESSIBLE>")
+                return_object.append(state2)
                 return_object.append(zip)
                 return_object.append("US")
                 return_object.append("<MISSING>")
                 return_object.append(phone)
                 return_object.append("<MISSING>")
                 return_object.append(lat)
-                return_object.append(lag)
+                return_object.append(lag.replace("+-","-"))
                 return_object.append("<MISSING>")
-                return_object.append(row)
-                return_object.append("<MISSING>")
-                return_main_object.append(return_object)
-    return return_main_object
+                return_object.append(row.replace(state2,"").replace(state,"").replace(zip,"").replace(",  ",""))
+                return_object.append("https://urbanbrickspizza.com/locations/")
+                yield return_object
 
 def scrape():
     data = fetch_data()

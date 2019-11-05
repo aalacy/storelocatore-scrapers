@@ -38,8 +38,8 @@ def fetch_data():
     store_number = ""
     phone = ""
     location_type = ""
-    latitude = ""
-    longitude = ""
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = ""
     page_url = ""
@@ -108,10 +108,10 @@ def fetch_data():
             hours_of_operation = ""
 
         location_name = soup_location.find("h1").text
-        geo_url = soup_location.find("a",{"id":"ctl00_cph_main_content_aMapItWithGoogle"})["href"]
+        # geo_url = soup_location.find("a",{"id":"ctl00_cph_main_content_aMapItWithGoogle"})["href"]
 
-        latitude = geo_url.split("&spn=")[1].split(",")[0]
-        longitude = geo_url.split("&spn=")[1].split(",")[1].split("&")[0]
+        # latitude = geo_url.split("&spn=")[1].split(",")[0]
+        # longitude = geo_url.split("&spn=")[1].split(",")[1].split("&")[0]
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]

@@ -7,6 +7,9 @@ import sgzip
 import json
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+import platform
+
+system = platform.system()
 
 def get_driver():
     options = Options()
@@ -14,7 +17,10 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
-    return webdriver.Firefox(executable_path='./geckodriver', options=options)
+    if "linux" in system.lower():
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)
+    else:
+        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
     
 
 def write_output(data):
@@ -30,17 +36,10 @@ def write_output(data):
 
 def minute_to_hours(time):
     am = "AM"
-    hour = int(time / 60)
-    if hour > 12:
+    hour = str(time)
+    if int(hour) > 1200:
         am = "PM"
-        hour = hour - 12
-    if int(str(time / 60).split(".")[1]) == 0:
-        hour1 = str(round(hour, 4))
-        return str(hour1) + ":00" + " " + am
-        
-    else:
-        sec=(str(int(str(time / 60).split(".")[1]) * 6)[:2])
-        return str(hour) + ":" + sec + " " + am
+    return str(hour)[0:2] + ":" + str(hour)[2:4] + am
 
 def fetch_data():
     driver = get_driver()
@@ -65,20 +64,21 @@ def fetch_data():
    
     soup = BeautifulSoup(driver.page_source, "lxml")
     while coords:
-        print(coords)
+        # print(coords)
         result_coords = []
         try:
+            # print("https://www.acehardware.com/api/commerce/storefront/locationUsageTypes/SP/locations?pageSize=1000&filter=geo+near("+str(coords[0])+","+str(coords[0])+",5000000000000)")
             k = s.get("https://www.acehardware.com/api/commerce/storefront/locationUsageTypes/SP/locations?pageSize=1000&filter=geo+near("+str(coords[0])+","+str(coords[0])+",5000000000000)", headers=headers).json()
         except:
             continue
         data = k['items']
         current_results_len = len(data)
-        print(current_results_len)
+        # print(current_results_len)
         for val in data:
             kk=''
             for x in val['regularHours']:
-                open1= minute_to_hours(int(val['regularHours'][x]['label'].split('-')[0]))
-                close = minute_to_hours(int(val['regularHours'][x]['label'].split('-')[1]))
+                open1= minute_to_hours(val['regularHours'][x]['label'].split(' - ')[0])
+                close = minute_to_hours(val['regularHours'][x]['label'].split(' - ')[1])
                 kk = kk + ' '+ x + ' '+ open1 + ' '+close
             hours_of_operation = (kk)
             locator_domain = base_url
@@ -88,7 +88,7 @@ def fetch_data():
             state =  val['address']['stateOrProvince']
             zip =  val['address']['postalOrZipCode']
             country_code = 'US'
-            store_number = "<MISSING>"
+            store_number = val["code"]
             phone = val['phone']
             if 'phone' in val:
                 phone = val['phone']
@@ -112,8 +112,8 @@ def fetch_data():
             store.append(location_type if location_type else '<MISSING>')
             store.append(latitude if latitude else '<MISSING>')
             store.append(longitude if longitude else '<MISSING>')
-            store.append(hours_of_operation.replace("0:00 AM 0:00 AM","close") if hours_of_operation else '<MISSING>')
-            store.append("https://www.acehardware.com/store-locator")
+            store.append(hours_of_operation.replace("00:00AM 00:00AM","close").strip() if hours_of_operation else '<MISSING>')
+            store.append("https://www.acehardware.com/store-details/" + str(val["code"]))
             # print("===", str(store))
             yield store
        

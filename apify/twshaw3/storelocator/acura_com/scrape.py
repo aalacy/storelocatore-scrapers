@@ -54,7 +54,6 @@ class Acura:
         })
 
         previous_zip_code = 90001
-
         for code in sgzip.for_radius(200):
             print(code)
             previous_zip_code = code

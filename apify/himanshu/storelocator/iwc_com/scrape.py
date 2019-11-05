@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -41,11 +41,12 @@ def fetch_data():
     country_code = "US"
     store_number = ""
     phone = ""
-    location_type = "iwc"
+    location_type = "<MISSING>"
     latitude = ""
     longitude = ""
     raw_address = ""
     hours_of_operation = ""
+    page_url = "<MISSING>"
 
     # print("soup ==== " + str(soup))
 
@@ -61,6 +62,7 @@ def fetch_data():
         page_result = len(json_data["response"]["entities"])
         current_offset += page_result
 
+
         # print("json_data === " + str(json_data["response"]["count"]))
         # print("entities === " + str(page_result))
         # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
@@ -69,19 +71,21 @@ def fetch_data():
 
             street_address = str(location["profile"]["address"]["line1"]) +" "+ str(location["profile"]["address"]["line2"]) +" "+ str(location["profile"]["address"]["line3"])
             street_address =  street_address.replace(" None","")
-            location_name = location["profile"]["name"]
+            location_name = location["profile"]["name"].replace('&','and')
             state = location["profile"]["address"]["region"]
             city = location["profile"]["address"]["city"]
             zipp = location["profile"]["address"]["postalCode"]
             country_code = location["profile"]["address"]["countryCode"]
             phone = location["profile"]["mainPhone"]["display"]
 
-            if "displayCoordinate" in location["profile"]:
+            # if "displayCoordinate" in location["profile"]:
+            try:
                 latitude = location["profile"]["displayCoordinate"]["lat"]
                 longitude = location["profile"]["displayCoordinate"]["long"]
-            else:
-                latitude = ""
-                longitude = ""
+            except:
+                # print("https://stores.iwc.com/search?country=US&offset=" + str(current_offset))
+                latitude = location['profile']['yextDisplayCoordinate']['lat']
+                longitude = location['profile']['yextDisplayCoordinate']['long']
 
             hours_of_operation = ""
             if "hours" in location["profile"]:
@@ -94,18 +98,22 @@ def fetch_data():
                         hours_of_operation += days_hours["day"] +" Closed"
 
                     hours_of_operation += " "
+            hours_of_operation = hours_of_operation.capitalize()
 
-            # print(" hours = "+ location_name)
+
+
 
             # print("s === "+ str(latitude))
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+
             if str(store[2]) + str(store[-3]) not in addresses:
                 addresses.append(str(store[2]) + str(store[-3]))
 
                 store = [x if x else "<MISSING>" for x in store]
-
+                store = [x.replace("–","-") if type(x) == str else x for x in store]
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
                 # print("data = " + str(store))
                 # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store

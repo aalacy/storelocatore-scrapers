@@ -65,6 +65,7 @@ def fetch_data():
                     if x['countryCode'] in ["US","CA"]:
                         store_number = x['ID']
                         location_name = x['name']
+                        
                         if x['address2'] is not None:
                             street_address = x['address1'] +" "+ x['address2']
                         else:
@@ -72,6 +73,7 @@ def fetch_data():
                         city = x['city']
                         state = x['stateCode']
                         ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(x['postalCode']))
+                        
                         us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(x['postalCode']))
                         if us_zip_list:
                             country_code = "US"
@@ -81,6 +83,7 @@ def fetch_data():
                             zipp = ca_zip_list[0]
                         else:
                             continue
+                       
                         latitude = x['latitude']
                         longitude = x['longitude']
                         phone =x['phone']

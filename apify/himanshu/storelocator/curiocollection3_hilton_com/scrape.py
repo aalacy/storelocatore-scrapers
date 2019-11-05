@@ -33,28 +33,51 @@ def fetch_data():
                 continue
             cord = location_list[location_list[key]["coordinate"]["id"]]
             store_unique_identifier =  location_list[key]["ctyhocn"]
-            request_data = r'{"operationName":"GetHotelInfo","variables":{"ctyhocn":"' + store_unique_identifier + r'","language":"en"},"query":"query GetHotelInfo($ctyhocn: String!, $language: String!) {\n  hotel(ctyhocn: $ctyhocn, language: $language) {\n    address {\n      addressFmt\n    }\n    brandCode\n    galleryImages(numPerCategory: 2, first: 12) {\n      alt\n      hiResSrc(height: 430, width: 950)\n      src\n    }\n    homepageUrl\n    name\n    open\n    openDate\n    phoneNumber\n    resEnabled\n    amenities(filter: {groups_includes: [hotel]}) {\n      id\n      name\n    }\n  }\n}\n"}'
+            request_data = r'{"operationName":"hotel","variables":{"ctyhocn":"' + store_unique_identifier + r'","language":"en"},"query":"query hotel($ctyhocn: String!, $language: String!) {\n  hotel(ctyhocn: $ctyhocn, language: $language) {\n    address {\n      addressFmt\n    }\n    brandCode\n    galleryImages(numPerCategory: 2, first: 12) {\n      alt\n      hiResSrc(height: 430, width: 950)\n      src\n    }\n    homepageUrl\n    name\n    open\n    openDate\n    phoneNumber\n    resEnabled\n    amenities(filter: {groups_includes: [hotel]}) {\n      id\n      name\n    }\n  }\n}\n"}'
             request_header = {
                 "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
                 "content-type": "application/json"
             }
-            print(address)
-            location_json_request = requests.post("https://www.hilton.com/graphql/customer?pod=brands&type=GetHotelInfo",data=request_data,headers=request_header)
+            # print(address)
+            location_json_request = requests.post("https://www.hilton.com/graphql/customer?pod=brands&operationName=hotel",data=request_data,headers=request_header)
+            # print(location_json_request.json())
             location_url = location_json_request.json()["data"]["hotel"]["homepageUrl"]
-            print(location_url)
+            # print(location_url)
+            # time.sleep(2)
             location_request = requests.get(location_url,headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             if location_soup.find("h1",text=re.compile("You've stumped us")):
                 continue
-            name = location_soup.find("span",{'class':"property-name"}).text.strip()
-            street_address = location_soup.find("span",{'class':"property-streetAddress"}).text.strip()
-            if street_address in addresses:
-                continue
-            addresses.append(street_address)
-            city = location_soup.find("span",{'class':"property-addressLocality"}).text.strip()
-            state = location_soup.find("span",{'class':"property-addressRegion"}).text.strip()
-            store_zip = location_soup.find("span",{'class':"property-postalCode"}).text.strip()
-            phone = location_soup.find("span",{'class':"property-telephone"}).text.strip()
+            if location_soup.find("span",{'class':"property-name"}):
+                name = location_soup.find("span",{'class':"property-name"}).text.strip()
+                street_address = location_soup.find("span",{'class':"property-streetAddress"}).text.strip()
+                if street_address in addresses:
+                    continue
+                addresses.append(street_address)
+                city = location_soup.find("span",{'class':"property-addressLocality"}).text.strip()
+                state = location_soup.find("span",{'class':"property-addressRegion"}).text.strip()
+                store_zip = location_soup.find("span",{'class':"property-postalCode"}).text.strip()
+                phone = location_soup.find("span",{'class':"property-telephone"}).text.strip()
+            else:
+                location_details = {}
+                for script in location_soup.find_all("script",{'type':"application/ld+json"}):
+                    try:
+                        location_details = json.loads(script.text)
+                        if "address" in location_details:
+                            break
+                    except:
+                        continue
+                if location_details == {}:
+                    continue
+                name = location_details["name"]
+                street_address = location_details["address"]["streetAddress"]
+                if street_address in addresses:
+                    continue
+                addresses.append(street_address)
+                city = location_details["address"]["addressLocality"]
+                state = location_details["address"]["addressRegion"]
+                store_zip = location_details["address"]["postalCode"]
+                phone = location_details["telephone"]
             store = []
             if(state == 'Washington'):
                 state ='WA'

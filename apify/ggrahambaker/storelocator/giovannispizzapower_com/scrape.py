@@ -53,7 +53,6 @@ def fetch_data():
     for i, link in enumerate(link_list):
         driver.get(link)
         driver.implicitly_wait(10)
-        print(i)
         location_name = driver.find_element_by_css_selector('h1.entry-title').text
 
         lat = driver.find_element_by_css_selector('div#store_locator_single_map').get_attribute('data-lat')

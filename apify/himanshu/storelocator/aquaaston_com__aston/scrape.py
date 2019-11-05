@@ -51,6 +51,8 @@ def fetch_data():
             yield store
         else:
             store_data = json.loads(location_soup.find("script",{'type':"application/ld+json"}).text, strict=False)
+            if store_data["address"]["addressLocality"] == "":
+                continue
             store = []
             store.append("https://www.aquaaston.com")
             store.append(location.text)

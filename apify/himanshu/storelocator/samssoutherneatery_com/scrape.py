@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import unicodedata
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -24,7 +25,9 @@ def fetch_data():
     for a in soup.find("main",{"class":"Index"}).find_all("a"):
         if a.find("strong") == False or a["href"][0] != "/":
             continue
-        location_request = requests.get(base_url + a["href"],headers=headers)
+        # there was a special case wih vivian so i had to add a replace it should no affect any other entires
+        page_url = base_url + a["href"].replace("vivian-la","vivian")
+        location_request = requests.get(page_url,headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         address = list(location_soup.find("div",{'class':"sqs-block-content"}).find("p").stripped_strings)
         name = location_soup.find("div",{'class':"sqs-block-content"}).find("h2").text.strip()
@@ -41,7 +44,7 @@ def fetch_data():
             phone = "<MISSING>"
         store = []
         store.append("http://samssoutherneatery.com")
-        store.append(name)
+        store.append(name.replace("’","'"))
         store.append(address[0])
         store.append(address[1].split(",")[0])
         store.append(state)
@@ -61,7 +64,11 @@ def fetch_data():
         if "Monday - Sunday Closed" in hours:
             continue
         store.append(hours if hours else "<MISSING>")
-        store.append(base_url + a["href"])
+        store.append(page_url)
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         yield store
 
 def scrape():

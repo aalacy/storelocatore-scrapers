@@ -13,7 +13,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -29,39 +29,63 @@ def fetch_data():
     return_main_object = []
     for data in soup.findAll('div', {'class', 'hotel-tile-info-wrapper'}):
         data_url = "https:" + data.find('a').get('href')
-        print(data_url)
+        page_url = data_url
         detail_url = requests.get(data_url, headers=headers)
         detail_soup = BeautifulSoup(detail_url.text, "lxml")
+        latitude = detail_soup.find('input',{'id':'latitude'})['value']
+        longitude = detail_soup.find('input',{'id':'longitude'})['value']
         detail_block = detail_soup.select('.brand-logo .visible-content')
         if detail_block:
-            location_name = detail_soup.select('.name')[0].get_text().strip()
-            phone = detail_soup.select('.phone-number')[0].get_text().strip()[8:]
             for br in detail_soup.select('.brand-logo .visible-content')[0].find_all("br"):
                 br.replace_with(",")
+
             address = detail_soup.select('.brand-logo .visible-content')[0].get_text().strip().split(',')
-            street_address = ' '.join(address[:-2]).strip()
-            if len(address[-2].split(" ")) == 2:
-                city = address[-2].split(" ")[0].strip()
-                state = address[-2].split(" ")[0].strip()
-                zip = address[-2].split(" ")[1].strip()
+            if "United States" in address[-1] or "Canada" in address[-1]:
+                # print(address)
+
+                location_name = detail_soup.select('.name')[0].get_text().strip()
+                phone = detail_soup.select('.phone-number')[0].get_text().strip()[8:]
+                street_address = ' '.join(address[:-2]).strip()
+                # print(address[-2].split(" "))
+                # print(len(address[-2].split(" ")))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~`')
+                ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(" ".join(address[-2].split(" "))))
+                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(" ".join(address[-2].split(" "))))
+                if us_zip_list:
+                    zip = us_zip_list[0].strip()
+                    country_code = "US"
+                    city = " ".join(address[-2].split(" ")[:-2]).strip()
+                    state =address[-2].split(" ")[-2].strip()
+
+
+                elif ca_zip_list:
+                    zip = ca_zip_list[0].strip()
+                    country_code = "CA"
+                    city = "".join(address[-2].split(" ")[0]).strip()
+                    state =address[-2].split(" ")[1].strip()
+                    # print(city +" | "+state+" | "+zip)
+
+
             else:
-                city = ' '.join(address[-2].split(' ')[:-2])
-                state = address[-2].strip().split(' ')[-2]
-                zip = address[-2].strip().split(' ')[-1]
+                # print(address[-1])
+                continue
             store = []
-            store.append(data_url)
+            store.append("https://www.kimptonhotels.com/")
             store.append(location_name)
             store.append(street_address)
             store.append(city)
             store.append(state)
             store.append(zip)
-            store.append("US")
+            store.append(country_code)
             store.append("<MISSING>")
             store.append(phone)
-            store.append("Kimpton Hotels")
             store.append("<MISSING>")
+            store.append(latitude)
+            store.append(longitude)
             store.append("<MISSING>")
-            store.append("<MISSING>")
+            store.append(page_url)
+            #print("data === "+str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~')
             return_main_object.append(store)
         else:
             pass

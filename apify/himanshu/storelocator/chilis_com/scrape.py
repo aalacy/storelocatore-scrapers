@@ -25,7 +25,7 @@ def fetch_data():
     return_main_object = []
     for values in soup.findAll('a', {'class', 'city-link'}):
         detail_page_url = "https://www.chilis.com" + values.get('href')
-        print(detail_page_url)
+        # print(detail_page_url)
         detail_url = requests.get(detail_page_url, headers=headers)
         detail_soup = BeautifulSoup(detail_url.text, "lxml")
         detail_page_exits = detail_soup.find('div', {'class', 'location-results'})
@@ -61,7 +61,7 @@ def fetch_data():
                     store.append("US")
                     store.append("<MISSING>")
                     store.append(phone)
-                    store.append("Chili's Grill & Bar - Local Restaurants Near Me | Chili's")
+                    store.append("<MISSING>")
                     store.append("<MISSING>")
                     store.append("<MISSING>")
                     store.append("<MISSING>")
