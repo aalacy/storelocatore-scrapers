@@ -178,6 +178,8 @@ def fetch_data():
 
         store.append(hours_of_operation if hours_of_operation else '<MISSING>')
         store.append(page_url if page_url else '<MISSING>')
+        store = [x.replace("–","-") for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         # print("data===="+str(store))
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         return_main_object.append(store)

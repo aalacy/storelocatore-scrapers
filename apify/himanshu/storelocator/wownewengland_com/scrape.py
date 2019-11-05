@@ -3,14 +3,14 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
+
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -34,7 +34,7 @@ def fetch_data():
         name = location_soup.find("h1",{'class':"vc_custom_heading"}).text
         store = []
         store.append("http://www.wownewengland.com")
-        store.append(name)
+        store.append(name.capitalize())
         store.append(address[0])
         store.append(address[1].split(",")[0])
         store.append(address[1].split(",")[1].split(" ")[-2])
@@ -42,12 +42,14 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(address[-1])
-        store.append("wow work out world")
+        store.append("<MISSING>")
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append(hours)
-        return_main_object.append(store)
-    return return_main_object
+        store.append(location_url)
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        yield store
 
 def scrape():
     data = fetch_data()

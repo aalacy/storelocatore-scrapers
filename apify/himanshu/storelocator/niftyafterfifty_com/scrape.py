@@ -19,9 +19,9 @@ def fetch_data():
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-    base_url= "https://www.niftyafterfifty.com/"
-    get_url = "https://www.niftyafterfifty.com/locations"
-    r = requests.get(get_url, headers=headers)
+    base_url = "https://www.niftyafterfifty.com/"
+    page_url = "https://www.niftyafterfifty.com/locations"
+    r = requests.get(page_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     exists = soup.findAll('p', {'class', 'font_8'})
@@ -43,42 +43,72 @@ def fetch_data():
         else:
             flg = False
         if flg == True:
-            location_name = data.get_text()
-            city = location_name
+            location_name = data.get_text().capitalize()
+            city = location_name.replace('(fitness only)','').replace('(pt only)','')
             if "," in data.find_next('p').find_next('p').get_text().strip():
-                street_address = data.find_next('p').get_text().strip() + ", " + data.find_next('p').find_next('p').get_text().strip().split(',')[0]
+                st_address = data.find_next('p').get_text().strip() + ", " + data.find_next('p').find_next('p').get_text().strip().split(',')[0]
+                street_address=" ".join(st_address.split(',')[:-1])
+
                 state = data.find_next('p').find_next('p').get_text().strip().split(',')[1].strip().split(' ')[0].strip()
                 zip = data.find_next('p').find_next('p').get_text().strip().split(',')[1].strip().split(' ')[1].strip()
             else:
-                street_address = data.find_next('p').get_text() + ", " + ' '.join(data.find_next('p').find_next('p').get_text().strip().split(' ')[:-2])
+                st_address = data.find_next('p').get_text() + ", " + ' '.join(data.find_next('p').find_next('p').get_text().strip().split(' ')[:-2])
+                street_address=" ".join(st_address.split(',')[:-1])
+
 
                 state = data.find_next('p').find_next('p').get_text().strip().split(' ')[-2]
                 zip = data.find_next('p').find_next('p').get_text().strip().split(' ')[-1]
             phone = data.find_next('p').find_next('p').find_next('p').get_text().strip()[:15]
-            if "fax" not in data.find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip():
-                hours_of_operation = data.find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip()
-            elif "_______" in data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip() or len(data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip()) < 10 or "Fitness Hours:" in data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip() or "Nifty People" in data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip() or "TUCSON" in data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip():
-                hours = data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text()
-                if "Hours" in hours:
-                    if hours.split('\n')[0].split(',')[0] == "Fitness Hours:":
-                        if data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p'):
-                            if "am" in data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text():
-                                hours_of_operation = data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().split('\n')[0].split(',')[0] + ", " + data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text()
-                            else:
-                                hours_of_operation = data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().split('\n')[0].split(',')[0]
-                    else:
-                        if "am" in data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text():
-                            hours_of_operation = hours.split('\n')[0].split(',')[0] + ", " + data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text()
-                        else:
-                            hours_of_operation = hours.split('\n')[0].split(',')[0]
+            # hours = data.find(lambda tag: (tag.name == 'span') and "fax" in tag.text)
+            hours= data.find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip()
+            if "Hours" in hours:
+                hours_of_operation = hours.split('Hours:')[-1].strip()
             else:
-                hours_of_operation = data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip().replace("\n", ',').strip()
+                # for h in data.find_all(lambda tag: (tag.name == 'span')):
+                #     print(h)
+                #     print('~~~~~~~~~~~~~~~~~~~~~~')
+                h   =   data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling
+                list_h = list(h.stripped_strings)
+
+                if "Nifty People" in "".join(list_h):
+                    list_h.remove("Nifty People® Group Ex Calendar")
+                # print(street_address )
+                # print(list_h)
+                # print(len(list_h))
+                # print('~~~~~~~~~~~~~~~~~~~')
+                if "Fitness Hours:" in "".join(list_h):
+                    fitness_hours = "Fitness Hours : "+data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.nextSibling.nextSibling.text.strip()
+                    PT_hours1 = "PT Hours : " +data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.text.strip()
+                    PT_hours = data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.text.strip()
+                    if "Nifty People" in PT_hours:
+                        PT_hours2 = ""
+                    else:
+                        PT_hours2 = PT_hours
+
+                    hours_of_operation = fitness_hours + "  "+ PT_hours1 +"  "+ PT_hours2
+                elif "16405 Whittier Blvd." in street_address:
+                    # print(list_h)
+                    h1 =  data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.text.strip()
+                    h2 = data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.nextSibling.nextSibling.text.strip()
+                    h3 = data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.nextSibling.text.strip()
+                    hours = h1 + "  "+h2 + "  "+h3
+                    hours_of_operation = ' '.join(hours.split()).replace('Hours:','').strip()
+                elif "1801 H Street" in street_address or "23595 Moulton Parkway" in street_address or "380 W. Central Avenue" in street_address:
+                    hours = data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.text.strip() + ","+data.find_next('p').find_next('p').find_next('p').find_next('p').nextSibling.nextSibling.nextSibling.nextSibling.text.strip()
+                    hours_of_operation = ' '.join(hours.split()).replace('Hours:','').replace('Nifty People® Group Ex Calendar','').strip()
+                    # print(hours_of_operation)
+                elif "\u200b"  == "".join(list_h) or "_______" in "".join(list_h) or list_h == []:
+                    hours_of_operation = "<MISSING>"
+                else:
+                    hours_of_operation = data.find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text().strip().split('Nifty')[0].strip()
+
+
             store = []
             store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
+            store.append(location_name.encode('ascii', 'ignore').decode('ascii').strip())
+            store.append(street_address.encode('ascii', 'ignore').decode('ascii').strip())
+            store.append(city.encode('ascii', 'ignore').decode('ascii').strip())
+            store.append(state.encode('ascii', 'ignore').decode('ascii').strip())
             store.append(zip)
             store.append("US")
             store.append("<MISSING>")
@@ -86,8 +116,11 @@ def fetch_data():
             store.append("Nifty After Fifty")
             store.append("<MISSING>")
             store.append("<MISSING>")
-            store.append(hours_of_operation)
-            store.append(get_url)
+            store.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip())
+            store.append(page_url)
+            # print(store[-2])
+            # print("data== "+ str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             return_main_object.append(store)
         else:
             pass

@@ -77,6 +77,9 @@ def fetch_data():
 
         if current_results_len > 0:
             for script in soup.find_all("div", {"class": "result pt-1"}):
+                page_url= base_url+script.find('div',class_='store-details').find('a')['href']
+                store_number =script.find('div',class_='store-details').find('a')['href'].split('=')[-1].strip()
+                # print(page_url,store_number)
 
                 full_address = list(script.find("div", {"class": "address"}).stripped_strings)
                 street_address = ", ".join(full_address[:-1])
