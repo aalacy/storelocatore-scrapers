@@ -28,6 +28,7 @@ class Scraper(Scrape):
         countries = []
         location_types = []
         stores = []
+        page_urls = []
         store_hours = {}
 
         headers = {
@@ -65,13 +66,19 @@ class Scraper(Scrape):
                 hour = driver.find_element_by_css_selector('ul.location-detail-hours').get_attribute('textContent')
             except:
                 hour = '<MISSING>'
-            store_hours[link] = hour
+            store_hours[link] = {
+                'hour': hour,
+                'store_link': store_link
+            }
 
 
         for store in stores:
             if store['opening_soon'] != "1" and store['customer'] not in self.seen:
                 # Store ID
                 location_id = store['customer']
+
+                # Page url
+                page_url = store_hours[location_id]['store_link']
 
                 # Type
                 location_type = 'Restaurant'
@@ -101,7 +108,7 @@ class Scraper(Scrape):
                 lon = store['lng']
 
                 # Hour
-                hour = store_hours[location_id]
+                hour = store_hours[location_id]['hour']
 
                 # Country
                 country = 'US'
@@ -119,10 +126,12 @@ class Scraper(Scrape):
                 cities.append(city)
                 countries.append(country)
                 location_types.append(location_type)
+                page_urls.append(page_url)
                 self.seen.append(store['customer'])
 
         for (
                 locations_title,
+                page_url,
                 street_address,
                 city,
                 state,
@@ -136,6 +145,7 @@ class Scraper(Scrape):
                 location_type,
         ) in zip(
             locations_titles,
+            page_urls,
             street_addresses,
             cities,
             states,
@@ -151,6 +161,7 @@ class Scraper(Scrape):
             self.data.append(
                 [
                     self.url,
+                    page_url,
                     locations_title,
                     street_address,
                     city,

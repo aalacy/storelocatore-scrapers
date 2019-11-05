@@ -26,13 +26,14 @@ class Scraper(Scrape):
         hours = []
         countries = []
         location_types = []
+        page_urls = []
 
         headers = {
             'authority': 'truenorthstores.com',
             'accept': '*/*',
             'origin': 'https://truenorthstores.com',
             'x-requested-with': 'XMLHttpRequest',
-            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.70 Safari/537.36',
+            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36',
             'dnt': '1',
             'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'sec-fetch-site': 'same-origin',
@@ -40,13 +41,14 @@ class Scraper(Scrape):
             'referer': 'https://truenorthstores.com/stores/',
             'accept-encoding': 'gzip, deflate, br',
             'accept-language': 'en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7',
-            'cookie': '_ga=GA1.2.1791701165.1572062285; _gid=GA1.2.1584999541.1572062285; _fbp=fb.1.1572062285604.2046796433; _gat=1; _gat_All-Starhttps%3A%2F%2Ftruenorthstores.com%2Fstores%2F=1; tk_ai=woo%3A1nSnGVQP4uO2X69jnstx6ZaS; _gat_All-Starhttps%3A%2F%2Ftruenorthstores.com%2Fabout%2F=1; _gat_All-Starhttps%3A%2F%2Ftruenorthstores.com%2Fcontact%2F=1',
+            'cookie': '_ga=GA1.2.464637378.1572821645; _gid=GA1.2.1404900775.1572821645; _fbp=fb.1.1572821645634.631702491; tk_ai=woo%3AIBfz6ik4dbyIURiyR96AR3%2FJ; _gat=1; _gat_All-Starhttps%3A%2F%2Ftruenorthstores.com%2F=1; _gat_All-Starhttps%3A%2F%2Ftruenorthstores.com%2Fstores%2F=1; _gat_All-Starhttps%3A%2F%2Ftruenorthstores.com%2Fcontact%2F=1',
         }
 
         data = {
             'action': 'locate',
             'address': '44141',
-            'locatorNonce': 'f48d1fc291',
+            'formatted_address': 'Brecksville, OH 44141, USA',
+            'locatorNonce': '3c29a512c7',
             'distance': '100',
             'latitude': '41.3055951',
             'longitude': '-81.61446799999999',
@@ -64,6 +66,9 @@ class Scraper(Scrape):
 
             # Type
             location_type = 'Coffee'
+
+            # Page url
+            page_url = store['permalink']
 
             # Name
             location_title = store['title']
@@ -108,9 +113,11 @@ class Scraper(Scrape):
             cities.append(city)
             countries.append(country)
             location_types.append(location_type)
+            page_urls.append(page_url)
 
         for (
                 locations_title,
+                page_url,
                 street_address,
                 city,
                 state,
@@ -124,6 +131,7 @@ class Scraper(Scrape):
                 location_type,
         ) in zip(
             locations_titles,
+            page_urls,
             street_addresses,
             cities,
             states,
@@ -139,6 +147,7 @@ class Scraper(Scrape):
             self.data.append(
                 [
                     self.url,
+                    page_url,
                     locations_title,
                     street_address,
                     city,

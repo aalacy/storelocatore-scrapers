@@ -28,6 +28,7 @@ class Scraper(Scrape):
         hours = []
         countries = []
         location_types = []
+        page_urls = []
 
         options = Options()
         options.add_argument("--headless")
@@ -47,6 +48,9 @@ class Scraper(Scrape):
 
             # Name
             location_title = store['name']
+
+            # Page url
+            page_url = 'https://www.billgrays.com/index.cfm?Page=' + location_title
 
             # Street
             street_address = store['address']['streetAddress']
@@ -88,9 +92,11 @@ class Scraper(Scrape):
             cities.append(city)
             countries.append(country)
             location_types.append(location_type)
+            page_urls.append(page_url)
 
         for (
                 locations_title,
+                page_url,
                 street_address,
                 city,
                 state,
@@ -104,6 +110,7 @@ class Scraper(Scrape):
                 location_type,
         ) in zip(
             locations_titles,
+            page_urls,
             street_addresses,
             cities,
             states,
@@ -119,6 +126,7 @@ class Scraper(Scrape):
             self.data.append(
                 [
                     self.url,
+                    page_url,
                     locations_title,
                     street_address,
                     city,

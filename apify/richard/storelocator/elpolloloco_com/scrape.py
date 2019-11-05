@@ -1,5 +1,6 @@
 import requests
 
+from datetime import datetime
 from Scraper import Scrape
 
 URL = "https://www.elpolloloco.com/"
@@ -24,6 +25,7 @@ class Scraper(Scrape):
         hours = []
         countries = []
         location_types = []
+        page_urls = []
 
         cookies = {
             'opvc': '298bde4b-6893-4f5d-ad62-f3ad8707166c',
@@ -55,58 +57,64 @@ class Scraper(Scrape):
         stores = response.json()
 
         for store in stores:
-            # Store ID
-            location_id = store[0]
+            if datetime.strptime(store[10], '%Y-%m-%d %H:%M:%S.%f') <= datetime.now():
+                # Store ID
+                location_id = store[0]
 
-            # Type
-            location_type = 'Restaurant'
+                # Page url
+                page_url = '<MISSING>'
 
-            # Name
-            location_title = f'El Pollo Loco - {store[3]}'
+                # Type
+                location_type = 'Restaurant'
 
-            # Street
-            street_address = store[1] + store[2]
+                # Name
+                location_title = f'El Pollo Loco - {store[3]}'
 
-            # city
-            city = store[3]
+                # Street
+                street_address = store[1] + store[2]
 
-            # zip
-            zipcode = store[5]
+                # city
+                city = store[3]
 
-            # State
-            state = store[4]
+                # zip
+                zipcode = store[5]
 
-            # Phone
-            phone = store[6]
+                # State
+                state = store[4]
 
-            # Lat
-            lat = store[8]
+                # Phone
+                phone = store[6]
 
-            # Long
-            lon = store[9]
+                # Lat
+                lat = store[8]
 
-            # Hour
-            hour = ' '.join(store[13]) if len(' '.join(store[13]).strip()) != 0 else '<MISSING>'
+                # Long
+                lon = store[9]
 
-            # Country
-            country = store[15].split('/')[0]
+                # Hour
+                hour = ' '.join(store[13]) if len(' '.join(store[13]).strip()) != 0 else '<MISSING>'
 
-            # Store data
-            locations_ids.append(location_id)
-            locations_titles.append(location_title)
-            street_addresses.append(street_address)
-            states.append(state)
-            zip_codes.append(zipcode)
-            hours.append(hour)
-            latitude_list.append(lat)
-            longitude_list.append(lon)
-            phone_numbers.append(phone)
-            cities.append(city)
-            countries.append(country)
-            location_types.append(location_type)
+                # Country
+                country = store[15].split('/')[0]
+
+                # Store data
+                locations_ids.append(location_id)
+                page_urls.append(page_url)
+                locations_titles.append(location_title)
+                street_addresses.append(street_address)
+                states.append(state)
+                zip_codes.append(zipcode)
+                hours.append(hour)
+                latitude_list.append(lat)
+                longitude_list.append(lon)
+                phone_numbers.append(phone)
+                cities.append(city)
+                countries.append(country)
+                location_types.append(location_type)
 
         for (
                 locations_title,
+                page_url,
                 street_address,
                 city,
                 state,
@@ -120,6 +128,7 @@ class Scraper(Scrape):
                 location_type,
         ) in zip(
             locations_titles,
+            page_urls,
             street_addresses,
             cities,
             states,
@@ -135,6 +144,7 @@ class Scraper(Scrape):
             self.data.append(
                 [
                     self.url,
+                    page_url,
                     locations_title,
                     street_address,
                     city,
