@@ -65,7 +65,6 @@ def fetch_data():
         driver2.get(names[i])
         time.sleep(5)
         page_url = names[i]
-        #print(page_url)
         try:
             store_name = driver2.find_element_by_css_selector('div.hero__title-copy').text
         except:
@@ -75,9 +74,12 @@ def fetch_data():
         else:
             try:
                 hours_elems =driver2.find_elements_by_css_selector('div.map__days')
-                store_opening_hours =""
-                for j in range(len(hours_elems)):
-                    store_opening_hours = store_opening_hours + " " + hours_elems[j].get_attribute('textContent').replace("\n"," ")
+                if hours_elems == []:
+                    store_opening_hours = '<MISSING>'
+                else:
+                    store_opening_hours =""
+                    for j in range(len(hours_elems)):
+                        store_opening_hours = store_opening_hours + " " + hours_elems[j].get_attribute('textContent').replace("\n"," ")
             except:
                 store_opening_hours = '<MISSING>'
             try:
