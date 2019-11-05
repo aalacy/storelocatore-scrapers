@@ -36,7 +36,7 @@ class Scraper(Scrape):
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
-        for zipcode_search in sgzip.for_radius(50):
+        for zipcode_search in sgzip.for_radius(100):
             driver.get(f'https://www.examone.com/locations/?zipInput={zipcode_search}&dist=100&submit=find+locations')
             data = driver.find_elements_by_css_selector('script')[-2]
             data = json.loads(data.get_attribute('innerHTML').replace('/* <![CDATA[ */', '').replace('/* ]]> */', '').replace('var php_vars = "', '').replace('\\', '').strip()[:-2])
