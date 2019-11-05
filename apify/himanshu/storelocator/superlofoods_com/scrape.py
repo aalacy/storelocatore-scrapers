@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
-
+import unicodedata
 
 def write_output(data):
     with open('data.csv', mode='w', encoding='utf8') as output_file:
@@ -30,7 +30,7 @@ def fetch_data():
     data = r.json()['items']
 
     for store_data in data:
-        return_object = []
+        store = []
         location_name = store_data['name']
         if('address_1'in store_data):
             street_address = store_data['address_1']
@@ -45,22 +45,26 @@ def fetch_data():
             if location_name in addresses:
                 continue
             addresses.append(location_name)
-            return_object.append(base_url)
-            return_object.append(location_name)
-            return_object.append(street_address)
-            return_object.append(city)
-            return_object.append(state)
-            return_object.append(zipp)
-            return_object.append("US")
-            return_object.append(store_id)
-            return_object.append(phone)
-            return_object.append("<MISSING>")
-            return_object.append(latitude)
-            return_object.append(longitude)
-            return_object.append(hour)
-            return_object.append("<MISSING>")
-            return_main_object.append(return_object)
-    return return_main_object
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
+            store.append("US")
+            store.append(store_id)
+            store.append(phone)
+            store.append("<MISSING>")
+            store.append(latitude)
+            store.append(longitude)
+            store.append(hour)
+            store.append(store_data["url"])
+            for i in range(len(store)):
+                if type(store[i]) == str:
+                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            store = [x.replace("–","-") if type(x) == str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            yield store
 def scrape():
     data = fetch_data()
     write_output(data)
