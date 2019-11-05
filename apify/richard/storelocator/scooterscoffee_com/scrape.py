@@ -64,7 +64,7 @@ class Scraper(Scrape):
                 location_type = 'Convenience Store'
 
                 # Name
-                location_title = store['store'].replace('&#38;', '')
+                location_title = store['store'].replace('&#038;', '')
 
                 # Street
                 street_address = store['address']
