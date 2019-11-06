@@ -42,40 +42,30 @@ def fetch_data():
     country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "reydelpollo"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
+    page_url = "https://reydelpollo.com/locations/"
 
 
 
     r= requests.get('https://reydelpollo.com/locations/',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
-    for column in soup.find_all('div',class_='vc_col-sm-6'):
-        # print(column.prettify())
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        address = column.h4
-        if address is not None:
-            list_add = list(address.stripped_strings)
-            # print(list_add)
-            location_name = list_add[0]
-            street_address = list_add[-1].split(',')[0]
-            city = list_add[-1].split(',')[1]
-            state = list_add[-1].split(',')[-1].split()[0]
-            zipp = list_add[-1].split(',')[-1].split()[-1]
-            hours = soup.find(lambda tag: (
-                    tag.name == "p") and "FOOD MENU" == tag.text).nextSibling.nextSibling
-            listhours = list(hours.stripped_strings)
+    for column in soup.find_all('div',class_='vc_row wpb_row vc_inner vc_row-fluid'):
+        list_columns = list(column.stripped_strings)
+        if len(list_columns) != 1:
+            location_name = list_columns[0].strip()
+            street_address = " ".join(list_columns[1].split(',')[:-2]).strip()
+            city = list_columns[1].split(',')[-2].strip()
+            state = list_columns[1].split(',')[-1].split()[0].strip()
+            zipp = list_columns[1].split(',')[-1].split()[-1].strip()
+            phone = list_columns[3].strip()
+            hours_of_operation =  " ".join(list_columns).split('Hours:')[-1].strip().replace('–','-').strip()
+            latitude = column.find('iframe')['src'].split('!1d')[-1].split('!3d')[0].split('!2d')[0].split('.')[0][-2:]+"."+column.find('iframe')['src'].split('!1d')[-1].split('!3d')[0].split('!2d')[0].split('.')[1]
+            longitude = column.find('iframe')['src'].split('!1d')[-1].split('!3d')[0].split('!2d')[-1].strip()
 
-            hours_of_operation = " ".join(listhours[1:])
-            phone = column.a.text.strip()
-        if address is None:
-
-            iframe = column.find('iframe')['src'].split('!2d')[-1].split('!3d')
-            longitude = iframe[0]
-            latitude = iframe[-1].split('!')[0]
 
 
             store = []
