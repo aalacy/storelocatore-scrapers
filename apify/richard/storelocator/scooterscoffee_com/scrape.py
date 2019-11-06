@@ -1,6 +1,9 @@
 import requests
+import re
 
 from Scraper import Scrape
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 URL = "https://scooterscoffee.com/"
 
@@ -26,7 +29,13 @@ class Scraper(Scrape):
         countries = []
         location_types = []
         page_urls = []
-        stores = []
+
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        driver = webdriver.Chrome(scrape.CHROME_DRIVER_PATH, options=options)
+
 
         headers = {
             'authority': 'scooterscoffee.com',
@@ -54,11 +63,13 @@ class Scraper(Scrape):
 
         for store in stores:
             if store['id'] not in self.seen:
+                print(f"Getting information for: {store['permalink']}")
+
                 # Store ID
                 location_id = store['id']
 
                 # Page website
-                page_url = store['url'] if len(store['url']) > 0 else '<MISSING>'
+                page_url = store['permalink']
 
                 # Type
                 location_type = 'Convenience Store'
@@ -87,8 +98,11 @@ class Scraper(Scrape):
                 # Long
                 lon = store['lng']
 
+                driver.get(page_url)
+
                 # Hour
-                hour = store['hours'] if len(store['hours']) > 0 else '<MISSING>'
+                index = driver.find_element_by_css_selector('div.store-left').text.split('\n').index('Store Hours:')
+                hour = ' '.join([hour for hour in driver.find_element_by_css_selector('div.store-left').text.split('\n')[index:]]).replace('Change Location', '')
 
                 # Country
                 country = store['country']

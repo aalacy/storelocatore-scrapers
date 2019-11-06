@@ -41,14 +41,14 @@ class Scraper(Scrape):
             'referer': 'https://truenorthstores.com/stores/',
             'accept-encoding': 'gzip, deflate, br',
             'accept-language': 'en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7',
-            'cookie': '_ga=GA1.2.464637378.1572821645; _gid=GA1.2.1404900775.1572821645; _fbp=fb.1.1572821645634.631702491; tk_ai=woo%3AIBfz6ik4dbyIURiyR96AR3%2FJ; _gat=1; _gat_All-Starhttps%3A%2F%2Ftruenorthstores.com%2F=1; _gat_All-Starhttps%3A%2F%2Ftruenorthstores.com%2Fstores%2F=1; _gat_All-Starhttps%3A%2F%2Ftruenorthstores.com%2Fcontact%2F=1',
+            'cookie': '_ga=GA1.2.464637378.1572821645; _fbp=fb.1.1572821645634.631702491; tk_ai=woo%3AIBfz6ik4dbyIURiyR96AR3%2FJ; _gid=GA1.2.494985078.1573077411; _gat=1; _gat_All-Starhttps%3A%2F%2Ftruenorthstores.com%2F=1; _gat_All-Starhttps%3A%2F%2Ftruenorthstores.com%2Fstores%2F=1',
         }
 
         data = {
             'action': 'locate',
             'address': '44141',
             'formatted_address': 'Brecksville, OH 44141, USA',
-            'locatorNonce': '3c29a512c7',
+            'locatorNonce': 'fd493dfdf5',
             'distance': '100',
             'latitude': '41.3055951',
             'longitude': '-81.61446799999999',
