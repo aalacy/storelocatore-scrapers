@@ -20,7 +20,7 @@ def get_driver():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome(r'C:/Python27/chromedriver', chrome_options=options)
+    return webdriver.Chrome(r'chromedriver', chrome_options=options)
 
 def fetch_data():
     data=[];store_no=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
