@@ -17,11 +17,9 @@ async function scrape() {
                 country_code: 'US',
                 store_number: store.id,
                 phone: store.phone,
-                location_type: null,
-                niacs_code: null,
+								location_type: '<MISSING>',
                 latitude: store.lat,
                 longitude: store.lng,
-                external_lat_long: false,
                 hours_of_operation: store.open_hours,
             });
         }
