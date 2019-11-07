@@ -12,6 +12,7 @@ async function scrape() {
         defaultViewport: { width: 1920, height: 1080 },
     });
     const page = await browser.newPage();
+    await page.goto('https://www.carters.com/on/demandware.store/Sites-Carters-Site/default/Stores-GetNearestStores?carters=true&oshkosh=false&skiphop=false&lat=0&lng=0');
     page.on('response', async response => {
         try {
             let data = await response.json();
@@ -19,7 +20,7 @@ async function scrape() {
             for(let key in data){
                 if(data[key].isOpen == 'open'){
                     let store = data[key];
-                    await stores.push({
+                    stores.push({
                         locator_domain: 'https://www.carters.com/',
                         location_name: store.name,
                         street_address: store.address1,
@@ -48,7 +49,6 @@ async function scrape() {
             console.log('Try again later, encountered CAPTCH.');
         }
     });
-    await page.goto('https://www.carters.com/on/demandware.store/Sites-Carters-Site/default/Stores-GetNearestStores?carters=true&oshkosh=false&skiphop=false&lat=0&lng=0');
     return stores;
 }
 
