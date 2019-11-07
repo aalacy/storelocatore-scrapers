@@ -45,8 +45,8 @@ def fetch_data():
                 zipcode = list(address.stripped_strings)[1].split(',')[1].split( )[-1]
                 r = requests.get(j.find('p', {'class': 'details'}).find('a')['href'])
                 soup = BeautifulSoup(r.text, "lxml")
-                print(j.find('p', {'class': 'details'}).find('a')['href'])
-                jk = soup.find('table', {'class': 'hours'}).find_all('tr', {'class': 'hidden-xs'})
+                # print(j.find('p', {'class': 'details'}).find('a')['href'])
+                jk = soup.find('table', {'class': 'hours'}).find("tbody").find_all('tr',recursive=False)
                 vk = []
                 for x in jk:
                     jk = ''
@@ -89,7 +89,7 @@ def fetch_data():
                 tem_var.append(long1)
                 tem_var.append(hours)
                 tem_var.append(j.find('p', {'class': 'details'}).find('a')['href'])
-                print("===============================")
+                # print("===============================")
                 if tem_var[2] in addressess:
                     continue
                 addressess.append(tem_var[2])

@@ -3,18 +3,37 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+import platform
+from selenium.webdriver.support.wait import WebDriverWait
+import time
+
+system = platform.system()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    if "linux" in system.lower():
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)
+    else:
+        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+
 def fetch_data():
+    driver = get_driver()
     headers = {
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
@@ -26,6 +45,12 @@ def fetch_data():
     for i in range(1,int(page_size) + 1):
         page_request = requests.get("https://api.va.gov/v0/facilities/va?address=Test,%20Coffeyville,%20Kansas%2067337,%20United%20States&bbox[]=-1.26265&bbox[]=187.6656&bbox[]=-179.65656&bbox[]=1.55965&type=all&page="+ str(i),headers=headers)
         for store_data in page_request.json()["data"]:
+            location_url = "https://www.va.gov/find-locations/facility/" + store_data["id"]
+            # print(location_url)
+            # driver.get(location_url)
+            # element = WebDriverWait(driver, 10).until(lambda x: x.find_element_by_xpath("//h4[contains(text(), 'Hours of Operation')]"))
+            # location_soup = BeautifulSoup(driver.page_source,"lxml")
+            # hours = " ".join(list(location_soup.find("h4",text=re.compile("Hours of Operation")).parent.stripped_strings))
             if "address_1" not in store_data["attributes"]["address"]["physical"]:
                 continue
             address = ""
@@ -38,7 +63,7 @@ def fetch_data():
             store = []
             store.append("https://www.va.gov")
             store.append(store_data["attributes"]["name"])
-            store.append(address)
+            store.append(address.replace("<Null>",""))
             if store[-1] in addresses:
                 continue
             addresses.append(store[-1])
@@ -46,17 +71,24 @@ def fetch_data():
             store.append(store_data["attributes"]["address"]["physical"]["state"])
             store.append(store_data["attributes"]["address"]["physical"]["zip"] if store_data["attributes"]["address"]["physical"]["zip"] != "" and store_data["attributes"]["address"]["physical"]["zip"] != None else "<MISSING>")
             store.append("US")
-            store.append(store_data["id"])
+            store.append("<MISSING>")
             store.append(store_data["attributes"]["phone"]["main"].split(" ")[0].split("/")[0] if store_data["attributes"]["phone"]["main"] != None and store_data["attributes"]["phone"]["main"] != "" else "<MISSING>")
-            store.append("va")
+            store.append("<MISSING>")
             store.append(store_data["attributes"]["lat"])
             store.append(store_data["attributes"]["long"])
             hours = ""
             for key in store_data["attributes"]["hours"]:
-                hours = hours + " " + key + " " + store_data["attributes"]["hours"][key]
+                if store_data["attributes"]["hours"][key] == None:
+                    hours = hours + " " + key + " N/A - N/A" 
+                else:
+                    hours = hours + " " + key + " " + store_data["attributes"]["hours"][key]
             store.append(hours if hours != "" else "<MISSING>")
-            return_main_object.append(store)
-    return return_main_object
+            if store[-1].count("24/7") == 7:
+                store[-1] = store[-1].replace("24/7","N/A - N/A")
+            store.append(location_url)
+            if hours.count("Closed") > 6:
+                continue
+            yield store
 
 def scrape():
     data = fetch_data()

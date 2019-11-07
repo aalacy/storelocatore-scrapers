@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -46,6 +46,7 @@ def fetch_data():
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
+    page_url = ""
 
     json_data = r.json()
 
@@ -57,7 +58,7 @@ def fetch_data():
         store_number = str(location_list['id'])
         latitude = str(location_list['loc_lat'])
         longitude = str(location_list['loc_long'])
-        phone = "<MISSING>"
+        phone = str(location_list['phone'])
 
         full_address = location_list['streetaddress'].replace("  ", " ")
         if not full_address.find('https://') >= 0:
@@ -87,40 +88,105 @@ def fetch_data():
 
         # print("data === " + str(full_address))
         location_url = location_list['website']
+        page_url = location_url
         # print("location_url == "+ location_url)
         r_location = requests.get(location_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
+        if soup_location.find('h2') != None:
+            hours = soup_location.find('h2')
+            list_hours = list(hours.stripped_strings)
+            list_hours = [el.replace('\xa0',' ') for el in list_hours]
+            # print(city,location_url)
+            # print(list_hours)
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            if "newark" in location_url or  "lo/granville" in location_url:
+                tag_hours= soup_location.find(lambda tag: (tag.name == 'p') and "HOURS" in tag.text).find_next('p')
 
-        if soup_location.find('div', {'class': re.compile('page-')}) is not None:
-            list_address = list(soup_location.find('div', {'class': re.compile('page-')}).stripped_strings)
-            hours_of_operation = ', '.join(list(soup_location.find('h2').stripped_strings))
-            # print("location_url `````````````  " + str(location_url))
-            # print("list_hours ~~~~~~~~~~  " + str(hours_of_operation))
+                for br in tag_hours.find_all('br'):
+                    br.replace_with(' ')
+                hours_of_operation = tag_hours.text.strip()
+                # print(hours_of_operation)
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            elif "rome" in location_url or "lo/breckenridge" in location_url:
+                hours_of_operation = "<MISSING>"
+            elif "moesdenver" in location_url and "Englewood" in city:
+                tag_hours = soup_location.find('div',class_='hours').find_all('div',class_='hour')[-1].find('p')
+                for br in tag_hours.find_all('br'):
+                    br.replace_with(' ')
+                hours_of_operation = tag_hours.text.strip()
+                # print(hours_of_operation)
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            elif "moesdenver" in location_url and "Denver" in city:
+                tag_hours = soup_location.find('div',class_='hours').find_all('div',class_='hour')[0].find('p')
+                for br in tag_hours.find_all('br'):
+                    br.replace_with(' ')
+                hours_of_operation = tag_hours.text.strip()
 
-            phone_index = [i for i, s in enumerate(list_address) if 'Phone' in s]
 
-            if len(list_address) > 0 and len(phone_index) > 0:
-                if len((list_address[phone_index[0]]).split(':')) > 1:
-                    phone = str(list_address[phone_index[0]]).split(':')[-1].strip()
-                else:
-                    phone = str(list_address[phone_index[0] + 1]).strip()
-            # print(str(list_address[phone_index[0]])+" == phone =====  " + phone)
+            elif "moesbbqcharlotte" in location_url and "Matthews" in city:
+                # print(city)
+                tag_hours= soup_location.find(lambda tag: (tag.name == 'h3') and "HOURS" in tag.text).find_next('p')
+                for br in tag_hours.find_all('br'):
+                    br.replace_with(' ')
+                hours_of_operation = tag_hours.text.strip().split('Close')[0].strip()
+                # print(city ,hours_of_operation)
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            elif "moesbbqcharlotte" in location_url and "Waxhaw" in city:
+                # print(city)
+                tag_hours= soup_location.find_all(lambda tag: (tag.name == 'h3') and "HOURS" in tag.text)[-1].find_next('p')
+                for br in tag_hours.find_all('br'):
+                    br.replace_with(' ')
+                hours_of_operation = tag_hours.text.strip().split('Close')[0].strip()
+            else:
+                hours_of_operation = " ".join(list_hours).strip().split('Address:')[0]
 
-        if len(phone) == 0:
-            phone = '<MISSING>'
+
+
+
         else:
-            phone_temp = phone.replace('(', "").replace(')', "").replace('-', ' ').split(' ')
-            phone = ' '.join(["" if not x.isdigit()  else x for x in phone_temp]).strip()
-            if len(phone) < 10 and "RIBS" in ' '.join(phone_temp):
-                phone += "7427" # because from website (251) 410-RIBS in this case i have replaced RIBS with 7427
+            hours = soup_location.find('div',{'id':'hours'})
+            list_hours = list(hours.stripped_strings)
+            list_hours = [el.replace('\xa0',' ') for el in list_hours]
+            # print(city,location_url)
+            # print(list_hours)
+            # print('**********************************************')
+        # print(hours_of_operation)
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
-        # print("after == phone =====  " + phone)
 
-        if '<MISSING>' in phone:
-            hours_of_operation = '<MISSING>'
+
+
+
+        # if soup_location.find('div', {'class': re.compile('page-')}) is not None:
+        #     list_address = list(soup_location.find('div', {'class': re.compile('page-')}).stripped_strings)
+        #     hours_of_operation = ', '.join(list(soup_location.find('h2').stripped_strings))
+        #     # print("location_url `````````````  " + str(location_url))
+        #     print("list_hours ~~~~~~~~~~  " + str(hours_of_operation))
+
+        #     phone_index = [i for i, s in enumerate(list_address) if 'Phone' in s]
+
+        #     if len(list_address) > 0 and len(phone_index) > 0:
+        #         if len((list_address[phone_index[0]]).split(':')) > 1:
+        #             phone = str(list_address[phone_index[0]]).split(':')[-1].strip()
+        #         else:
+        #             phone = str(list_address[phone_index[0] + 1]).strip()
+        #     # print(str(list_address[phone_index[0]])+" == phone =====  " + phone)
+
+        # if len(phone) == 0:
+        #     phone = '<MISSING>'
+        # else:
+        #     phone_temp = phone.replace('(', "").replace(')', "").replace('-', ' ').split(' ')
+        #     phone = ' '.join(["" if not x.isdigit()  else x for x in phone_temp]).strip()
+        #     if len(phone) < 10 and "RIBS" in ' '.join(phone_temp):
+        #         phone += "7427" # because from website (251) 410-RIBS in this case i have replaced RIBS with 7427
+
+        # # print("after == phone =====  " + phone)
+
+        # if '<MISSING>' in phone:
+        #     hours_of_operation = '<MISSING>'
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
         if country_code == "US" or country_code == "CA":
             if str(store[2]) + str(store[-3]) not in addresses:

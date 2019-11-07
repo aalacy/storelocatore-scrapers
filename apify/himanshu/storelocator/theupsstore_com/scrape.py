@@ -96,16 +96,11 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(lat)
             store.append(lng)
-            hours_request = request_wrapper(store_data["StoreURL"],"get",headers=hour_headers)
-            if hours_request == None:
-                print("failed to load " + str(store_data["StoreURL"]))
-                continue
-            hours_soup = BeautifulSoup(hours_request.text,"lxml")
-            hours = " ".join(list(hours_soup.find("div",{'class':"Hours--location"}).stripped_strings))
-            for hour in hours_soup.find("div",{"class":"Hours--location"}).find_all("div",{"class":"OpenStatus-summary"}):
-                hours = hours.replace(" ".join(list(hour.stripped_strings)),"")
-            store.append(hours.replace("  "," ") if hours != "" else "<MISSING>")
+            hours = " ".join(list(BeautifulSoup(store_data["Hours"],"lxml").stripped_strings))
+            store.append(hours.replace("  "," ") if hours else "<MISSING>")
             store.append(store_data["StoreURL"])
+            store = [x.replace("–","-") if type(x) == str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             # print(store)
             yield store
         if len(data) < MAX_RESULTS:

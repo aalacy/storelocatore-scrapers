@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -21,7 +21,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    print("soup ===  first")
+    # print("soup ===  first")
 
     base_url = "https://www.pagliacci.com"
     r = requests.get("https://www.pagliacci.com/locations/category/all", headers=headers)
@@ -41,7 +41,7 @@ def fetch_data():
     country_code = ""
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "pagliacci"
+    location_type = "<MISSING>"
     latitude = ""
     longitude = ""
     hours_of_operation = ""
@@ -62,7 +62,7 @@ def fetch_data():
         location_name = address.split(",")[1]
         country_code = "US"
 
-        print("sll location ====== " + str(len(map_location.split("&sll="))))
+        # print("sll location ====== " + str(len(map_location.split("&sll="))))
 
         if len(map_location.split("&sll=")) > 1:
             latitude = map_location.split("&sll=")[1].split("&")[0].split(",")[0]
@@ -74,24 +74,25 @@ def fetch_data():
             latitude = "<MISSING>"
             longitude = "<MISSING>"
 
-        print("~~~~~~~~~~" + address)
-        print("locator_domain = " + locator_domain)
-        print("location_name = " + location_name)
-        print("street_address = " + street_address)
-        print("city = " + city)
-        print("state = " + state)
-        print("zipp = " + zipp)
-        print("country_code = " + country_code)
-        print("store_number = " + store_number)
-        print("phone = " + phone)
-        print("location_type = " + location_type)
-        print("latitude = " + latitude)
-        print("longitude = " + longitude)
-        print("hours_of_operation = " + hours_of_operation)
+        # print("~~~~~~~~~~" + address)
+        # print("locator_domain = " + locator_domain)
+        # print("location_name = " + location_name)
+        # print("street_address = " + street_address)
+        # print("city = " + city)
+        # print("state = " + state)
+        # print("zipp = " + zipp)
+        # print("country_code = " + country_code)
+        # print("store_number = " + store_number)
+        # print("phone = " + phone)
+        # print("location_type = " + location_type)
+        # print("latitude = " + latitude)
+        # print("longitude = " + longitude)
+        # print("hours_of_operation = " + hours_of_operation)
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation]
-
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation,store_url]
+        store = [x.replace("–","-") for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         return_main_object.append(store)
 
     return return_main_object

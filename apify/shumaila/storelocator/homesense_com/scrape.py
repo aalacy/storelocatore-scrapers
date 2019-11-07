@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re
-import usaddress
+
 
 
 def write_output(data):
@@ -26,7 +26,8 @@ def fetch_data():
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
     #print(soup)
-    repo_list = soup.findAll('div',{'class':'store-list'})
+    repo_list = soup.findAll('div',{'class':'col-md-3 col-xs-3 locator-txt store-padding'})
+    #print(len(repo_list))
 
     soup = str(soup)
     cleanr = re.compile('<.*?>')
@@ -56,9 +57,16 @@ def fetch_data():
         except:
             phone = "<MISSING>"
         try:
-            hours = repo.find('strong').text
-            hours = re.sub(pattern,"|",hours)
-            hours = hours[1:len(hours)-1]
+            hours = repo.findAll('strong')
+            if len(hours) == 1:
+                hours = hours[0].text
+                hours = re.sub(pattern,"|",hours)
+                hours = hours[1:len(hours)-1]
+            else:
+                hours = hours[1].text
+                hours = re.sub(pattern, "|", hours)
+                hours = hours[1:len(hours) - 1]
+
         except:
             hours = "<MISSING>"
 

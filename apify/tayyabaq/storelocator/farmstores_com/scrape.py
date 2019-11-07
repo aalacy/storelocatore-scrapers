@@ -27,29 +27,15 @@ def fetch_data():
     soup = BeautifulSoup(r.content, 'html.parser')
     script = soup.findAll('script')
     lat=re.findall(r'\>","[\d.*]*\","',str(script))
-    lon = re.findall(r'\","-[\d.*]*\"',str(script))
-    for n in range(0,len(lon)):
-        latitude.append(lat[n].replace('>","','').replace('","',""))
-        longitude.append(lon[n].replace('","',"").replace('"',""))
+    lon = re.findall(r'\","-[\d.*]*\"',str(script)) 
     driver = get_driver()
     driver.get('http://www.farmstores.com/locations/')
     time.sleep(3)
     loc = driver.find_elements_by_class_name('loc-title')
     location = [loc[n].text for n in range(0,len(loc))]
     stores = driver.find_elements_by_class_name('location-address')
-    hours = driver.find_elements_by_class_name('location')
-    for n in range(0,len(hours)):
-        if 'Hours' in hours[n].text:
-            if 'COMING SOON' in hours[n].text:
-                hours_of_operation.append("<MISSING>")
-            else:
-                hours_of_operation.append(str("Hours: "+hours[n].text.split("Hours:")[1]))
-        else:
-            hours_of_operation.append("<MISSING>")
-        if 'Phone:' in hours[n].text:
-            phone.append(str("Phone: "+hours[n].text.split("Phone:")[1].split("Hours:")[0].strip()))
-        else:
-            phone.append("<MISSING>")
+    hour = driver.find_elements_by_class_name('location')
+    hours = [hour[n].text for n in range(0,len(hour))]
     for n in range(0,len(stores)-1):
         if 'COMING SOON' not in location[n]: 
             try:
@@ -63,10 +49,20 @@ def fetch_data():
                 state.append(stores[n].text.split()[-2])
                 zipcode.append(stores[n].text.split()[-1])
             location_name.append(location[n])
+            latitude.append(lat[n].replace('>","','').replace('","',""))
+            longitude.append(lon[n].replace('","',"").replace('"',""))
             try:
                 store_no.append(location[n].split("(")[1].replace(")",""))
             except:
                 store_no.append("<MISSING>")
+            if 'Hours' in hours[n]:
+                hours_of_operation.append(str("Hours: "+hours[n].split("Hours:")[1]))
+            else:
+                hours_of_operation.append("<MISSING>")
+            if 'Phone:' in hours[n]:
+                phone.append(str("Phone: "+hours[n].split("Phone:")[1].split("Hours:")[0].strip()))
+            else:
+                phone.append("<MISSING>")
     for n in range(0,len(street_address)): 
         data.append([
             'https://www.farmstores.com',

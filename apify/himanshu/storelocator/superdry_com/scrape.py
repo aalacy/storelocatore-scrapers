@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import sgzip
 import json
-# import time
+import unicodedata
 
 def hour_split(s, chunk_size):
     a = zip(*[s[i::chunk_size] for i in range(chunk_size)])
@@ -100,6 +100,8 @@ def fetch_data():
                 phone = z['phone']
                 latitude = z['latitude']
                 longitude = z['longitude']
+                if "-" in str(latitude):
+                    latitude,longitude = longitude,latitude
                 hours = z['openingHours']
                 h = []
                 for i in hours:
@@ -144,9 +146,12 @@ def fetch_data():
                 addresses.append(store[2])
                 # print("data===="+str(store))
                 # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-
-                return_main_object.append(store)
-    return return_main_object
+                for i in range(len(store)):
+                    if type(store[i]) == str:
+                        store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+                store = [x.replace("–","-") if type(x) == str else x for x in store]
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                yield store
 
 
 

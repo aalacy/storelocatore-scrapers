@@ -34,6 +34,7 @@ def get_driver():
 
 def fetch_data():
     driver = get_driver()
+    main_object = []
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
@@ -73,14 +74,21 @@ def fetch_data():
                 store.append(store_zip if store_zip else "<MISSING>")
                 store.append("US")
                 store.append(store_id if store_id else "<MISSING>")
-                store.append(phone if phone else "<MISSING>")
+                store.append(phone if phone.strip() else "<MISSING>")
                 store.append("<MISSING>")
                 store.append(lat)
                 store.append(lng)
                 store.append(hours if hours else "<MISSING>")
-                store.append("https://www.lelabofragrances.com/front/app/store/search?execution=e1s1")
+                store.append(driver.current_url)
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-                yield store
+                push = True
+                for i in range(len(main_object)):
+                    if main_object[i][2] == store[2]:
+                        if main_object[i][12] == "<MISSING>":
+                            main_object[i] = store
+                            push = False
+                if push:
+                    main_object.append(store)
     driver.find_element_by_xpath("//button[@id='storeSearch.country-dropdown-selected']").click()
     driver.find_element_by_xpath("//button[@data-value='CANADA']").click()
     soup = BeautifulSoup(driver.page_source, "lxml")
@@ -108,14 +116,22 @@ def fetch_data():
                 store.append(store_zip if store_zip else "<MISSING>")
                 store.append("CA")
                 store.append(store_id if store_id else "<MISSING>")
-                store.append(phone if phone else "<MISSING>")
+                store.append(phone if phone.strip() else "<MISSING>")
                 store.append("<MISSING>")
                 store.append(lat)
                 store.append(lng)
                 store.append(hours if hours else "<MISSING>")
-                store.append("https://www.lelabofragrances.com/front/app/store/search?execution=e1s1")
+                store.append(driver.current_url)
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-                yield store
+                push = True
+                for i in range(len(main_object)):
+                    if main_object[i][2] == store[2]:
+                        if main_object[i][12] == "<MISSING>":
+                            main_object[i] = store
+                            push = False
+                if push:
+                    main_object.append(store)
+    return main_object
 
 def scrape():
     data = fetch_data()

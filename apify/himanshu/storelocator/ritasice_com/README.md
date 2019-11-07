@@ -10,3 +10,5 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 address with no number,address contains state name,1 lat & lng same this website
+
+so i removed all the location that were closed all 7 days some of them were only open on Sunday so i have not done anything with them

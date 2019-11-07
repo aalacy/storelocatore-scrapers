@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -55,10 +55,11 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(phone)
-        store.append("the pod hotels")
+        store.append("<MISSING>")
         geo_location = details_soup.find("iframe")["src"]
         store.append(geo_location.split("&lat=")[1].split("&")[0])
         store.append(geo_location.split("&long=")[1].split("&")[0])
+        store.append("<MISSING>")
         store.append("<MISSING>")
         return_main_object.append(store)
     return return_main_object

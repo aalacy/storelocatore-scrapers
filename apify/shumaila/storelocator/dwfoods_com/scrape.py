@@ -92,22 +92,42 @@ def fetch_data():
         except:
             phone = "<MISSING>"
         try:
-            hours = soup.find('table',{'class':'table table-striped responsive hours'}).text
-            hours = re.sub(pattern,"",hours)
-            hours = hours.replace("\n"," | ")
+            hours = ""
+            hdetail = soup.find('table',{'class':'table table-striped responsive hours'})
+            hdetail = hdetail.find('tbody')
+            rows = hdetail.findAll('tr')
+            for row in rows:
+                #print(row.text)
+                td = row.findAll('td')
+                hours = hours + td[0].text + "  " + td[1].text + "|"
+
+            hours = hours[0:len(hours)-1]
             hours = hours.lstrip()
+            hours = re.sub(pattern," ",hours)
+            hours = re.sub("\n","", hours)
         except:
             hours = "<MISSING>"
 
         try:
-            ltype = soup.find('div',{'class':'departments'}).text
-            ltype = re.sub("\n","|",ltype)
-            ltype = ltype.replace("|||","|")
-            ltype = ltype[1:len(ltype)-1]
+            detail = soup.find('div',{'class':'detail amenities'})
+            detlist = detail.findAll('div')
+            ltype = ""
+            for div in detlist:
+                ltype = ltype + div.text +"|"
+
+
         except:
             ltype = "<MISSING>"
 
+        #print(link)
+        start = link.find("locations")
+        start = link.find("/", start) + 2
+        start = link.find("/", start) + 1
+        store = link[start:len(link)]
+        #print(store)
 
+        #print(ltype)
+        #print(hours)
 
         #print(address)
         #print(street)
@@ -129,7 +149,7 @@ def fetch_data():
             state,
             pcode,
             'US',
-            "<MISSING>",
+            store,
             phone,
             ltype,
             lat,

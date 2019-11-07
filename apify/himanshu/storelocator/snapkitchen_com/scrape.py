@@ -47,18 +47,14 @@ def fetch_data():
         tem_var.append(i['address']['state'].encode('ascii', 'ignore').decode('ascii').strip())
         tem_var.append(i['address']['zipcode'].encode('ascii', 'ignore').decode('ascii').strip())
         tem_var.append(i['address']['country'].replace("USA","US"))
-        tem_var.append("<MISSING>")
+        tem_var.append(i["id"])
         tem_var.append(i['phone'].encode('ascii', 'ignore').decode('ascii').strip())
         tem_var.append("<MISSING>")
         tem_var.append(i['address']['coord'][1])
         tem_var.append(i['address']['coord'][0])
         tem_var.append(hours.encode('ascii', 'ignore').decode('ascii').strip())
-        tem_var.append("https://www.snapkitchen.com/locations/")
-        print(tem_var)
-        return_main_object.append(tem_var)
-        
-
-    return return_main_object
+        tem_var.append("https://www.snapkitchen.com/locations/" + tem_var[1].replace(' ',"-").lower() + "/" + str(tem_var[7]))
+        yield tem_var
 
 
 def scrape():

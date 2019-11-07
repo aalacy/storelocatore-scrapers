@@ -42,7 +42,7 @@ def fetch_data():
     country_code = ""
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "<MISSING>"
+    location_type = "edwardjones"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
@@ -52,6 +52,7 @@ def fetch_data():
 
         # print("zip_code == " + zip_code)
         r = requests.get('https://www.shoeshowmega.com/on/demandware.store/Sites-shoe-show-Site/default/Stores-FindStores?showMap=true&radius=200&postalCode='+str(zip_code), headers=headers)
+        # print('https://www.shoeshowmega.com/on/demandware.store/Sites-shoe-show-Site/default/Stores-FindStores?showMap=true&radius=200&postalCode='+str(zip_code))
 
         # print("r===" + r.text)
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~")
@@ -64,12 +65,15 @@ def fetch_data():
                 for x in json_data['stores']:
                     if x['countryCode'] in ["US","CA"]:
                         store_number = x['ID']
-                        location_name = x['name']
+                        # location_name = x['name']
                         if x['address2'] is not None:
                             street_address = x['address1'] +" "+ x['address2']
                         else:
                             street_address = x['address1']
+                            # print(street_address)
                         city = x['city']
+                        location_name = x['name']
+                       
                         state = x['stateCode']
                         ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(x['postalCode']))
                         us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(x['postalCode']))
@@ -81,10 +85,12 @@ def fetch_data():
                             zipp = ca_zip_list[0]
                         else:
                             continue
+                        
                         latitude = x['latitude']
                         longitude = x['longitude']
                         phone =x['phone']
-                        hours_of_operation =x['storeHours'].replace('<br>','    ').replace('  ','')
+                        hours_of_operation =x['storeHours'].replace('<br>','    ').replace('   ','')
+                        
 
 
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
@@ -100,8 +106,7 @@ def fetch_data():
 
 
                     # print("data = " + str(store))
-                    # print(
-                    #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     return_main_object.append(store)
 
         except:

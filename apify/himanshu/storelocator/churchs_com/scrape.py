@@ -45,7 +45,7 @@ def parser(location_soup,url):
     store.append(lng)
     store.append(hours)
     store.append(url)
-    print(store)
+    #print(store)
     return store
 
 def fetch_data():
@@ -60,11 +60,11 @@ def fetch_data():
         state_request = requests.get("https://locations.churchs.com/" + states["href"])
         state_soup = BeautifulSoup(state_request.text,"lxml")
         for city in state_soup.find_all("a",{'class':"Directory-listLink"}):
-            print("https://locations.churchs.com/" + city["href"].replace("../",""))
+            #print("https://locations.churchs.com/" + city["href"].replace("../",""))
             city_request = requests.get("https://locations.churchs.com/" + city["href"].replace("../",""))
             city_soup = BeautifulSoup(city_request.text,"lxml")
             for location in city_soup.find_all("a",{'class':"Teaser-titleLink"}):
-                print("https://locations.churchs.com/" + location["href"].replace("../",""))
+                #print("https://locations.churchs.com/" + location["href"].replace("../",""))
                 location_request = requests.get("https://locations.churchs.com/" + location["href"].replace("../",""))
                 location_soup = BeautifulSoup(location_request.text,"lxml")
                 store_data = parser(location_soup,"https://locations.churchs.com/" + location["href"].replace("../",""))

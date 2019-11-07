@@ -2,7 +2,9 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import re
 import ast
+import time
 
 def get_driver():
     options = Options() 
@@ -40,9 +42,11 @@ def fetch_data():
 	
 	driver = get_driver()
 	driver.get('https://www.chemicalbank.com/Locations')
-	
+	time.sleep(3)
 	stores=driver.find_elements_by_tag_name('script')
-	locations=stores[24].get_attribute('text').split('RenderData = ')[1].split(';')[0]
+	for i in range(len(stores)):
+		if (len(stores[i].get_attribute('text').split('RenderData = '))==2):
+			locations=stores[i].get_attribute('text').split('RenderData = ')[1].split(';')[0]
 	locations_dict=ast.literal_eval(locations)
 	locator_domain='https://www.chemicalbank.com/'
 	country_code='US'

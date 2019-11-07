@@ -17,7 +17,80 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
+states = {
+        'AK': 'Alaska',
+        'AL': 'Alabama',
+        'AR': 'Arkansas',
+        'AS': 'American Samoa',
+        'AZ': 'Arizona',
+        'CA': 'California',
+        'CO': 'Colorado',
+        'CT': 'Connecticut',
+        'DC': 'District of Columbia',
+        'DE': 'Delaware',
+        'FL': 'Florida',
+        'GA': 'Georgia',
+        'GU': 'Guam',
+        'HI': 'Hawaii',
+        'IA': 'Iowa',
+        'ID': 'Idaho',
+        'IL': 'Illinois',
+        'IN': 'Indiana',
+        'KS': 'Kansas',
+        'KY': 'Kentucky',
+        'LA': 'Louisiana',
+        'MA': 'Massachusetts',
+        'MD': 'Maryland',
+        'ME': 'Maine',
+        'MI': 'Michigan',
+        'MN': 'Minnesota',
+        'MO': 'Missouri',
+        'MP': 'Northern Mariana Islands',
+        'MS': 'Mississippi',
+        'MT': 'Montana',
+        'NA': 'National',
+        'NC': 'North Carolina',
+        'ND': 'North Dakota',
+        'NE': 'Nebraska',
+        'NH': 'New Hampshire',
+        'NJ': 'New Jersey',
+        'NM': 'New Mexico',
+        'NV': 'Nevada',
+        'NY': 'New York',
+        'OH': 'Ohio',
+        'OK': 'Oklahoma',
+        'OR': 'Oregon',
+        'PA': 'Pennsylvania',
+        'PR': 'Puerto Rico',
+        'RI': 'Rhode Island',
+        'SC': 'South Carolina',
+        'SD': 'South Dakota',
+        'TN': 'Tennessee',
+        'TX': 'Texas',
+        'UT': 'Utah',
+        'VA': 'Virginia',
+        'VI': 'Virgin Islands',
+        'VT': 'Vermont',
+        'WA': 'Washington',
+        'WI': 'Wisconsin',
+        'WV': 'West Virginia',
+        'WY': 'Wyoming'
+}
+prov_terr = {
+    'AB': 'Alberta',
+    'BC': 'British Columbia',
+    'MB': 'Manitoba',
+    'NB': 'New Brunswick',
+    'NL': 'Newfoundland and Labrador',
+    'NT': 'Northwest Territories',
+    'NS': 'Nova Scotia',
+    'NU': 'Nunavut',
+    'ON': 'Ontario',
+    'PE': 'Prince Edward Island',
+    'QC': 'Quebec',
+    'SK': 'Saskatchewan',
+    'YT': 'Yukon'
+}
 
 def fetch_data():
     headers = {
@@ -60,7 +133,7 @@ def fetch_data():
 
         r_locations = requests.get(locations_url, headers=headers)
         json_data = r_locations.json()
-
+        # print(json.dumps(json_data,indent=4))
         current_results_len = len(json_data["Data"])  # it always need to set total len of record.
         # print("current_results_len === " + str(current_results_len))
 
@@ -115,6 +188,8 @@ def fetch_data():
             longitude = str(script["Longitude"])
 
             result_coords.append((latitude, longitude))
+            if state in states:
+                page_url = "https://www.smartstartinc.com/locations/" + states[state].replace(" ","-").lower() + "-" + city.replace(" ","-").lower() + "-" + street_address.replace(" ","-").lower() + "-" + zipp.replace(" ","-").lower()
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 

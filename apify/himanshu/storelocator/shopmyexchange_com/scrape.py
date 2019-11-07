@@ -14,7 +14,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -77,6 +77,10 @@ def fetch_data():
 
         if current_results_len > 0:
             for script in soup.find_all("div", {"class": "result pt-1"}):
+                page_url= base_url+script.find('div',class_='store-details').find('a')['href']
+                # print(page_url)
+                store_number =script.find('div',class_='store-details').find('a')['href'].split('=')[-1].strip()
+                # print(page_url,store_number)
 
                 full_address = list(script.find("div", {"class": "address"}).stripped_strings)
                 street_address = ", ".join(full_address[:-1])
@@ -109,7 +113,7 @@ def fetch_data():
 
                 result_coords.append((latitude, longitude))
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
                 if str(store[2]) + str(store[-3]) not in addresses:
                     addresses.append(str(store[2]) + str(store[-3]))
