@@ -8,7 +8,7 @@ async function scrape() {
 
     const browser = await puppeteer.launch({
         headless: false,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--headless'],
         defaultViewport: { width: 1920, height: 1080 },
     });
     const page = await browser.newPage();
@@ -29,11 +29,9 @@ async function scrape() {
                         country_code: store.countryCode,
                         store_number: store.storeid,
                         phone: store.phone,
-                        location_type: null,
-                        niacs_code: null,
+												location_type: '<MISSING>',
                         latitude: store.latitude,
                         longitude: store.longitude,
-                        external_lat_long: false,
                         hours_of_operation: {
                             'Sunday Hours': store.sundayHours,
                             'Monday Hours': store.mondayHours,
