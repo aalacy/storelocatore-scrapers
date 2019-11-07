@@ -26,7 +26,6 @@ async function scrape() {
             });
         }
     }
-    //console.log(stores);
     return stores;
 }
 
