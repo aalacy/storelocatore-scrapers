@@ -49,14 +49,14 @@ class Scraper(Scrape):
             # Name
             location_title = store['name']
 
-            # Page url
-            page_url = 'https://www.billgrays.com/index.cfm?Page=' + location_title
-
             # Street
             street_address = store['address']['streetAddress']
 
             # city
             city = store['address']['addressLocality']
+
+            # Page url
+            page_url = 'https://www.billgrays.com/index.cfm?Page=' + location_title.replace("Bill Gray's", '').strip().replace(' ', '_')
 
             # zip
             zipcode = store['address']['postalCode']
