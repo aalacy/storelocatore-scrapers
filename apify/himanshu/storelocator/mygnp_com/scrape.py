@@ -18,59 +18,59 @@ def write_output(data):
 
 
 def fetch_data():
-    try:
-        base_url= "https://www.mygnp.com/pharmacies/"
-        r = requests.get(base_url)
-        soup= BeautifulSoup(r.text,"lxml")
-        store_name=[]
-        store_detail=[]
-        return_main_object=[]
-        address=[]
-        k= soup.find_all("ul",{"class":"states-list body-wrapper content-block"})
-        k1 = soup.find_all("ul",{"class":"states-list body-wrapper content-block"})
+    base_url= "https://www.mygnp.com/pharmacies/"
+    r = requests.get(base_url)
+    soup= BeautifulSoup(r.text,"lxml")
+    store_name=[]
+    store_detail=[]
+    return_main_object=[]
+    address=[]
+    k= soup.find_all("ul",{"class":"states-list body-wrapper content-block"})
+    k1 = soup.find_all("ul",{"class":"states-list body-wrapper content-block"})
 
-        for i in k1:
-            for j in (i.find_all('a')):
-                r = requests.get(j['href'])
-                soup1= BeautifulSoup(r.text,"lxml")
-                a = (soup1.find_all("div",{"class":"location-card"}))
-                for j in a:
-                    tem_var=[]
-                    r = requests.get(j.a['href'])
-                    soup2= BeautifulSoup(r.text,"lxml")
-                    j2 = json.loads(soup2.find("script",{"type":"application/ld+json"}).text)
-                    # print(j2['geo'])
-                    # exit()
-                    # tem_var.append("https://www.mygnp.com")
-                    store_name.append(j2['name'])
-                    tem_var.append(j2['address']['streetAddress'])
-                    tem_var.append(j2['address']['addressLocality'])
-                    tem_var.append(j2['address']['addressRegion'])
-                    tem_var.append(j2['address']['postalCode'])
-                    tem_var.append("US")
+    for i in k1:
+        for j in (i.find_all('a')):
+            r = requests.get(j['href'])
+            soup1= BeautifulSoup(r.text,"lxml")
+            a = (soup1.find_all("div",{"class":"location-card"}))
+            for j in a:
+                tem_var=[]
+                r = requests.get(j.a['href'])
+                soup2= BeautifulSoup(r.text,"lxml")
+                j2 = json.loads(soup2.find("script",{"type":"application/ld+json"}).text)
+                # print(j2['geo'])
+                # exit()
+                tem_var.append("https://www.mygnp.com")
+                tem_var.append(j2['name'])
+                tem_var.append(j2['address']['streetAddress'])
+                tem_var.append(j2['address']['addressLocality'])
+                tem_var.append(j2['address']['addressRegion'])
+                tem_var.append(j2['address']['postalCode'])
+                tem_var.append("US")
+                tem_var.append("<MISSING>")
+                tem_var.append(j2['telephone'])
+                tem_var.append("mygnp")
+                tem_var.append(j2['geo']['latitude'])
+                tem_var.append(j2['geo']['longitude'])
+                if "openingHours" in j2:
+                    tem_var.append( j2['openingHours'])
+                else:
                     tem_var.append("<MISSING>")
-                    tem_var.append(j2['telephone'])
-                    tem_var.append("mygnp")
-                    tem_var.append(j2['geo']['latitude'])
-                    tem_var.append(j2['geo']['longitude'])
-                    if "openingHours" in j2:
-                        tem_var.append( j2['openingHours'])
-                    else:
-                        tem_var.append("<MISSING>")
-                    store_detail.append(tem_var)
-                    # return_main_object.append(tem_var)
-        # print(store_detail)
-        for i in range(len(store_name)):
-            store = list()
-            store.append("https://www.mygnp.com")
-            store.append(store_name[i])
-            store.extend(store_detail[i])
-            if store[3] in address:
-                continue
-            address.append(store[3])
-            return_main_object.append(store)
-    except:
-       pass
+
+                # print(tem_var)
+                # store_detail.append(tem_var)
+                return_main_object.append(tem_var)
+    # print(store_detail)
+    # for i in range(len(store_name)):
+    #     store = list()
+    #     store.append("https://www.mygnp.com")
+    #     store.append(store_name[i])
+    #     store.extend(store_detail[i])
+    #     if store[2] in address:
+    #         continue
+    #     address.append(store[2])
+    #     return_main_object.append(store)
+
 
     return return_main_object
 
