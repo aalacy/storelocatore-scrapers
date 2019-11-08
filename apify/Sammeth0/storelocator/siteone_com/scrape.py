@@ -26,7 +26,7 @@ def fetch_data():
 	lats = []
 	timing = []
 	ids=[]
-	page_url=[]
+	pages=[]
 	
 	locator_domain ="https://www.siteone.com/"
 	country_code="US"
@@ -44,7 +44,6 @@ def fetch_data():
 			locs.append(str(r).split('class=strong&gt;')[1].split('#')[0])
 			streets.append(str(r).split('&lt;div&gt;')[1].split('/div&gt;')[0].replace('&lt;',''))
 			cities.append(str(r).split('&lt;div&gt;')[3].split('&lt;/div&gt;')[0])
-			states.append(str(r).split('class=strong&gt;')[1].split('#')[0].split(' ')[-2])
 			try:
 				longs.append(str(r).split('"longitude":"')[1].split('",')[0])
 			except:
@@ -54,16 +53,19 @@ def fetch_data():
 			except:
 				lats.append("<MISSING>")
 			try:
-				zips.append(str(r).split('&lt;div&gt;')[4].split('-')[0].replace('&lt;/div&gt;',''))
+				zips.append(str(r).split('&lt;div&gt;')[4].split('-')[0].replace('&lt','').replace('/div&gt',''))
 			except:
 				zips.append("<MISSING>")
-			try:
+			try:	
 				ids.append(str(r).split('&lt;div&gt;')[1].split('/div&gt;')[0].split(' ')[0])
 			except:
 				ids.append("<MISSING>")
 			print(locs)
 			print(len(locs))
-			
+		try:
+			states.append(soup.find("title").text.split(', ')[1].split(' |')[0])
+		except:
+			continue
 		try:
 			phones.append(soup.find(class_="tel-phone content-product-title").text)
 			print(len(phones))
@@ -76,7 +78,9 @@ def fetch_data():
 		try:
 			types.append(soup.find(class_="store_details_Sname").text.strip())
 		except:
-			continue	
+			continue
+		pages.append(page_url)
+		print(pages)
 			
 		return_main_object=[]
 	for i in range(len(locs)):
@@ -94,7 +98,7 @@ def fetch_data():
 		row.append(lats[i] if lats[i] else "<MISSING>")
 		row.append(longs[i] if longs[i] else "<MISSING>")
 		row.append(timing[i] if timing[i] else "<MISSING>") 
-		row.append(page_url)
+		row.append(pages[i] if pages[i] else "<MISSING>")
 		
 		return_main_object.append(row)
 	return return_main_object
