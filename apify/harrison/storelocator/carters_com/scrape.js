@@ -13,11 +13,24 @@ Apify.main(async () => {
 		handlePageFunction: async ({ request, page }) => {
 
 			try {
-				let data = await response.json();
-				data = data.stores;
-				for(let key in data){
-					if(data[key].isOpen == 'open'){
-						let store = data[key];
+				let body = await page.evaluate(() => document.body.innerHTML);
+				let data = [];
+				let capture = false;
+				for (line of body.split(/\r?\n/)) {
+					if (line.includes('"stores":')) {
+						capture = true;
+					} else if (line.includes("</pre>")) {
+						capture = false;
+					}
+					if (capture && line.trim()) {
+						data.push(line.trim());
+					}
+				}
+				const rawJson = data.join('\n');
+				const parsed = JSON.parse(rawJson).stores;
+				for(let key in parsed){
+					if(parsed[key].isOpen == 'open'){
+						let store = parsed[key];
 						stores.push({
 							locator_domain: 'https://www.carters.com/',
 							location_name: store.name,
@@ -44,6 +57,7 @@ Apify.main(async () => {
 					}
 				}
 			} catch(err) {
+				console.log(err);
 				console.log('Try again later, encountered CAPTCH.');
 			}
 
