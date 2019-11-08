@@ -112,10 +112,19 @@ def fetch_data():
             store_number = x['id']
             location_name = x['storename'].replace('\\','').capitalize().strip()
             street_address = x['address']['street'].replace('\\','').replace('>','').capitalize().strip()
+            # print(street_address)
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             city = x['address']['city'].split(',')[0].replace('\\','').replace('u00E9','e').replace('u00C8','c').capitalize().strip()
             state =x['address']['state'].replace('.','').strip()
-            latitude = x['address']['latitude']
-            longitude = x['address']['longitude']
+            lat = x['address']['latitude']
+            lng = x['address']['longitude']
+            if "0" == str(lat)  or "0" == str(lng):
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+            else:
+                latitude = lat
+                longitude = lng
+            # print(latitude,longitude)
             hours = x['storehours']
             h = []
             for key,value in hours.items():
@@ -126,9 +135,11 @@ def fetch_data():
 
                     h.append(h1)
             if h !=[]:
-                hours_of_operation = " ".join(h)
+                hours_of_operation = " ".join(h).replace('moned:','to ').replace('tueed','to ').replace('weded:','to ').replace('thued:','to ').replace('fried:','to ').replace('sated:','to ').replace('suned:Closed','').replace('st','').replace('suned:','to ').strip()
             else:
                 hours_of_operation = "<MISSING>"
+            # print(hours_of_operation)
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                              store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
             store = ["<MISSING>" if x == "" or x ==
@@ -142,8 +153,8 @@ def fetch_data():
 
 
             # print(state)
-            #print("data = " + str(store))
-            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             return_main_object.append(store)
 
 
