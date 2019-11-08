@@ -9,4 +9,4 @@ Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
-same lat & lng,address with no number,address contains state name,and zipcode not state,and all error are from website
+address with no number,address contains state name,invalid zipsame lat & lng and i check all data is true this website

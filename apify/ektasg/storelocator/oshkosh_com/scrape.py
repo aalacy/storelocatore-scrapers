@@ -42,9 +42,10 @@ def fetch_data():
     # Your scraper here
     data=[]
     count=0
+
     driver.get("https://www.oshkosh.com/on/demandware.store/Sites-Carters-Site/default/Stores-ShowAll")
     time.sleep(5)
-    driver.find_element_by_css_selector('a.close-popup').click()
+    #driver.find_element_by_css_selector('a.close-popup').click()
     stores = driver.find_elements_by_css_selector('div.storeTile')
     page_url = "https://www.oshkosh.com/on/demandware.store/Sites-Carters-Site/default/Stores-ShowAll"
     for store in stores:
@@ -91,10 +92,77 @@ def fetch_data():
                 ])
             count+=1
             print(count)
+    driver.quit()
+    driver2.quit()
+
+    #canada locations
+    driver.get("https://www.oshkosh.com/on/demandware.store/Sites-Carters-Site/default/Stores-International")
+    page_url = "https://www.oshkosh.com/on/demandware.store/Sites-Carters-Site/default/Stores-International"
+    time.sleep(5)
+    driver.find_element_by_css_selector('a.close-popup').click()
+    names = driver.find_elements_by_css_selector('div.storeTile')
+    for i in range(226,748):
+        location_name = names[i].text.splitlines()[0].replace("@","").replace("&amp;"," ")
+        location_type = names[i].get_attribute('class').split("storeTile ")[1]
+        street_addr = names[i].find_element_by_css_selector('p:nth-child(3)').text
+        state_city_zip = names[i].find_element_by_css_selector('p:nth-child(4)').text
+        zipcode = state_city_zip.split(" ")[-2] + " " + state_city_zip.split(" ")[-1]
+        zip_present = bool(re.search(r'\d', zipcode))
+        if zip_present:
+            if len(state_city_zip.split(" ")[-1]) == 6:
+                zipcode = state_city_zip.split(" ")[-1]
+                state = state_city_zip.split(" ")[-2]
+                city_list = state_city_zip.split(" ")[0:-2]
+                city = " "
+                city.join(city_list)
+                if 'columbia' in state.lower() or 'brunswick' in state.lower() or 'scotia' in state.lower():
+                    state = state_city_zip.split(" ")[-3] + " " + state_city_zip.split(" ")[-2]
+                    city_list =  state_city_zip.split(" ")[0:-3]
+                    city = " "
+                    city.join(city_list)
+            else:
+                city_list = state_city_zip.split(" ")[0:-3]
+                city = " "
+                city.join(city_list)
+                state = state_city_zip.split(" ")[-3]
+                if 'columbia' in state.lower() or 'brunswick' in state.lower() or 'scotia' in state.lower():
+                    state = state_city_zip.split(" ")[-4] + " " + state_city_zip.split(" ")[-3]
+                    city_list =  state_city_zip.split(" ")[0:-4]
+                    city = " "
+                    city.join(city_list)
+        else:
+            zipcode = '<MISSING>'
+            city_list = state_city_zip.split(" ")[0:-1]
+            city = " "
+            city.join(city_list)
+            state = state_city_zip.split(" ")[-1]
+
+
+        try:
+            phone = names[i].find_element_by_css_selector('p:nth-child(5)').text.replace("BABY (","").replace(")","").replace(" (GIFT", "")
+        except:
+            phone = '<MISSING>'
+        data.append([
+            'https://www.oshkosh.com/',
+            page_url,
+            location_name,
+            street_addr,
+            city,
+            state,
+            zipcode,
+            'CA',
+            '<MISSING>',
+            phone,
+            location_type,
+            '<MISSING>',
+            '<MISSING>',
+            '<MISSING>'
+        ])
+        count += 1
+        print(count)
 
     time.sleep(3)
     driver.quit()
-    driver2.quit()
     return data
 
 def scrape():

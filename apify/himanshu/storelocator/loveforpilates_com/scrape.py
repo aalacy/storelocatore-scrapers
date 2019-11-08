@@ -34,13 +34,20 @@ def fetch_data():
     
     r = requests.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    main =  soup.find('div', {'id': 'builder-row-58d4e40454852'}).find_all('div', {'class': 'module rich-text'})
+    main =  soup.find_all('ul', {'class': 'dropdown-menu'})[1].find_all('li')
     for i in main:
-        add =(list(i.stripped_strings))
-        address_tmp=add[3].split(',')
-        location_name =add[1]
-        phone = add[5]
-       
+        link = i.find('a')['href']
+        r1 = requests.get(link, headers=headers)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        main1 =  soup1.find_all('div', {'class': 'span6'})[1]
+              
+
+   
+        location_name =(list(main1.stripped_strings))[1]
+        address_tmp = (list(main1.stripped_strings))[3].split(',')   
+        phone =  (list(main1.stripped_strings))[5]    
+        hour1 = (list(main1.stripped_strings))[-15:]  
+        hour = " ".join(hour1).replace('|','').replace('Hours','').strip()         
         if(len(address_tmp)==5):
             address =address_tmp[0]+' '+address_tmp[1]
             city = address_tmp[2]
@@ -49,9 +56,9 @@ def fetch_data():
             address =address_tmp[0]
             city = address_tmp[1]
             state = address_tmp[2]
-            
+             
  
-        hour =" ".join(add[-15:]).replace('|','').replace('Hours','').strip()
+   
       
         tem_var =[]
     
@@ -68,7 +75,7 @@ def fetch_data():
         tem_var.append("<MISSING>")
         tem_var.append("<MISSING>")
         tem_var.append(hour)
-        tem_var.append(base_url) 
+        tem_var.append(link) 
        
 
         return_main_object.append(tem_var)
