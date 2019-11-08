@@ -69,7 +69,8 @@ def fetch_data():
         if state == 'HI':
             Found = False
         if Found or state == 'HI':
-            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            if zc != '':
+                yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
