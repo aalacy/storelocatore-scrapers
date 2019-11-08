@@ -33,6 +33,7 @@ Apify.main(async () => {
 						let store = parsed[key];
 						stores.push({
 							locator_domain: 'https://www.carters.com/',
+							page_url: '<MISSING>',
 							location_name: store.name,
 							street_address: store.address1,
 							city: store.city,
