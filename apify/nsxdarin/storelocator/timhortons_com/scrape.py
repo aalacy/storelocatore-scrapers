@@ -105,7 +105,7 @@ def fetch_data():
                                     hours = hours + '; ' + day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
                                 except:
                                     hours = hours + '; ' + day.split('"')[0] + ': CLOSED'
-            hours = hours.replace('0-0;','Open 24 Hours;').replace('Sunday: 0-0','Sunday: Open 24 Hours')
+            hours = hours.replace(' 0-0',' Open 24 Hours;')
             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
