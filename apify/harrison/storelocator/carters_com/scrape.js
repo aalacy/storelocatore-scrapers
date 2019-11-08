@@ -1,8 +1,16 @@
 const Apify = require('apify');
 
+function convertBlank(x) {
+	if (!x || (typeof(x) == 'string' && !x.trim())) {
+		return "<MISSING>";
+	} else {
+		return x;
+	}
+}
+
 Apify.main(async () => {
 	const requestQueue = await Apify.openRequestQueue();
-	await requestQueue.addRequest({ url: 'https://www.carters.com/on/demandware.store/Sites-Carters-Site/default/Stores-GetNearestStores?carters=true&oshkosh=false&skiphop=false&lat=0&lng=0' });
+	await requestQueue.addRequest({ url: 'https://www.carters.com/on/demandware.store/Sites-Carters-Site/default/Stores-GetNearestStores?carters=true&oshkosh=true&skiphop=false&lat=0&lng=0' });
 
 	const useProxy = process.env.USE_PROXY;
 
@@ -34,17 +42,17 @@ Apify.main(async () => {
 						stores.push({
 							locator_domain: 'https://www.carters.com/',
 							page_url: '<MISSING>',
-							location_name: store.name,
-							street_address: store.address1,
-							city: store.city,
-							state: store.stateCode,
-							zip: store.postalCode,
-							country_code: store.countryCode,
-							store_number: store.storeid,
-							phone: store.phone,
-							location_type: '<MISSING>',
-							latitude: store.latitude,
-							longitude: store.longitude,
+							location_name: convertBlank(store.name),
+							street_address: convertBlank(store.address1),
+							city: convertBlank(store.city),
+							state: convertBlank(store.stateCode),
+							zip: convertBlank(store.postalCode),
+							country_code: convertBlank(store.countryCode),
+							store_number: convertBlank(store.storeid),
+							phone: convertBlank(store.phone),
+							location_type: convertBlank(store.brand),
+							latitude: convertBlank(store.latitude),
+							longitude: convertBlank(store.longitude),
 							hours_of_operation: {
 								'Sunday Hours': store.sundayHours,
 								'Monday Hours': store.mondayHours,
