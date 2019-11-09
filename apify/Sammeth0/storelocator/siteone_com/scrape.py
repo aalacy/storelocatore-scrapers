@@ -31,7 +31,7 @@ def fetch_data():
 	locator_domain ="https://www.siteone.com/"
 	country_code="US"
 	
-	for i in range(860):
+	for i in range(808):
 		page_url="https://www.siteone.com/store/"+str(i+1)
 		print(page_url)
 		headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'}
@@ -49,18 +49,22 @@ def fetch_data():
 			except:
 				longs.append("<MISSING>")
 			try:
-				lats.append(str(r).split('"latitude":"')[1].split('",')[0])
+				lat=str(r).split('"latitude":"')[1].split('",')[0]
+				if len(lat)<=4:
+					lats.append(lat+'00')
+					print(lats)
+				else:
+					lats.append(lat)
 			except:
 				lats.append("<MISSING>")
 			try:
-				zips.append(str(r).split('&lt;div&gt;')[4].split('-')[0].replace('&lt','').replace('/div&gt',''))
+				zips.append(str(r).split('&lt;div&gt;')[4].split('-')[0].replace('&lt','').replace('/div&gt','').replace(';',''))
 			except:
 				zips.append("<MISSING>")
 			try:	
-				ids.append(str(r).split('&lt;div&gt;')[1].split('/div&gt;')[0].split(' ')[0])
+				ids.append(i+1)
 			except:
 				ids.append("<MISSING>")
-			print(locs)
 			print(len(locs))
 		try:
 			states.append(soup.find("title").text.split(', ')[1].split(' |')[0])
@@ -68,7 +72,6 @@ def fetch_data():
 			continue
 		try:
 			phones.append(soup.find(class_="tel-phone content-product-title").text)
-			print(len(phones))
 		except:
 			continue
 		try:
