@@ -63,21 +63,21 @@ class Scraper(Scrape):
                     location_type = 'Print Center'
 
                     # Street
-                    address_info = [re.sub('(Canada)|(United States)', '', address.get_attribute('textContent')).replace('\t', '').replace('\n', '').strip() for address in driver.find_element_by_css_selector('div.location__address').find_elements_by_css_selector('div.location-address')]
+                    address_info = [re.sub('(Canada)|(United States)', '', address.get_attribute('textContent')).replace('\t', '').replace('\n', '').strip() for address in driver.find_element_by_css_selector('div.location__address').find_elements_by_css_selector('div') if address.get_attribute('itemprop') == 'streetAddress']
                     address_info = [info for info in address_info if info != '']
-                    street_address = address_info[0]
+                    street_address = ' '.join(address_info[:-1])
 
                     # zip
-                    zipcode = address_info[1][-5:].strip() if search_country == 'us' else address_info[1][-7:].strip()
+                    zipcode = address_info[-1][-5:].strip() if search_country == 'us' else address_info[-1][-7:].strip()
 
                     # city
-                    city = address_info[1].replace(zipcode, '').split(',')[0].strip()
+                    city = address_info[-1].replace(zipcode, '').split(',')[0].strip()
 
                     # Name
                     location_title = f"Minute man press - {city}"
 
                     # State
-                    state = address_info[1].replace(zipcode, '').split(',')[1].strip()
+                    state = address_info[-1].replace(zipcode, '').split(',')[1].strip()
 
                     # Phone
                     phone = driver.find_element_by_css_selector('div.location-phone.location-phone--1 > span.value > a').get_attribute('textContent')
