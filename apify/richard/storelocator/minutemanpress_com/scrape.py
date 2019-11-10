@@ -35,11 +35,11 @@ class Scraper(Scrape):
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
-        for country in ['ca', 'us']:
+        for search_country in ['us']:
             stores = []
-            prov_state = 'provinces' if country == 'ca' else 'states'
-            print(f"Getting {prov_state} for {country.upper()}")
-            driver.get(f'https://www.minutemanpress.com/locations/locations.html/{country}')
+            prov_state = 'provinces' if search_country == 'ca' else 'states'
+            print(f"Getting {prov_state} for {search_country.upper()}")
+            driver.get(f'https://www.minutemanpress.com/locations/locations.html/{search_country}')
             states = [url.get_attribute('action') for url in driver.find_elements_by_css_selector('div.mmp-corp-store-search-filter-options > form')]
             for state in states:
                 print(f"Getting stores for state website: {state}")
@@ -63,20 +63,21 @@ class Scraper(Scrape):
                     location_type = 'Print Center'
 
                     # Street
-                    address_info = '\n'.join([re.sub('(Canada)|(United States)', '', address.get_attribute('textContent')).replace('\t', '').replace('\n', '').strip() for address in  driver.find_element_by_css_selector('div.location__address').find_elements_by_css_selector('div.location-address')])
-                    street_address = ' '.join(address_info.split('\n')[:-1])
+                    address_info = [re.sub('(Canada)|(United States)', '', address.get_attribute('textContent')).replace('\t', '').replace('\n', '').strip() for address in driver.find_element_by_css_selector('div.location__address').find_elements_by_css_selector('div.location-address')]
+                    address_info = [info for info in address_info if info != '']
+                    street_address = address_info[0]
+
+                    # zip
+                    zipcode = address_info[1][-5:].strip() if search_country == 'us' else address_info[1][-7:].strip()
 
                     # city
-                    city = address_info.split('\n')[-1][:-5].strip()[:-2] if country == 'us' else address_info.split('\n')[-1][:-7].strip()[:-2]
+                    city = address_info[1].replace(zipcode, '').split(',')[0].strip()
 
                     # Name
                     location_title = f"Minute man press - {city}"
 
-                    # zip
-                    zipcode = address_info.split('\n')[-1][-5:] if country == 'us' else address_info.split('\n')[-1][-7:]
-
                     # State
-                    state = address_info.split('\n')[-1][:-5].strip()[-2:] if country == 'us' else address_info.split('\n')[-1][:-7].strip()[-2:]
+                    state = address_info[1].replace(zipcode, '').split(',')[1].strip()
 
                     # Phone
                     phone = driver.find_element_by_css_selector('div.location-phone.location-phone--1 > span.value > a').get_attribute('textContent')
@@ -94,7 +95,7 @@ class Scraper(Scrape):
                         hour = '<MISSING>'
 
                     # Country
-                    country = country.upper()
+                    country = search_country.upper()
 
                     # Store data
                     locations_ids.append(location_id)
@@ -114,7 +115,7 @@ class Scraper(Scrape):
                     print(f"{store} is not scrapable")
                     pass
 
-            print(f"Done scraping stores for {country.upper()}")
+            print(f"Done scraping stores for {search_country.upper()}")
 
         for (
                 locations_title,
