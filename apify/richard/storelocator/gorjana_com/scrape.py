@@ -68,13 +68,13 @@ class Scraper(Scrape):
             street_address = store['address'].replace('<br />', ', ').split(',')[0]
 
             # city
-            city = store['address'].replace('<br />', ', ').split(',')[1]
+            city = store['address'].replace('<br />', ', ').split(',')[-2]
 
             # zip
-            zipcode = store['address'].replace('<br />', ', ').split(',')[0][-5:]
+            zipcode = store['address'].replace('<br />', ', ').split(',')[-1][-5:]
 
             # State
-            state = store['address'].replace('<br />', ', ').split(',')[0][:-5].strip()
+            state = store['address'].replace('<br />', ', ').split(',')[-1][:-5].strip()
 
             # Phone
             phone = store['phone']

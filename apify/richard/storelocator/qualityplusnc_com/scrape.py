@@ -112,7 +112,6 @@ class Scraper(Scrape):
             location_title = store['title']
 
             # Street
-            print(store['address'])
             street_address = store['address'].split(',')[0] if store['address'] not in self.exceptions else self.exceptions[store['address']]['address']
 
             # city
@@ -125,7 +124,7 @@ class Scraper(Scrape):
             state = store['address'].split(',')[2][:-5].strip() if store['address'] not in self.exceptions else self.exceptions[store['address']]['state']
 
             # Phone
-            phone = store['desc']
+            phone = store['desc'].split('</p>')[0].replace('<p>', '').split('<br />')[0]
 
             # Lat
             lat = store['lat']
