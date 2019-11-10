@@ -42,7 +42,7 @@ def fetch_data():
     city = "<MISSING>"
     state = "<MISSING>"
     zipp = "<MISSING>"
-    country_code = "CA"
+    country_code = ""
     store_number = "<MISSING>"
     phone = "<MISSING>"
     location_type = "<MISSING>"
@@ -110,6 +110,7 @@ def fetch_data():
                 phone= list_phone[0].split(';')[0]
             latitude = store.find('latitude').text.strip()
             longitude = store.find('longitude').text.strip()
+            country_code = "CA"
             hours = store.find('exturl').nextSibling
             soup_hours = BeautifulSoup(hours.text,'lxml')
             # print(soup_hours.prettify())
@@ -117,10 +118,14 @@ def fetch_data():
             for hr in soup_hours.find_all('p'):
                 hour = hr.text.replace('\n' ,'  ')
                 h.append(hour)
-            hours_of_operation = "   ".join(h).replace('&','-').replace('\r','')
+            hours_of_operation = "   ".join(h).replace('&','-').replace('\r','-').strip()
+            page_url = "https://extremepita.com/locations/"
+
+
+
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-            store = ["<MISSING>" if x == "" or x == "Blank" else x for x in store]
+            store = ["<MISSING>" if x == "" or x == "Blank" else x.encode('ascii', 'ignore').decode('ascii').strip() for x in store]
             # if store_number in addresses:
             #     continue
             # addresses.append(store_number)
@@ -129,9 +134,69 @@ def fetch_data():
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
+    #################################################
+    #us store locator
+    us_url = "https://locator.kahalamgmt.com/locator/index.php"
+    # for zip_code in zips:
+    us_querystring = {"brand":"27","mode":"map","latitude":"40.79843000","longitude":"-73.64766000","q":"","pagesize":""}
+
+    us_headers = {
+        'content-type': "application/x-www-form-urlencoded",
+        'accept': "application/json, text/javascript, */*; q=0.01",
+        'cache-control': "no-cache",
+        'postman-token': "c5530775-1d0d-3c17-04e3-0cd229f54a0c"
+        }
+
+    us_response = requests.request("GET", us_url, headers=us_headers, params=us_querystring)
+    us_soup = BeautifulSoup(us_response.text,'lxml')
+    p_url = requests.get('https://www.extremepitaus.com/locator/index.php?brand=27&mode=desktop&pagesize=5&q=11576')
+    url_soup = BeautifulSoup(p_url.text,'lxml')
+    u =[]
+    h = []
+    for loc_url in url_soup.find_all(lambda tag: (tag.name == 'a') and "Learn More" in tag.text):
+        data_url = "https://www.extremepitaus.com"+loc_url['href']
+        loc = requests.get(data_url)
+        soup_loc =BeautifulSoup(loc.text,'lxml')
+        hours = soup_loc.find('div',class_='group hours').text.strip().replace('Store Hours','').strip()
+        u.append(data_url)
+        h.append(hours)
+
+    script = us_soup.find('div',{'id':'map_canvas'}).find_next('script',{'type':'text/javascript'}).text.split('function()')[1].split(';')
+    del script[-1]
+    for i in script:
+
+        script_text = i.split('=')[1].split('}')[0]+"}"
+        try:
+            json_data = json.loads(script_text)
+        except:
+            continue
+        store_number = json_data['StoreId']
+        location_name = json_data['Name']
+        street_address = json_data['Address']
+        city = json_data['City']
+        state = json_data['State']
+        zipp= json_data['Zip']
+        phone = json_data['Phone']
+        latitude = json_data['Latitude']
+        longitude = json_data['Longitude']
+        country_code = json_data['CountryCode']
+        location_type = json_data['LocationType']
+        hours_of_operation = h.pop(0)
+        page_url = u.pop(0)
+
+        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+        store = ["<MISSING>" if x == "" or x == "Blank" else x for x in store]
+        # if store_number in addresses:
+        #     continue
+        # addresses.append(store_number)
+
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+        return_main_object.append(store)
 
     return return_main_object
-
 
 
 

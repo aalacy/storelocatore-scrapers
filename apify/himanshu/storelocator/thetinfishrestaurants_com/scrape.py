@@ -11,80 +11,60 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    base_url= "https://www.thetinfishrestaurants.com/locations-menus/"
-    r = requests.get(base_url)
-    soup= BeautifulSoup(r.text,"lxml")
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        "x-requested-with":"XMLHttpRequest",
+        "referer": "https://www.thetinfishrestaurants.com/locations-menus/find-a-tin-fish-location-near-you/",
+        "content-type" :"application/x-www-form-urlencoded; charset=UTF-8",
+
+    }
+    data = 'address=&formdata=addressInput%3D&lat=37.09024&lng=-95.71289100000001&name=&options%5Bdistance_unit%5D=miles&options%5Bdropdown_style%5D=none&options%5Bignore_radius%5D=0&options%5Bimmediately_show_locations%5D=1&options%5Binitial_radius%5D=10000&options%5Blabel_directions%5D=Directions&options%5Blabel_email%5D=Email&options%5Blabel_fax%5D=Fax%3A+&options%5Blabel_phone%5D=Phone%3A+&options%5Blabel_website%5D=http%3A%2F%2Fwww.thetinfishrestaurants.com&options%5Bloading_indicator%5D=&options%5Bmap_center%5D=United+States&options%5Bmap_center_lat%5D=37.09024&options%5Bmap_center_lng%5D=-95.712891&options%5Bmap_domain%5D=maps.google.com&options%5Bmap_end_icon%5D=http%3A%2F%2Fwww.thetinfishrestaurants.com%2Fwp-content%2Fuploads%2F2013%2F01%2FTF-Marker.png&options%5Bmap_home_icon%5D=http%3A%2F%2Fwww.thetinfishrestaurants.com%2Fwp-content%2Fplugins%2Fstore-locator-le%2Fimages%2Ficons%2Fbox_yellow_home.png&options%5Bmap_region%5D=us&options%5Bmap_type%5D=roadmap&options%5Bmessage_bad_address%5D=Could+not+locate+this+address.+Please+try+a+different+location.&options%5Bmessage_no_results%5D=No+locations+found.&options%5Bno_autozoom%5D=0&options%5Buse_sensor%5D=false&options%5Bzoom_level%5D=4&options%5Bzoom_tweak%5D=1&radius=10000&tags=&action=csl_ajax_onload'
+
+    base_url= "https://www.thetinfishrestaurants.com/wp-admin/admin-ajax.php"
+    loc = requests.post(base_url,data=data,headers=headers).json()
+    
     store_name=[]
     store_detail=[]
     time =[]
     return_main_object=[]
     phone = []
     
-    k= soup.find_all("table",{"border":"0","width":"90%","cellspacing":"0","cellpadding":"0"})
-    k1= soup.find_all("h3",{"class":"style1"})
+    for i in loc['response']:
+        tem_var =[]
+        address = i['address']
+        city = i['city']
+        lat= i['lat']
+        lng =i['lng']
+        name = i['name']
+        phone = i['phone']
+        state = i['state']
+        zip1 = i['zip']
+        hours = i['data']['sl_hours'].replace("\t","").encode('ascii', 'ignore').decode('ascii').strip().replace("\n","").replace("&#44;","")
 
-    for j in k1:
-        store_name.append(j.text.split("|")[0])
-        phone.append(j.text.split("|")[2].split("\n")[0])
-
-    
-    for i in  k:
-        st = i.find_all("td",{"width":"31.37%"})
-        hours = i.find_all("td",{"width":"24.93%"})
-
-        for j in hours:
-            time.append(" ".join(list(j.stripped_strings)).replace("( No Reservations ) We operate on a 1st come first serve basis.",""))
-       
-        for j in st:
-            tem_var=[]
-            zipcode =''
-            p = j.find_all("p")
-         
-            if len(p[1].text.replace("\xa0","").split(','))==2:
-                street_address=(j.p.text)
-                
-                city = p[1].text.replace("\xa0","").split(',')[0]
-                state =  p[1].text.replace("\xa0","").split(',')[1].split( )[0]
-                zipcode = p[1].text.replace("\xa0","").split(',')[1].split( )[1]
-
-                tem_var.append(street_address)
-                tem_var.append(city)
-                tem_var.append(state.strip())
-                tem_var.append(zipcode)
-                store_detail.append(tem_var)
-             
-            else:
-                street_address=(j.p.text)
-                city = p[1].text.replace("\xa0","").split( )[0]
-                state = p[1].text.replace("\xa0","").split( )[1]
-                zipcode ="<MISSING>"
-
-                tem_var.append(street_address)
-                tem_var.append(city)
-                tem_var.append(state.strip())
-                tem_var.append(zipcode)
-                store_detail.append(tem_var)
-
-    for i in range(len(store_name)):
-        store = list()
-        store.append("https://www.thetinfishrestaurants.com")
-        store.append(store_name[i])
-        store.extend(store_detail[i])
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone[i])
-        store.append("thetinfishrestaurants")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(time[i])
-        return_main_object.append(store)
+        tem_var.append("https://www.thetinfishrestaurants.com")
+        tem_var.append(name)
+        tem_var.append(address.replace("\t","").replace("\n","").replace("\r",""))
+        tem_var.append(city.replace("\t","").replace("\n","").replace("\r",""))
+        tem_var.append(state.strip().replace("\t","").replace("\n","").replace("\r",""))
+        tem_var.append(zip1.strip().replace("\t","").replace("\n","").replace("\r",""))
+        tem_var.append("US")
+        tem_var.append("<MISSING>")
+        
+        tem_var.append(phone.replace("\t","").replace("\n","").replace("\r",""))
+        tem_var.append("<MISSING>")
+        tem_var.append(lat.replace("\t","").replace("\n","").replace("\r",""))
+        tem_var.append(lng.replace("\t","").replace("\n","").replace("\r",""))
+        tem_var.append(hours.replace("\r","").replace(" &amp;",""))
+        tem_var.append("<MISSING>")
+        # print(tem_var)
+        return_main_object.append(tem_var)
 
     return return_main_object
 
@@ -95,3 +75,5 @@ def scrape():
 
 
 scrape()
+
+

@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import unicodedata
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -29,7 +30,7 @@ def fetch_data():
     tmp_url= 'https://www.firstlightfcu.org'
     get_url= 'https://www.firstlightfcu.org/branches' 
     
-    # tem_var=[]
+    # store=[]
  
    
     
@@ -40,7 +41,7 @@ def fetch_data():
   
     main =soup.find_all('span', {'class': 'name'})
     for i in main:
-        tem_var = []
+        store = []
         link = tmp_url+i.a['href']
         r1 = requests.get(link, headers=headers)
          # print(r)
@@ -63,22 +64,26 @@ def fetch_data():
         
   
 
-        tem_var.append(tmp_url)
-        tem_var.append(location_name)
-        tem_var.append(address)
-        tem_var.append(city)
-        tem_var.append(state) 
-        tem_var.append(zip)
-        tem_var.append('US')
-        tem_var.append("<MISSING>")
-        tem_var.append(phone)
-        tem_var.append("<MISSING>")
-        tem_var.append(lat)
-        tem_var.append(lng)
-        tem_var.append(hour)
-        tem_var.append(link)
-
-        return_main_object.append(tem_var)
+        store.append(tmp_url)
+        store.append(location_name)
+        store.append(address)
+        store.append(city)
+        store.append(state) 
+        store.append(zip)
+        store.append('US')
+        store.append("<MISSING>")
+        store.append(phone)
+        store.append("<MISSING>")
+        store.append(lat)
+        store.append(lng)
+        store.append(hour)
+        store.append(link)
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        return_main_object.append(store)
         
            
  

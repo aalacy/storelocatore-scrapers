@@ -10,13 +10,12 @@ import pandas as pd
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
-import os
 
 def fetch_data():
     data = []
     driver = webdriver.Chrome()
         
-    df_zips = pd.read_csv(os.path.join(os.getcwd(),"US_states.csv"))["Zip_Range"].tolist()
+    df_zips = pd.read_csv("./US_states.csv")["Zip_Range"].tolist()
     for z in range(len(df_zips)):
         try:
             min_z,max_z = df_zips[z].split("-")
@@ -73,7 +72,8 @@ def fetch_data():
                         hours_of_operation = [p.text for p in p_list if "Hours of Operation:".lower() in p.text.lower()]
                         hours_of_operation = [h.strip() for h in hours_of_operation[0].split("\n") if h.strip() != ""]
                         
-                        
+                        store_number = location_link.split("id=")[1]
+
                         country_code = "US"
                         data_record = {}
                         data_record['locator_domain'] = locator_domain
@@ -83,13 +83,13 @@ def fetch_data():
                         data_record['state'] = state
                         data_record['zip'] = zipcode
                         data_record['country_code'] = country_code
-                        data_record['store_number'] = '<MISSING>'
+                        data_record['store_number'] = store_number
                         data_record['phone'] = phone   
                         data_record['location_type'] = '<MISSING>'
                         data_record['latitude'] = latitude
                         data_record['longitude'] = longitude
                         data_record['hours_of_operation'] = ",".join(hours_of_operation)
-                        data_record['page_url'] = '<MISSING>'
+                        data_record['page_url'] = location_link
                         data.append(data_record)
                         #print(len(data))
             
@@ -115,7 +115,8 @@ def write_output(data):
     df_data = df_data.replace(r'^\s*$', "<MISSING>", regex=True)
     df_data = df_data.drop_duplicates(["location_name","street_address"])
     df_data['zip'] = df_data.zip.astype(str)
-    df_data.to_csv('./data_v4.csv',index = 0,header=True,columns=['locator_domain','location_name','street_address','city',
+
+    df_data.to_csv('./data.csv',index = 0,header=True,columns=['locator_domain','location_name','street_address','city',
                                                                'state','zip','country_code','store_number','phone','location_type',
                                                                'latitude','longitude','hours_of_operation','page_url'])
 

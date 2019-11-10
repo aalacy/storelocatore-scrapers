@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import unicodedata
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -47,25 +47,28 @@ def fetch_data():
         lat= i['lat']
         lng=i['lng']
         hour= 'Monday' +' '+i['hours1']+' '+'Tuesday' +' '+i['hours2']+' '+'Wednesday' +' '+i['hours3']+' '+'Thursday' +' '+i['hours4']+' '+'Friday' +' '+i['hours5']+' '+'Saturday' +' '+i['hours6']+' '+'Sunday' +' '+i['hours7']       
-        tem_var=[]       
-        tem_var.append(domain_url)
-        tem_var.append(location_name)
-        tem_var.append(address)
-        tem_var.append(city)
-        tem_var.append(state) 
-        tem_var.append(zip)
-        tem_var.append('CA')
-        tem_var.append("<MISSING>")
-        tem_var.append(phone)
-        tem_var.append("<MISSING>")
-        tem_var.append(lat)
-        tem_var.append(lng)
-        tem_var.append(hour)
-        tem_var.append('<MISSING>') 
-        return_main_object.append(tem_var)
-        
+        store=[]       
+        store.append(domain_url)
+        store.append(location_name)
+        store.append(address)
+        store.append(city)
+        store.append(state) 
+        store.append(zip)
+        store.append('CA')
+        store.append("<MISSING>")
+        store.append(phone)
+        store.append("<MISSING>")
+        store.append(lat)
+        store.append(lng)
+        store.append(hour)
+        store.append("https://www.caasco.com" + i["moreInfo"])
+        return_main_object.append(store)
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
            
- 
     return return_main_object
 
 

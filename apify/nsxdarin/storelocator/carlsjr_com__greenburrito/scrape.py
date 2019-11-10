@@ -62,13 +62,15 @@ def fetch_data(search):
                         except:
                             phone = '<MISSING>'
                         hrs = item.split('{"day":"')
-                        hours = '<MISSING>'
+                        hours = ''
                         for hr in hrs:
                             if '"time":"' in hr:
                                 if hours == '':
                                     hours = hr.split('"')[0] + ': ' + hr.split('"time":"')[1].split('"')[0]
                                 else:
                                     hours = hours + '; ' + hr.split('"')[0] + ': ' + hr.split('"time":"')[1].split('"')[0]
+                        if hours == '':
+                            hours = '<MISSING>'
                         locations.append([website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours])
         if not coords: print("zip returned no results: {}".format(search.current_zip))
         search.max_count_update(coords)

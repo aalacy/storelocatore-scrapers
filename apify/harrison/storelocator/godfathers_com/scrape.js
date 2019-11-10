@@ -15,12 +15,10 @@ async function scrape() {
             country_code: store.country,
             store_number: store.storeId,
             phone: store.phoneNumber,
-            location_type: null,
-            niacs_code: null,
-            latitude: null,
-            longitude: null,
-            external_lat_long: true,
-            hours_of_operation: null
+					location_type: '<MISSING>',
+						latitude: store.latitude == "0E-8" ? "<MISSING>" : store.latitude,
+            longitude: store.longitude == "0E-8" ? "<MISSING>" : store.longitude,
+            hours_of_operation: store.storeHours
         });
     }
     return stores;

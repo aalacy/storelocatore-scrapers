@@ -61,7 +61,7 @@ def fetch_data():
             if "schedule" in store_data and store_data["schedule"]:
                 store_hours = store_data["schedule"]
                 for hour in store_hours:
-                    hours = hours + " " + days[hour["dayNumber"]] + hour["value"]
+                    hours = hours + " " + days[hour["dayNumber"]] + " " + hour["value"]
             store.append(hours if hours != "" else "<MISSING>")
             store.append("<MISSING>")
             #print(store)

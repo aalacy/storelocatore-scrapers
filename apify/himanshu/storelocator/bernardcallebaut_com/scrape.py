@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import unicodedata
 # import sgzip
 # import time
 
@@ -179,12 +180,19 @@ def fetch_data():
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                                  store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
                     store = ["<MISSING>" if x == ""  else x for x in store]
-
+                    if ")" in store[8]:
+                        if store[8][0] != "(":
+                            store[8] = "(" + store[8]
                     # print(location_name +" | "+street_address)
 
                     # print("data = " + str(store))
                     # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
+                    
+                    for i in range(len(store)):
+                        if type(store[i]) == str:
+                            store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+                    store = [x.replace("–","-") if type(x) == str else x for x in store]
+                    store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
                     return_main_object.append(store)
 
 
