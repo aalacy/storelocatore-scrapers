@@ -60,7 +60,7 @@ class Scraper(Scrape):
             print(f"{len(data)} locations scraped for {coord[0]}, {coord[1]}")
 
         for store in stores:
-            if store['Address'] + store['Address'] not in self.seen:
+            if ' '.join(store['Address'].split(' ')[:2]) not in self.seen:
                 # Store ID
                 location_id = store['StoreID']
 
@@ -74,7 +74,7 @@ class Scraper(Scrape):
                 location_title = store['Name']
 
                 # Street
-                street_address = store['Address'] + store['Address']
+                street_address = store['Address']
 
                 # city
                 city = store['City']
@@ -114,7 +114,7 @@ class Scraper(Scrape):
                 cities.append(city)
                 countries.append(country)
                 location_types.append(location_type)
-                self.seen.append(store['Address'] + store['Address'])
+                self.seen.append(' '.join(store['Address'].split(' ')[:2]))
 
         for (
                 locations_title,
