@@ -8,18 +8,20 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
     base_url = "https://earthbar.com/apps/store-locator"
+    page_url = "https://earthbar.com/apps/store-locator"
     r = requests.get(base_url)
     soup = BeautifulSoup(r.text ,"lxml")
     return_main_object = []
     store_listing = soup.find("div",{"id": "addresses_list"}).find('ul').find_all('li')
     for lit in store_listing:
+        location_type = lit.find('span',class_='name').text.strip()
         store_no=lit['onmouseover'].split('(')[-1].split(')')[0].strip()
         address=lit.find('a').find('span',{"class":"address"}).text.strip()
         city=lit.find('a').find('span',{"class":"city"}).text.strip()
@@ -46,10 +48,13 @@ def fetch_data():
         store.append("US")
         store.append(store_no)
         store.append(phone)
-        store.append("Earthbar")
+        store.append(location_type)
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append("<MISSING>")
+        store.append(page_url)
+        #print(str(store))
+        #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
     return return_main_object
 
