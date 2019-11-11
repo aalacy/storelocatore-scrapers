@@ -35,7 +35,7 @@ def fetch_data():
         #print(statelink)
         page1 = requests.get(statelink)
         soup1 = BeautifulSoup(page1.text, "html.parser")
-        link_list = soup1.findAll('a', {'class': 'address-link'})
+        #link_list = soup1.findAll('a', {'class': 'address-link'})
        # for alink in link_list:s
         #    links.append("https://www.extraspace.com" + alink['href'])
         link_list = soup1.findAll('a', {'class': 'cl-other-faclink'})
