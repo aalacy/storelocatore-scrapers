@@ -26,7 +26,6 @@ def fetch_data():
 	long = []
 	lat = []
 	storeno = []
-	ids=[]
 	page_url=[]
 	
 	page_url="https://www.vw.ca/app/dccsearch/vw-ca/en/Volkswagen%20Dealer%20Search/+/53.835794350000015/-95.32055685/4/+/+/+/+"
@@ -43,6 +42,7 @@ def fetch_data():
 	names_pos=[m.start() for m in re.finditer('%22name%22:%22', stores)]
 	states_pos=[m.start() for m in re.finditer('%22province%22:%22', stores)]
 	types_pos=[m.start() for m in re.finditer('%22type%22:%22Point%22%7D,%22services%22:%5B%22', stores)]
+	ids_pos=[m.start() for m in re.finditer('%22id%22:%22', stores)]
 	
 	for i in names_pos:
 		locs.append(stores[i:].split('%22name%22:%22')[1].split('%22,')[0].replace('%20',' '))
@@ -54,8 +54,8 @@ def fetch_data():
 		states.append(stores[i:].split('%22province%22:%22')[1].split('%22,')[0].replace('%20',' '))
 	for i in zips_pos:
 		zips.append(stores[i:].split('%22postalCode%22:%22')[1].split('%22%7D')[0].replace('%20',' '))
-	#for i in addresses_pos:
-	#	storeno.append(stores[i:].split('%22address%22:%7B%22street%22:%22')[1].split('%22,')[0].split('%20')[0])
+	for i in ids_pos:
+		storeno.append(stores[i:].split('%22id%22:%22')[1].split('%22,')[0])
 	for i in phones_pos:
 		phones.append(stores[i:].split('%22phoneNumber%22:%22')[1].split('%22,')[0])
 	for i in types_pos:
@@ -75,7 +75,7 @@ def fetch_data():
 		store.append(states[i] if states[i] else "<MISSING>")
 		store.append(zips[i] if zips[i] else "<MISSING>")
 		store.append('CA')
-		store.append("<MISSING>")
+		store.append(storeno[i] if storeno[i] else "<MISSING>")
 		store.append(phones[i] if phones[i] else "<MISSING>")
 		store.append(types[i] if types[i] else "<MISSING>" )
 		store.append(lat[i] if lat[i] else "<MISSING>")

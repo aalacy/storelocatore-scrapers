@@ -22,6 +22,15 @@ def get_driver():
     options.add_argument('--disable-dev-shm-usage')
     return webdriver.Chrome(r'chromedriver', chrome_options=options)
 
+def parse_geo(url):
+    try:
+        lon = re.findall(r'\,(-=?[\d\.]*)', url)[0]
+        lat = re.findall(r'\=(-?[\d\.]*),', url)[0]
+    except:
+        lon = re.findall(r'\!2d(-?[\d\.]*)', url)[0]
+        lat = re.findall(r'\!3d(-?[\d\.]*)!', url)[0]
+    return lat,lon
+    
 def fetch_data():
     data=[];store_no=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
     #Driver
@@ -41,20 +50,26 @@ def fetch_data():
             state.append(tagged['StateName'])
             zipcode.append(tagged['ZipCode'].strip().replace("'",""))
             location_name.append(street[n].text.split("\n")[0])
-            street_address.append(street[n].text.split("\n")[1])
         except:
-            tagged = usaddress.tag(str(street[n].text.split("\n")[1:]))[0]
+            tagged = usaddress.tag(str(street[n].text.split("\n")[2:]))[0]
             city.append(tagged['PlaceName'])
             state.append(tagged['StateName'])
             zipcode.append(tagged['ZipCode'].strip().replace("'",""))
             location_name.append(street[n].text.split("\n")[0])
-            street_address.append(street[n].text.split("\n")[1])
         store_no.append(store[n].get_attribute("data-store-id"))
+        if 'Suite' in street[n].text:
+                street_address.append(' '.join(str(street[n].text.split("\n")[1]+', '+street[n].text.split("\n")[2]).split(",")[:2]))
+        else:
+                street_address.append(street[n].text.split("\n")[1])
     for n in range(0,len(links_href)-1):
         driver.get(links_href[n])
         time.sleep(2)
         phone.append(driver.find_element_by_xpath("//a[contains(@href,'tel')]").get_attribute("href").split("tel:")[1])
-        hours_of_operation.append(driver.find_element_by_xpath("//div[contains(@class,'tt-column')]").text.split("Hours of Operation")[-1].strip())
+        hours_of_operation.append(driver.find_element_by_xpath("//div[contains(@class,'tt-column')]").text.split("Hours of Operation")[-1].replace(":","").strip())
+        url = driver.find_element_by_xpath("//iframe[contains(@src,'google')]")
+        lat,lon=parse_geo(url.get_attribute('src'))
+        latitude.append(lat)
+        longitude.append(lon)
     location_name.append(link)
     state.append("<MISSING>")
     city.append("<MISSING>")
@@ -64,10 +79,12 @@ def fetch_data():
     phone.append("<MISSING>")
     hours_of_operation.append("<MISSING>")
     store_no.append("<MISSING>")
+    latitude.append("<MISSING>")
+    longitude.append("<MISSING>")
     for n in range(0,len(location_name)):
         data.append([
             'https://www.zenmassageusa.com/',
-            'https://www.zenmassageusa.com/find-zen/',
+            links_href[n],
             location_name[n],
             street_address[n],
             city[n],
@@ -77,8 +94,8 @@ def fetch_data():
             store_no[n],
             phone[n],
             '<MISSING>',
-            '<MISSING>',
-            '<MISSING>',
+            latitude[n],
+            longitude[n],
             hours_of_operation[n]
         ])
     driver.quit()

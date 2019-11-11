@@ -1,4 +1,7 @@
 
+#http://www.primerica.com/public/locations.html
+#https://pterrys.com
+
 # Import libraries
 import requests
 from bs4 import BeautifulSoup
@@ -43,7 +46,7 @@ def fetch_data():
     maidiv = soup.find('main')
     mainsection = maidiv.findAll('section',{'class':'content locList'})
     print(len(mainsection))
-    sec = 1
+    sec = 0
     while sec < 2:
 
         if sec == 0:
@@ -57,7 +60,7 @@ def fetch_data():
         pattern = re.compile(r'\s\s+')
         for rep in rep_list:
             link = "http://www.primerica.com/public/" + rep['href']
-            link = 'http://www.primerica.com/public/FindRep?pageName=FINDREPZIP&province=NewFoundland&abbrv=NF'
+            #link = 'http://www.primerica.com/public/FindRep?pageName=FINDREPZIP&province=NewFoundland&abbrv=NF'
             print(link)
 
             try:
@@ -143,34 +146,46 @@ def fetch_data():
                             if len(phone) < 11:
                                 phone = "<MISSING>"
 
-                            print(address)
-                            print(mainlink)
-                            print(title)
-                            print(street)
-                            print(city)
-                            print(state)
-                            print(pcode)
-                            print(ccode)
-                            print(phone)
-                            print(p)
+                            #print(address)
+                            #print(mainlink)
+                            #print(title)
+                            #print(street)
+                            #print(city)
+                            #print(state)
+                            #print(pcode)
+                            #print(ccode)
+                            #print(phone)
+                            #print(p)
                             p += 1
-                            print("...................")
-                            data.append([
-                                'http://www.primerica.com/',
-                                mainlink,
-                                title,
-                                street,
-                                city,
-                                state,
-                                pcode,
-                                ccode,
-                                "<MISSING>",
-                                phone,
-                                "<MISSING>",
-                                "<MISSING>",
-                                "<MISSING>",
-                                "<MISSING>",
-                            ])
+                            #print("...................")
+                            flag = True
+                            #print(len(data))
+                            i = 0
+                            while i < len(data) and flag:
+                                if title == data[i][2]:
+                                    flag = False
+                                    break
+                                else:
+                                    i += 1
+                            if state == "NF":
+                                state = "NL"
+                            if flag:
+                                data.append([
+                                    'http://www.primerica.com/',
+                                    mainlink,
+                                    title,
+                                    street,
+                                    city,
+                                    state,
+                                    pcode,
+                                    ccode,
+                                    "<MISSING>",
+                                    phone,
+                                    "<MISSING>",
+                                    "<MISSING>",
+                                    "<MISSING>",
+                                    "<MISSING>",
+                                ])
                             driver.quit()
 
                     except:
@@ -178,6 +193,8 @@ def fetch_data():
                     n += 1
                     #driver1.back()
                     driver1.quit()
+                    #if p == 100:
+                        #break
 
 
                     #break
@@ -185,9 +202,11 @@ def fetch_data():
                 #print("error")
                 pass
 
-            driver1.quit()
-            break
+            #driver1.quit()
+            #break
         sec += 1
+        #if sec == 1:
+            #break
 
     return data
 

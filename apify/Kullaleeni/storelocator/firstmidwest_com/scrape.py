@@ -19,7 +19,7 @@ def fetch_data():
     driver.get(url)
     time.sleep(10)
     
-    df_zip = pd.read_csv("/home/srek/xyz/Odetta/data/Kullaleeni/storelocator/firstmidwest_com/US_states.csv")
+    df_zip = pd.read_csv("./firstmidwest_com/US_states.csv")
     
     states = df_zip.State_Mod.drop_duplicates().tolist()
     

@@ -25,6 +25,7 @@ def fetch_data():
         soup1=BeautifulSoup(r1.text,'lxml')
         name=soup1.find('div',{"id":"theatre"}).find('div',{"class":"title"}).text.strip()
         madd=list(soup1.find('div',{"id":"theatre"}).find('div',{"class":"small"}).stripped_strings)
+        print(madd)
         phone=madd[1].replace('Information:','').strip()
         md=madd[0].split('|')
         address=md[0].strip()
