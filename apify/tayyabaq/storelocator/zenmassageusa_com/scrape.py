@@ -20,7 +20,7 @@ def get_driver():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome(r'C:/Python27/chromedriver', chrome_options=options)
+    return webdriver.Chrome(r'chromedriver', chrome_options=options)
 
 def parse_geo(url):
     try:
@@ -58,7 +58,7 @@ def fetch_data():
             location_name.append(street[n].text.split("\n")[0])
         store_no.append(store[n].get_attribute("data-store-id"))
         if 'Suite' in street[n].text:
-                street_address.append(str(street[n].text.split("\n")[1]+', '+street[n].text.split("\n")[2]))
+                street_address.append(' '.join(str(street[n].text.split("\n")[1]+', '+street[n].text.split("\n")[2]).split(",")[:2]))
         else:
                 street_address.append(street[n].text.split("\n")[1])
     for n in range(0,len(links_href)-1):
