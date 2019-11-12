@@ -12,7 +12,12 @@ class Scraper(Scrape):
     def __init__(self, url):
         Scrape.__init__(self, url)
         self.data = []
-        self.seen = []
+        self.seen = [
+            'http://www.citycenter.minutemanpress.com/',
+            'http://www.allentownpa.minutemanpress.com/',
+            'http://www.bethlehempa.minutemanpress.com/',
+            'http://www.conroe.minutemanpress.com/'
+        ]
         self.exceptions = {
             "http://www.brentwood.minutemanpress.com/": {
                 'address': '1905 Conta Costa Blvd.',
@@ -62,6 +67,54 @@ class Scraper(Scrape):
                 'state': 'MA',
                 'zipcode': '01915'
             },
+            "http://www.minutemanlex.com/": {
+                'address': '2408 Merchant Street',
+                'city': 'Lexington',
+                'state': 'KY',
+                'zipcode': '40511'
+            },
+            "http://www.br.minutemanpress.com/": {
+                'address': '15110 Market Street, Suite B',
+                'city': 'Baton Rouge',
+                'state': 'LA',
+                'zipcode': '70817'
+            },
+            "http://www.fallriver.minutemanpress.com/": {
+                'address': '435 Columbia St.',
+                'city': 'Fall River',
+                'state': 'MA',
+                'zipcode': '02721'
+            },
+            "http://www.mmpressfitchburg.com/": {
+                'address': '386 Summer Street',
+                'city': 'Fitchburg',
+                'state': 'MA',
+                'zipcode': '01420'
+            },
+            "http://www.portland24-or.minutemanpress.com/": {
+                'address': '1308 SW 2nd Ave.',
+                'city': 'Portland',
+                'state': 'OR',
+                'zipcode': '97201'
+            },
+            "http://www.arlingtontx.minutemanpress.com/": {
+                'address': '801 Ave H E Suite 100',
+                'city': 'Arlington',
+                'state': 'TX',
+                'zipcode': '76011'
+            },
+            "http://www.fredericksburg.minutemanpress.com/": {
+                'address': '10699 Courthouse Rd.',
+                'city': 'Fredericksburg',
+                'state': 'VA',
+                'zipcode': '22407'
+            },
+            "http://www.southcharleston.minutemanpress.com/": {
+                'address': '503 D Street So.',
+                'city': 'Charleston',
+                'state': 'WV',
+                'zipcode': '25303'
+            },
         }
 
     def fetch_data(self):
@@ -99,71 +152,72 @@ class Scraper(Scrape):
             print("\n Preparing for scrape each store. \n")
 
             for store in stores:
-                print(f"Getting url for {store}")
-                driver.get(store)
+                if store not in self.seen:
+                    print(f"Getting url for {store}")
+                    driver.get(store)
 
-                try:
-                    # Store ID
-                    location_id = '<MISSING>'
-
-                    # Page url
-                    page_url = store
-
-                    # Type
-                    location_type = 'Print Center'
-
-                    # Street
-                    address_info = [re.sub('(Canada)|(United States)|\((.*?)\)', '', address.get_attribute('textContent')).replace('\t', '').replace('\n', '').strip() for address in driver.find_element_by_css_selector('div.location__address').find_elements_by_css_selector('div') if address.get_attribute('itemprop') == 'streetAddress']
-                    address_info = [info for info in address_info if info != '' and not re.match('(.*)@(.*).(.*)', info)]
-                    street_address = ' '.join(address_info[:-1]) if store not in self.exceptions.keys() else self.exceptions[store]['address']
-
-                    # zip
-                    zipcode = self.exceptions[store]['zipcode'] if store in self.exceptions.keys() else (address_info[-1].strip().split(' ')[-1] if search_country == 'us' else address_info[-1][-7:].strip())
-
-                    # city
-                    city = address_info[-1].replace(zipcode, '').split(',')[0].strip() if store not in self.exceptions.keys() else self.exceptions[store]['city']
-
-                    # Name
-                    location_title = f"Minute man press - {city}"
-
-                    # State
-                    state = address_info[-1].replace(zipcode, '').split(',')[-1].strip() if store not in self.exceptions.keys() else self.exceptions[store]['state']
-
-                    # Phone
-                    phone = driver.find_element_by_css_selector('div.location-phone.location-phone--1 > span.value > a').get_attribute('textContent')
-
-                    # Lat
-                    lat = '<MISSING>'
-
-                    # Long
-                    lon = '<MISSING>'
-
-                    # Hour
                     try:
-                        hour = driver.find_element_by_css_selector('div.location__hours').get_attribute('textContent').replace('\n', '').replace('\t', '').strip()
+                        # Store ID
+                        location_id = '<MISSING>'
+
+                        # Page url
+                        page_url = store
+
+                        # Type
+                        location_type = 'Print Center'
+
+                        # Street
+                        address_info = [re.sub('(Canada)|(United States)|\((.*?)\)', '', address.get_attribute('textContent')).replace('\t', '').replace('\n', '').strip() for address in driver.find_element_by_css_selector('div.location__address').find_elements_by_css_selector('div') if address.get_attribute('itemprop') == 'streetAddress']
+                        address_info = [info for info in address_info if info != '' and not re.match('(.*)@(.*).(.*)', info)]
+                        street_address = ' '.join(address_info[:-1]) if store not in self.exceptions.keys() else self.exceptions[store]['address']
+
+                        # zip
+                        zipcode = self.exceptions[store]['zipcode'] if store in self.exceptions.keys() else (address_info[-1].strip().split(' ')[-1] if search_country == 'us' else address_info[-1][-7:].strip())
+
+                        # city
+                        city = address_info[-1].replace(zipcode, '').split(',')[0].strip() if store not in self.exceptions.keys() else self.exceptions[store]['city']
+
+                        # Name
+                        location_title = f"Minute man press - {city}"
+
+                        # State
+                        state = address_info[-1].replace(zipcode, '').split(',')[-1].strip() if store not in self.exceptions.keys() else self.exceptions[store]['state']
+
+                        # Phone
+                        phone = driver.find_element_by_css_selector('div.location-phone.location-phone--1 > span.value > a').get_attribute('textContent')
+
+                        # Lat
+                        lat = '<MISSING>'
+
+                        # Long
+                        lon = '<MISSING>'
+
+                        # Hour
+                        try:
+                            hour = driver.find_element_by_css_selector('div.location__hours').get_attribute('textContent').replace('\n', '').replace('\t', '').strip()
+                        except:
+                            hour = '<MISSING>'
+
+                        # Country
+                        country = search_country.upper()
+
+                        # Store data
+                        locations_ids.append(location_id)
+                        locations_titles.append(location_title)
+                        street_addresses.append(street_address)
+                        states.append(state)
+                        zip_codes.append(zipcode)
+                        hours.append(hour)
+                        latitude_list.append(lat)
+                        longitude_list.append(lon)
+                        phone_numbers.append(phone)
+                        cities.append(city)
+                        countries.append(country)
+                        location_types.append(location_type)
+                        page_urls.append(page_url)
                     except:
-                        hour = '<MISSING>'
-
-                    # Country
-                    country = search_country.upper()
-
-                    # Store data
-                    locations_ids.append(location_id)
-                    locations_titles.append(location_title)
-                    street_addresses.append(street_address)
-                    states.append(state)
-                    zip_codes.append(zipcode)
-                    hours.append(hour)
-                    latitude_list.append(lat)
-                    longitude_list.append(lon)
-                    phone_numbers.append(phone)
-                    cities.append(city)
-                    countries.append(country)
-                    location_types.append(location_type)
-                    page_urls.append(page_url)
-                except:
-                    print(f"{store} is not scrapable")
-                    pass
+                        print(f"{store} is not scrapable")
+                        pass
 
             print(f"Done scraping stores for {search_country.upper()}")
 
