@@ -85,7 +85,7 @@ class Scraper(Scrape):
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
-        for search_country in ['us']:
+        for search_country in ['ca', 'us']:
             stores = []
             prov_state = 'provinces' if search_country == 'ca' else 'states'
             print(f"Getting {prov_state} for {search_country.upper()}")
