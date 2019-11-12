@@ -7,10 +7,10 @@ import re, time
 import usaddress
 
 def write_output(data):
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain","page_url","location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             if row:
@@ -48,11 +48,17 @@ def fetch_data():
     zipcodes = driver.find_elements_by_xpath("//span[@itemprop='postalCode']")
     zipcode = [zipcodes[n].text for n in range(0,len(zipcodes))]
     phones = driver.find_elements_by_xpath("//span[@itemprop='telephone']")
+    hour = driver.find_elements_by_class_name("location-details")
+    showdetails = driver.find_elements_by_class_name("show-details-btn")
     for n in range(0,len(phones)):
         if (phones[n].text!=[]) and (phones[n].text!=""):
             phone.append(phones[n].text)
         else:
             phone.append('<MISSING>')
+    for n in range(0,len(showdetails)):
+        showdetails[n].click()
+    for n in range(0,len(hour)):
+        hours_of_operation.append(hour[n].text.split("Products")[0])
     geomap = driver.find_elements_by_xpath("//a[contains(@href,'https://maps.google.com/')]")
     for n in range(0,len(geomap)):
         lat,lon = parse_geo(geomap[n].get_attribute('href'))
@@ -61,6 +67,7 @@ def fetch_data():
     for n in range(0,len(street_address)):
         data.append([
             'http://johnnysmarkets.com',
+            'http://johnnysmarkets.com/#locations',
             location_name[n],
             street_address[n],
             city[n],
@@ -72,7 +79,7 @@ def fetch_data():
             '<INACCESSIBLE>',
             latitude[n],
             longitude[n],
-            '<MISSING>'
+            hours_of_operation[n]
         ])
     driver.quit()
     return data

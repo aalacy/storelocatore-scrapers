@@ -61,11 +61,10 @@ def fetch_data():
 
     stores = driver.find_elements_by_xpath("//a[contains(@class,'button button--primary location-search-list__cta')]")
     names = [stores[i].get_attribute("href") for i in range(0, len(stores))]
-    for i in range(4,7):
+    for i in range(len(names)):
         driver2.get(names[i])
         time.sleep(5)
         page_url = names[i]
-        #print(page_url)
         try:
             store_name = driver2.find_element_by_css_selector('div.hero__title-copy').text
         except:
@@ -75,9 +74,12 @@ def fetch_data():
         else:
             try:
                 hours_elems =driver2.find_elements_by_css_selector('div.map__days')
-                store_opening_hours =""
-                for j in range(len(hours_elems)):
-                    store_opening_hours = store_opening_hours + " " + hours_elems[j].get_attribute('textContent').replace("\n"," ")
+                if hours_elems == []:
+                    store_opening_hours = '<MISSING>'
+                else:
+                    store_opening_hours =""
+                    for j in range(len(hours_elems)):
+                        store_opening_hours = store_opening_hours + " " + hours_elems[j].get_attribute('textContent').replace("\n"," ")
             except:
                 store_opening_hours = '<MISSING>'
             try:

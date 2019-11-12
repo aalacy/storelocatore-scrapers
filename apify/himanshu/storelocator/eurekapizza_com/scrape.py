@@ -20,6 +20,14 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.eurekapizza.com/locations/"
+    # hours for Fayetteville
+    h = requests.get('https://orderonline.granburyrs.com/slice/account/initialize?account=335').json()
+    hh = []
+    for hours_list in  h['restaurants']:
+        h1 = hours_list['hours']['Delivery']['ranges']
+        hh1= "Monday " + h1['Monday']['startString'] +"-" + h1['Monday']['endString'] + ","+"Tuesday " + h1['Tuesday']['startString'] +"-" + h1['Tuesday']['endString'] + ","+"Wednesday " + h1['Wednesday']['startString'] +"-" + h1['Wednesday']['endString'] + ","+"Thursday " + h1['Thursday']['startString'] +"-" + h1['Thursday']['endString'] + " "+"Friday " + h1['Friday']['startString'] +"-" + h1['Friday']['endString'] + ","+"Saturday " + h1['Saturday']['startString'] +"-" + h1['Saturday']['endString'] + ","+"Sunday " + h1['Sunday']['startString'] +"-" + h1['Sunday']['endString']
+        hh.append(hh1)
+    ##################################
     r = requests.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
@@ -54,7 +62,13 @@ def fetch_data():
                         temp_hr = list(inner_semi_hr.stripped_strings)
                         hour = ' '.join(map(str, temp_hr))
                     else:
-                        hour = "<INACCESSIBLE>"
+
+                        hour = hh.pop(0)
+                        # print(street_address , hour)
+                        # print('~~~~~~~~~~~~~~~~~~~~~~~')
+
+
+
                 else:
                     hour = "<MISSING>"
                     page_url = "<MISSING>"

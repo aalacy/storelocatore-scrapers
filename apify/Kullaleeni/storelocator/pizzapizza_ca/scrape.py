@@ -10,6 +10,7 @@ import pandas as pd
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
+from selenium.webdriver.common.keys import Keys
 
 def check_zip(x):
     #print(x)
@@ -44,117 +45,79 @@ def phone_check(x):
     return y
     
 def fetch_data():
+
     url = "https://www.pizzapizza.ca/locations/"
     
     data_out = []
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome("chromedriver")
     driver.get(url)
-    time.sleep(5)
+    time.sleep(3)
+    try:
+        driver.find_element_by_xpath("/html/body/ngb-modal-window/div/div/app-location-modal/div/div[1]/div/div[1]/i").click()
+    except:
+        pass
     
-    city_list = pd.read_csv(r"./CA_City_List.csv").City_State.tolist()
+    soup = BeautifulSoup(driver.page_source)
+    store_locations = soup.find("div",attrs={"class":"row store-city-list no-gutters"}).find_all("li")
     
-    for st in range(0,len(city_list),5):
-        time.sleep(5)
-        print(st)
-        element = driver.find_element_by_id("name")
-        element.clear()
-        element.send_keys(city_list[st])
-        
-        try:
-            driver.find_element_by_xpath("/html/body/div[1]/div[3]/div[1]/div[3]/form/fieldset/div/input").click()
-        except:
-            #time.sleep(5)
-            driver.get(url)
-            #time.sleep(5)
-            element = driver.find_element_by_id("name")
-            element.clear()
-            element.send_keys(city_list[st])
-            try:
-                driver.find_element_by_xpath("/html/body/div[1]/div[3]/div[1]/div[3]/form/fieldset/div/input").click()
-            except:
-                break
-        time.sleep(5)
-        soup = BeautifulSoup(driver.page_source)
-        time.sleep(2)
-        if "No search" not in soup.find("div",attrs={"id":"location-section"}).text or "Please try again later" not in soup.find("div",attrs={"id":"location-section"}).text :
-            #print(soup.find("div",attrs={"id":"location-section"}).text)
+    for p in range(len(store_locations)):
+        page_link = "https://www5.pizzapizza.ca"+ store_locations[p].find("a").get("href")
+        driver.get(page_link)
+        time.sleep(3)
+ 
+ 
+        soup_1 = BeautifulSoup(driver.page_source)
+        if "No results found".lower() not in soup_1.text.lower():
             
-            try:
-                noofpages = int(soup.find("div",attrs={"id":"pagel"}).find_all("li")[-1].text)
-            except:
-                noofpages = 1
-            #print(noofpages)
+            records = soup_1.find_all("div",attrs={"class":"row search-results-row"})
+            r = 0
             
-            for n in range(2,noofpages):
-                soup = BeautifulSoup(driver.page_source)
+            location_name = records[r].find("h2",attrs={"class":"fw-normal"}).text.strip()
+            street_address = location_name
+            try:
+                city,state,zipcode = records[r].find("p").text.split(",")
+            except:
+                city,state,zipcode = "<MISSING>","<MISSING>","<MISSING>"
+         
+            location_type = records[r].find("div",attrs={"class":"col-12 align-self-end"}).find("p").text.replace("Available:","").replace("\xa0", " ").strip()
+            
+            hours_list = records[r].find("div",attrs={"class":"col-12 col-lg-5 store-hours"}).find_all("div",attrs={"class":"row justify-content-end no-gutters days-break-down"})
+            
+            hours_of_open = [h.text.replace("y","y : ") for h in hours_list]
+
+            city = city.strip()
+            state = state.strip()
+            zipcode = zipcode.strip()
+            country_code = "CA"
+            location_type = "<MISSING>"
+                        
+            latitude,longitude = "<MISSING>","<MISSING>"
+            
+            data_record = {}
+            
+            locator_domain = url
+            store_number = "<MISSING>"
+            phone = "<MISSING>"
+            
+            
+            data_record['locator_domain'] = locator_domain
+            data_record['location_name'] = location_name
+            data_record['street_address'] = street_address
+            data_record['city'] = city
+            data_record['state'] = state
+            data_record['zip'] = zipcode
+            data_record['country_code'] = country_code
+            data_record['store_number'] = store_number
+            data_record['phone'] = phone   
+            data_record['location_type'] = location_type
+            data_record['latitude'] = latitude
+            data_record['longitude'] = longitude
+            data_record['hours_of_operation'] = hours_of_open
+            data_record['page_url'] = page_link
+            
+            data_out.append(data_record)
+
                 
-                store_list = soup.find_all("div",attrs={"class":"location-section"})
-                
-                for sl in range(len(store_list)):
-                    street_address = store_list[sl].find("h3").text
-                    address = store_list[sl].find("div",attrs={"class":"columnAddress"}).text.strip()
-                    location_name = street_address
-                    
-                    city,state,zipcode = address.split(",")
-                    
-                    city = city.strip()
-                    state = state.strip()
-                    zipcode = zipcode.strip()
-                    country_code = "CA"
-                    location_type = "<MISSING>"
-                    
-                    phone = store_list[sl].find("div",attrs={"class":"column"}).find_all("dd")[1].text
-                    hours_of_open = BeautifulSoup(str( store_list[sl].find("div",attrs={"class":"column hours"})).replace("</dd><dt>"," ; ")).text.strip().replace("  "," ")
-                    
-                    #try:
-                    #    latitude,longitude = store_list[sl].find("div",attrs={"class":"button-holder"}).find("a",attrs={"class":"btn-directions"}).get("href").split("AX")[-2:]
-                    #except:
-                    latitude,longitude = "<MISSING>","<MISSING>"
-                    
-                    data_record = {}
-                    
-                    locator_domain = url
-                    store_number = "<MISSING>"
-                
-                    data_record['locator_domain'] = locator_domain
-                    data_record['location_name'] = location_name
-                    data_record['street_address'] = street_address
-                    data_record['city'] = city
-                    data_record['state'] = state
-                    data_record['zip'] = zipcode
-                    data_record['country_code'] = country_code
-                    data_record['store_number'] = store_number
-                    data_record['phone'] = phone   
-                    data_record['location_type'] = location_type
-                    data_record['latitude'] = latitude
-                    data_record['longitude'] = longitude
-                    data_record['hours_of_operation'] = hours_of_open
-                    data_out.append(data_record)
-                    df_data = pd.DataFrame(columns=['locator_domain','location_name','street_address','city','state','zip','country_code','store_number','phone','location_type','latitude','longitude','hours_of_operation'])
-                    
-                    for d in range(len(data_out)):
-                        df = pd.DataFrame(list(data_out[d].values())).transpose()
-                        df.columns = list((data_out[d].keys()))   
-                        df_data = df_data.append(df)
-                    #df_data = df_data.fillna("<MISSING>")
-                    df_data = df_data.replace(r'^\s*$', "<MISSING>", regex=True)
-                    df_data = df_data.drop_duplicates(["location_name","street_address"])
-                    df_data['zip'] = df_data.zip.astype(str)
-                    state_check = {"US":["AL","AK","AZ","AR","AA","AE","AP","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","UT","TX","VT","VA","WA","WV","WI","WY"],"CA":["AB","BC","MB","NB","NL","NT","NS","NU","ON","PE","QC","SK","YT"]}
-                    
-                    for sc in range(len(list(state_check.keys()))):
-                        df_data.loc[df_data['state'].isin(state_check[list(state_check.keys())[sc]]),"country_code"] = list(state_check.keys())[sc]
-                    
-                    df_data['zip'] = df_data['zip'].map(lambda x : check_zip(x))
-                    df_data["phone"] = df_data.phone.map(lambda x : phone_check(x))
-                    df_data.to_csv('./data.csv',index = 0,header=True)
-                
-                
-                driver.find_element_by_xpath('//*[@id="{0}"]'.format(n)).click()
-                time.sleep(5)
-       # except:
-           # print(st)
-            #pass               
     return data_out
 
 def write_output(data):
@@ -175,7 +138,11 @@ def write_output(data):
     
     df_data['zip'] = df_data['zip'].map(lambda x : check_zip(x))
     df_data["phone"] = df_data.phone.map(lambda x : phone_check(x))
-    df_data.to_csv('./data.csv',index = 0,header=True)
+    df_data.to_csv('./data.csv',index = 0,header=True,columns=['locator_domain','location_name','street_address','city',
+                                                               'state','zip','country_code','store_number','phone','location_type',
+                                                               'latitude','longitude','hours_of_operation','page_url'])
+
+    #df_data.to_csv('./data.csv',index = 0,header=True)
 
 def scrape():
     data = fetch_data()

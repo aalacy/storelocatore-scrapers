@@ -59,6 +59,7 @@ def fetch_data():
         for j in st:
             tem_var =[]
             street_address = (list(j.stripped_strings)[0])
+            print(street_address)
             city = (list(j.stripped_strings)[1].split(',')[0])
             state =  (list(j.stripped_strings)[1].split( )[-2])
             zipcode = (list(j.stripped_strings)[1].split( )[-1])

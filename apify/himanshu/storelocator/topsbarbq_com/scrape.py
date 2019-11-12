@@ -36,6 +36,7 @@ def fetch_data():
             if len(list(p1.stripped_strings))==7:
                 store_name.append(list(p1.stripped_strings)[0])
                 street_address = list(p1.stripped_strings)[2].split(',')[0]
+                print(street_address)
                 city = list(p1.stripped_strings)[2].split(',')[1]
                 state=list(p1.stripped_strings)[2].split(',')[2].split( )[0]
                 zipcode = list(p1.stripped_strings)[2].split(',')[2].split( )[1]

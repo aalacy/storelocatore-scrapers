@@ -40,7 +40,8 @@ def fetch_data():
         state = list(i.stripped_strings)[4].split(',')[1].split( )[0]
         zip1=list(i.stripped_strings)[4].split(',')[1].split( )[1]
         phone =list(i.stripped_strings)[6]
-        hours = (" ".join(list(i.stripped_strings)[6:8]))
+        hours = (" ".join(list(i.stripped_strings)[7:22]))
+        
 
         tem_var.append("https://www.rodeomexicangrill.com")
         tem_var.append(name)
