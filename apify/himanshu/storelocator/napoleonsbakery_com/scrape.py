@@ -6,87 +6,64 @@ import json
 import ast
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', encoding='utf-8') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
+    return_main_object = []
+    addresses = []
     headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+    'Accept' :'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3'
     }
-    base_url= "http://napoleonsbakery.com/locations.php"
-    r = requests.get(base_url,headers=headers)
+    base_url = locator_domain= 'http://napoleonsbakery.com/'
+    page_url= "http://napoleonsbakery.com/locations.php"
+    r = requests.get(page_url,headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
-    
-    data = soup.find_all("div",{"class":"hentry","data-sync":"textbox_content"})
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
 
-    k = (soup.find_all("div",{"id":"container"}))
-    for i in k:
-        k1 = i.find_all("li")
-        for j in k1:
-            tem_var =[]
-            tem_var1 = []
-            data = list(j.stripped_strings)
-            stopwords = "24 hours"
-            new_words = [word for word in data if word not in stopwords]
+    for loc in soup.find('div',{'id':'location'}).find_all('div',{'id':'single'}):
+        for p in loc.find_all('p',class_='bodytext'):
+            ch = p.strong.text.split('-')
+            city = ch[0].replace('*','').strip()
+            location_name = city
+            state = loc.h4.text.strip()
+            if "Honolulu" == state:
+                city  = state
+                state = "<MISSING>"
             
-            if len(new_words) != 1 and new_words !=[]:
-
-                if "24 hours" in data[1]:
-                    hours = (data[1])
-                    
-                else:
-                    if "Kailua*" in data[0]:
-                        hours = "24 hours"
-                    else:
-                        
-                        hours = "<MISSING>"
-                # print(data[0])
-                store_name.append(new_words[0])
-                street_address = (new_words[1])
-
-                
-                phone = (new_words[2])
-
-
-
-                tem_var.append(street_address.replace("*-","").replace("*","").replace("-","").replace("\u2011",""))
-               
-                tem_var.append(new_words[0].replace("*-","").replace("*","").replace("-","").replace("\u2011",""))
-                tem_var.append("<MISSING>")
-                tem_var.append("<MISSING>")
-                tem_var.append("US")
-                tem_var.append("<MISSING>")
-                
-                tem_var.append(phone.replace("\u2011",""))
-                
-                tem_var.append("napoleonsbakery")
-                tem_var.append("<MISSING>")
-                tem_var.append("<MISSING>")
-                tem_var.append(hours)
-                store_detail.append(tem_var)
+            if len(ch) == 2:
+                hours_of_operation = ch[-1].strip()
+            else:
+                hours_of_operation = "<MISSING>"
+            zipp = "<MISSING>"
+            country_code = "US"
+            store_number = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            location_type = "<MISSING>"
+            street_address = p.strong.nextSibling.nextSibling.strip()
+            phone = list(p.stripped_strings)[-1].strip()
             
-   
-  
-   
-    for i in range(len(store_name)):
-        store = list()
-        store.append("http://napoleonsbakery.com")
-        store.append(store_name[i].replace("-","").replace("*",""))
-        store.extend(store_detail[i])
-        # print(store)
-        return_main_object.append(store) 
-        
+            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+            store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+            store = [x if x else "<MISSING>" for x in store]
+
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
+
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            return_main_object.append(store)
+
     return return_main_object
 
 

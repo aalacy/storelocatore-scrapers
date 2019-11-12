@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -23,7 +23,7 @@ def fetch_data():
 
     addresses = []
 
-    base_url = "http://www.jrcrickets.com"
+    base_url = "http://jrcrickets.com"
     r = requests.get("http://jrcrickets.com/locations.php", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
@@ -41,7 +41,7 @@ def fetch_data():
     country_code = ""
     store_number = "<MISSING>"
     phone = ""
-    location_type = "jrcrickets"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     hours_of_operation = ""
@@ -66,6 +66,8 @@ def fetch_data():
 
             location_name = list_location[0]
             street_address = list_location[1]
+            if 'Center' in street_address:
+                street_address = list_location[2] 
             country_code = "US"
 
             city_state_zipp_index = [i for i, s in enumerate(list_location) if 'Hours:' in s]
@@ -98,24 +100,18 @@ def fetch_data():
                 if "Hours:" in str_data:
                     hours_of_operation = str_data.replace("Hours:", "")
 
-            for str_data in list_location:
-                if "Phone:" in str_data:
-                    phone = str_data.replace("Phone:", "")
+           
+            phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_location))
 
-            if len(phone) == 0:
-                try:
-                    phone_index = list_location.index("Phone:")
-                    if len(list_location[phone_index + 1]) == 12:
-                        phone = list_location[phone_index + 1]
-                    else:
-                        phone = "<MISSING>"
-                except:
-                    phone = "<MISSING>"
+            if phone_list:
+                phone = phone_list[0]
+            else:
+                phone = "<MISSING>"
 
             # print("street_address === " + str(street_address))
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,location_url]
 
             if str(store[2]) + str(store[-3]) not in addresses:
                 addresses.append(str(store[2]) + str(store[-3]))

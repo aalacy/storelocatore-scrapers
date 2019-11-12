@@ -35,6 +35,8 @@ def fetch_data():
             urls.append(page_url)
             location_request = requests.get(page_url,headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
+            if location_soup.find("script",{'type':"application/ld+json"}) == None:
+                continue
             location_data = json.loads(location_soup.find("script",{'type':"application/ld+json"}).text)
             address = location_data["address"]
             hours = " ".join(list(location_soup.find("div",{"class":re.compile("components__OpenHours")}).stripped_strings))

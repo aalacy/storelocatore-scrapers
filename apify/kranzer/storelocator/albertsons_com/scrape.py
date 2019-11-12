@@ -43,7 +43,6 @@ class Scrape(base.Spider):
             res = await self._fetch_store(session, url)
             if res:
                 results.append(res)
-        print(results)
         return results
 
     async def _fetch_city(self, session, url):

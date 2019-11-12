@@ -58,6 +58,7 @@ def fetch_data():
         store.append(geo_lcoation.split("!3d")[1].split("!")[0])
         store.append(geo_lcoation.split("!2d")[1].split("!")[0])
         store.append(hours)
+        print(store)
         return_main_object.append(store)
     return return_main_object
 

@@ -32,7 +32,7 @@ def fetch_data():
                 main2=soup2.find('div',{"class":"city-list"}).find_all("li")
                 for ltag in main2:
                     loc=list(ltag.stripped_strings)
-                    print(loc)
+                    # print(loc)
                     name=loc[0].strip()
                     address=loc[1].strip()
                     ct=loc[2].split(',')
@@ -48,6 +48,7 @@ def fetch_data():
                     hour="<MISSING>"
                     if soup3.find('div',{"class":"hours-wrapper"})!=None:
                         hour=' '.join(list(soup3.find('div',{"class":"hours-wrapper"}).stripped_strings))
+                        print(hour)
                     if soup3.find('div',{"class":"address-wrapper"})!=None:
                         lt=soup3.find('div',{"class":"address-wrapper"}).find('a',text="see map")['href']
                         lat=lt.split('AddressLatitude=')[1].split('&')[0].strip()

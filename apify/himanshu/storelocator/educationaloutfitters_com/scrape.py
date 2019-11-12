@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -37,33 +37,46 @@ def fetch_data():
     country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "educationaloutfitters"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
+    page_url = "http://www.educationaloutfitters.com/states"
 
     for script in soup.find_all("div", {"class": "p-name"}):
         location_name = script.text
 
-        print(location_name + " === " + str(script.find("a")["href"]))
+        # print(location_name + " === " + str(script.find("a")["href"]))
         location_url = script.find("a")["href"]
         r_location = requests.get(location_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "html.parser")
-
-        full_detail = list(soup_location.find("div", {"class": "ProductDetailsGrid ProductAddToCart"}).stripped_strings)
-
+        d = soup_location.find("div", {"class": "ProductDetailsGrid ProductAddToCart"})
+        full_detail = list(d.stripped_strings)
         full_address = ",".join(full_detail[full_detail.index("\uf041") + 1:full_detail.index("\uf0e0")]).split(",")
-
-        street_address = ", ".join(full_address[:-2])
-        if street_address != "":
-            if full_address[-2] == "":
-                city = location_name
+        if len(full_address) == 1:
+            street_address = "<MISSING>"
+            city = full_address[0].split('  ')[-1]
+        elif len(full_address) == 2:
+            city =  " ".join(full_address[0].split()[-2:]).replace('100','').strip()
+            street_address = " ".join(full_address[0].split()[:-1]).replace('San','').replace('Corpus','').replace('Academic Outfitters of  Christi','' ).replace('Academic Outfitters  Antonio','' ).replace('Academic Outfitters of Fort Worth - South ','' ).strip()
+        elif len(full_address) == 3:
+            city = full_address[1].strip()
+            if "Educational Outfitters" == full_address[0]:
+                street_address = "<MISSING>"
             else:
-                city = full_address[-2]
+                street_address = full_address[0].strip()
+        elif len(full_address) == 4:
+            street_address = full_address[1].strip()
+            city = full_address[-2].strip()
+            print(street_address+ " | "+city)
         else:
-            street_address = full_address[0]
-            city = location_name
+            street_address = full_address[0].strip()
+            city = full_address[-3].strip()
+            
+        
+            
+            
 
         if len(full_address[-1].strip().split(" ")) > 2:
             state = "<MISSING>"
@@ -79,11 +92,10 @@ def fetch_data():
                 else:
                     state = full_address[-1].strip()
                     zipp = "<MISSING>"
-
         phone = full_detail[full_detail.index("\uf095")+1]
-
+        
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
         if str(store[2]) + str(store[-3]) not in addresses:
             addresses.append(str(store[2]) + str(store[-3]))

@@ -1,4 +1,0 @@
-selenium python 3.6
-re
-csv
-usaddress

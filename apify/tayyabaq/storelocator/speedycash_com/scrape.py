@@ -19,7 +19,7 @@ def get_driver():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
+    return webdriver.Chrome(r'chromedriver', chrome_options=options)
 
 def parse_geo(url):
     lon = re.findall(r'\%2C(--?[\d\.]*)', url)[0]
@@ -27,7 +27,7 @@ def parse_geo(url):
     return lat,lon
 
 def fetch_data():
-    data=[]; page_url=[];location_name=[];links=[];countries=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
+    data=[]; page_url=[];hours_of_operation=[];location_name=[];links=[];countries=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
     #Driver
     driver = get_driver()
     driver.get('https://www.speedycash.com/find-a-store/')
@@ -40,6 +40,8 @@ def fetch_data():
         address = driver.find_elements_by_tag_name('address')
         loc = driver.find_elements_by_link_text('Directions')
         phones = driver.find_elements_by_xpath("//a[contains(@class,'store-phone')]")
+        hours = driver.find_elements_by_xpath("//div[@class='row']")
+        hour = [hours[n].text for n in range(0,len(hours))]
         for n in range(0,len(address)):
             a=address[n].text.split("\n")
             street_address.append(' '.join(address[n].text.split("\n")[:-1]))
@@ -51,6 +53,11 @@ def fetch_data():
             zipcode.append(a[-1].split(",")[1].split()[1])
             phone.append(phones[n].text)
             page_url.append(url)
+            check_hour = ' '.join(hour[n].split("Hours:")[1:]).strip()
+            if check_hour !='':
+                hours_of_operation.append(check_hour)
+            else:
+                hours_of_operation.append('<INACCESSIBLE>')
     for n in range(0,len(street_address)):
         data.append([
             'https://www.speedycash.com',
@@ -66,7 +73,7 @@ def fetch_data():
             '<MISSING>',
             latitude[n],
             longitude[n],
-            '<INACCESSIBLE>'
+            hours_of_operation[n]
         ])
     return data
 
