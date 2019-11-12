@@ -36,28 +36,28 @@ def fetch_data():
             if country == 'US' or country == 'CA':
                 lat = item['latitude']
                 lng = item['longitude']
-                zc = item['postalcode']
+                zc = item['postalcode'].encode('utf-8')
                 name = item['name'].encode('utf-8')
                 if item['address2']:
-                    add = item['address1'] + ' ' + item['address2']
+                    add = item['address1'].encode('utf-8') + ' ' + item['address2'].encode('utf-8')
                 else:                    
-                    add = item['address1']
+                    add = item['address1'].encode('utf-8')
                 try:
                     add = add.strip().replace('"',"'")
                 except:
                     add = ''
-                state = item['state']
+                state = item['state'].encode('utf-8')
                 if item['city'] is not None:
                     city = item['city'].encode('utf-8')
                 website = 'ugg.com'
                 phone = item['phone']
                 if item['province'] is not None:
-                    state = item['province']
+                    state = item['province'].encode('utf-8')
                 hours = '<MISSING>'
-                typ = item['storetype']
+                typ = item['storetype'].encode('utf-8')
                 if typ == '':
                     typ = 'Store'
-                store = item['clientkey']
+                store = item['clientkey'].encode('utf-8')
                 if item['mon_hours']:
                     hours = 'Mon: ' + item['mon_hours']
                     hours = hours + '; Tue: ' + item['tue_hours']
