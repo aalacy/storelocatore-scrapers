@@ -59,7 +59,6 @@ def fetch_data():
                             if lurl not in locs:
                                 locs.append(lurl)
         for loc in locs:
-            print('Pulling Location %s...' % loc)
             r2 = session.get(loc, headers=headers)
             website = 'timhortons.com'
             typ = 'Restaurant'
