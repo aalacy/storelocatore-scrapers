@@ -13,6 +13,56 @@ class Scraper(Scrape):
         Scrape.__init__(self, url)
         self.data = []
         self.seen = []
+        self.exceptions = {
+            "http://www.brentwood.minutemanpress.com/": {
+                'address': '1905 Conta Costa Blvd.',
+                'city': 'Pleasant Hill',
+                'state': 'CA',
+                'zipcode': '94523'
+            },
+            "http://www.impressaz.com/": {
+                'address': '14525 N. 79th Street, Suite E.',
+                'city': 'Scottsdale',
+                'state': 'AZ',
+                'zipcode': '85260'
+            },
+            "http://brampton11.minutemanpress.ca/": {
+                'address': '211 Wilkinson Road Unit 4',
+                'city': 'Brampton',
+                'state': 'Ontario',
+                'zipcode': 'L6T 4M2'
+            },
+            "http://www.mrpm.minutemanpress.com/": {
+                'address': '#6-22935 Lougheed Hwy',
+                'city': 'Maple Ridge',
+                'state': 'BC',
+                'zipcode': 'V2X 2W1'
+            },
+            "http://www.edmonton13.minutemanpress.ca/": {
+                'address': '4752 76 Ave NW',
+                'city': 'Edmonton',
+                'state': 'AB',
+                'zipcode': 'T6B 0A5'
+            },
+            "http://www.alabaster.minutemanpress.com/": {
+                'address': '2659 Pelham Parkway',
+                'city': 'Pelham',
+                'state': 'AL',
+                'zipcode': '35124'
+            },
+            "http://www.minutemancl.com/": {
+                'address': '835 Virginia Road Ste G',
+                'city': 'Crystal Lake',
+                'state': 'IL',
+                'zipcode': '60014'
+            },
+            "http://www.minutemanbeverly.com/": {
+                'address': '409 Cabot Street',
+                'city': 'Beverly',
+                'state': 'MA',
+                'zipcode': '01915'
+            },
+        }
 
     def fetch_data(self):
         # store data
@@ -35,7 +85,7 @@ class Scraper(Scrape):
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
-        for search_country in ['ca', 'us']:
+        for search_country in ['us']:
             stores = []
             prov_state = 'provinces' if search_country == 'ca' else 'states'
             print(f"Getting {prov_state} for {search_country.upper()}")
@@ -63,21 +113,21 @@ class Scraper(Scrape):
                     location_type = 'Print Center'
 
                     # Street
-                    address_info = [re.sub('(Canada)|(United States)', '', address.get_attribute('textContent')).replace('\t', '').replace('\n', '').strip() for address in driver.find_element_by_css_selector('div.location__address').find_elements_by_css_selector('div') if address.get_attribute('itemprop') == 'streetAddress']
-                    address_info = [info for info in address_info if info != '']
-                    street_address = ' '.join(address_info[:-1])
+                    address_info = [re.sub('(Canada)|(United States)|\((.*?)\)', '', address.get_attribute('textContent')).replace('\t', '').replace('\n', '').strip() for address in driver.find_element_by_css_selector('div.location__address').find_elements_by_css_selector('div') if address.get_attribute('itemprop') == 'streetAddress']
+                    address_info = [info for info in address_info if info != '' and not re.match('(.*)@(.*).(.*)', info)]
+                    street_address = ' '.join(address_info[:-1]) if store not in self.exceptions.keys() else self.exceptions[store]['address']
 
                     # zip
-                    zipcode = address_info[-1][-5:].strip() if search_country == 'us' else address_info[-1][-7:].strip()
+                    zipcode = self.exceptions[store]['zipcode'] if store in self.exceptions.keys() else (address_info[-1].strip().split(' ')[-1] if search_country == 'us' else address_info[-1][-7:].strip())
 
                     # city
-                    city = address_info[-1].replace(zipcode, '').split(',')[0].strip()
+                    city = address_info[-1].replace(zipcode, '').split(',')[0].strip() if store not in self.exceptions.keys() else self.exceptions[store]['city']
 
                     # Name
                     location_title = f"Minute man press - {city}"
 
                     # State
-                    state = address_info[-1].replace(zipcode, '').split(',')[1].strip()
+                    state = address_info[-1].replace(zipcode, '').split(',')[-1].strip() if store not in self.exceptions.keys() else self.exceptions[store]['state']
 
                     # Phone
                     phone = driver.find_element_by_css_selector('div.location-phone.location-phone--1 > span.value > a').get_attribute('textContent')
