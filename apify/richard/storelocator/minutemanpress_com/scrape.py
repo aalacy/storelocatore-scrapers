@@ -182,6 +182,10 @@ class Scraper(Scrape):
 
                         # State
                         state = address_info[-1].replace(zipcode, '').split(',')[-1].strip() if store not in self.exceptions.keys() else self.exceptions[store]['state']
+                        print(street_address)
+                        print(city)
+                        print(state)
+                        print(zipcode)
 
                         # Phone
                         phone = driver.find_element_by_css_selector('div.location-phone.location-phone--1 > span.value > a').get_attribute('textContent')
