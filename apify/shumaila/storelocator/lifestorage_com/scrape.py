@@ -34,9 +34,11 @@ def fetch_data():
     for city in city_list:
         pagenum = 1
         ccity = city['href']
-        while True:
+        check = True
+        while check:
             try:
                 citylink = "https://www.lifestorage.com" + ccity + "?pagenum=" + str(pagenum)
+                #citylink = "https://www.lifestorage.com/storage-units/maryland/baltimore/?pagenum=1"
                 print(citylink)
                 page1 = requests.get(citylink)
                 soup1 = BeautifulSoup(page1.text, "html.parser")
@@ -44,7 +46,13 @@ def fetch_data():
                 if len(link_list) == 0:
                     break
                 else:
-                    pagenum += 1
+                    try :
+                        nex = soup1.find('li',{'class':'next'})
+                        nex = nex.find('a').text
+                        pagenum += 1
+                    except:
+                        check = False
+
                     #print(pagenum)
                 for link in link_list:
                     link = "https://www.lifestorage.com" + link['href']
@@ -153,6 +161,7 @@ def fetch_data():
                             hours
                         ])
             except:
+                break
                 pass
 
 
