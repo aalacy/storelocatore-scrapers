@@ -133,18 +133,7 @@ def fetch_data():
         if state == "NW":
             state = "WA"
 
-        print(p)
-        print(title)
-        print(street)
-        print(city)
-        print(state)
-        print(ccode)
-        print(pcode)
-        print(phone)
-        print(store)
-        print(hours)
-        print(lat)
-        print(longt)
+       
 
         print("................")
 
