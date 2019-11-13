@@ -40,7 +40,7 @@ def fetch_data():
 	urlpage = 'https://www.zoundshearing.com/corp/storelocator/' 
 	options = Options()
 	options.headless = True
-	driver = webdriver.Firefox(firefox_options=options, executable_path = 'C:/Users/user/Desktop/Odetta/Sammeth0/storelocator/zoundshearing_com/geckodriver')
+	driver = webdriver.Firefox(firefox_options=options, executable_path = './/geckodriver')
 	driver = webdriver.Firefox()
 	driver.get(urlpage)
 	driver.execute_script("window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
@@ -69,7 +69,7 @@ def fetch_data():
 	for r in timing_results:
 		timing.append(r.find_element_by_xpath(".//span[@class='slp_result_contact slp_result_hours']").text)
 		directions=r.find_element_by_xpath(".//span[@class='slp_result_contact slp_result_directions']/a").get_attribute('href')
-		driver_directions= webdriver.Firefox(firefox_options=options, executable_path = 'C:/Users/user/Desktop/Odetta/Sammeth0/storelocator/zoundshearing_com/geckodriver')
+		driver_directions= webdriver.Firefox(firefox_options=options, executable_path = './/geckodriver')
 		driver_directions = webdriver.Firefox()
 		driver_directions.get(directions)
 		driver_directions.execute_script("window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
