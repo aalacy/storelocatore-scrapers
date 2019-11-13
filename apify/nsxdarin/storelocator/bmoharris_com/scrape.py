@@ -78,7 +78,6 @@ def fetch_data():
         while Found is False:
             Found = True
             try:
-                print('Pulling Branch %s...' % branch)
                 r = session.get(branch, headers=headers, timeout=10, verify=False)
                 lines = r.iter_lines()
                 for line in lines:
