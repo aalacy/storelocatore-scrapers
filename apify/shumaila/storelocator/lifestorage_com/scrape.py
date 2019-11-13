@@ -35,122 +35,125 @@ def fetch_data():
         pagenum = 1
         ccity = city['href']
         while True:
-            citylink = "https://www.lifestorage.com" + ccity + "?pagenum=" + str(pagenum)
-            print(citylink)
-            page1 = requests.get(citylink)
-            soup1 = BeautifulSoup(page1.text, "html.parser")
-            link_list = soup1.findAll('a', {'class': 'btn store'})
-            if len(link_list) == 0:
-                break
-            else:
-                pagenum += 1
-                #print(pagenum)
-            for link in link_list:
-                link = "https://www.lifestorage.com" + link['href']
-                print(link)
-                page2 = requests.get(link)
-                soup2 = BeautifulSoup(page2.text, "html.parser")
-                detail = str(soup2)
-                start = detail.find("alternateName")
-                start = detail.find(":", start)
-                start = detail.find('"', start) + 1
-                end =  detail.find('"', start)
-                title = detail[start:end]
-                start = detail.find("branchCode")
-                start = detail.find(":", start)
-                start = detail.find('"', start) + 1
-                end = detail.find('"', start)
-                store = detail[start:end]
-                start = detail.find("streetAddress")
-                start = detail.find(":", start)
-                start = detail.find('"', start) + 1
-                end = detail.find('"', start)
-                street = detail[start:end]
-                start = detail.find("addressLocality")
-                start = detail.find(":", start)
-                start = detail.find('"', start) + 1
-                end = detail.find('"', start)
-                city = detail[start:end]
-                start = detail.find("addressRegion")
-                start = detail.find(":", start)
-                start = detail.find('"', start) + 1
-                end = detail.find('"', start)
-                state = detail[start:end]
-                start = detail.find("postalCode")
-                start = detail.find(":", start)
-                start = detail.find('"', start) + 1
-                end = detail.find('"', start)
-                pcode = detail[start:end]
-                start = detail.find("addressCountry")
-                start = detail.find(":", start)
-                start = detail.find('"', start) + 1
-                end = detail.find('"', start)
-                ccode = detail[start:end]
-                start = detail.find("latitude")
-                start = detail.find(":", start) + 2
-                end = detail.find(',', start)
-                lat = detail[start:end]
-                start = detail.find("longitude")
-                start = detail.find(":", start) + 2
-                end = detail.find('}', start)
-                longt = detail[start:end]
-                start = detail.find('"telephone"')
-                start = detail.find(":", start)
-                start = detail.find('"', start) + 1
-                end = detail.find('"', start)
-                phone = detail[start:end]
-                maind = soup2.find('div', {'id':'hours'})
-                hdetail = maind.find("ul",{'class': 'noList'})
-                hdetail = hdetail.findAll('li')
-                hours = ""
-                for li in hdetail:
-                    hours = hours + li.text + " "
-                hours = re.sub(pattern," ",hours)
-                hours = hours.replace("\n","")
-                if len(hours) < 3:
-                    hours = "<MISSING>"
-                if len(phone) < 5:
-                    phone = "<MISSING>"
+            try:
+                citylink = "https://www.lifestorage.com" + ccity + "?pagenum=" + str(pagenum)
+                print(citylink)
+                page1 = requests.get(citylink)
+                soup1 = BeautifulSoup(page1.text, "html.parser")
+                link_list = soup1.findAll('a', {'class': 'btn store'})
+                if len(link_list) == 0:
+                    break
+                else:
+                    pagenum += 1
+                    #print(pagenum)
+                for link in link_list:
+                    link = "https://www.lifestorage.com" + link['href']
+                    print(link)
+                    page2 = requests.get(link)
+                    soup2 = BeautifulSoup(page2.text, "html.parser")
+                    detail = str(soup2)
+                    start = detail.find("alternateName")
+                    start = detail.find(":", start)
+                    start = detail.find('"', start) + 1
+                    end =  detail.find('"', start)
+                    title = detail[start:end]
+                    start = detail.find("branchCode")
+                    start = detail.find(":", start)
+                    start = detail.find('"', start) + 1
+                    end = detail.find('"', start)
+                    store = detail[start:end]
+                    start = detail.find("streetAddress")
+                    start = detail.find(":", start)
+                    start = detail.find('"', start) + 1
+                    end = detail.find('"', start)
+                    street = detail[start:end]
+                    start = detail.find("addressLocality")
+                    start = detail.find(":", start)
+                    start = detail.find('"', start) + 1
+                    end = detail.find('"', start)
+                    city = detail[start:end]
+                    start = detail.find("addressRegion")
+                    start = detail.find(":", start)
+                    start = detail.find('"', start) + 1
+                    end = detail.find('"', start)
+                    state = detail[start:end]
+                    start = detail.find("postalCode")
+                    start = detail.find(":", start)
+                    start = detail.find('"', start) + 1
+                    end = detail.find('"', start)
+                    pcode = detail[start:end]
+                    start = detail.find("addressCountry")
+                    start = detail.find(":", start)
+                    start = detail.find('"', start) + 1
+                    end = detail.find('"', start)
+                    ccode = detail[start:end]
+                    start = detail.find("latitude")
+                    start = detail.find(":", start) + 2
+                    end = detail.find(',', start)
+                    lat = detail[start:end]
+                    start = detail.find("longitude")
+                    start = detail.find(":", start) + 2
+                    end = detail.find('}', start)
+                    longt = detail[start:end]
+                    start = detail.find('"telephone"')
+                    start = detail.find(":", start)
+                    start = detail.find('"', start) + 1
+                    end = detail.find('"', start)
+                    phone = detail[start:end]
+                    maind = soup2.find('div', {'id':'hours'})
+                    hdetail = maind.find("ul",{'class': 'noList'})
+                    hdetail = hdetail.findAll('li')
+                    hours = ""
+                    for li in hdetail:
+                        hours = hours + li.text + " "
+                    hours = re.sub(pattern," ",hours)
+                    hours = hours.replace("\n","")
+                    if len(hours) < 3:
+                        hours = "<MISSING>"
+                    if len(phone) < 5:
+                        phone = "<MISSING>"
 
-                #print(title)
-                #print(store)
-                #print(street)
-                #print(city)
-                #print(state)
-                #print(pcode)
-                #print(ccode)
-                #print(phone)
-                #print(lat)
-                #print(longt)
-                #print(hours)
-                print(p)
-                p += 1
-                flag = True
-                i = 0
-                while i < len(data) and flag:
-                    if store == data[i][8] and street == data[i][3]:
-                        flag = False
-                        break
-                    else:
-                        i += 1
+                    #print(title)
+                    #print(store)
+                    #print(street)
+                    #print(city)
+                    #print(state)
+                    #print(pcode)
+                    #print(ccode)
+                    #print(phone)
+                    #print(lat)
+                    #print(longt)
+                    #print(hours)
+                    print(p)
+                    p += 1
+                    flag = True
+                    i = 0
+                    while i < len(data) and flag:
+                        if store == data[i][8] and street == data[i][3]:
+                            flag = False
+                            break
+                        else:
+                            i += 1
 
-                if flag:
-                    data.append([
-                        'https://www.lifestorage.com/',
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        ccode,
-                        store,
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        longt,
-                        hours
-                    ])
+                    if flag:
+                        data.append([
+                            'https://www.lifestorage.com/',
+                            link,
+                            title,
+                            street,
+                            city,
+                            state,
+                            pcode,
+                            ccode,
+                            store,
+                            phone,
+                            "<MISSING>",
+                            lat,
+                            longt,
+                            hours
+                        ])
+            except:
+                pass
 
 
 
