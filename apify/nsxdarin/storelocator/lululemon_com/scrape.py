@@ -18,17 +18,19 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        if "type: '" in line:
+            stype = line.split("type: '")[1].split("'")[0]
         if '<h1><a href="https://shop.lululemon.com/stores/ca/' in line or '<h1><a href="https://shop.lululemon.com/stores/us/' in line:
             lurl = line.split('href="')[1].split('"')[0]
-            locs.append(lurl)
+            locs.append(lurl + '|' + stype)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc.split('|')[0])
         website = 'lululemon.com'
-        typ = 'Store'
+        typ = loc.split('|')[1]
         hours = ''
         store = '<MISSING>'
-        locurl = loc
+        locurl = loc.split('|')[0]
         r2 = session.get(locurl, headers=headers)
         for line2 in r2.iter_lines():
             if ',"streetAddress":"' in line2:
@@ -46,6 +48,10 @@ def fetch_data():
                     hours = '<MISSING>'
                 if 'null' in hours:
                     hours = '<MISSING>'
+                if phone == '':
+                    phone = '<MISSING>'
+                if hours == '':
+                    hours = '<MISSING>'
                 yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
@@ -53,4 +59,3 @@ def scrape():
     write_output(data)
 
 scrape()
-
