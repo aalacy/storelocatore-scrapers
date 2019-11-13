@@ -39,7 +39,6 @@ def fetch_data():
                     lurl = 'https://hrblock.com' + line3.split('href="')[1].split('"')[0]
                     if lurl not in alllocs:
                         alllocs.append(lurl)
-                        print('Pulling Location %s...' % lurl)
                         r4 = session.get(lurl, headers=headers)
                         lines = r4.iter_lines()
                         website = 'hrblock.com'
