@@ -8,7 +8,7 @@ import time
 
 def get_driver():
     options = Options()
-    #options.add_argument('--headless')
+    options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
@@ -20,7 +20,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", 'page_url'])
         # Body
         for row in data:
             writer.writerow(row)
@@ -67,6 +67,8 @@ def fetch_data():
         street_address = cont[1]
         city, state, zip_code = addy_ext(cont[2])
         phone_number = cont[3]
+        if "THAT'S MY COMET CLEANERS!" in phone_number:
+            phone_number = '<MISSING>'
 
         country_code = 'US'
         location_type = '<MISSING>'
@@ -79,20 +81,35 @@ def fetch_data():
                       store_number, phone_number, location_type, lat, longit, hours]]
         link_store_data.append(store_data)
 
-
-
-
-    print(len(link_store_data))
     all_store_data = []
 
     for data in link_store_data:
-        print(data[0])
         driver.get(data[0])
         driver.implicitly_wait(10)
+
+        try:
+            google_src = driver.find_element_by_xpath("//iframe[contains(@src, 'www.google.com/maps/')]").get_attribute('src')
+
+        except NoSuchElementException:
+            all_store_data.append(data[1])
+            continue
+
+
+        start = google_src.find('!2d')
+        if start > 0:
+            end = google_src.find('!2m')
+            coords = google_src[start + 3: end].split('!3d')
+
+            # lat
+            data[1][-3] = coords[1]
+            # longit
+            data[1][-2] = coords[0]
+
+        # link
+        data[1][-1] = data[0]
+        all_store_data.append(data[1])
+
         time.sleep(1)
-
-
-
 
     driver.quit()
     return all_store_data

@@ -6,10 +6,7 @@ import re, time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,7 +21,7 @@ def write_output(data):
 
 def get_driver():
     options = Options()
-    options.add_argument('--headless')
+    #options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-notifications")
@@ -37,7 +34,7 @@ def fetch_data():
     data = []
     p = 1
     url = "http://highsstores.com/StoreLocator"
-    driver1 = webdriver.Chrome('chromedriver')
+    driver1 = get_driver()
     driver1.get(url)
     time.sleep(10)
     #divs = driver.find_element_id("searchResultListing")

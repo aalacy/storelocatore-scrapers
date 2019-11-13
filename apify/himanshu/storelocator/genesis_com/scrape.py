@@ -22,7 +22,6 @@ def fetch_data():
     zips = sgzip.for_radius(200)
     addresses = []
     for zip_code in zips:
-        print(zip_code)
         headers = {
             "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
         }
@@ -51,7 +50,6 @@ def fetch_data():
             for location_hour in store_hours:
                 hours = hours + " " + location_hour["day"] + " " + location_hour["hour"]
             store.append(hours if hours != "" else "<MISSING>")
-            print(store)
             return_main_object.append(store)
     return return_main_object
 
