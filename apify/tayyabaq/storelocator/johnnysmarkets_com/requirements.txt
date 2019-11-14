@@ -1,2 +1,3 @@
 usaddress
-selenium==3.141.0
+selenium
+requests
