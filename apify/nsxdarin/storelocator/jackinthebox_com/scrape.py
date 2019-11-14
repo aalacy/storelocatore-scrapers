@@ -34,12 +34,13 @@ def fetch_data():
         hours = ''
         zc = ''
         phone = '<MISSING>'
-        print('Pulling Location %s...' % loc)
         website = 'jackinthebox.com'
         typ = 'Restaurant'
         Found = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            if 'id="telephone">' in line2:
+                phone = line2.split('id="telephone">')[1].split('<')[0].strip()
             if '{"ids":' in line2:
                 store = line2.split('{"ids":')[1].split(',')[0]
             if "'dimension4', '" in line2:
@@ -68,7 +69,7 @@ def fetch_data():
             phone = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
-        if add != '':
+        if add != '' or state != '':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

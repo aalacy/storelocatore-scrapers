@@ -83,7 +83,7 @@ def fetch_data():
             except:
                 store_opening_hours = '<MISSING>'
             try:
-                phone_no =driver2.find_element_by_xpath("//a[contains(@href,'tel:')]").get_attribute('textContent').replace("\n","")
+                phone_no =driver2.find_element_by_xpath("//a[contains(@href,'tel:')]").get_attribute('textContent').replace("\n","").replace(" ","")
             except:
                 phone_no = '<MISSING>'
             elem = driver2.find_element_by_xpath("//a[contains(@itemprop, 'address')]")

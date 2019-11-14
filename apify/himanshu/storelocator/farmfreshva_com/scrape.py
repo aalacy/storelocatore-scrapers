@@ -2,71 +2,57 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
+import json
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                        "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        
-        print(data)
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
+    header = {'User-agent' : 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
+    return_main_object = []
     base_url = "https://www.farmfreshva.com"
-    req = requests.get(base_url)
-    soup = BeautifulSoup(req.text, "lxml")
-    addressColumn = soup.find("div",{"class": "et_pb_row et_pb_row_1"})
-    locator_domain = base_url
-    country_code = "US"
-    store_number = "<MISSING>"
-    location_type = soup.find("img", {"id":"logo"})["alt"]
-    latitude = "<INACCESSIBLE>"
-    longitude = "<INACCESSIBLE>"
-    hours_of_op = "<MISSING>"
-    data = []
-    for address in addressColumn.findAll("div", {"class": "et_pb_column"}):
-        row = []
-        addr_split = address.find("div", {"class": "et_pb_blurb_container"}).text.split("\n")
-        addr_split_removed_empty = []
-        for x  in addr_split:
-            if x != "":
-                if "Chatham" not in x:
-                    addr_split_removed_empty.append(x)
-                else:
-                    addr_split_removed_empty.append(x.split(".")[0])
-                    addr_split_removed_empty.append(x.split(".")[1])
-        streetAddr = addr_split_removed_empty[1].strip()
-        phoneNo = addr_split_removed_empty[3].strip()
-        city = addr_split_removed_empty[2].split(",")[0].strip()
-        # state = addr_split_removed_empty[2].split(",")[1].strip()
-        zipcode = addr_split_removed_empty[2].split(",")[2].strip()
-        location_name = soup.title.text.split("|")[0] + "-" + city
-        row.append(locator_domain)
-        row.append(location_name)
-        row.append(streetAddr)
-        row.append(city)
-        row.append('state')
-        row.append(zipcode)
-        row.append(country_code)
-        row.append(store_number)
-        row.append(phoneNo)
-        row.append(location_type)
-        row.append(latitude)
-        row.append(longitude)
-        row.append(hours_of_op)
+    get_url ='https://www.farmfreshva.com'
+    r = requests.get(get_url,headers = header)
+    soup = BeautifulSoup(r.text,"lxml")    
+    main = soup.find_all('div',{'class':'et_pb_blurb_container'})[:2]
+    for i in main:
+        st = list(i.stripped_strings)
+        location_name = st[0]
+        address =st[1]
+        city_tmp= st[2].split(',')
+        city = city_tmp[0]
+        state = city_tmp[1]
+        zip = city_tmp[2]
+        phone = st[3]     
+
+        store=[]
+        store.append(base_url if base_url else '<MISSING>')
+        store.append(location_name if location_name else '<MISSING>')
+        store.append(address if address else '<MISSING>')
+        store.append(city if city else '<MISSING>')
+        store.append(state if state else '<MISSING>')
+        store.append(zip if zip else '<MISSING>')
+        store.append('US')
+        store.append('<MISSING>')
+        store.append(phone if phone else '<MISSING>')
+        store.append('<MISSING>')
+        store.append('<MISSING>')
+        store.append('<MISSING>')
+        store.append('<MISSING>')
+        store.append('<MISSING>')
+        return_main_object.append(store)
+        #print("data ==== "+str(store))
+    return return_main_object
         
-        data.append(row)
-
-    return data
-
 def scrape():
-    data = fetch_data()
+    data = fetch_data()    
     write_output(data)
-scrape()
 
+scrape()
