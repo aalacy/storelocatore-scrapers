@@ -39,6 +39,8 @@ def fetch_data():
         Found = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            if 'id="telephone">' in line2:
+                phone = line2.split('id="telephone">')[1].split('<')[0].strip()
             if '{"ids":' in line2:
                 store = line2.split('{"ids":')[1].split(',')[0]
             if "'dimension4', '" in line2:
