@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -40,19 +40,20 @@ def fetch_data():
                     state = address[1].strip().split(' ')[0].strip()
                     zip = address[1].strip().split(' ')[1].strip()
                     store = []
-                    store.append(url)
+                    store.append('http://www.drivenstyle.com/')
                     store.append(location_name)
-                    store.append(street_address)
+                    store.append('<MISSING>')
                     store.append(city)
                     store.append(state)
                     store.append(zip)
                     store.append("US")
                     store.append("<MISSING>")
                     store.append(phone)
-                    store.append("Drive N Style")
                     store.append("<MISSING>")
                     store.append("<MISSING>")
                     store.append("<MISSING>")
+                    store.append("<MISSING>")
+                    store.append(url)
                     return_main_object.append(store)
             else:
                 pass
