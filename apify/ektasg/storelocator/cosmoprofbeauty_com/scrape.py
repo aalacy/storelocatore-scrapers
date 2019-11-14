@@ -65,8 +65,11 @@ def fetch_data():
                         page_url = store_view_details_lnks[k]
                         print(page_url)
                         location_name = driver4.find_element_by_css_selector('span.location-name').text
-                        print("location name", location_name)
-                        store_id = location_name.split("#")[1]
+                        if location_name == "":
+                            location_name ='<MISSING>'
+                            store_id = '<MISSING>'
+                        else:
+                            store_id = location_name.split("#")[1]
                         street_addr = driver4.find_element_by_css_selector('p.address > span:nth-child(1)').text
                         state_city_zip = driver4.find_element_by_css_selector('p.address > span:nth-child(3)').text
                         #print(state_city_zip)
@@ -79,7 +82,6 @@ def fetch_data():
                             zipcode = zipcode1 + zipcode2
                         except:
                             zipcode = zipcode1
-                        print(zipcode)
                         if len(zipcode)==5:
                             country = 'US'
                         else:
