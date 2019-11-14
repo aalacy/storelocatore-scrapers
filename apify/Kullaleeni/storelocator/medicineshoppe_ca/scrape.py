@@ -15,7 +15,7 @@ import time
 def fetch_data():
 
     #df_ca_list = pd.read_csv("/home/srek/xyz/Odetta/CA_states.csv")
-    driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
+    driver = webdriver.Chrome()
 
     data = []
     
