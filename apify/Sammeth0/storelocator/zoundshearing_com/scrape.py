@@ -67,9 +67,13 @@ def fetch_data():
 			phones.append("<MISSING>")
 	timing_results=driver.find_elements_by_xpath(".//div[@class='results_row_right_column location_tertiary']")
 	for r in timing_results:
-		timing.append(r.find_element_by_xpath(".//span[@class='slp_result_contact slp_result_hours']").text)
+		try:
+			timing.append(r.find_element_by_xpath(".//span[@class='slp_result_contact slp_result_hours']").text)
+		except:
+			timing.append("<MISSING>")
+		
 		directions=r.find_element_by_xpath(".//span[@class='slp_result_contact slp_result_directions']/a").get_attribute('href')
-		driver_directions= webdriver.Firefox(firefox_options=options, executable_path = './/geckodriver')
+		driver_directions= webdriver.Firefox(firefox_options=options, executable_path = 'C:/Users/user/Desktop/Odetta/Sammeth0/storelocator/zoundshearing_com/geckodriver')
 		driver_directions = webdriver.Firefox()
 		driver_directions.get(directions)
 		driver_directions.execute_script("window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
@@ -95,6 +99,7 @@ def fetch_data():
 		row.append(urlpage)
 		
 		return_main_object.append(row)
+	driver_directions.quit()
 	driver.quit()
 	return return_main_object
 	
