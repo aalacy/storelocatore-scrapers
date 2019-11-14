@@ -34,7 +34,6 @@ def fetch_data():
         hours = ''
         zc = ''
         phone = '<MISSING>'
-        print('Pulling Location %s...' % loc)
         website = 'jackinthebox.com'
         typ = 'Restaurant'
         Found = False
@@ -68,7 +67,7 @@ def fetch_data():
             phone = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
-        if add != '':
+        if add != '' or state != '':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
