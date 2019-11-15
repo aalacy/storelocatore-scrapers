@@ -102,8 +102,6 @@ class Scraper(Scrape):
             except:
                 hour = '<MISSING>'
 
-            print(zipcode)
-
             hours.append(hour)
             zip_codes.append(zipcode)
 
