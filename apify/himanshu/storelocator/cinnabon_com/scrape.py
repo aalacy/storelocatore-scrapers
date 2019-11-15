@@ -48,7 +48,7 @@ def fetch_data():
                     hour="<MISSING>"
                     if soup3.find('div',{"class":"hours-wrapper"})!=None:
                         hour=' '.join(list(soup3.find('div',{"class":"hours-wrapper"}).stripped_strings))
-                        print(hour)
+                      #  print(hour)
                     if soup3.find('div',{"class":"address-wrapper"})!=None:
                         lt=soup3.find('div',{"class":"address-wrapper"}).find('a',text="see map")['href']
                         lat=lt.split('AddressLatitude=')[1].split('&')[0].strip()
