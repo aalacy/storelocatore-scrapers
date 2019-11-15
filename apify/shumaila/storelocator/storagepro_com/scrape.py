@@ -194,69 +194,71 @@ def fetch_data():
                 for link in detail_list:
                     link = "https://www.storagepro.com" +  link['href']
                     #print("Branch = ", link)
-
-                    page3 = requests.get(link)
-                    soup3 = BeautifulSoup(page3.text, "html.parser")
-                    title = soup3.find("h1").text
-                    street = soup3.find('span', {'itemprop': 'streetAddress'}).text
-                    city = soup3.find('span', {'itemprop': 'addressLocality'}).text
-                    state = soup3.find('span', {'itemprop': 'addressRegion'}).text
-                    pcode = soup3.find('span', {'itemprop': 'postalCode'}).text
-                    phone = soup3.find('a',{'class': 'green_text ga_phone_call phone_customize'}).text
-                    coord = soup3.find('a',{'class': 'map_it_tag green_text ga_outbound_link'})
-                    lat = coord['data-lat']
-                    longt = coord['data-long']
-                    hours= soup3.find('div',{'class': 'gate_access_wrapper right'}).text
-                    hours = re.sub(pattern," ",hours)
-                    soup3 = str(soup3)
-                    start = soup3.find('setCustomDimension')
-                    start = soup3.find("9,", start) + 1
-                    start = soup3.find('"', start) + 1
-                    end = soup3.find('"', start)
-                    store = soup3[start:end]
-                    hours = hours.lstrip()
-                    if len(hours) < 3:
-                        hours = "<MISSING>"
-                    if len(phone) < 5:
-                        phone = "<MISSING>"
-                    #print(title)
-                    #print(store)
-                    #print(street)
-                    #print(city)
-                    #print(state)
-                    #print(pcode)
-                    #print(ccode[i])
-                    #print(phone)
-                    #print(lat)
-                    #print(longt)
-                    #print(hours)
-                    #print(p)
-                    p += 1
-                    flag = True
-                    m = 0
-                    while m < len(data) and flag:
-                        if store == data[m][8] and street == data[m][3]:
-                            flag = False
-                            break
-                        else:
-                            m += 1
-                    if flag:
-                        data.append([
-                        'https://www.storagepro.com/',
-                        link,
-                        title,
-                        street,
-                        city,
-                        state,
-                        pcode,
-                        ccode[i],
-                        store,
-                        phone,
-                        "<MISSING>",
-                        lat,
-                        longt,
-                        hours
-                        ])
+                    try:
+                        page3 = requests.get(link)
+                        soup3 = BeautifulSoup(page3.text, "html.parser")
+                        title = soup3.find("h1").text
+                        street = soup3.find('span', {'itemprop': 'streetAddress'}).text
+                        city = soup3.find('span', {'itemprop': 'addressLocality'}).text
+                        state = soup3.find('span', {'itemprop': 'addressRegion'}).text
+                        pcode = soup3.find('span', {'itemprop': 'postalCode'}).text
+                        phone = soup3.find('a',{'class': 'green_text ga_phone_call phone_customize'}).text
+                        coord = soup3.find('a',{'class': 'map_it_tag green_text ga_outbound_link'})
+                        lat = coord['data-lat']
+                        longt = coord['data-long']
+                        hours= soup3.find('div',{'class': 'gate_access_wrapper right'}).text
+                        hours = re.sub(pattern," ",hours)
+                        soup3 = str(soup3)
+                        start = soup3.find('setCustomDimension')
+                        start = soup3.find("9,", start) + 1
+                        start = soup3.find('"', start) + 1
+                        end = soup3.find('"', start)
+                        store = soup3[start:end]
+                        hours = hours.lstrip()
+                        if len(hours) < 3:
+                            hours = "<MISSING>"
+                        if len(phone) < 5:
+                            phone = "<MISSING>"
+                        #print(title)
+                        #print(store)
+                        #print(street)
+                        #print(city)
+                        #print(state)
+                        #print(pcode)
+                        #print(ccode[i])
+                        #print(phone)
+                        #print(lat)
+                        #print(longt)
+                        #print(hours)
+                        #print(p)
+                        p += 1
+                        flag = True
+                        m = 0
+                        while m < len(data) and flag:
+                            if store == data[m][8] and street == data[m][3]:
+                                flag = False
+                                break
+                            else:
+                                m += 1
+                        if flag:
+                            data.append([
+                            'https://www.storagepro.com/',
+                            link,
+                            title,
+                            street,
+                            city,
+                            state,
+                            pcode,
+                            ccode[i],
+                            store,
+                            phone,
+                            "<MISSING>",
+                            lat,
+                            longt,
+                            hours
+                            ])
+                    except:
+                        pass
             #print("............................")
 
     return data
