@@ -6,7 +6,7 @@ from lxml import html
 from bs4 import BeautifulSoup
 import json
 import lxml.html
-import urllib2
+import urllib.request as urllib2
 
 def write_output(data):
     with open('data.csv', mode='wb') as output_file:
