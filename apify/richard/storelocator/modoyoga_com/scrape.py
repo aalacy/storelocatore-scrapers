@@ -1,3 +1,5 @@
+import re
+
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -24,7 +26,6 @@ class Scraper(Scrape):
         longitude_list = []
         phone_numbers = []
         hours = []
-        stores = []
         countries = []
         location_types = []
         page_urls = []
@@ -52,10 +53,13 @@ class Scraper(Scrape):
                 location_type = 'Yoga'
 
                 # Street
-                street_address = store.find_element_by_css_selector('div.contact').get_attribute('innerHTML').split('<br>')[0].strip().split(',')[0]
+                street_address = ' '.join(store.find_element_by_css_selector('div.contact').get_attribute('innerHTML').split('<br>')[0].strip().split(',')[:-3])
 
-                # zip
-                zipcode = '<MISSING>'
+                # city
+                city = store.find_element_by_css_selector('div.contact').get_attribute('innerHTML').split('<br>')[0].strip().split(',')[-3].strip()
+
+                # State
+                state = store.find_element_by_css_selector('div.contact').get_attribute('innerHTML').split('<br>')[0].strip().split(',')[-2].strip()[:2]
 
                 # Phone
                 phone = store.find_element_by_css_selector('div.contact').get_attribute('innerHTML').split('<br>')[1].strip()
@@ -67,13 +71,14 @@ class Scraper(Scrape):
                 lon = '<MISSING>'
 
                 # Country
-                country = store.find_element_by_css_selector('div.contact').get_attribute('innerHTML').split('<br>')[0].split(',')[-1]
+                country = store.find_element_by_css_selector('div.contact').get_attribute('innerHTML').split('<br>')[0].split(',')[-1].strip()
 
                 # Store data
+                states.append(state)
+                cities.append(city)
                 locations_ids.append(location_id)
                 locations_titles.append(location_title)
                 street_addresses.append(street_address)
-                zip_codes.append(zipcode)
                 latitude_list.append(lat)
                 longitude_list.append(lon)
                 phone_numbers.append(phone)
@@ -85,26 +90,20 @@ class Scraper(Scrape):
             driver.get(page_url)
             print(f'Getting information for {page_url}')
 
+            # zip
             try:
-                # city
-                city = driver.find_element_by_css_selector('div.col-6.offset-1 > p').get_attribute('textContent').split('<br>')[-1].split(',')[0]
-
-                # State
-                state = driver.find_element_by_css_selector('div.col-6.offset-1 > p').get_attribute('textContent').split('<br>')[-1].split(',')[1]
+                zipcode = re.search('((?!.*[DFIOQU])[A-VXY][0-9][A-Z] ?[0-9][A-Z][0-9])|([0-9]{5}(?:-[0-9]{4})?)', driver.find_element_by_css_selector('div.col-6.offset-1').get_attribute('innerHTML')).group(0)
             except:
-                city = '<MISSING>'
-                state = '<MISSING>'
+                zipcode = '<MISSING>'
 
+            # hour
             try:
-                # Hour
-                hour = [hour.get_attribute('textContent') for hour in driver.find_elements_by_css_selector('div.row > p') if 'pm' in hour.get_attribute('textContent')][0]
+                hour = driver.find_element_by_css_selector('div.row > div.col-6.offset-1 > p:nth-of-type(4)').get_attribute('textContent')
             except:
                 hour = '<MISSING>'
 
-            states.append(state)
             hours.append(hour)
-            cities.append(city)
-
+            zip_codes.append(zipcode)
 
         for (
                 locations_title,
