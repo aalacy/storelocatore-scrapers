@@ -84,22 +84,22 @@ def fetch_data():
             if len(title) < 4:
                 title = "<MISSING>"
 
-            print(title)
-            print(address)
-            print(street)
-            print(city)
-            print(state)
-            print(pcode)
-            print(phone)
-            print(hours)
-            print("...............")
+            #print(title)
+            #print(address)
+            #print(street)
+            #print(city)
+            #print(state)
+            #print(pcode)
+            #print(phone)
+            #print(hours)
+            #print("...............")
 
             flag = 0
 
             for chk in data:
                 if chk[2] == street:
                     flag = 1
-                    print("Already exist")
+                    #print("Already exist")
                     break
 
             if flag == 0:
@@ -124,14 +124,15 @@ def fetch_data():
             pagination = soup.find('ul', {'class': 'pages'})
             nextt = pagination.find('a', {'rel': 'next'})
         except:
-            print("ERROR")
+            pass
+            #print("ERROR")
         try:
-            print(nextt['href'])
+            #print(nextt['href'])
             pnumber += 4
-            print(str(pnumber))
+            #print(str(pnumber))
             flag = True
         except:
-            print("END")
+            #print("END")
             flag = False
 
 
