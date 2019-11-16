@@ -85,12 +85,25 @@ def fetch_data():
             if phone.find("Get Directions") > -1:
                 phone = "<MISSING>"
 
-            ltyped = div.find('div',{'class':'large-4 columns'}).text
-            ltyped = ltyped.replace("\n","|")
-            ltype= ltyped[1:len(ltyped)-1]
-            print(ltype)
-            ltype = ltype.replace("Safe Deposit Box|","")
-            ltype = ltype.replace("|Drive Thru", "")
+            try:
+                ltyped = div.find('div', {'class': 'large-4 columns'}).text
+                ltyped = ltyped.replace("\n", "|")
+                ltype = ltyped[1:len(ltyped)]
+
+                m = 0
+                temp = ""
+                while m < len(ltype):
+                    end = ltype.find("|", m)
+                    if ltype[m:end].find("Branch") > - 1 or ltype[m:end].find("ATM") > - 1:
+                        if len(temp) > 1:
+                            temp = temp + "|"
+                        temp = temp + ltype[m:end]
+                    m = end + 1
+
+                ltype = temp
+                # print(ltype)
+            except:
+                ltype = "<MISSING>"
             if len(pcode)<5:
                 pcode = '0' + pcode
 
@@ -128,13 +141,13 @@ def fetch_data():
                 hours
             ])
 
-            next = soup.find('a', {'class': 'next page-numbers'})
-            try:
+        next = soup.find('a', {'class': 'next page-numbers'})
+        try:
 
-                url = next['href']
+            url = next['href']
 
-            except:
-                flag = False
+        except:
+            flag = False
 
     return data
 
