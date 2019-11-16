@@ -13,7 +13,7 @@ options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3
 #driver=webdriver.Chrome('C:\chromedriver.exe', options=options)
 driver = webdriver.Chrome("chromedriver", options=options)
 #chrome_path = '/Users/Dell/local/chromedriver'
-#driver = webdriver.Chrome(chrome_path)
+#driver = webdriver.Chrome(chrome_path, options=options)
 
 
 def write_output(data):
