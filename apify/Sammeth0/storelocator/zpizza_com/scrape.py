@@ -15,6 +15,12 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+
+	us_states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA", 
+          "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", 
+          "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", 
+          "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
+          "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
 	locs = []
 	streets = []
 	states=[]
@@ -28,64 +34,53 @@ def fetch_data():
 	ids=[]
 	pages=[]
 	
-	locator_domain ="https://www.siteone.com/"
+	locator_domain ="http://zpizza.com"
 	country_code="US"
-	
-	for i in range(808):
-		page_url="https://www.siteone.com/store/"+str(i+1)
-		print(page_url)
-		headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'}
-
+	page_url="http://zpizza.com/search-locations?for=f"
 		
-		r = requests.get(page_url,headers=headers)
-		soup=BeautifulSoup(r.text,'lxml')
-		divs=soup.findAll(class_="store_map_details")
-		for r in divs:
-			locs.append(str(r).split('class=strong&gt;')[1].split('#')[0])
-			streets.append(str(r).split('&lt;div&gt;')[1].split('/div&gt;')[0].replace('&lt;',''))
-			cities.append(str(r).split('&lt;div&gt;')[3].split('&lt;/div&gt;')[0])
+	r = requests.get(page_url)
+	soup=BeautifulSoup(r.text,'lxml')
+
+	divs=soup.findAll(class_="location-contact")
+	for div in divs:
+		state=div.find(class_='region').text.replace('\xa0','')
+		if state in us_states:
+			locs.append(div.find(class_='locality').text)
+			streets.append(div.find(class_='street-address').text)
+			cities.append(div.find(class_='locality').text)
+			states.append(div.find(class_='region').text)
+			zips.append(div.find(class_='postal-code').text)
+			id=str(div.find(class_='street-address').text).split('#')
 			try:
-				longs.append(str(r).split('"longitude":"')[1].split('",')[0])
-			except:
-				longs.append("<MISSING>")
-			try:
-				lat=str(r).split('"latitude":"')[1].split('",')[0]
-				if len(lat)<=4:
-					lats.append(lat+'00')
-					print(lats)
-				else:
-					lats.append(lat)
-			except:
-				lats.append("<MISSING>")
-			try:
-				zips.append(str(r).split('&lt;div&gt;')[4].split('-')[0].replace('&lt','').replace('/div&gt','').replace(';',''))
-			except:
-				zips.append("<MISSING>")
-			try:	
-				ids.append(i+1)
+				ids.append(id[1])
 			except:
 				ids.append("<MISSING>")
-			print(len(locs))
-		try:
-			states.append(soup.find("title").text.split(', ')[1].split(' |')[0])
-		except:
-			continue
-		try:
-			phones.append(soup.find(class_="tel-phone content-product-title").text)
-		except:
-			continue
-		try:
-			timing.append(soup.find(class_="detailSection row").text.replace('\n',''))
-		except:
-			continue
-		try:
-			types.append(soup.find(class_="store_details_Sname").text.strip())
-		except:
-			continue
-		pages.append(page_url)
-		print(pages)
-			
-		return_main_object=[]
+			phone=str(div.find('a',href=True,text=True))
+			if phone != 'None':
+				phones.append( phone.split('href="tel:')[1].split('">')[0])
+			else:
+				phones.append("<MISSING>")
+	locations=soup.findAll(class_='fn location-name')
+	for location in locations:
+		if location.find(class_="taproom-location"):
+			types.append(soup.find("dd").text)
+		else:
+			types.append("<MISSING>")
+	
+	longs_lats=soup.findAll(class_='vcard location open')
+	for long_lat in longs_lats:
+		longs.append(long_lat['data-geo'].split(',')[0])
+		lats.append(long_lat['data-geo'].split(',')[1])
+	
+	details= soup.findAll(class_='details')
+	for detail in details:
+		a=locator_domain+detail.find('a')['href']
+		r_timing= requests.get(a)
+		soup_timing=BeautifulSoup(r_timing.text,'lxml')
+		timing.append(soup_timing.find(class_='hours-of-operation').text)
+		
+	#print(streets)
+	return_main_object=[]
 	for i in range(len(locs)):
 		row = []
 		row.append(locator_domain)
@@ -101,7 +96,7 @@ def fetch_data():
 		row.append(lats[i] if lats[i] else "<MISSING>")
 		row.append(longs[i] if longs[i] else "<MISSING>")
 		row.append(timing[i] if timing[i] else "<MISSING>") 
-		row.append(pages[i] if pages[i] else "<MISSING>")
+		row.append(page_url)
 		
 		return_main_object.append(row)
 	return return_main_object
