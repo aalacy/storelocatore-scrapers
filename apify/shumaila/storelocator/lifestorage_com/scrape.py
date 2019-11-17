@@ -183,13 +183,15 @@ def fetch_data():
 
     print("..............")
 
-
+    return data
 
 
 
 
 def scrape():
     data = fetch_data()
+    write_output(data)
+
     #(data)
 
 scrape()
