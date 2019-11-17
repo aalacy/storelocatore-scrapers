@@ -103,6 +103,7 @@ def fetch_data():
                 try:
                     hour = soup.find('div', {'class': 'wpb_text_column wpb_content_element'})
                     hours = hour.find('div', {'class':'wpb_wrapper'}).text
+
                     #print(len(hours))
                     if len(hours) < 4:
                         hour = hour.find('div', {'class': 'wpb_wrapper'})
@@ -121,9 +122,12 @@ def fetch_data():
             hours = str(hours)
             hours = hours.encode('ascii', 'ignore').decode('ascii')
             title = title.encode('ascii', 'ignore').decode('ascii')
-            hours = re.sub(pattern, " ", hours)
-            hours = hours.replace("\n", " ")
-            hours = hours.lstrip()
+
+            hours = re.sub(pattern, "  ", hours)
+            hours = hours.replace("\n", "  ")
+
+            hours = hours.strip()
+            print(hours)
             if hours.find("Hours vary depending on flight schedules") > -1:
                 hours = "<MISSING>"
             title = title.lstrip()
