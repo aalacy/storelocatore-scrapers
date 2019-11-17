@@ -98,10 +98,18 @@ def fetch_data():
             page = requests.get(link)
             soup = BeautifulSoup(page.text, "html.parser")
             try:
-                hours = soup.find('div', {'id': 'hours-location'}).text
+                hours = soup.find('div', {'id': 'hours-location'})
+                spans= hours.findAll('p')
+                hours = ""
+                for span in spans:
+                    #print(span.text)
+                    hours = hours + span.text +" "
+
+                #print("0")
             except:
                 try:
                     hour = soup.find('div', {'class': 'wpb_text_column wpb_content_element'})
+                    #print("1")
                     hours = hour.find('div', {'class':'wpb_wrapper'}).text
 
                     #print(len(hours))
@@ -109,10 +117,17 @@ def fetch_data():
                         hour = hour.find('div', {'class': 'wpb_wrapper'})
                         spans = hour.findAll('span')
                         hours = spans[0].text + " " + spans[1].text
+                        #print("2")
                 except:
 
                     try:
-                        hours = soup.find('div', {'class': 'hours'}).text
+                        hours = soup.find('div', {'class': 'hours'})
+                        spans = hours.findAll('span')
+                        hours = ""
+                        for span in spans:
+                            #print(span.text)
+                            hours = hours + span.text + " "
+                       # print("3")
 
                     except:
 
@@ -120,14 +135,14 @@ def fetch_data():
 
 
             hours = str(hours)
-            hours = hours.encode('ascii', 'ignore').decode('ascii')
+            #hours = hours.encode('ascii', 'ignore').decode('ascii')
             title = title.encode('ascii', 'ignore').decode('ascii')
 
-            hours = re.sub(pattern, "  ", hours)
+            #hours = re.sub(pattern, "  ", hours)
             hours = hours.replace("\n", "  ")
 
             hours = hours.strip()
-            print(hours)
+            #print(hours)
             if hours.find("Hours vary depending on flight schedules") > -1:
                 hours = "<MISSING>"
             title = title.lstrip()
@@ -135,7 +150,7 @@ def fetch_data():
             lat= lat.replace('"',"")
             longt = longt.replace('"', "")
 
-            print(link)
+            #print(link)
             #print(store)
             #print(title)
             #print(street)
@@ -149,7 +164,7 @@ def fetch_data():
 
 
             n += 1
-            print(n)
+            #print(n)
             #print("...........................")
             data.append([
                 'https://www.shulas.com/',
