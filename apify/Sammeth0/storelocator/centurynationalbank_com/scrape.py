@@ -3,13 +3,6 @@ from bs4 import BeautifulSoup
 from lxml import html
 import csv
 
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
