@@ -47,7 +47,7 @@ def fetch_data():
             hours = hours + '; Sun: ' + item['storeHours'][0]['sunday']['openTime']['timeString'].split(',')[0] + '-' + item['storeHours'][0]['sunday']['closeTime']['timeString'].split(',')[0]
         except:
             hours = '<MISSING>'
-        if status == 'ACTIVE':
+        if add != '':
             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

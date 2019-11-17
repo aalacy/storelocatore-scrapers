@@ -39,7 +39,6 @@ def fetch_data():
             longitude=re.findall(r'(--?[\d\.]*)\)', script[n].text)
     pages=driver.find_elements_by_xpath("//a[contains(@href,'javascript:wpgmp_filter_locations')]")
     last_page=(pages[-2].text)
-    print last_page
     for n in range(0,20):
         location = driver.find_elements_by_xpath("//a[contains(@href,'javascript:open_current_location')]")
         location_text = [location[n].text for n in range(0,len(location))]

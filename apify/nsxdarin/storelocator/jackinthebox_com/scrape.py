@@ -9,7 +9,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -34,12 +34,13 @@ def fetch_data():
         hours = ''
         zc = ''
         phone = '<MISSING>'
-        print('Pulling Location %s...' % loc)
         website = 'jackinthebox.com'
         typ = 'Restaurant'
         Found = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            if 'id="telephone">' in line2:
+                phone = line2.split('id="telephone">')[1].split('<')[0].strip()
             if '{"ids":' in line2:
                 store = line2.split('{"ids":')[1].split(',')[0]
             if "'dimension4', '" in line2:
@@ -68,8 +69,8 @@ def fetch_data():
             phone = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
-        if add != '':
-            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if add != '' or state != '':
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

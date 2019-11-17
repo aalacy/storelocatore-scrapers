@@ -22,7 +22,7 @@ def fetch_data():
     p = 1
 
     url = 'https://www.howardbank.com/branch-locations'
-    page = requests.get(url)
+    page = requests.get(url,verify=False)
     soup = BeautifulSoup(page.text, "html.parser")
     repo = soup.find('div', {'id': 'block-menu-menu-branch-location'})
     repo_list = repo.findAll('a')
@@ -44,7 +44,7 @@ def fetch_data():
             comlink =  "https://www.howardbank.com" + link['href']
 
     print(comlink)
-    page = requests.get(comlink)
+    page = requests.get(comlink, verify=False)
     soup = BeautifulSoup(page.text, "html.parser")
     detail = soup.find('div', {'class': 'field-item even'})
     detp = detail.findAll('p')
@@ -84,16 +84,16 @@ def fetch_data():
         hours = "<MISSING>"
         if len(phone) < 2:
             phone = "<MISSING>"
-        print(title)
-        print(ltype)
-        print(street)
-        print(city)
-        print(state)
-        print(pcode)
-        print(phone)
-        print(hours)
-        print(p)
-        print("..................................")
+        #print(title)
+        #print(ltype)
+        #print(street)
+        #print(city)
+        #print(state)
+        #print(pcode)
+        #print(phone)
+        #print(hours)
+        #print(p)
+        #print("..................................")
         data.append([
             url,
             title,
@@ -114,7 +114,7 @@ def fetch_data():
 
     for link in finallinks:
         print(link)
-        page = requests.get(link)
+        page = requests.get(link,verify=False)
         soup = BeautifulSoup(page.text, "html.parser")
         title = soup.find("h1").text
         detail = soup.find('div',{'class':'branch_address'})

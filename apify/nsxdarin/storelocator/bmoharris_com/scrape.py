@@ -55,7 +55,7 @@ def fetch_data():
                }
     locs = []
     branches = []
-    r = session.post(url, headers=headers, data=json.dumps(payload))
+    r = session.post(url, headers=headers, data=json.dumps(payload), verify=False)
     for line in r.iter_lines():
         if '{"mondayopen":"' in line:
             items = line.split('{"mondayopen":"')
@@ -78,8 +78,7 @@ def fetch_data():
         while Found is False:
             Found = True
             try:
-                print('Pulling Branch %s...' % branch)
-                r = session.get(branch, headers=headers, timeout=10)
+                r = session.get(branch, headers=headers, timeout=10, verify=False)
                 lines = r.iter_lines()
                 for line in lines:
                     if 'property="og:title" content="' in line:

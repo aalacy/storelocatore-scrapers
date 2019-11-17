@@ -1,6 +1,4 @@
 # Import libraries
-import xml
-import lxml
 import requests
 from bs4 import BeautifulSoup
 import csv
@@ -23,7 +21,7 @@ def fetch_data():
     # Your scraper here
     data = []
     url = 'https://www.chuys.com/locations'
-    page = requests.get(url)
+    page = requests.get(url, verify=False)
     soup = BeautifulSoup(page.text, "html.parser")
     maindiv = soup.find('div', {'class': 'overview'})
     repo_list = maindiv.findAll('a')
@@ -32,7 +30,7 @@ def fetch_data():
     for repo in repo_list:
         link = "https://www.chuys.com" + repo['href']
         print(link)
-        page = requests.get(link)
+        page = requests.get(link,verify=False)
         soup = BeautifulSoup(page.text, "html.parser")
         title = soup.find("title").text
         print(title)

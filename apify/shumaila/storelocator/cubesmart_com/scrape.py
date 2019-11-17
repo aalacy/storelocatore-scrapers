@@ -29,8 +29,8 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-notifications")
-    #return webdriver.Chrome('chromedriver', chrome_options=options)
-    return webdriver.Chrome('/Users/Dell/local/chromedriver')
+    return webdriver.Chrome('chromedriver', chrome_options=options)
+    #return webdriver.Chrome('/Users/Dell/local/chromedriver')
 
 
 def fetch_data():

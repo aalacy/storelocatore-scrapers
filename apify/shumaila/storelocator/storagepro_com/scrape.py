@@ -40,72 +40,75 @@ def fetch_data():
     for link in link_list:
         links.append(link['href'])
         ccode.append("CA")
-
+    #print(len(links))
+    #print(len(ccode))
     for i in range(0,len(links)):
         statelink = "https://www.storagepro.com" + links[i] #['href']
-        print(statelink)
+        #print("State ", statelink)
         page1 = requests.get(statelink)
         soup1 = BeautifulSoup(page1.text, "html.parser")
         city_list =  soup1.findAll('a',{'class':'popular_city'})
-        for city in city_list:
-            count = city.find('span',{'class': 'facilities_count right'}).text
-            count = count.replace(" Facilities","")
-            if count != "0":
-                citylink = "https://www.storagepro.com" + city['href']
-                print(citylink)
-                page2 = requests.get(citylink)
-                soup2 = BeautifulSoup(page2.text, "html.parser")
-                detail_list = soup2.findAll('a',{'class': 'green_text ajax-slider'})
-                for link in detail_list:
-                    link = "https://www.storagepro.com" +  link['href']
-                    print(link)
-                    page3 = requests.get(link)
-                    soup3 = BeautifulSoup(page3.text, "html.parser")
-                    title = soup3.find("h1").text
-                    street = soup3.find('span', {'itemprop': 'streetAddress'}).text
-                    city = soup3.find('span', {'itemprop': 'addressLocality'}).text
-                    state = soup3.find('span', {'itemprop': 'addressRegion'}).text
-                    pcode = soup3.find('span', {'itemprop': 'postalCode'}).text
-                    phone = soup3.find('a',{'class': 'green_text ga_phone_call phone_customize'}).text
-                    coord = soup3.find('a',{'class': 'map_it_tag green_text ga_outbound_link'})
-                    lat = coord['data-lat']
-                    longt = coord['data-long']
-                    hours= soup3.find('div',{'class': 'gate_access_wrapper right'}).text
-                    hours = re.sub(pattern," ",hours)
-                    soup3 = str(soup3)
-                    start = soup3.find('setCustomDimension')
-                    start = soup3.find("9,", start) + 1
-                    start = soup3.find('"', start) + 1
-                    end = soup3.find('"', start)
-                    store = soup3[start:end]
-                    hours = hours.lstrip()
-                    if len(hours) < 3:
-                        hours = "<MISSING>"
-                    if len(phone) < 5:
-                        phone = "<MISSING>"
-                    print(title)
-                    print(store)
-                    print(street)
-                    print(city)
-                    print(state)
-                    print(pcode)
-                    print(ccode[i])
-                    print(phone)
-                    print(lat)
-                    print(longt)
-                    print(hours)
-                    print(p)
-                    p += 1
-                    flag = True
-                    i = 0
-                    while i < len(data) and flag:
-                        if store == data[i][8] and street == data[i][3]:
-                            flag = False
-                            break
-                        else:
-                            i += 1
-                    if flag:
-                        data.append([
+        if len(city_list) == 0:
+            try:
+                title = soup1.find("h1").text
+                street = soup1.find('span', {'itemprop': 'streetAddress'}).text
+                city = soup1.find('span', {'itemprop': 'addressLocality'}).text
+                state = soup1.find('span', {'itemprop': 'addressRegion'}).text
+                pcode = soup1.find('span', {'itemprop': 'postalCode'}).text
+                phone = soup1.find('a', {'class': 'green_text ga_phone_call phone_customize'}).text
+                coord = soup1.find('a', {'class': 'map_it_tag green_text ga_outbound_link'})
+                lat = coord['data-lat']
+                longt = coord['data-long']
+                hours = ""
+                try:
+                    hourd = soup1.find('div', {'class': 'gate_access_wrapper right'})
+                    hours = hourd.text
+                    hours = hours.replace("FRI", "FRI ")
+                    hours = hours.replace("MON", "MON ")
+                    hours = hours.replace("TUE", "TUE ")
+                    hours = hours.replace("WED", "WED ")
+                    hours = hours.replace("SUN", "SUN ")
+                    hours = hours.replace("SAT", "SAT ")
+                    hours = hours.replace("Daily", "Daily ")
+
+                except:
+                    hours = "<MISSING>"
+
+                hours = re.sub(pattern, " ", hours)
+                soup1 = str(soup1)
+                start = soup1.find('setCustomDimension')
+                start = soup1.find("9,", start) + 1
+                start = soup1.find('"', start) + 1
+                end = soup1.find('"', start)
+                store = soup1[start:end]
+                hours = hours.lstrip()
+                if len(hours) < 3:
+                    hours = "<MISSING>"
+                if len(phone) < 5:
+                    phone = "<MISSING>"
+                #print(title)
+                #print(store)
+                #print(street)
+                #print(city)
+                #print(state)
+                #print(pcode)
+                #print(ccode[i])
+               # print(phone)
+                #print(lat)
+                #print(longt)
+                #print(hours)
+                #print(p)
+                p += 1
+                flag = True
+                m = 0
+                while i < len(data) and flag:
+                    if store == data[m][8] and street == data[m][3]:
+                        flag = False
+                        break
+                    else:
+                        m += 1
+                if flag:
+                    data.append([
                         'https://www.storagepro.com/',
                         link,
                         title,
@@ -120,8 +123,184 @@ def fetch_data():
                         lat,
                         longt,
                         hours
-                        ])
+                    ])
+            except:
+                pass
+        #print(len(city_list))
+        for city in city_list:
+            count = city.find('span',{'class': 'facilities_count right'}).text
+            count = count.replace(" Facilities","")
+            count = count.replace(" Facility", "")
+            count = count.strip()
+            #print("Count=", count)
+            if count != "0":
+                citylink = "https://www.storagepro.com" + city['href']
+                #print("City= ", citylink)
+                #return
+                page2 = requests.get(citylink)
+                soup2 = BeautifulSoup(page2.text, "html.parser")
+                detail_list = soup2.findAll('a',{'class': 'ajax-slider'})
+                #print("LEN = ",len(detail_list))
+                if len(detail_list) == 0:
+                    try:
+                        title = soup2.find("h1").text
+                        street = soup2.find('span', {'itemprop': 'streetAddress'}).text
+                        city = soup2.find('span', {'itemprop': 'addressLocality'}).text
+                        state = soup2.find('span', {'itemprop': 'addressRegion'}).text
+                        pcode = soup2.find('span', {'itemprop': 'postalCode'}).text
+                        phone = soup2.find('a', {'class': 'green_text ga_phone_call phone_customize'}).text
+                        coord = soup2.find('a', {'class': 'map_it_tag green_text ga_outbound_link'})
+                        lat = coord['data-lat']
+                        longt = coord['data-long']
+                        hours = ""
+                        try:
+                            hourd = soup2.find('div', {'class': 'gate_access_wrapper right'})
+                            hours = hourd.text
+                            hours = hours.replace("FRI", "FRI ")
+                            hours = hours.replace("MON", "MON ")
+                            hours = hours.replace("TUE", "TUE ")
+                            hours = hours.replace("WED", "WED ")
+                            hours = hours.replace("SUN", "SUN ")
+                            hours = hours.replace("SAT", "SAT ")
+                            hours = hours.replace("Daily", "Daily ")
 
+                        except:
+                            hours = "<MISSING>"
+                        hours = re.sub(pattern, " ", hours)
+                        soup2 = str(soup2)
+                        start = soup2.find('setCustomDimension')
+                        start = soup2.find("9,", start) + 1
+                        start = soup2.find('"', start) + 1
+                        end = soup2.find('"', start)
+                        store = soup2[start:end]
+                        hours = hours.lstrip()
+                        if len(hours) < 3:
+                            hours = "<MISSING>"
+                        if len(phone) < 5:
+                            phone = "<MISSING>"
+                        #print(title)
+                        #print(store)
+                        #print(street)
+                        #print(city)
+                        #print(state)
+                        #print(pcode)
+                        #print(ccode[i])
+                        #print(phone)
+                        #print(lat)
+                        #print(longt)
+                        #print(hours)
+                        #print(p)
+                        p += 1
+                        flag = True
+                        m = 0
+                        while m < len(data) and flag:
+                            if store == data[m][8] and street == data[m][3]:
+                                flag = False
+                                break
+                            else:
+                                m += 1
+                        if flag:
+                            data.append([
+                                'https://www.storagepro.com/',
+                                link,
+                                title,
+                                street,
+                                city,
+                                state,
+                                pcode,
+                                ccode[i],
+                                store,
+                                phone,
+                                "<MISSING>",
+                                lat,
+                                longt,
+                                hours
+                            ])
+                    except:
+                        pass
+                for link in detail_list:
+                    link = "https://www.storagepro.com" +  link['href']
+                    #print("Branch = ", link)
+                    try:
+                        page3 = requests.get(link)
+                        soup3 = BeautifulSoup(page3.text, "html.parser")
+                        title = soup3.find("h1").text
+                        street = soup3.find('span', {'itemprop': 'streetAddress'}).text
+                        city = soup3.find('span', {'itemprop': 'addressLocality'}).text
+                        state = soup3.find('span', {'itemprop': 'addressRegion'}).text
+                        pcode = soup3.find('span', {'itemprop': 'postalCode'}).text
+                        phone = soup3.find('a',{'class': 'green_text ga_phone_call phone_customize'}).text
+                        coord = soup3.find('a',{'class': 'map_it_tag green_text ga_outbound_link'})
+                        lat = coord['data-lat']
+                        longt = coord['data-long']
+                        hours = ""
+                        try:
+                            hourd = soup3.find('div', {'class': 'gate_access_wrapper right'})
+                            hours = hourd.text
+                            hours = hours.replace("FRI", "FRI ")
+                            hours = hours.replace("MON", "MON ")
+                            hours = hours.replace("TUE", "TUE ")
+                            hours = hours.replace("WED", "WED ")
+                            hours = hours.replace("SUN", "SUN ")
+                            hours = hours.replace("SAT", "SAT ")
+                            hours = hours.replace("Daily", "Daily ")
+
+                        except:
+                            hours = "<MISSING>"
+                        hours = re.sub(pattern," ",hours)
+                        soup3 = str(soup3)
+                        start = soup3.find('setCustomDimension')
+                        start = soup3.find("9,", start) + 1
+                        start = soup3.find('"', start) + 1
+                        end = soup3.find('"', start)
+                        store = soup3[start:end]
+                        hours = hours.lstrip()
+                        if len(hours) < 3:
+                            hours = "<MISSING>"
+                        if len(phone) < 5:
+                            phone = "<MISSING>"
+                        #print(title)
+
+                        #print(store)
+                        #print(street)
+                        #print(city)
+                        #print(state)
+                        #print(pcode)
+                        #print(ccode[i])
+                        #print(phone)
+                        #print(lat)
+                        #print(longt)
+                        #print(hours)
+                        #print(p)
+                        p += 1
+                        flag = True
+                        m = 0
+                        while m < len(data) and flag:
+                            if store == data[m][8] and street == data[m][3]:
+                                flag = False
+                                break
+                            else:
+                                m += 1
+                        if flag:
+                            data.append([
+                            'https://www.storagepro.com/',
+                            link,
+                            title,
+                            street,
+                            city,
+                            state,
+                            pcode,
+                            ccode[i],
+                            store,
+                            phone,
+                            "<MISSING>",
+                            lat,
+                            longt,
+                            hours
+                            ])
+                    except:
+                        pass
+            #print("............................")
 
     return data
 

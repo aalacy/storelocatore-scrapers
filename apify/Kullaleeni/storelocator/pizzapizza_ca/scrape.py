@@ -10,7 +10,7 @@ import pandas as pd
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
-from selenium.webdriver.common.keys import Keys
+#from selenium.webdriver.common.keys import Keys
 
 def check_zip(x):
     #print(x)
@@ -70,54 +70,54 @@ def fetch_data():
         if "No results found".lower() not in soup_1.text.lower():
             
             records = soup_1.find_all("div",attrs={"class":"row search-results-row"})
-            r = 0
+            for r in range(len(records)):
             
-            location_name = records[r].find("h2",attrs={"class":"fw-normal"}).text.strip()
-            street_address = location_name
-            try:
-                city,state,zipcode = records[r].find("p").text.split(",")
-            except:
-                city,state,zipcode = "<MISSING>","<MISSING>","<MISSING>"
-         
-            location_type = records[r].find("div",attrs={"class":"col-12 align-self-end"}).find("p").text.replace("Available:","").replace("\xa0", " ").strip()
-            
-            hours_list = records[r].find("div",attrs={"class":"col-12 col-lg-5 store-hours"}).find_all("div",attrs={"class":"row justify-content-end no-gutters days-break-down"})
-            
-            hours_of_open = [h.text.replace("y","y : ") for h in hours_list]
-
-            city = city.strip()
-            state = state.strip()
-            zipcode = zipcode.strip()
-            country_code = "CA"
-            location_type = "<MISSING>"
-                        
-            latitude,longitude = "<MISSING>","<MISSING>"
-            
-            data_record = {}
-            
-            locator_domain = url
-            store_number = "<MISSING>"
-            phone = "<MISSING>"
-            
-            
-            data_record['locator_domain'] = locator_domain
-            data_record['location_name'] = location_name
-            data_record['street_address'] = street_address
-            data_record['city'] = city
-            data_record['state'] = state
-            data_record['zip'] = zipcode
-            data_record['country_code'] = country_code
-            data_record['store_number'] = store_number
-            data_record['phone'] = phone   
-            data_record['location_type'] = location_type
-            data_record['latitude'] = latitude
-            data_record['longitude'] = longitude
-            data_record['hours_of_operation'] = hours_of_open
-            data_record['page_url'] = page_link
-            
-            data_out.append(data_record)
-
+                location_name = records[r].find("h2",attrs={"class":"fw-normal"}).text.strip()
+                street_address = location_name
+                try:
+                    city,state,zipcode = records[r].find("p").text.split(",")
+                except:
+                    city,state,zipcode = "<MISSING>","<MISSING>","<MISSING>"
+             
+                location_type = records[r].find("div",attrs={"class":"col-12 align-self-end"}).find("p").text.replace("Available:","").replace("\xa0", " ").strip()
                 
+                hours_list = records[r].find("div",attrs={"class":"col-12 col-lg-5 store-hours"}).find_all("div",attrs={"class":"row justify-content-end no-gutters days-break-down"})
+                
+                hours_of_open = [h.text.replace("y","y : ") for h in hours_list]
+    
+                city = city.strip()
+                state = state.strip()
+                zipcode = zipcode.strip()
+                country_code = "CA"
+                location_type = "<MISSING>"
+                            
+                latitude,longitude = "<MISSING>","<MISSING>"
+                
+                data_record = {}
+                
+                locator_domain = url
+                store_number = "<MISSING>"
+                phone = "<MISSING>"
+                
+                
+                data_record['locator_domain'] = locator_domain
+                data_record['location_name'] = location_name
+                data_record['street_address'] = street_address
+                data_record['city'] = city
+                data_record['state'] = state
+                data_record['zip'] = zipcode
+                data_record['country_code'] = country_code
+                data_record['store_number'] = store_number
+                data_record['phone'] = phone   
+                data_record['location_type'] = location_type
+                data_record['latitude'] = latitude
+                data_record['longitude'] = longitude
+                data_record['hours_of_operation'] = " ".join(hours_of_open)
+                data_record['page_url'] = page_link
+                
+                data_out.append(data_record)
+    
+                    
     return data_out
 
 def write_output(data):

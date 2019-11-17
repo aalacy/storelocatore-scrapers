@@ -74,14 +74,15 @@ def fetch_data():
                 start = end + 1
                 end = hdetail.find(',', start)
                 longt = hdetail[start:end]
-
+                if hours.find("Clinic hours can vary") > -1:
+                    hours = "<MISSING>"
                 #print(title)
                 #print(street)
                 #print(city)
                 #print(state)
                 #print(pcode)
                 #print(phone)
-                #print(hours)
+                print(hours)
                 #print(lat)
                 #print(longt)
                 if street.find('Grand Opening') == -1:

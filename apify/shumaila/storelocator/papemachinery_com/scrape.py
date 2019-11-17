@@ -1,6 +1,4 @@
 # Import libraries
-import xml
-import lxml
 import requests
 from bs4 import BeautifulSoup
 import csv
