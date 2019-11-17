@@ -40,8 +40,8 @@ def fetch_data():
     for link in link_list:
         links.append(link['href'])
         ccode.append("CA")
-    print(len(links))
-    print(len(ccode))
+    #print(len(links))
+    #print(len(ccode))
     for i in range(0,len(links)):
         statelink = "https://www.storagepro.com" + links[i] #['href']
         #print("State ", statelink)
@@ -59,7 +59,21 @@ def fetch_data():
                 coord = soup1.find('a', {'class': 'map_it_tag green_text ga_outbound_link'})
                 lat = coord['data-lat']
                 longt = coord['data-long']
-                hours = soup1.find('div', {'class': 'gate_access_wrapper right'}).text
+                hours = ""
+                try:
+                    hourd = soup1.find('div', {'class': 'gate_access_wrapper right'})
+                    hours = hourd.text
+                    hours = hours.replace("FRI", "FRI ")
+                    hours = hours.replace("MON", "MON ")
+                    hours = hours.replace("TUE", "TUE ")
+                    hours = hours.replace("WED", "WED ")
+                    hours = hours.replace("SUN", "SUN ")
+                    hours = hours.replace("SAT", "SAT ")
+                    hours = hours.replace("Daily", "Daily ")
+
+                except:
+                    hours = "<MISSING>"
+
                 hours = re.sub(pattern, " ", hours)
                 soup1 = str(soup1)
                 start = soup1.find('setCustomDimension')
@@ -138,7 +152,20 @@ def fetch_data():
                         coord = soup2.find('a', {'class': 'map_it_tag green_text ga_outbound_link'})
                         lat = coord['data-lat']
                         longt = coord['data-long']
-                        hours = soup2.find('div', {'class': 'gate_access_wrapper right'}).text
+                        hours = ""
+                        try:
+                            hourd = soup2.find('div', {'class': 'gate_access_wrapper right'})
+                            hours = hourd.text
+                            hours = hours.replace("FRI", "FRI ")
+                            hours = hours.replace("MON", "MON ")
+                            hours = hours.replace("TUE", "TUE ")
+                            hours = hours.replace("WED", "WED ")
+                            hours = hours.replace("SUN", "SUN ")
+                            hours = hours.replace("SAT", "SAT ")
+                            hours = hours.replace("Daily", "Daily ")
+
+                        except:
+                            hours = "<MISSING>"
                         hours = re.sub(pattern, " ", hours)
                         soup2 = str(soup2)
                         start = soup2.find('setCustomDimension')
@@ -206,7 +233,20 @@ def fetch_data():
                         coord = soup3.find('a',{'class': 'map_it_tag green_text ga_outbound_link'})
                         lat = coord['data-lat']
                         longt = coord['data-long']
-                        hours= soup3.find('div',{'class': 'gate_access_wrapper right'}).text
+                        hours = ""
+                        try:
+                            hourd = soup3.find('div', {'class': 'gate_access_wrapper right'})
+                            hours = hourd.text
+                            hours = hours.replace("FRI", "FRI ")
+                            hours = hours.replace("MON", "MON ")
+                            hours = hours.replace("TUE", "TUE ")
+                            hours = hours.replace("WED", "WED ")
+                            hours = hours.replace("SUN", "SUN ")
+                            hours = hours.replace("SAT", "SAT ")
+                            hours = hours.replace("Daily", "Daily ")
+
+                        except:
+                            hours = "<MISSING>"
                         hours = re.sub(pattern," ",hours)
                         soup3 = str(soup3)
                         start = soup3.find('setCustomDimension')
@@ -220,6 +260,7 @@ def fetch_data():
                         if len(phone) < 5:
                             phone = "<MISSING>"
                         #print(title)
+
                         #print(store)
                         #print(street)
                         #print(city)
