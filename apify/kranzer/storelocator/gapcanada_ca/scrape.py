@@ -35,6 +35,7 @@ class Scrape(base.Spider):
             i.add_value('longitude', res_[-1])
             i.add_value('latitude', res_[-2])
             i.add_value('store_number', res_[0])
+            i.add_value('location_type', 'WomenMenGapBodyAccessories')
             i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
             yield i
 
