@@ -47,10 +47,10 @@ def fetch_data():
     json_data = r_json.json()
     # soup = BeautifulSoup(r.text, "lxml")
 
-    print("json_data === "+ str(json_data))
+    # print("json_data === "+ str(json_data))
     for location in json_data["stores"]:
 
-        print("location === " + str(location))
+        # print("location === " + str(location))
         street_address = location["address"]["line1"] +" "+ location["address"]["line2"]+" "+ location["address"]["line3"]
         location_name = location["address"]["name"]
         city = location["address"]["city"]

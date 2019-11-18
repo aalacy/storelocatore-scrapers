@@ -3,7 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -24,7 +25,7 @@ def fetch_data():
     addresses = []
 
     base_url = "https://www.hyperionpublic.com"
-    r = requests.get("https://www.hyperionpublic.com/", headers=headers)
+    r = requests.get("https://www.hyperionpublic.com/", headers=headers,verify=False)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))

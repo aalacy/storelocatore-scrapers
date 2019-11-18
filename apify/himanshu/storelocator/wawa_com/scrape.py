@@ -79,7 +79,7 @@ def fetch_data():
                 for i in k['locations']:
                     street_address = i['addresses'][0]['address']                  
                     city = i['addresses'][0]['city'].capitalize()
-                    print(city)
+                    # print(city)
                     state = i['addresses'][0]['state']
                     zipp = i['addresses'][0]['zip']
                     lat = i['addresses'][1]['loc'][0]
