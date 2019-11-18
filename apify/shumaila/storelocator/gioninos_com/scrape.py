@@ -114,18 +114,18 @@ def fetch_data():
         if len(phone) < 6:
             phone = "<MISSING>"
 
-        print(store)
-        print(title)
-        print(street)
-        print(city)
-        print(state)
-        print(pcode)
-        print(phone)
-        print(lat)
-        print(longt)
-        print(hours)
-        print(p)
-        print("...........................")
+        #print(store)
+        #print(title)
+        #print(street)
+        #print(city)
+        #print(state)
+        #print(pcode)
+        #print(phone)
+        #print(lat)
+        #print(longt)
+        #print(hours)
+        #print(p)
+        #print("...........................")
         p += 1
         data.append([
             'https://www.gioninos.com/',
