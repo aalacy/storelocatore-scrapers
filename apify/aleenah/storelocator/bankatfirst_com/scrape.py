@@ -95,8 +95,16 @@ def fetch_data():
                 phones.append("<MISSING>")
             else:
                 types.append("Branch center, "+re.findall(r'<div class="infowindow"><div class="title">.*</div><div>(.*)</div></div>]]></contents></tab>',b)[0])
-                add=re.findall(r'<add2><\!\[CDATA\[(.*)<br>.*</add2>',b)[0]
-                phones.append(re.findall(r'<add2><.*<br><b>(.*)</b>\]\]></add2>',b)[0])
+                print(b)
+                add=re.findall(r'<add2><\!\[CDATA\[(.*)<br>.*</add2>',b)
+                if add==[]:
+                    add=re.findall(r'<add2><\!\[CDATA\[(.*)\]\]></add2>',b)
+                add=add[0]
+                ph=re.findall(r'<add2><.*<br><b>(.*)</b>\]\]></add2>',b)
+                if ph!=[]:
+                    phones.append(ph[0])
+                else:
+                    phones.append("<MISSING>")
 
             street.append(re.findall(r'<add1><\!\[CDATA\[(.*)\]\]></add1>',b)[0])
             addr=add.replace(",,",",").split(",")
