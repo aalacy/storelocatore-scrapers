@@ -95,11 +95,13 @@ def extract(soup,link):
     except:
         hours = "<MISSING>"
     soup  = str(soup)
-    start = soup.find("storeId")
+    start = soup.find("storeNumber")
     start = soup.find("=", start) + 1
     end = soup.find("&", start)
     store = soup[start:end]
     pcode = pcode.strip()
+    if len(store) > 9:
+        store = "<MISSING>"
     #print(title)
     #3print(store)
     #print(street)
