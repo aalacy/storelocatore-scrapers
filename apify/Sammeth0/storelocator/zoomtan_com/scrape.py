@@ -2,7 +2,6 @@ import requests
 #from bs4 import BeautifulSoup
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
-from lxml import html
 import pandas as pd 
 from selenium.webdriver.support.ui import Select
 import csv
