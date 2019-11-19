@@ -102,8 +102,9 @@ def extract(soup,link):
     pcode = pcode.strip()
     if len(store) > 9:
         store = "<MISSING>"
+    #print(link)
     #print(title)
-    #3print(store)
+    #print(store)
     #print(street)
     #print(city)
     #print(state)
