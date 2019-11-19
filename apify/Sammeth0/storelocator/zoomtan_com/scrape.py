@@ -59,10 +59,10 @@ def fetch_data():
 			select_city = Select(driver.find_element_by_name('cityselect'))
 			select_city.select_by_index(index_c)
 			time.sleep(5)
-			locations=driver.find_elements_by_xpath('/html/body/div[1]/section[2]/div/div[1]/div[3]/a')
-			for s in locations:
-				locs.append(s.find_element_by_xpath('//*[@id="locationitem"]/h5').text)
-				streets.append(str(s.find_element_by_xpath('//*[@id="locationitem"]').text).split('\n\n')[1].replace('\n',' '))
+			# locations=driver.find_elements_by_xpath('/html/body/div[1]/section[2]/div/div[1]/div[3]/a')
+			# for s in locations:
+				# locs.append(s.find_element_by_xpath('//*[@id="locationitem"]/h5').text)
+				# streets.append(str(s.find_element_by_xpath('//*[@id="locationitem"]').text).split('\n\n')[1].split('\n')[0].replace('\n',' '))
 
 			urls=driver.find_elements_by_xpath('/html/body/div[1]/section[2]/div/div[1]/div[3]/a')
 			for url in urls:
@@ -71,6 +71,14 @@ def fetch_data():
 				driver_page= get_driver()
 				driver_page.get(page_url)
 				time.sleep(3)
+				try:
+					locs.append(driver_page.find_element_by_xpath("/html/body/div[1]/div[5]/div/div[1]/div[1]/div/div[1]/div/h3[1]").text)
+				except:
+					locs.append("<MISSING>")
+				try:
+					streets.append(driver_page.find_element_by_xpath("/html/body/div[1]/div[5]/div/div[1]/div[1]/div/div[1]/div/p[1]/a").text.split('\n')[0])
+				except:
+					streets.append("<MISSING>")
 				try:
 					cities.append(page_url.split('-')[4].split('-')[0])
 				except:
@@ -105,6 +113,7 @@ def fetch_data():
 				except:
 					timing.append("<MISSING>")
 	
+				
 	return_main_object = []	
 	for l in range(len(locs)):
 		row = []
