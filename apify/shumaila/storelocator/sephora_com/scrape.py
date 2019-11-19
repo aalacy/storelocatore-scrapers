@@ -30,12 +30,12 @@ def fetch_data():
     for repo in repo_list:
         link = "https://www.sephora.com" + repo['href']
         # link = "https://www.sephora.com/happening/stores/silverdale-jcpenney-at-kitsap-mall"
-        print(link)
+        #print(link)
         page = requests.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
         detail = soup.find('script', {'type': 'application/ld+json'})
         detail = str(detail)
-        print(detail)
+        #print(detail)
         if detail == "None":
             detail = str(soup)
         start = detail.find("streetAddress")
@@ -135,13 +135,13 @@ def fetch_data():
 
        
 
-        print("................")
+        #print("................")
 
         flag = 0
         for chk in data:
             if chk[2] == street:
                 flag = 1
-                print("Already exist")
+                #print("Already exist")
                 break
 
         if flag == 0:

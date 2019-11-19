@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -48,12 +48,17 @@ def fetch_data():
         store.append(location_details[3].replace("Ph: ",""))
         store.append("<MISSING>")
         # There was 1 entry which did not have url on its name so i had to get it from a different part
-        if location.find("a") == None:
-            geo_location = soup.find("div",{"title":re.compile("Drum3.png")}).find("a")["href"]
-        else:
+        if location.find("a") != None:
             geo_location = location.find("a")["href"]
-        store.append(geo_location.split("/@")[1].split(",")[0])
-        store.append(geo_location.split("/@")[1].split(",")[1])
+            lat= geo_location.split("/@")[1].split(",")[0]
+            lng = geo_location.split("/@")[1].split(",")[1]
+
+        else:
+            lat = '<MISSING>'
+            lng = '<MISSING>'
+        store.append(lat)
+        store.append(lng)
+        store.append("<MISSING>")
         store.append("<MISSING>")
         yield store
 

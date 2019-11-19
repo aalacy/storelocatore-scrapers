@@ -3,6 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -268,7 +270,7 @@ def fetch_data():
         'Åland Islands': 'AX'
     }
     base_url = "https://juanvaldezcafe.com"
-    r = requests.get(base_url + "/en-us/stores")
+    r = requests.get(base_url + "/en-us/stores",verify=False)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
 
@@ -283,9 +285,10 @@ def fetch_data():
                 hours = ""
                 days = {0:"M",1:"T",2:"W",3:"T",4:"F",5:"S",6:"S",7:"F"}
                 for k in range(len(location_hours)):
-                    temp_hours = location_hours[k].text
-                    temp_hours_1 = days[k] + " " + temp_hours[2:]
-                    hours = hours + temp_hours_1 + " "
+                    if k in days:
+                        temp_hours = location_hours[k].text
+                        temp_hours_1 = days[k] + " " + temp_hours[2:]
+                        hours = hours + temp_hours_1 + " "
                 if location_soup.find("span",{"class":"fn"}) == None:
                     continue
                 name = location_soup.find("span",{"class":"fn"}).text

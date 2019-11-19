@@ -3,6 +3,7 @@ import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import json
+import re
 
 options = Options()
 options.add_argument('--headless')
@@ -86,8 +87,9 @@ def fetch_data():
             page_url = "https://www.topshop.com/store-locator?country=Canada"
             country = 'CA'
         try:
-            op_hrs=main[i]['openingHours']
-            if op_hrs == "":
+            op_hrs=str(main[i]['openingHours'])
+            empty_hrs = bool(re.search(r'\d',op_hrs))
+            if empty_hrs == False:
                 op_hrs = '<MISSING>'
         except:
             op_hrs='<MISSING>'

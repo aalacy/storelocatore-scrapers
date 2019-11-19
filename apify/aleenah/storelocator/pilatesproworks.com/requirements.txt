@@ -1,4 +1,0 @@
-selenium==3.141.0
-bs4==0.0.1
-requests==2.22.0
-pyzipcode3==2.2
