@@ -42,6 +42,7 @@ def fetch_data():
 	lats = []
 	timing = []
 	ids=[]
+	pages_url=[]
 	
 	
 	driver = get_driver()
@@ -66,6 +67,7 @@ def fetch_data():
 			urls=driver.find_elements_by_xpath('/html/body/div[1]/section[2]/div/div[1]/div[3]/a')
 			for url in urls:
 				page_url=url.get_attribute('href')
+				pages_url.append(page_url)
 				driver_page= get_driver()
 				driver_page.get(page_url)
 				time.sleep(3)
@@ -119,7 +121,7 @@ def fetch_data():
 		row.append(lats[l])
 		row.append(longs[l])
 		row.append(timing[l]) 
-		row.append(page_url[l])
+		row.append(pages_url[l])
 		
 		return_main_object.append(row)
 	
