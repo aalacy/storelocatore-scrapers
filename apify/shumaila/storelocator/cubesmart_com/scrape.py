@@ -26,7 +26,7 @@ def get_driver():
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-notifications")
     return webdriver.Chrome('chromedriver', chrome_options=options)
-   # return webdriver.Chrome('/Users/Dell/local/chromedriver')
+    #return webdriver.Chrome('/Users/Dell/local/chromedriver')
 
 
 def fetch_data():
@@ -79,7 +79,11 @@ def fetch_data():
             hours = ""
             for n in range(0, len(htimes)):
                 hours = hours + hdetail[n].text + " " + htimes[n].text + " "
-
+            hours = hours.replace("PM"," PM ")
+            hours = hours.replace("AM", " AM ")
+            hours = hours.replace("-","- ")
+            hours = hours.replace("  ", " ")
+            #hours = re.sub(pattern," ",hours)
             if len(hours) < 3:
                 hours = "<MISSING>"
             if len(phone) <3:
