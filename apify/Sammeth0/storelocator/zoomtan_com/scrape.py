@@ -68,13 +68,15 @@ def fetch_data():
 			for url in urls:
 				page_url=url.get_attribute('href')
 				pages_url.append(page_url)
+				print(pages_url)
 				driver_page= get_driver()
 				driver_page.get(page_url)
 				time.sleep(3)
+				
 				try:
 					locs.append(driver_page.find_element_by_xpath("/html/body/div[1]/div[5]/div/div[1]/div[1]/div/div[1]/div/h3[1]").text)
 				except:
-					locs.append("<MISSING>")
+					continue
 				try:
 					streets.append(driver_page.find_element_by_xpath("/html/body/div[1]/div[5]/div/div[1]/div[1]/div/div[1]/div/p[1]/a").text.split('\n')[0])
 				except:
@@ -84,7 +86,7 @@ def fetch_data():
 				except:
 					cities.append("<MISSING>")
 				try:
-					states.append(page_url.split('/')[4].split('-')[0])
+					states.append(driver_page.find_element_by_xpath("/html/body/div[1]/div[5]/div/div[1]/div[1]/div/div[1]/div/p[1]/a").text.split(',')[1].split(' ')[1])
 				except:
 					states.append("<MISSING>")
 				try:
