@@ -91,6 +91,8 @@ def fetch_data():
             empty_hrs = bool(re.search(r'\d',op_hrs))
             if empty_hrs == False:
                 op_hrs = '<MISSING>'
+            else:
+                op_hrs = op_hrs.replace("{","").replace("}","").replace("'","").replace(","," ")
         except:
             op_hrs='<MISSING>'
         try:
