@@ -55,38 +55,27 @@ def fetch_data():
 	locations=driver.find_elements_by_tag_name("a")
 	for a in range(12,len(locations)-18):
 		pages_url.append(locations[a].get_attribute('href'))
-	print(pages_url)
 		
 	for u in pages_url:
-		print(u)
 		driver_page.get(u)
 		time.sleep(3)
 		stores=driver_page.find_elements_by_xpath("/html/body/div[1]/div[3]/div[2]/div[2]/div/div[2]/div/ul/li")
 		for s in stores:
-			print('************************************************************************************')
 			pages.append(u)
-			#				//*[@id="content-area"]/div/div[2]/div/ul/li[1]/div[1]/div/div/div[1]/span[1]
-			#/html/body/div[1]/div[3]/div[2]/div[2]/div/div[2]/div/ul/li[1]/div[1]/div/div/div[1]/span[1]
 			locs.append(s.find_element_by_xpath('.//div[1]/div/div/div[1]/span[1]').text)
-			print(locs)
 			streets.append(s.find_element_by_xpath('.//div[1]/div/div/div[1]/div[1]').text)
-			print(streets)
+			city=s.find_element_by_xpath('.//div[1]/div/div/div[1]/span[1]').text
 			cities.append(s.find_element_by_xpath('.//div[1]/div/div/div[1]/span[1]').text)
-			print(cities)
 			states.append(s.find_element_by_xpath('.//div[1]/div/div/div[1]/span[2]').text)
-			print(states)
-			zips.append(s.find_element_by_xpath('.//div[1]/div/div/div[1]/span[3]').text)
-			print(zips)
+			zips.append(s.find_element_by_xpath('.//div[1]/div/div/div[1]/span[3]').text[:5])
 			try:
 				phones.append(s.find_element_by_xpath('.//div[2]/span').text)
 			except:
 				phones.append("<MISSING>")
-			print(phones)
 			try:
 				types.append(s.find_element_by_xpath('.//div[3]/span/a').text.split('.')[1].split('.')[2])
 			except:
 				types.append("<MISSING>")
-			print(types)
 			lat=float(str(s.find_element_by_xpath('.//div[1]/div/div/div[2]/div/a').get_attribute('href')).split('?q=')[1].split('+')[0])
 			try:
 				if (lat<=90 and lat>=0):
@@ -95,7 +84,6 @@ def fetch_data():
 					lats.append("<MISSING>")
 			except:
 				lats.append("<MISSING>")
-			print(lats)
 			try:
 				long=float(str(s.find_element_by_xpath('.//div[1]/div/div/div[2]/div/a').get_attribute('href')).split('+')[1])
 				if (long<=180 and long>=0):
@@ -104,11 +92,8 @@ def fetch_data():
 					longs.append("<MISSING>")
 			except:
 				longs.append("<MISSING>")
-			print(longs)
 			
 						
-		
-	print(len(locs))
 		
 	return_main_object = []	
 	for l in range(len(locs)):
