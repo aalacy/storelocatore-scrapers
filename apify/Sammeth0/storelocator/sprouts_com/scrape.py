@@ -77,36 +77,25 @@ def fetch_data():
 	for u in urls:
 		driver_url.get(u)
 		locs.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/h1').text)
-		print(locs)
 		streets.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[2]/a').text.split('\n')[0])
-		print(streets)
 		cities.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[2]/a').text.split('\n')[1].split(',')[0])
-		print(cities)
 		states.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[2]/a').text.split(',')[-1].split(' ')[1])
-		print(states)
 		zips.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[2]/a').text.split(',')[-1].split(' ')[2])
-		print(zips)
 		try:
 			ids.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[1]').text.split('#')[1])
 		except:
 			ids.append("<MISSING>")
-		print(ids)
 		try:
 			phones.append(driver_url.find_element_by_xpath("/html/body/main/article/div/div/div[2]/div[1]/div/p[3]/a").text)
 		except:
 			phones.append("<MISSING>")
-		print(phones)
 		types.append(driver_url.find_element_by_xpath("/html/body/main/article/div/section[1]/div/div/div[1]/ul").text.replace('\n',' '))
-		print(types)
 		lats.append(driver_url.find_element_by_xpath("/html/body/main/article/div/div/div[1]").get_attribute('lat'))	
-		print(lats)
 		longs.append(driver_url.find_element_by_xpath("/html/body/main/article/div/div/div[1]").get_attribute('lon'))
-		print(longs)
 		try:
 			timing.append(driver_url.find_element_by_xpath("/html/body/main/article/div/div/div[2]/div[1]/div/p[4]/span[1]").text)
 		except:
 			timing.append("<MISSING>")
-		print(timing)
 		
 	print(len(locs))
 		
@@ -128,7 +117,7 @@ def fetch_data():
 		row.append(timing[l] if timing[l] else "<MISSING>") 
 		row.append(urls[l] if urls[l] else "<MISSING>") 
 		
-	return_main_object.append(row)
+		return_main_object.append(row)
 	
     # End scraper
 	return return_main_object
