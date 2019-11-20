@@ -87,9 +87,23 @@ def fetch_data():
 			except:
 				types.append("<MISSING>")
 			print(types)
-			lats.append(str(s.find_element_by_xpath('.//div[1]/div/div/div[2]/div/a').get_attribute('href')).split('?q=')[1].split('+')[0])
+			lat=float(str(s.find_element_by_xpath('.//div[1]/div/div/div[2]/div/a').get_attribute('href')).split('?q=')[1].split('+')[0])
+			try:
+				if (lat<=90 and lat>=0):
+					lats.append(lat)
+				else:
+					lats.append("<MISSING>")
+			except:
+				lats.append("<MISSING>")
 			print(lats)
-			longs.append(str(s.find_element_by_xpath('.//div[1]/div/div/div[2]/div/a').get_attribute('href')).split('+')[1])
+			try:
+				long=float(str(s.find_element_by_xpath('.//div[1]/div/div/div[2]/div/a').get_attribute('href')).split('+')[1])
+				if (long<=180 and long>=0):
+					longs.append(long)
+				else:
+					longs.append("<MISSING>")
+			except:
+				longs.append("<MISSING>")
 			print(longs)
 			
 						
