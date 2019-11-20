@@ -45,7 +45,7 @@ def fetch_data():
 	ids=[]
 	pages_url=[]
 	urls=[]
-	
+	res = [] 
 	
 	driver = get_driver()
 	driver_page = get_driver()
@@ -56,25 +56,22 @@ def fetch_data():
 	locations=driver.find_elements_by_tag_name("a")
 	for a in range(34,len(locations)-25):
 		pages_url.append(locations[a].get_attribute('href'))
-	print(pages_url)
-		
+	
+
 	for u in pages_url:
-		print(u)
 		driver_page.get(u)
 		time.sleep(3)
 		stores=driver_page.find_elements_by_tag_name("a")
 		for s in stores:
-			print(s.get_attribute('href'))
-			print('************************************************************************************')
 			if u.find('stores')!=-1:
 				url=u.split('stores')[0]+'store'+u.split('stores')[1]
-				print(url)
 				if str(s.get_attribute('href')).find(url)!=-1:
-					print(str(s.get_attribute('href'))[str(s.get_attribute('href')).find(url):])
 					urls.append(str(s.get_attribute('href'))[str(s.get_attribute('href')).find(url):])
 					
-	print(urls)				
-	for u in urls:
+		
+	[res.append(x) for x in urls if x not in res]
+	
+	for u in res:
 		driver_url.get(u)
 		locs.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/h1').text)
 		streets.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[2]/a').text.split('\n')[0])
@@ -97,7 +94,6 @@ def fetch_data():
 		except:
 			timing.append("<MISSING>")
 		
-	print(len(locs))
 		
 	return_main_object = []	
 	for l in range(len(locs)):
@@ -115,7 +111,7 @@ def fetch_data():
 		row.append(lats[l] if lats[l] else "<MISSING>")
 		row.append(longs[l] if longs[l] else "<MISSING>")
 		row.append(timing[l] if timing[l] else "<MISSING>") 
-		row.append(urls[l] if urls[l] else "<MISSING>") 
+		row.append(res[l] if res[l] else "<MISSING>") 
 		
 		return_main_object.append(row)
 	
