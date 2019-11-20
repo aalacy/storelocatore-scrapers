@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import io
 import json
-
+import unicodedata
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -87,6 +87,11 @@ def fetch_data():
                         store.append(geo_location.split("/@")[1].split(",")[1] if "/@" in geo_location else "<MISSING>")
                         store.append(hours_of_operation)
                         store.append("<MISSING>")
+                        for i in range(len(store)):
+                            if type(store[i]) == str:
+                                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+                        store = [x.replace("–","-") if type(x) == str else x for x in store]
+                        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
                         return_main_object.append(store)
                     else:
                         pass

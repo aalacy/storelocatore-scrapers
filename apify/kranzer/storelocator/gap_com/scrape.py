@@ -12,6 +12,17 @@ base_url = "https://www.gap.com/stores/"
 flatten = lambda l: [item for sublist in l for item in sublist]
 class Scrape(base.Spider):
     crawled = set()
+
+    def normalize_days(self, text):
+        text = text.replace('Mo ', 'Mon ')
+        text = text.replace('Tu ', 'Tue ')
+        text = text.replace('We ', 'Wed ')
+        text = text.replace('Th ', 'Thu ')
+        text = text.replace('Fr ', 'Fri ')
+        text = text.replace('Sa ', 'Sat ')
+        text = text.replace('Su ', 'Sun ')
+        return text
+
     async def _fetch_store(self, session, url):
         async with session.get(url, timeout=60 * 60) as response:
             resp = await response.text()
@@ -24,7 +35,6 @@ class Scrape(base.Spider):
             i = base.Item(json_resp)
             i.add_value('locator_domain', base_url)
             i.add_value('page_url', url)
-            i.add_value('location_name', json_resp['name'])
             i.add_value('phone', json_resp['address']['telephone'])
             i.add_value('location_type', json_resp['@type'])
             lat_lng = (json_resp['geo']['latitude'], json_resp['geo']['longitude'])
@@ -35,10 +45,12 @@ class Scrape(base.Spider):
             i.add_value('state', json_resp['address']['addressRegion'])
             i.add_value('zip', json_resp['address']['postalCode'])
             i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
-            i.add_value('store_number', url[url.find('/gap-'):].replace('/gap-', '').replace('.html', ''))
-            i.add_value('hours_of_operation', json_resp['openingHours'])
-            if lat_lng not in self.crawled:
-                self.crawled.add(lat_lng)
+            store_num = url[url.find('/gap-'):].replace('/gap-', '').replace('.html', '')
+            i.add_value('location_name', json_resp['name'], lambda x: x.split(' |')[0], lambda x: x+' Store #'+store_num)
+            i.add_value('store_number', store_num)
+            i.add_value('hours_of_operation', json_resp['openingHours'], lambda x: self.normalize_days(x))
+            if store_num not in self.crawled:
+                self.crawled.add(store_num)
                 return i
 
     async def _fetch_stores(self, session, urls):

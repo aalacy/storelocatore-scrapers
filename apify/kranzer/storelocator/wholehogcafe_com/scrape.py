@@ -6,7 +6,7 @@ import requests, json
 from urllib.parse import urljoin
 from lxml import html
 class Scrape(base.Spider):
-
+    crawled = set()
     def crawl(self):
         base_url = "https://www.wholehogcafe.com/locations/"
         body = [urljoin(base_url, l) for l in re.findall(r'window.location.href=\"(//www.whole.+?)\"',requests.get(base_url, verify=False).text)]
@@ -34,10 +34,14 @@ class Scrape(base.Spider):
                 i.add_value('locator_domain', base_url)
                 i.add_value('page_url', res_sel['url'])
                 i.add_value('location_name', texts[0])
+                n = texts[0].encode('utf8').replace(b'\xe2\x80\x93', b'-').decode('utf8')
                 del texts[0]
-                i.add_value('latitude', data.get(i.as_dict()['location_name'], {}).get('lat'))
-                i.add_value('longitude', data.get(i.as_dict()['location_name'], {}).get('lng'))
-                i.add_value('store_number', data.get(i.as_dict()['location_name'], {}).get('id'))
+                n = n[:int(len(n)*0.65)+1]
+                for k, v in data.items():
+                    if n in k:
+                        i.add_value('latitude', v.get('lat'))
+                        i.add_value('longitude', v.get('lng'))
+                        i.add_value('store_number', v.get('id'))
                 loc = texts.pop()
                 if loc:
                     tup = re.findall(r'(.+?),\s([A-Z][A-Z])\s(.+)', loc.replace('\r', '').strip())
@@ -47,10 +51,12 @@ class Scrape(base.Spider):
                         i.add_value('zip', tup[0][2])
                         i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
                 i.add_value('street_address', ' '.join(texts))
-                i.add_xpath('phone', './td[2]/text()', base.get_first, lambda x: x.replace('Phone: ', ''))
+                i.add_xpath('phone', './td[2]/text()', base.get_first, lambda x: x.replace('Phone: ', ''), lambda x: x.replace('\n','').replace('\t',''))
                 i.add_xpath('hours_of_operation', './td[3]/text()', lambda x: [s.replace('\n', '').replace('\t', '').strip() for s in x], lambda x: '; '.join([s for s in x if s]))
                 if i.as_dict()['store_number'] != "<MISSING>":
-                    yield i
+                    if i.as_dict()['store_number'] not in self.crawled:
+                        self.crawled.add(i.as_dict()['store_number'])
+                        yield i
 
 
 if __name__ == '__main__':

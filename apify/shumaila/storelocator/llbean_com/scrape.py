@@ -86,7 +86,7 @@ def fetch_data():
                 'US',
                 store,
                 phone,
-                "<MISSING>",
+                "flagship, Bike, Boat & Ski, hunting and fishing",
                 lat,
                 longt,
                 hours

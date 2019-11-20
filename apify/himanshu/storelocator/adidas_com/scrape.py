@@ -46,7 +46,7 @@ def fetch_data():
             continue
         location_data = location_request.json()["wsResponse"]["result"][0]
         store.append(location_data["phone"] if "phone" in location_data else "<MISSING>")
-        store.append("adidas")
+        store.append("<MISSING>")
         store.append(location_data["latitude_google"])
         store.append(location_data["longitude_google"])
         hours = ""

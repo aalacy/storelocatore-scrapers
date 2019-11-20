@@ -40,7 +40,6 @@ class Scrape(base.Spider):
             i.add_value('store_number', id)
             i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
             i.add_value('hours_of_operation', res_[8], lambda x: x.replace('<br>', '; '), lambda x: remove_tags(x))
-            print(i)
             yield i
 
 

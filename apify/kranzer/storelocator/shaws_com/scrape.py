@@ -14,6 +14,16 @@ flatten = lambda l: [item for sublist in l for item in sublist]
 
 class Scrape(base.Spider):
     crawled = set()
+    def normalize_days(self, text):
+        text = text.replace('Mo ', 'Mon ')
+        text = text.replace('Tu ', 'Tue ')
+        text = text.replace('We ', 'Wed ')
+        text = text.replace('Th ', 'Thu ')
+        text = text.replace('Fr ', 'Fri ')
+        text = text.replace('Sa ', 'Sat ')
+        text = text.replace('Su ', 'Sun ')
+        return text
+
     async def _fetch_store(self, session, url):
         async with session.get(url, timeout=60 * 60) as response:
             resp = await response.text()
@@ -32,7 +42,7 @@ class Scrape(base.Spider):
             i.add_xpath('zip', '//div[@class="LocationInfo-address"]//span[@class="c-address-postal-code"]/text()', base.get_first)
             i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
             i.add_xpath('store_number', '//a/@href[contains(., "storeId")]', base.get_first, lambda x: x.split('storeId=')[1].split('&')[0])
-            i.add_xpath('hours_of_operation', '//div[@class="LocationInfo-hoursTable"]//tr[@itemprop="openingHours"]/@content', lambda x: '; '.join(x))
+            i.add_xpath('hours_of_operation', '//div[@class="LocationInfo-hoursTable"]//tr[@itemprop="openingHours"]/@content', lambda x: '; '.join(x), lambda x: self.normalize_days(x))
             if lat_lng not in self.crawled:
                 self.crawled.add(lat_lng)
                 return i

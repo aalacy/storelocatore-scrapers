@@ -1,7 +1,6 @@
 import urllib.request
-from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
 import time
 import pandas as pd
 import csv
@@ -38,12 +37,16 @@ def fetch_data():
 	country_code="US"
 	
 	urlpage = 'https://www.zoundshearing.com/corp/storelocator/' 
+	
 	options = Options()
-	options.headless = True
-	driver = webdriver.Firefox(firefox_options=options, executable_path = './/geckodriver')
-	driver = webdriver.Firefox()
+	options.add_argument('--headless')
+	options.add_argument('--no-sandbox')
+	options.add_argument('--disable-dev-shm-usage')
+	options.add_argument('--window-size=1920,1080')
+	options.add_argument("user-agent= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36'")
+	driver= webdriver.Chrome('chromedriver', options=options)
 	driver.get(urlpage)
-	driver.execute_script("window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
+	#driver.execute_script("window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
 	time.sleep(3)
 	
 	locs_results = driver.find_elements_by_xpath(".//span[@class='location_name']")
@@ -73,10 +76,8 @@ def fetch_data():
 			timing.append("<MISSING>")
 		
 		directions=r.find_element_by_xpath(".//span[@class='slp_result_contact slp_result_directions']/a").get_attribute('href')
-		driver_directions= webdriver.Firefox(firefox_options=options, executable_path = 'C:/Users/user/Desktop/Odetta/Sammeth0/storelocator/zoundshearing_com/geckodriver')
-		driver_directions = webdriver.Firefox()
+		driver_directions= webdriver.Chrome('chromedriver', options=options)
 		driver_directions.get(directions)
-		driver_directions.execute_script("window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
 		lats.append(str(driver_directions.find_elements_by_xpath(".//meta")[8].get_attribute('content')).split('center=')[1].split('%2C')[0])
 		longs.append(str(driver_directions.find_elements_by_xpath(".//meta")[8].get_attribute('content')).split('%2C')[1].split('&zoom')[0])
 

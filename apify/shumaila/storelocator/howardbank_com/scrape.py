@@ -114,7 +114,7 @@ def fetch_data():
 
     for link in finallinks:
         print(link)
-        page = requests.get(link)
+        page = requests.get(link,verify=False)
         soup = BeautifulSoup(page.text, "html.parser")
         title = soup.find("h1").text
         detail = soup.find('div',{'class':'branch_address'})

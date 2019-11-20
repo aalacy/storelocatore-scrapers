@@ -32,7 +32,13 @@ class Scrape(base.Spider):
             i.add_value('city', result.get('city', ''))
             i.add_value('state', result.get('state', ''))
             i.add_value('country_code', base.get_country_by_code(result.get('state','')))
-            i.add_value('hours_of_operation', result.get('office_hours', ''), lambda x: x.replace('\n','; ').replace('\r', ''), lambda x: remove_tags(x))
+            i.add_value('hours_of_operation', result.get('office_hours', ''),
+                        lambda x: x.replace('\r\n<em>*Hours', '@@'),
+                        lambda x: x.replace('\r\n<em>Hours', '@@'),
+                        lambda x: x.replace('\r\n\r\n<em>Hours', '@@'),
+                        lambda x: x.replace('\r\nHours', '@@'),
+                        lambda x: x.replace('\r\n\r\n','@@'),
+                        lambda x: remove_tags(x.split('@@')[0].replace('\n', '; ').replace('\r', '')))
             i.add_value('location_type', result.get('business_name',''))
             i.add_value('street_address', ' '.join([s for s in [result.get('street_address', ''), result.get('street_address_line_2','')] if s]))
             i.add_value('zip', result.get('zipcode', ''))

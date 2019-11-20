@@ -22,9 +22,7 @@ def fetch_data():
     r = requests.get("https://www.midwestvisioncenters.com/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
-    for sub_menu in soup.find("span",text="Locations").parent.parent.find_all("ul",{"class":"sub-menu"}):
-        if sub_menu.find("ul",{"class":"sub-menu"}) == None:
-            continue
+    for sub_menu in soup.find("span",text="Locations").parent.parent.find("ul",{"class":"sub-menu"}).find_all("li",recursive=False):
         for link in sub_menu.find("ul",{"class":"sub-menu"}).find_all("a"):
             # print(link["href"])
             location_reqeust = requests.get(link["href"],headers=headers)
@@ -48,20 +46,41 @@ def fetch_data():
                         phone = location_soup.find("a",{"href":re.compile("tel:")}).text
                     if location_soup.find("h4",text=re.compile("Hours of Operation:")):
                         hours = " ".join(list(location_soup.find("h4",text=re.compile("Hours of Operation:")).parent.stripped_strings))
-                    store.append(address[0])
-                    store.append(address[1].split(",")[0])
-                    state_split = re.findall("([A-Z]{2})",address[1])
-                    if state_split:
-                        state = state_split[-1]
+                    if len(address) < 2:
+                        geo_request = requests.get(location_soup.find_all("iframe")[-1]["src"],headers=headers)
+                        geo_soup = BeautifulSoup(geo_request.text,"lxml")
+                        for script in geo_soup.find_all("script"):
+                            if "initEmbed" in script.text:
+                                geo_data = json.loads(script.text.split("initEmbed(")[1].split(");")[0])[21][3][13].replace(", United States","")
+                        store.append(" ".join(geo_data.split(",")[:-2]))
+                        store.append(geo_data.split(",")[-2])
+                        state_split = re.findall("([A-Z]{2})",geo_data.split(",")[-1])
+                        if state_split:
+                            state = state_split[-1]
+                        else:
+                            state = "<MISSING>"
+                        store_zip_split = re.findall(r"\b[0-9]{5}(?:-[0-9]{4})?\b",geo_data.split(",")[-1])
+                        if store_zip_split:
+                            store_zip = store_zip_split[-1]
+                        else:
+                            store_zip = "<MISSING>"
+                        store.append(state)
+                        store.append(store_zip)
                     else:
-                        state = "<MISSING>"
-                    store_zip_split = re.findall(r"\b[0-9]{5}(?:-[0-9]{4})?\b",address[1])
-                    if store_zip_split:
-                        store_zip = store_zip_split[-1]
-                    else:
-                        store_zip = "<MISSING>"
-                    store.append(state)
-                    store.append(store_zip)
+                        state_split = re.findall("([A-Z]{2})",address[1])
+                        if state_split:
+                            state = state_split[-1]
+                        else:
+                            state = "<MISSING>"
+                        store_zip_split = re.findall(r"\b[0-9]{5}(?:-[0-9]{4})?\b",address[1])
+                        if store_zip_split:
+                            store_zip = store_zip_split[-1]
+                        else:
+                            store_zip = "<MISSING>"
+                        store.append(address[0])
+                        store.append(address[1].split(",")[0])
+                        store.append(state)
+                        store.append(store_zip)
                     store.append("US")
                     store.append("<MISSING>")
                     store.append(phone if phone!= "" else "<MISSING>")

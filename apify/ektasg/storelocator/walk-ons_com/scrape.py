@@ -59,7 +59,7 @@ def fetch_data():
         name1.append(nam[i].get_attribute("innerText").replace('\n','').replace('\t',''))
         city2.append(nam[i].get_attribute("innerText").replace('\n','').replace('\t','').split(',')[0])
         loca.append(loc[i].get_attribute('href'))
-        hour1.append(hou[i].get_attribute('textContent').replace('\n','').replace('\t',''))
+        hour1.append(hou[i].get_attribute('textContent').replace('\n',' ').replace('\t',' ').replace('Hours','').lstrip())
     dictn={'AL':'ALABAMA','FL':'FLORIDA','LA':'LOUISIANA','MS':'MISSISSIPPI','NC':'NORTH CAROLINA','TX':'TEXAS','AR':'Argentina','SC':'Seychelles'}    
     
     

@@ -1,1 +1,1 @@
-validation fails due to descripencies phone numbers so the phone number is partial so an inignorable check is called 
+websites have data descripencies and no specific tags for city/state etc. so there are descripencies in scrapped data too

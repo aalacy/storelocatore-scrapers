@@ -169,6 +169,10 @@ def fetch_data():
                                     i += 1
                             if state == "NF":
                                 state = "NL"
+                            phone = phone.replace("Mobile","")
+                            phone = phone.replace(":","")
+                            phone = phone.strip()
+
                             if flag:
                                 data.append([
                                     'http://www.primerica.com/',
