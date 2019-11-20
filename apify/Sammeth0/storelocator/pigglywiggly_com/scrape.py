@@ -78,7 +78,7 @@ def fetch_data():
 				types.append("<MISSING>")
 			lat=float(str(s.find_element_by_xpath('.//div[1]/div/div/div[2]/div/a').get_attribute('href')).split('?q=')[1].split('+')[0])
 			try:
-				if (lat<=90 and lat>=0):
+				if lat<=90:
 					lats.append(lat)
 				else:
 					lats.append("<MISSING>")
@@ -86,7 +86,7 @@ def fetch_data():
 				lats.append("<MISSING>")
 			try:
 				long=float(str(s.find_element_by_xpath('.//div[1]/div/div/div[2]/div/a').get_attribute('href')).split('+')[1])
-				if (long<=180 and long>=0):
+				if long<=180:
 					longs.append(long)
 				else:
 					longs.append("<MISSING>")
@@ -94,7 +94,6 @@ def fetch_data():
 				longs.append("<MISSING>")
 			
 						
-		
 	return_main_object = []	
 	for l in range(len(locs)):
 		row = []
