@@ -46,7 +46,7 @@ def fetch_data():
 	ids=[]
 	urls=[]
 	
-	for url in range(14):
+	for url in range(15):
 		page_url.append("https://centurynationalbank.com/locations/page/"+str(url+1)+"/?place&latitude&longitude&type=location#038,latitude&longitude&type=location")
 		soup.append(BeautifulSoup(requests.get(page_url[url]).text,'lxml'))
 		location_names.append(soup[url].findAll(class_="sub-head fw-light"))
