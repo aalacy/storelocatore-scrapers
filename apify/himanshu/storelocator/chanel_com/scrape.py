@@ -23,13 +23,13 @@ def fetch_data():
     }
     return_main_object = []
     addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 170
-    MAX_DISTANCE = 200
-    coord = search.next_coord()
-    while coord:
-        result_coords = []
+    # search = sgzip.ClosestNSearch()
+    # search.initialize()
+    # MAX_RESULTS = 500
+    # MAX_DISTANCE = 50
+    coords = sgzip.coords_for_radius(50)
+    for coord in coords:
+        # result_coords = []
         # print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
@@ -39,20 +39,17 @@ def fetch_data():
             "X-Requested-With": "XMLHttpRequest",
             "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
         }
-        data = r'geocodeResults=%5B%7B%22address_components%22%3A%5B%7B%22long_name%22%3A%22United+States%22%2C%22short_name%22%3A%22US%22%2C%22types%22%3A%5B%22country%22%2C%22political%22%5D%7D%5D%2C%22geometry%22%3A%7B%22location%22%3A%7B%22lat%22%3A'+ str(x) + r'%2C%22lng%22%3A'+ str(y) + r'%7D%2C%22location_type%22%3A%22APPROXIMATE%22%7D%2C%22types%22%3A%5B%22postal_code%22%5D%7D%5D&iframe=true&radius=200.00'
+        data = r'geocodeResults=%5B%7B%22address_components%22%3A%5B%7B%22long_name%22%3A%22United+States%22%2C%22short_name%22%3A%22US%22%2C%22types%22%3A%5B%22country%22%2C%22political%22%5D%7D%5D%2C%22geometry%22%3A%7B%22location%22%3A%7B%22lat%22%3A'+ str(x) + r'%2C%22lng%22%3A'+ str(y) + r'%7D%2C%22location_type%22%3A%22APPROXIMATE%22%7D%2C%22types%22%3A%5B%22postal_code%22%5D%7D%5D&iframe=true&radius=50.00'
         r = requests.post("https://services.chanel.com/en_US/storelocator/getStoreList",headers=headers,data=data)
         data = r.json()["stores"]
         for store_data in data:
             lat = store_data["latitude"]
             lng = store_data["longitude"]
-            result_coords.append((lat, lng))
+            # result_coords.append((lat, lng))
             store = []
             store.append("https://www.chanel.com")
             store.append(store_data["translations"][0]["name"])
             store.append(store_data["translations"][0]["address1"] + " " + store_data["translations"][0]["address2"] if store_data["translations"][0]["address2"] else store_data["translations"][0]["address1"])
-            if store[-1] in addresses:
-                continue
-            addresses.append(store[-1])
             store.append(store_data["cityname"] if store_data["cityname"] else "<MISSING>")
             store.append(store_data["statename"] if store_data["statename"] else "<MISSING>")
             store.append(store_data["zipcode"] if store_data["zipcode"] else "<MISSING>")
@@ -78,17 +75,20 @@ def fetch_data():
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             store = [x if x.replace(" ","") != "NA" else "<MISSING>" for x in store]
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
             # print(store)
             yield store
-        if len(data) < MAX_RESULTS:
-            # print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif len(data) == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_coord()
+        # if len(data) < MAX_RESULTS:
+        #     # print("max distance update")
+        #     search.max_distance_update(MAX_DISTANCE)
+        # elif len(data) == MAX_RESULTS:
+        #     # print("max count update")
+        #     search.max_count_update(result_coords)
+        # else:
+        #     raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        # coord = search.next_coord()
 
 def scrape():
     data = fetch_data()

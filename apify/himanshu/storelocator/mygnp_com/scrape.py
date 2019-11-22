@@ -24,7 +24,7 @@ def fetch_data():
     store_name=[]
     store_detail=[]
     return_main_object=[]
-    address=[]
+    addressess=[]
     k= soup.find_all("ul",{"class":"states-list body-wrapper content-block"})
     k1 = soup.find_all("ul",{"class":"states-list body-wrapper content-block"})
 
@@ -36,12 +36,13 @@ def fetch_data():
             for j in a:
                 tem_var=[]
                 r = requests.get(j.a['href'])
+                
+                # print(j.a['href'])
                 soup2= BeautifulSoup(r.text,"lxml")
                 j2 = json.loads(soup2.find("script",{"type":"application/ld+json"}).text)
-                # print(j2['geo'])
-                # exit()
-                tem_var.append("https://www.mygnp.com")
-                tem_var.append(j2['name'])
+                # print(j2)
+                #print("=============================")
+                store_name.append(j2['name'])
                 tem_var.append(j2['address']['streetAddress'])
                 tem_var.append(j2['address']['addressLocality'])
                 tem_var.append(j2['address']['addressRegion'])
@@ -52,26 +53,22 @@ def fetch_data():
                 tem_var.append("mygnp")
                 tem_var.append(j2['geo']['latitude'])
                 tem_var.append(j2['geo']['longitude'])
+                # print(tem_var)
                 if "openingHours" in j2:
                     tem_var.append( j2['openingHours'])
                 else:
-                    tem_var.append("<MISSING>")
+                    tem_var.append("<MISSING>")    
+                store_detail.append(tem_var)
 
-                # print(tem_var)
-                # store_detail.append(tem_var)
-                return_main_object.append(tem_var)
-    # print(store_detail)
-    # for i in range(len(store_name)):
-    #     store = list()
-    #     store.append("https://www.mygnp.com")
-    #     store.append(store_name[i])
-    #     store.extend(store_detail[i])
-    #     if store[2] in address:
-    #         continue
-    #     address.append(store[2])
-    #     return_main_object.append(store)
-
-
+    for i in range(len(store_name)):
+       store = list()
+       store.append("https://www.mygnp.com")
+       store.append(store_name[i])
+       store.extend(store_detail[i])
+       if store[2] in addressess:
+            continue
+       addressess.append(store[2])
+       return_main_object.append(store)
     return return_main_object
 
 

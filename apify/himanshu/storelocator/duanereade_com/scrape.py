@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -36,11 +36,12 @@ def fetch_data():
     country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "duanereade"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
+    page_url = "<MISSING>"
 
     intdex = 1
     while True:
@@ -61,6 +62,7 @@ def fetch_data():
         # print("json_data === "+ str(json_data))
         for address_list in json_data['results']:
             store_number = address_list["storeNumber"]
+
             latitude = address_list["latitude"]
             longitude = address_list["longitude"]
             zipp = address_list["store"]['address']['zip']
@@ -68,15 +70,22 @@ def fetch_data():
             state = address_list["store"]['address']['state']
             location_name = city
             street_address = address_list["store"]['address']['street']
-
+            page_url = "https://www.walgreens.com"+ address_list["storeSeoUrl"]
+            try:
+                location_type = address_list["store"]['storeBrand']
+                # print(location_type)
+            except:
+                # location_type = "<MISSING>"
+                location_type = page_url.split('/')[-2].split('-')[0].strip()
+                # print(location_type)
             phone = address_list["store"]['phone']['areaCode'] + address_list["store"]['phone']['number']
 
-            store_url = "https://www.walgreens.com"+ address_list["storeSeoUrl"]
+
             # print("store_url ==== "+ str(store_url))
 
             while True:
                 try:
-                    r_hours = requests.get(store_url, headers=headers)
+                    r_hours = requests.get(page_url, headers=headers)
                     break
                 except:
                     continue
@@ -103,7 +112,7 @@ def fetch_data():
             # print("soup_hours === "+ str(hours_of_operation))
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
             if store[2] + store[-3] not in addresses:
                 addresses.append(store[2] + store[-3])
