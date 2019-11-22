@@ -40,7 +40,7 @@ def fetch_data():
             countries.append(country[n].text)
     for n in range(0,len(links)):
         driver.get(links[n])
-        time.sleep(4)
+        time.sleep(5)
         address = driver.find_element_by_class_name('address').text
         street_address.append(address.split("\n")[0].split(",")[0])
         city.append(address.split("\n")[0].split(",")[1])
