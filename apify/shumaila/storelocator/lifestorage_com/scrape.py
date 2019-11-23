@@ -4,7 +4,6 @@ import csv
 import string
 import re, time
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,7 +13,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def fetch_data():
     # Your scraper here
@@ -37,9 +35,7 @@ def fetch_data():
         state = state.lower()
         state = state.replace(" ","-")
         slink = "https://www.lifestorage.com/storage-units/" + state +"/"
-        print(state)
         page = requests.get(slink)
-        print("State = ",slink)
         soup = BeautifulSoup(page.text, "html.parser")
         mainul = soup.find('ul', {'class': 'nearbyCities'})
         try:
@@ -52,7 +48,6 @@ def fetch_data():
                 while check:
                     try:
                         clink = "https://www.lifestorage.com" +  blink + "?pagenum=" + str(pagenum)
-                        print("CITY = ", clink)
                         pagem = requests.get(clink)
                         soupm = BeautifulSoup(pagem.text, "html.parser")
                         mainb = soupm.findAll('a', {'class': 'btn store'})
@@ -68,7 +63,6 @@ def fetch_data():
 
                         for branch in mainb:
                             link = "https://www.lifestorage.com" + branch['href']
-                            print("Branch = ", link)
                             try:
                                 page2 = requests.get(link)
                                 soup2 = BeautifulSoup(page2.text, "html.parser")
@@ -134,18 +128,6 @@ def fetch_data():
                                 if len(phone) < 5:
                                     phone = "<MISSING>"
 
-                                print(title)
-                                print(store)
-                                print(street)
-                                # print(city)
-                                # print(state)
-                                # print(pcode)
-                                # print(ccode)
-                                # print(phone)
-                                # print(lat)
-                                # print(longt)
-                                # print(hours)
-                                print(p)
                                 p += 1
                                 flag = True
                                 i = 0
@@ -181,18 +163,11 @@ def fetch_data():
         except:
             pass
 
-    print("..............")
-
     return data
-
-
-
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
-    #(data)
 
 scrape()
 
