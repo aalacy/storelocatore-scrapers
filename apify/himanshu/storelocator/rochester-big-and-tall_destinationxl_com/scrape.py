@@ -9,12 +9,12 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
-def parser(location_soup,current_country):
+def parser(location_soup,current_country,page_url):
     street_address = " ".join(list(location_soup.find("span",{'class':"c-address-street-1"}).stripped_strings))
     if location_soup.find("span",{'class':"c-address-street-2"}) != None:
         street_address = street_address + " " +  " ".join(list(location_soup.find("span",{'class':"c-address-street-2"}).stripped_strings))
@@ -40,6 +40,7 @@ def parser(location_soup,current_country):
     store.append(lat)
     store.append(lng)
     store.append(hours)
+    store.append(page_url)
     return store
 
 def fetch_data():
@@ -60,11 +61,11 @@ def fetch_data():
         country_request = requests.get("https://stores.dxl.com/" + country["href"])
         country_soup = BeautifulSoup(country_request.text,"lxml")
         for states in country_soup.find_all("a",{'class':"Directory-listLink"}):
-            if states["href"].count("/") == 4:
+            if states["href"].count("/") == 3:
                 location_request = requests.get("https://stores.dxl.com/" + states["href"].replace("../",""))
                 location_soup = BeautifulSoup(location_request.text,"lxml")
-                store_data = parser(location_soup,current_country)
-                return_main_object.append(store_data)
+                store_data = parser(location_soup,current_country,"https://stores.dxl.com/" + states["href"].replace("../",""))
+                yield store_data
             else:
                 state_request = requests.get("https://stores.dxl.com/" + states["href"])
                 state_soup = BeautifulSoup(state_request.text,"lxml")
@@ -72,17 +73,16 @@ def fetch_data():
                     if city["href"].count("/") == 4:
                         location_request = requests.get("https://stores.dxl.com/" + city["href"].replace("../",""))
                         location_soup = BeautifulSoup(location_request.text,"lxml")
-                        store_data = parser(location_soup,current_country)
-                        return_main_object.append(store_data)
+                        store_data = parser(location_soup,current_country,"https://stores.dxl.com/" + city["href"].replace("../",""))
+                        yield store_data
                     else:
                         city_request = requests.get("https://stores.dxl.com/" + city["href"].replace("../",""))
                         city_soup = BeautifulSoup(city_request.text,"lxml")
-                        for location in city_soup.find_all("a",{'class':"Directory-listLink"}):
+                        for location in city_soup.find_all("a",{'class':"Teaser-titleLink"}):
                             location_request = requests.get("https://stores.dxl.com/" + location["href"].replace("../",""))
                             location_soup = BeautifulSoup(location_request.text,"lxml")
-                            store_data = parser(location_soup,current_country)
-                            return_main_object.append(store_data)
-    return return_main_object
+                            store_data = parser(location_soup,current_country,"https://stores.dxl.com/" + location["href"].replace("../",""))
+                            yield store_data
 
 def scrape():
     data = fetch_data()

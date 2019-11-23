@@ -101,6 +101,12 @@ def fetch_data():
                         location_soup = BeautifulSoup(location_request.text,"lxml")
                         store_data = parser(location_soup,"https://local.safeway.com/" + location["href"].replace("../",""))
                         yield store_data
+            if state_soup.find("a",{'class':"Teaser-nameLink"}):
+                for location in state_soup.find_all("a",{'class':"Teaser-nameLink"}):
+                        location_request = requests.get("https://local.safeway.com/" + location["href"].replace("../",""),headers=headers)
+                        location_soup = BeautifulSoup(location_request.text,"lxml")
+                        store_data = parser(location_soup,"https://local.safeway.com/" + location["href"].replace("../",""))
+                        yield store_data
 
 def scrape():
     data = fetch_data()

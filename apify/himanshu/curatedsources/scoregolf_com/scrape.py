@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -14,6 +15,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
 
 def fetch_data():
     # zips = sgzip.coords_for_radius(50)
@@ -107,26 +109,16 @@ def fetch_data():
                     else:
                         longitude = soup_rr.find('div',class_ = 'blockbox wrap-4 mapresult').find_next('script',{'type':'text/javascript'}).text.split('initFacMap(')[1].split(',')[1]
              
-                    store = [locator_domain, location_name.capitalize(), street_address.capitalize().replace(","," ").replace(".,","").replace(". ,","").replace("#",""), city.capitalize(), state, zipp, country_code,
-                         store_number, phone.replace(")",""), location_type, latitude, longitude.replace("0.0000000000","<MISSING>"), hours_of_operation,page_url]
+                    store = [locator_domain, location_name.upper(), street_address.capitalize().replace(","," ").replace(".,","").replace(". ,","").replace("#",""), city.capitalize(), state, zipp, country_code,
+                         store_number, phone, location_type, latitude, longitude.replace("0.0000000000","<MIISING>"), hours_of_operation,page_url]
                     store = ["<MISSING>" if x == "" or x == ","  or x == None else x.encode('ascii', 'ignore').decode('ascii').strip() for x in store]
                     if store[2] in addresses:
                         continue
                     addresses.append(store[2])
-                    store[2] = " ".join(list(BeautifulSoup(store[2],"lxml").stripped_strings))
                     # print("data = " + str(store))
                     # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    if store[2] == "":
-                        store[2] = "<MISSING>"
-                    if store[2] == None:
-                        store[2] = "<MISSING>"
-                    if store[-4] == "<MISSING>":
-                        store[-3] = "<MISSING>"
-                    if store[-3] == "<MISSING>":
-                        store[-4] = "<MISSING>"
                     yield store
                     # return_main_object.append(store)
-
 
             except:
                 continue

@@ -49,10 +49,8 @@ def fetch_data():
             json1 = json.loads(soup3.find("script",{"type":"application/ld+json"}).text)
             
             # print("============================link",details)
-            if "openingHours" in json1[0]:
-                hours = json1[0]['openingHours']
-            else:
-                hours = "<MISSING>"
+            [x.extract() for x in soup3.find("div",{"class":"store-hours"}).findAll('script')]
+            hours = " ".join(list(soup3.find("div",{"class":"store-hours"}).stripped_strings))
             latitude = json1[0]['geo']['latitude']
             longitude = json1[0]['geo']['longitude']
             name = json1[0]['mainEntityOfPage']['breadcrumb']['itemListElement'][0]['item']['name']
@@ -64,7 +62,7 @@ def fetch_data():
             zip1 = json1[0]['address']['postalCode']
            
             tem_var.append("https://stores.petco.com")
-            tem_var.append(name)
+            tem_var.append("<MISSING>")
             tem_var.append(st)
             tem_var.append(city)
             tem_var.append(state)

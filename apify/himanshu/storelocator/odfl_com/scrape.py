@@ -6,6 +6,10 @@ import json
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
+import platform
+
+system = platform.system()
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,8 +27,10 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
-    return webdriver.Firefox(options=options,executable_path="./geckodriver")
-
+    if "linux" in system.lower():
+        return webdriver.Firefox(options=options,executable_path="./geckodriver")
+    else:
+        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 def fetch_data():
     addresses = []
     driver = get_driver()

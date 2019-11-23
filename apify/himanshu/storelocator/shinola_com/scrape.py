@@ -26,8 +26,9 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "lxml")
 
         vk = soup.find('div', {'id': 'amazon-root'}).find_next('script').find_next('script').text.split('"stores":')[1].split(',"total"')[0]
-
+        addresses = []
         k = json.loads(vk)
+
         main = {}
         # JArray = []
         for idx, val in enumerate(k):
@@ -55,8 +56,12 @@ def fetch_data():
 
 
                 zipcode = (val['postcode'])
+                phone = ''
+                if val['phone'] == []:
+                    phone = val['phone']
 
-                phone = (val['phone'])
+
+
                 street = val['street']
                 city = val['city']
                 country = val['country']
@@ -69,6 +74,9 @@ def fetch_data():
                             'saturday_open'] + ' ' + val['saturday_close'] + ' ' + 'sunday' + ' ' + val[
                             'sunday_open'] + ' ' + val['sunday_close']
 
+                if street in addresses:
+                    continue
+                addresses.append(street)
                 tem_var.append(name_store if name_store else "<MISSING>")
                 tem_var.append(street if street else "<MISSING>")
                 tem_var.append(city if city else "<MISSING>")
@@ -102,7 +110,9 @@ def fetch_data():
                         lng = main[b][1]
                 zipcode1 = val['postcode']
                 # print(len(zipcode))
-                phone = (val['phone'])
+                phone = ''
+                if val['phone'] == []:
+                    phone = val['phone']
                 street = val['street']
                 city = val['city']
                 country = val['country']
@@ -128,6 +138,9 @@ def fetch_data():
                     else:
                         zipcode = zipcode1
 
+                if street in addresses:
+                    continue
+                addresses.append(street)
                 tem_var.append(state if state else "<MISSING>")
                 tem_var.append(zipcode.replace("Mati", "").replace("24B", "<MISSING>").replace("918",
                                                                                                "<MISSING>") if zipcode else "<MISSING>")

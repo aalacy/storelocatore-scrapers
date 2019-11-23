@@ -45,7 +45,7 @@ def fetch_data():
         store_number = val['id']
         phone = ''
 
-        location_type = 'biggby'
+        location_type = '<MISSING>'
         latitude = val['lat']
         longitude = val['lng']
 
@@ -58,6 +58,8 @@ def fetch_data():
         store.append(locator_domain if locator_domain else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
         store.append(street_address if street_address else '<MISSING>')
+        if "Coming Soon" in store[-1]:
+            continue
         store.append(city if city else '<MISSING>')
         store.append(state if state else '<MISSING>')
         store.append(zip if zip else '<MISSING>')
@@ -69,7 +71,6 @@ def fetch_data():
         store.append(longitude if longitude else '<MISSING>')
         store.append(hours_of_operation if hours_of_operation else '<MISSING>')
         store.append(page_url if page_url else '<MISSING>')
-        print("===", str(store))
         yield  store
 
 

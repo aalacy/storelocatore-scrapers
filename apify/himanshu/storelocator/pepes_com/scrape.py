@@ -52,7 +52,7 @@ def fetch_data():
         soup_location = BeautifulSoup(r_location.text, 'lxml')
         # print(soup_location.prettify())
         for location_result in soup_location.find('div', {'id': 'location-results'}).find('ul').find_all('a'):
-            loc_res = base_url+location_result['href']
+            loc_res = base_url + location_result['href']
             result_location = requests.get(loc_res, headers=headers)
             result_soup = BeautifulSoup(result_location.text, 'lxml')
             # print(result_soup.prettify())
@@ -60,7 +60,8 @@ def fetch_data():
                 'div', {'id': 'location-content'}).find('div', {'id': 'location-desc'})
             location_name = location_content.find('h1').text
 
-            street_address = location_content.find('ul').find('li').text.strip()
+            street_address = location_content.find(
+                'ul').find('li').text.strip()
             tag_address = location_content.find('ul').find('li').nextSibling
             address = list(tag_address.stripped_strings)
             city = "".join(address[0].split(',')[0])
@@ -68,23 +69,28 @@ def fetch_data():
             zipp = address[0].split(',')[1].split(' ')[-1].strip()
             # print(street_address+" \ "+city+" \ "+state+" \ " +
             #       zipp)
-            tag_phone = location_content.find('ul').find('li').nextSibling.nextSibling
+            tag_phone = location_content.find(
+                'ul').find('li').nextSibling.nextSibling
             ph = list(tag_phone.stripped_strings)
-            phone = "".join(ph[0].split(':')[1]).replace('or (219) 769-PEPE','')
-            
+            phone = "".join(ph[0].split(':')[1])
 
             hours_content = result_soup.find(
                 'div', {'id': 'location-content'}).find('div', {'id': 'location-hours'})
             hours = list(hours_content.stripped_strings)
-            hours_of_operation = " ".join(hours)
+            hours_of_operation = "  ".join(hours).replace('Click on Coupons below for a FREE Dinner', '').replace(
+                'Patio Is Now Open', '').replace('Now Accepting Credit Cards  Exclusive Savings Text 36000PEPE', '').replace('Prices Subject To Change','').replace('No one under 21 allowed to Dine in due to Indiana Smoking Law.','').replace('Carry outs are available.','').strip()
+            # print(hours_of_operation)
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                     store_number, phone.strip().replace(' or (219) 769-PEPE',''), location_type, latitude, longitude, hours_of_operation]
 
             store = ["<MISSING>" if x == "" else x for x in store]
             return_main_object.append(store)
             # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print(
+            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            yield store
     return return_main_object
 
 
