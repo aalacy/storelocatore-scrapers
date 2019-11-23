@@ -11,7 +11,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -22,15 +22,16 @@ def fetch_data():
     data = []
     url = 'http://www.rubytuesday.com/locations'
     pnumber = 0
-    flag = True
-    while flag:
-        link = url+"?start="+str(pnumber)+"&count=4"
+    done = False
+    while not done:
+        link = url+"?locationId=7142&start="+str(pnumber)+"&count=4"
         page = requests.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
-        repo_list = soup.findAll('div', {'class': 'microInfo text clearfix'})
+        repo_list = soup.findAll('div', {'class': 'restaurant-location-item clearfix'})
         cleanr = re.compile('<.*?>')
         pattern = re.compile(r'\s\s+')
         for repo in repo_list:
+            storeId = repo.find('input', {'name': 'locationId'})['value']
             title = str(repo.find('h1'))
             address = str(repo.find('address').text)
             phone = repo.find('a')
@@ -44,8 +45,6 @@ def fetch_data():
                 temp = " "
                 for etd in htd:
                     temp = temp + " " + str(etd)
-                    #print(temp)
-
                 hours =  hours + "|" + temp
 
             title = re.sub(cleanr,"",title)
@@ -84,65 +83,35 @@ def fetch_data():
             if len(title) < 4:
                 title = "<MISSING>"
 
-            #print(title)
-            #print(address)
-            #print(street)
-            #print(city)
-            #print(state)
-            #print(pcode)
-            #print(phone)
-            #print(hours)
-            #print("...............")
+            latlng = repo.find('div', {'class': 'map_info clearfix'})
+            lat = latlng['data-lat']
+            lng = latlng['data-lng']
+            
+            data.append([
+                url,
+                '<MISSING>',
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                storeId,
+                phone,
+                "<MISSING>",
+                lat,
+                lng,
+                hours
+              ])
 
-            flag = 0
-
-            for chk in data:
-                if chk[2] == street:
-                    flag = 1
-                    #print("Already exist")
-                    break
-
-            if flag == 0:
-
-                data.append([
-                    url,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    "<MISSING>",
-                    "<MISSING>",
-                    hours
-                  ])
-
-        try:
-            pagination = soup.find('ul', {'class': 'pages'})
-            nextt = pagination.find('a', {'rel': 'next'})
-        except:
-            pass
-            #print("ERROR")
-        try:
-            #print(nextt['href'])
+        if len(repo_list) == 0:
+            done = True
+        else:
             pnumber += 4
-            #print(str(pnumber))
-            flag = True
-        except:
-            #print("END")
-            flag = False
-
-
     return data
-
-
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()
