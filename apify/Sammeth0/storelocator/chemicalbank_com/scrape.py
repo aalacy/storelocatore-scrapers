@@ -6,7 +6,6 @@ import re
 import ast
 import time
 import urllib.request
-from lxml import html
 
 def get_driver():
 	options = Options()
