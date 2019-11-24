@@ -74,8 +74,8 @@ def fetch_data():
 		timing_location=''
 		for i in range(1,days_count):
 			days=str(hours_dict).split('"Name":"')[2].split('"DayName":"')[i].split('"')[0]
-			TimeOpen=str(hours_dict).split('"Name":"')[3].split('"TimeOpen":"')[i].split('"')[0]
-			TimeClose=str(hours_dict).split('"Name":"')[3].split('"TimeClose":"')[i].split('"')[0]
+			TimeOpen=str(hours_dict).split('"Name":"')[2].split('"TimeOpen":"')[i].split('"')[0]
+			TimeClose=str(hours_dict).split('"Name":"')[2].split('"TimeClose":"')[i].split('"')[0]
 			timing_location=timing_location+' '+days+' '+TimeOpen+' '+TimeClose
 		if timing_location=='':
 			timing.append( "<MISSING>")
