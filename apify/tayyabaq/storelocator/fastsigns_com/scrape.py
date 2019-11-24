@@ -47,7 +47,7 @@ def fetch_data():
 		print(links[n])
 		driver.get(links[n])
 		pages_url.append(links[n])
-		time.sleep(5)
+		time.sleep(6)
 		address = driver.find_element_by_class_name('address').text
 		street_address.append(address.split("\n")[0].split(",")[0])
 		print(street_address)
