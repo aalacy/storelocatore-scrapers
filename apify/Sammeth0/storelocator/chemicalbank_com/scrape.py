@@ -5,14 +5,17 @@ from selenium.webdriver.chrome.options import Options
 import re
 import ast
 import time
+import urllib.request
+from lxml import html
 
 def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
+	options = Options()
+	options.add_argument('--headless')
+	options.add_argument('--no-sandbox')
+	options.add_argument('--disable-dev-shm-usage')
+	options.add_argument('--window-size=1920,1080')
+	options.add_argument("user-agent= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'")
+	return webdriver.Chrome('chromedriver', options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -39,11 +42,14 @@ def fetch_data():
 	timing = []
 	ids=[]
 	page_url=[]
-	
+	locations=[]
 	driver = get_driver()
+	driver_hours = get_driver()
 	driver.get('https://www.chemicalbank.com/Locations')
-	time.sleep(3)
+
+	time.sleep(4)
 	stores=driver.find_elements_by_tag_name('script')
+	
 	for i in range(len(stores)):
 		if (len(stores[i].get_attribute('text').split('RenderData = '))==2):
 			locations=stores[i].get_attribute('text').split('RenderData = ')[1].split(';')[0]
@@ -52,6 +58,7 @@ def fetch_data():
 	country_code='US'
 	page_url='https://www.chemicalbank.com/Locations'
 	
+	
 	for i in range(len(locations_dict['LocationData'])):
 		locs.append(locations_dict['LocationData'][i]['FullName'])
 		streets.append((' ').join(locations_dict['LocationData'][i]['Address'].split(' ')))
@@ -59,9 +66,26 @@ def fetch_data():
 		states.append(locations_dict['LocationData'][i]['State'])
 		zips.append(locations_dict['LocationData'][i]['PostalCode'])
 		ids.append(locations_dict['LocationData'][i]['LocationID'])
+		driver_hours.get('https://www.chemicalbank.com/LocationDataByID/'+str(ids[i]))
+		time.sleep(3)
+		#print('https://www.chemicalbank.com/LocationDataByID/'+str(ids[i]))
+		hours_dict=ast.literal_eval(driver_hours.find_element_by_tag_name('body').text)
+		days_count=str(hours_dict).split('Branch Drive-Thru')[0].count('"DayName"')
+		timing_location=''
+		for i in range(1,days_count):
+			days=str(hours_dict).split('"Name":"')[2].split('"DayName":"')[i].split('"')[0]
+			TimeOpen=str(hours_dict).split('"Name":"')[3].split('"TimeOpen":"')[i].split('"')[0]
+			TimeClose=str(hours_dict).split('"Name":"')[3].split('"TimeClose":"')[i].split('"')[0]
+			timing_location=timing_location+' '+days+' '+TimeOpen+' '+TimeClose
+		if timing_location=='':
+			timing.append( "<MISSING>")
+		else:
+			timing.append(timing_location)
+		#print(timing)
 		phones.append(locations_dict['LocationData'][i]['PhoneNumber'])
 		lats.append(locations_dict['LocationData'][i]['Latitude'])
 		longs.append(locations_dict['LocationData'][i]['Longitude'])
+	
 		
 	
 	data = []
@@ -79,14 +103,13 @@ def fetch_data():
 		row.append('ATM' if locations_dict['LocationData'][i]['FullName'].find("ATM") else 'Branch')
 		row.append(lats[i] if lats[i] else "<MISSING>")
 		row.append(longs[i] if longs[i] else "<MISSING>")
-		row.append("<INACCESSIBLE>") 
+		row.append(timing[i] if timing[i] else "<MISSING>")
 		row.append(page_url)
 		
 		data.append(row)
 	
     # End scraper
 	
-	driver.quit()
 	return data
 
 def scrape():
