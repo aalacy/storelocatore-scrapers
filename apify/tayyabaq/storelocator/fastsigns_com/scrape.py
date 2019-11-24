@@ -8,7 +8,7 @@ def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
-        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             if row:
@@ -33,43 +33,36 @@ def fetch_data():
 	stores_text = [stores[n].text for n in range(0,len(stores))]
 	country = driver.find_elements_by_xpath('//tbody/tr/td[5]')
 	address_type = driver.find_elements_by_xpath('//tbody/tr/td[2]')
-	print(address_type)
+
 	for n in range(0,len(stores_href)):
 		if (('COMING SOON' not in address_type[n].text) and ('COMING SOON!' not in address_type[n].text))and (('US' in country[n].text) or ('CA' in country[n].text)):
 			links.append(stores_href[n])
 			location_name.append(stores_text[n])
-			#print(location_name)
 			state.append(stores_text[n].split(",")[-1].replace(' ','')[:2])
-			print(state)
-			
 			countries.append(country[n].text)
 	for n in range(0,len(links)):
-		print(links[n])
 		driver.get(links[n])
 		pages_url.append(links[n])
 		time.sleep(5)
 		address = driver.find_element_by_class_name('address').text
-		street_address.append(address.split("\n")[0].split(",")[0])
-		print(street_address)
-		city.append(address.split("\n")[0].split(",")[1])
-		print(city)
-		#state.append(address.split("\n")[0].split(",")[2])
-		#print(state)
-		zipcode.append(address.split("\n")[0].split(",")[-1])
-		print(zipcode)
-		ids.append(str(links[n]).split('/')[-1].split('-')[0])
-		print(ids)
-		phone.append(driver.find_element_by_class_name('phone').text)
-		hours_of_operation.append(driver.find_element_by_xpath('//div[@class="inner"]/div[3]').text)
-		lat_lon = b=driver.find_element_by_xpath('//a[contains(@href,"https://www.google.com/maps")]').get_attribute('href')
-		try:
-			latitude.append(lat_lon.split("n/")[1].split(",")[0])
-		except:
-			latitude.append('<MISSING>')
-		try:
-			longitude.append(lat_lon.split("n/")[1].split(",")[1])
-		except:
-			longitude.append('<MISSING>')
+		if (address.split("\n")[0].split(",")[0]!="COMING SOON" and  address.split("\n")[0].split(",")[0]!="COMING SOON!"):
+			street_address.append(address.split("\n")[0].split(",")[0])
+			city.append(address.split("\n")[0].split(",")[1])
+			#state.append(address.split("\n")[0].split(",")[2])
+			zipcode.append(address.split("\n")[0].split(",")[-1])
+			ids.append(str(links[n]).split('/')[-1].split('-')[0])
+			if driver.find_element_by_class_name('phone').text!="Coming Soon":
+				phone.append(driver.find_element_by_class_name('phone').text)
+				hours_of_operation.append(driver.find_element_by_xpath('//div[@class="inner"]/div[3]').text)
+				lat_lon = b=driver.find_element_by_xpath('//a[contains(@href,"https://www.google.com/maps")]').get_attribute('href')
+				try:
+					latitude.append(lat_lon.split("n/")[1].split(",")[0])
+				except:
+					latitude.append('<MISSING>')
+				try:
+					longitude.append(lat_lon.split("n/")[1].split(",")[1])
+				except:
+					longitude.append('<MISSING>')
 	data=[]
 	for i in range(0,len(street_address)):
 		row = []
