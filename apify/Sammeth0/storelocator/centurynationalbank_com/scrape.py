@@ -30,7 +30,7 @@ def fetch_data():
 	for i in range(1,12):
 		driver = get_driver()
 		driver.get("https://centurynationalbank.com/locations/page/"+str(i))
-		time.sleep(5)
+		time.sleep(4)
 		print("https://centurynationalbank.com/locations/page/"+str(i))
 		stores = driver.find_elements_by_xpath('/html/body/section[2]/section/div/div/div[1]/div')[1:]
 		for s in stores:
@@ -38,7 +38,7 @@ def fetch_data():
 			print(s.find_element_by_tag_name('a').get_attribute('href'))
 			driver_page=get_driver()
 			driver_page.get(s.find_element_by_tag_name('a').get_attribute('href'))
-			time.sleep(5)
+			time.sleep(4)
 			location_name.append(driver_page.find_element_by_xpath('/html/body/section/section/div[1]/div[1]/h1').text)
 			print(location_name)
 			try:
@@ -57,9 +57,9 @@ def fetch_data():
 				state.append(driver_page.find_element_by_xpath('/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span').text.split(',')[1].split(' ')[1])
 			print(state)                      
 			try:
-				zipcode.append(driver_page.find_element_by_xpath('/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span[2]').text.split('\n')[1].split(' ')[2])
-			except:
-				zipcode.append(driver_page.find_element_by_xpath('/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span').text.split('\n')[1].split(' ')[2])
+				zipcode.append(driver_page.find_element_by_xpath('/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span[2]').text.split('\n')[1].split(' ')[-1])
+			except:                                              
+				zipcode.append(driver_page.find_element_by_xpath('/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span').text.split('\n')[1].split(' ')[-1])
 			print(zipcode)
 			ids.append(driver_page.find_element_by_xpath('/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[2]/div/a[2]').get_attribute('data-locationid'))
 			print(ids)
@@ -90,7 +90,7 @@ def fetch_data():
 	data=[]
 	for i in range(0,len(street_address)):
 		row = []
-		row.append('http://fastsigns.com')
+		row.append('https://centurynationalbank.com')
 		row.append(location_name[i] if location_name[i] else "<MISSING>")
 		row.append(street_address[i] if street_address[i] else "<MISSING>")
 		row.append(city[i] if city[i] else "<MISSING>")
