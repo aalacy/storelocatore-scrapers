@@ -7,7 +7,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 def get_driver():
     options = Options()
-    #options.add_argument('--headless')
+    options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
@@ -19,7 +19,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -41,7 +41,6 @@ def fetch_data():
             continue
 
         link_list.append(link)
-        print(link)
 
     all_store_data = []
 
@@ -50,10 +49,6 @@ def fetch_data():
 
         driver.get(link)
         driver.implicitly_wait(10)
-
-        print()
-        print(i)
-        print(link)
 
         start_idx = link.find('.ca/') + 4
 
@@ -143,8 +138,20 @@ def fetch_data():
                 state = addy_split[3].strip()
                 zip_code = addy_split[4].strip()
 
+            
+            
+            
             lat = '<MISSING>'
             longit = '<MISSING>'
+
+            src = driver.find_element_by_xpath("//iframe[contains(@src, 'www.google.com/maps/')]").get_attribute('src')
+            start = src.find('!2d')
+            if start > 0:
+                end = src.find('!3m')
+                coords = src[start + 3: end].split('!3d')
+                lat = coords[1]
+                longit = coords[0]
+            
 
         if street_address not in duplicate_tracker:
             duplicate_tracker.append(street_address)
@@ -161,14 +168,12 @@ def fetch_data():
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         hours = '<MISSING>'
-
+        page_url = link
         phone_number = phone_number.replace('+', '').strip()
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
-        print()
-        print(store_data)
-        print()
+        
         all_store_data.append(store_data)
 
 

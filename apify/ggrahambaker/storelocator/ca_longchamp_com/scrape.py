@@ -61,11 +61,12 @@ def fetch_data():
         location_name = driver.find_element_by_css_selector('h2.title-gamma.upper.pt-1.pb-05').text
         cont = driver.find_element_by_css_selector(
             'div.ff-light.mt-05.mb-1.js-accordion.accordion--beta.accordion').text.split('\n')
-
-        street_address = cont[0]
+        addy = cont[0].split(' ')
+        street_address = ' '.join(addy[:-1])
+        city = ' '.join(addy[-1:])
         phone_number = cont[-2]
 
-        city = '<MISSING>'
+
         state = '<MISSING>'
         zip_code = '<MISSING>'
         country_code = 'CA'
