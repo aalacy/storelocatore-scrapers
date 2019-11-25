@@ -2,14 +2,13 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
-# import http.client
-import sgzip
 import json
-import  pprint
+#import sgzip
+
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -20,95 +19,133 @@ def write_output(data):
             writer.writerow(row)
 
 
+def minute_to_hours(time):
+    am = "AM"
+    hour = int(time / 60)
+    if hour > 12:
+        am = "PM"
+        hour = hour - 12
+    if int(str(time / 60).split(".")[1]) == 0:
+        return str(hour) + ":00" + " " + am
+    else:
+        return str(hour) + ":" + str(int(str(time / 60).split(".")[1]) * 6) + " " + am
+
+
 def fetch_data():
-    base_url = "https://www.kwiktrip.com"
-    # conn = http.client.HTTPSConnection("guess.radius8.com")
     
+    return_main_object = []
     addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 100
-    MAX_DISTANCE = 80
-    coords = search.next_coord()
-    # search.current_zip """"""""==zip
-    header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5',}
-    while coords:
-        try:
-        # print(coords)
-            result_coords = []
-            k= requests.get(
-                'https://www.kwiktrip.com/locproxy.php?Latitude='+str(coords[0])+'&Longitude='+str(coords[1]) +'&maxDistance='+str(MAX_DISTANCE)+'&limit='+str(MAX_RESULTS),
-                headers=headers,
+    # search = sgzip.ClosestNSearch()
+    # search.initialize()
+    # MAX_RESULTS = 92
+    # MAX_DISTANCE = 80
+    # current_results_len = 0  # need to update with no of count.
+    # coord = search.next_coord()
+    
+    return_main_object = []
+    addresses = []
+  
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        "content-type": "application/json;charset=UTF-8",
+  
         
-            ).json()
-        
-            # print("response ===", str(r['response']))
-            # print(k)
-            # data = r['response']
-            if "stores" in k:
-                for val in k['stores']:
-                    # print(val['address'])
-                
-                    locator_domain = base_url
-                    location_name =  val['name']
-                    street_address = val['address']['address1']
-                    city = val['address']['city']
-                    state =  val['address']['state']
-                    zip1 =  val['address']['zip']
-                    country_code = val['address']['county']
-                    store_number = "<MISSING>"
-                    phone = val['phone']
-                    if 'phone' in val:
-                        phone = val['phone']
-                    location_type = ''
-                    latitude = val['latitude']
-                    longitude = val['longitude']
-                    if val['open24Hours']:
-                        hours_of_operation = "OPEN-24-HOURS"
-                    else:
-                        hours_of_operation = "<MISSING>"
-                        
-                    result_coords.append((latitude,longitude))
-                    if street_address in addresses:
-                        continue
-                    addresses.append(street_address)
-                    store = []
-                    store.append(locator_domain if locator_domain else '<MISSING>')
-                    store.append(location_name if location_name else '<MISSING>')
-                    store.append(street_address if street_address else '<MISSING>')
-                    store.append(city if city else '<MISSING>')
-                    store.append(state if state else '<MISSING>')
-                    store.append(zip1 if zip1 else '<MISSING>')
-                    store.append(country_code if country_code else '<MISSING>')
-                    store.append(store_number if store_number else '<MISSING>')
-                    store.append(phone if phone else '<MISSING>')
-                    store.append(location_type if location_type else '<MISSING>')
-                    store.append(latitude if latitude else '<MISSING>')
-                    store.append(longitude if longitude else '<MISSING>')
-                    store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-                    store.append("https://www.kwiktrip.com/locator")
-                    # if store[3] in addresses:
-                    #     continue
-                    # addresses.append(store[3])
-                    # print("data = " + str(store))
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    yield store
-            
-            if len(k) < MAX_RESULTS:
-                # print("max distance update")
-                search.max_distance_update(MAX_DISTANCE)
-            elif len(k) == MAX_RESULTS:
-                # print("max count update")
-                search.max_count_update(result_coords)
+    }
+
+    # it will used in store data.
+    locator_domain = "https://www.drmartens.com"
+    location_name = ""
+    street_address = "<MISSING>"
+    city = "<MISSING>"
+    state = "<MISSING>"
+    zipp = "<MISSING>"
+    country_code = "US"
+    store_number = "<MISSING>"
+    phone = "<MISSING>"
+    location_type = "drmartens"
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
+    raw_address = ""
+    hours_of_operation = "<MISSING>"
+    address=[]
+    # while coord:
+    #     result_coords = []
+    #     zip_code = str(coord[0])
+    #     zip_code = str(coord[1])
+      
+    r = requests.get(
+        "https://www.kwiktrip.com/locproxy.php?Latitude=42.07295&Longitude=-89.38669&maxDistance=80&limit=100",
+        # "https://www.kwiktrip.com/locproxy.php?Latitude="+zip_code[0]+"&Longitude="+zip_code[1] +"&maxDistance=80&limit=100",
+        # 'https://www.kwiktrip.com/locproxy.php?Latitude='+zip_code[0]+'&Longitude='+zip_code[1] +'&maxDistance=4000&limit=100',
+        headers=headers,
+    
+    )
+    soup= BeautifulSoup(r.text,"lxml")
+    # print("=====================================================================",soup)
+    # print('https://www.kwiktrip.com/locproxy.php?Latitude='+zip_code[0]+'&Longitude='+zip_code[1] +'&maxDistance='+str(MAX_DISTANCE)+'&limit='+str(MAX_RESULTS))
+    k = json.loads(soup.text)
+    if len(k) != 1 or k in 'stores':
+        current_results_len = len(k['stores'])
+        for i in k['stores']:
+            # print("=====================================================================",i)
+            tem_var=[]
+            if i['open24Hours']==True:
+                hours_of_operation = "Open 24 hours a day"
             else:
-                raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        except:
-            continue
-        coords = search.next_coord()
-        # break
+                hours_of_operation ="<MISSING>"
+            tem_var.append("https://www.kwiktrip.com")
+            tem_var.append(i['name'].split(" #")[0])
+            tem_var.append(i['address']['address1'])
+            tem_var.append(i['address']['city'] )
+            tem_var.append(i['address']['state'])
+            tem_var.append(i['address']['zip'])
+            tem_var.append("US")
+            tem_var.append(i['name'].split(" #")[-1])
+            tem_var.append(i['phone'])
+            tem_var.append("<MISSING>")
+            tem_var.append(i['latitude'])
+            tem_var.append(i['longitude'])
+            tem_var.append(hours_of_operation)
+            tem_var.append('<MISSING>')
+
+            # print(i.kyes())
+            # if i['open24Hours']=='true':
+    
+            # print(tem_var)
+            #     tem_var.append('open24Hours')
+            # else:
+            #     print(zip_code)
+            #     print(i['open24Hours'])
+            # print(tem_var)
+            if tem_var[2] in address:
+                continue
+
+            address.append(tem_var[2])
+            # print("tem_var==============================",tem_var)
+            return_main_object.append(tem_var)
+            
+        # if current_results_len < MAX_RESULTS:
+        #     print("max distance update")
+        #     search.max_distance_update(MAX_DISTANCE)
+        # elif current_results_len == MAX_RESULTS:
+        #     print("max count update")
+        #     search.max_count_update(result_coords)
+        # else:
+        #     raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        # coord = search.next_coord()
+       
+    return return_main_object
+
+
+            
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
+
 scrape()
+
+
+

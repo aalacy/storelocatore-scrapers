@@ -58,20 +58,13 @@ def fetch_data():
             id1.append(i.attrs['id'])
             lat1.append(lat.split(",")[0])
             lng1.append(lat.split(",")[1])
-            # print(lat.split(",")[1])
-        # print(i.find("a")['href'].split("/@")[-1])
-        # print("=========================")
-    #     name1.append(i.attrs['id'])
-    #     if len(i.find("a")['href'].split("@"))==2:
-    #         lat.append(i.find("a")['href'].split("@")[-1].split(",")[0])
-    #         lng.append(i.find("a")['href'].split("@")[-1].split(",")[1])
+
        
     link = (soup.find_all("a",{"class":"LA-ui-accordion-header"}))
 
     for i in link:
-        
         data1 = soup.find("div",{"id":i['href'].replace("#","")})
-        
+
         latitude1 =''
         longitude1 = ''
         loc =list(data1.stripped_strings)
@@ -83,22 +76,22 @@ def fetch_data():
                     if id2 ==id1[ii]:
                         latitude1 = lat1[ii]
                         longitude1 = lng1[ii]
-                        
-            
+                 
             full_address = " ".join(loc)
             us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(full_address))
             zip1 = us_zip_list[-1]
             state_list = re.findall(r' ([A-Z]{2}) ', str(full_address))[-1]
-            phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(full_address))[-1]
-            name = i.text
-            city = name.replace(" (Lending Center Only)","")
+            phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(full_address))[0]
+            phone_list1 = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(full_address))[-1]
 
+            name = i.text
+            city = name.replace(" (Lending Center Only)","").replace("Center ","").replace(" Auto Bank Express","").replace(", Westside","")
             address = (" ".join(loc[1:4]).replace(state_list,"").replace(zip1,"").replace(phone_list,"").split("Address")[-1].replace("Get Directions","").strip().replace(",","").replace(city,"").replace("Groton","").replace("Mystic","").replace("Mystic","").replace("Norwich",""))
-            hours = (full_address.split(phone_list)[-1].replace("Send an email","").replace("Hours (walk-in pre-approvals welcome! No appointment needed*):","").replace("*after hour appointments are always available","").replace("•",""))
+            hours = (full_address.split(phone_list1)[-1].replace("Send an email","").replace("Hours (walk-in pre-approvals welcome! No appointment needed*):","").replace("*after hour appointments are always available","").replace("•",""))
             tem_var.append("https://www.chelseagroton.com")
             tem_var.append(name.encode('ascii', 'ignore').decode('ascii').strip().replace("&#8211;",""))
             tem_var.append(address.encode('ascii', 'ignore').decode('ascii').strip())
-            tem_var.append(city)
+            tem_var.append(city.replace("Norwichtown","Norwich"))
             tem_var.append(state_list.strip().encode('ascii', 'ignore').decode('ascii') if state_list.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>" )
             tem_var.append(zip1.encode('ascii', 'ignore').decode('ascii').strip())
             tem_var.append("US")
@@ -107,7 +100,7 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append(latitude1 if latitude1 else "<MISSING>")
             tem_var.append(longitude1 if longitude1 else "<MISSING>")
-            tem_var.append(hours.strip())
+            tem_var.append(hours)
             tem_var.append("<MISSING>")
             # print(tem_var)
             return_main_object.append(tem_var)
@@ -127,19 +120,6 @@ def fetch_data():
                     state = tage.next_sibling.next_sibling.replace("\n","").strip().split(",")[1].split( )[0]
                     zip1 = tage.next_sibling.next_sibling.replace("\n","").strip().split(",")[1].split( )[1]
 
-         
-                # print(state)    
-                # us_zip_list1 = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(i.text))
-                # if us_zip_list1:
-                #     zip1 = us_zip_list1[-1]
-                # else:
-                #     zip1 = "<MISSING>"
-                # state_list1 = re.findall(r' ([A-Z]{2}) ', str(i.text))
-                 
-                # if state_list1:
-                #     state = state_list1[-1]
-                # else:
-                #     state = "<MISSING>"
 
 
   
@@ -158,11 +138,11 @@ def fetch_data():
                 tem_var1.append("<MISSING>")
                 tem_var1.append("<MISSING>")
                 
-                if tem_var1[2] in addressess:
-                    continue
+                # if tem_var1[2] in addressess:
+                #     continue
         
-                addressess.append(tem_var1[2])
-                #print(tem_var1)
+                # addressess.append(tem_var1[2])
+                # print(tem_var1)
                 return_main_object.append(tem_var1)
         
 

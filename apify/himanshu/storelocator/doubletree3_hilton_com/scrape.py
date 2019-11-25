@@ -74,6 +74,10 @@ def fetch_data():
             location_json_request = request_wrapper("https://www.hilton.com/graphql/customer?pod=brands&operationName=hotel",'post',data=request_data,headers=request_header)
             if location_json_request == None:
                 continue
+            if  location_json_request.json()["data"] == None:
+                continue
+            if location_json_request.json()["data"]["hotel"] == None:
+                continue
             location_url = location_json_request.json()["data"]["hotel"]["homepageUrl"]
             location_request = request_wrapper(location_url,'get',headers=headers)
             if location_request == None:

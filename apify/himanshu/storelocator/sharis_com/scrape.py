@@ -3,8 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import http.client
+# import sgzip
 import json
-
+# import  pprint
 
 
 def write_output(data):

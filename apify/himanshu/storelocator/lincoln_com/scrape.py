@@ -16,7 +16,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -38,7 +38,9 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 100
-    MAX_DISTANCE = 500
+    y =0
+    x =0
+    MAX_DISTANCE = 50
     current_results_len = 0  # need to update with no of count.
     # coord = search.next_coord()    # zip_code = search.next_zip() 
     zip_code = search.next_zip()       
@@ -80,6 +82,7 @@ def fetch_data():
             continue
         if "Response" in k and "Dealer" in k['Response']:
             if list ==type(k['Response']["Dealer"]):
+                x = len(k['Response']["Dealer"])
                 for i in k['Response']['Dealer']:
                     
                     if "Street1"  in i["Address"]:
@@ -109,25 +112,28 @@ def fetch_data():
                             elif "open" in j:
                                 time1 = time1 + ' '+j['name'] + ' ' +j['open'] + ' '+j['close'] + ' '+h1
                     hours_of_operation = " SalesHours " + time + " ServiceHours " + time1
-                    tem_var =[]
                     latitude = i['Latitude']
                     longitude = i['Longitude']
+                    tem_var =[]
                     tem_var.append(street_address)
                     tem_var.append(city)
                     tem_var.append(state)
                     tem_var.append(zipp)
                     tem_var.append("US")
                     tem_var.append("<MISSING>")
-                    tem_var.append(phone if phone else "<MISSING>")
+                    tem_var.append(phone if phone else "<MISSING>" )
                     tem_var.append("lincoln")
                     tem_var.append(latitude)
                     tem_var.append(longitude)
                     tem_var.append(hours_of_operation.replace(" SalesHours  ServiceHours ","<MISSING>") if hours_of_operation else "<MISSING>")
+                    tem_var.append("https://www.lincoln.com/dealerships/dealer-details/"+i['urlKey'])
+                    
                     store_detail.append(tem_var)
           
 
         if "Response" in k and "Dealer" in k['Response']:
             if dict==type(k['Response']["Dealer"]):
+                y = len(k['Response']["Dealer"])
                 if "Street1"  in i["Address"]:
                     street_address = i["Address"]['Street1'] #+ ' ' +i["Address"]['Street2']+ ' ' +i["Address"]['Street3']
                 else:
@@ -164,19 +170,20 @@ def fetch_data():
                 tem_var.append(zipp)
                 tem_var.append("US")
                 tem_var.append("<MISSING>")
-                tem_var.append(phone if phone else "<MISSING>")
+                tem_var.append(phone if phone else "<MISSING>" )
                 tem_var.append("lincoln")
                 tem_var.append(latitude)
                 tem_var.append(longitude)
                 tem_var.append(hours_of_operation.replace(" SalesHours  ServiceHours ","<MISSING>") if hours_of_operation else "<MISSING>")
+                tem_var.append("https://www.lincoln.com/dealerships/dealer-details/"+i['urlKey'])
                 store_detail.append(tem_var)
      
 
-        if current_results_len < MAX_RESULTS:
-            print("max distance update")
+        if x+y < MAX_RESULTS:
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            print("max count update")
+        elif x+y == MAX_RESULTS:
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
@@ -189,9 +196,9 @@ def fetch_data():
         store.append("https://www.lincoln.com")
         store.append(store_name[i])                 
         store.extend(store_detail[i])
-        if store[3] in addresses:
+        if store[2] in addresses:
             continue
-        addresses.append(store[3])  
+        addresses.append(store[2])  
         return_man.append(store)  
     return return_man
         # break

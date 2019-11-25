@@ -72,11 +72,15 @@ def fetch_data():
 
         result_coords = []
         #print(zip_code)
-        r = requests.get(
-            'https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE),
-            headers=headers,
-       
-        )
+        try:
+
+            r = requests.get(
+                'https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE),
+                headers=headers,
+        
+            )
+        except:
+            continue
         name =''
         soup= BeautifulSoup(r.text,"lxml")
         try:

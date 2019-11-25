@@ -116,7 +116,7 @@ def fetch_data():
 
 
 
-            store_number = x['id']
+            store_number = '<MISSING>'
             location_name = x['storename'].replace('\\','').capitalize().strip()
             street_address = x['address']['street'].replace('\\','').replace('>','').capitalize().strip()
             # print(street_address)

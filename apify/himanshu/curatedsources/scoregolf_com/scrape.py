@@ -110,7 +110,7 @@ def fetch_data():
                         longitude = soup_rr.find('div',class_ = 'blockbox wrap-4 mapresult').find_next('script',{'type':'text/javascript'}).text.split('initFacMap(')[1].split(',')[1]
              
                     store = [locator_domain, location_name.upper(), street_address.capitalize().replace(","," ").replace(".,","").replace(". ,","").replace("#",""), city.capitalize(), state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude.replace("0.0000000000","<MIISING>"), hours_of_operation,page_url]
+                         store_number, phone, location_type, latitude, longitude.replace("0.0000000000","<MISSING>"), hours_of_operation,page_url]
                     store = ["<MISSING>" if x == "" or x == ","  or x == None else x.encode('ascii', 'ignore').decode('ascii').strip() for x in store]
                     if store[2] in addresses:
                         continue

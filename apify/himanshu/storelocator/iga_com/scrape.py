@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+# import html5lib
 
 
 def write_output(data):
@@ -13,7 +14,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -38,11 +39,12 @@ def fetch_data():
     country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "iga"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
+    page_url = "<MISSING>"
 
     page_no = 0
     isFinish = False
@@ -52,8 +54,10 @@ def fetch_data():
 
         r = requests.get("https://www.iga.com/find-a-store?page=" + str(page_no) +
                          "&locationLat=38.65818091399883&locationLng=-115.09908940607174", headers=headers);
+        # r1 = "https://www.iga.com/find-a-store?page=" + str(page_no) +"&locationLat=38.65818091399883&locationLng=-115.09908940607174"
+        # print(r1)
 
-        soup = BeautifulSoup(r.text, "lxml")
+        soup = BeautifulSoup(r.text, "html.parser")
 
         if soup.find('div', class_="store-card") == None:
             # print("None")
@@ -63,20 +67,33 @@ def fetch_data():
             for details in soup.find_all('div', class_="store-card"):
                 tag_address = details.find(
                     'div', class_='store-location')
+                dataurl = tag_address.find('a', class_='store-website-link')
+                if dataurl == None:
+                    dataurl = "<MISSING>"
+                else:
+                    page_url = dataurl['href'].strip()
                 location_name = tag_address.find(
                     'div', class_="store-location-details").find('h3').text
-                street_address = tag_address['data-address'].split(',')[0]
-                city = tag_address['data-address'].split(',')[1]
-                state = tag_address['data-address'].split(',')[2]
-                zipp = tag_address['data-address'].split(',')[-1]
+                street_address = tag_address['data-address'].split(',')[
+                    0].strip()
+                city = tag_address['data-address'].split(',')[1].strip()
+                state = tag_address['data-address'].split(',')[2].strip()
+                if "Vail" == state or "Rio Rico" == state:
+                    state = tag_address['data-address'].split(',')[-2].strip()
+                zipp = tag_address['data-address'].split(',')[-1].strip()
+                if len(zipp) == 4:
+                    zipp = "0" + zipp
+
                 latitude = tag_address['data-lat']
                 longitude = tag_address['data-long']
                 phone = tag_address.find(
                     'p', class_="store-phone-fax").text.strip().split('- Main')[0]
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                         store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                 store = ["<MISSING>" if x == "" else x for x in store]
-               
+                # print("data = " + str(store))
+                # print(
+                #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)
         page_no += 1

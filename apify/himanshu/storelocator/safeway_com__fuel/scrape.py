@@ -45,15 +45,18 @@ def parser(location_soup,page_url):
     hours = ""
     hours = hours + " " + location_soup.find("h2",{"class":"LocationInfo-hoursTitle"}).text.strip() + " " + " ".join(list(location_soup.find("table",{'class':"c-location-hours-details"}).stripped_strings))
     if location_soup.find("div",{'data-analytics-type':"nap"}):
-        pharmacy_id = location_soup.find("div",{'data-analytics-type':"nap"})["data-pharmacy-id"]
-        hours_request = requests.get("https://local.safeway.com/pharmacydata/" + str(pharmacy_id).lower() + ".json",headers=headers)
-        hour_data = hours_request.json()["hours"]["days"]
-        hours = hours + " Pharmacy Hours "
-        for hour in hour_data:
-            if hour["intervals"] == []:
-                hours = hours + " " + hour["day"] + " Closed"
-            else:
-                hours = hours + " " + hour["day"] + " " + convert_time(hour["intervals"][0]["start"]) + " - " + convert_time(hour["intervals"][0]["end"])
+        try:
+            pharmacy_id = location_soup.find("div",{'data-analytics-type':"nap"})["data-pharmacy-id"]
+            hours_request = requests.get("https://local.safeway.com/pharmacydata/" + str(pharmacy_id).lower() + ".json",headers=headers)
+            hour_data = hours_request.json()["hours"]["days"]
+            hours = hours + " Pharmacy Hours "
+            for hour in hour_data:
+                if hour["intervals"] == []:
+                    hours = hours + " " + hour["day"] + " Closed"
+                else:
+                    hours = hours + " " + hour["day"] + " " + convert_time(hour["intervals"][0]["start"]) + " - " + convert_time(hour["intervals"][0]["end"])
+        except:
+            pass
     lat = location_soup.find("meta",{'itemprop':"latitude"})["content"]
     lng = location_soup.find("meta",{'itemprop':"longitude"})["content"]
     store = []
@@ -107,7 +110,6 @@ def fetch_data():
                         location_soup = BeautifulSoup(location_request.text,"lxml")
                         store_data = parser(location_soup,"https://local.safeway.com/" + location["href"].replace("../",""))
                         yield store_data
-
 def scrape():
     data = fetch_data()
     write_output(data)
