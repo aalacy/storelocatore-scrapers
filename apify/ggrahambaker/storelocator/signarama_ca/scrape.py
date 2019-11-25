@@ -7,7 +7,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 def get_driver():
     options = Options()
-    options.add_argument('--headless')
+    #options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
@@ -96,7 +96,7 @@ def fetch_data():
             phone_number_a = driver.find_element_by_xpath("//a[contains(@href, 'tel:')]").get_attribute('href')
             phone_number = phone_number_a.replace('tel:', '')
 
-            # https://maps.google.com/maps?ll=51.051116,-114.004049&z=
+
             try:
                 href = driver.find_element_by_xpath("//a[contains(@href, 'maps.google.com')]").get_attribute('href')
 
@@ -107,6 +107,7 @@ def fetch_data():
                 longit = coords[1]
 
             except NoSuchElementException:
+
                 lat = '<MISSING>'
                 longit = '<MISSING>'
 
