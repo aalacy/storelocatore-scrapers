@@ -35,11 +35,11 @@ def fetch_data():
     #print(soup)
     divs = soup.find_all('div', {'class': 'col-sm-4 col-xs-11 bottom25'})
     for div in divs:
-        page_url.append(div.find('a').get('href'))
+        page_url.append("http://www.commoncentsstores.com"+div.find('a').get('href'))
 
     for url in page_url:
         print(url)
-        url="http://www.commoncentsstores.com"+url
+        
         res = requests.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         div = soup.find('div', {'class': 'map bottom30'})

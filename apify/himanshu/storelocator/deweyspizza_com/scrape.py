@@ -28,7 +28,7 @@ def fetch_data():
     address1 = []
     phone = []
     get_url= 'http://deweyspizza.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?t=1571049679253' 
-    
+    domain_url = 'https://www.omnisourceusa.com/'
     # tem_var=[]
     hour2 = []
    
@@ -49,7 +49,7 @@ def fetch_data():
         time = list(hour1.stripped_strings)
         if time[-1]=="Party Room Available":
             del time[-1]
-        print(" ".join(time))
+        # print(" ".join(time))
         hour2.append(" ".join(time))
         # hour.append(list(hour1.stripped_strings)[0]+ ' '+list(hour1.stripped_strings)[1]+ ' '+list(hour1.stripped_strings)[2])
         
@@ -107,7 +107,7 @@ def fetch_data():
   
     for i in range(len(store_name)):
        store = list()
-       store.append("http://deweyspizza.com/")
+       store.append("http://deweyspizza.com")
        store.append(store_name[i])
        store.extend(store_detail[i])
        store.append(phone[i])
@@ -124,7 +124,6 @@ def fetch_data():
        return_main_object.append(store)
 
         
-           
  
     return return_main_object
 

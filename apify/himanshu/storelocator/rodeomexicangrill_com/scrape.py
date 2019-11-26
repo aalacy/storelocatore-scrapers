@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -29,9 +29,18 @@ def fetch_data():
 
     store_detail=[]
     return_main_object=[]
-    k=(soup.find_all("div",{"class":"col-md-4 col-xs-12"}))
+    lat = []
+    lng =[]
+    loc=(soup.find_all("div",{"class":"col-md-4 col-xs-12"}))
+    k=soup.find("script",{"type":"application/json","class":"js-react-on-rails-component"})
+    for i in json.loads(k.text)['preloadQueries']:
+        for data in i["data"]['restaurant']["locations"]:
+            if data['lat']:
+                lat.append(data['lat'])
+                lng.append(data['lng'])
 
-    for i in k:
+
+    for index,i in enumerate(loc):
         tem_var=[]
         name = list(i.stripped_strings)[0]
         st = " ".join(list(i.stripped_strings)[1:4])
@@ -40,12 +49,11 @@ def fetch_data():
         state = list(i.stripped_strings)[4].split(',')[1].split( )[0]
         zip1=list(i.stripped_strings)[4].split(',')[1].split( )[1]
         phone =list(i.stripped_strings)[6]
-        hours = (" ".join(list(i.stripped_strings)[7:22]))
-        
+        hours = " ".join(list(i.stripped_strings)[7:])
+        # print(hours)
 
         tem_var.append("https://www.rodeomexicangrill.com")
         tem_var.append(name)
-  
         tem_var.append(st)
         tem_var.append(city)
         tem_var.append(state)
@@ -53,10 +61,12 @@ def fetch_data():
         tem_var.append("US")
         tem_var.append("<MISSING>")
         tem_var.append(phone)
-        tem_var.append("rodeomexicangrill")
         tem_var.append("<MISSING>")
-        tem_var.append("<MISSING>")
+        tem_var.append(lat[index])
+        tem_var.append(lng[index])
         tem_var.append(hours)
+        tem_var.append("<MISSING>")
+
         return_main_object.append(tem_var)
 
     return return_main_object
@@ -68,3 +78,7 @@ def scrape():
 
 
 scrape()
+
+
+
+

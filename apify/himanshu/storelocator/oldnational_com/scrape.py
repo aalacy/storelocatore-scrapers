@@ -59,10 +59,19 @@ def fetch_data():
         # print(json_data)
         current_results_len = (len(json_data))
         for value in json_data['Locations']:
-            print(value)
 
             base_url = "https://www.oldnational.com/"
-
+            # print(value)
+            types = value['LocationType']
+            if types=="WM":
+                types = "Wealth Management"
+            
+            elif  types=="BR":
+                types = "Branche"
+            else:
+                types = "ATM"
+            # print(types)
+            location_type = types
             locator_domain = base_url
             location_name = value['Name'].strip()
             page_url = base_url + value['Url'].strip()
@@ -76,7 +85,6 @@ def fetch_data():
             # print(phone)
             if str(phone) == 'None':
                 phone = ''
-            location_type = "<MISSING>"
             latitude = value['Lat']
             longitude = value['Lon']
             vb = []

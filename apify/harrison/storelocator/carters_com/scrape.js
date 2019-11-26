@@ -53,15 +53,15 @@ Apify.main(async () => {
 							location_type: convertBlank(store.brand),
 							latitude: convertBlank(store.latitude),
 							longitude: convertBlank(store.longitude),
-							hours_of_operation: {
-								'Sunday Hours': store.sundayHours,
-								'Monday Hours': store.mondayHours,
-								'Tuesday Hours': store.tuesdayHours,
-								'Wednesday Hours': store.wednesdayHours,
-								'Thurday Hours': store.thursdayHours,
-								'Friday Hours': store.fridayHours,
-								'Saturday Hours': store.saturdayHours,
-							},
+							hours_of_operation: JSON.stringify({
+								'Sunday': store.sundayHours,
+								'Monday': store.mondayHours,
+								'Tuesday': store.tuesdayHours,
+								'Wednesday': store.wednesdayHours,
+								'Thurday': store.thursdayHours,
+								'Friday': store.fridayHours,
+								'Saturday': store.saturdayHours,
+							}),
 						});
 					}
 				}

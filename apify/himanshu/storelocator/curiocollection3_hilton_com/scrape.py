@@ -5,6 +5,38 @@ import re
 import json
 import time
 
+def request_wrapper(url,method,headers,data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url,headers=headers,data=data)
+                else:
+                    r = requests.post(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -39,12 +71,16 @@ def fetch_data():
                 "content-type": "application/json"
             }
             # print(address)
-            location_json_request = requests.post("https://www.hilton.com/graphql/customer?pod=brands&operationName=hotel",data=request_data,headers=request_header)
+            location_json_request = request_wrapper("https://www.hilton.com/graphql/customer?pod=brands&operationName=hotel",'post',data=request_data,headers=request_header)
+            if location_json_request == None:
+                continue
             # print(location_json_request.json())
             location_url = location_json_request.json()["data"]["hotel"]["homepageUrl"]
             # print(location_url)
             # time.sleep(2)
-            location_request = requests.get(location_url,headers=headers)
+            location_request = request_wrapper(location_url,'get',headers=headers)
+            if location_request == None:
+                continue
             location_soup = BeautifulSoup(location_request.text,"lxml")
             if location_soup.find("h1",text=re.compile("You've stumped us")):
                 continue
@@ -89,7 +125,7 @@ def fetch_data():
             store.append(store_zip)
             store.append(address["country"])
             store.append("<MISSING>")
-            store.append(phone if phone else "<MISSING>")
+            store.append(phone.replace("=","") if phone else "<MISSING>")
             store.append("<MISSING>")
             store.append(cord["latitude"])
             store.append(cord["longitude"])

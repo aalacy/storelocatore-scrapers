@@ -2,11 +2,6 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
-# import json
-# import sgzip
-# import calendar
-
-
 
 
 def write_output(data):
@@ -58,7 +53,6 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.70 Safari/537.36',
         'Accept' :'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3'}
 
-
     r = requests.request("GET", url, headers=headers)
     soup = BeautifulSoup(r.text,'lxml')
     for li in soup.find('div',class_='crs-province').find('ul',class_='crs-by-prov').find_all('li',class_='crs-province-list'):
@@ -66,8 +60,6 @@ def fetch_data():
             a = "https://www.scoregolf.com"+h5.find('a')['href']
             r_loc = requests.get(a,headers = headers)
             soup_loc = BeautifulSoup(r_loc.text,'lxml')
-
-            # print(table.prettify())
 
             try:
                 table = soup_loc.find('table',class_='tablesorter')
@@ -79,9 +71,7 @@ def fetch_data():
                     block = soup_rr.find('div',class_='block cg-wrapper').find('div',class_='facility-info-wrapper').find_all('div',class_ = 'large-4 medium-4 small-12 columns')[-1]
                     address= block.find('div',class_='cg-address')
                     list_address= list(address.stripped_strings)
-                    # print(list_address)
-                    # print(len(list_address))
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``')
+                
                     st_address = list_address[1].replace('\\u200b','').strip()
                     if ","  == st_address:
                         street_address = "<MISSING>"
@@ -98,13 +88,8 @@ def fetch_data():
                         zipp= "<MISSING>"
                     else:
                         zipp= ca_zip_list[0].strip()
-                    # if "B1A***" != list_address[-1].strip():
-                    #     zipp = list_address[-1].strip()
-                    # else:
-                    #     zipp= "<MISSING>"
-                    print(zipp +" | "+state)
-                    # print('~~~~~~~~~~~~~~~~~~~~~~')
-
+               
+                    # print(zipp +" | "+state)
                     lname = soup_rr.find('div',class_='block cg-wrapper').find('div',class_= 'block crs-header-block')
                     location_name = list(lname.stripped_strings)[0].capitalize().strip()
                     phone_tag=soup_rr.find('div',class_='block cg-wrapper').find('div',class_='facility-info-wrapper').find('p',class_ = 'exp-tx').text.strip()
@@ -123,43 +108,27 @@ def fetch_data():
                         longitude= "<MISSING>"
                     else:
                         longitude = soup_rr.find('div',class_ = 'blockbox wrap-4 mapresult').find_next('script',{'type':'text/javascript'}).text.split('initFacMap(')[1].split(',')[1]
-                        # print(lat,lng)
-                    # print(lat,lng)
-                    # print(street_address +" | "+zipp)
-                    # print(latitude,longitude)
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~')
-                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-                    if store[-4] == "0.0000000000":
-                        store[-4] == "<MISSING>"
-                    if store[-3] == "0.0000000000":
-                        store[-3] == "<MISSING>"
+             
+                    store = [locator_domain, location_name.upper(), street_address.capitalize().replace(","," ").replace(".,","").replace(". ,","").replace("#",""), city.capitalize(), state, zipp, country_code,
+                         store_number, phone, location_type, latitude, longitude.replace("0.0000000000","<MISSING>"), hours_of_operation,page_url]
                     store = ["<MISSING>" if x == "" or x == ","  or x == None else x.encode('ascii', 'ignore').decode('ascii').strip() for x in store]
-                    if store[1] + store[2] in addresses:
+                    if store[2] in addresses:
                         continue
-                    addresses.append(store[1]+store[2])
-
-                    #print("data = " + str(store))
-                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-                    return_main_object.append(store)
-
-
-
-
+                    addresses.append(store[2])
+                    # print("data = " + str(store))
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    yield store
+                    # return_main_object.append(store)
 
             except:
-                # pass
                 continue
-                # print(page_url)
-                # print('******************************************')
+                
 
 
 
 
 
-
-    return return_main_object
+    # return return_main_object
 
 
 

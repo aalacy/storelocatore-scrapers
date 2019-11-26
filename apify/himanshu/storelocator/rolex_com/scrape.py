@@ -35,7 +35,7 @@ def fetch_data():
             locator_domain = base_url
             location_name = vj['nameTranslated'].encode('ascii', 'ignore').decode('ascii').strip().replace('<br/>','')
             street_address = vj['streetAddress'].encode('ascii', 'ignore').decode('ascii').strip().replace('<br/>','')
-            
+
             b = vj['address'].split('<br/>')
             if(b[-1] == 'United States' or b[-1] == 'Canada'):
                 if len(b) == 5:
@@ -51,6 +51,7 @@ def fetch_data():
 
                     state = b[1].encode('ascii', 'ignore').decode('ascii').strip()
 
+                    # print(state)
                     if hasNumbers(city):
                         city = ''
 
@@ -67,7 +68,18 @@ def fetch_data():
 
                     city = '<INACCESSIBLE>'
 
-                    state = b[1].split(' ')[1]
+                    state = b[1].split(' ')
+                    # print(b)
+                    # print(state)
+                    # print(len(state))
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    if len(b[1].split(' ')) <4:
+                        state =b[1].split(' ')[-1]
+                    else:
+                        state = " ".join(b[1].split(' ')[-2:]).replace('City','').strip()
+
+
+
                     if hasNumbers(city):
                         city = ''
 
@@ -111,10 +123,24 @@ def fetch_data():
                     state = state.split(' ')[-1]
                 else:
                     state = state
-
-
                 if hasNumbers(state):
-                    state = "<INACCESSIBLE>"
+                    if len(b) >4:
+                        state = b[-3].strip()
+                    else:
+                        state = b[-2].strip()
+
+
+
+                if "Columbia" in  state:
+                    state = "British Columbia"
+                if "Beach Florida" in state:
+                    state = "Florida"
+                if "Carolina" == state or "Jersey" == state or "York" == state or "Island" == state or "Hampshire" == state or  "Mexico" == state:
+                        state = " ".join(b[1].split(' ')[-2:]).replace('City','').strip()
+                if "Edmonton Alberta" in state:
+                    state = "Alberta"
+
+                # print(state)
 
 
                 store = []
@@ -133,17 +159,19 @@ def fetch_data():
 
                 store.append(hours_of_operation if hours_of_operation else '<MISSING>')
                 store.append(page_url if page_url else '<MISSING>')
+                # if store_number in address:
+                #     continue
+                # addresses.append(store_number)
+                # print("data====",str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
+                return_main_object.append(store)
+                # yield store
 
-                #print("data====",str(store))
-
-                # return_main_object.append(store)
-                yield store
-                    
         except:
             continue
 
 
-    # return return_main_object
+    return return_main_object
 
 
 

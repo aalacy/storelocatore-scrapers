@@ -59,7 +59,7 @@ def fetch_data():
             time.sleep(10)
             lat,lon = parse_geo(driver2.current_url)
             data.append([
-                 'https://www.oshkosh.com/',
+                 'https://handymarts.com/',
                   page_url,
                   location_name,
                   street_addr,

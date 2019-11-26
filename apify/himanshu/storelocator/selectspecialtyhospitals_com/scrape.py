@@ -40,6 +40,8 @@ def fetch_data():
             location_soup = BeautifulSoup(store_data["Html"],"lxml")
             name = location_soup.find("span",{'class':"location-title"}).text.strip()
             address = location_soup.find("div",{'class':"address"}).text
+            if location_soup.find("div",{'class':"address2"}):
+                address = address + " " + location_soup.find("div",{'class':"address2"}).text
             city = location_soup.find("span",{'class':"city"}).text
             state = location_soup.find("span",{'class':"state"}).text
             store_zip = location_soup.find("span",{'class':"zip"}).text

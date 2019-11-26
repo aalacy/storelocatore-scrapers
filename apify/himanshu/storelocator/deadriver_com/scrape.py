@@ -105,8 +105,8 @@ def fetch_data():
 
                     # return_main_object.append(store)
                     yield store
-                    # print("data = " + str(store))
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    print("data = " + str(store))
+                    print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         if current_results_len < MAX_RESULTS:
             # print("max distance update")

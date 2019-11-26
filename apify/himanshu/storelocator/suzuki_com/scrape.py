@@ -39,9 +39,12 @@ def fetch_data():
     zip = search.next_zip()
     while zip:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
-        print('Pulling Lat-Long %s...' % (str(zip)))
-        r = requests.get(base_url+'/DealerSearchHandler.ashx?zip='+str(zip)+'&hasCycles=true&hasAtvs=true&hasScooters=true&hasMarine=true&hasAuto=true&maxResults=4&country=en')
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print('Pulling Lat-Long %s...' % (str(zip)))
+        try:
+            r = requests.get(base_url+'/DealerSearchHandler.ashx?zip='+str(zip)+'&hasCycles=true&hasAtvs=true&hasScooters=true&hasMarine=true&hasAuto=true&maxResults=4&country=en')
+        except:
+            continue
         soup=BeautifulSoup(r.text,'lxml')
         for loc in soup.find_all('dealerinfo'):
             name=loc.find('name').text.strip()

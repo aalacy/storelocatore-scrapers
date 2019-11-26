@@ -12,7 +12,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -45,7 +45,7 @@ def fetch_data():
 
     for zip_code in zips:
         while True:
-            print("https://www.tranesupply.com/store-locator?q=" + zip_code)
+            page_url="https://www.tranesupply.com/store-locator?q=" + str(zip_code)
             try:
                 r = requests.get("https://www.tranesupply.com/store-locator?q=" + zip_code,
                                 headers=headers)
@@ -61,8 +61,8 @@ def fetch_data():
             zipp = "<MISSING>"
             country_code = "US"
             store_number = "<MISSING>"
-            phone = "<MISSING>"
-            location_type = "tranesupply"
+            phone = ""
+            location_type = "<MISSING>"
             latitude = "<MISSING>"
             longitude = "<MISSING>"
             raw_address = ""
@@ -70,6 +70,11 @@ def fetch_data():
 
             for script in soup.find_all("div", {'class': 'dealer listing hoverable z-depth-1 row pb20 pt20 mb10'}):
                 location_name = script.find('h3', {'class': 'no-margin'}).text.strip()
+                phone1 = script.find('a', {'class': 'storePhoneNumber dealer_phone'})#.text.strip()
+                if phone1 !=None:
+                    phone =  script.find('a', {'class': 'storePhoneNumber dealer_phone'}).text.strip()
+                else:
+                    phone =''    
                 full_address = ",".join(list(script.find('p', {'class': 'address relative'}).stripped_strings))
 
                 if not full_address.find('https://') >= 0:
@@ -102,11 +107,12 @@ def fetch_data():
 
                 if script.find("a",{"class":"storeDirections"}) is not None:
                     location_url = script.find("a",{"class":"storeDirections"})['href']
+                   
                     latitude = location_url.split('&daddr=')[1].split(',')[0]
-                    longitude = location_url.split('&daddr=')[1].split(',')[0]
+                    longitude = location_url.split('&daddr=')[1].split(',')[1]                   
 
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                        store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                        store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
                 if store[2]+store[-3] in addresses:
                     continue
@@ -114,6 +120,7 @@ def fetch_data():
                 addresses.append(store[2]+store[-3])
 
                 store = ["<MISSING>" if x == "" else x for x in store]
+                yield store
 
                 # print("data = " + str(store))
                 # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

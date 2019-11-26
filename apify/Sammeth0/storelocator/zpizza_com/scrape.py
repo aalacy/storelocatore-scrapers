@@ -41,43 +41,48 @@ def fetch_data():
 	r = requests.get(page_url)
 	soup=BeautifulSoup(r.text,'lxml')
 
-	divs=soup.findAll(class_="location-contact")
-	for div in divs:
-		state=div.find(class_='region').text.replace('\xa0','')
-		if state in us_states:
-			locs.append(div.find(class_='locality').text)
-			streets.append(div.find(class_='street-address').text)
-			cities.append(div.find(class_='locality').text)
-			states.append(div.find(class_='region').text)
-			zips.append(div.find(class_='postal-code').text)
-			id=str(div.find(class_='street-address').text).split('#')
-			try:
-				ids.append(id[1])
-			except:
-				ids.append("<MISSING>")
-			phone=str(div.find('a',href=True,text=True))
-			if phone != 'None':
-				phones.append( phone.split('href="tel:')[1].split('">')[0])
-			else:
-				phones.append("<MISSING>")
-	locations=soup.findAll(class_='fn location-name')
-	for location in locations:
-		if location.find(class_="taproom-location"):
-			types.append(soup.find("dd").text)
-		else:
-			types.append("<MISSING>")
-	
-	longs_lats=soup.findAll(class_='vcard location open')
-	for long_lat in longs_lats:
-		longs.append(long_lat['data-geo'].split(',')[0])
-		lats.append(long_lat['data-geo'].split(',')[1])
-	
-	details= soup.findAll(class_='details')
-	for detail in details:
-		a=locator_domain+detail.find('a')['href']
-		r_timing= requests.get(a)
-		soup_timing=BeautifulSoup(r_timing.text,'lxml')
-		timing.append(soup_timing.find(class_='hours-of-operation').text)
+	all_divs=soup.findAll(class_="vcard location open")
+	for all_div in all_divs:
+		divs=all_div.findAll(class_="location-contact")
+		coming_soon=all_div.find(class_="coming-soon")
+		if coming_soon==None:
+			for div in divs:
+				state=div.find(class_='region').text.replace('\xa0','')
+				if state in us_states:
+					locs.append(div.find(class_='locality').text)
+					streets.append(div.find(class_='street-address').text)
+					cities.append(div.find(class_='locality').text)
+					states.append(div.find(class_='region').text)
+					zips.append(div.find(class_='postal-code').text)
+					id=str(div.find(class_='street-address').text).split('#')
+					try:
+						ids.append(id[1])
+					except:
+						ids.append("<MISSING>")
+					phone=str(div.find('a',href=True,text=True))
+					if phone != 'None':
+						phones.append( phone.split('href="tel:')[1].split('">')[0])
+					else:
+						phones.append("<MISSING>")
+			locations=all_div.findAll(class_='fn location-name')
+			for location in locations:
+				if location.find(class_="taproom-location"):
+					types.append(soup.find("dd").text)
+				else:
+					types.append("<MISSING>")
+			
+			longs_lats=soup.findAll(class_='vcard location open')
+			for long_lat in longs_lats:
+				longs.append(long_lat['data-geo'].split(',')[0])
+				lats.append(long_lat['data-geo'].split(',')[1])
+			
+			details= all_div.findAll(class_='details')
+			for detail in details:
+				a=locator_domain+detail.find('a')['href']
+				r_timing= requests.get(a)
+				soup_timing=BeautifulSoup(r_timing.text,'lxml')
+				timing.append((' '.join(str(soup_timing.find(class_='hours-of-operation')).split('<dt>')[1:])).replace('<dt>',' ')
+				.replace('<dd>',' ').replace('</dt>','').replace('</dd>','').replace('</dl>',''))
 		
 	#print(streets)
 	return_main_object=[]

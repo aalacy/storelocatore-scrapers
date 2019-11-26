@@ -15,90 +15,110 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    base_url ="https://www.thomassabo.com"
-    return_main_object=[]
-    addresses=[]
+
+    return_main_object = []
+    addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    result_coords = []
-    data_len = 0
-    MAX_RESULTS = 20
-    MAX_DISTANCE = 1000
-    coords = search.next_coord()
-    while coords:
+    MAX_RESULTS = 25
+    MAX_DISTANCE = 100
+    current_results_len = 0  # need to update with no of count.
+    coord = search.next_coord()
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        # 'Content-type': 'application/x-www-form-urlencoded'
+        "accept": "application/json, text/javascript, */*; q=0.01",
+        "referer": "https://www.thomassabo.com/US/en_US/shopfinder",
+        "x-requested-with": "XMLHttpRequest"
 
-        r = requests.get(base_url+"/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase="+str(search.current_zip)+"&searchDistance="+str(MAX_DISTANCE)+"&lat="+str(coords[0])+"&lng="+str(coords[1])+"&filterBy=").json()
-        if r != []:
-            data_len = len(r)
-            for loc in r:
-                if "address1" in loc and "stateCode" in loc:
-                    zip=''
-                    # if "postalCode" in loc:
-                        # zip=loc['postalCode'].strip()
-                    ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(loc['postalCode']))
-                    us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(loc['postalCode']))
 
-                    if ca_zip_list:
-                        zip = ca_zip_list[0]
-                        country = "CA"
-                    elif us_zip_list:
-                        zip = us_zip_list[0]
-                        country = "US"
-                    else:
-                        continue
+    }
+    base_url ="https://www.thomassabo.com"
+    while coord:
+        result_coords =[]
+        #print(coord)
+        # ul="https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase=&searchDistance=35&lat=40.7876&lng=-74.06&filterBy="
+        f="https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase=&searchDistance=35&lat="+str(coord[0])+"&lng="+str(coord[1])+"&filterBy="
+        # ulr1 = "https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase=&searchDistance="+str(MAX_DISTANCE)+"&lat="+str(coord[0])+"="+str(coord[1])+"&filterBy="
+        try:
+            r = requests.get(f).json()
+        except:
+            continue
+        # soup= BeautifulSoup(r.text,"lxml")
+        # k = json.loads(soup)
+        # print(soup)
+        # url ="https://www.thomassabo.com/on/demandware.store/Sites-TS_INT-Site/en/Shopfinder-GetStores?searchMode=radius"+str(MAX_DISTANCE)+"&searchPhrase=10009&searchDistance=50&lat="+str(coord[0])+"&lng="+str(coord[1])+"&filterBy="
+        # try:
+        #     r = requests.get(ulr1).json()
+        # except:
+        #     continue
+        
+        current_results_len = len(r )
+        for loc in r:
+           
+            if "address1" in loc and "stateCode" in loc:
+                zip=''
+                ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(loc['postalCode']))
+                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(loc['postalCode']))
 
-                    name=loc['name'].strip()
-                    address=loc['address1'].strip()
-                    city=loc['city'].strip()
-                    state=loc['stateCode']
-                    # zip=''
-                    # if "postalCode" in loc:
-                    #     zip=loc['postalCode'].strip()
-                    # if len(zip)==4:
-                    #     zip=str(0)+zip
-                    phone=''
-                    if "phone" in loc:
-                        phone=loc['phone'].strip()
+                if ca_zip_list:
+                    zip = ca_zip_list[0]
+                    country = "CA"
+                elif us_zip_list:
+                    zip = us_zip_list[0]
+                    country = "US"
+                else:
+                    continue
 
-                    storeno=loc['ID'].strip()
-                    lat=loc['latitude']
-                    lng=loc['longitude']
-                    result_coords.append((lat, lng))
-                    hour = ''
-                    page_url = base_url+"/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase=&searchDistance="+str(MAX_DISTANCE)+"&lat="+str(coords[0])+"&lng="+str(coords[1])+"&filterBy="
-                    store=[]
-                    store.append(base_url)
-                    store.append(name if name else "<MISSING>")
-                    store.append(address if address else "<MISSING>")
-                    store.append(city if city else "<MISSING>")
-                    store.append(state if state else "<MISSING>")
-                    store.append(zip if zip else "<MISSING>")
-                    store.append(country if country else "<MISSING>")
-                    store.append(storeno if storeno else "<MISSING>")
-                    store.append(phone if phone else "<MISSING>")
-                    store.append("<MISSING>")
-                    store.append(lat if lat else "<MISSING>")
-                    store.append(lng if lng else "<MISSING>")
-                    store.append(hour if hour.strip() else "<MISSING>")
-                    store.append(page_url if page_url.strip() else "<MISSING>")
+                name=loc['name'].strip()
+                address=loc['address1'].strip()
+                city=loc['city'].strip()
+                state=loc['stateCode']
+             
+                phone=''
+                if "phone" in loc:
+                    phone=loc['phone'].strip()
 
-                    adrr =name+' '+address + ' ' + city + ' ' + state + ' ' + zip
-                    if store[2]  in addresses:
-                        continue
-                    addresses.append(store[2])
-                    # print('zipp == '+zip)
-                    print("data===="+str(store))
-                    yield store
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-        if data_len < MAX_RESULTS:
-            #print("max distance update")
+                storeno=loc['ID'].strip()
+                lat=loc['latitude']
+                lng=loc['longitude']
+                hour = ''
+                store=[]
+                latitude =lat
+                longitude = lng
+                result_coords.append((latitude, longitude))
+                store.append(base_url)
+                store.append(name if name else "<MISSING>")
+                store.append(address if address else "<MISSING>")
+                store.append(city if city else "<MISSING>")
+                store.append(state if state else "<MISSING>")
+                store.append(zip if zip else "<MISSING>")
+                store.append(country if country else "<MISSING>")
+                store.append(storeno if storeno else "<MISSING>")
+                store.append(phone if phone else "<MISSING>")
+                store.append("<MISSING>")
+                store.append(lat if lat else "<MISSING>")
+                store.append(lng if lng else "<MISSING>")
+                store.append(hour if hour.strip() else "<MISSING>")
+                store.append("<MISSING>")
+                if store[2]  in addresses:
+                    continue
+                addresses.append(store[2])
+                yield store
+                #print("data===="+str(store))
+                #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+
+        if current_results_len < MAX_RESULTS:
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
-        elif data_len == MAX_RESULTS:
-            #print("max count update")
+        elif current_results_len == MAX_RESULTS:
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coords = search.next_coord()
+        coord = search.next_coord()
+    
+
 def scrape():
     data = fetch_data()
     write_output(data)

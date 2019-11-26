@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -43,17 +43,17 @@ def fetch_data():
 
 
                         locator_domain = base_url
-                        location_name = val['ownership_name']
+                        location_name = " ".join(list(BeautifulSoup(val['ownership_name'],"lxml").stripped_strings))
                         street_address = val['full_business_address']
                         city = val['city']
                         state = val['state']
                         zip = val['business_zip']
                         store_number = '<MISSING>'
                         country_code = '<MISSING>'
-                        phone = '<MISSSING>'
-                        location_type = 'sfgov'
-                        latitude = val['location']['latitude']
-                        longitude = val['location']['longitude']
+                        phone = '<MISSING>'
+                        location_type = '<MISSING>'
+                        latitude = val['location']['coordinates'][1]
+                        longitude = val['location']['coordinates'][0]
                         hours_of_operation = '<MISSING>'
 
                         store = []
@@ -71,13 +71,11 @@ def fetch_data():
                         store.append(longitude if longitude else '<MISSING>')
 
                         store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-
-                        return_main_object.append(store)
+                        store.append('<MISSING>')
+                        yield store
                 except:
                    
                     continue
-
-    return return_main_object
 
 
 

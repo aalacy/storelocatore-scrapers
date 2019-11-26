@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=",")
 
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
 
         # print("data::" + str(data))
         for i in data or []:
@@ -35,15 +35,18 @@ def fetch_data():
     k  = soup.find_all('li', {'id': 'menu-item-44'})
     for i in k:
         
-        
         li = i.find_all('li')
+        
         for i in li:
             tem_var = []
             link = i.find('a')['href']
             r1 = requests.get( link, headers=headers) 
             soup1 = BeautifulSoup(r1.text, "lxml")
             location_name = soup1.find('h1', {'class': 'main-title'}).text
+            
+          
             address_tmp = soup1.find_all('div', {'class': 'avia_textblock'})[1]
+            # print(address_tmp.text)
             address = list(address_tmp.stripped_strings)[0]
             city_tmp = list(address_tmp.stripped_strings)[1].split(',')
             city = city_tmp[0]
@@ -59,11 +62,7 @@ def fetch_data():
             hour_tmp= soup1.find_all('div', {'class': 'avia_textblock'})[2]
             hour_tmp1 = hour_tmp.find_all('p')
             hour = hour_tmp1[3].text.replace("Birthday: October 1986","Monday – Friday: 7:00 a.m. – 8:30 p.m.Saturday – Sunday: 7:30 a.m. – 8:30 p.m.")
-
-           
- 
-   
-        
+          
        
                    
             tem_var.append('https://hobees.com')
@@ -75,10 +74,12 @@ def fetch_data():
             tem_var.append('US')
             tem_var.append("<MISSING>")
             tem_var.append(phone)
-            tem_var.append("hobees")
+            tem_var.append("<MISSING>")
             tem_var.append(latitude)
             tem_var.append(longitude)
-            tem_var.append(hour.replace('\n',''))
+            tem_var.append(hour.replace("\n","").replace("Hours of Operation:",""))
+            tem_var.append(link)
+            #print(tem_var)
             return_main_object.append(tem_var)
                    
  

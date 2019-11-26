@@ -3,13 +3,14 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import unicodedata
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -36,13 +37,18 @@ def fetch_data():
         store.append(location_details[3])
         store.append("US")
         store.append("<MISSING>")
-        store.append(location_soup.find("a",{"href":re.compile("tel:")}).text)
-        store.append("los balcones")
+        store.append(location_soup.find("a",{"href":re.compile("tel:")})["href"].replace("tel:",""))
+        store.append("<MISSING>")
         store.append(geo_location.split("/@")[1].split(",")[0])
         store.append(geo_location.split("/@")[1].split(",")[1])
         store.append(" ".join(location_soup.find("div",{'class':"hours"}).stripped_strings))
-        return_main_object.append(store)
-    return return_main_object
+        store.append(location.find_all("a")[1]["href"])
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        yield store
 
 def scrape():
     data = fetch_data()

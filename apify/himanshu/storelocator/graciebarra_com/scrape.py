@@ -3,13 +3,14 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import unicodedata
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -51,10 +52,16 @@ def fetch_data():
         store.append("US" if store_data["field_3_raw"]["country"].lower() == "united states" else "CA")
         store.append("<MISSING>")
         store.append(store_data["field_4_raw"]["number"] if store_data["field_4_raw"]  else "<MISSING>")
-        store.append("gracie barra")
+        store.append("<MISSING>")
         store.append(store_data["field_3_raw"]["latitude"])
         store.append(store_data["field_3_raw"]["longitude"])
         store.append("<MISSING>")
+        store.append("<MISSING>")
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         yield store
 
 def scrape():

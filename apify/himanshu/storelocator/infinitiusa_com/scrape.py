@@ -13,7 +13,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","Page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -33,13 +33,14 @@ def minute_to_hours(time):
 
 def fetch_data():
     # zips = sgzip.for_radius(100)
-    zips = sgzip.coords_for_radius(50)
-
-    
     return_main_object = []
     addresses = []
-    store_name=[]
-    store_detail=[]
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 25
+    MAX_DISTANCE = 50
+    current_results_len = 0  # need to update with no of count.
+    coord = search.next_coord()
   
 
     headers = {
@@ -68,19 +69,24 @@ def fetch_data():
     # longitude = "<MISSING>"
     # raw_address = ""
     # hours_of_operation = "<MISSING>"
-    address=[]
-    for zip_code in zips:
+    addresses=[]
+    while coord:
+        result_coords = []
+        lat = coord[0]
+        lng = coord[1]
 
         r = requests.get(
-            'https://us.nissan-api.net/v2/dealers?size=50&lat='+ zip_code[0]+'&long='+ zip_code[1]+'&serviceFilterType=AND&include=openingHours',
+            'https://us.nissan-api.net/v2/dealers?size='+str(MAX_DISTANCE)+'&lat='+str(lat)+'&long='+str(lng)+'&serviceFilterType=AND&include=openingHours',
             headers=headers,
        
         )
         soup= BeautifulSoup(r.text,"lxml")
         k = json.loads(soup.text)
         if 'dealers' in k:
+            current_results_len = len(k)
             for i in k['dealers']:
-                tem_var=[]
+                #print(i['hasDealerWebsite'])
+                
                 # print(i['departments']['sales']['hours']['sunday']['open']['time'] + ' '+i['departments']['sales']['hours']['sunday']['close']['time'])
                 # hours = 'sunday' +' '+i['departments']['sales']['hours']['sunday']['open']['time'] + ' '+i['departments']['sales']['hours']['sunday']['close']['time']+ ' '+'monday'+' '+i['departments']['sales']['hours']['monday']['open']['time'] + ' '+i['departments']['sales']['hours']['monday']['close']['time']+ ' '+ 'tuesday'+' '+i['departments']['sales']['hours']['tuesday']['open']['time'] + ' '+i['departments']['sales']['hours']['tuesday']['close']['time']+' '+'wednesday'+' '+i['departments']['sales']['hours']['wednesday']['open']['time'] + ' '+i['departments']['sales']['hours']['wednesday']['close']['time']+' '+'thursday'+' '+i['departments']['sales']['hours']['thursday']['open']['time'] + ' '+i['departments']['sales']['hours']['thursday']['close']['time']+' '+'friday'+' '+i['departments']['sales']['hours']['friday']['open']['time'] + ' '+i['departments']['sales']['hours']['friday']['close']['time']+ ' '+'saturday'+' '+i['departments']['sales']['hours']['saturday']['open']['time'] + ' '+i['departments']['sales']['hours']['saturday']['close']['time']
   
@@ -105,8 +111,9 @@ def fetch_data():
                         h2 = str(h['closed'])
                     
                     time = time  + ' ' + h2
+            
                 hours = (time +' '+time1)
-                # exit()
+                tem_var=[]
                 tem_var.append("https://www.infinitiusa.com/")
                 tem_var.append(i['name'])
                 tem_var.append(i['address']['addressLine1'])
@@ -116,17 +123,27 @@ def fetch_data():
                 tem_var.append(c)
                 tem_var.append('<MISSING>')
                 tem_var.append(i['contact']['phone'])
-                tem_var.append("infinitiusa")
+                tem_var.append("<MISSING>")
                 tem_var.append(i['geolocation']['latitude'])
                 tem_var.append(i['geolocation']['longitude'])
                 tem_var.append(hours)
-                
-                if tem_var[3] in address:
+                tem_var.append("<MISSING>")
+                # print(tem_var)
+                if tem_var[2] in addresses:
                     continue
+                addresses.append(tem_var[2])
+                yield tem_var
+                # return_main_object.append(tem_var)
 
-                address.append(tem_var[3])
-
-                return_main_object.append(tem_var) 
+        if current_results_len < MAX_RESULTS:
+            # print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            # print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_coord() 
 
     
     return return_main_object

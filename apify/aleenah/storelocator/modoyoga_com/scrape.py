@@ -41,6 +41,7 @@ def fetch_data():
     countries=[]
     urls=[]
     count=[]
+    checks=[]
     headers={'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
 'accept-encoding': 'gzip, deflate, br',
 'accept-language': 'en-US,en;q=0.9',
@@ -60,22 +61,64 @@ def fetch_data():
             if re.findall(r'<h5><a href="([^"]*)"', d)[0].strip() not in urls:
                 urls.append(re.findall(r'<h5><a href="([^"]*)"', d)[0].strip())
                 count.append("CA")
+        else:
+            #checks.append(re.findall(r'<h5><a href="([^"]*)"', d)[0].strip())
+            if re.findall(r'<h5><a href="([^"]*)"', d)[0].strip() not in urls:
+                urls.append(re.findall(r'<h5><a href="([^"]*)"', d)[0].strip())
+                count.append("<MISSING>")
 
-
+    '''for check in checks:
+        print(check)
+        res = requests.get(check, headers=headers)
+        #soup = BeautifulSoup(res.text, 'html.parser')
+        if "canada" in res.text.lower():
+            print('found canada')
+        elif "usa" in res.text.lower():
+            print('found usa')'''
 
     print("here",len(urls))
     for url in urls:
+        cont=0
         res=requests.get(url,headers=headers)
         soup = BeautifulSoup(res.text, 'html.parser')
         print(url)
 
+        driver.get(url)
+        # print(driver.page_source)
+        contacts = driver.find_elements_by_tag_name("section")
+
+        for c in contacts:
+            if c.get_attribute('id') == "contact":
+                f = c.find_elements_by_tag_name("iframe")[1]
+                driver.switch_to.frame(f)
+                script = driver.find_element_by_xpath('//script[contains(text(), "onEmbedLoad")]')
+                script_src = script.get_attribute('innerHTML')
+                if "canada" in script_src.lower():
+                    count[urls.index(url)]="CA"
+                    #print("canada")
+                elif "usa" in script_src.lower():
+                    count[urls.index(url)] = "US"
+                    #print("usa")
+                else:
+                    cont = 1
+                    break
+
+                lat_lng = re.search(r'(-\d+\.\d+), ?(\d+\.\d+)', script_src)
+                la = lat_lng.group(2)
+                lng = lat_lng.group(1)
+                lat.append(la)
+                long.append(lng)
+                driver.switch_to.default_content()
+                #print(la, lng)
+        if cont ==1:
+            continue
         divs = soup.find_all('div', {'class': 'col-6 offset-1'})
         for div in divs:
 
             locs.append(div.find('h2').text.strip())
             ps=div.find_all('p')
             p=ps[0].text
-
+            p=re.sub(r'\([a-zA-Z \.]+\)',"",p)
             z = re.findall(r'[A-Z][0-9][A-Z] [0-9][A-Z][0-9]' , p,re.DOTALL)
             if z == []:
                 z = re.findall(r'[0-9]{5}', p,re.DOTALL)
@@ -110,6 +153,9 @@ def fetch_data():
                     s = "<MISSING>"
             st= p.split(c)[0].replace(",","").replace("\r\n"," ").replace("\n"," ").strip()
             #print(st)
+            if len(c)>2 and st=="":
+                st=c
+                c="<MISSING>"
             if st=="":
                 st="<MISSING>"
             states.append(s)
@@ -123,7 +169,7 @@ def fetch_data():
                 ph="<MISSING>"
             else:
                 ph=ph[0].strip().replace("<","")
-                if ph=="":
+                if ph=="" or len(ph)<10:
                     ph="<MISSING>"
 
             tim=re.findall(r"Hours(.*pm|.*PM)",div.text,re.DOTALL)
@@ -139,25 +185,8 @@ def fetch_data():
             page_url.append(url)
             countries.append(count[urls.index(url)])
 
-        driver.get(url)
-        #print(driver.page_source)
-        contacts=driver.find_elements_by_tag_name("section")
 
-        for c in contacts:
-            if c.get_attribute('id')=="contact":
-                f=c.find_elements_by_tag_name("iframe")[1]
-                driver.switch_to.frame(f)
-                script = driver.find_element_by_xpath('//script[contains(text(), "onEmbedLoad")]')
-                script_src = script.get_attribute('innerHTML')
-                lat_lng = re.search(r'(-\d+\.\d+), ?(\d+\.\d+)', script_src)
-                la = lat_lng.group(2)
-                lng = lat_lng.group(1)
-                lat.append(la)
-                long.append(lng)
-                driver.switch_to.default_content()
-                print(la,lng)
-
-
+    print(len(locs),len(street))
     all = []
     for i in range(0, len(locs)):
         row = []

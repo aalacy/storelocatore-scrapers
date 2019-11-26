@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","raw_address"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -30,21 +30,75 @@ def fetch_data():
         filters = store_data["filters"]
         if "Convenience Store" not in filters:
             continue
+        address = store_data["data"]["address"].split(',')
+        if "United States" in " ".join(address):
+            address.remove(' United States')
+        zipp_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(" ".join(address[1:])))
+        if zipp_list :
+            zipp = zipp_list[0].strip()
+        else:
+            zipp = "<MISSING>"
+
+
+        if len(address) == 4:
+
+            if "Suite 1" not in address[1]:
+                street_address = address[0].strip()
+                city = address[1].strip()
+                state = address[-2].strip()
+            else:
+                street_address = address[0] + " "+ address[1]
+                city = address[2].strip()
+                state = address[-1].strip()
+        elif len(address) ==3:
+            state_tag = re.findall(r'([A-Z]{2})', str("".join(address)))
+            if state_tag :
+                if "US" in " ".join(state_tag):
+                    state_tag.remove("US")
+                state = state_tag[-1].strip()
+                street_address = address[0].strip()
+                if "MT" not in address[1]:
+
+                    city = address[1].strip()
+                else:
+                    city = " ".join(address[0].split()[-2:]).strip()
+
+
+            else:
+                state = "<MISSING>"
+                street_address = " ".join(address[:2]).strip()
+                city = address[-1].strip()
+        elif len(address) == 2:
+            state= re.findall(r'([A-Z]{2})', str("".join(address[-1].split()[-1])))[0]
+            if "Suite 1" not in address[-1]:
+                street_address = " ".join(address[0].split()[:-1]).strip()
+                city = address[0].split()[-1].strip()
+            else:
+                street_address = address[0].strip() + " "+" ".join(address[-1].split(' ')[:-2]).strip()
+                city =address[-1].split(' ')[-2].strip()
+        else:
+            street_address = "".join(address)
+            city = "<MISSING>"
+            state = "<MISSING>"
+
+
         store = []
-        store.append("https://www.townpump.com")
+        store.append("https://www.townpumpconvenience.com")
         store.append(store_data['name'])
-        store.append("<INACCESSIBLE>")
-        store.append("<INACCESSIBLE>")
-        store.append("<INACCESSIBLE>")
-        store.append("<INACCESSIBLE>")
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
         store.append("US")
         store.append(store_data["storeid"])
         store.append(store_data["data"]["phone"] if "phone" in store_data["data"] and store_data["data"]["phone"] != "" and store_data["data"]["phone"] != None else "<MISSING>")
-        store.append("town  pump")
+        store.append("<MISSING>")
         store.append(store_data["data"]["map_lat"])
         store.append(store_data["data"]["map_lng"])
         store.append("<MISSING>")
-        store.append(store_data["data"]["address"])
+        store.append("<MISSING>")
+        # print('data==='+str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
     return return_main_object
 
