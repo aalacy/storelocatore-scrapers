@@ -137,6 +137,7 @@ def fetch_data():
         elif len(branches) > 0:
             print("max count update")
             search.max_count_update(result_coords)
+        coord = search.next_coord()
         
     all = []
     for i in range(0, len(locs)):
