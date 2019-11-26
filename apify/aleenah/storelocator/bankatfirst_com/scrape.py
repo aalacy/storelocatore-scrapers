@@ -62,7 +62,7 @@ def fetch_data():
         lati=coord[0]
         longi=coord[1]
         r = requests.post("https://bankatfirst.locatorsearch.com/GetItems.aspx", headers=headers,
-                      data="lat="+str(lati)+"&lng="+str(longi)+"&searchby=FCS%7CATMSF%7C")
+                      data="lat="+str(lati)+"&lng="+str(longi)+"&searchby=FCS%7C")
     
 
 
