@@ -56,9 +56,6 @@ def fetch_data():
     coord = search.next_coord()
 
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
-        #print(coord)
-        #i+=1
         lati=coord[0]
         longi=coord[1]
         r = requests.post("https://bankatfirst.locatorsearch.com/GetItems.aspx", headers=headers,
@@ -69,7 +66,6 @@ def fetch_data():
         data=str(r.content)
         branches=data.split("</marker>")
         del branches[-1]
-        print(len(branches))
         result_coords = []
         for b in branches:
 
@@ -95,7 +91,6 @@ def fetch_data():
                 phones.append("<MISSING>")
             else:
                 types.append("Branch center, "+re.findall(r'<div class="infowindow"><div class="title">.*</div><div>(.*)</div></div>]]></contents></tab>',b)[0])
-                print(b)
                 add=re.findall(r'<add2><\!\[CDATA\[(.*)<br>.*</add2>',b)
                 if add==[]:
                     add=re.findall(r'<add2><\!\[CDATA\[(.*)\]\]></add2>',b)
@@ -114,7 +109,6 @@ def fetch_data():
             if z ==[]:
                 z=re.findall(r'[A-Z][0-9][A-Z] [0-9][A-Z][0-9]',addr)
                 if z ==[]:
-                    print(addr)
                     zips.append("<MISSING>")
                     countries.append("US")
                 else:
@@ -129,7 +123,6 @@ def fetch_data():
                 states.append(s[0])
             else:
                 states.append("<MISSING>")
-                print(addr)
         
         if len(branches) == 0:
             print("max distance update")
