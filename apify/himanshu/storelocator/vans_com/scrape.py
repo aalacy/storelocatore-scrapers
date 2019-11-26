@@ -47,6 +47,13 @@ def fetch_data():
                     zip = loc.find('postalcode').text.strip()
                     if zip  == '00000':
                         zip = ''
+
+                    if len(zip) != 5 and zip != '':
+                        index = 5
+                        char = '-'
+                        zip = zip[:index] + char + zip[index + 1:]
+                        # print(word)
+                    # print("zipppppppppppppppppp   ",zip) 
                     phone=loc.find('phone').text.strip()
                     storeno=loc.find('sn').text.strip()
                     if storeno == '0':
@@ -79,7 +86,7 @@ def fetch_data():
                         continue
                     addresses.append(address)
                     # print('zipp == '+zip)
-                    #print("data===="+str(store))
+                    # print("data===="+str(store))
                     yield store
                 # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         if data_len < MAX_RESULTS:

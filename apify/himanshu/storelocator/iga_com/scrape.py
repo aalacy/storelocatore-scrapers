@@ -67,11 +67,13 @@ def fetch_data():
             for details in soup.find_all('div', class_="store-card"):
                 tag_address = details.find(
                     'div', class_='store-location')
-                dataurl = tag_address.find('a', class_='store-website-link')
-                if dataurl == None:
-                    dataurl = "<MISSING>"
-                else:
-                    page_url = dataurl['href'].strip()
+
+                # dataurl = tag_address.find('a', class_='store-website-link')
+                # if dataurl == None:
+                #     dataurl = "<MISSING>"
+                # else:
+                #     page_url = dataurl['href'].strip()
+                page_url = "<MISSING>"
                 location_name = tag_address.find(
                     'div', class_="store-location-details").find('h3').text
                 street_address = tag_address['data-address'].split(',')[
@@ -83,7 +85,9 @@ def fetch_data():
                 zipp = tag_address['data-address'].split(',')[-1].strip()
                 if len(zipp) == 4:
                     zipp = "0" + zipp
-
+                # if "42106" == zipp or "42113" == zipp or "17328" == zipp:
+                #     print(tag_address)
+                #     print('~~~~~~~~~~~~~~~~~~~~~`')
                 latitude = tag_address['data-lat']
                 longitude = tag_address['data-long']
                 phone = tag_address.find(

@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-#import sgzip
+import sgzip
 
 
 
@@ -35,12 +35,12 @@ def fetch_data():
     
     return_main_object = []
     addresses = []
-    # search = sgzip.ClosestNSearch()
-    # search.initialize()
-    # MAX_RESULTS = 92
-    # MAX_DISTANCE = 80
-    # current_results_len = 0  # need to update with no of count.
-    # coord = search.next_coord()
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 100
+    MAX_DISTANCE = 80
+    current_results_len = 0  # need to update with no of count.
+    coord = search.next_coord()
     
     return_main_object = []
     addresses = []
@@ -69,73 +69,65 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
     address=[]
-    # while coord:
-    #     result_coords = []
-    #     zip_code = str(coord[0])
-    #     zip_code = str(coord[1])
-      
-    r = requests.get(
-        "https://www.kwiktrip.com/locproxy.php?Latitude=42.07295&Longitude=-89.38669&maxDistance=80&limit=100",
-        # "https://www.kwiktrip.com/locproxy.php?Latitude="+zip_code[0]+"&Longitude="+zip_code[1] +"&maxDistance=80&limit=100",
-        # 'https://www.kwiktrip.com/locproxy.php?Latitude='+zip_code[0]+'&Longitude='+zip_code[1] +'&maxDistance=4000&limit=100',
-        headers=headers,
-    
-    )
-    soup= BeautifulSoup(r.text,"lxml")
+    while coord:
+        result_coords = []
+        try:
+
+            r = requests.get(
+                "https://www.kwiktrip.com/locproxy.php?Latitude="+str(coord[0])+"&Longitude="+str(coord[1])+"&maxDistance="+str(MAX_DISTANCE)+"&limit="+str(MAX_RESULTS),
+                headers=headers,
+        
+            )
+        except:
+            continue    
+        soup= BeautifulSoup(r.text,"lxml")
     # print("=====================================================================",soup)
     # print('https://www.kwiktrip.com/locproxy.php?Latitude='+zip_code[0]+'&Longitude='+zip_code[1] +'&maxDistance='+str(MAX_DISTANCE)+'&limit='+str(MAX_RESULTS))
-    k = json.loads(soup.text)
-    if len(k) != 1 or k in 'stores':
-        current_results_len = len(k['stores'])
-        for i in k['stores']:
-            # print("=====================================================================",i)
-            tem_var=[]
-            if i['open24Hours']==True:
-                hours_of_operation = "Open 24 hours a day"
-            else:
-                hours_of_operation ="<MISSING>"
-            tem_var.append("https://www.kwiktrip.com")
-            tem_var.append(i['name'].split(" #")[0])
-            tem_var.append(i['address']['address1'])
-            tem_var.append(i['address']['city'] )
-            tem_var.append(i['address']['state'])
-            tem_var.append(i['address']['zip'])
-            tem_var.append("US")
-            tem_var.append(i['name'].split(" #")[-1])
-            tem_var.append(i['phone'])
-            tem_var.append("<MISSING>")
-            tem_var.append(i['latitude'])
-            tem_var.append(i['longitude'])
-            tem_var.append(hours_of_operation)
-            tem_var.append('<MISSING>')
-
-            # print(i.kyes())
-            # if i['open24Hours']=='true':
-    
-            # print(tem_var)
-            #     tem_var.append('open24Hours')
-            # else:
-            #     print(zip_code)
-            #     print(i['open24Hours'])
-            # print(tem_var)
-            if tem_var[2] in address:
-                continue
-
-            address.append(tem_var[2])
-            # print("tem_var==============================",tem_var)
-            return_main_object.append(tem_var)
-            
-        # if current_results_len < MAX_RESULTS:
-        #     print("max distance update")
-        #     search.max_distance_update(MAX_DISTANCE)
-        # elif current_results_len == MAX_RESULTS:
-        #     print("max count update")
-        #     search.max_count_update(result_coords)
-        # else:
-        #     raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        # coord = search.next_coord()
+   
+        k = json.loads(soup.text)
        
-    return return_main_object
+        if len(k) != 1 or k in 'stores':
+            current_results_len = len(k['stores'])
+            for i in k['stores']:
+                # print("=====================================================================",i)
+                tem_var=[]
+                if i['open24Hours']==True:
+                    hours_of_operation = "Open 24 hours a day"
+                else:
+                    hours_of_operation ="<MISSING>"
+                tem_var.append("https://www.kwiktrip.com")
+                tem_var.append(i['name'].split(" #")[0])
+                tem_var.append(i['address']['address1'])
+                tem_var.append(i['address']['city'] )
+                tem_var.append(i['address']['state'])
+                tem_var.append(i['address']['zip'])
+                tem_var.append("US")
+                tem_var.append(i['name'].split(" #")[-1])
+                tem_var.append(i['phone'])
+                tem_var.append("<MISSING>")
+                tem_var.append(i['latitude'])
+                tem_var.append(i['longitude'])
+                tem_var.append(hours_of_operation)
+                tem_var.append('<MISSING>')
+                if tem_var[2] in address:
+                    continue
+
+                address.append(tem_var[2])
+                #print("tem_var==============================",tem_var)
+                yield tem_var
+            # return_main_object.append(tem_var)
+            
+        if current_results_len < MAX_RESULTS:
+            #print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            #print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_coord()
+       
+    # return return_main_object
 
 
             

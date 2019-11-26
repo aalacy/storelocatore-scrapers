@@ -21,25 +21,41 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 25
-    MAX_DISTANCE = 50
+    MAX_DISTANCE = 100
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        # 'Content-type': 'application/x-www-form-urlencoded'
+        "accept": "application/json, text/javascript, */*; q=0.01",
+        "referer": "https://www.thomassabo.com/US/en_US/shopfinder",
+        "x-requested-with": "XMLHttpRequest"
 
+
+    }
     base_url ="https://www.thomassabo.com"
     while coord:
-        # lat = coord[0]
-        # lng = coord[1]
         result_coords =[]
-        # print(coord)
-        url ="https://www.thomassabo.com/on/demandware.store/Sites-TS_INT-Site/en/Shopfinder-GetStores?searchMode=radius"+str(MAX_DISTANCE)+"&searchPhrase=10009&searchDistance=50&lat="+str(coord[0])+"&lng="+str(coord[1])+"&filterBy="
+        #print(coord)
+        # ul="https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase=&searchDistance=35&lat=40.7876&lng=-74.06&filterBy="
+        f="https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase=&searchDistance=35&lat="+str(coord[0])+"&lng="+str(coord[1])+"&filterBy="
+        # ulr1 = "https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase=&searchDistance="+str(MAX_DISTANCE)+"&lat="+str(coord[0])+"="+str(coord[1])+"&filterBy="
         try:
-            r = requests.get(url).json()
+            r = requests.get(f).json()
         except:
             continue
+        # soup= BeautifulSoup(r.text,"lxml")
+        # k = json.loads(soup)
+        # print(soup)
+        # url ="https://www.thomassabo.com/on/demandware.store/Sites-TS_INT-Site/en/Shopfinder-GetStores?searchMode=radius"+str(MAX_DISTANCE)+"&searchPhrase=10009&searchDistance=50&lat="+str(coord[0])+"&lng="+str(coord[1])+"&filterBy="
+        # try:
+        #     r = requests.get(ulr1).json()
+        # except:
+        #     continue
         
-        current_results_len = len(r)
+        current_results_len = len(r )
         for loc in r:
-            #print(loc)
+           
             if "address1" in loc and "stateCode" in loc:
                 zip=''
                 ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(loc['postalCode']))
@@ -89,8 +105,8 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
                 yield store
-                # print("data===="+str(store))
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                #print("data===="+str(store))
+                #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
         if current_results_len < MAX_RESULTS:
             # print("max distance update")

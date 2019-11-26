@@ -16,7 +16,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -33,8 +33,8 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 2500
+    MAX_RESULTS = 25
+    MAX_DISTANCE = 100
     current_results_len = 0  # need to update with no of count.
     zip_code = search.next_zip()     
     while zip_code:
@@ -48,7 +48,7 @@ def fetch_data():
         country_code = "US"
         store_number = ""
         phone = ""
-        location_type = "gabesstores"
+        location_type = "<MISSING>"
         latitude = ""
         longitude = ""
         raw_address = ""
@@ -63,48 +63,56 @@ def fetch_data():
         # zip_code = 11576
         
         # print('location_url ==' +location_url))
-        #print("===============================================",zip_code)
+        # print("===============================================",zip_code)
         
         try:
             location_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius="+str(MAX_DISTANCE)+"&location="+zip_code+"&limit="+str(MAX_RESULTS)+"&api_key=56bb34af25f122cb7752babc1c8b9767&v=20181201&resolvePlaceholders=true&entityTypes=location"
             k = requests.get(location_url, headers=headers).json()
         except:
             continue
-        # print(zip_code)
+        # print(location_url)
+        current_results_len = len(k['response']['entities'])
         for i in k['response']['entities']:
+            # print(i)
             street_address =i["address"]['line1']
             city = i["address"]['city']
-            # if ""
             state =  i["address"]['region']
             zipp = i["address"]['postalCode']
             location_name = i["name"]
             phone = i['mainPhone']
             time = ''
             for j in i["hours"].keys():
-                # print(i["hours"][j])
                 if "openIntervals" in i["hours"][j]: 
                     time = time +' ' + (j + ' ' +i["hours"][j]['openIntervals'][-1]["start"]+ ' ' + i["hours"][j]['openIntervals'][-1]["end"])
                 else:
                     time = ''
+            
             hours_of_operation =time
-            latitude = i['yextDisplayCoordinate']['latitude']
-            longitude = i['yextDisplayCoordinate']['longitude']
+            latitude = i['yextRoutableCoordinate']['latitude']
+            longitude = i['yextRoutableCoordinate']['longitude']
+            # print("================k ",i)
+            # page_url = i['landingPageUrl']
+            if "landingPageUrl" in i:
+                page_url =i['landingPageUrl']
+            else:
+                
+                page_url = "<MISSING>"
             result_coords.append((latitude, longitude))
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                    store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                    store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
             if str(store[2]) + str(store[-3]) not in addresses:
                 addresses.append(str(store[2]) + str(store[-3]))                   
                 store = [x if x else "<MISSING>" for x in store]
-                print("data = " + str(store))
-                print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                #print("data = " + str(store))
+                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
         if current_results_len < MAX_RESULTS:
-            print("max distance update")
+            #print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            print("max count update")
+            #print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -49,8 +49,11 @@ def fetch_data():
         # print("location url = "+ location_url +'{"longitude": '+str(lat)+', "latitude": '+str(lng)+'}')
         # lat = -73.6506776
         # lng = 40.7987048
-        r = requests.post(location_url, headers=headers, data={"longitude": str(lng), "latitude": str(lat)})
+        try:
 
+            r = requests.post(location_url, headers=headers, data={"longitude": str(lng), "latitude": str(lat)})
+        except:
+            continue
         # r_ascii = r.text.encode('ascii', 'ignore').decode('ascii')
 
         soup = BeautifulSoup(r.text, "lxml")
@@ -69,7 +72,7 @@ def fetch_data():
         country_code = "US"
         store_number = ""
         phone = ""
-        location_type = "shopmyexchange"
+        location_type = "<MISSING>"
         latitude = ""
         longitude = ""
         raw_address = ""

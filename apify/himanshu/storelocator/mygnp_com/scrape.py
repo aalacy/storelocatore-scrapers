@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -41,8 +41,9 @@ def fetch_data():
                 soup2= BeautifulSoup(r.text,"lxml")
                 j2 = json.loads(soup2.find("script",{"type":"application/ld+json"}).text)
                 # print(j2)
-                #print("=============================")
-                store_name.append(j2['name'])
+                # print("=============================")
+                store_name.append(j2['name'].replace("Good Neighbor Pharmacy of ","").split(",")[0])
+                #print(j2['name'].replace("Good Neighbor Pharmacy of ","").split(",")[0])
                 tem_var.append(j2['address']['streetAddress'])
                 tem_var.append(j2['address']['addressLocality'])
                 tem_var.append(j2['address']['addressRegion'])
@@ -50,15 +51,17 @@ def fetch_data():
                 tem_var.append("US")
                 tem_var.append("<MISSING>")
                 tem_var.append(j2['telephone'])
-                tem_var.append("mygnp")
+                tem_var.append("<MISSING>")
                 tem_var.append(j2['geo']['latitude'])
                 tem_var.append(j2['geo']['longitude'])
                 # print(tem_var)
                 if "openingHours" in j2:
                     tem_var.append( j2['openingHours'])
                 else:
-                    tem_var.append("<MISSING>")    
+                    tem_var.append("<MISSING>")
+                tem_var.append(j.a['href'])    
                 store_detail.append(tem_var)
+                # print(tem_var)
 
     for i in range(len(store_name)):
        store = list()

@@ -27,11 +27,15 @@ def fetch_data():
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Referer": "https://www.lincoln.com/dealerships/",
+        "x-dtpc": "5$343920979_615h3vPDTGJFWDWTFXZXAKGVOSSDVSUAIMTUYZ",
+        "X-Requested-With": "XMLHttpRequest"
+
     }
     base_url = "https://www.lincoln.com"
-
+    addresses1 = []
     addresses = []
-    addresses1 =[]
     store_detail =[] 
     store_name=  []
     return_man = []
@@ -47,7 +51,6 @@ def fetch_data():
     
     while zip_code:
         result_coords = []
-
         locator_domain = base_url
         location_name = ""
         street_address = ""
@@ -74,27 +77,32 @@ def fetch_data():
         # lng = -42.225
 
         # zip_code = 11576
-        location_url = "https://www.lincoln.com/services/dealer/Dealers.json?make=Lincoln&radius="+str(MAX_DISTANCE)+"&filter=&minDealers=1&maxDealers="+str(MAX_RESULTS)+"&postalCode="+str(zip_code)
+        get_u = "https://www.lincoln.com/services/dealer/Dealers.json?make=Lincoln&radius="+str(MAX_DISTANCE)+"&filter=&minDealers=1&maxDealers="+str(MAX_RESULTS)+"&postalCode="+str(zip_code)
+        # location_url = "https://www.lincoln.com/services/dealer/Dealers.json?make=Lincoln&radius="+str(MAX_DISTANCE)+"&filter=&minDealers=1&maxDealers="+str(MAX_RESULTS)+"&postalCode="+str(zip_code)
         # print('location_url ==' +location_url))
         try:
-            k = requests.get(location_url, headers=headers).json()
+            k = requests.get(get_u, headers=headers).json()
         except:
             continue
         if "Response" in k and "Dealer" in k['Response']:
             if list ==type(k['Response']["Dealer"]):
                 x = len(k['Response']["Dealer"])
                 for i in k['Response']['Dealer']:
-                    
+                    if i['ldlrcalltrk_lad']:
+                        phone =  i['ldlrcalltrk_lad']
+                    else:
+                        phone = i["Phone"]
+
                     if "Street1"  in i["Address"]:
                         street_address = i["Address"]['Street1'] #+ ' ' +i["Address"]['Street2']+ ' ' +i["Address"]['Street3']
                     else:
                         street_address = "<MISSING>"
                     # location_name = i["Name"]
-                    store_name.append(i["Name"])
+                    # store_name.append()
                     city = i["Address"]['City']
                     state = i["Address"]['State']
                     zipp =i["Address"]['PostalCode']
-                    phone = i["Phone"]
+                    # phone = i["Phone"]
                     time=''
                     time1 = ''
                     h1 =''
@@ -115,6 +123,8 @@ def fetch_data():
                     latitude = i['Latitude']
                     longitude = i['Longitude']
                     tem_var =[]
+                    # tem_var.append("https://www.lincoln.com/")
+                    store_name.append(i["Name"])
                     tem_var.append(street_address)
                     tem_var.append(city)
                     tem_var.append(state)
@@ -122,27 +132,38 @@ def fetch_data():
                     tem_var.append("US")
                     tem_var.append("<MISSING>")
                     tem_var.append(phone if phone else "<MISSING>" )
-                    tem_var.append("lincoln")
+                    tem_var.append("<MISSING>")
                     tem_var.append(latitude)
                     tem_var.append(longitude)
                     tem_var.append(hours_of_operation.replace(" SalesHours  ServiceHours ","<MISSING>") if hours_of_operation else "<MISSING>")
                     tem_var.append("https://www.lincoln.com/dealerships/dealer-details/"+i['urlKey'])
-                    
                     store_detail.append(tem_var)
+                    # if tem_var[2] in addresses:
+                    #     continue
+                    # addresses.append(tem_var[2])  
+                    # yield tem_var
+                    #print(tem_var)
           
 
         if "Response" in k and "Dealer" in k['Response']:
             if dict==type(k['Response']["Dealer"]):
                 y = len(k['Response']["Dealer"])
+
                 if "Street1"  in i["Address"]:
                     street_address = i["Address"]['Street1'] #+ ' ' +i["Address"]['Street2']+ ' ' +i["Address"]['Street3']
                 else:
                     street_address = "<MISSING>"
+
+                if i['ldlrcalltrk_lad']:
+                    phone =  i['ldlrcalltrk_lad']
+                else:
+                    phone = i["Phone"]
+
                 store_name.append(i["Name"])
                 city = i["Address"]['City']
                 state = i["Address"]['State']
                 zipp =i["Address"]['PostalCode']
-                phone = i["Phone"]
+                # phone = i["Phone"]
                 time=''
                 time1 = ''
                 h1 =''
@@ -164,6 +185,8 @@ def fetch_data():
                 latitude = i['Latitude']
                 longitude = i['Longitude']
                 tem_var =[]
+                # tem_var.append("https://www.lincoln.com")
+                store_name.append(i["Name"])
                 tem_var.append(street_address)
                 tem_var.append(city)
                 tem_var.append(state)
@@ -171,14 +194,20 @@ def fetch_data():
                 tem_var.append("US")
                 tem_var.append("<MISSING>")
                 tem_var.append(phone if phone else "<MISSING>" )
-                tem_var.append("lincoln")
+                tem_var.append("<MISSING>")
                 tem_var.append(latitude)
                 tem_var.append(longitude)
                 tem_var.append(hours_of_operation.replace(" SalesHours  ServiceHours ","<MISSING>") if hours_of_operation else "<MISSING>")
                 tem_var.append("https://www.lincoln.com/dealerships/dealer-details/"+i['urlKey'])
                 store_detail.append(tem_var)
-     
 
+                # if tem_var[2] in addresses1:
+                #     continue
+                # addresses1.append(tem_var[2])  
+                # yield tem_var
+                #print(tem_var)
+     
+        result_coords.append((latitude, longitude))
         if x+y < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)

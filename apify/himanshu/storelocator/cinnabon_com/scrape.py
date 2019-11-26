@@ -3,108 +3,126 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import sgzip
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open('data.csv', 'w') as output_file:
+        writer = csv.writer(output_file, delimiter=",")
 
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
 
+        # print("data::" + str(data))
+        for i in data or []:
+            writer.writerow(i)
 def fetch_data():
-    base_url = "https://www.cinnabon.com"
-    r = requests.get(base_url+'/locations')
-    soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
-    ouptut=[]
-    main=soup.find('div',{"class":"national-list"}).find_all("a")
-    for link in main:
+    addresses = []
+    search = sgzip.ClosestNSearch()
+    search.initialize(include_canadian_fsas = True)
+    MAX_RESULTS = 10
+    MAX_DISTANCE = 100
+    current_results_len = 0  # need to update with no of count.
+    zip_code = search.next_zip()
+    # coord = search.next_coord()
+    result_coords = []
+
+    headers = {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
+        # 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+
+
+    }
+
+    # it will used in store data.
+    locator_domain = "https://www.cinnabon.com/"
+    page_url = "<MISSING>"
+    location_name = ""
+    street_address = "<MISSING>"
+    city = "<MISSING>"
+    state = "<MISSING>"
+    zipp = "<MISSING>"
+    country_code = "US"
+    store_number = "<MISSING>"
+    phone = "<MISSING>"
+    location_type = "<MISSING>"
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
+    raw_address = ""
+    hours_of_operation = "<MISSING>"
+
+    while zip_code:
+        result_coords = []
+
+        # isFinish = False
+        # while isFinish is not True:
         try:
-            r1 = requests.get(base_url+link['href'])
-            soup1=BeautifulSoup(r1.text,'lxml')
-            main1=soup1.find('div',{"class":"state-national-list"}).find_all("a")
-            # print(main1)
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            try:
-                for link1 in main1:
-                    r2 = requests.get(base_url+link1['href'])
-                    soup2=BeautifulSoup(r2.text,'lxml')
-                    p_url = base_url+link1['href']
-                    # print(page_url)
-                    if soup2.find('div',{"class":"city-list"})!=None:
-                        main2=soup2.find('div',{"class":"city-list"}).find_all("li")
-                        for ltag in main2:
-                            # print(ltag.prettify())
-                            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                            loc=list(ltag.stripped_strings)
-                            # print(loc)
-                            name=loc[0].strip()
-                            address=loc[1].strip()
-                            ct=loc[2].split(',')
-                            city=ct[0].strip()
-                            state=ct[1].strip().split(' ')[0].strip()
-                            zip=ct[1].strip().split(' ')[1].strip()
-                            #print(zip)
-                            if len(loc)>3:
-                                phone=loc[3].strip()
-                            else:
-                                phone="<MISSING>"
-                            page_url = base_url+ltag.find('a')['href']
-                            # print(page_url)
-
-                            r3 = requests.get(base_url+ltag.find('a')['href'])
-                            soup3=BeautifulSoup(r3.text,'lxml')
-                            hour="<MISSING>"
-                            if soup3.find('div',{"class":"hours-wrapper"})!=None:
-                                hour=' '.join(list(soup3.find('div',{"class":"hours-wrapper"}).stripped_strings))
-                                # print(hour)
-                            if soup3.find('div',{"class":"address-wrapper"})!=None:
-                                lt=soup3.find('div',{"class":"address-wrapper"}).find('a',text="see map")['href']
-                                lat=lt.split('AddressLatitude=')[1].split('&')[0].strip()
-                                lng=lt.split('AddressLongitude=')[1].split('&')[0].strip()
-                            else:
-                                lat="<MISSING>"
-                                lng="<MISSING>"
-                    else:
-
-                        #print(p_url)
-                        #print('********************************************************************************************')
-                        continue
-                    store=[]
-                    store.append(base_url)
-                    store.append(name)
-                    store.append(address)
-                    store.append(city)
-                    store.append(state)
-                    store.append(zip)
-                    store.append("US")
-                    store.append("<MISSING>")
-                    store.append(phone)
-                    store.append("<MISSING>")
-                    store.append(lat)
-                    store.append(lng)
-                    store.append(hour)
-                    store.append(page_url)
-                    if store[2] in ouptut:
-                        continue
-                    ouptut.append(store[2])
-                    #print('data == '+str(store))
-                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~`')
-                    return_main_object.append(store)
-            except:
-                #print(base_url+link1['href'])
-                #print('-----------------------------------------------------------------------------------------------------')
-                continue
-
+            r = requests.get('https://www.cinnabon.com/Location/Map/Get?brand={A019D0E8-A707-40CC-B647-F3A4670AE0AB}&ZipOrCity='+str(zip_code)+'&userfilters=8c753773-7ff5-4f6f-a550-822523cbafad&userfilters=3431a520-d000-46bb-9058-b000edc96867&userfilters=43ba8d22-b606-4d69-8b91-437e5d6264fd')
         except:
-            #print(base_url+link['href'])
-            #print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
             continue
-    return return_main_object
+        json_data = r.json()
+        current_results_len = len(json_data['Locations'])
+        for location_list in json_data['Locations']:
+            if location_list['ComingSoon'] == False and "Cinnabon" in location_list['LocationName']:
 
+                country_code = location_list['CountryName']
+                location_name = "<MISSING>"
+                phone = location_list['Tel']
+                zipp = location_list['PostalCode']
+                #print(zipp)
+                state = location_list['Region']
+                city = location_list['Locality']
+                street_address = location_list['StreetAddress']
+                location_type = location_list['LocationName']
+                latitude = location_list['Latitude']
+                longitude = location_list['Longitude']
+                store_number = location_list['StoreNumber']
+                page_url = location_list['Website']
+                h = []
+                if location_list != {}:
+                    for day,hours in location_list['Hours'].items():
+                        hours_tag = "{} : {}".format(day,hours)
+                        h.append(hours_tag)
+
+                    hours_list =  ",".join(",".join(h).split(',')[1:-2]).strip()
+                    if "None" in hours_list:
+                        hours_of_operation = "<MISSING>"
+                    else:
+                        hours_of_operation = hours_list
+                else:
+                    hours_of_operation = "<MISSING>"
+
+                result_coords.append((latitude, longitude))
+                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+                # store = [x if x else "<MISSING>" for x in store]
+                store = ['<MISSING>' if x == ' ' or x == None else x for x in store]
+
+                if store[2] in addresses:
+                    continue
+                addresses.append(store[2])
+
+
+                #print("data = " + str(store))
+                #print( '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                return_main_object.append(store)
+
+
+            # except:
+            #     isFinish = True
+            #     continue
+
+        # if current_results_len < MAX_RESULTS:
+            # print("max distance update")
+        #     search.max_distance_update(MAX_DISTANCE)
+        # elif current_results_len == MAX_RESULTS:
+        #     # print("max count update")
+        #     search.max_count_update(result_coords)
+        # else:
+        #     raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+
+        zip_code = search.next_zip()
+    return return_main_object
 def scrape():
     data = fetch_data()
     write_output(data)
