@@ -53,7 +53,6 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        print(link)
         driver.get(link)
         driver.implicitly_wait(20)
 
@@ -84,7 +83,7 @@ def fetch_data():
         all_store_data.append(store_data)
 
 
-    print('nice')
+
 
     driver.quit()
     return all_store_data
