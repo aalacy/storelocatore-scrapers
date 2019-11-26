@@ -45,6 +45,7 @@ def fetch_data():
             json_res = r.json()
             for location in json_res['d']:
                 store_num= location['StoreNum']
+
                 street_addr = location['Address']
                 lat =location['Lat']
                 if lat == "" or lat== " ":
@@ -69,7 +70,7 @@ def fetch_data():
                     loc_type= 'Murphy Express'
                 else:
                     loc_type ='Murphy USA'
-
+                loc_name = loc_type + " " + '#' + str(store_num)
                 url2 = "http://locator.murphyusa.com/MapServices.asmx/StoreDetailHtml"
                 headers2 = {
                     'Host': 'locator.murphyusa.com',
@@ -95,7 +96,7 @@ def fetch_data():
                 data.append([
                      'https://www.murphyusa.com/',
                      'http://locator.murphyusa.com/',
-                      '<MISSING>',
+                      loc_name,
                       street_addr,
                       city,
                       state,
