@@ -3,7 +3,7 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
-
+import json
 def get_driver():
     options = Options()
     options.add_argument('--headless')
@@ -30,10 +30,6 @@ def fetch_data():
     driver = get_driver()
     driver.get(locator_domain + ext)
 
-
-
-    #close = driver.find_element_by_xpath('//img[@aria-label="Popup Close Button"]')
-    #driver.execute_script("arguments[0].click();", close)
 
     link_list = []
     locs = driver.find_elements_by_css_selector('div.eslStore.ml-storelocator-headertext')
@@ -74,8 +70,23 @@ def fetch_data():
             phone_number = driver.find_element_by_xpath('//span[@itemprop="telephone"]').text
         except NoSuchElementException:
             phone_number = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
+
+
+        loc_j = driver.find_elements_by_xpath('//script[@type="text/javascript"]')
+        for i, loc in enumerate(loc_j):
+            if 'MarketLive.StoreLocator.storeLocatorDetailPageReady' in loc.get_attribute('innerHTML'):
+                text = loc.get_attribute('innerHTML')
+                start = text.find('location')
+                text_2 = text[start-1:]
+                
+                end = text_2.find('}')
+                
+                coords = json.loads(text_2[text_2.find(':') + 1:end + 1])
+                
+                lat = coords['latitude']
+                longit = coords['longitude']
+        
+
         country_code = 'US'
         location_type = '<MISSING>'
         page_url = link

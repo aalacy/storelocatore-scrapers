@@ -39,12 +39,15 @@ def fetch_data():
     link_list = []
     for city in cities:
         link = city.find_element_by_css_selector('a').get_attribute('href')
-        link_list.append(link)
+        if link in link_list:
+            continue
+        else:
+            link_list.append(link)
 
 
     all_store_data = []
+    dup_tracker = []
     for link in link_list:
-        print(link)
         if 'undefined' in link:
             continue
         driver.get(link)
@@ -55,17 +58,29 @@ def fetch_data():
         
         if 'COMING SOON' in location_name:
             continue
-            
+        if 'Closed' in location_name:
+            continue
+        
+        if location not in dup_tracker:
+            dup_tracker.append(location_name)
+        else:
+            continue
         street_address = driver.find_element_by_css_selector('li.location-detail__address-line-1').text
         city = driver.find_element_by_css_selector('li.location-detail__locality').text
         state = driver.find_element_by_css_selector('span.state').text
+        if 'Japan' in state:
+            break
         zip_code = driver.find_element_by_css_selector('span.zip').text
         
         
         phone_number = driver.find_element_by_css_selector('li.location-detail__phone').text
+        if phone_number == '':
+            phone_number = '<MISSING>'
+
         
-        
-        hours = driver.find_element_by_css_selector('div.location-detail__hours').text.replace('\n', ' ')
+        hours = driver.find_element_by_css_selector('div.location-detail__hours').text.replace('\n', ' ').strip()
+        if hours == '':
+            hours = '<MISSING>'
         google_href = driver.find_element_by_xpath("//a[contains(@href, 'maps.google.com/maps')]").get_attribute('href')
 
         start = google_href.find('?ll=')

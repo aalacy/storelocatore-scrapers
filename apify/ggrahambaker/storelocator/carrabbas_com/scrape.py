@@ -24,66 +24,77 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():    
-    locator_domain = 'https://www.francescas.com/'
-    ext = 'store-locator/all-stores.do'
+    locator_domain = 'https://www.carrabbas.com/'
+    ext = 'locations/all'
 
     driver = get_driver()
     driver.get(locator_domain + ext)
 
-
-
-    #close = driver.find_element_by_xpath('//img[@aria-label="Popup Close Button"]')
-    #driver.execute_script("arguments[0].click();", close)
-
+    main = driver.find_element_by_css_selector('section.location-directory')
+    loc_links = main.find_elements_by_css_selector('a')
     link_list = []
-    locs = driver.find_elements_by_css_selector('div.eslStore.ml-storelocator-headertext')
-    for loc in locs:
-        link = loc.find_element_by_css_selector('a').get_attribute('href')
-        
-        if link == '':
-            continue
-        
-        if link in link_list:
-            continue
-            
+    for loc in loc_links:
+        link = loc.get_attribute('href')
+        #print(link)
         link_list.append(link)
-        
-    all_store_data = []
-    for i, link in enumerate(link_list):
 
+
+    all_store_data = []
+    for link in link_list:
+        print(link)
         driver.get(link)
         driver.implicitly_wait(10)
+        source = str(driver.page_source)
 
-        try:
-            location_name = driver.find_element_by_xpath('//span[@itemprop="name"]').text
+        for line in source.splitlines():
+            if line.strip().startswith("$(function(){initLocationDetail(false,"):
+                raw_line = line.strip()
         
+                start_lat = raw_line.find('"Latitude":')
+                start_string = raw_line[start_lat + len('"Latitude":'):]
+                end_lat = start_string.find(',')
+                
+                lat = start_string[1:end_lat - 1]
+                
+                
+                start_longit = raw_line.find('"Longitude":')
+                start_string = raw_line[start_longit + len('"Longitude":'):]
+                end_longit = start_string.find(',')
+
+                longit = start_string[1:end_longit - 1]
+                
+        try:
+            location_name = driver.find_element_by_xpath('//h3[@itemprop="name"]').text
         except NoSuchElementException:
             continue
-
-        store_number = location_name.split('#')[1]
         
-        street_address = driver.find_element_by_xpath('//span[@itemprop="streetAddress"]').text.replace('\n', ' ')
+        street_address = driver.find_element_by_xpath('//span[@itemprop="streetAddress"]').text
+        
         city = driver.find_element_by_xpath('//span[@itemprop="addressLocality"]').text
+        
         state = driver.find_element_by_xpath('//span[@itemprop="addressRegion"]').text
+        
         zip_code = driver.find_element_by_xpath('//span[@itemprop="postalCode"]').text
-        if len(zip_code) == 4:
-            zip_code = '0' + zip_code
-        hours = driver.find_element_by_css_selector('span.ml-storelocator-hours-details').text.replace('\n', ' ')
-
-        try:
-            phone_number = driver.find_element_by_xpath('//span[@itemprop="telephone"]').text
-        except NoSuchElementException:
+        
+        
+        phone_number = driver.find_element_by_xpath('//span[@itemprop="telephone"]').text
+        if len(phone_number) == 11:
             phone_number = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
+        
+        main_loc = driver.find_element_by_css_selector('section.l-location-details.desktop-only')
+        hours = main_loc.find_elements_by_css_selector('p')[1].text.replace('\n', ' ').split('Happy')[0].strip()
+        
+        
         country_code = 'US'
+        store_number = '<MISSING>'
         location_type = '<MISSING>'
         page_url = link
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
-        
         all_store_data.append(store_data)
+
+
+        
 
         
 
