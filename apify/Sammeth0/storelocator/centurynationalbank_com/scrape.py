@@ -52,9 +52,9 @@ def fetch_data():
 				city.append(driver_page.find_element_by_xpath('/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span').text.split('\n')[1].split(',')[0])
 			print(city)
 			try:
-				state.append(driver_page.find_element_by_xpath('/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span[2]').text.split(',')[1].split(' ')[1])
+				state.append(driver_page.find_element_by_xpath('/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span[2]').text.split('\n')[1].split(' ')[-2])
 			except:
-				state.append(driver_page.find_element_by_xpath('/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span').text.split(',')[1].split(' ')[1])
+				state.append(driver_page.find_element_by_xpath('/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span').text.split('\n')[1].split(' ')[-2])
 			print(state)                      
 			try:
 				zipcode.append(driver_page.find_element_by_xpath('/html/body/section/section/div[1]/div[3]/div[1]/div[2]/div[1]/p/span[2]').text.split('\n')[1].split(' ')[-1])
