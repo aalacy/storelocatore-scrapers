@@ -56,7 +56,7 @@ def fetch_data():
     coord = search.next_coord()
 
     while coord:
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         #print(coord)
         #i+=1
         lati=coord[0]
@@ -130,17 +130,14 @@ def fetch_data():
             else:
                 states.append("<MISSING>")
                 print(addr)
-        #break
-        if len(branches) < MAX_RESULTS:
+        
+        if len(branches) == 0:
             print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif len(branches) == MAX_RESULTS:
+            search.max_distance_update(50)
+        elif len(branches) > 0:
             print("max count update")
             search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + MAX_RESULTS + " results")
-        coord = search.next_coord()
-
+        
     all = []
     for i in range(0, len(locs)):
         row = []
