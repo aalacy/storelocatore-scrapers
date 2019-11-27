@@ -2,7 +2,7 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+from selenium.common.exceptions import NoSuchElementException
 
 def get_driver():
     options = Options()
@@ -88,10 +88,11 @@ def fetch_data():
         if not store_number.isdigit():
             store_number = '<MISSING>'
 
-
-        hours_span = driver.find_element_by_xpath("//span[contains(text(),'Hours:')]")
-        hours = hours_span.find_element_by_xpath("..").text.replace('Hours:', '').replace('\n', ' ').strip()
-
+        try:
+            hours_span = driver.find_element_by_xpath("//span[contains(text(),'Hours:')]")
+            hours = hours_span.find_element_by_xpath("..").text.replace('Hours:', '').replace('\n', ' ').strip()
+        except NoSuchElementException:
+            continue
         location_type = '<MISSING>'
         page_url = link
         
