@@ -63,11 +63,9 @@ def fetch_data():
 
 
     all_store_data = []
-    for link in store_list:
+    for i, link in enumerate(store_list):
         driver.get(link)
-        print(link)
         driver.implicitly_wait(10)
-        
         
         street_address = driver.find_element_by_xpath('//meta[@property="business:contact_data:street_address"]').get_attribute('content')
         city = driver.find_element_by_xpath('//meta[@property="business:contact_data:locality"]').get_attribute('content')
@@ -80,24 +78,26 @@ def fetch_data():
 
         
         location_name = driver.find_element_by_css_selector('h2.h1text').text
+        
+            
 
         start = location_name.find('(')
+
+
         store_number = location_name[start + 1: -1]
+        if not store_number.isdigit():
+            store_number = '<MISSING>'
 
 
-        hours = '<MISSING>'
+        hours_span = driver.find_element_by_xpath("//span[contains(text(),'Hours:')]")
+        hours = hours_span.find_element_by_xpath("..").text.replace('Hours:', '').replace('\n', ' ').strip()
+
         location_type = '<MISSING>'
         page_url = link
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-        
-        
-        
-        
-        
-        
         
         
     driver.quit()

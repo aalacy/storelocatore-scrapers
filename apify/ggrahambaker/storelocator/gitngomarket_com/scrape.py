@@ -66,12 +66,16 @@ def fetch_data():
 
         hours = row.find_element_by_css_selector('div.map-hours').text.replace('\n', ' ')
 
+
+        map_div = row.find_element_by_css_selector('div.et_pb_map')
+        lat = map_div.get_attribute('data-center-lat')
+        longit = map_div.get_attribute('data-center-lng')
+    
         country_code = 'US'
 
         location_type = '<MISSING>'
         page_url = '<MISSING>'
-        longit = '<MISSING>'
-        lat = '<MISSING>'
+        
         store_number = '<MISSING>'
         location_name = '<MISSING>'
 
