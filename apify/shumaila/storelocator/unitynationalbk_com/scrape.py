@@ -125,7 +125,7 @@ def fetch_data():
             #print(".......................")
             p += 1
             data.append([
-                'https://secondnational.com/',
+                'https://unitynationalbk.com',
                 url,
                 title,
                 street,
