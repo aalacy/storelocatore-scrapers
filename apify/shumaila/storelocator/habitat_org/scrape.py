@@ -244,17 +244,17 @@ def fetch_data():
             if len(longt) > 12 or longt.find("<") > -1:
                 longt = "<MISSING>"
 
-            print(title)
-            print(street)
-            print(city)
-            print(state)
-            print(pcode)
-            print(ccode)
-            print(phone)
-            print(lat)
-            print(longt)
-            print(p)
-            print("..............")
+            #print(title)
+            #print(street)
+            #print(city)
+            #print(state)
+            #print(pcode)
+            #print(ccode)
+            #print(phone)
+            #print(lat)
+            #print(longt)
+            #print(p)
+            #print("..............")
             p += 1
             data.append([
                 'https://www.habitat.org',
