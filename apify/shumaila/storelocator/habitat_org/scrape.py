@@ -22,7 +22,7 @@ def fetch_data():
     data = []
     p = 1
     url = 'https://www.habitat.org/volunteer/near-you/find-your-local-habitat'
-    page = requests.get(url)
+    page = requests.get(url,verify=False)
     soup = BeautifulSoup(page.text, "html.parser")
     maindiv = soup.find('select', {'class': 'form-select--white form-select chosen-disable form-item__text'})
     repo_list = maindiv.findAll('option')
@@ -33,7 +33,7 @@ def fetch_data():
         repo = repo_list[n]
         link = "https://www.habitat.org" + repo['value']
         #print(link)
-        page = requests.get(link)
+        page = requests.get(link, verify=False)
         soup = BeautifulSoup(page.text, "html.parser")
         maindiv = soup.findAll('article', {'class': 'listing'})
         for card in maindiv:
@@ -128,7 +128,7 @@ def fetch_data():
                     pcode = state[start:len(state)]
                     state = temp
                 street = street.replace(",", "")
-                page = requests.get(maplink)
+                page = requests.get(maplink,verify=False)
                 soup = BeautifulSoup(page.text, "html.parser")
                 script = soup.find('script', {'type': 'application/json'})
                 script = str(script)
