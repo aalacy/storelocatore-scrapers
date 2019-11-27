@@ -65,11 +65,11 @@ def fetch_data():
         # print('location_url ==' +location_url))
         # print("===============================================",zip_code)
         
-        try:
-            location_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius="+str(MAX_DISTANCE)+"&location="+zip_code+"&limit="+str(MAX_RESULTS)+"&api_key=56bb34af25f122cb7752babc1c8b9767&v=20181201&resolvePlaceholders=true&entityTypes=location"
-            k = requests.get(location_url, headers=headers).json()
-        except:
-            continue
+        # try:
+        location_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius="+str(MAX_DISTANCE)+"&location="+zip_code+"&limit="+str(MAX_RESULTS)+"&api_key=56bb34af25f122cb7752babc1c8b9767&v=20181201&resolvePlaceholders=true&entityTypes=location"
+        k = requests.get(location_url, headers=headers).json()
+        # except:
+        #     continue
         # print(location_url)
         current_results_len = len(k['response']['entities'])
         for i in k['response']['entities']:
@@ -80,26 +80,30 @@ def fetch_data():
             zipp = i["address"]['postalCode']
             location_name = i["name"]
             phone = i['mainPhone']
-            time = ''
-            for j in i["hours"].keys():
-                if "openIntervals" in i["hours"][j]: 
-                    time = time +' ' + (j + ' ' +i["hours"][j]['openIntervals'][-1]["start"]+ ' ' + i["hours"][j]['openIntervals'][-1]["end"])
-                else:
-                    time = ''
-            
-            hours_of_operation =time
+            # time = ''
+            # for j in i["hours"].keys():
+            #     if "openIntervals" in i["hours"][j]: 
+            #         time = time +' ' + (j + ' ' +i["hours"][j]['openIntervals'][-1]["start"]+ ' ' + i["hours"][j]['openIntervals'][-1]["end"])
+          
+            # print("=============================",i["hours"])
+            # hours_of_operation =time
+
             latitude = i['yextRoutableCoordinate']['latitude']
             longitude = i['yextRoutableCoordinate']['longitude']
             # print("================k ",i)
             # page_url = i['landingPageUrl']
             if "landingPageUrl" in i:
                 page_url =i['landingPageUrl']
+                k1 = requests.get(page_url, headers=headers)
+                soup2 = BeautifulSoup(k1.text, "html.parser")
+                time = (" ".join(list(soup2.find("tbody",{"class":"hours-body"}).stripped_strings)))
+
             else:
                 
                 page_url = "<MISSING>"
             result_coords.append((latitude, longitude))
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                    store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+                    store_number, phone, location_type, latitude, longitude, time,page_url]
 
             if str(store[2]) + str(store[-3]) not in addresses:
                 addresses.append(str(store[2]) + str(store[-3]))                   

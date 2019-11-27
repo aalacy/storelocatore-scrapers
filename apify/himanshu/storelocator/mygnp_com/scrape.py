@@ -43,7 +43,7 @@ def fetch_data():
                 # print(j2)
                 # print("=============================")
                 store_name.append(j2['name'].replace("Good Neighbor Pharmacy of ","").split(",")[0])
-                #print(j2['name'].replace("Good Neighbor Pharmacy of ","").split(",")[0])
+                print(j2['name'].replace("Good Neighbor Pharmacy of ","").split(",")[0])
                 tem_var.append(j2['address']['streetAddress'])
                 tem_var.append(j2['address']['addressLocality'])
                 tem_var.append(j2['address']['addressRegion'])

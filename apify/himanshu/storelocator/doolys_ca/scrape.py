@@ -52,15 +52,19 @@ def fetch_data():
     time.sleep(3)
     driver.find_element_by_xpath("//div[@class='i4ewOd-pzNkMb-ornU0b-b0t70b-Bz112c']").click()
     for button in driver.find_elements_by_xpath("//*[contains(text(), '...')]"):
-        time.sleep(1)
+        time.sleep(3)
         button.click()
     for button in driver.find_elements_by_xpath("//div[contains(@index, '')]"):
         try:
+            try:
+                driver.find_element_by_xpath("//div[@class='U26fgb mUbCce p9Nwte HzV7m-tJHJj-LgbsSe qqvbed-a4fUwd-LgbsSe']").click()
+            except:
+                pass
             if button.get_attribute("index") == None:
                 continue
-            time.sleep(1)
+            time.sleep(3)
             button.click()
-            time.sleep(2)
+            time.sleep(4)
             location_soup = BeautifulSoup(driver.page_source, "lxml")
             name = list(location_soup.find("div",text=re.compile("name")).parent.stripped_strings)[1]
             address = list(location_soup.find("div",text=re.compile("Details from Google Maps")).parent.stripped_strings)[1]
@@ -100,11 +104,13 @@ def fetch_data():
             store.append(hours.replace("\xa0","") if hours else "<MISSING>")
             store.append('https://www.doolys.ca/locations-1')
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            # print(store)
             yield store
-            time.sleep(2)
-            driver.find_element_by_xpath("//span[@class='HzV7m-tJHJj-LgbsSe-Bz112c qqvbed-a4fUwd-LgbsSe-Bz112c']").click()
+            time.sleep(5)
+            driver.find_element_by_xpath("//div[@class='U26fgb mUbCce p9Nwte HzV7m-tJHJj-LgbsSe qqvbed-a4fUwd-LgbsSe']").click()
         except Exception as e:
-            time.sleep(1)
+            # print(e)
+            time.sleep(3)
 
 def scrape():
     data = fetch_data()

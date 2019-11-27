@@ -21,7 +21,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 25
-    MAX_DISTANCE = 100
+    MAX_DISTANCE = 70
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
     headers = {
@@ -36,9 +36,9 @@ def fetch_data():
     base_url ="https://www.thomassabo.com"
     while coord:
         result_coords =[]
-        #print(coord)
+        # print(coord)
         # ul="https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase=&searchDistance=35&lat=40.7876&lng=-74.06&filterBy="
-        f="https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase=&searchDistance=35&lat="+str(coord[0])+"&lng="+str(coord[1])+"&filterBy="
+        f="https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase=&searchDistance="+str(MAX_DISTANCE)+"&lat="+str(coord[0])+"&lng="+str(coord[1])+"&filterBy="
         # ulr1 = "https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase=&searchDistance="+str(MAX_DISTANCE)+"&lat="+str(coord[0])+"="+str(coord[1])+"&filterBy="
         try:
             r = requests.get(f).json()
@@ -105,8 +105,8 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
                 yield store
-                #print("data===="+str(store))
-                #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                # print("data===="+str(store))
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
