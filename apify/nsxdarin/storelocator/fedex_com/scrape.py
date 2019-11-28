@@ -16,7 +16,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    res = 50000
+    res = 100000
     coords = ['45.0,-93.5']
     for coord in coords:
         x = coord.split(',')[0]
