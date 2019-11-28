@@ -33,7 +33,6 @@ def fetch_data():
                             locs.append(lid)
     print('%s Locations Found...' % str(len(locs)))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         lurl = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=detail%7CLOC_ID%3D%27' + loc + '%27'
         r2 = session.get(lurl, headers=headers)
         array = json.loads(r2.content.split('"properties":')[1].split('}]')[0])
