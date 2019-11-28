@@ -55,10 +55,10 @@ def fetch_data():
         coords = []
         stores = []
         typ = 'Advance Auto Parts'
+        name = ''
         r = session.get(city, headers=headers)
         for line in r.iter_lines():
             if '<div class="LocationName-geo">' in line:
-                name = line.split('<div class="LocationName-geo">')[1].split('<')[0]
                 add = line.split('class="c-address-street-1"')[1].split('>')[1].split('<')[0]
                 city = line.split('<span class="c-address-city"')[1].split('>')[1].split('<')[0]
                 try:
@@ -103,6 +103,12 @@ def fetch_data():
                 except:
                     hours = hours + '; Sun: Closed'
                 stores.append(name.replace('|','-') + '|' + add.replace('|','-') + '|' + city.replace('|','-') + '|' + state.replace('|','-') + '|' + zc.replace('|','-') + '|' + country.replace('|','-') + '|' + phone.replace('|','-') + '|' + hours.replace('|','-'))
+                try:
+                    name = line.split('<span class="LocationName"><span class="LocationName-brand">')[1].split('</span></span>')[0].replace('<span>','').replace('  ',' ').strip()
+                except:
+                    pass
+            if '<span class="LocationName"><span class="LocationName-brand">' in line:
+                name = line.split('<span class="LocationName"><span class="LocationName-brand">')[1].split('</span></span>')[0].replace('<span>','').replace('  ',' ').strip()
             if ',"id":' in line:
                 items = line.split(',"id":')
                 for item in items:
@@ -127,6 +133,7 @@ def fetch_data():
                     state = 'PR'
                 yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for loc in locs:
+        print('Pulling Location %s...' % loc)
         typ = 'Advance Auto Parts'
         r = session.get(loc, headers=headers)
         name = ''
