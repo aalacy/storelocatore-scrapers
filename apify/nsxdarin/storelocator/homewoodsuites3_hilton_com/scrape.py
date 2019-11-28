@@ -36,7 +36,7 @@ def fetch_data():
         store = loc.replace('/index.html','').rsplit('-',1)[1]
         hours = '<MISSING>'
         print('Pulling Location %s...' % loc)
-        website = 'homewoodsuites3.hilton.com/'
+        website = 'homewoodsuites3.hilton.com'
         typ = 'Homewood Suites by Hilton | Extended Stay Hotels'
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
