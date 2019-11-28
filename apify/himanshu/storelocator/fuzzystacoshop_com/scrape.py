@@ -13,7 +13,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -47,69 +47,66 @@ def fetch_data():
 
     # it will used in store data.
     for zip_code in zips:
-        # print(zip_code)
-        try:
-            r = requests.get(
-                'https://www.fuzzystacoshop.com/locations/?gmw_form=1&gmw_per_page=3000&gmw_lat='+str(zip_code[0])+'&gmw_lng='+str(zip_code[1])+'&gmw_px=pt&action=gmw_post',
-                headers=headers)
-            soup1= BeautifulSoup(r.text,"lxml")
-            if soup1 != None:
-                # k = soup1.find("script",{"type":"text/javascript","id":"locsJson"}).text.split("var locations =")[1].split("jQuery")[0].replace(";","")
-                v3 =soup1.find("script",{"type":"text/javascript","id":"locsJson"})
-                if v3 != None:
-                    k = v3.text.split("var locations = ")[1].split("jQuery")[0].replace(";","")
-                    # print("======================out side of =============",json.loads(k))
-                
-                    k1 = json.loads(k)
-                    for i in k1:
-                        name = i['title']
-                        lat = i['lat']
-                        h1= BeautifulSoup(i['hours'],"lxml")
-                    
-                        
-                        k2=(h1.find_all("td"))
-                        if k2 !=[]:
-                            v1= (list(h1.stripped_strings))
-                            pie = 0
-                            v2 = [p.replace("&nbsp&nbsp&ndash&nbsp&nbsp","") for p in v1]
-                            for index,j in enumerate(v2,start=0):
-                                if "/" in j:
-                                    del v2[index]
-                            time = " ".join(v2)
-                            
-                    
-                        else:
-                            time = "<MISSING>"
-                        tem_var=[]
-                        tem_var.append("https://www.fuzzystacoshop.com")
-                        tem_var.append(name if name  else "<MISSING>")
-                        tem_var.append(i['address'] if i['address']  else "<MISSING>")
-                        tem_var.append(i["city"] if i["city"] else "<MISSING>")
-                        tem_var.append(i['state'] if i['state'] else "<MISSING>" )
-                        if i['zipcode']=="0":
-                            tem_var.append("<MISSING>")
-                        else:
-                            tem_var.append(i['zipcode'] if i['zipcode'] else "<MISSING>")
-                        tem_var.append("US")
+        #print(zip_code)
+        r = requests.get(
+            'https://www.fuzzystacoshop.com/locations/?gmw_form=1&gmw_per_page=3000&gmw_lat='+str(zip_code[0])+'&gmw_lng='+str(zip_code[1])+'&gmw_px=pt&action=gmw_post',
+            headers=headers)
+        soup1= BeautifulSoup(r.text,"lxml")
+        
+        if soup1 != None:
+            # k = soup1.find("script",{"type":"text/javascript","id":"locsJson"}).text.split("var locations =")[1].split("jQuery")[0].replace(";","")
+            v3 =soup1.find("script",{"type":"text/javascript","id":"locsJson"})
+           
+            if v3 != None:
+                # page = (soup1.find("a",{"class":"Btn Btn--pink LocationsMap-linksBtn"})['href'])
+                k = v3.text.split("var locations = ")[1].split("jQuery")[0].replace(";","")
+                # print("======================out side of =============",json.loads(k))
+                k1 = json.loads(k)
+                for i in k1:
+                    name = i['title']
+                    lat = i['lat']
+                    h1= BeautifulSoup(i['hours'],"lxml")
+                    k2=(h1.find_all("td"))
+                    if k2 !=[]:
+                        v1= (list(h1.stripped_strings))
+                        pie = 0
+                        v2 = [p.replace("&nbsp&nbsp&ndash&nbsp&nbsp","") for p in v1]
+                        for index,j in enumerate(v2,start=0):
+                            if "/" in j:
+                                del v2[index]
+                        time = " ".join(v2)
+                  
+                    else:
+                        time = "<MISSING>"
+                    tem_var=[]
+                    tem_var.append("https://www.fuzzystacoshop.com")
+                    tem_var.append(name if name  else "<MISSING>")
+                    tem_var.append(i['address'] if i['address']  else "<MISSING>")
+                    tem_var.append(i["city"] if i["city"] else "<MISSING>")
+                    tem_var.append(i['state'] if i['state'] else "<MISSING>" )
+                    if i['zipcode']=="0":
                         tem_var.append("<MISSING>")
-                        tem_var.append(i["phone"] if i['phone'] else "<MISSING>" )
-                        tem_var.append("fuzzystacoshop")
-                        tem_var.append(lat if lat else "<MISSING>" )
-                        tem_var.append(i["lng"] if i["lng"] else  "<MISSING>")
-                        tem_var.append(time if time else "<MISSING>")
-                        
-                        if tem_var[2] in addresses:
-                            continue
-                        addresses.append(tem_var[2])
-                        print(tem_var)
-                        print("======================================")
-
-                        
+                    else:
+                        tem_var.append(i['zipcode'] if i['zipcode'] else "<MISSING>")
+                    tem_var.append("US")
+                    tem_var.append("<MISSING>")
+                    tem_var.append(i["phone"] if i['phone'] else "<MISSING>" )
+                    tem_var.append("<MISSING>")
+                    tem_var.append(lat if lat else "<MISSING>" )
+                    tem_var.append(i["lng"] if i["lng"] else  "<MISSING>")
+                    tem_var.append(time if time else "<MISSING>")
+                    tem_var.append("<MISSING>")
+                    if tem_var[2] in addresses:
+                        continue
+                    addresses.append(tem_var[2])
+                    match = re.search(r'\b(COMING SOON)\b',tem_var[1])
+                    if match:
+                        pass
+                    else:
                         yield tem_var
-        except:
-            continue  
-
-    # return return_main_object
+                    # print("======================================")
+                   
+     
 
 
 def scrape():

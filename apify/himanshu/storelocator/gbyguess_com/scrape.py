@@ -85,7 +85,8 @@ def fetch_data():
 
 
 
-                hours_of_operation = re.sub(r"\s+", " ", soup.find('div',{'class':'hours'}).text)
+                hours_of_operation = re.sub(r"\s+", " ", soup.find('div',{'class':'hours'}).text).strip().replace('Thu Holiday Hours','Thu').replace('Holiday','').replace('Hours ','')
+                print(hours_of_operation)
 
 
 

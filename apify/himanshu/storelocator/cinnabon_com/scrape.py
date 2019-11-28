@@ -4,6 +4,42 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+import time
+
+
+def request_wrapper(url, method, headers, data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url, headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url, headers=headers, data=data)
+                else:
+                    r = requests.post(url, headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
+
+
 def write_output(data):
     with open('data.csv', 'w') as output_file:
         writer = csv.writer(output_file, delimiter=",")
@@ -14,17 +50,18 @@ def write_output(data):
         # print("data::" + str(data))
         for i in data or []:
             writer.writerow(i)
+
+
 def fetch_data():
     return_main_object = []
     addresses = []
     search = sgzip.ClosestNSearch()
-    search.initialize(include_canadian_fsas = True)
-    MAX_RESULTS = 10
-    MAX_DISTANCE = 100
-    current_results_len = 0  # need to update with no of count.
+    search.initialize()
+    MAX_RESULTS = 50
+    MAX_DISTANCE = 30
+    # current_results_len = 0  # need to update with no of count.
     zip_code = search.next_zip()
     # coord = search.next_coord()
-    result_coords = []
 
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
@@ -54,14 +91,13 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        # isFinish = False
-        # while isFinish is not True:
-        try:
-            r = requests.get('https://www.cinnabon.com/Location/Map/Get?brand={A019D0E8-A707-40CC-B647-F3A4670AE0AB}&ZipOrCity='+str(zip_code)+'&userfilters=8c753773-7ff5-4f6f-a550-822523cbafad&userfilters=3431a520-d000-46bb-9058-b000edc96867&userfilters=43ba8d22-b606-4d69-8b91-437e5d6264fd')
-        except:
-            continue
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        time.sleep(1)
+        r = request_wrapper('https://www.cinnabon.com/Location/Map/Get?brand={A019D0E8-A707-40CC-B647-F3A4670AE0AB}&ZipOrCity=' + str(
+            zip_code) + '&userfilters=8c753773-7ff5-4f6f-a550-822523cbafad&userfilters=3431a520-d000-46bb-9058-b000edc96867&userfilters=43ba8d22-b606-4d69-8b91-437e5d6264fd', "get", headers=headers)
         json_data = r.json()
-        current_results_len = len(json_data['Locations'])
+        current_results_len = json_data['Locations']
         for location_list in json_data['Locations']:
             if location_list['ComingSoon'] == False and "Cinnabon" in location_list['LocationName']:
 
@@ -80,11 +116,11 @@ def fetch_data():
                 page_url = location_list['Website']
                 h = []
                 if location_list != {}:
-                    for day,hours in location_list['Hours'].items():
-                        hours_tag = "{} : {}".format(day,hours)
+                    for day, hours in location_list['Hours'].items():
+                        hours_tag = "{} : {}".format(day, hours)
                         h.append(hours_tag)
 
-                    hours_list =  ",".join(",".join(h).split(',')[1:-2]).strip()
+                    hours_list = ",".join(",".join(h).split(',')[1:-2]).strip()
                     if "None" in hours_list:
                         hours_of_operation = "<MISSING>"
                     else:
@@ -94,35 +130,38 @@ def fetch_data():
 
                 result_coords.append((latitude, longitude))
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+                         store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                 # store = [x if x else "<MISSING>" for x in store]
-                store = ['<MISSING>' if x == ' ' or x == None else x for x in store]
+                store = ['<MISSING>' if x == ' ' or x ==
+                         None else x for x in store]
 
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
 
-
                 #print("data = " + str(store))
-                #print( '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                return_main_object.append(store)
-
+                
+                yield store
+                # return_main_object.append(store)
 
             # except:
             #     isFinish = True
             #     continue
 
-        # if current_results_len < MAX_RESULTS:
-            # print("max distance update")
-        #     search.max_distance_update(MAX_DISTANCE)
-        # elif current_results_len == MAX_RESULTS:
-        #     # print("max count update")
-        #     search.max_count_update(result_coords)
+        if len(current_results_len) < MAX_RESULTS:
+            #print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        if len(current_results_len) == MAX_RESULTS:
+            # print("max count update")
+            search.max_count_update(result_coords)
         # else:
-        #     raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        #     raise Exception("expected at most " +
+        #                     str(MAX_RESULTS) + " results")
 
         zip_code = search.next_zip()
-    return return_main_object
+    # return return_main_object
+
+
 def scrape():
     data = fetch_data()
     write_output(data)

@@ -21,7 +21,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
 
-    print("soup ===  first")
+    #print("soup ===  first")
 
     base_url = "https://sambabraziliansteakhouse.com"
     r = requests.get("https://sambabraziliansteakhouse.com/", headers=headers)
@@ -54,7 +54,7 @@ def fetch_data():
 
         if len(address_list) > 2:
             # address_list = [x for x in address_list if "Reservations:" not in x]
-            print("address_list ===== "+str(address_list))
+           #print("address_list ===== "+str(address_list))
 
             location_name = address_list[0]
             street_address = address_list[1].split("|")[0]
@@ -71,14 +71,14 @@ def fetch_data():
             zipp = csz.split(",")[1].strip().split(" ")[-1]
 
 
-            print("phone === "+ phone)
+            #print("phone === "+ phone)
 
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation]
 
-            print("data = " + str(store))
-            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            #print("data = " + str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             return_main_object.append(store)
 

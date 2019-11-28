@@ -20,7 +20,7 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url = "https://shop.guess.com/en/"
+    base_url = "https://www.guess.com/"
     return_main_object = []
     addresses = []
     search = sgzip.ClosestNSearch()
@@ -42,7 +42,6 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
 
     for x in soup.find('ul',{'class':'custom-map-list'}).find_all('a'):
-
 
         r = requests.get(x['href'], headers=headers)
         soup = BeautifulSoup(r.text, "lxml")
@@ -86,7 +85,8 @@ def fetch_data():
 
 
 
-                hours_of_operation = re.sub(r"\s+", " ", soup.find('div',{'class':'hours'}).text)
+                hours_of_operation = re.sub(r"\s+", " ", soup.find('div',{'class':'hours'}).text).strip().replace('Thu Holiday Hours','Thu').replace('Holiday','').replace('Hours ','')
+                print(hours_of_operation)
 
 
 
@@ -110,7 +110,7 @@ def fetch_data():
                 store.append(longitude if longitude else '<MISSING>')
                 store.append(hours_of_operation if hours_of_operation else '<MISSING>')
                 store.append(page_url if page_url else '<MISSING>')
-                print("===", str(store))
+                #print("===", str(store))
                 # return_main_object.append(store)
                 yield store
 
