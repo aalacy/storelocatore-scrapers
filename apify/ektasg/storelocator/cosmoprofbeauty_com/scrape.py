@@ -41,27 +41,25 @@ def fetch_data():
     data=[]
     driver.get("https://stores.cosmoprofbeauty.com/")
     time.sleep(10)
-    stores = driver.find_elements_by_css_selector('div.map-list-item.is-single > a')
+    stores = driver.find_elements_by_css_selector('ul.browse.mb-30.mb-xs-0 > li > div.map-list-item.is-single > a')
     name = [stores[i].get_attribute('href') for i in range(0, len(stores))]
-    #print(name)
-    time.sleep(5)
     for i in range(0,len(name)):
             driver2.get(name[i])
             page_url = name[i]
             #print(page_url)
-            time.sleep(5)
+            time.sleep(1)
             stores1 = driver2.find_elements_by_css_selector('div.map-list-item.is-single > a')
             name_sub = [stores1[m].get_attribute('href') for m in range(0, len(stores1))]
             for j in range(0,len(name_sub)):
                     driver3.get(name_sub[j])
                     page_url = name_sub[j]
                     #print(page_url)
-                    time.sleep(5)
+                    time.sleep(1)
                     store_view_details = driver3.find_elements_by_css_selector('div.map-list-links.mt-20 > a:nth-child(1)')
                     store_view_details_lnks = [store_view_details[n].get_attribute('href') for n in range(0, len(store_view_details))]
                     for k in range(0,len(store_view_details_lnks)):
                         driver4.get(store_view_details_lnks[k])
-                        time.sleep(5)
+                        time.sleep(1)
                         page_url = store_view_details_lnks[k]
                         print(page_url)
                         location_name = driver4.find_element_by_css_selector('span.location-name').text
@@ -110,7 +108,6 @@ def fetch_data():
                         ])
                         count = count + 1
                         print(count)
-
 
     time.sleep(3)
     driver.quit()
