@@ -65,7 +65,7 @@ def fetch_data():
         driver.get(links_href[n])
         time.sleep(2)
         phone.append(driver.find_element_by_xpath("//a[contains(@href,'tel')]").get_attribute("href").split("tel:")[1])
-        hours_of_operation.append(driver.find_element_by_xpath("//div[contains(@class,'tt-column')]").text.split("Hours of Operation")[-1].replace(":","").strip())
+        hours_of_operation.append(driver.find_element_by_xpath("//div[contains(@class,'tt-column')]").text.split("Hours of Operation")[-1].replace(":","").strip().replace("\n"," "))
         url = driver.find_element_by_xpath("//iframe[contains(@src,'google')]")
         lat,lon=parse_geo(url.get_attribute('src'))
         latitude.append(lat)
