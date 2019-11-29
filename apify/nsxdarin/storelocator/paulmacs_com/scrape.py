@@ -28,9 +28,11 @@ def fetch_data():
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
         Found = True
+        count = 0
         while Found:
             Found = False
             try:
+                count = count + 1
                 name = ''
                 add = ''
                 city = ''
@@ -82,6 +84,8 @@ def fetch_data():
                 yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             except:
                 Found = True
+                if count >= 3:
+                    Found = False
 
 def scrape():
     data = fetch_data()
