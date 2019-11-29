@@ -12,7 +12,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -21,7 +21,7 @@ def write_output(data):
 def fetch_data():
     # header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5','Accept':'application/json, text/javascript, */*; q=0.01'}
     return_main_object = []
-    base_url = "https://www.rosesdiscountstores.com/"
+    base_url = "https://www.rosesdiscountstores.com"
     zips = sgzip.for_radius(100)
     addresses= []
 
@@ -35,18 +35,36 @@ def fetch_data():
 
         location_name = vj['name']
         street_address = vj['address1'].strip()
+        
         vk = vj['address'].split(',')[2].strip().split(' ')[0].strip()
+        # print(vk)
+        us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(vj['address']))
+        if us_zip_list:
+            zip  = us_zip_list[-1]
+
+        # print(us_zip_list)
+
+
+
 
         city = vj['city'].strip()
+
         state = vk
-        zip = vj['postcode'].strip()
+        # zip = vj['postcode'].strip()
+        
+        hours_of_operation = ''
+        if "hoursOfOperation" in vj['hours']:
+            for i in vj['hours']['hoursOfOperation']:
+                hours_of_operation  =hours_of_operation +' '+ i + ' ' +vj['hours']['hoursOfOperation'][i]
+        
+        if "con_wg5rd22k" in vj['contacts']:
+            phone = vj['contacts']['con_wg5rd22k']['text']
+        else:
+            phone = "<MISSING>"
+        store_number = "<MISSING>"
 
-        store_number = vj['id']
         country_code = vj['countryCode'].strip()
-
-        phone = ''
-
-        location_type = 'rosesdiscountstores'
+        location_type = '<MISSING>'
         latitude = vj['lat']
         longitude = vj['lng']
 
@@ -54,9 +72,9 @@ def fetch_data():
             continue
         addresses.append(street_address)
 
-        hours_of_operation = ''
-        if 'hoursOfOperation' in   vj['hours']:
-            hours_of_operation = ' mon ' + vj['hours']['hoursOfOperation']['mon'] + ' tue ' + vj['hours']['hoursOfOperation']['tue'] + ' thu ' + vj['hours']['hoursOfOperation']['thu'] + ' fri ' + vj['hours']['hoursOfOperation']['fri'] + ' sat ' + vj['hours']['hoursOfOperation']['sat'] + ' sun ' + vj['hours']['hoursOfOperation']['sun']
+        # hours_of_operation = ''
+        # if 'hoursOfOperation' in   vj['hours']:
+        #     hours_of_operation = ' mon ' + vj['hours']['hoursOfOperation']['mon'] + ' tue ' + vj['hours']['hoursOfOperation']['tue'] + ' thu ' + vj['hours']['hoursOfOperation']['thu'] + ' fri ' + vj['hours']['hoursOfOperation']['fri'] + ' sat ' + vj['hours']['hoursOfOperation']['sat'] + ' sun ' + vj['hours']['hoursOfOperation']['sun']
 
         store = []
         store.append(locator_domain if locator_domain else '<MISSING>')
@@ -71,10 +89,10 @@ def fetch_data():
         store.append(location_type if location_type else '<MISSING>')
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
-
         store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-        print('===', str(store))
+        store.append('<MISSING>')
 
+        # print('===', str(store))
         return_main_object.append(store)
 
     return return_main_object

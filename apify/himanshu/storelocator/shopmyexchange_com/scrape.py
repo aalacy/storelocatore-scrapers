@@ -45,7 +45,11 @@ def fetch_data():
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         location_url = "https://www.shopmyexchange.com/stores"
-        r = requests.post(location_url, headers=headers, data={"longitude": str(lng), "latitude": str(lat)})
+        try:
+
+            r = requests.post(location_url, headers=headers, data={"longitude": str(lng), "latitude": str(lat)})
+        except:
+            continue
         # r_ascii = r.text.encode('ascii', 'ignore').decode('ascii')
 
         soup = BeautifulSoup(r.text, "lxml")

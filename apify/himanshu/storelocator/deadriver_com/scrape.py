@@ -12,7 +12,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -43,15 +43,10 @@ def fetch_data():
 
         location_url = "https://www.deadriver.com/LocationFinder.asmx/GetLocation"
         # print("location url = "+ location_url +'{"zipCode":"' + zip_code + '"}')
-
-        while(True):
-            try:
-                r = requests.post(location_url, headers=headers, data='{"zipCode":"' + zip_code + '"}')
-                break
-            except:
-                continue
-            
-
+        try:
+            r = requests.post(location_url, headers=headers, data='{"zipCode":"' + zip_code + '"}')
+        except:
+            continue
         # print("text_data ==== " + str(r.text))
 
         soup = BeautifulSoup(r.text, "lxml")
@@ -76,7 +71,7 @@ def fetch_data():
         country_code = "US"
         store_number = ""
         phone = ""
-        location_type = "deadriver"
+        location_type = "<MISSING>"
         latitude = ""
         longitude = ""
         raw_address = ""
@@ -88,15 +83,17 @@ def fetch_data():
                 city = location["City"]
                 zipp = location["ZipCode"]
                 state = location["State"]
+                # print(zipp)
                 phone = location["PhoneOne"]
                 longitude = location["Longitude"]
                 latitude = location["Latitude"]
                 location_name = location["CompanyName"]
                 # do your logic.
+                page_url = "<MISSING>"
 
                 result_coords.append((latitude, longitude))
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
                 if str(store[2]) + str(store[-3]) not in addresses:
                     addresses.append(str(store[2]) + str(store[-3]))
@@ -105,8 +102,8 @@ def fetch_data():
 
                     # return_main_object.append(store)
                     yield store
-                    print("data = " + str(store))
-                    print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # print("data = " + str(store))
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
@@ -118,9 +115,6 @@ def fetch_data():
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
 
-        # if len(return_main_object) > 0:
-        #     break
-    # return return_main_object
 
 
 def scrape():

@@ -52,10 +52,10 @@ def fetch_data():
             store[-1] = "CA"
         if store[-1] == "":
             store[-1] = "US"
-        store.append(location_type)
+        store.append("<MISSING>")
         store.append(store_data["phone"]
                      if store_data["phone"] != "" else "<MISSING>")
-        store.append("lilly pulitzer")
+        store.append(location_type)
         store.append(store_data["latitude"])
         store.append(store_data["longitude"])
         hours = ""
@@ -66,8 +66,8 @@ def fetch_data():
         store.append(store_data['storeUrl']
                      if store_data['storeUrl'] != '' else "<MISSING>")
         return_main_object.append(store)
-        # print("===" + str(store))
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        #print("===" + str(store))
+        #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     return return_main_object
 
 
