@@ -29,7 +29,7 @@ def fetch_data():
     search.initialize()
     MAX_RESULTS = 100
     MAX_DISTANCE = 10
-
+    addressess =[]
     result_coords = []
     search = sgzip.ClosestNSearch()
     search.initialize()
@@ -38,73 +38,52 @@ def fetch_data():
     while coords:
         # print("zip_code === " + str(coords))
         # print("ramiang zip =====" + str(search.current_zip))
-        try:
-            data  = "lat="+str(coords[0])+"&lng="+str(coords[1])+"&searchby=ESC%7CATMSF%7CCOOP%7CCUSC%7C&SearchKey=&rnd=1566557208502"
-            # data = "address=11756&lat=40.7226698&lng=-73.51818329999998&searchby=ESC%7CATMSF%7CCOOP%7CCUSC%7C&rnd=1571729652978"
-            location_url = 'https://golden1.locatorsearch.com/GetItems.aspx'
-            r = requests.post(location_url, headers=header, data=data)
-
-            soup = BeautifulSoup(r.text, "html.parser")
+        data = "golden1branches=true&golden1homecenters=false&golden1atm=false&sharedbranches=false&sharedatm=false&swlat="+str(coords[0])+"&swlng="+str(coords[1])+"&nelat="+str(coords[0])+"&nelng="+str(coords[1])+"&centerlat="+str(coords[0])+"&centerlng="+str(coords[1])+"&userlat=&userlng="
+        location_url = 'https://www.golden1.com/api/BranchLocator/GetLocations'
+        try:           
+            data = requests.post(location_url, headers=header, data=data).json()
         except:
             continue
-        data_len = len(soup.find_all('marker'))
-        for idx, v in enumerate(soup.find_all('marker')):
-
-            latitude = v['lat']
-            longitude = v['lng']
-            result_coords.append((latitude, longitude))
-            locator_domain = base_url
-            location_name = v.find('label').text.replace('<br>', '')
-            street_address = v.find('add1').text.replace('<br>', '')
-            vk = v.find('add2').text.split(',')
-            city = ''
-            state = ''
-            zip = ''
-            city = vk[0].strip()
-            if len(vk[1].strip().split(' ')) == 2:
-
-                state = vk[1].strip().split(' ')[0].replace('HI','')
-                if '<br><b>' in state:
-                    state = ''
-                if 'Restricted' in state:
-                    state = ''
-                zip = vk[1].strip().split(' ')[1]
-                if 'Access</b>' in zip:
-                    zip = ''
-                if '-' in zip:
-                    zip = ''
-
-            country_code = 'US'
-            store_number = '<MISSING>'
-            phone = '<MISSING>'
-            location_type = '<MISSING>'
-            hours_of_operation = ''
-            get_hour  = BeautifulSoup(v.find('contents').text, "lxml").find('table')
-            if get_hour != None:
-                hours_of_operation = BeautifulSoup(v.find('contents').text, "lxml").find('table').text
-
-            page_url = base_url
-            if street_address in addresses:
-                continue
-            addresses.append(street_address)
-            store = []
-            store.append(locator_domain if locator_domain else '<MISSING>')
-            store.append(location_name if location_name else '<MISSING>')
-            store.append(street_address if street_address else '<MISSING>')
-            store.append(city if city else '<MISSING>')
-            store.append(state if state else '<MISSING>')
-            store.append(zip if zip else '<MISSING>')
-            store.append(country_code if country_code else '<MISSING>')
-            store.append(store_number if store_number else '<MISSING>')
-            store.append(phone if phone else '<MISSING>')
-            store.append(location_type if location_type else '<MISSING>')
-            store.append(latitude if latitude else '<MISSING>')
-            store.append(longitude if longitude else '<MISSING>')
-
-            store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-            store.append(page_url if page_url else '<MISSING>')
-            # print("data====", str(store))
-            yield store
+        store_number =''
+        location_type =''
+        if data['locations'] != []:
+            data_len =len(data['locations'])
+            for json_data in data['locations']:
+                street_address = json_data['address']
+                city =json_data['city']
+                state = json_data['state']
+                zipp = json_data['zip']
+                hours = json_data['hours']
+                location_name = json_data['title']
+                latitude =  json_data['lat']
+                longitude=  json_data['lng']
+                branch =  json_data['switchedToCoOpBranch']
+                atm =  json_data['switchedToCoOpATM']
+                if branch==True:
+                    location_type ="branch"
+                if atm==True:
+                    location_type = "ATM"
+                hours_of_operation = " ".join(list(BeautifulSoup(hours, "lxml").stripped_strings)).replace("\\n","")
+                store = []
+                result_coords.append((latitude, longitude))
+                store.append("https://www.golden1.com")
+                store.append(location_name if location_name else '<MISSING>')
+                store.append(street_address if street_address else '<MISSING>')
+                store.append(city if city else '<MISSING>')
+                store.append(state if state else '<MISSING>')
+                store.append(zipp if zipp else '<MISSING>')
+                store.append("US")
+                store.append(store_number if store_number else '<MISSING>')
+                store.append( '<MISSING>')
+                store.append(location_type if location_type else '<MISSING>')
+                store.append(latitude if latitude else '<MISSING>')
+                store.append(longitude if longitude else '<MISSING>')
+                store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+                store.append('<MISSING>')
+                if store[2] in addressess:
+                    continue
+                addressess.append(store[2])
+                yield store
         if data_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)

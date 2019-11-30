@@ -26,11 +26,8 @@ def fetch_data():
         count = 1
         while True:
             base_url = "https://www.ramtrucks.com"
-            try:
-
-                r = requests.get("https://www.ramtrucks.com/bdlws/MDLSDealerLocator?brandCode=R&func=SALES&radius=200&resultsPage=" +  str(count) + "&resultsPerPage=200&zipCode=" + str(zip_code),headers=headers)
-            except:
-                continue
+            r = requests.get("https://www.ramtrucks.com/bdlws/MDLSDealerLocator?brandCode=R&func=SALES&radius=200&resultsPage=" +  str(count) + "&resultsPerPage=200&zipCode=" + str(zip_code),headers=headers)
+    
             data = r.json()
             if "dealer" not in data:
                 break

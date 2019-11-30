@@ -31,17 +31,17 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
 
-    base_url = "https://www.happybank.com/"
+    base_url = "https://www.seattlesbest.com"
 
     while zip_code:
         result_coords = []
         # print("zip_code === "+zip_code)
-        location_url = "https://www.happybank.com/Locations?bh-sl-address="+str(zip_code)+"&locpage=search"
         try:
 
-            r = requests.get(location_url,headers=headers)
+            location_url = "https://www.happybank.com/Locations?bh-sl-address="+str(zip_code)+"&locpage=search"
         except:
             continue
+        r = requests.get(location_url,headers=headers)
         soup = BeautifulSoup(r.text, "lxml")
         locator_domain = base_url
         location_name = ""

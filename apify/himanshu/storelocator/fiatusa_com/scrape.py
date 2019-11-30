@@ -38,8 +38,8 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 10
+    MAX_RESULTS = 100
+    MAX_DISTANCE = 300
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
   
@@ -50,7 +50,7 @@ def fetch_data():
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
     # it will used in store data.
-    locator_domain = "https://www.drmartens.com"
+    locator_domain = "https://www.fiatusa.com"
     location_name = ""
     street_address = "<MISSING>"
     city = "<MISSING>"
@@ -68,13 +68,10 @@ def fetch_data():
     while zip_code:
         result_coords = []
         # print("zips === " + str(zip_code))
-        try:
 
-            r = requests.get(
-                'https://www.fiatusa.com/bdlws/MDLSDealerLocator?brandCode=X&func=SALES&radius=200&resultsPage=1&resultsPerPage=20&zipCode='+zip_code
-            )
-        except:
-            continue
+        r = requests.get(
+            'https://www.fiatusa.com/bdlws/MDLSDealerLocator?brandCode=X&func=SALES&radius='+str(MAX_DISTANCE)+'&resultsPage=1&resultsPerPage='+str(MAX_RESULTS)+'&zipCode='+zip_code
+        )
         soup= BeautifulSoup(r.text,"lxml")
         k = json.loads(soup.text)
         if 'dealer' in k:
@@ -110,6 +107,7 @@ def fetch_data():
                 tem_var.append(i['dealerShowroomLongitude'])
                 tem_var.append(hours.replace("0:00 0:00","Close"))
                 tem_var.append("<MISSING>")
+                result_coords.append((i['dealerShowroomLatitude'], i['dealerShowroomLongitude']))
                 # print(tem_var)
                 if tem_var[2] in addresses:
                     continue

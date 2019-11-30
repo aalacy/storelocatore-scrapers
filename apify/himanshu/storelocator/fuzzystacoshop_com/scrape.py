@@ -37,7 +37,14 @@ def minute_to_hours(time):
 
 def fetch_data():
     # zips = sgzip.for_radius(100)
-    zips =sgzip.coords_for_radius(50)
+    return_main_object = []
+    addresses = []
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 1000000
+    MAX_DISTANCE = 50
+    current_results_len = 0  # need to update with no of count.
+    coord = search.next_coord()
     addresses = []
 
     headers = {
@@ -46,25 +53,35 @@ def fetch_data():
     }
 
     # it will used in store data.
-    for zip_code in zips:
-        #print(zip_code)
-        r = requests.get(
-            'https://www.fuzzystacoshop.com/locations/?gmw_form=1&gmw_per_page=3000&gmw_lat='+str(zip_code[0])+'&gmw_lng='+str(zip_code[1])+'&gmw_px=pt&action=gmw_post',
+    while coord:
+        result_coords = []
+        lat = coord[0]
+        lng = coord[1]
+        #print(lng)
+        try:
+            r = requests.get(
+            'https://www.fuzzystacoshop.com/locations/?gmw_form=1&gmw_per_page=3000&gmw_lat='+str(lat)+'&gmw_lng='+str(lng)+'&gmw_px=pt&action=gmw_post',
             headers=headers)
+        except:
+            continue
         soup1= BeautifulSoup(r.text,"lxml")
         
         if soup1 != None:
             # k = soup1.find("script",{"type":"text/javascript","id":"locsJson"}).text.split("var locations =")[1].split("jQuery")[0].replace(";","")
             v3 =soup1.find("script",{"type":"text/javascript","id":"locsJson"})
-           
+        
             if v3 != None:
                 # page = (soup1.find("a",{"class":"Btn Btn--pink LocationsMap-linksBtn"})['href'])
                 k = v3.text.split("var locations = ")[1].split("jQuery")[0].replace(";","")
                 # print("======================out side of =============",json.loads(k))
                 k1 = json.loads(k)
+                current_results_len = len(k)
+                #print("current_results_len===================== ",current_results_len)
                 for i in k1:
                     name = i['title']
                     lat = i['lat']
+                    log = i["lng"]
+
                     h1= BeautifulSoup(i['hours'],"lxml")
                     k2=(h1.find_all("td"))
                     if k2 !=[]:
@@ -79,6 +96,7 @@ def fetch_data():
                     else:
                         time = "<MISSING>"
                     tem_var=[]
+                    result_coords.append((lat, log))
                     tem_var.append("https://www.fuzzystacoshop.com")
                     tem_var.append(name if name  else "<MISSING>")
                     tem_var.append(i['address'] if i['address']  else "<MISSING>")
@@ -104,7 +122,19 @@ def fetch_data():
                         pass
                     else:
                         yield tem_var
-                    # print("======================================")
+                        #print(tem_var)
+                    #print("======================================")
+
+
+        if current_results_len < MAX_RESULTS:
+            #print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            #print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_coord()
                    
      
 

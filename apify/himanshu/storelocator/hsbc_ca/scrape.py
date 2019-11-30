@@ -17,18 +17,33 @@ def write_output(data):
 
 def fetch_data():
     base_url ="https://www.hsbc.ca"
-    cord=sgzip.coords_for_radius(100)
-    return_main_object=[]
-    output=[]
+  
+    return_main_object = []
+    addresses = []
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 50
+    MAX_DISTANCE = 50
+    current_results_len = 0  # need to update with no of count.
+    coord = search.next_coord()
     addressess =[]
     # r=requests.get(base_url+"/1/2/contact-us/atm-branch-locations")
     # soup=BeautifulSoup(r.text,'lxml')
     # for zp in soup.find('map',{'id':'Map'}).find_all('area'):
-    for cd in cord:
-        #print(cd)
+    while coord:
+        result_coords = []
+
+        lat = str(coord[0])
+        lng = str(coord[1])
+        phone =''
         # r1 = requests.get(base_url + zp['href'])
         # soup1 = BeautifulSoup(r.text, 'lxml')
-        r2 = requests.get('https://www.hsbc.ca/1/PA_ABSL-JSR168/ABSLFCServlet?event=cmd_ajax&location_type=show-all-results&address=&cLat='+cd[0]+'&cLng='+cd[1]+'&LOCALE=en&rand=100').json()
+        try:
+
+            r2 = requests.get('https://www.hsbc.ca/1/PA_ABSL-JSR168/ABSLFCServlet?event=cmd_ajax&location_type=show-all-results&address=&cLat='+lat+'&cLng='+lng+'&LOCALE=en&rand='+str(MAX_DISTANCE)).json()
+        except:
+            continue
+        current_results_len = len(r2['results'])
         for dt in r2['results']:
             storeno=dt['location']['locationId']
             name = dt['location']['name']
@@ -39,14 +54,16 @@ def fetch_data():
             zip = dt['location']['address']['postalCode']
             country = dt['location']['address']['country']
             location_type = dt['location']['links']['details_tab']
+            if dt['location']['contacts'] != None:
+                # phone = dt['location']['contacts'][-1].split("Phone|")[-1] 
+                phone= re.sub(r'[a-zA-Z|]', '', dt['location']['contacts'][-1])
+                #print(phone)
             if country == "Canada":
                 country="CA"
-            # print("==========================================")
-            # print(dt)
+            #print("==========================================")
             lat=dt['location']['address']['lat']
             lng=dt['location']['address']['lng']
             store=[]
-            phone=''
             hour=''
             if "services" in dt['location']:
                 if dt['location']['services']:
@@ -57,6 +74,8 @@ def fetch_data():
                         hour+=' '+i+' '+"Closed"
                    else:
                        hour+=' '+i+' '+dt['location']['WorkHrs']['lobby'][i]
+
+            result_coords.append((lat, lng))
             store.append(base_url)
             store.append(name if name else "<MISSING>")
             store.append(address if address else "<MISSING>")
@@ -75,11 +94,16 @@ def fetch_data():
                 continue
             addressess.append(store[2])
             yield store
-            # ads = address + ' ' + city + ' ' + state + ' ' + zip
-            # if ads not in output:
-            #     output.append(ads)
-            #     return_main_object.append(store)
-    # return return_main_object
+
+        if current_results_len < MAX_RESULTS:
+            # print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            # print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_coord()
 
 def scrape():
     data = fetch_data()
