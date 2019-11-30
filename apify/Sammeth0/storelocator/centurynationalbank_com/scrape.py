@@ -41,7 +41,7 @@ def fetch_data():
     phone = []
     # Driver
 
-    for i in range(1, 15):
+    for i in range(1, 16):
         driver = get_driver()
         driver.get("https://centurynationalbank.com/locations/page/" + str(i)+"/?place&latitude&longitude&type=location")
         time.sleep(4)
