@@ -55,6 +55,8 @@ def fetch_data():
             address= str(div.find('span',{'class':'branch-address fw-light'}))
             address = re.sub(pattern,"",address)
             phone = div.find('div', {'class': 'large-8 columns'}).find('a').text
+            bank = div.find('span',{'class': 'branch-name'}).text
+            title = bank + " | " + title
             try:
                 hours = div.find('div', {'class': 'large-6 small-6 columns'}).text
             except:
