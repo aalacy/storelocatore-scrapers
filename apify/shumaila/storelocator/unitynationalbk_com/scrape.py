@@ -59,6 +59,8 @@ def fetch_data():
                 hours = div.find('div', {'class': 'large-6 small-6 columns'}).text
             except:
                 hours = "<MISSING>"
+            bank = div.find('span',{'class': 'branch-name'}).text
+            title = bank + " | " + title
             stored = div.find('div', {'class': 'links fw-light'})
             stored = stored.findAll('a')
             store = stored[1]['data-locationid']
