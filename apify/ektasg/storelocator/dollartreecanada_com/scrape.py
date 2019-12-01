@@ -28,12 +28,6 @@ def write_output(data):
             writer.writerow(row)
 
 
-def parse_geo(url):
-    a=re.findall(r'&daddr=(-?[\d\.]*,(--?[\d\.]*))',url)[0]
-    lat = a[0].split(",")[0]
-    lon = a[0].split(",")[1]
-    return lat, lon
-
 
 def fetch_data():
     # Your scraper here
