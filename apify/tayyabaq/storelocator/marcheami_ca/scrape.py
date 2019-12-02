@@ -24,8 +24,8 @@ def get_driver():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('c:/chromedriver.exe', chrome_options=options)
-    #return webdriver.Chrome('chromedriver', chrome_options=options)
+    #return webdriver.Chrome('c:/chromedriver.exe', chrome_options=options)
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def fetch_data():
     driver = get_driver()
