@@ -65,7 +65,7 @@ def fetch_data():
             store.append(store_data["address"]["country"])
             store.append(store_data["id"])
             store.append(store_data["phone"])
-            store.append("choice hotels")
+            store.append("<MISSING>")
             store.append(store_data["lat"])
             store.append(store_data["lon"])
             store.append("<MISSING>")

@@ -23,10 +23,8 @@ def fetch_data():
     r = requests.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     address12 =[]
-    hours = []
     store_name=[]
     store_detail=[]
-    phone=[]
     return_main_object=[]
     address=[]
     k = (soup.find_all("div",{"class":"sqs-block-content"}))
@@ -87,15 +85,22 @@ def fetch_data():
             soup = BeautifulSoup(cnv, "lxml")
             street_address = soup.text.split('%%')[0]
 
-            if location_name == 'STEUBENVILLE*':
-                db = json.loads(jj[0][2].text)
-                street_address = db['address'].split('\n')[0] + ' ' + db['address'].split('\n')[1].strip().split(',')[0]
+          
+
+            
+
 
 
 
             phone = ''
             if '.' in soup.text.split('%%')[1]:
                 phone  = soup.text.split('%%')[1]
+                print("================",phone)
+            if location_name == 'STEUBENVILLE*':
+                db = json.loads(jj[0][2].text)
+                street_address = db['address'].split('\n')[0] + ' ' + db['address'].split('\n')[1].strip().split(',')[0]
+                phone = y.find('a')['href'].replace("tel:","")
+                
             city = ''
             state = ''
             zip = ''
@@ -115,7 +120,7 @@ def fetch_data():
             store.append(zip if zip else '<MISSING>')
             store.append(country_code if country_code else '<MISSING>')
             store.append(store_number if store_number else '<MISSING>')
-            store.append(phone if phone else '<MISSING>')
+            store.append(phone )
             store.append(location_type if location_type else '<MISSING>')
             store.append(latitude if latitude else '<MISSING>')
             store.append(longitude if longitude else '<MISSING>')
@@ -124,7 +129,12 @@ def fetch_data():
             store_detail.append(store)
    
     del store_name[5]
-    del store_detail[5]
+    del store_detail[5] 
+    # if "DICARLOS PIZZA STEUBENVILLE" in store_detail:
+    # print(store_detail)
+    # print(store_detail[-1])
+    # if store_detail[6]=="<MISSING>":
+    #     print("=============================-0------------",store_detail[-1])
     for i in range(len(store_name)):
         store = list()
         store.append("https://www.dicarlospizza.com")
@@ -133,8 +143,6 @@ def fetch_data():
         if store[2] in address12:
             continue
         address12.append(store[2])
-   
-
         return_main_object.append(store) 
     return return_main_object
 

@@ -54,7 +54,7 @@ def fetch_data():
     address=[]
     
     while zip_code:
-        locator_domain = "https://www.honda.com/"
+        locator_domain = "https://www.drmartens.com"
         location_name = ""
         street_address = "<MISSING>"
         city = "<MISSING>"
@@ -71,9 +71,8 @@ def fetch_data():
         st =  "<MISSING>"
 
         result_coords = []
-        #print(zip_code)
+        # print(zip_code)
         try:
-
             r = requests.get(
                 'https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE),
                 headers=headers,
@@ -81,6 +80,7 @@ def fetch_data():
             )
         except:
             continue
+
         name =''
         soup= BeautifulSoup(r.text,"lxml")
         try:
@@ -101,7 +101,7 @@ def fetch_data():
                         t= t+' '+q['Day']+ ' '+q['Hours']
                     time = time +' ' +type1 + ' '+t
 
-                #print(i)
+                # print(i)
                 # print(p)
                 # exit()
                 
@@ -145,10 +145,10 @@ def fetch_data():
                 # exit()
 
         if current_results_len < MAX_RESULTS:
-            #print("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            #print("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

@@ -49,7 +49,10 @@ def fetch_data():
         store_number =  str(location['storeNumber'])
         http = "http://find.cashamerica.us/api/stores/"+str(store_number)+"?key=D21BFED01A40402BADC9B931165432CD"
         page_url =http
-        all_data = requests.get(http, headers=headers).json()
+        try:
+            all_data = requests.get(http, headers=headers).json()
+        except:
+            continue
         location_name = location['brand']
         street_address = all_data['address']['address1']
         city = all_data['address']['city']

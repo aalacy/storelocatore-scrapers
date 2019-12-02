@@ -20,16 +20,14 @@ def fetch_data():
   
     return_main_object = []
     addresses = []
+    addressess = []
     search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 50
-    current_results_len = 0  # need to update with no of count.
-    coord = search.next_coord()
-    addressess =[]
-    # r=requests.get(base_url+"/1/2/contact-us/atm-branch-locations")
-    # soup=BeautifulSoup(r.text,'lxml')
-    # for zp in soup.find('map',{'id':'Map'}).find_all('area'):
+    search.initialize(include_canadian_fsas = True)
+    MAX_RESULTS = 51
+    MAX_DISTANCE = 20
+    current_results_len = 0
+    coord = search.next_zip()
+    
     while coord:
         result_coords = []
 
@@ -39,13 +37,13 @@ def fetch_data():
         # r1 = requests.get(base_url + zp['href'])
         # soup1 = BeautifulSoup(r.text, 'lxml')
         try:
-
             r2 = requests.get('https://www.hsbc.ca/1/PA_ABSL-JSR168/ABSLFCServlet?event=cmd_ajax&location_type=show-all-results&address=&cLat='+lat+'&cLng='+lng+'&LOCALE=en&rand='+str(MAX_DISTANCE)).json()
         except:
             continue
         current_results_len = len(r2['results'])
         for dt in r2['results']:
-            storeno=dt['location']['locationId']
+            # storeno=dt['location']['locationId']
+            storeno = "<MISSING>"
             name = dt['location']['name']
             address=dt['location']['address']['postalAddress']
             address = dt['location']['address']['postalAddress']
@@ -60,7 +58,7 @@ def fetch_data():
                 #print(phone)
             if country == "Canada":
                 country="CA"
-            #print("==========================================")
+            # print("==========================================")
             lat=dt['location']['address']['lat']
             lng=dt['location']['address']['lng']
             store=[]
@@ -93,6 +91,7 @@ def fetch_data():
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
+            # print(store)
             yield store
 
         if current_results_len < MAX_RESULTS:

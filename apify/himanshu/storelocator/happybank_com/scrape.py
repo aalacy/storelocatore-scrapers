@@ -31,17 +31,16 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
 
-    base_url = "https://www.seattlesbest.com"
+    base_url = "https://www.happybank.com"
 
     while zip_code:
         result_coords = []
         # print("zip_code === "+zip_code)
-        try:
-
-            location_url = "https://www.happybank.com/Locations?bh-sl-address="+str(zip_code)+"&locpage=search"
+        location_url = "https://www.happybank.com/Locations?bh-sl-address="+str(zip_code)+"&locpage=search"
+        try:            
+            r = requests.get(location_url,headers=headers)            
         except:
             continue
-        r = requests.get(location_url,headers=headers)
         soup = BeautifulSoup(r.text, "lxml")
         locator_domain = base_url
         location_name = ""
@@ -76,18 +75,7 @@ def fetch_data():
                     latitude = data['lat']
                     longitude = data['lng']
                     page_url = data['web']
-                    phone = data['phone'].replace("BANK ","")
-                    # phone1 = ''.join(filter(lambda x: x.isdigit(), data['phone']))
-                    # index = 3
-                    # char = '-'
-                    # phone2 = phone1[:index] + char + phone1[index + 1:]
-                    
-                    # index = 7
-                    # char = '-'
-                    # phone = phone2[:index] + char + phone2[index + 1:]
-                    # print(phone)
-                    # print("-----------------------------",phone)
-                    # print("https://www.happybank.com/Locations"+page_url)
+                    phone = data['phone'].replace("BANK ","")                   
                     r1 = requests.get("https://www.happybank.com/Locations"+page_url,headers=headers)
                     soup1 = BeautifulSoup(r1.text, "lxml")
                     hours_of_operation = " ".join(list(soup1.find("div",{"id":"hours"}).stripped_strings)).split("Special")[0]

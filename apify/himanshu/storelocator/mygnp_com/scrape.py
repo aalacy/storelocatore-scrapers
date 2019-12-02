@@ -35,15 +35,17 @@ def fetch_data():
             a = (soup1.find_all("div",{"class":"location-card"}))
             for j in a:
                 tem_var=[]
-                r = requests.get(j.a['href'])
-                
+                try:
+                    r = requests.get(j.a['href'])
+                except:
+                    continue
                 # print(j.a['href'])
                 soup2= BeautifulSoup(r.text,"lxml")
                 j2 = json.loads(soup2.find("script",{"type":"application/ld+json"}).text)
                 # print(j2)
                 # print("=============================")
                 store_name.append(j2['name'].replace("Good Neighbor Pharmacy of ","").split(",")[0])
-                print(j2['name'].replace("Good Neighbor Pharmacy of ","").split(",")[0])
+                #print(j2['name'].replace("Good Neighbor Pharmacy of ","").split(",")[0])
                 tem_var.append(j2['address']['streetAddress'])
                 tem_var.append(j2['address']['addressLocality'])
                 tem_var.append(j2['address']['addressRegion'])

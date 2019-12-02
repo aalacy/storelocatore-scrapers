@@ -46,7 +46,7 @@ def fetch_data():
                         store_number = vj['ID']
                         country_code = vj['countryCode']
                         phone = vj['phone']
-                        location_type = 'gamestop'
+                        location_type = '<MISSING>'
                         latitude = vj['latitude']
                         longitude = vj['longitude']
 
@@ -70,11 +70,9 @@ def fetch_data():
                         store.append(location_type if location_type else '<MISSING>')
                         store.append(latitude if latitude else '<MISSING>')
                         store.append(longitude if longitude else '<MISSING>')
-                        store.append('<MISSING>')
-
-
                         store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-                        #print("====",str(store))
+                        store.append('<MISSING>')
+                        print("====",str(store))
 
                         yield store
             except:
