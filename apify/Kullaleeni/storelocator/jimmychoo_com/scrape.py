@@ -5,7 +5,13 @@ Created on Sat Sep 14 21:43:29 2019
 
 @author: srek
 """
-
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', options=options)
 
 from selenium import webdriver
 from bs4 import BeautifulSoup
@@ -17,7 +23,7 @@ def fetch_data():
     
     states_list_1 = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY']
     states_list_2 = ['alabama', 'alaska', 'arizona', 'arkansas', 'california', 'colorado', 'conneticut', 'deleware', 'district of columbia', 'florida', 'georgia', 'hawaii', 'idaho', 'illinois', 'indiana', 'iowa', 'kansas', 'kentucky', 'lousiana', 'maine', 'maryland', 'massachusetts', 'michigan', 'minnesota', 'mississippo', 'missouri', 'montana', 'nebraska', 'nevada', 'new hampshire', 'new jersey', 'new mexico', 'new york', 'north carolina', 'north dakota', 'ohio', 'oklahoma', 'oregon', 'pennsylvania', 'rhode island', 'south carolina', 'south dakota', 'tennessee', 'texas', 'utah', 'vermont', 'virginia', 'washington', 'west virginia', 'wisconsin', 'wyoming']
-    driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
+    driver = get_driver()
     driver.get(url)
     data = []
     
