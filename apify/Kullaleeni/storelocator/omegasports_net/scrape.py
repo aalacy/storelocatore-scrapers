@@ -9,6 +9,7 @@ Created on Sun Sep 15 11:14:17 2019
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import pandas as pd
+from selenium.webdriver.chrome.options import Options
 
 def get_driver():
     options = Options()

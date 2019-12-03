@@ -5,6 +5,13 @@ Created on Sat Sep 14 21:43:29 2019
 
 @author: srek
 """
+
+from selenium import webdriver
+from bs4 import BeautifulSoup
+import pandas as pd
+import time
+from selenium.webdriver.chrome.options import Options
+
 def get_driver():
     options = Options()
     options.add_argument('--headless')
@@ -12,11 +19,6 @@ def get_driver():
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
     return webdriver.Chrome('chromedriver', options=options)
-
-from selenium import webdriver
-from bs4 import BeautifulSoup
-import pandas as pd
-import time
 
 def fetch_data():
     url = "https://row.jimmychoo.com/en/store-locator#address=United+States&format=ajax&country=US"

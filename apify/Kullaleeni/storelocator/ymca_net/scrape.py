@@ -10,6 +10,7 @@ import pandas as pd
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
+from selenium.webdriver.chrome.options import Options
 
 def get_driver():
     options = Options()
