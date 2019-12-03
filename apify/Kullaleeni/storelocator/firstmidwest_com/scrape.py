@@ -24,7 +24,7 @@ def fetch_data():
     links = []
     pattern = re.compile(r'\s\s+')
     url = 'https://www.firstmidwest.com/locations/'
-    page = requests.get(url)
+    page = requests.get(url, verify=False)
     soup = BeautifulSoup(page.text, "html.parser")
     mainlist = soup.find('div',{'class':'rio-regionList'})
     mainlist = mainlist.findAll('a',{'class':'gaq-link'})
