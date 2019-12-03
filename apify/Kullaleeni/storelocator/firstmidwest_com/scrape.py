@@ -36,7 +36,7 @@ def fetch_data():
         else:
             statelink = "https://www.firstmidwest.com"+ states['href']
         #print(statelink)
-        page = requests.get(statelink)
+        page = requests.get(statelink, verify=False)
         soup = BeautifulSoup(page.text, "html.parser")
 
         maindiv = soup.find('div',{'id':'rls-map'})
@@ -76,7 +76,7 @@ def fetch_data():
         try:
         #print(link)
             link = links[ind]
-            page = requests.get(link)
+            page = requests.get(link, verify=False)
             soup = BeautifulSoup(page.text, "html.parser")
             title = soup.find('div',{'id':'rio-locName'}).text
             address = soup.find('div', {'class': 'rio-addrText'})
