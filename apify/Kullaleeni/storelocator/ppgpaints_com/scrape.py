@@ -10,6 +10,14 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
 
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', options=options)
+
 def fetch_fields(driver,location_type,country_code):
     url = "https://www.ppgpaints.com/store-locator"
     data_out = []
@@ -114,11 +122,8 @@ def fetch_data():
     
     #df_us_list = pd.read_csv("/home/srek/xyz/Odetta/US_states.csv")
     #driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
-    try:
-        driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
-    except:
-        driver = webdriver.Chrome()
-    
+   
+    driver = get_driver()
     data = []
     url = "https://www.ppgpaints.com/store-locator"
     
