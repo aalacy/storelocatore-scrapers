@@ -51,7 +51,8 @@ def fetch_data():
             st=store['Address1']+","+store['Address2']
             z=store["Zip"]
             key = c+s+st+z
-            print(key)
+            #print(key)
+            #print(s)
             if key in key_set:
                 continue
             else:
@@ -74,8 +75,8 @@ def fetch_data():
 
             timing.append(tim)
             zips.append(z)
-            print(locs)
-        break
+            #print(locs)
+
 
     all = []
     for i in range(0, len(locs)):
@@ -105,6 +106,3 @@ def scrape():
 
 
 scrape()
-
-
-fetch_data()
