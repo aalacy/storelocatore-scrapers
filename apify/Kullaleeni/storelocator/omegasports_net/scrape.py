@@ -10,7 +10,13 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import pandas as pd
 
-
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', options=options)
 
 def fetch_data():
     
@@ -18,7 +24,7 @@ def fetch_data():
     
     locator_domain = url
     
-    driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
+    driver = get_driver()
     driver.get(url)
     soup = BeautifulSoup(driver.page_source,"html.parser")
     data = []
