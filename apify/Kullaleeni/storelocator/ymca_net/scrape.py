@@ -11,9 +11,17 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
 
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', options=options)
+
 def fetch_data():
     data = []
-    driver = webdriver.Chrome()
+    driver = get_driver()
         
     df_zips = pd.read_csv("./US_states.csv")["Zip_Range"].tolist()
     for z in range(len(df_zips)):
