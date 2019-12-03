@@ -13,7 +13,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -53,18 +53,7 @@ def fetch_data():
             headers=headers)
         soup1= BeautifulSoup(r.text,"lxml")
 
-        k = (soup1.find_all("div",{"class":"store-name"}))
-        # print(len(k))
-        # script = soup1.find_all("script")
-        # p =0
-        # for i in script:
-            
-        #     if "var storeInfo" in i.text:
-                
-        #         print(p)
-        #         p = p +1
-                # print(i.text.split("//add_marker(gmap,")[-1].split(",")[0])
-        # exit()
+        k = (soup1.find_all("div",{"class":"store-name"}))      
         p=0
         for i in k:
             tem_var =[]
@@ -129,13 +118,14 @@ def fetch_data():
             tem_var.append(c)
             tem_var.append("<MISSING>")
             tem_var.append(phone if phone  else "<MISSING>")
-            tem_var.append("johnstonmurphy")
+            tem_var.append("<MISSING>")
             tem_var.append("<INACCESSIBLE>" )
             tem_var.append("<INACCESSIBLE>")
             tem_var.append(time.replace(u'\u2013', u' ') if time.replace(u'\u2013', u' ')  else "<MISSING>" )
+            tem_var.append('<MISSING>')
             if tem_var[3] not in addresses:
                 addresses.append(tem_var[3])
-                print(tem_var)
+                #print(tem_var)
                 yield tem_var
         # exit()
     
