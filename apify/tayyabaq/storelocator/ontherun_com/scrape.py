@@ -61,12 +61,7 @@ def fetch_data():
         except Exception as e:
             ph = "<MISSING>"
 
-        try:
-            link = item['url']
-            if len(link) < 3:
-                link = "<MISSING>"
-        except Exception as e:
-            link = "<MISSING>"
+        link = json_url
 
         try:
             hoo = item['open24']
@@ -78,13 +73,7 @@ def fetch_data():
         except Exception as e:
             hoo = "<MISSING>"
 
-        try:
-            ltype = item['gasbrand']
-            if len(item['gasbrand']) < 1:
-                ltype = "<MISSING>"
-
-        except Exception as e:
-            ltype = "<MISSING>"
+        ltype = "<MISSING>"
 
         location_name = "On the Run"
         country_code = "US"
