@@ -61,7 +61,7 @@ def fetch_data():
     for n in range(0,len(hour)):
         s=hour[n].text.split("Products")[0]
         if ("Open" in s):
-            hours_of_operation.append(s)
+            hours_of_operation.append(s.replace("\n"," "))
         else:
             hr=hour[n].find_elements_by_class_name("store-hours")
             s="Hours "
