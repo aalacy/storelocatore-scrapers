@@ -24,7 +24,7 @@ def get_driver():
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-notifications")
     #return webdriver.Chrome('c:/chromedriver.exe', chrome_options=options)
-    return webdriver.Chrome('/Users/Dell/local/chromedriver', chrome_options=options)
+    return webdriver.Chrome('chromedriver', chrome_options=options)
 
 
 endprint = []
