@@ -1,4 +1,4 @@
-import csv
+﻿import csv
 import os
 import re, time
 import requests
@@ -29,10 +29,10 @@ def get_driver():
 
 def fetch_data():
     driver = get_driver()
-    c=0
     data=[];page_url=[];hours_of_operation=[]; latitude=[];longitude=[];zipcode=[];location_name=[];city=[];street_address=[]; state=[]; phone=[]
     url = "http://marcheami.ca/siteamienglish/index.php"
     r = requests.get(url)
+    c=0
     soup = BeautifulSoup(r.content, 'html.parser')
     doc = lxml.html.fromstring(r.content)
     store = doc.xpath('//ul[@class="rvnavigator"]/li[5]/ul/li/a/@href')
@@ -53,20 +53,23 @@ def fetch_data():
         cities2 =  driver.find_elements_by_xpath('//div[@class="store alone"]/ul/li[2]')
         phones2 =  driver.find_elements_by_xpath('//div[@class="store alone"]/ul/li[3]')
         for m in range(0,len(address)):
-            if name[m]=='ÉPICERIE DE ST-VIANNEY COOP SOLIDARITÉ':
+            if "1040 C, ROUTE 195" == address[m].text:
+                print("here")
                 c+=1
-                if c<=1:
-                    location_name.append(name[m].text)
-                    street_address.append(address[m].text)
-                    if states[n] in ['Bas St-Laurent','Chaudières Appalaches','Centre du Québec','Outaouais','Saguenay','Côte Nord','Estrie','Gaspésie','Lanaudière','Laurentides','Mauricie','Montérégie','Montréal']:
-                        state.append("Quebec")
-                    elif states[n] in ['Clair / New-Brunswick']:
-                        state.append("New Brunswick")
-                    else:
-                        state.append(states[n])
-                    city.append(cities[m].text)
-                    phone.append(phones[m].text)
-                    page_url.append(store[n])
+                if c>1:
+                    continue
+            
+            location_name.append(name[m].text)
+            street_address.append(address[m].text)
+            if states[n] in ['Bas St-Laurent','Chaudières Appalaches','Centre du Québec','Outaouais','Saguenay','Côte Nord','Estrie','Gaspésie','Lanaudière','Laurentides','Mauricie','Montérégie','Montréal']:
+                state.append("Quebec")
+            elif states[n] in ['Clair / New-Brunswick']:
+                state.append("New Brunswick")
+            else:
+                state.append(states[n])
+            city.append(cities[m].text)
+            phone.append(phones[m].text)
+            page_url.append(store[n])
         for x in range(0,len(address1)):
             location_name.append(name1[x].text)
             street_address.append(address1[x].text)
@@ -93,6 +96,7 @@ def fetch_data():
             page_url.append(store[n])
         
     for n in range(0,len(location_name)): 
+        print(page_url[n])
         data.append([
             'https://marcheami.ca/',
             page_url[n],
