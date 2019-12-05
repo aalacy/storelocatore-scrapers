@@ -46,7 +46,7 @@ def fetch_data():
             store.append("US")
             store.append("<MISSING>")
             store.append(phone.split("|")[0].split("–")[0] if phone != "" else "<MISSING>")
-            store.append("viva vitamins")
+            store.append("<MISSING>")
             store.append("<MISSING>")
             store.append("<MISSING>")
             store.append("<MISSING>")
@@ -84,7 +84,7 @@ def fetch_data():
             store.append(phone_details[1])
         else:
             store.append("<MISSING>")
-        store.append("viva vitamins")
+        store.append("<MISSING>")
         store.append("<MISSING>")
         store.append(geo_location.split("/@")[1].split(",")[0])
         store.append(geo_location.split("/@")[1].split(",")[1])

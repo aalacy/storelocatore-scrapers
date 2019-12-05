@@ -13,7 +13,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -32,85 +32,125 @@ def minute_to_hours(time):
 
 
 def fetch_data():
-    zips = sgzip.for_radius(100)
     # zips = sgzip.coords_for_radius(50)
 
-    
     return_main_object = []
     addresses = []
-    store_name=[]
-    store_detail=[]
-  
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 50
+    MAX_DISTANCE = 100
+    current_results_len = 0     # need to update with no of count.
+    zip_code = search.next_zip()  
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
         "content-type": "application/json;charset=UTF-8",
-        'X-Requested-With':"XMLHttpRequest"
-  
-        
+        'X-Requested-With':"XMLHttpRequest"    
     }
 
     # it will used in store data.
-    # locator_domain = "https://www.drmartens.com"
-    # location_name = ""
-    # street_address = "<MISSING>"
-    # city = "<MISSING>"
-    # state = "<MISSING>"
-    # zipp = "<MISSING>"
-    # country_code = "US"
-    # store_number = "<MISSING>"
-    # phone = "<MISSING>"
-    # location_type = "drmartens"
-    # latitude = "<MISSING>"
-    # longitude = "<MISSING>"
-    # raw_address = ""
-    # hours_of_operation = "<MISSING>"
+    
     address=[]
-    for zip_code in zips:
-        r = requests.get(
-            'https://owners.honda.com/service-maintenance/dealer-search?zip='+zip_code+'&searchRadius=100',
-            headers=headers,
-       
-        )
-        soup= BeautifulSoup(r.text,"lxml")
+    
+    while zip_code:
+        locator_domain = "https://www.drmartens.com"
+        location_name = ""
+        street_address = "<MISSING>"
+        city = "<MISSING>"
+        state = "<MISSING>"
+        zipp = "<MISSING>"
+        country_code = "US"
+        store_number = "<MISSING>"
+        phone = "<MISSING>"
+        location_type = "drmartens"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        raw_address = ""
+        hours_of_operation = "<MISSING>"
+        st =  "<MISSING>"
+
+        result_coords = []
         try:
-            k = json.loads(soup.text)
-            time =''
-            if k != None and k !=[]:
-                for i in k['Dealers']:
-                    tem_var=[]
-                    
-                    h1= (i['Departments'])
-                    time = time
-                    for h in h1:
-                        v=(" ".join(" ".join(" ".join(" ".join(" ".join(str(h['OperationHours']).split("{'Day':")).split("}")).split("]")).split("[")).split(", 'Hours':")).replace("'","").replace(",","").strip().replace("  "," "))
-                        time = time + v
-        
-                    tem_var.append("https://www.honda.com/")
-                    tem_var.append(i['Name'] if i['Name'] else "<MISSING>" )
-                    tem_var.append(i['Address']['AddressLine1']if i['Address']['AddressLine1'] else "<MISSING>" )
-                    tem_var.append(i['Address']['City'].strip() if i['Address']['City'].strip() else "<MISSING>")
-                    tem_var.append(i['Address']['State'] if i['Address']['State'] else "<MISSING>")
-            
-
-                    tem_var.append(i['Address']['Zip'] if i['Address']['Zip']  else "<MISSING>")
-                    tem_var.append("US")
-                    tem_var.append("<MISSING>")
-                        
-                    tem_var.append(i['Phone'] if i['Phone'] else "<MISSING>")
-                    tem_var.append("honda")
-                    tem_var.append(i['Address']['Latitude'] if i['Address']['Latitude'] else "<MISSING>" )
-                    tem_var.append(i['Address']['Longitude'] if i['Address']['Longitude'] else "<MISSING>" )
-                    tem_var.append(time if time else "<MISSING>" )
-                    # print(tem_var)
-                    if tem_var[3] in addresses:
-                        continue
-                    addresses.append(tem_var[3])
-                    return_main_object.append(tem_var) 
-
+            k = requests.get(
+                'https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE),
+                headers=headers,
+            ).json()
         except:
-            pass
-    return return_main_object
+            continue
+
+        #print('https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE))
+        name =''
+        # soup= BeautifulSoup(r.text,"lxml")
+        # try:
+        #     k = json.loads(soup.text)
+        # except:
+        #     continue
+        
+        if k != None and k !=[]:
+            current_results_len = len(k['Dealers'])
+            for i in k['Dealers']:
+                h1= i['Departments']
+                time =''
+                for h in h1:
+                    t=''
+                    type1 = h['Type']
+                    
+                    for q in h['OperationHours']:
+                        t= t+' '+q['Day']+ ' '+q['Hours']
+                    time = time +' ' +type1 + ' '+t
+                
+                if "Name" in i:
+                    name  = i['Name']
+                
+                if "Address" in i:
+                    st = i['Address']['AddressLine1']
+                    state = i['Address']['State']
+                    city = i['Address']['City'].strip()
+                    zipp = i['Address']['Zip']
+                    latitude = str(i['Address']['Latitude'])
+                    longitude = str(i['Address']['Longitude'])
+                #print("=====================================================================")
+                if "Phone" in i:
+                    phone = i['Phone']
+                if " Sales " == time:
+                    time = time.replace(" Sales ","<MISSING>")
+                result_coords.append((latitude, longitude))
+                
+                tem_var =[]
+                tem_var.append("https://www.honda.com/")
+                tem_var.append(name if name else "<MISSING>" )
+                tem_var.append(st)
+                tem_var.append(city)
+                tem_var.append(state)
+                tem_var.append(zipp)
+                tem_var.append("US")
+                tem_var.append("<MISSING>")
+                tem_var.append(phone)
+                tem_var.append("<MISSING>")
+                tem_var.append(latitude)
+                tem_var.append(longitude)
+                tem_var.append(time.replace(" Parts  Sales ","<MISSING>") if time.replace(" Parts  Sales ","<MISSING>") else "<MISSING>" )
+                tem_var.append("<MISSING>")
+                
+                if tem_var[2] in addresses:
+                    continue
+                addresses.append(tem_var[2])
+                yield tem_var
+                #print("============================",tem_var)
+                # print(tem_var)
+                # exit()
+
+        if current_results_len < MAX_RESULTS:
+            # print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            # print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        zip_code = search.next_zip()
+    # return return_main_object
 
 
             

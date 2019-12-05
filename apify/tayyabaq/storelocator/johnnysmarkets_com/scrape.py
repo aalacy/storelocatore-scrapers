@@ -30,6 +30,7 @@ def get_driver():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    #return webdriver.Chrome('c:/chromedriver.exe', chrome_options=options)
     return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def fetch_data():
@@ -58,7 +59,19 @@ def fetch_data():
     for n in range(0,len(showdetails)):
         showdetails[n].click()
     for n in range(0,len(hour)):
-        hours_of_operation.append(hour[n].text.split("Products")[0])
+        s=hour[n].text.split("Products")[0]
+        if ("Open" in s):
+            hours_of_operation.append(s.replace("\n"," "))
+        else:
+            hr=hour[n].find_elements_by_class_name("store-hours")
+            s="Hours "
+            dt=hr[0].find_elements_by_tag_name('dt')
+            dd=hr[0].find_elements_by_tag_name('dd')
+            for m in range(0,len(dt)):
+                s=s+dt[m].text+" "
+                s=s+dd[m].text+" "
+            print(s)
+            hours_of_operation.append(s)
     geomap = driver.find_elements_by_xpath("//a[contains(@href,'https://maps.google.com/')]")
     for n in range(0,len(geomap)):
         lat,lon = parse_geo(geomap[n].get_attribute('href'))

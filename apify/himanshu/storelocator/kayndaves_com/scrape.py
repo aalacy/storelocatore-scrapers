@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -36,12 +36,12 @@ def fetch_data():
         store.append("US")
         store.append("<MISSING>")
         store.append(location_details[2])
-        store.append("kayndaves cantinas")
+        store.append("<MISSING>")
         store.append(geo_location.split("!3d")[1].split("!")[0])
         store.append(geo_location.split("!2d")[1].split("!")[0])
-        store.append(" ".join(location_details[2:]))
-        return_main_object.append(store)
-    return return_main_object
+        store.append(" ".join(location_details[2:]).replace(store[8],""))
+        store.append("http://kayndaves.com/locations/")
+        yield store
 
 def scrape():
     data = fetch_data()

@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -32,6 +32,9 @@ def fetch_data():
             
             v = list(p1.stripped_strings)
             if len(v) != 1 and  v!=[]:
+                r1 = requests.get(p1.find_all('a')[0]['href'])
+                soup1= BeautifulSoup(r1.text,"lxml")
+                hours = (" ".join(list(soup1.find("tbody",{"class":"lemon--tbody__373c0__2T6Pl"}).stripped_strings)))
                 lat = (p1.find_all('a')[1]['href'].split('/@')[-1].split(',')[0])
                 lon = p1.find_all('a')[1]['href'].split('/@')[-1].split(',')[1]
                 tem_var.append("https://www.loscompadreslbc.com")
@@ -43,10 +46,12 @@ def fetch_data():
                 tem_var.append("US")
                 tem_var.append("<MISSING>")
                 tem_var.append(v[-1])
-                tem_var.append("loscompadreslbc")
+                tem_var.append("<MISSING>")
                 tem_var.append(lat)
                 tem_var.append(lon)
-                tem_var.append("<MISSING>")
+                tem_var.append(hours)
+                tem_var.append(p1.find_all('a')[0]['href'])
+                # print(tem_var)
                 return_main_object.append(tem_var)
         
 

@@ -15,6 +15,38 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def request_wrapper(url,method,headers,data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url,headers=headers,data=data)
+                else:
+                    r = requests.post(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
+
 def fetch_data():
     headers = {
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
@@ -38,13 +70,17 @@ def fetch_data():
                 "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
                 "content-type": "application/json"
             }
-            # print(address)
-            location_json_request = requests.post("https://www.hilton.com/graphql/customer?pod=brands&operationName=hotel",data=request_data,headers=request_header)
-            # print(location_json_request.json())
+            location_json_request = request_wrapper("https://www.hilton.com/graphql/customer?pod=brands&operationName=hotel",'post',data=request_data,headers=request_header)
+            if location_json_request == None:
+                continue
+            if  location_json_request.json()["data"] == None:
+                continue
+            if location_json_request.json()["data"]["hotel"] == None:
+                continue
             location_url = location_json_request.json()["data"]["hotel"]["homepageUrl"]
-            # print(location_url)
-            # time.sleep(2)
-            location_request = requests.get(location_url,headers=headers)
+            location_request = request_wrapper(location_url,'get',headers=headers)
+            if location_request == None:
+                continue
             location_soup = BeautifulSoup(location_request.text,"lxml")
             if location_soup.find("h1",text=re.compile("You've stumped us")):
                 continue

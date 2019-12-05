@@ -6,11 +6,15 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.proxy import Proxy,ProxyType
 import time
 import re #for regular expression
-options = webdriver.ChromeOptions()
-options.add_argument("--headless")
-prefs= {"profile.default_content_setting_values.geolocation":2}
-options.add_experimental_option("prefs",prefs)
-driver=webdriver.Chrome('chromedriver',options=options)
+
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    return webdriver.Chrome('chromedriver', chrome_options=options)
+
+driver=get_driver()
 
 url = "https://www.dollarstores.com/store-finder/"
 driver.get(url)
@@ -20,6 +24,7 @@ soup = BeautifulSoup(html,"html.parser")
 all_rec = soup.find_all(name="div",attrs={"class":"wpsl-not-loaded"})
 hed=["locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude",
            "longitude","hours_of_operation"]
+
 with open("data.csv",mode="w") as file:
     fl_writer=csv.writer(file,delimiter=',')
     fl_writer.writerow(hed)

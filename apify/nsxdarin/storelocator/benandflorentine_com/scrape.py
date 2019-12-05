@@ -16,7 +16,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://www.benandflorentine.com/locations/'
+    url = 'https://benandflorentine.com/locations/'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if '"cssClass":" ouvert-en' in line:
@@ -27,8 +27,14 @@ def fetch_data():
                     website = 'benandflorentine.com'
                     name = item.split('"')[0]
                     add = item.split('"address":"<p>')[1].split('<')[0]
-                    city = item.split('"address":"<p>')[1].split('<br \\/>\\n')[1].split(',')[0].strip()
-                    state = item.split('"address":"<p>')[1].split('<br \\/>\\n')[1].split(',')[1].strip()
+                    try:
+                        city = item.split('"address":"<p>')[1].split('<br \\/>\\n')[1].split(',')[0].strip()
+                    except:
+                        city = item.split('"address":"<p>')[1].split(',')[2].strip()
+                    try:
+                        state = item.split('"address":"<p>')[1].split('<br \\/>\\n')[1].split(',')[1].strip()
+                    except:
+                        state = item.split('"address":"<p>')[1].split(',')[3].strip()
                     if '<' in state:
                         state = state.split('<')[0].strip()
                     if ' ' in state:

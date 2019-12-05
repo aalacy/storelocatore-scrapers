@@ -41,7 +41,7 @@ def fetch_data():
     country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "moesoriginalbbq"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
@@ -63,6 +63,7 @@ def fetch_data():
         full_address = location_list['streetaddress'].replace("  ", " ")
         if not full_address.find('https://') >= 0:
             if len(full_address.split(',')[-1].strip().split(' ')) > 1:
+                #print(full_address)
                 street_address = ','.join(full_address.split(',')[:-2])
                 city = full_address.split(',')[-2]
                 if len(street_address) == 0:
@@ -71,6 +72,8 @@ def fetch_data():
 
                 state = full_address.split(',')[-1].strip().split(' ')[0]
                 zipp = full_address.split(',')[-1].strip().split(' ')[1][-5:]
+
+
             else:
                 street_address = ','.join(full_address.split(',')[:-3])
                 city = full_address.split(',')[-3]
@@ -80,12 +83,23 @@ def fetch_data():
                 else:
                     zipp = full_address.split(',')[-2][-5:]
                     state = full_address.split(',')[-1]
+                if "CDMX" in state:
+                    continue
+                # print(state,zipp)
+
+
+
+
+
         else:
             street_address = "<MISSING>"
             city = "<MISSING>"
             zipp = "<MISSING>"
             state = "<MISSING>"
-
+        if "30381" == zipp:
+            # 349 14th St.
+            #print(zipp)
+            zipp = "30318"
         # print("data === " + str(full_address))
         location_url = location_list['website']
         page_url = location_url
@@ -147,43 +161,7 @@ def fetch_data():
             hours = soup_location.find('div',{'id':'hours'})
             list_hours = list(hours.stripped_strings)
             list_hours = [el.replace('\xa0',' ') for el in list_hours]
-            # print(city,location_url)
-            # print(list_hours)
-            # print('**********************************************')
-        # print(hours_of_operation)
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
-
-
-
-
-        # if soup_location.find('div', {'class': re.compile('page-')}) is not None:
-        #     list_address = list(soup_location.find('div', {'class': re.compile('page-')}).stripped_strings)
-        #     hours_of_operation = ', '.join(list(soup_location.find('h2').stripped_strings))
-        #     # print("location_url `````````````  " + str(location_url))
-        #     print("list_hours ~~~~~~~~~~  " + str(hours_of_operation))
-
-        #     phone_index = [i for i, s in enumerate(list_address) if 'Phone' in s]
-
-        #     if len(list_address) > 0 and len(phone_index) > 0:
-        #         if len((list_address[phone_index[0]]).split(':')) > 1:
-        #             phone = str(list_address[phone_index[0]]).split(':')[-1].strip()
-        #         else:
-        #             phone = str(list_address[phone_index[0] + 1]).strip()
-        #     # print(str(list_address[phone_index[0]])+" == phone =====  " + phone)
-
-        # if len(phone) == 0:
-        #     phone = '<MISSING>'
-        # else:
-        #     phone_temp = phone.replace('(', "").replace(')', "").replace('-', ' ').split(' ')
-        #     phone = ' '.join(["" if not x.isdigit()  else x for x in phone_temp]).strip()
-        #     if len(phone) < 10 and "RIBS" in ' '.join(phone_temp):
-        #         phone += "7427" # because from website (251) 410-RIBS in this case i have replaced RIBS with 7427
-
-        # # print("after == phone =====  " + phone)
-
-        # if '<MISSING>' in phone:
-        #     hours_of_operation = '<MISSING>'
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
@@ -194,9 +172,11 @@ def fetch_data():
 
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
+                #print("data = " + str(store))
+                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # yield store
+                return_main_object.append(store)
+    return return_main_object
 
 
 def scrape():

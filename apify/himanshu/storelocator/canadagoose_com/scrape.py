@@ -39,14 +39,20 @@ def fetch_data():
         postalcode= main_soup1.find_all("postalcode")
         state = main_soup1.find_all("state")
         country =  main_soup1.find_all("country")
+        
         for i in range(len(st)):
             tem_var=[]
+            # print(country[i])
             tem_var.append("https://www.canadagoose.com")
             tem_var.append(name[i].text.encode('ascii', 'ignore').decode('ascii'))
             tem_var.append(st[i].text.encode('ascii', 'ignore').decode('ascii') if st[i].text.encode('ascii', 'ignore').decode('ascii') else "<MISSING>")
             tem_var.append(city[i].text.encode('ascii', 'ignore').decode('ascii'))
             tem_var.append(state[i].text.encode('ascii', 'ignore').decode('ascii'))
-            tem_var.append(postalcode[i].text.encode('ascii', 'ignore').decode('ascii'))
+            if postalcode[i].text.encode('ascii', 'ignore').decode('ascii')=="0":
+                tem_var.append("<MISSING>")
+            else:
+                tem_var.append(postalcode[i].text.encode('ascii', 'ignore').decode('ascii').replace("00000","<MISSING>"))
+
             tem_var.append(country[i].text.encode('ascii', 'ignore').decode('ascii'))
             tem_var.append("<MISSING>")
             tem_var.append(phone[i].text.encode('ascii', 'ignore').decode('ascii') if phone[i].text.encode('ascii', 'ignore').decode('ascii') else "<MISSING>") 
@@ -54,7 +60,7 @@ def fetch_data():
             tem_var.append(lat[i].text.encode('ascii', 'ignore').decode('ascii'))
             tem_var.append(lon[i].text.encode('ascii', 'ignore').decode('ascii'))
             tem_var.append("<MISSING>")
-            tem_var.append("https://www.canadagoose.com/ca/en/find-a-retailer/find-a-retailer.html")
+            tem_var.append("<MISSING>")
             # print(tem_var)
             if tem_var[2] in addressess and tem_var[-4]:
                 continue
@@ -155,7 +161,7 @@ def fetch_data():
         store.append(latitude[i])
         store.append(longitude[i])
         store.append(hours_of_operation[i].replace("\uff0b",""))
-        store.append("https://www.canadagoose.com/ca/en/find-a-retailer/find-a-retailer.html")
+        store.append("<MISSING>")
 
         if "West Edmonton Mall" in store:
             store[6] = store[6].replace("<MISSING>","CA")
@@ -163,13 +169,15 @@ def fetch_data():
             store[4] = store[4].replace("USA","MN")
             store[5] = store[5].replace("<MISSING>","55425")
             store[6] = store[6].replace("<MISSING>","US")
-        if "Shop 2088, Level 2" in store or "SANLITUN" in store or "Mixc Shopping Mall" in store or "Via della Spiga" in store or "LONDON" in store or "ifc mall" in store or "SENDAGAYA" in store or "REGENT STREET" in store:
+        if "Shop 2088, Level 2" in store or "SANLITUN" in store or "Mixc Shopping Mall" in store or "Via della Spiga" in store or "LONDON" in store or "ifc mall" in store or "SENDAGAYA" in store or "REGENT STREET" in store or "Harbour City Store" in store:
             pass
         else:
+            # print(store)
             yield store
+        
 
      
-    return return_main_object
+    # return return_main_object
     
 
 

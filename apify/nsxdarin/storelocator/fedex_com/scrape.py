@@ -16,24 +16,18 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    res = 1000
-    coords = ['45.0,-93.5']
-    for coord in coords:
-        x = coord.split(',')[0]
-        y = coord.split(',')[1]
-        url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&where=ST_DISTANCE(geometry%2C+ST_POINT(' + y + '%2C+' + x + '))%3C160900000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(' + y + '%2C+' + x + '))as+distance&orderBy=distance+ASC&limit=' + str(res) + '&maxResults=' + str(res)
-        r = session.get(url, headers=headers)
-        for line in r.iter_lines():
-            if 'LOC_ID' in line:
-                items = line.split('{"LOC_ID":"')
-                for item in items:
-                    if '{"features":' not in item:
-                        lid = item.split('"')[0]
-                        if lid not in locs:
-                            locs.append(lid)
+    url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&callback=jQuery1720034581823033266845_1566253080293&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))%3C160900&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=15000&maxResults=15000&_=1566253089266'
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        if 'LOC_ID' in line:
+            items = line.split('{"LOC_ID":"')
+            for item in items:
+                if '{"features":' not in item:
+                    lid = item.split('"')[0]
+                    if lid not in locs:
+                        locs.append(lid)
     print('%s Locations Found...' % str(len(locs)))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         lurl = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=detail%7CLOC_ID%3D%27' + loc + '%27'
         r2 = session.get(lurl, headers=headers)
         array = json.loads(r2.content.split('"properties":')[1].split('}]')[0])

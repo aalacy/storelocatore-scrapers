@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import unicodedata
 
 
 def write_output(data):
@@ -10,7 +11,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -42,11 +43,12 @@ def fetch_data():
     country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "threebearsalaska"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
+    page_url = ""
 
     # print("soup ==== " + str(soup))
 
@@ -132,10 +134,14 @@ def fetch_data():
             hours_of_operation = " ".join(list_hours)
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,location_url]
 
             store = ["<MISSING>" if x == "" else x for x in store]
-
+            for i in range(len(store)):
+                if type(store[i]) == str:
+                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            store = [x.replace("–","-") if type(x) == str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             # print("data = " + str(store))
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 

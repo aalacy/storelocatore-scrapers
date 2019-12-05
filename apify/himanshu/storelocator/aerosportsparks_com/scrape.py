@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -22,10 +22,6 @@ def fetch_data():
     r = requests.get("http://aerosportsparks.com/locations/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     location_url = []
-    hours_request = requests.get("http://aerosportsparks.com/contact/",headers=headers)
-    hours_soup = BeautifulSoup(hours_request.text,"lxml")
-    hours_location = {}
-    hours_location[list(hours_soup.find("div",{'class':"wolf_col_4 wolf_col_last"}).stripped_strings)[1]] = " ".join(list(hours_soup.find_all("div",{"class":'fl-rich-text'})[-1].stripped_strings))
     for location in soup.find("div",{'class':"mpfy-map-canvas"}).find_all("a"):
         if location["href"] == "#":
             continue
@@ -61,9 +57,13 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(geo_location.split("=")[-1].split(",")[0])
         store.append(geo_location.split("=")[-1].split(",")[1])
-        if store[2] in hours_location:
-            store.append(hours_location[store[2]].replace("\xa0"," "))
+        if location_soup.find("a",{"class":"mpfy-p-color-accent-color"}):
+            hours_request = requests.get(location_soup.find("a",{"class":"mpfy-p-color-accent-color"})["href"] + "/contact",headers=headers)
+            hours_soup = BeautifulSoup(hours_request.text,"lxml")
+            store.append(" ".join(list(hours_soup.find_all("div",{"class":'fl-rich-text'})[-1].stripped_strings)))
+            store.append(location_soup.find("a",{"class":"mpfy-p-color-accent-color"})["href"])
         else:
+            store.append("<MISSING>")
             store.append("<MISSING>")
         yield store
 

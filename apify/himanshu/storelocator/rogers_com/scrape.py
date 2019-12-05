@@ -24,12 +24,12 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize(include_canadian_fsas = True)
-    # MAX_RESULTS = 10
-    # MAX_DISTANCE = 50
+    MAX_RESULTS = 75
+    MAX_DISTANCE = 50
     # current_results_len = 0  # need to update with no of count.
     # zip_code = search.next_zip()
     coord = search.next_coord()
-    result_coords = []
+
 
 
     headers = {
@@ -55,25 +55,33 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
     while coord:
+        result_coords = []
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
+        # try:
+        data = {
+        'select':"Record_ID,SCID,Gplus_URL,Location_Name,Address_Or_Intersection,Address2,City,State_Or_Province,ZIP_Or_Postal_Code,Business_Phone,Fax,Intersection,IPhone_And_Access,Wireless_Phones_Access,PAYGO_Phones_Access,PAYGO_Cards,Wireless_Products_Access,Messaging_Paging_Access,Internet_Service,Cable_TV,Digital_TV,RV_Sales_Rentals,MyHome_Advantage,Cellular_Repair,Phone_Upgrades,Car_Phone_Installation,Wireless_Accepts_CC_Cheq,Wireless_Accepts_Cash,Cable_Accepts_CC_Cheq,Cable_Accepts_Cash,Pickup_Return_Dig_Equipmt,Pickup_Exch_Int_Modem,Messaging_Paging_HW_Exch,Home_Phone_Sales,Priority1,Priority2,Priority3,Priority10,Movies_And_Games_For_Rent,Hi_Def_For_Sale,Hi_Def_For_Rent,Games_For_Sale,Rogers_Portable_Internet,Rogers_Video_Store,Rogers_Plus_Store,Business_Voice_Data,Fleet_Management,Email_Solutions,Wireless_Business,Face_to_Face,Games_Trade_In,Wireless_Content_Transfer,Rocket_Stick,Netbook_wRocketMobileInt,Rocket_Hub,Rocket_Mobile_Hotspot,Ipad_Microsims,MicroSIMs,Biz_Wireless,Biz_Internet_TV,Biz_Phone,Biz_Specialist_Available,Customer_Learning_WIR,Customer_Learning_Cable,Trade_Up,Wireless_HP,SHM_Sales,SHM_Assessments,Smart_Home_Monitoring,Device_tuneup,Rogers_Credit_Cards,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday,Monday_FR,Tuesday_FR,Wednesday_FR,Thursday_FR,Friday_FR,Saturday_FR,Sunday_FR,Book_appt_url,Small_biz_centre,Closed_smb,Promo_svc1,Promo_svc2,Promo_svc3,Promo_svc4,Latitude,Longitude,CONCAT(Longitude, ',' ,Latitude) as geometry,( 6371 * acos( cos( radians("+str(x)+") ) * cos( radians(Latitude) ) * cos( radians( Longitude ) - radians( "+str(y)+") )+sin( radians("+str(x)+") ) * sin( radians( Latitude )))) AS distance",
+        'where':"(Closed_smb=''AND Small_biz_centre='Y'AND ( 6371 * acos( cos( radians("+str(x)+") ) * cos( radians(Latitude) ) * cos( radians( Longitude ) - radians("+str(y)+") )+sin( radians("+str(x)+") ) * sin( radians( Latitude ))))<10)OR(Closed_smb=''AND Priority1='Y'AND ( 6371 * acos( cos( radians("+str(x)+") ) * cos( radians(Latitude) ) * cos( radians( Longitude ) - radians("+str(y)+") )+sin( radians("+str(x)+") ) * sin( radians( Latitude ))))<10)OR(Closed_smb=''AND Priority2='Y'AND ( 6371 * acos( cos( radians("+str(x)+") ) * cos( radians(Latitude) ) * cos( radians( Longitude ) - radians("+str(y)+") )+sin( radians("+str(x)+") ) * sin( radians( Latitude ))))<10)",
+        "order": "distance ASC",
+        "limit" : "75",
+        "channelID":"ROGERS"
+        }
+        # print("data ===" + data)
         try:
-            data = {
-            'select':"Record_ID,SCID,Gplus_URL,Location_Name,Address_Or_Intersection,Address2,City,State_Or_Province,ZIP_Or_Postal_Code,Business_Phone,Fax,Intersection,IPhone_And_Access,Wireless_Phones_Access,PAYGO_Phones_Access,PAYGO_Cards,Wireless_Products_Access,Messaging_Paging_Access,Internet_Service,Cable_TV,Digital_TV,RV_Sales_Rentals,MyHome_Advantage,Cellular_Repair,Phone_Upgrades,Car_Phone_Installation,Wireless_Accepts_CC_Cheq,Wireless_Accepts_Cash,Cable_Accepts_CC_Cheq,Cable_Accepts_Cash,Pickup_Return_Dig_Equipmt,Pickup_Exch_Int_Modem,Messaging_Paging_HW_Exch,Home_Phone_Sales,Priority1,Priority2,Priority3,Priority10,Movies_And_Games_For_Rent,Hi_Def_For_Sale,Hi_Def_For_Rent,Games_For_Sale,Rogers_Portable_Internet,Rogers_Video_Store,Rogers_Plus_Store,Business_Voice_Data,Fleet_Management,Email_Solutions,Wireless_Business,Face_to_Face,Games_Trade_In,Wireless_Content_Transfer,Rocket_Stick,Netbook_wRocketMobileInt,Rocket_Hub,Rocket_Mobile_Hotspot,Ipad_Microsims,MicroSIMs,Biz_Wireless,Biz_Internet_TV,Biz_Phone,Biz_Specialist_Available,Customer_Learning_WIR,Customer_Learning_Cable,Trade_Up,Wireless_HP,SHM_Sales,SHM_Assessments,Smart_Home_Monitoring,Device_tuneup,Rogers_Credit_Cards,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday,Monday_FR,Tuesday_FR,Wednesday_FR,Thursday_FR,Friday_FR,Saturday_FR,Sunday_FR,Book_appt_url,Small_biz_centre,Closed_smb,Promo_svc1,Promo_svc2,Promo_svc3,Promo_svc4,Latitude,Longitude,CONCAT(Longitude, ',' ,Latitude) as geometry,( 6371 * acos( cos( radians("+str(x)+") ) * cos( radians(Latitude) ) * cos( radians( Longitude ) - radians( "+str(y)+") )+sin( radians("+str(x)+") ) * sin( radians( Latitude )))) AS distance",
-            'where':"(Closed_smb=''AND Small_biz_centre='Y'AND ( 6371 * acos( cos( radians("+str(x)+") ) * cos( radians(Latitude) ) * cos( radians( Longitude ) - radians("+str(y)+") )+sin( radians("+str(x)+") ) * sin( radians( Latitude ))))<10)OR(Closed_smb=''AND Priority1='Y'AND ( 6371 * acos( cos( radians("+str(x)+") ) * cos( radians(Latitude) ) * cos( radians( Longitude ) - radians("+str(y)+") )+sin( radians("+str(x)+") ) * sin( radians( Latitude ))))<10)OR(Closed_smb=''AND Priority2='Y'AND ( 6371 * acos( cos( radians("+str(x)+") ) * cos( radians(Latitude) ) * cos( radians( Longitude ) - radians("+str(y)+") )+sin( radians("+str(x)+") ) * sin( radians( Latitude ))))<10)",
-            "order": "distance ASC",
-            "limit" : "30",
-            "channelID":"ROGERS"
-            }
-            # print("data ===" + data)
+
             r= requests.post ('https://1-dot-rogers-store-finder.appspot.com/searchRogersStoresService',data = data,headers = headers)
-            json_data = r.json()
         except:
             continue
+        json_data = r.json()
+        # except:
+        #     continue
         # print(json_data['features'])
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        features_len = len(json_data['features'])
+        #print(features_len)
         if json_data['features'] != []:
-            features_len = len(json_data['features'])
+
             for z in json_data['features']:
                 location_name = z['properties']['LocationName'] + "-" +z['properties']['City']
 
@@ -90,6 +98,7 @@ def fetch_data():
                 if us_zip_list:
                     zipp = us_zip_list[0]
                     country_code = "US"
+                #print(zipp)
 
 
                 phone = z['properties']['Business_Phone']
@@ -128,22 +137,22 @@ def fetch_data():
 
                 # print(location_name+" | "+street_address + " | " + city + " | " +state +" | "+ zipp + " | "+phone+"  | "+hours_of_operation + " | "+ latitude+" | "+ longitude +" | "+store_number)
 
-                # if features_len < MAX_RESULTS:
-                #     # print("max distance update")
-                #     search.max_distance_update(MAX_DISTANCE)
-                # elif features_len == MAX_RESULTS:
-                #     # print("max count update")
-                #     search.max_count_update(result_coords)
-                # else:
-                #     raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+
                 #print("data===="+str(store))
-               # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
-                return_main_object.append(store)
+                # return_main_object.append(store)
                 yield store
-
+        if features_len < MAX_RESULTS:
+            # print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        if features_len == MAX_RESULTS:
+            # print("max count update")
+            search.max_count_update(result_coords)
+        # else:
+        #     raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         coord = search.next_coord()
-    return return_main_object
+    # return return_main_object
 
 
 def scrape():

@@ -48,7 +48,7 @@ def fetch_data():
     for loc in locations:
         lat = loc['lat']
         lng = loc['lng']
-        name = loc['store'].capitalize()
+        name = loc['store']
         phone =loc['phone']
         phone = loc['phone']
         address = loc['address'] + ' ' +loc['address2']
@@ -64,7 +64,7 @@ def fetch_data():
             country = "CA"
         else:
             country = "US"
-
+        # print(hours)
         tem_var.append("https://mccaffreys.com")
         tem_var.append(name.encode('ascii', 'ignore').decode('ascii').strip().replace("&#8217;","").replace("&#038;",""))
         tem_var.append(address.encode('ascii', 'ignore').decode('ascii').strip())
@@ -79,8 +79,13 @@ def fetch_data():
         tem_var.append(lng)
         tem_var.append(hours.encode('ascii', 'ignore').decode('ascii').strip())
         tem_var.append("https://mccaffreys.com/about-us/our-locations/")
-        print(tem_var)
-        return_main_object.append(tem_var)
+        if "COMING SOON TO NEW HOPE" in tem_var:
+            pass
+        else:
+            pass
+
+            return_main_object.append(tem_var)
+            # print(tem_var)
         
 
    

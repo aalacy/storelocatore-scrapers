@@ -45,12 +45,11 @@ def fetch_data():
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         location_url = "https://www.shopmyexchange.com/stores"
+        try:
 
-        # print("location url = "+ location_url +'{"longitude": '+str(lat)+', "latitude": '+str(lng)+'}')
-        # lat = -73.6506776
-        # lng = 40.7987048
-        r = requests.post(location_url, headers=headers, data={"longitude": str(lng), "latitude": str(lat)})
-
+            r = requests.post(location_url, headers=headers, data={"longitude": str(lng), "latitude": str(lat)})
+        except:
+            continue
         # r_ascii = r.text.encode('ascii', 'ignore').decode('ascii')
 
         soup = BeautifulSoup(r.text, "lxml")
@@ -69,7 +68,7 @@ def fetch_data():
         country_code = "US"
         store_number = ""
         phone = ""
-        location_type = "shopmyexchange"
+        location_type = "<MISSING>"
         latitude = ""
         longitude = ""
         raw_address = ""
@@ -77,8 +76,7 @@ def fetch_data():
 
         if current_results_len > 0:
             for script in soup.find_all("div", {"class": "result pt-1"}):
-                page_url= base_url+script.find('div',class_='store-details').find('a')['href']
-                # print(page_url)
+                page_url1= base_url+script.find('div',class_='store-details').find('a')['href']
                 store_number =script.find('div',class_='store-details').find('a')['href'].split('=')[-1].strip()
                 # print(page_url,store_number)
 
@@ -86,15 +84,21 @@ def fetch_data():
                 street_address = ", ".join(full_address[:-1])
                 city = full_address[-1].split(",")[0]
                 state = full_address[-1].split(",")[1].replace('\xa0', " ").strip().split(" ")[0]
-                zipp = " ".join(full_address[-1].split(",")[1].replace('\xa0', " ").strip().split(" ")[1:]).strip()
+                # zipp = " ".join(full_address[-1].split(",")[1].replace('\xa0', " ").strip().split(" ")[1:]).strip()
+                
+                # print("-----------------------",full_address[-1])
+                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(full_address[-1].split(",")[1]))
+                
+                if us_zip_list:
+                    zipp =us_zip_list[-1]
+
 
                 temp_zipp = zipp
                 temp_zipp = temp_zipp.replace("-","")
 
-                if (temp_zipp.isdigit()):
+                if temp_zipp.isdigit():
                     country_code = "US"
-                else:
-                    country_code = "CA"
+              
 
                 # print("CSZ == "+full_address[-1].split(",")[1].replace('\xa0', " "))
                 # print("city == "+city)
@@ -113,15 +117,13 @@ def fetch_data():
 
                 result_coords.append((latitude, longitude))
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+                         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url1]
 
                 if str(store[2]) + str(store[-3]) not in addresses:
                     addresses.append(str(store[2]) + str(store[-3]))
-
                     store = [x if x else "<MISSING>" for x in store]
-
-                    # print("data = " + str(store))
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    #print("data = " + str(store))
+                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     yield store
 
         if current_results_len < MAX_RESULTS:
@@ -133,7 +135,6 @@ def fetch_data():
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         coord = search.next_coord()
-        # break
 
 
 def scrape():

@@ -6,7 +6,6 @@ Created on Tue Sep 17 22:50:41 2019
 @author: srek
 """
 
-
 import requests
 from bs4 import BeautifulSoup
 from lxml import html

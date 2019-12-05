@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -27,6 +27,7 @@ def fetch_data():
         while True:
             base_url = "https://www.ramtrucks.com"
             r = requests.get("https://www.ramtrucks.com/bdlws/MDLSDealerLocator?brandCode=R&func=SALES&radius=200&resultsPage=" +  str(count) + "&resultsPerPage=200&zipCode=" + str(zip_code),headers=headers)
+    
             data = r.json()
             if "dealer" not in data:
                 break
@@ -49,7 +50,13 @@ def fetch_data():
                 store.append("US")
                 store.append(str(store_data["dealerCode"]) + "-" + str(store_data["locationSeq"]))
                 store.append(store_data["phoneNumber"] if store_data["phoneNumber"] else "<MISSING>")
-                store.append("ram trucks")
+                if store[-1] != "<MISSING>":
+                    # print("https://rw.marchex.io/phone/Ch4NmVi5xREg6wEE/%7B%221%22%3A%22" + str(store[-1].replace(" ","").replace("-","")) + "%22%7D?url=https%3A%2F%2Fwww.ramtrucks.com%2Ffind-dealer.html")
+                    phone_request = requests.get("https://rw.marchex.io/phone/Ch4NmVi5xREg6wEE/%7B%221%22%3A%22" + str(store[-1].replace(" ","").replace("-","")) + "%22%7D?url=https%3A%2F%2Fwww.ramtrucks.com%2Ffind-dealer.html",headers=headers)
+                    if '"ctn"' in phone_request.text:
+                        phone = phone_request.text.split('"ctn"')[1].split("}")[0].replace(":","").replace('"','')
+                        store[-1] = phone
+                store.append("<MISSING>")
                 store.append(store_data["dealerShowroomLatitude"])
                 store.append(store_data["dealerShowroomLongitude"])
                 hours = ""
@@ -61,6 +68,7 @@ def fetch_data():
                         else:
                             hours = hours + " " + hour_key + " " + store_data["departments"][department]["hours"][hour_key]["open"]["time"] + " " + store_data["departments"][department]["hours"][hour_key]["open"]["ampm"] + " - " + store_data["departments"][department]["hours"][hour_key]["close"]["time"] + " " + store_data["departments"][department]["hours"][hour_key]["close"]["time"]
                 store.append(hours if hours else "<MISSING>")
+                store.append("<MISSING>")
                 yield store
             count = count + 1
 

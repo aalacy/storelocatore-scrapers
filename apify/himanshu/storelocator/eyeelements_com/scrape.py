@@ -4,17 +4,49 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+import time
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="UTF-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
-            print(row)
             writer.writerow(row)
+
+def request_wrapper(url,method,headers,data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url,headers=headers,data=data)
+                else:
+                    r = requests.post(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
 
 def fetch_data():
     return_main_object = []
@@ -24,7 +56,9 @@ def fetch_data():
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }
-        r = requests.get("https://www.clarksoneyecare.com/wp-json/352inc/v1/locations/coordinates?lat=" + str(cord[0]) + "&lng=" + str(cord[1]),headers=headers)
+        r = request_wrapper("https://www.clarksoneyecare.com/wp-json/352inc/v1/locations/coordinates?lat=" + str(cord[0]) + "&lng=" + str(cord[1]),'get',headers=headers)
+        if r == None:
+            continue
         if r.text == "null":
             continue
         else:
@@ -43,15 +77,17 @@ def fetch_data():
                 store.append("US")
                 store.append("<MISSING>")
                 store.append(store_data["phone_number"] if store_data["phone_number"] != "" and store_data["phone_number"] != None else "<MISSING>")
-                store.append("the eye doctors")
+                store.append("<MISSING>")
                 store.append(store_data["lat"])
                 store.append(store_data["lng"])
-                location_request = requests.get(store_data["permalink"],headers=headers)
+                location_request = request_wrapper(store_data["permalink"],'get',headers=headers)
+                if location_request == None:
+                    continue
                 location_soup = BeautifulSoup(location_request.text,"lxml")
                 hours = " ".join(list(location_soup.find("div",{"class":"col-lg-4 times"}).stripped_strings))
                 store.append(hours if hours != "" else "<MISSING>")
-                return_main_object.append(store)
-    return return_main_object
+                store.append(store_data["permalink"])
+                yield store
 
 def scrape():
     data = fetch_data()

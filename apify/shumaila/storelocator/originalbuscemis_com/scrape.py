@@ -64,10 +64,8 @@ def fetch_data():
         start = store.find("_", start) + 1
         store = store[start:len(store)]
         #print(store)
-
         geo_data = i.find_element_by_xpath('//*[@id="slp_right_cell_32"]/span[3]/a')
         geo_data = geo_data.get_attribute('href')
-
         driver1 = get_driver()
         driver1.get(geo_data)
         time.sleep(5)
@@ -90,10 +88,11 @@ def fetch_data():
             "<MISSING>"
         ])
 
-
-
     for i in range(0, len(repo_list)):
         detail = repo_list[i].text
+        if detail.find("OPENING SOON!") > -1:
+            break
+
         # print(detail)
         start = 0
         end = detail.find("\n", start)

@@ -29,7 +29,7 @@ def fetch_data():
     MAX_DISTANCE = 50
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
-
+    
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
@@ -42,11 +42,12 @@ def fetch_data():
         lat = coord[0]
         lng = coord[1]
         # print("remaining zipcodes: " + str(len(search.zipcodes)))
-        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        #print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
         try:
-            location_url = "https://info3.regiscorp.com/salonservices/siteid/43/salons/searchGeo/map/"+str(lat)+"/"+str(lng)+"/90/180/true"
-            
-            r = requests.get(location_url, headers=headers)
+            get_url ="https://info3.regiscorp.com/salonservices/siteid/43/salons/searchGeo/map/"+str(lat)+"/"+str(lng)+"/0.8/0.5/true"
+           
+            # location_url = "https://info3.regiscorp.com/salonservices/siteid/43/salons/searchGeo/map/"+str(lat)+"/"+str(lng)+"/90/180/true"
+            r = requests.get(get_url, headers=headers)
         except:
             continue
         # r_utf = r.text.encode('ascii', 'ignore').decode('ascii')
@@ -57,7 +58,9 @@ def fetch_data():
         
         # json_data = json.loads(r_utf)
         # print("json_Data === " + str(json_data))
-        current_results_len = int(len(json_data['stores']))  # it always need to set total len of record.
+        current_results_len = int(len(json_data['stores']))
+        # print(json_data)
+        # print(current_results_len) # it always need to set total len of record.
         # print("current_results_len === " + str(current_results_len))
 
         locator_domain = base_url
@@ -77,12 +80,15 @@ def fetch_data():
         
         for location in json_data['stores']:
             street_address = location['subtitle']
+            
             longitude = location['longitude']
             latitude = location['latitude']
-            location_name = location['title'].capitalize()            
+            location_name = location['title']
             store_hours = location['store_hours']
-            phone = location['phonenumber']
+            if "phonenumber" in location:
+                phone = location['phonenumber'].replace("(0) 0-0","<MISSING>")
             us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(street_address))
+
             state_list = re.findall(r' ([A-Z]{2}) ', str(street_address))
 
             if us_zip_list:
@@ -94,24 +100,31 @@ def fetch_data():
             hours_of_operation = ''
             for i in store_hours:
                 hours_of_operation = hours_of_operation +' '+ i['days'] + ' ' +i['hours']['open']+' '+ i['hours']['close']
-      
-            street_address1 = street_address.replace(zipp,"").replace(state,"")
-            city = street_address1.split(",")[1].capitalize()
-            street_address2 = street_address1.replace(city,"").replace(","," ").strip()
-            # print(street_address2)
+
+            
+            
+            street_address1 = street_address.replace(zipp,"").replace(state,"").lstrip(",").split(",")[0]
+            
+            city =  " ".join(street_address.replace(zipp,"").replace(state,"").lstrip(",").split(",")[1:]).replace(",","")
+            #print("street_address1",city)
+            
+            street_address2 = street_address1.split("  ")[0]
+            # print("|================",street_address2.split("  "))
             page_url = "<MISSING>"
             result_coords.append((latitude, longitude))
             store = [locator_domain, location_name, street_address2, city, state, zipp, country_code,
-                     store_number, phone.replace("(0) 0-0","<MISSING>"), location_type, latitude, longitude, hours_of_operation,page_url]
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
-            if str(store[2]) + str(store[-3]) not in addresses:
-                addresses.append(str(store[2]) + str(store[-3]))
+            if store[2] in addresses:
+                continue
+        
+            addresses.append(store[2])
 
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
+            #print("data = " + str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            yield store
 
         if current_results_len < MAX_RESULTS:
             # print("max distance update")

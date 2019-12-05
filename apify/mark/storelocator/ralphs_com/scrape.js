@@ -28,7 +28,8 @@ Apify.main(async () => {
     launchPuppeteerOptions: {
       headless: true,
       useChrome: true,
-      stealth: true,
+			stealth: true,
+			useApifyProxy: true,
     },
     handlePageFunction: async ({ request, page }) => {
       const isBlocked = await page.evaluate(() => document.body.innerText.startsWith('Access Denied'));

@@ -41,15 +41,17 @@ def parse_geo(url):
 
 def fetch_data():
     data=[]
-    driver.get("https://www.firsttennessee.com/support/contact-us/location-listing")
-    page_url = "https://www.firsttennessee.com/support/contact-us/location-listing"
+    driver.get("https://www.firsthorizon.com/Support/Contact-Us/Location-Listing")
+    page_url = "https://www.firsthorizon.com/Support/Contact-Us/Location-Listing"
     li=[]
     abc=driver.find_elements_by_xpath("//div[@class='ftb-listing-item__content']//ul")
     for i in abc:
-        k=i.get_attribute('innerText')
-        k=k.replace('\n','')
-        li.append(k)
-    
+        k=i.get_attribute('innerText').splitlines()
+        hours =""
+        for m in range(len(k)):
+            hours = hours + " " + k[m].lstrip()
+        li.append(hours)
+
     maps=[]
     adress=[]
     abc=driver.find_elements_by_xpath("//div[@class='ftb-listing-item__content']//a[@target='_blank']")
@@ -74,15 +76,14 @@ def fetch_data():
         addr = adress[i].splitlines()
         state.append(addr[2].split(',')[1].split(" ")[-2])
         zipcode.append(addr[2].split(',')[1].split(" ")[-1])
-        street.append(addr[1])
-        city.append(addr[2].split(',')[0])
+        street.append(addr[1].lstrip())
+        city.append(addr[2].split(',')[0].lstrip())
         ph = phone_nos[i].get_attribute('innerText')
         phone.append(ph)
         lc_name = loc_names[i].get_attribute('innerText')
-        print("lc_name" , lc_name)
         name.append(lc_name)
         driver1.get(maps[i])
-        time.sleep(7)
+        time.sleep(5)
         l,ln = parse_geo(driver1.current_url)
         lat.append(l)
         lng.append(ln)
@@ -107,7 +108,7 @@ def fetch_data():
             pass
 
         data.append([
-            'https://www.firsttennessee.com',
+            'https://www.firsthorizon.com/',
             page_url,
             name1,
             street1,
@@ -117,15 +118,15 @@ def fetch_data():
             country1,
             '<MISSING>',
             phone1,
-            'Branch/ATM',
+            '<MISSING>',
             lat1,
             lng1,
             hour1
         ])
 
-
-
     time.sleep(3)
+    driver.quit()
+    driver1.quit()
     return data
 
 

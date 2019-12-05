@@ -3,8 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
-
 
 
 def write_output(data):
@@ -13,122 +11,119 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
-def minute_to_hours(time):
-    am = "AM"
-    hour = int(time / 60)
-    if hour > 12:
-        am = "PM"
-        hour = hour - 12
-    if int(str(time / 60).split(".")[1]) == 0:
-        
-        return str(hour) + ":00" + " " + am
-        
-    else:
-        k1 = str(int(str(time / 60).split(".")[1]) * 6)[:2]
-        # print(k1[:2])
-        # round(answer, 2)
-        return str(hour) + ":" + k1 + " " + am
-        
-
-
 def fetch_data():
-    zips = sgzip.for_radius(100)
-    # zips =sgzip.coords_for_radius(50)
-
-   
- 
-    return_main_object = []
-    addresses = []
-
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        'accept':"application/json"
-
-    }
-
-    # it will used in store data.
- 
-    for zip_code in zips:
-        # data = '{"strLocation":"85029","strLat":33.5973469,"strLng":-112.10725279999997,"strRadius":"100","country":"US"}'
-        # print("zips === " + str(zip_code))
+    base_url= "https://agents.allstate.com/"
+    r = requests.get(base_url)
+    soup= BeautifulSoup(r.text,"lxml")
+    # print(soup)
+    store_name=[]
+    store_detail=[]
+    return_main_object=[]
+    address123 =[]
+    # div  =soup.find("div",{"class":"Directory-listLinks"})
+    k= soup.find_all("a",{"class":"Directory-listLink","data-ya-track":"directorylink","data-allstate-web-analytics":"Directory-listLink"})
+    k=soup.find_all("a",{"class":re.compile("Directory-listLink")}) 
+    # k= div.find_all("ul",{"class":"Directory-letterList"})
+    #print(len(k))
+    for i in k:
         try:
-            r = requests.get('https://agents.allstate.com/locator.html?search='+str(zip_code)+'&r=1000',headers=headers)
-            soup1= BeautifulSoup(r.text,"lxml").text
-            address=[]
-        
-            k = json.loads(soup1)
-            for i in k['response']['entities']:
-                tem_var=[]
-                postalCode = i['profile']['address']['postalCode']
-                state = i['profile']['address']['region']
-                city= i['profile']['address']['city']
-                time=''
-                if i['profile']['address']['line2']==None:
-                    st=''
-                else:
-                    st = i['profile']['address']['line2']
-                st=  i['profile']['address']['line1'] + ' '+time
-                if "facebookCallToAction" in i['profile']:
-                    phone =(i['profile']['facebookCallToAction']['value'])
-                else:
-                    phone = "<MISSING>"
 
-
-                if "hours" in i['profile']:
-                    for j in i['profile']['hours']['normalHours']:
-                        
-                        if j['intervals'] !=[]:
-                            start =j['intervals'][0]['start']
-                            end= j['intervals'][0]['end']
-                            start1 = minute_to_hours(start)
-                            end1 = minute_to_hours(end)
-
-                        
-                            time = (j['day'] + ' ' +start1 +' '+end1)
-
-                if "yextDisplayCoordinate" in i['profile']:
-                    lat = i['profile']['yextDisplayCoordinate']['lat']
-                    lon = i['profile']['yextDisplayCoordinate']['long']
-                else:
-                    lat = "<MISSING>"
-                    lon = "<MISSING>"
-
-                name  = i['profile']['name']
-                # print(i['profile']['name'])
-                # exit()
-                tem_var.append("https://agents.allstate.com")
-                tem_var.append(name if name  else "<MISSING>")
-                tem_var.append(st if st else "<MISSING>")
-                tem_var.append(city if city else "<MISSING>")
-                tem_var.append(state if state else "<MISSING>" )
-                tem_var.append(postalCode if postalCode else "<MISSING>")
-                tem_var.append("US")
-                tem_var.append("<MISSING>")
-                tem_var.append(phone if phone else "<MISSING>" )
-                tem_var.append("agents.allstate")
-                tem_var.append(lat if lat else "<MISSING>" )
-                tem_var.append(lon if lon else  "<MISSING>")
-                tem_var.append(time if time else "<MISSING>")
-                if tem_var[3] in addresses:
-                    continue
-            
-                addresses.append(tem_var[3])
-                # print(tem_var)
-                yield tem_var
+            r1 = requests.get("https://agents.allstate.com/"+i['href'])
         except:
             continue
+        soup1= BeautifulSoup(r1.text,"lxml")
+        link_state=soup1.find_all("a",{"class":re.compile("Directory-listLink")}) 
+        for link in link_state:
+            
+            #print("city========================","https://agents.allstate.com"+link['href'].replace("..",""))
 
-               
-
-           
-
-    return return_main_object
+            r2 = requests.get("https://agents.allstate.com"+link['href'].replace("..",""))
+            soup2= BeautifulSoup(r2.text,"lxml")
+            st = soup2.find_all("span",{"class":"c-address-street-1"})
+            st1 = soup2.find_all("span",{"class":"c-address-street-2"})
+            city = soup2.find_all("span",{"class":"c-address-city"})
+            state = soup2.find_all("abbr",{"class":"c-address-state"})
+            zip1 = soup2.find_all("span",{"class":"c-address-postal-code"})
+            phone = soup2.find_all("span",{"class":"Teaser-phoneText"})
+            name = soup2.find_all("span",{"class":"Teaser-name"})
+            a = soup2.find_all("a",{"class":"Teaser-link l-row Link"})
+            if a != []:
+                # print(a)
+                for loc in range(len(st)):
+                    tem_var =[]
+                    store_link = "https://agents.allstate.com/"+a[loc]['href'].replace("../../","")
+                    r3 = requests.get(store_link)
+                    soup3= BeautifulSoup(r3.text,"lxml")
+                    lat = soup3.find("meta",{"itemprop":"latitude"}).attrs['content']
+                    lng = soup3.find("meta",{"itemprop":"longitude"}).attrs['content']
+                    day = soup3.find("div",{"class":"c-hours-details-wrapper js-hours-table"}).find_all("tr")
+                    hours_of_operation =''
+                    for d in day[1:]:
+                        hours_of_operation = hours_of_operation + ' '+d.attrs['content']
+        
+                    tem_var.append("https://agents.allstate.com")
+                    tem_var.append(name[loc].text.strip())
+                    try:
+                        new1 = st1[loc].text.strip()
+                    except:
+                        new1 =''
+                    tem_var.append(st[loc].text.strip() + ' ' +new1)
+                    tem_var.append(city[loc].text.strip())
+                    tem_var.append(state[loc].text.strip())
+                    tem_var.append(zip1[loc].text.strip())
+                    tem_var.append("US")
+                    tem_var.append("<MISSING>")
+                    tem_var.append(phone[loc].text.strip())
+                    tem_var.append("<MISSING>")
+                    tem_var.append(lat)
+                    tem_var.append(lng)
+                    tem_var.append(hours_of_operation)
+                    tem_var.append("https://agents.allstate.com/"+a[loc]['href'].replace("../../",""))
+                    #print(tem_var)
+                    if tem_var[2] in address123:
+                        continue
+                    address123.append(tem_var[2])
+                    yield tem_var
+                
+            else:
+                name1 = soup2
+                tem_var =[]
+                    # print(st[loc])
+                name = soup2.find("div",{"class":"Hero-type"})
+                st = soup2.find("span",{"class":"c-address-street-1"}).text.strip()
+                try:
+                    st1 = soup2.find("span",{"class":"c-address-street-2"}).text.strip()
+                except:
+                    st1 = ''
+                city = soup2.find("span",{"class":"c-address-city"}).text.strip()
+                state = soup2.find("abbr",{"class":"c-address-state"}).text.strip()
+                zip1 = soup2.find("span",{"class":"c-address-postal-code"}).text.strip()
+                phone = soup2.find("span",{"class":"Core-phoneText"}).text.strip()
+                lat = soup2.find("meta",{"itemprop":"latitude"}).attrs['content']
+                lng = soup2.find("meta",{"itemprop":"longitude"}).attrs['content']
+                tem_var.append("https://agents.allstate.com")
+                tem_var.append(name.text.strip())
+                tem_var.append(st+' '+st1)
+                tem_var.append(city)
+                tem_var.append(state)
+                tem_var.append(zip1)
+                tem_var.append("US")
+                tem_var.append("<MISSING>")
+                tem_var.append(phone)
+                tem_var.append("<MISSING>")
+                tem_var.append(lat)
+                tem_var.append(lng)
+                tem_var.append(hours_of_operation)
+                tem_var.append("https://agents.allstate.com"+link['href'].replace("..",""))
+                #print(tem_var)
+                yield tem_var
+    
 
 
 def scrape():
@@ -137,3 +132,5 @@ def scrape():
 
 
 scrape()
+
+

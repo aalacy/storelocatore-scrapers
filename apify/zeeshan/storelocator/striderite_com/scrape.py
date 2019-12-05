@@ -1,136 +1,65 @@
-import re
-import base 
+import csv
 import requests
-import urllib
+import os
 
-from lxml import html
-from pdb import set_trace as bp
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-xpath = base.xpath
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
 
-class StrideTite(base.Base):
+HEADERS = {
+    'Referer': 'https://www.striderite.com/en/stores',
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36'
+}
 
-    csv_filename = 'data.csv'
-    domain_name = 'striderite.com'
-    url = 'https://www.striderite.com/en/stores'
+URL = "https://storerocket.global.ssl.fastly.net/api/user/wjN49rzJGy/locations?lat=37.7802277&lng=-122.40416580000002&radius=500000" 
 
-    def _map_data(self, row):
+session = requests.Session()
+##proxy_password = os.environ["PROXY_PASSWORD"]
+##proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
+##proxies = {
+##    'http': proxy_url,
+##    'https': proxy_url
+##}
+##session.proxies = proxies
 
-        location_name = row.xpath('.//div[@class="store-name"]//span//text()')
-        location_name = re.sub('\s+', ' ', location_name[0]).strip() if location_name else None
+def handle_missing(field):
+    if field == None or (type(field) == type('x') and len(field.strip()) == 0):
+        return '<MISSING>'
+    return field
 
-        store_number = row.xpath('.//div[@class="store-name"]//a//@id')
-        store_number = store_number[0] if store_number else None
+def fetch_data():
+    stores = []
+    results = session.get(URL, headers=HEADERS).json()['results']['locations']
+    for result in results:
+        location_name = result['name']
+        if location_name.lower() != 'stride rite':
+            continue
+        locator_domain = 'striderite.com'
+        page_url = handle_missing(str(result['url']))
+        store_number = handle_missing(result['id'])
+        street_address = handle_missing(result['address_line_1'])
+        if len(result['address_line_2']) > 0:
+            street_address += ' ' + result['address_line_2']
+        latitude = handle_missing(result['lat'])
+        longitude = handle_missing(result['lng'])
+        city = handle_missing(result['city'])
+        state = handle_missing(result['state'])
+        zip_code = handle_missing(result['postcode'])
+        country_code = handle_missing(result['country'])
+        location_type = handle_missing(result['location_type_name'])
+        phone = handle_missing(result['phone'])
+        hours_of_operation = '<MISSING>' if len(result['hours']) == 0 or not result['hours']['mon'] else result['hours']
+        stores.append([locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+    return stores
 
-        geo = row.xpath('.//div[@class="store-name"]//a//@data-location')
-        geo = eval(geo[0]) if geo else None
+def scrape():
+    data = fetch_data()
+    write_output(data)
 
-        address = row.xpath('.//td[@class="store-address"]/text()')
-        address = [re.sub('\s+', ' ', line).strip() for line in address]
-
-        street_address, city, state, postal_code = None, None, None, None
-        country_code = None
-
-        if len(address) == 5:
-            street_address = '\n'.join(address[:2])
-        else:
-            street_address = address[0]
-
-        country_code = address[-2]
-
-        city, region = address[-3].split(',')
-        city = city.strip()
-        
-        state = re.findall(r'[A-Za-z]+', region)
-        postal_code = re.findall(r'[0-9]{5}', region)
-
-        state = state[0] if state else None
-        postal_code = postal_code[0] if postal_code else None
-        
-        phone = row.xpath('.//td[@class="store-phone"]//text()')
-        phone = phone[0] if phone else None
-
-        return {
-            'locator_domain': self.domain_name
-            ,'location_name': location_name
-            ,'street_address': street_address
-            ,'city': city
-            ,'state': state
-            ,'zip': postal_code
-            ,'country_code': country_code
-            ,'store_number': store_number
-            ,'phone': phone
-            ,'location_type': None
-            ,'naics_code': None 
-            ,'latitude': geo.get('latitude', None)
-            ,'longitude': geo.get('longitude', None)
-            ,'hours_of_operation': None
-        }
-
-    def crawl(self):
-
-        session = requests.Session()
-
-        self.headers.update({
-            'authority': 'www.striderite.com'
-            ,'method': 'POST'
-            ,'scheme': 'https'
-            ,'accept': 'text/html, */*; q=0.01'
-            ,'accept-encoding': 'gzip, deflate, br'
-            ,'accept-language': 'en-US,en;q=0.9,it;q=0.8'
-            ,'content-type': 'application/x-www-form-urlencoded'
-            ,'origin': 'https://www.striderite.com'
-            ,'referer': 'https://www.striderite.com/en/stores?dwcont='
-            ,'x-requested-with': 'XMLHttpRequest'
-        })
-        query_params = {
-            'distanceMax': 10000 # this would cover all of the US!
-            ,'zip': '63101' # Misouri zip; choose a near-center-most zip code
-            ,'distanceUnit': 'mi'
-            ,'country': 'US'
-            ,'formType': 'findbyzipandcountry'
-            ,'sz': 25 # max page size; obtained through trial-and-error
-            ,'start': 0
-        }
-        payload = {'format': 'ajax'}
-
-        session.headers.update(self.headers)
-
-        r = session.post(self.url, params=query_params, data=payload)
-        
-        if r.status_code == 200:
-
-            hxt = html.fromstring(r.text)
-
-            for row in hxt.xpath('//table[@id="store-location-results"]//tr'):
-                yield self._map_data(row)
-
-            next_page = self.get_next_page(hxt)
-            
-            while next_page:
-                url = xpath(next_page[0], '@href')
-                
-                query_params = base.query_params(url)
-                start = query_params['start']
-
-                r = session.post(url, data=payload)
-                
-                if r.status_code == 200:
-
-                    hxt = html.fromstring(r.text)
-
-                    for row in hxt.xpath('//table[@id="store-location-results"]//tr'):
-                        yield self._map_data(row)
-
-                    next_page = self.get_next_page(hxt)
-
-    def get_next_page(self, hxt):
-        return hxt.xpath('//div[@class="pagination-nav-buttons"]//a[text()="Next"]')
-
-
-if __name__ == '__main__':
-    st = StrideTite()
-    st.run()
-
-
-
+scrape()

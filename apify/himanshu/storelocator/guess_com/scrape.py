@@ -1,121 +1,123 @@
 import csv
-import sys
-
 import requests
 from bs4 import BeautifulSoup
 import re
-import json
-# import pprint
-# pp = pprint.PrettyPrinter(indent=4)
+import http.client
 import sgzip
+import json
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",'page_url'])
         # Body
         for row in data:
             writer.writerow(row)
 
 
-
 def fetch_data():
-
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        "Authorization":"R8-Gateway App=shoplocal, key=guess, Type=SameOrigin",
-        "Referer":"https://guess.radius8.com/sl/shoplocal_guess?r8dref=fcbb573a-fd5c-b3d7-bb9c-43a060fe3db4&r8sl_store_code=5023&r8view=locations&",
-        "X-Device-Id":"fcbb573a-fd5c-b3d7-bb9c-43a060fe3db4",
-        "X-Domain-Id":'guess'
-    }
-    base_url = "https://shop.guess.com/"
-    page_url = "<MISSING>"
+    base_url = "https://www.guess.com/"
+    return_main_object = []
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 100
-    MAX_DISTANCE = 30000
+    MAX_RESULTS = 50
+    MAX_DISTANCE = 10
     current_results_len = 0  # need to update with no of count.
-    coord = search.next_coord()    # zip_code = search.next_zip()    
-    
-    while coord:
-        result_coords = []
-        locator_domain = 'https://guess.com/'
-        location_name = ""
-        street_address = ""
-        city = ""
-        state = ""
-        zipp = ""
-        # country_code = "US"
-        store_number = "<MISSING>"
-        phone = ""
-        location_type = ""
-        latitude = ""
-        longitude = ""
-        raw_address = ""
-        hours_of_operation = ""
-        lat = coord[0]
-        lng = coord[1]
-        location_url = "https://guess.radius8.com/api/v1/streams/stores?lat="+str(lat)+"&lng="+str(lng)+"&radius="+str(MAX_DISTANCE)+"&units=MI&limit="+str(MAX_RESULTS)+"&divisions=guess&_ts=1569414026314"
-        
-        try:
-            k = requests.get(location_url, headers=headers).json()
-        except:
-            continue
-        current_results_len = len(k)
-        if "results" in k:
-            for i  in k['results']:
-                location_name = i['name']
-                street_address = i['address']['address1']
-                city = i['address']['city']
-                zipp = i['address']['postal_code']
-                if len(zipp)==6 or len(zipp)==7:
+    zip_code = search.next_zip()
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+    }
+
+
+
+    location_url = "https://stores.guess.com.prod.rioseo.com/"
+    r = requests.get(location_url,headers=headers)
+
+    soup = BeautifulSoup(r.text,"lxml")
+
+    for x in soup.find('ul',{'class':'custom-map-list'}).find_all('a'):
+
+        r = requests.get(x['href'], headers=headers)
+        soup = BeautifulSoup(r.text, "lxml")
+        for x in soup.find('ul',{'class':'custom-map-list'}).find_all('a'):
+            r = requests.get(x['href'], headers=headers)
+            soup = BeautifulSoup(r.text, "lxml")
+            for x in soup.find('ul', {'class': 'custom-map-list'}).find_all('li'):
+
+                r = requests.get(x.find('a')['href'], headers=headers)
+                soup = BeautifulSoup(r.text, "lxml")
+
+                locator_domain = base_url
+
+                location_name =  soup.find('span',{'class':'location-name'}).text;
+                street_address = soup.find('meta',{'name':'address'})['content'].strip().split(',')[0];
+
+                city = soup.find('meta',{'name':'city'})['content'].strip()
+                state =  soup.find('meta',{'name':'state'})['content'].strip().split(',')[0]
+                zip =  soup.find('meta',{'name':'zip'})['content'].strip()
+
+                ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zip))
+                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zip))
+
+                if ca_zip_list:
+                    zip = ca_zip_list[-1]
                     country_code = "CA"
-                else:
+                if us_zip_list:
+                    zip = us_zip_list[-1]
                     country_code = "US"
-                if "state" in i['address']:
-                    state =i['address']['state']
-                else:
-                    state = "<MISSING>"
-                lat = i['geo_point']['lat']
-                lng = i['geo_point']['lng']
-                phone = i['contact_info']['phone']
-                time = ''
-                kk = []
-                for x in i['hours']:
-                    kk.append(x + " " + i['hours'][x][0][:2]+':'+i['hours'][x][0][2:4] +" AM to PM " + i['hours'][x][1][:2]+':'+i['hours'][x][1][2:4])
-                hours_of_operation = ' '.join(kk)
-                latitude =  lat
-                longitude = lng
-                result_coords.append((latitude, longitude))
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                        store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-                if str(store[2]) + str(store[-4]) not in addresses:
-                    addresses.append(str(store[2]) + str(store[-4]))                   
-                    store = [x if x else "<MISSING>" for x in store]
-                    #print("data = " + str(store))
-                   # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    yield store
 
 
-        if current_results_len < MAX_RESULTS:
-            # print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_coord()   # zip_code = search.next_zip()    
-    # break
+                store_number = ''
+                page_url =  x.find('a')['href']
+                phone = soup.find('a',{'class':'phone'}).text.strip()
+
+                location_type = '<MISSING>'
+                latitude = soup.find('a',{'class':'directions'})['href'].split(',')[-2].split('=')[-1]
+
+
+                longitude = soup.find('a',{'class':'directions'})['href'].split(',')[-1]
+
+
+
+                hours_of_operation = re.sub(r"\s+", " ", soup.find('div',{'class':'hours'}).text).strip().replace('Thu Holiday Hours','Thu').replace('Holiday','').replace('Hours ','')
+                print(hours_of_operation)
+
+
+
+                if street_address in addresses:
+                    continue
+
+                addresses.append(street_address)
+
+                store = []
+                store.append(locator_domain if locator_domain else '<MISSING>')
+                store.append(location_name if location_name else '<MISSING>')
+                store.append(street_address if street_address else '<MISSING>')
+                store.append(city if city else '<MISSING>')
+                store.append(state if state else '<MISSING>')
+                store.append(zip if zip else '<MISSING>')
+                store.append(country_code if country_code else '<MISSING>')
+                store.append(store_number if store_number else '<MISSING>')
+                store.append(phone if phone else '<MISSING>')
+                store.append(location_type if location_type else '<MISSING>')
+                store.append(latitude if latitude else '<MISSING>')
+                store.append(longitude if longitude else '<MISSING>')
+                store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+                store.append(page_url if page_url else '<MISSING>')
+                #print("===", str(store))
+                # return_main_object.append(store)
+                yield store
+
+
 
 def scrape():
     data = fetch_data()
-
     write_output(data)
 
 

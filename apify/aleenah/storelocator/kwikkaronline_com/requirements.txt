@@ -1,0 +1,4 @@
+bs4==0.0.1
+requests==2.22.0
+pyzipcode3==2.2
+sgzip==0.0.31

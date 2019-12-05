@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-# import sgzip
+import unicodedata
 
 
 def write_output(data):
@@ -64,13 +64,19 @@ def fetch_data():
             if "" != x['address']['zip']:
                 # print(x['address']['zip'],country_code)
                 if "Canada" in country_code or "CANADA" in country_code:
-                    zipp = x['address']['zip'].replace('/ Ontario','').upper().replace('-',' ')
+                    ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(x['address']['zip']))
+                    if ca_zip_list != []:
+                        zipp = ca_zip_list[0].strip()
+                    else:
+                    # zipp = x['address']['zip'].replace('/ Ontario','').upper().replace('-',' ')
+                        # print(zipp)
+                        zipp = "<MISSING>"
                     country_code = "CA"
                     # print(country_code,zipp)
                 else:
                     zip = x['address']['zip'].replace('CA','').replace('\\uFFFD','').strip()
                     # print(zip)
-                    # print(len(zip))
+                    # print("len=="+str(len(zip)))
                     # print('~~~~~~~~~~~~~~~~~~~~~`')
                     if len(zip) ==3:
 
@@ -80,7 +86,7 @@ def fetch_data():
                     elif len(zip) ==4:
                         zipp = "0"+zip
                         country_code = "US"
-                    elif len(zip) == 7:
+                    elif len(zip) == 7 or len(zip) ==6:
 
                         zipp = zip
                         country_code = "CA"
@@ -92,7 +98,7 @@ def fetch_data():
 
 
             else:
-                #
+                # print( x['address']['zip'],x['address']['country'])
                 if "Canada" in country_code or "CANADA" in country_code:
                     zipp = "<MISSING>"
                     country_code = "CA"
@@ -103,19 +109,25 @@ def fetch_data():
                     # print("zipp === "+x['address']['zip'],country_code)
                     # print(country_code,zipp)
 
+            if "L4N  1A4" == zipp:
+                zipp = "L4N 1A4"
 
 
 
 
 
-
-            store_number = x['id']
+            store_number = '<MISSING>'
             location_name = x['storename'].replace('\\','').capitalize().strip()
             street_address = x['address']['street'].replace('\\','').replace('>','').capitalize().strip()
             # print(street_address)
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             city = x['address']['city'].split(',')[0].replace('\\','').replace('u00E9','e').replace('u00C8','c').capitalize().strip()
             state =x['address']['state'].replace('.','').strip()
+            if "Vancouver" or "Vancourver" in state:
+                state = "<MISSING>"
+                city = "Vancouver"
+            if "MICH" == state:
+                state = "Michigan"
             lat = x['address']['latitude']
             lng = x['address']['longitude']
             if "0" == str(lat)  or "0" == str(lng):
@@ -125,6 +137,11 @@ def fetch_data():
                 latitude = lat
                 longitude = lng
             # print(latitude,longitude)
+            phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(x['address']['phone']))
+            if phone_list:
+                phone = phone_list[0]
+            else:
+                phone= "<MISSING>"
             hours = x['storehours']
             h = []
             for key,value in hours.items():
@@ -153,8 +170,8 @@ def fetch_data():
 
 
             # print(state)
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            #print("data = " + str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             return_main_object.append(store)
 
 
@@ -169,3 +186,22 @@ def scrape():
 scrape()
 
 
+ # python validate.py theblkackdog_data.csv
+# US
+# us
+# Us
+# u.s.
+# U.S.
+# usa
+# USA
+# U7SA
+# United States
+# United States Virgin Islands
+# U.S.A.
+# u.s.a
+# United States of America
+# U.S. Virgin Islands
+# UNITED STATES
+# Canada
+# Canada.
+# CANADA

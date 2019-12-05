@@ -9,4 +9,4 @@ Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
-address with no number,invalid state,and 1 lat & lng length is short
+address with no number,invalid state,and same lat & lng and  it length is short this website

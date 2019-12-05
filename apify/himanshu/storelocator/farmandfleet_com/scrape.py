@@ -13,7 +13,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -57,7 +57,7 @@ def fetch_data():
                 phone = ''
                 if 'phone' in val:
                     phone = val['phone']
-                location_type = base_url+'/stores/'+val['urlAlias']
+                page_url = base_url+'/stores/'+val['urlAlias']
                 latitude = val['latitude']
                 longitude = val['longitude']
 
@@ -82,10 +82,11 @@ def fetch_data():
                 store.append(country_code if country_code else '<MISSING>')
                 store.append(store_number if store_number else '<MISSING>')
                 store.append(phone if phone else '<MISSING>')
-                store.append(location_type if location_type else '<MISSING>')
+                store.append('<MISSING>')
                 store.append(latitude if latitude else '<MISSING>')
                 store.append(longitude if longitude else '<MISSING>')
                 store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+                store.append(page_url if page_url else '<MISSING>')
                 print("===", str(store))
                 # return_main_object.append(store)
                 yield store

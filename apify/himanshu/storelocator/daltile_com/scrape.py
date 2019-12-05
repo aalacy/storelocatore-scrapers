@@ -12,7 +12,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -49,10 +49,10 @@ def fetch_data():
 
     app_key = soup_appkey.text.split("appkey: '")[1].split("'")[0]
 
-    # print("r_appKey === " + str(app_key))
+    #print("r_appKey === " + str(app_key))
 
     for zip_code in zips:
-        print(zip_code)
+        #print(zip_code)
 
         # zip_code = 99655
         r = requests.post("https://hosted.where2getit.com/daltile/rest/locatorsearch",
@@ -62,7 +62,6 @@ def fetch_data():
                                '"geolocs":{"geoloc":[{"addressline":"' + str(zip_code) + '","country":"","latitude":"",'
                                                                                          '"longitude":""}]},"searchradius":"100"}}}')
         json_data = r.json()
-       
 
         # it will used in store data.
         locator_domain = base_url
@@ -79,10 +78,11 @@ def fetch_data():
         longitude = "<MISSING>"
         raw_address = ""
         hours_of_operation = "<MISSING>"
+        page_url = "<MISSING>"
 
         if 'collection' not in json_data['response']:
             continue
-
+        # print(len(json_data['response']['collection']))
         for address_list in json_data['response']['collection']:
 
             # print('json data = ' + str(address_list))
@@ -91,12 +91,12 @@ def fetch_data():
             longitude = address_list['longitude']
             zipp = address_list['postalcode']
             location_name = address_list['name']
-            city = address_list['region']
+            city = address_list['city']
             country_code = address_list['country']
             state = address_list['state']
             street_address = address_list['address1']
             phone = address_list['phone']
-
+            # print(address_list.keys())
             if street_address is not None:
                 if address_list['address2'] is not None:
                     street_address += ", " + address_list['address2']
@@ -196,7 +196,7 @@ def fetch_data():
                 hours_of_operation = "<MISSING>"
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
             if store[2] + store[-3] in addresses:
                 continue

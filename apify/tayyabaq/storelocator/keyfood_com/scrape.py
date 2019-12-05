@@ -24,7 +24,10 @@ def fetch_data():
     page = 0
     while True:
         r = requests.get("https://keyfoodstores.keyfood.com/store/keyFood/en/store-locator?q=11756&page=" + str(page) + "&radius=5000000000&all=true",headers=headers)
-        store_data = r.json()["data"]
+        try:
+	    store_data = r.json()["data"]
+	except ValueError:
+	    break
         for content in store_data:
             location_name.append(content["displayName"])
             if content["line2"]:
@@ -43,8 +46,6 @@ def fetch_data():
             for hour in content["openings"]:
                 hours = hours + " " + hour + " " + content["openings"][hour]
             hours_of_operation.append(hours if hours else "<MISSING>")
-        if len(data) < 250:
-            break
         page = page + 1
     for n in range(0,len(location_name)): 
         data.append([

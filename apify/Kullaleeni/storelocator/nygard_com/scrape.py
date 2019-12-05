@@ -9,15 +9,21 @@ import pandas as pd
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import time
+from selenium.webdriver.chrome.options import Options
+
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', options=options)
 
 def fetch_data():
     url = "https://www.nygard.com/en-ca/LocateStore"
     locator_domain = url
     data = []
-    try:
-        driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver")
-    except:
-        driver = webdriver.Chrome()
+    driver = get_driver()
     driver.get(url)
     time.sleep(3)
 
