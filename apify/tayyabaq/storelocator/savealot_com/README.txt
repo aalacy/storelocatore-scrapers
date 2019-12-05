@@ -1,1 +1,1 @@
-python val.py OdettaSA.csv --ignore StreetAddressHasNumber --ignore LatLngDuplicationValidator
+>python validate.py changes.csv --ignore StreetAddressHasNumber --ignore StoreNumberColumnValidator --ignore LatLngDuplicationValidator
