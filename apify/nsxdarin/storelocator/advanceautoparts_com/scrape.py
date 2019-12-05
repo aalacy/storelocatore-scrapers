@@ -60,7 +60,7 @@ def fetch_data():
                 stores = []
                 typ = 'Advance Auto Parts'
                 name = ''
-                r = session.get(city, headers=headers)
+                r = session.get(city, headers=headers, timeout=5)
                 for line in r.iter_lines():
                     if '<div class="LocationName-geo">' in line:
                         add = line.split('class="c-address-street-1"')[1].split('>')[1].split('<')[0]
@@ -145,7 +145,7 @@ def fetch_data():
                 LFound = False
                 print('Pulling Location %s...' % loc)
                 typ = 'Advance Auto Parts'
-                r = session.get(loc, headers=headers)
+                r = session.get(loc, headers=headers, timeout=5)
                 name = ''
                 add = ''
                 city = ''
