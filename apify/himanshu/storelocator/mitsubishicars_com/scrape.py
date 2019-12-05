@@ -9,56 +9,47 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
     base_url ="https://www.mitsubishicars.com"
-    return_main_object=[]
-    output=[]
+    return_main_object = []
+    addresses = []
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 50
+    MAX_DISTANCE = 10
     addressess =[]
-    zps=sgzip.for_radius(50)
-    for zp in zps:
+    current_results_len = 0     # need to update with no of count.
+    zip_code = search.next_zip()
+
+    while zip_code:
+        result_coords = []
         try:
-            r=requests.get('https://www.mitsubishicars.com/rs/dealers?bust=1569242590201&zipCode='+zp+'&idealer=false&ecommerce=false').json()
+            r=requests.get('https://www.mitsubishicars.com/rs/dealers?bust=1569242590201&zipCode='+str(zip_code)+'&idealer=false&ecommerce=false').json()
         except:
             continue
-        hours_of_operation = ''    
+        hours_of_operation = '' 
+
+        current_results_len = len(r)  
         for loc in r:
             if loc['zipcode']:
-                # page_url = loc['dealerUrl']
                 link = loc['dealerUrl'] 
                 if link != None:
                     page_url = (link)
-                    try:                        
-                        r=requests.get("http://"+page_url.lower())
+                    try:
+                        r=requests.get("http://"+page_url)
                     except:
                         continue
-                    # r=requests.get("https://www.saltlakemitsubishi.com/")
-
-                    
                     soup = BeautifulSoup(r.text, "lxml")
-                    # , attrs = {'class' : 'pos'}
-                    # columns = soup.findAll('tr', text = re.compile('HOURS'))
-                    # .parent.find('table').find_all('tr')
-                    # print("startttt")
                     main=soup.find('h3',text=re.compile("Hours"))
                     if main != None:
-                        # print("================",main.parent)
                         if main.parent != None:
                             hours_of_operation = " ".join(list(main.parent.stripped_strings))
-                        #     print(hours_of_operation)
-                        # else:
-                        #     print("http://"+page_url)
-
-                        # main.parent.find(re.compile("tbody"))
-                        # if main.parent.find(re.compile("tbody")) !=None:
-                        #     hours_of_operation = " ".join(list(main.parent.find(re.compile("tbody")).stripped_strings))   
-                        # else:              
-                        #     
-                # print()
+                # page_url = 
                 address=loc['address1'].strip()
                 if loc['address2']:
                     address+=' '+loc['address2'].strip()
@@ -89,17 +80,26 @@ def fetch_data():
                 store.append(lng if lng else "<MISSING>")
                 store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
                 store.append(page_url)
-                # print(store)
+                print(store)
+                print('==============================')
                 if store[2] in addressess:
                     continue
                 addressess.append(store[2])
                 yield store
 
-                # store.append()
-                # adrr =name+' '+address + ' ' + city + ' ' + state + ' ' + str(zip)
-                # if adrr not in output:
-                #     output.append(adrr)
-                #     
+
+
+        if current_results_len < MAX_RESULTS:
+            # print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            # print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        zip_code = search.next_zip()
+
+           
 def scrape():
     data = fetch_data()
     write_output(data)

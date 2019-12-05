@@ -10,7 +10,7 @@ import time
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('wellsfargo_qa1.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -53,8 +53,8 @@ def fetch_data():
         page_url = ""
         hours_of_operation = ""
 
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
-        #print("zip_code === "+zip_code)
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("zip_code === "+zip_code)
         # x = coord[0]
         # y = coord[1]
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
@@ -80,7 +80,7 @@ def fetch_data():
                     city= adr.find('span',class_='locality').text.strip().capitalize()
                     state = adr.find('abbr',class_='region').text.strip()
                     zipp = adr.find('span',class_='postal-code').text.strip()
-                    #print(zipp)
+                    print(zipp)
                     country_code = "US"
                     phone_tag = left_data.find('div',class_='tel').text.replace('Phone:','').strip()
                     phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
@@ -117,8 +117,8 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
 
-                #print("data = " + str(store))
-                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                print("data = " + str(store))
+                print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 # return_main_object.append(store)
                 yield store
         
