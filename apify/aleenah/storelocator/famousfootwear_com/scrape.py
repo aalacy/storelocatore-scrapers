@@ -34,9 +34,20 @@ def fetch_data():
     countries=[]
     key_set=set([])
     zip_codes=sgzip.for_radius(50)
-    headers={'Sec-Fetch-User': '?1',
+    #headers for linux:
+    headers={"Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+"Accept-Encoding":"gzip, deflate, br",
+"Accept-Language":"en-US,en;q=0.5",
+ "Connection":"keep-alive",
+"Host":"api.famousfootwear.com",
+"Upgrade-Insecure-Requests":"1",  
+     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0"}
+    
+    """ headers fro windows:
+    {'Sec-Fetch-User': '?1',
 'Upgrade-Insecure-Requests': '1',
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"}
+    """
     for zip in zip_codes:
         print(zip)
         url="https://api.famousfootwear.com/api/store/v1/storesByZip?webStoreId=20000&radius=50&zipCode="+str(zip)+"&json=true"
