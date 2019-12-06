@@ -33,15 +33,14 @@ def fetch_data():
         except:
             continue
         hours_of_operation = '' 
-
         current_results_len = len(r)  
         for loc in r:
             if loc['zipcode']:
                 link = loc['dealerUrl'] 
                 if link != None:
-                    page_url = (link)
+                    page_url = "http://"+link.lower()
                     try:
-                        r=requests.get("http://"+page_url)
+                        r=requests.get(page_url)
                     except:
                         continue
                     soup = BeautifulSoup(r.text, "lxml")
@@ -80,8 +79,7 @@ def fetch_data():
                 store.append(lng if lng else "<MISSING>")
                 store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
                 store.append(page_url)
-                print(store)
-                print('==============================')
+                #print(store)
                 if store[2] in addressess:
                     continue
                 addressess.append(store[2])
