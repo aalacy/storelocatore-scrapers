@@ -34,8 +34,10 @@ def fetch_data():
         result_coords = []
         location_name =''
         #print("zip_code === "+zip_code)
-
-        r = requests.get("https://locations.comerica.com/?q=me"+str(zip_code)+"&filter=all")
+        try:
+            r = requests.get("https://locations.comerica.com/?q=me"+str(zip_code)+"&filter=all")
+        except:
+            continue
         soup=BeautifulSoup(r.text ,"lxml")
         return_main_object = []
         main=soup.find_all('script')
