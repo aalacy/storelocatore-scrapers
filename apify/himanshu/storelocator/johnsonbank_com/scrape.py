@@ -26,8 +26,10 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 50
+    MAX_RESULTS = 100
     MAX_DISTANCE = 10
+    addresses123 =[]
+    store_detail=[]
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
 
@@ -48,21 +50,97 @@ def fetch_data():
         # lng = -73.71329370598734
         # print("remaining zipcodes: " + str(len(search.zipcodes)))
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
-
         location_url = "https://johnsonbank.locatorsearch.com/GetItems.aspx"
+        try:
+            r = requests.post(location_url, headers=headers, data="lat=" + str(lat) + "&lng=" + str(
+                lng) + "&searchby=FCS%7CDRIVEUP%7CDRIVEUPATM%7CATMSF%7C")
+        except :
+            continue
 
-        while True:
-            try:
-                r = requests.post(location_url, headers=headers, data="lat=" + str(lat) + "&lng=" + str(
-                    lng) + "&searchby=FCS%7CDRIVEUP%7CDRIVEUPATM%7CATMSF%7C")
-                break
-            except Exception as e:
-                # print("Error = "+ str(e))
-                time.sleep(10)
-                continue
+        try:
+            r1 = requests.post(location_url, headers=headers, data="lat=" + str(lat) + "&lng=" + str(
+                lng) + "&searchby=ATMSF%7C&SearchKey=&rnd=1575264836020")
+        except :
+            continue
+
 
         soup = BeautifulSoup(r.text, "html.parser")
-        current_results_len = len(soup.find_all("marker"))
+        soup1 = BeautifulSoup(r1.text, "html.parser")
+        current_results_len = len(soup.find_all("marker")+soup1.find_all("marker"))
+        
+        for script in soup1.find_all("marker"):
+            locator_domain = base_url
+            location_name = ""
+            street_address = ""
+            city = ""
+            state = ""
+            zipp = ""
+            country_code = "CA"
+            store_number = ""
+            phone = ""
+            location_type = ""
+            latitude = ""
+            longitude = ""
+            raw_address = ""
+            page_url = ""
+            hours_of_operation = ""
+
+            # do your logic here
+
+            title_tag = BeautifulSoup(script.find("title").text,"html.parser").find("a")
+            if title_tag:
+                page_url = "https://johnsonbank.locatorsearch.com/"+title_tag["href"]
+
+            location_name = script.find("label").text
+            street_address = script.find("add1").text
+            latitude = script["lat"]
+            longitude = script["lng"]
+            list_address = list(script.find("add2").stripped_strings)
+
+            phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_address))
+            ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(list_address))
+            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(list_address))
+            state_list = re.findall(r' ([A-Z]{2}) ', str(list_address))
+
+            # print("script == " + str(list_address))
+            if phone_list:
+                phone = phone_list[0]
+
+            if ca_zip_list:
+                zipp = ca_zip_list[-1]
+                country_code = "CA"
+
+            if us_zip_list:
+                zipp = us_zip_list[-1]
+                country_code = "US"
+
+            if state_list:
+                state = state_list[-1]
+
+            city = list_address[0].split(",")[0]
+
+            if script.find("contents"):
+                hours_soup = BeautifulSoup(script.find("contents").text,"html.parser")
+                if hours_soup.find("div",{"class":"infowindow"}) and hours_soup.find("table"):
+                    hours_of_operation = " ".join(list(hours_soup.find("div",{"class":"infowindow"}).stripped_strings))
+                    # print("hours_list === "+ str(hours_of_operation))
+
+            result_coords.append((latitude, longitude))
+            store1 = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+
+            store_detail.append(store1)
+
+            # if str(store1[2]) + str(store1[-3]) not in addresses123:
+            #     addresses123.append(str(store1[2]) + str(store1[-3]))
+
+            #     store1 = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store1]
+
+            #     print("data = " + str(store1))
+            #     print('~~~~~~~~~~~~~~~~~~~~~~~~store1~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            #     yield store1
+            
+        
         # print("soup === " + str(soup))
         # print("current_results_len === " + str(current_results_len))
 
@@ -128,15 +206,15 @@ def fetch_data():
             result_coords.append((latitude, longitude))
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+            store_detail.append(store)
+            # if str(store[2]) + str(store[-3]) not in addresses:
+            #     addresses.append(str(store[2]) + str(store[-3]))
 
-            if str(store[2]) + str(store[-3]) not in addresses:
-                addresses.append(str(store[2]) + str(store[-3]))
+            #     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
+            #     print("data = " + str(store))
+            #     print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            #     yield store
 
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
@@ -147,7 +225,16 @@ def fetch_data():
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         coord = search.next_coord()
-        # break
+
+    for q in range(len(store_detail)):
+        if store_detail[2] in addresses:
+            continue
+        addresses.append(store_detail[2])
+        yield store_detail[q]
+
+
+
+
 
 
 def scrape():

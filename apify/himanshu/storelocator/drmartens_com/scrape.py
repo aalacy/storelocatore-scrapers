@@ -12,7 +12,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -60,15 +60,16 @@ def fetch_data():
     country_code = "US"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "drmartens"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
+    page_url = "<MISSING>"
 
     while zip_code:
         result_coords = []
-        print("zips === " + str(zip_code))
+        #print("zips === " + str(zip_code))
         page_no = 0
         isFinish = False
         while isFinish is not True:
@@ -88,12 +89,12 @@ def fetch_data():
                     zipp = address_list['postalCode']
                     hours_of_operation = str(address_list['openings']).replace('{', "").replace('}', "")
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                             store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                             store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
                     if store[2] in addresses:
                         continue
                     addresses.append(store[2])
-                    #print("data = " + str(store))
-                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    print("data = " + str(store))
+                    print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     yield  store
                 page_no += 1
             except:

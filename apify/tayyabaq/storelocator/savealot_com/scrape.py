@@ -9,8 +9,8 @@ url = "https://savealot.com/grocery-stores/"
 base = 'https://savealot.com'
 
 
-def write_output(df1):
-    df1.to_csv('data.csv', index=False)
+def write_output(df):
+    df.to_csv('data.csv', index=False)
 
 
 def fetch_data():
@@ -65,14 +65,27 @@ def fetch_data():
                                 continue
                             if response.status_code == 200:
                                 page_urls.append(loc)
+                                res = response
+                                response.close()
+                                try:
+                                    strn = loc.split('-')[-1]
+                                    strnum = re.findall(r"\d{3,}", strn)
+                                    store_num = strnum[0]
+                                    if len(store_num) < 3:
+                                        store_num = '<MISSING>'
+                                except Exception as e:
+                                    store_num = "<MISSING>"
+
+                                print(store_num)
+                                store_numbrs.append(store_num)
+
                                 try:
                                     city = city_loc.split('/')[-2]
                                 except Exception as e:
                                     city = "<MISSING>"
                                 print(city)
                                 cities.append(city)
-                                res = response
-                                response.close()
+
                                 data = res.text
                                 soup = BeautifulSoup(data, 'html.parser')
 
@@ -124,10 +137,17 @@ def fetch_data():
 
                                 try:
                                     result = soup.findAll('div', class_='day-row')
+
                                     hour = ''
                                     for i in result:
-                                        pat = re.sub(pattern, "", i.text)
-                                        hour = hour + pat + '|'
+                                        m = i.findAll("p", attrs={'class': 'hours'})
+                                        n = i.find('p').text.strip()
+                                        for j in m:
+                                            mm = j.text.strip()
+                                            pat = re.sub(pattern, "", mm)
+                                        hoo = n + ' ' + pat + ' '
+                                        hour = hour + hoo + '|' + ' '
+
                                     if len(hour) < 3:
                                         hour = "<MISSING>"
 
@@ -171,9 +191,9 @@ def fetch_data():
                                 location_types.append(location_type)
                                 #         # print(location_type)
 
-                                store_numbr = "<MISSING>"
-                                store_numbrs.append(store_numbr)
-                                #         # print(store_number)
+                                # store_numbr = "<MISSING>"
+                                # store_numbrs.append(store_numbr)
+                                # #         # print(store_number)
 
                                 locator_domain = "https://www.savealot.com"
                                 locator_domains.append(locator_domain)
@@ -183,9 +203,8 @@ def fetch_data():
                'zip': zip_codes, 'country_code': country_codes, 'phone': phones, 'location_type': location_types,
                'latitude': lats, 'longitude': longts, 'hours_of_operation': hours, 'store_number': store_numbrs}
         d = pd.DataFrame(dic)
-        df = d.fillna("<MISSING>")
-        df1 = df.drop_duplicates()
-        return df1
+        df = d.drop_duplicates()
+        return df
 
     except Exception as e:
         print(str(e))

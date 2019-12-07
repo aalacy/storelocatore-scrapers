@@ -76,7 +76,7 @@ def fetch_data():
             long.append(lo)
             locs.append(re.findall(r'<img alt="(.*)\.gif" src=',b)[0].replace("_logo","")+" "+re.findall(r'\.png"><label><\!\[CDATA\[(.*)\]\]></label>',b)[0])
             try:
-                timing.append(re.findall(r'</table><div>(.*)</div>]]></contents></tab><tab><label>',b,re.DOTALL)[0].replace("<br>"," ").replace("\n"," ").replace("\xe2\x80\x93","").replace("<",""))
+                timing.append(re.findall(r'</table><div>(.*)</div>]]></contents></tab><tab><label>',b,re.DOTALL)[0].replace("<br>"," ").replace("\\n"," ").replace("\xe2\x80\x93","").replace("<",""))
                 h=1
             except:
                 timing.append("<MISSING>")
