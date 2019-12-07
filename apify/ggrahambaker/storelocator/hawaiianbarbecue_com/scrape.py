@@ -61,7 +61,7 @@ def fetch_data():
         if 'Closed' in location_name:
             continue
         
-        if location not in dup_tracker:
+        if location_name not in dup_tracker:
             dup_tracker.append(location_name)
         else:
             continue

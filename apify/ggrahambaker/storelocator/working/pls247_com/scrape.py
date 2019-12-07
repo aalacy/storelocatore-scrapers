@@ -99,8 +99,8 @@ def fetch_data():
 
 
     all_store_data = []
+    dup_tracker = []
     for link in link_list:
-        print(link)
         driver.get(link)
         driver.implicitly_wait(10)
         
@@ -110,7 +110,12 @@ def fetch_data():
         
             
         phone_number = driver.find_element_by_xpath('//span[@itemprop="telephone"]').text
-        
+        if phone_number in dup_tracker:
+            continue
+        else:
+            dup_tracker.append(phone_number)
+            
+
         
         hours = ''
         
@@ -137,9 +142,7 @@ def fetch_data():
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
-        print()
-        print(store_data)
-        print()
+        
         all_store_data.append(store_data)
         
 
