@@ -17,7 +17,7 @@ def get_driver():
 	return webdriver.Chrome('chromedriver', options=options)
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data2.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -69,22 +69,35 @@ def fetch_data():
 		time.sleep(3)
 		#print('https://www.chemicalbank.com/LocationDataByID/'+str(ids[i]))
 		hours_dict=ast.literal_eval(driver_hours.find_element_by_tag_name('body').text)
-		days_count=str(hours_dict).split('Branch Drive-Thru')[0].count('"DayName"')
+		#print(hours_dict)
+		try:
+			days_count=str(hours_dict).split('"Name":"')[2].count('"DayName"')
+		except:
+			days_count=0
+		types_count=str(hours_dict).split('Features')[1].count('"Name":"')
+		#print(str(hours_dict).split('Features')[1])
+		#print(types_count)
 		timing_location=''
+		
 		for i in range(1,days_count):
 			days=str(hours_dict).split('"Name":"')[2].split('"DayName":"')[i].split('"')[0]
 			TimeOpen=str(hours_dict).split('"Name":"')[2].split('"TimeOpen":"')[i].split('"')[0]
 			TimeClose=str(hours_dict).split('"Name":"')[2].split('"TimeClose":"')[i].split('"')[0]
 			timing_location=timing_location+' '+days+' '+TimeOpen+' '+TimeClose
+			#print(timing_location)
 		if timing_location=='':
 			timing.append( "<MISSING>")
 		else:
 			timing.append(timing_location)
-		#print(timing)
+		type=''
+		for j in range(1,types_count+1):
+			type=type+' '+str(hours_dict).split('"Name":"')[j+1].split('"')[0]
+			#print(type)
+		types.append(type)
 		phones.append(locations_dict['LocationData'][i]['PhoneNumber'])
 		lats.append(locations_dict['LocationData'][i]['Latitude'])
 		longs.append(locations_dict['LocationData'][i]['Longitude'])
-	
+		
 		
 	
 	data = []
@@ -99,7 +112,7 @@ def fetch_data():
 		row.append(country_code)
 		row.append(ids[i] if ids[i] else "<MISSING>")
 		row.append(phones[i] if phones[i] else "<MISSING>")
-		row.append('ATM' if locations_dict['LocationData'][i]['FullName'].find("ATM") else 'Branch')
+		row.append(types[i] if types[i] else "<MISSING>")
 		row.append(lats[i] if lats[i] else "<MISSING>")
 		row.append(longs[i] if longs[i] else "<MISSING>")
 		row.append(timing[i] if timing[i] else "<MISSING>")
