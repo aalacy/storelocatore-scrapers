@@ -84,19 +84,31 @@ def fetch_data():
 			timing_location=timing_location+' '+days+' '+TimeOpen+' '+TimeClose
 			#print(timing_location)
 		if timing_location=='':
-			timing.append( "<MISSING>")
+			timing.append("<MISSING>")
 		else:
 			timing.append(timing_location)
 		type=''
 		for j in range(1,types_count+1):
 			type=type+' '+str(hours_dict).split('"Name":"')[j+1].split('"')[0]
 		types.append(type)
-		#print(str(hours_dict).split('"PhoneNumber":"')[1].split('"')[0])
-		phones.append(str(hours_dict).split('"PhoneNumber":"')[1].split('"')[0])
-		#print(str(hours_dict).split('"Latitude":"')[1].split('"')[0])
-		#print(str(hours_dict).split('"Longitude":"')[1].split('"')[0])
-		lats.append(str(hours_dict).split('"Latitude":"')[1].split('"')[0])
-		longs.append(str(hours_dict).split('"Longitude":"')[1].split('"')[0])
+		print(str(hours_dict).split('"PhoneNumber":"')[1].split('"')[0])
+		phone=str(hours_dict).split('"PhoneNumber":"')[1].split('"')[0]
+		if phone=='':
+			phones.append("<MISSING>")
+		else:
+			phones.append(phone)	
+		print(str(hours_dict).split('"Latitude":"')[1].split('"')[0])
+		print(str(hours_dict).split('"Longitude":"')[1].split('"')[0])
+		lat=str(hours_dict).split('"Latitude":"')[1].split('"')[0]
+		if lat=='':
+			lats.append("<MISSING>")
+		else:
+			lats.append(lat)	
+		long=str(hours_dict).split('"Longitude":"')[1].split('"')[0]
+		if long=='':
+			longs.append("<MISSING>")
+		else:
+			longs.append(long)
 		
 		
 	
