@@ -50,6 +50,10 @@ def fetch_data():
     for link in link_list:
         if 'undefined' in link:
             continue
+        start = link.find('loc=')
+        if not link[start + 4:].split('%')[0][0].isnumeric():
+            continue
+
         driver.get(link)
 
         time.sleep(4)
@@ -65,6 +69,7 @@ def fetch_data():
             dup_tracker.append(location_name)
         else:
             continue
+
         street_address = driver.find_element_by_css_selector('li.location-detail__address-line-1').text
         city = driver.find_element_by_css_selector('li.location-detail__locality').text
         state = driver.find_element_by_css_selector('span.state').text
