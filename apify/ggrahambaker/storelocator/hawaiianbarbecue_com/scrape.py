@@ -35,7 +35,7 @@ def fetch_data():
     close = driver.find_element_by_css_selector('div.mailer__close')
     driver.execute_script("arguments[0].click();", close)
 
-    cities = driver.find_elements_by_css_selector('div.city')
+    cities = driver.find_elements_by_css_selector('li.location')
     link_list = []
     for city in cities:
         link = city.find_element_by_css_selector('a').get_attribute('href')
@@ -48,12 +48,11 @@ def fetch_data():
     all_store_data = []
     dup_tracker = []
     for link in link_list:
+        print(link)
         if 'undefined' in link:
             continue
-        start = link.find('loc=')
-        if not link[start + 4:].split('%')[0][0].isnumeric():
-            continue
 
+        
         driver.get(link)
 
         time.sleep(4)
