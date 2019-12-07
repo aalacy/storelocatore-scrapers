@@ -75,8 +75,6 @@ def fetch_data():
 		except:
 			days_count=0
 		types_count=str(hours_dict).split('Features')[1].count('"Name":"')
-		#print(str(hours_dict).split('Features')[1])
-		#print(types_count)
 		timing_location=''
 		
 		for i in range(1,days_count):
@@ -92,11 +90,13 @@ def fetch_data():
 		type=''
 		for j in range(1,types_count+1):
 			type=type+' '+str(hours_dict).split('"Name":"')[j+1].split('"')[0]
-			#print(type)
 		types.append(type)
-		phones.append(locations_dict['LocationData'][i]['PhoneNumber'])
-		lats.append(locations_dict['LocationData'][i]['Latitude'])
-		longs.append(locations_dict['LocationData'][i]['Longitude'])
+		#print(str(hours_dict).split('"PhoneNumber":"')[1].split('"')[0])
+		phones.append(str(hours_dict).split('"PhoneNumber":"')[1].split('"')[0])
+		#print(str(hours_dict).split('"Latitude":"')[1].split('"')[0])
+		#print(str(hours_dict).split('"Longitude":"')[1].split('"')[0])
+		lats.append(str(hours_dict).split('"Latitude":"')[1].split('"')[0])
+		longs.append(str(hours_dict).split('"Longitude":"')[1].split('"')[0])
 		
 		
 	
