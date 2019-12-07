@@ -91,24 +91,24 @@ def fetch_data():
 		for j in range(1,types_count+1):
 			type=type+' '+str(hours_dict).split('"Name":"')[j+1].split('"')[0]
 		types.append(type)
-		print(str(hours_dict).split('"PhoneNumber":"')[1].split('"')[0])
-		phone=str(hours_dict).split('"PhoneNumber":"')[1].split('"')[0]
+		phone=str(hours_dict).split('"PhoneNumber":"')[1].split('"')[0].strip()
 		if phone=='':
 			phones.append("<MISSING>")
 		else:
 			phones.append(phone)	
-		print(str(hours_dict).split('"Latitude":"')[1].split('"')[0])
-		print(str(hours_dict).split('"Longitude":"')[1].split('"')[0])
+		#print(phone)
 		lat=str(hours_dict).split('"Latitude":"')[1].split('"')[0]
 		if lat=='':
 			lats.append("<MISSING>")
 		else:
-			lats.append(lat)	
+			lats.append(lat)
+		#print(lat)
 		long=str(hours_dict).split('"Longitude":"')[1].split('"')[0]
 		if long=='':
 			longs.append("<MISSING>")
 		else:
 			longs.append(long)
+		#print(long)
 		
 		
 	
