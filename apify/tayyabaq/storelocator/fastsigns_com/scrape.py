@@ -88,20 +88,20 @@ def fetch_data():
                 countries.append('CA')
             ids.append(str(links[n]).split('/')[-1].split('-')[0])
             print(ids)
-        if driver.find_element_by_class_name('phone').text != "Coming Soon":
-            phone.append(driver.find_element_by_class_name('phone').text)
-        else:
-            phone.append("<MISSING>")
-        hours_of_operation.append(driver.find_element_by_xpath('//div[@class="inner"]/div[3]').text+" "+driver.find_element_by_xpath('//div[@class="inner"]/span[1]').text+" "+driver.find_element_by_xpath('//div[@class="inner"]/span[2]').text)
-        lat_lon = b = driver.find_element_by_xpath(
+            if driver.find_element_by_class_name('phone').text != "Coming Soon":
+                phone.append(driver.find_element_by_class_name('phone').text)
+            else:
+                phone.append("<MISSING>")
+            hours_of_operation.append(driver.find_element_by_xpath('//div[@class="inner"]/div[3]').text+" "+driver.find_element_by_xpath('//div[@class="inner"]/span[1]').text+" "+driver.find_element_by_xpath('//div[@class="inner"]/span[2]').text)
+            lat_lon = b = driver.find_element_by_xpath(
                 '//a[contains(@href,"https://www.google.com/maps")]').get_attribute('href')
-        try:
+            try:
                 latitude.append(lat_lon.split("n/")[1].split(",")[0])
-        except:
+            except:
                 latitude.append('<MISSING>')
-        try:
+            try:
                 longitude.append(lat_lon.split("n/")[1].split(",")[1])
-        except:
+            except:
                 longitude.append('<MISSING>')
     data = []
     for i in range(0, len(street_address)):
