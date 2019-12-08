@@ -56,50 +56,52 @@ def fetch_data():
         if (('COMING SOON' not in address_type[n].text) and ('COMING SOON!' not in address_type[n].text)) and (
                 ('US' in country[n].text) or ('CA' in country[n].text)):
             links.append(stores_href[n])
-            location_name.append(stores_text[n])
+            
             # print(location_name)
-            state.append(stores_text[n].split(",")[-1].replace(' ', '')[:2])
+            
             #print(state)
 
-            countries.append(country[n].text)
+            #countries.append(country[n].text)
     for n in range(0, len(links)):
         print(links[n])
         driver.get(links[n])
-        pages_url.append(links[n])
+        
         time.sleep(5)
-        address = driver.find_element_by_class_name('address').text
-        if (address.split("\n")[0].split(",")[0] != "COMING SOON" and address.split("\n")[0].split(",")[
-            0] != "COMING SOON!"):
-
-
-
-            if "suite" not in address.split("\n")[0].split(",")[1].lower() and "unit" not in address.split("\n")[0].split(",")[1].lower() and " ste " not in address.split("\n")[0].split(",")[1].lower() and re.findall(r'[\d]+',address.split("\n")[0].split(",")[1])==[]:
-                city.append(address.split("\n")[0].split(",")[1])
-                street_address.append(address.split("\n")[0].split(",")[0])
-            else:
-                city.append(address.split("\n")[0].split(",")[2])
-                street_address.append(address.split("\n")[0].split(",")[0]+" "+address.split("\n")[0].split(",")[1])
+        addr = driver.find_element_by_class_name('address').text.replace(",,",",").split("\n")[0]
+        address=addr.strip().split(",")
+        if address[0] !="COMING SOON" and address[0]!= "COMING SOON!":
+            s=address[-2].strip()
+            state.append(s)
+            c=address[-3].strip()
+            city.append(c)
+            z=address[-1].strip()
+            zipcode.append(z)
+            pages_url.append(links[n])   
+            street_address.append(addr.replace(c,"").replace(s,"").replace(z,"").replace(",",""))
             print(address)
             print(city)
             print(street_address)
-            # state.append(address.split("\n")[0].split(",")[2])
-            # print(state)
-            zipcode.append(address.split("\n")[0].split(",")[-1])
             print(zipcode)
+            if len(z)==5:
+                countries.append('US')
+            else:
+                countries.append('CA')
             ids.append(str(links[n]).split('/')[-1].split('-')[0])
             print(ids)
         if driver.find_element_by_class_name('phone').text != "Coming Soon":
             phone.append(driver.find_element_by_class_name('phone').text)
-            hours_of_operation.append(driver.find_element_by_xpath('//div[@class="inner"]/div[3]').text)
-            lat_lon = b = driver.find_element_by_xpath(
+        else:
+            phone.append("<MISSING>")
+        hours_of_operation.append(driver.find_element_by_xpath('//div[@class="inner"]/div[3]').text+" "+driver.find_element_by_xpath('//div[@class="inner"]/span[1]').text+" "+driver.find_element_by_xpath('//div[@class="inner"]/span[2]').text)
+        lat_lon = b = driver.find_element_by_xpath(
                 '//a[contains(@href,"https://www.google.com/maps")]').get_attribute('href')
-            try:
+        try:
                 latitude.append(lat_lon.split("n/")[1].split(",")[0])
-            except:
+        except:
                 latitude.append('<MISSING>')
-            try:
+        try:
                 longitude.append(lat_lon.split("n/")[1].split(",")[1])
-            except:
+        except:
                 longitude.append('<MISSING>')
     data = []
     for i in range(0, len(street_address)):
