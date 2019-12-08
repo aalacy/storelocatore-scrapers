@@ -67,14 +67,32 @@ def fetch_data():
         driver.get(links[n])
         
         time.sleep(5)
-        addr = driver.find_element_by_class_name('address').text.replace(",,",",").split("\n")[0]
-        address=addr.strip().split(",")
-        if address[0] !="COMING SOON" and address[0]!= "COMING SOON!":
-            s=address[-2].strip()
+        addr = driver.find_element_by_class_name('address').text.replace(",,",",").split("\n")[0].strip()
+        #address=addr.strip().split(",")
+        if addr.split(",")[0] !="COMING SOON" and addr.split(",")[0]!= "COMING SOON!":
+            z= re.findall(r'[0-9]{5}',addr)
+            if z== []:
+                z=re.findall(r'[A-Z][0-9][A-Z] [0-9][A-Z][0-9]',addr)
+                if z==[]:
+                    z=""
+                else:
+                    z=z[-1]
+                    addr=addr.replace(z,"")
+            else:
+                z=z[-1]
+                    addr=addr.replace(z,"")
+               
+            s= re.findall(r'[A-Z]{2}',addr)
+            if s==[]:
+                s=""
+            else:
+                s=s[-1]
+                addr=addr.replace(s,"")
             state.append(s)
+            print('check',re.findall(r'(.*[a-z0-9])[ ,.]*',addr)[0])
             c=address[-3].strip()
             city.append(c)
-            z=address[-1].strip()
+            
             zipcode.append(z)
             pages_url.append(links[n])   
             street_address.append(addr.replace(c,"").replace(s,"").replace(z,"").replace(",",""))
