@@ -1,1 +1,1 @@
-This site isn't passing Phone and LatLngDuplicationValidator because of the data in the site. 
+This site isn't passing LatLngDuplicationValidator because of the data in the site. 
