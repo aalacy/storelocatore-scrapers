@@ -23,8 +23,8 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-notifications")
-    #return webdriver.Chrome('c:/chromedriver.exe', chrome_options=options)
-    return webdriver.Chrome('chromedriver', chrome_options=options)
+    return webdriver.Chrome('c:/chromedriver.exe', chrome_options=options)
+    #return webdriver.Chrome('/Users/Dell/local/chromedriver', chrome_options=options)
 
 
 endprint = []
@@ -33,6 +33,7 @@ def fetch_data():
     data = []
     store_links =[]
     c=0
+    t=0;m=0
     url = 'https://www.southstatebank.com/locations/'
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
@@ -44,21 +45,20 @@ def fetch_data():
     driver1 = get_driver()
     for cities in cities_list:
         city = "https://www.southstatebank.com/locations/" + cities['href']
-        city = city.replace(" ","")
+        city = city.replace(", ",",")
         start = city.find(",")
+        m+=1
         if start != len(city)-1:
+            t+=1
             driver.get(city)
             time.sleep(5)
-
             linklist = driver.find_elements_by_class_name('loc_title')
             for i in range(0,len(linklist)):
                 link = linklist[i].get_attribute('href')
                 store_links.append(link)
     mylist = list(dict.fromkeys(store_links))
-    print(len(mylist))
     for link in mylist:
         c+=1
-        print(link)
         driver1.get(link)
         time.sleep(5)
         soup=BeautifulSoup(driver1.page_source)
@@ -77,10 +77,15 @@ def fetch_data():
             store="<MISSING>"
             hrs=soup.find('table',class_ = 'c-location-hours-details')
             day=hrs.find_all('tr',class_='c-location-hours-details-row')
-            hours=""
-            for item in day:
-                hours=hours+item.text+"|"
-            print(location_name)
+            if len(day) ==0:
+                hours='<MISSING>'
+            else:
+                hours=""
+                for item in day:
+                    d=item.find('td',class_='c-location-hours-details-row-day')
+                    hours=hours+d.text+" "
+                    h=item.find('td',class_='c-location-hours-details-row-intervals')
+                    hours=hours+h.text+'|'
         else:
             loc=soup.find('h1',itemprop='name').text
             location_name=loc.split(',')[0]
@@ -101,9 +106,12 @@ def fetch_data():
             store="<MISSING>"
             phone="<MISSING>"
             hours="<MISSING>"
-            print(location_name)
-        data.append([url2,link,location_name,street,cty,state,pcode,ccode,store,phone,ltype,lat,long,hours])
-    
+        cnt = False
+        for i in data:
+            if street == i[3]:
+                cnt= True
+        if cnt == False:
+            data.append([url2,link,location_name,street,cty,state,pcode,ccode,store,phone,ltype,lat,long,hours])
     return data
 
 

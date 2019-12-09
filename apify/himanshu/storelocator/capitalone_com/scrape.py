@@ -5,15 +5,19 @@ import re
 import json
 import sgzip
 
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
+
 
 def fetch_data():
     headers = {
@@ -35,8 +39,14 @@ def fetch_data():
         x = coord[0]
         y = coord[1]
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        r_data = '{"lat":' + str(x) + ',"lng":' + str(y) + ',"radius":50,"services":[],"resType":["BRANCHLOC","CAFELOC","ATMLOC","ALLPOINTATMLOC"]}'
-        r = requests.post("https://locations.capitalone.com/resourcelocator/location/resources/",headers=headers,data=r_data)
+        r_data = '{"lat":' + str(x) + ',"lng":' + str(
+            y) + ',"radius":50,"services":[],"resType":["BRANCHLOC","CAFELOC","ATMLOC","ALLPOINTATMLOC"]}'
+        try:
+
+            r = requests.post(
+            "https://locations.capitalone.com/resourcelocator/location/resources/", headers=headers, data=r_data)
+        except:
+            continue
         data = r.json()["resourceList"]
         for store_data in data:
             lat = store_data["latitude"]
@@ -54,8 +64,16 @@ def fetch_data():
             store.append(store_data["address"]["zipcode"])
             store.append("US")
             store.append(store_data["id"])
-            store.append(store_data["phoneNumber"] if "phoneNumber" in store_data and store_data["phoneNumber"] != "" and store_data["phoneNumber"] != None  else "<MISSING>")
-            store.append("capitalone " + store_data["agentType"])
+            store.append(store_data["phoneNumber"] if "phoneNumber" in store_data and store_data["phoneNumber"]
+                         != "" and store_data["phoneNumber"] != None else "<MISSING>")
+            if store_data["storeID"].isdigit() == False:
+                location_type = store_data["storeID"].split('_')[0]
+            else:
+                location_type = "Allpoint"
+            page_url = "https://locations.capitalone.com/location/" + \
+                store_data["storeID"]
+            store.append(location_type)
+
             store.append(lat)
             store.append(lng)
             hours = ""
@@ -74,7 +92,9 @@ def fetch_data():
             if 'sunLobbyHours' in store_data and store_data["sunLobbyHours"] != None:
                 hours = hours + " sunday " + store_data["sunLobbyHours"]
             store.append(hours if hours != "" else "<MISSING>")
-            # print(store)
+            store.append(page_url if page_url != "" else "<MISSING>")
+            # print("data ===" + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
             yield store
         if len(data) < MAX_RESULTS:
             # print("max distance update")
@@ -83,11 +103,14 @@ def fetch_data():
             # print("max count update")
             search.max_count_update(result_coords)
         else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+            raise Exception("expected at most " +
+                            str(MAX_RESULTS) + " results")
         coord = search.next_coord()
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
