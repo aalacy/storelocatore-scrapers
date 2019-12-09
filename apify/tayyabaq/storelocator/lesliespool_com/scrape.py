@@ -160,7 +160,8 @@ def fetch_data():
 
                 try:
                     lc = soup.find('h1', class_="top_heading")
-                    location_name = lc.text.strip()
+                    l_name = lc.text.strip()
+                    location_name= l_name.split(',')[0]
 
                 except Exception as e:
                     location_name = "<MISSING>"
