@@ -63,7 +63,7 @@ def fetch_data():
 
             # countries.append(country[n].text)
     for n in range(0, len(links)):
-        print(links[n])
+        #print(links[n])
         driver.get(links[n])
 
         time.sleep(5)
@@ -99,10 +99,10 @@ def fetch_data():
             zipcode.append(z)
             pages_url.append(links[n])
             street_address.append(addr.replace(c, "").replace(",",""))
-            print(addr)
-            print(c)
+            #print(addr)
+            #print(c)
             #rint(street_address)
-            print(z)
+            #print(z)
             if len(z) == 5:
                 countries.append('US')
             else:
