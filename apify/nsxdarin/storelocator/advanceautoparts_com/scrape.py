@@ -55,7 +55,6 @@ def fetch_data():
         while CFound:
             try:
                 CFound = False
-                print('Pulling City %s...' % city)
                 coords = []
                 stores = []
                 typ = 'Advance Auto Parts'
@@ -143,7 +142,6 @@ def fetch_data():
         while LFound:
             try:
                 LFound = False
-                print('Pulling Location %s...' % loc)
                 typ = 'Advance Auto Parts'
                 r = session.get(loc, headers=headers, timeout=5)
                 name = ''
