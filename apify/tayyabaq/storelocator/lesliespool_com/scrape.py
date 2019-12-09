@@ -71,11 +71,11 @@ def fetch_data():
                 data = res.text
                 soup = BeautifulSoup(data, 'html.parser')
 
-                np = re.compile(r'\s+\-')
                 try:
-                    c = soup.find('div', class_="name").text.strip()
-                    ct = re.sub(np, " ", c)
-                    city = ct.split('#')[0]
+                    c = soup.find('h1', class_="top_heading")
+                    ct = c.text.split(',')
+                    city = ct[0].split('-')[1].strip()
+
                 except Exception as e:
                     city = "<MISSING>"
                 print(city)
