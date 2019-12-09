@@ -23,7 +23,7 @@ def write_output(data):
 
 def fetch_data():
     url = 'https://apps.pnc.com/locator-api/locator/api/v1/locator/browse?t=1575479568229'
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     locs = []
     for line in r.iter_lines():
         if '"externalId" : "' in line:
@@ -32,7 +32,7 @@ def fetch_data():
     for loc in locs:
         time.sleep(5)
         lurl = 'https://apps.pnc.com/locator-api/locator/api/v2/location/' + loc
-        r2 = session.get(lurl, headers=headers, timeout=3)
+        r2 = session.get(lurl, headers=headers, timeout=3, verify=False)
         lines = r2.iter_lines()
         website = 'pnc.com'
         HFound = False
