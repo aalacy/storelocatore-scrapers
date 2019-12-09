@@ -45,4 +45,4 @@ RUN npm --quiet set progress=false \
 
 RUN npm install puppeteer
 
-CMD npm start
+CMD npm start && ./check_output.sh
