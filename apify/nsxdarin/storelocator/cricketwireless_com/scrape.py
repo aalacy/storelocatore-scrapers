@@ -99,6 +99,11 @@ def fetch_data():
                     if phone == '':
                         phone = '<MISSING>'
                     sc = sc + 1
+                    if '55555' in phone:
+                        phone = '<MISSING>'
+                    if lat == '0.0':
+                        lat = '<MISSING>'
+                        lng = '<MISSING>'
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             except:
                 pass
