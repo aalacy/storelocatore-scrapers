@@ -70,10 +70,11 @@ def fetch_data():
         if tem_var[2] in addresses:
             continue
         addresses.append(tem_var[2])
-        # print(tem_var)
-        return_main_object.append(tem_var)
+        #print(tem_var)
+        # return_main_object.append(tem_var)
+        yield tem_var
         
-    return return_main_object
+    # return return_main_object
 
 
 def scrape():
