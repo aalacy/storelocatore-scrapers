@@ -16,7 +16,13 @@ function fail(message) {
 	const exec = util.promisify(child_process.exec);
 	let err, stdout, stderr;
 	try {
-		({ err, stdout, stderr } = await exec('node scrape.js', {env: {'APIFY_LOCAL_STORAGE_DIR': 'apify_storage'}}));
+		environment = {env: {
+			'APIFY_LOCAL_STORAGE_DIR': 'apify_storage',
+			'APIFY_CHROME_EXECUTABLE_PATH': '/usr/bin/google-chrome',
+			'NODE_ENV': 'production',
+			'NODE_PATH': '/usr/local/lib/node_modules/'
+		}}
+		({ err, stdout, stderr } = await exec('node scrape.js', environment));
 	} catch(err) {
 		fail(`error executing scraper: ${err}`);
 	}
