@@ -73,12 +73,16 @@ def fetch_data():
     for loc in locs:
         loc_div = loc.find_element_by_xpath('..')
         
-        if 'Mon–Fri' in loc_div.text:
+        
+        if 'Mon–' in loc_div.text:
+            
+                
             cont = loc_div.text.split('\n')
             if len(cont) == 4:
                 location_name = cont[0]
                 if '30 Rockefeller Plaza' in location_name:
                     street_address, city, state, zip_code = addy_parser(cont[1] + ' ' + cont[2])
+                    city = city.replace('Concourse Level,',  '').strip()
                     fixed_loc = cont[3].replace('. Bre', '. \nBre').split('\n')
                     hours = fixed_loc[0]
                     location_type = fixed_loc[1]
@@ -89,10 +93,17 @@ def fetch_data():
                     location_type = cont[3]            
             
             elif len(cont) == 5:
+                #print(loc_div.text.split('\n'))
                 location_name = cont[0]
-                street_address, city, state, zip_code = addy_parser(cont[1] + ' ' + cont[2])
-                hours = cont[2]
-                location_type = cont[3]
+                if 'Mart' in location_name:
+                    street_address, city, state, zip_code = addy_parser(cont[1] + ' ' + cont[2])
+                    hours = cont[3]
+                    location_type = cont[4]
+                else:
+                    street_address, city, state, zip_code = addy_parser(cont[1])
+                    hours = cont[3]
+                    location_type = cont[4]
+
             
             elif len(cont) == 3:
                 location_name = cont[0]

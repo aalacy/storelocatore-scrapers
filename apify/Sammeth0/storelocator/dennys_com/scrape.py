@@ -30,8 +30,8 @@ def fetch_data():
 
 # Begin scraper
 
-	base_url="https://www.ashleyfurniture.com"
-	location_url ="https://stores.ashleyfurniture.com/store"
+	base_url="https://www.dennys.com"
+	location_url ="https://locations.dennys.com/index.html"
 	locs = []
 	streets = []
 	states=[]
@@ -45,24 +45,26 @@ def fetch_data():
 	ids=[]
 	pages_url=[]
 	pages=[]
-	
+	link=[]
 	
 	driver = get_driver()
 	driver_page = get_driver()
 	driver.get(location_url)
 	time.sleep(3)
 	
-	link=driver.find_element_by_class_name("state-col")
-	links=link.find_elements_by_tag_name("a")
+	links=driver.find_elements_by_class_name("Directory-listItem")
+	for l in links:
+		link.append(l.find_element_by_tag_name("a"))
+	print(link)
 	
-	for a in range(len(links)):
-		pages_url.append(links[a].get_attribute('href'))
+	for a in range(len(link)):
+		pages_url.append(link[a].get_attribute('href'))
 		print(pages_url)
 		
 	for u in pages_url:
 		driver_page.get(u)
 		time.sleep(3)
-		stores=driver_page.find_elements_by_xpath("/html/body/div[1]/div[2]/div/div[1]/div/div[4]/div")
+		stores=driver_page.find_elements_by_class_name("Directory-listItem")
 		for s in stores:
 			pages.append(s.find_element_by_tag_name("a").get_attribute('href'))
 			print(pages)
@@ -70,30 +72,33 @@ def fetch_data():
 	for p in pages:
 		driver_page.get(p)
 		time.sleep(5)
-		locs.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1').text.split(',')[0])
+		locs.append(str(p).split('/')[-2])
 		print(locs)
-		streets.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[1]/p[1]').text)
+		streets.append(driver_page.find_element_by_xpath('/html/body/main/div/div[3]/div/div/div/div[1]/div[1]/address/div[1]/span').text)
 		print(streets)
-		cities.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[1]/p[2]').text.split(',')[0])
+		cities.append(str(p).split('/')[-2])
 		print(cities)
-		states.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1/span').text.split(',')[1])
+		states.append(str(p).split('/')[-3])
 		print(states)
-		zips.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[1]/p[2]').text[:5])
+		try:
+			zips.append(driver_page.find_element_by_xpath('/html/body/main/div/div[3]/div/div/div/div[1]/div[1]/address/div[2]/span[2]').text)
+		except:
+			zips.append(driver_page.find_element_by_xpath('/html/body/main/div/div[3]/div/div/div/div[1]/div[1]/address/div[3]/span[2]').text)
 		print(zips)
-		ids.append(str(p).split('/')[-2])
+		ids.append(str(p).split('/')[-1])
 		print(ids)
 		try:
-			phones.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[3]/a').text)
+			phones.append(driver_page.find_element_by_xpath('/html/body/main/div/div[3]/div/div/div/div[1]/div[2]/div/div[2]/div[1]').text)
 		except:
 			phones.append("<MISSING>")
 		print(phones)
-		timing.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[4]').text.replace('\n',' '))
+		timing.append(driver_page.find_element_by_xpath('/html/body/main/div/div[3]/div/div/div/div[2]/div[2]/div/div/table/tbody').text.replace('\n',' '))
 		print(timing)
-		types.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1').text.split(',')[0].split(' ')[1])
+		types.append(driver_page.find_element_by_xpath('/html/body/main/div/div[1]/div/div/div[1]/h1/span/span[1]').text)
 		print(types)
-		lats.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]').get_attribute('data-lat'))
+		lats.append(driver_page.find_element_by_xpath('/html/body/main/div/div[3]/div/div/div/div[1]/div[1]/span/meta[1]').get_attribute('content'))
 		print(lats)
-		longs.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]').get_attribute('data-lng'))
+		longs.append(driver_page.find_element_by_xpath('/html/body/main/div/div[3]/div/div/div/div[1]/div[1]/span/meta[2]').get_attribute('content'))
 		print(longs)
 			
 						
