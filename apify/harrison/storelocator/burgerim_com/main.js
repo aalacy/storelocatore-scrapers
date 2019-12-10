@@ -31,6 +31,7 @@ async function pushToCloud() {
 	try {
 		const files = await listDataFiles();
 		const pois = await readDataFiles(files);
+		console.log(`number of pois: ${pois.length}`);
 		await Apify.pushData(pois);
 	} catch(error) {
 		console.log(error);
