@@ -36,12 +36,12 @@ def fetch_data():
     while zip_code:
         result_coords = []
         # print("zip_code === "+zip_code)
-        location_url = "https://www.happybank.com/Locations?bh-sl-address="+str(zip_code)+"&locpage=search"
-        try:            
-            r = requests.get(location_url,headers=headers)            
+        try:
+            location_url = "https://www.happybank.com/Locations?bh-sl-address="+str(zip_code)+"&locpage=search"
+            r = requests.get(location_url,headers=headers)
+            soup = BeautifulSoup(r.text, "lxml")
         except:
             continue
-        soup = BeautifulSoup(r.text, "lxml")
         locator_domain = base_url
         location_name = ""
         street_address = ""
@@ -75,7 +75,18 @@ def fetch_data():
                     latitude = data['lat']
                     longitude = data['lng']
                     page_url = data['web']
-                    phone = data['phone'].replace("BANK ","")                   
+                    phone = data['phone'].replace("BANK ","")
+                    # phone1 = ''.join(filter(lambda x: x.isdigit(), data['phone']))
+                    # index = 3
+                    # char = '-'
+                    # phone2 = phone1[:index] + char + phone1[index + 1:]
+                    
+                    # index = 7
+                    # char = '-'
+                    # phone = phone2[:index] + char + phone2[index + 1:]
+                    # print(phone)
+                    # print("-----------------------------",phone)
+                    # print("https://www.happybank.com/Locations"+page_url)
                     r1 = requests.get("https://www.happybank.com/Locations"+page_url,headers=headers)
                     soup1 = BeautifulSoup(r1.text, "lxml")
                     hours_of_operation = " ".join(list(soup1.find("div",{"id":"hours"}).stripped_strings)).split("Special")[0]
