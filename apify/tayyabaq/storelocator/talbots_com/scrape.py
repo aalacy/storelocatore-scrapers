@@ -77,6 +77,11 @@ def fetch_data():
         hours=hours.replace("<br/>"," ")
         hours=(hours.split("</div>")[1]).split("</div")[0]
         street=street.replace("\n"," ")
+        cty=cty.replace(",","")
+        coord = soup.find("input",id="address")["value"]
+        lat=coord.split(",")[0]
+        lng=coord.split(",")[1]
+        hours=hours.replace("\t","")
         data.append([
                 'https://www.talbots.com/',
                  link,
@@ -89,8 +94,8 @@ def fetch_data():
                  num,
                  ph,
                  '<MISSING>',
-                 '<MISSING>',
-                 '<MISSING>',
+                 lat,
+                 lng,
                  hours
                  ])
     
