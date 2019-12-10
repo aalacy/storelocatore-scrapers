@@ -9,6 +9,33 @@ class Scraper(Scrape):
     def __init__(self, url):
         Scrape.__init__(self, url)
         self.data = []
+        self.exceptions = {
+            'https://www.apple.com/retail/appleparkvisitorcenter/': {
+                'title': 'Apple Park Visitor Center',
+                'street_address': '10600 North Tantau Avenue',
+                'city': 'Cupertino',
+                'state': 'CA',
+                'zipcode': '95014',
+                'phone': '(408) 961-1560',
+                'hours': """
+                Mon - Fri 9:00 a.m. - 7:00 p.m.
+                Sat 10:00 a.m. - 7:00 p.m.
+                Sun 11:00 a.m. - 6:00 p.m.
+                """,
+            },
+            'https://www.apple.com/retail/carnegielibrary/': {
+                'title': 'Apple Carnegie Library',
+                'street_address': '801 K Street NW',
+                'city': 'Washington',
+                'state': 'DC',
+                'zipcode': '20001',
+                'phone': '(202) 609-6400',
+                'hours': """
+                Mon - Sat 9:00 a.m. - 9:00 p.m.
+                Sun 11:00 a.m. - 7:00 p.m.
+                """,
+            },
+        }
 
     def fetch_data(self):
         # store data
@@ -25,7 +52,6 @@ class Scraper(Scrape):
         countries = []
         location_types = []
         page_urls = []
-        stores = []
 
         options = Options()
         options.add_argument("--headless")
@@ -43,11 +69,8 @@ class Scraper(Scrape):
             # Store ID
             location_id = '<MISSING>'
 
-            try:
-                # Name
-                location_title = driver.find_element_by_css_selector('h1.typography-section-headline').text
-            except:
-                location_title = '<MISSING>'
+            # Name
+            location_title = self.exceptions[store]['title'] if store in self.exceptions else driver.find_element_by_css_selector('h1.typography-section-headline').text
 
             # Page url
             page_url = store
@@ -55,35 +78,20 @@ class Scraper(Scrape):
             # Type
             location_type = 'Apple Store'
 
-            try:
-                # Street
-                street_address = driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(1)').text
-            except:
-                street_address = '<MISSING>'
+            # Street
+            street_address = self.exceptions[store]['street_address'] if store in self.exceptions else driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(1)').text
 
-            try:
-                # city
-                city = driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(3)').text.split(',')[0]
-            except:
-                city = '<MISSING>'
+            # city
+            city = self.exceptions[store]['city'] if store in self.exceptions else driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(3)').text.split(',')[0]
 
-            try:
-                # zip
-                zipcode = driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(3)').text.split(',')[1][-7:]
-            except:
-                zipcode = '<MISSING>'
+            # zip
+            zipcode = self.exceptions[store]['zipcode'] if store in self.exceptions else driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(3)').text.split(',')[1][-7:]
 
-            try:
-                # State
-                state = driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(3)').text.split(',')[1][:-7].strip()
-            except:
-                state = '<MISSING>'
+            # State
+            state = self.exceptions[store]['state'] if store in self.exceptions else driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(3)').text.split(',')[1][:-7].strip()
 
-            try:
-                # Phone
-                phone = driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(4)').text
-            except:
-                phone = '<MISSING>'
+            # Phone
+            phone = self.exceptions[store]['phone'] if store in self.exceptions else driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(4)').text
 
             # Lat
             lat = '<MISSING>'
@@ -91,11 +99,8 @@ class Scraper(Scrape):
             # Long
             lon = '<MISSING>'
 
-            try:
-                # Hour
-                hour = driver.find_element_by_css_selector('div.store-hours-container > div.store-hours').get_attribute('textContent').strip()
-            except:
-                hour = '<MISSING>'
+            # Hour
+            hour = self.exceptions[store]['hours'] if store in self.exceptions else ' '.join([hour.get_attribute('textContent').strip() for hour in driver.find_elements_by_css_selector('div.store-hours-container > div.store-hours')])
 
             # Country
             country = 'Canada'
@@ -125,11 +130,8 @@ class Scraper(Scrape):
             # Store ID
             location_id = '<MISSING>'
 
-            try:
-                # Name
-                location_title = driver.find_element_by_css_selector('h1.typography-section-headline').text
-            except:
-                location_title = '<MISSING>'
+            # Name
+            location_title = self.exceptions[store]['title'] if store in self.exceptions else driver.find_element_by_css_selector('h1.typography-section-headline').text
 
             # Page url
             page_url = store
@@ -137,35 +139,20 @@ class Scraper(Scrape):
             # Type
             location_type = 'Apple Store'
 
-            try:
-                # Street
-                street_address = driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(1)').text
-            except:
-                street_address = '<MISSING>'
+            # Street
+            street_address = self.exceptions[store]['street_address'] if store in self.exceptions else driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(1)').text
 
-            try:
-                # city
-                city = driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(3)').text.split(',')[0]
-            except:
-                city = '<MISSING>'
+            # city
+            city = self.exceptions[store]['city'] if store in self.exceptions else driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(3)').text.split(',')[0]
 
-            try:
-                # zip
-                zipcode = driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(3)').text.split(',')[1][-5:]
-            except:
-                zipcode = '<MISSING>'
+            # zip
+            zipcode = self.exceptions[store]['zipcode'] if store in self.exceptions else driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(3)').text.split(',')[1][-5:]
 
-            try:
-                # State
-                state = driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(3)').text.split(',')[1][:-5].strip()
-            except:
-                state = '<MISSING>'
+            # State
+            state = self.exceptions[store]['state'] if store in self.exceptions else driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(3)').text.split(',')[1][:-5].strip()
 
-            try:
-                # Phone
-                phone = driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(4)').text
-            except:
-                phone = '<MISSING>'
+            # Phone
+            phone = self.exceptions[store]['phone'] if store in self.exceptions else driver.find_element_by_css_selector('div.column.large-12.address-store-details').find_element_by_css_selector('p.hcard-address:nth-of-type(4)').text
 
             # Lat
             lat = '<MISSING>'
@@ -173,11 +160,8 @@ class Scraper(Scrape):
             # Long
             lon = '<MISSING>'
 
-            try:
-                # Hour
-                hour = driver.find_element_by_css_selector('div.store-hours').get_attribute('textContent')
-            except:
-                hour = '<MISSING>'
+            # Hour
+            hour = self.exceptions[store]['hours'] if store in self.exceptions else ' '.join([hour.get_attribute('textContent').strip() for hour in driver.find_elements_by_css_selector('div.store-hours-container > div.store-hours')])
 
             # Country
             country = 'US'

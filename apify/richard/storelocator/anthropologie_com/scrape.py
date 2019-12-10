@@ -113,7 +113,7 @@ class Scraper(Scrape):
         stores = [store for store in requests.get('https://www.anthropologie.com/api/misl/v1/stores/search', headers=headers, params=params, cookies=cookies).json()['results'] if 'storeInventory' in store.keys()]
 
         for store in stores:
-            if 'closed' not in store.keys() or not store['closed']:
+            if ('closed' not in store.keys() or not store['closed']) and (store['addresses']['marketing']['country'] in ['US', 'Canada']):
                 # Store ID
                 location_id = store['id']
 
