@@ -33,14 +33,6 @@ function fail(message) {
 		fail("scraper did not produce any output data!");
 	}
 
-	fs.readdir('./apify_storage/datasets/default/', function(err, items) {	
-		console.log(items);	
-
-		for (var i=0; i<items.length; i++) {	
-			console.log(items[i]);	
-		}	
-	});
-
 	let pois = [];
 	try {
 		glob("./apify_storage/datasets/default/*.json", function(err, files) {
@@ -53,14 +45,12 @@ function fail(message) {
 						console.log("Failed to read file: ", err);
 					}
 					let item = JSON.parse(data);
-					pois.push(item);
+					await Apify.pushData(item);
 				});
 			});
 		});
-		console.log(`number of pois: ${pois.length}`);
 	} catch(error) {
 		console.log(error);
 		fail("error parsing output data!");
 	}
-	await Apify.pushData(pois);
 })();
