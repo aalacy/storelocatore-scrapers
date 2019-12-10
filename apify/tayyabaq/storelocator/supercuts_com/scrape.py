@@ -1,12 +1,9 @@
 import csv
 import os
-import re, time
 import requests
-from lxml import html
 from bs4 import BeautifulSoup
-import json
-import lxml.html
-import urllib.request as urllib2
+import re, time
+import usaddress
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,87 +14,91 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
+            
 def fetch_data():
-    data=[];location_name=[];page_url=[];street_address=[];city=[];state=[];zipcode=[];phone=[];latitude=[];longitude=[];typ=[];hrs=[];
-    url = "https://www.childrens.com/wps/FusionServiceCMC/publicsearch/api/apollo/collections/Childrens/query-profiles/ls/select?q=*&start=0&rows=100"
-    content = json.load(urllib2.urlopen(url))
-    res=content['response']
-    docs=res['docs']
-    print(len(docs))
-    for i in range(0,len(docs)):
-        loc=docs[i]
-        l=str(loc)
-        pg=(l.split("\'id\': \'"))[1].split("\'")[0]
-        coord=loc['latlng_p']
-        lat=coord.split(",")[0]
-        long=coord.split(",")[1]
-        page_url.append(pg)
-        latitude.append(lat)
-        longitude.append(long)
+    data = []
+    store_links =[]
+    st=[]
+    #getting the state urls
+    url = 'https://www.supercuts.com/salon-directory.html'
+    page = requests.get(url)
+    soup = BeautifulSoup(page.content, "html.parser")
+    store=soup.find_all('a',class_='btn btn-primary')
+    for link in store:
+        st.append(link['href'])
+    for ln in st:
+        page = requests.get(ln)
+        soup = BeautifulSoup(page.content, "html.parser")
+        sto=soup.find_all("a")
+        for li in sto:
+            sr=li['href']
+            if str(sr).startswith("/locations/"):
+                  store_links.append(sr)
+    mylist = list(dict.fromkeys(store_links))
+    for u in mylist:
+        ul='https://www.supercuts.com/'+u
         
-    print(len(page_url))   
-    for link in page_url:
-        print(link)
-        page = requests.get(link)
-        soup = BeautifulSoup(page.content,"html.parser")
-        loc=soup.find("h1",itemprop='name').text
-        loc=loc.replace("\u2120","")
-        loc=loc.replace("\n","")
         try:
-            hr=soup.find("span",itemprop="openingHours").text
+            pg=requests.get(ul)
         except:
-            hrs.append(hr)
+            print (ul)
+            print("not working")
         else:
-            hrs.append("<MISSING>")
-        street=soup.find("span",itemprop="streetAddress").text
-        street=street.replace("\n","")
-        cty=soup.find("span",itemprop='addressLocality').text
-        cty=cty.replace(",","")
-        ste=soup.find("span",itemprop='addressRegion').text
-        zcode=soup.find("span",itemprop='postalCode').text
-        ph=soup.find("span",itemprop='telephone').text
-        location_name.append(loc)
-        street_address.append(street)
-        city.append(cty)
-        state.append(ste)
-        zipcode.append(zcode)
-        hrs.append(hr)
-        if any(c.isalpha() for c in ph):
-            phone.append("<MISSING>")
-        elif ph == "":
-            phone.append("<MISSING>")
-        else:
-            phone.append(ph)
-        
-    c=0    
-    for n in range(0,len(location_name)): 
+            soup = BeautifulSoup(pg.content, "html.parser")
+            try:
+                loc=soup.find("h2",class_='hidden-xs salontitle_salonlrgtxt').text
+            except:
+                print (ul)
+                print("closed")
+            else:
+                street=soup.find("span",class_='street-address').text
+                cty=soup.find("span",itemprop='addressLocality').text
+                sts=soup.find("span",itemprop='addressRegion').text
+                zcode=soup.find("span",itemprop='postalCode').text
+                ph=soup.find("a",id='sdp-phone').text
+                hrs=soup.find('div',class_='sdp-timings-right')
+                hr=hrs.find_all("span",class_=['days','hours'])
+                hours =""
+                for h in hr:
+                    hours+=h.text
+                    hours+=" "
+                if not hours:
+                    hours="<MISSING>"
+                lat=soup.find('meta',itemprop='latitude')['content']
+                long=soup.find('meta',itemprop='longitude')['content']
+                num=ul[-10:-5]
+                num=num.replace("-","")
+                if any(c.isalpha() for c in zcode):
+                    ctry ='CA'
+                else:
+                    ctry ='US'
+                if ul.startswith('https://www.supercuts.com//locations/pr/'):
+                    ctry ='PR'
         cnt = False
         for i in data:
-            if location_name[n] == i[2]:
+            if num == i[8]:
                 cnt= True
         if cnt == False:
             data.append([
-                'https://www.childrens.com/',
-                 page_url[n],
-                 location_name[n],
-                 street_address[n],
-                 city[n],
-                 state[n],
-                 zipcode[n],
-                 'US',
-                 '<MISSING>',
-                 phone[n],
-                 '<MISSING>',
-                 latitude[n],
-                 longitude[n],
-                 hrs[n]
-                 ])
-    print(len(data))
+                            'https://www.supercuts.com/',
+                             ul,
+                             loc,
+                             street,
+                             cty,
+                             sts,
+                             zcode,
+                             ctry,
+                             num,
+                             ph,
+                             "<MISSING>",
+                             lat,
+                             long,
+                             hours
+                             ])
     return data
-
+    
 def scrape():
     data = fetch_data()
     write_output(data)
-   
+
 scrape()
