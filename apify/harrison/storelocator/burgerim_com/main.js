@@ -33,6 +33,14 @@ function fail(message) {
 		fail("scraper did not produce any output data!");
 	}
 
+	fs.readdir('./apify_storage/datasets/', function(err, items) {	
+		console.log(items);	
+
+		for (var i=0; i<items.length; i++) {	
+			console.log(items[i]);	
+		}	
+	});
+
 	let pois = [];
 	try {
 		glob("./apify_storage/datasets/default/*.json", function(err, files) {
