@@ -1,3 +1,5 @@
+import re
+
 from Scraper import Scrape
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -56,7 +58,7 @@ class Scraper(Scrape):
             city = store[0].split(',')[0]
 
             # zip
-            zipcode = store[1].strip()[-5:]
+            zipcode = re.search('[0-9]{5}(?:-[0-9]{4})?', store[1]).group(0)
 
             # State
             state = store[0].split(',')[1]
