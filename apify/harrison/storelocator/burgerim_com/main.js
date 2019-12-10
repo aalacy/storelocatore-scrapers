@@ -11,6 +11,7 @@ function fail(message) {
 }
 
 (async () => {
+	console.log("in main.js");
 	console.log("starting scrape.....");
 	const exec = util.promisify(child_process.exec);
 	let err, stdout, stderr;
