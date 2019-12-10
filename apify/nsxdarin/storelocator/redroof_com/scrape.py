@@ -57,6 +57,12 @@ def fetch_data():
                 zc = line2.split('property="s:postalCode" content="')[1].split('"')[0]
             if 'itemprop="telephone">' in line2:
                 phone = line2.split('itemprop="telephone">')[1].split('<')[0]
+        if 'Red Roof' not in name:
+            name = 'Red Roof Inn'
+        if 'PLUS+' in name:
+            typ = 'Red Room PLUS+'
+        else:
+            typ = 'Red Roof Inn'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
