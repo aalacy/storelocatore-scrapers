@@ -137,7 +137,7 @@ def fetch_data():
         tims=div.find('tbody').find_all('tr')
         for t in tims:
             tim+= t.get('content')+", "
-        timing.append(tim.strip().strip(',') )
+        timing.append(tim.strip().strip(',').replace("Mo","Monday").replace("Tu","Tuesday").replace("We","Wednesday").replace("Th","Thursday").replace("Fr","Friday").replace("Sa","Saturday").replace("Su","Sunday") )
 
         latlng=soup.find_all('meta')[17].get('content')
         #print(latlng)

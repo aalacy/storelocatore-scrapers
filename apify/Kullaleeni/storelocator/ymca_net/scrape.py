@@ -28,7 +28,10 @@ def fetch_data():
   "North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania",
   "Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah",
   "Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"]
-
+    
+    
+    MAX_RESULTS=20       #max number of results the website gives
+    MAX_DISTANCE=50.0        #max number of distance from the zip it covers
     data = []
     p = 0
     pattern = re.compile(r'\s\s+')
@@ -38,6 +41,8 @@ def fetch_data():
     print(query_coord)
     #2:56
     while query_coord:
+        count =0
+        result_coords=[]                    #mantain the list of coords of data collected
     #for s in range(0,len(states)):
         try:
             url = 'https://www.ymca.net/find-your-y/?address='+query_coord
@@ -48,10 +53,12 @@ def fetch_data():
             #print(len(mainul))
             for ul in mainul:
                 li_list = ul.findAll('li')
+                count += len(li_list)               #to calculate total # of results
                 for li in li_list:
                     try:
                         lat = li['data-latitude']
                         longt = li['data-longitude']
+                        result_coords.append((lat, longt))         #add coords to list
                         link = li.find('a')
                         link = "https://www.ymca.net" + link['href']
                         page1 = requests.get(link)
@@ -137,7 +144,15 @@ def fetch_data():
                         pass
         except:
             pass
-
+        if count < MAX_RESULTS:                         #check a near zip code
+            print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif len(array) == MAX_RESULTS:                  #check to save lat lngs to find zip that excludes them
+            print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            print("oops! the maxcount should be",count)
+            raise Exception("expected at most " + MAX_RESULTS + " results")
 
         query_coord = search.next_zip()
 

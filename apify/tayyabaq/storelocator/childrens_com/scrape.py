@@ -20,32 +20,29 @@ def write_output(data):
 
 def fetch_data():
     data=[];location_name=[];page_url=[];street_address=[];city=[];state=[];zipcode=[];phone=[];latitude=[];longitude=[];typ=[];
-    url = "https://www.childrens.com/wps/FusionServiceCMC/publicsearch/api/apollo/collections/Childrens/query-profiles/ls/select?q=*&start=0&rows=10"
+    url = "https://www.childrens.com/wps/FusionServiceCMC/publicsearch/api/apollo/collections/Childrens/query-profiles/ls/select?q=*&start=0&rows=100"
     content = json.load(urllib2.urlopen(url))
     res=content['response']
     docs=res['docs']
-    
+    print(len(docs))
     for i in range(0,len(docs)):
         loc=docs[i]
         l=str(loc)
         pg=(l.split("\'id\': \'"))[1].split("\'")[0]
-        ltype=str(loc['mainCategory_ss'])
-        ltype=ltype.replace("[","")
-        ltype=ltype.replace("]","")
-        ltype=ltype.replace("'","")
         coord=loc['latlng_p']
         lat=coord.split(",")[0]
         long=coord.split(",")[1]
         page_url.append(pg)
         latitude.append(lat)
         longitude.append(long)
-        typ.append(ltype)
         
+    print(len(page_url))   
     for link in page_url:
         page = requests.get(link)
         soup = BeautifulSoup(page.content,"html.parser")
         loc=soup.find("h1",itemprop='name').text
         loc=loc.replace("\u2120","")
+        
         street=soup.find("span",itemprop="streetAddress").text
         cty=soup.find("span",itemprop='addressLocality').text
         ste=soup.find("span",itemprop='addressRegion').text
@@ -56,7 +53,14 @@ def fetch_data():
         city.append(cty)
         state.append(ste)
         zipcode.append(zcode)
-        phone.append(ph)
+        if any(c.isalpha() for c in ph):
+            phone.append("<MISSING>")
+        elif ph == "":
+            phone.append("<MISSING>")
+        else:
+            phone.append(ph)
+        
+            
     c=0    
     for n in range(0,len(location_name)): 
         if location_name[n] == "Children's Health Imaging Center Plano":
@@ -74,7 +78,7 @@ def fetch_data():
                  'US',
                  '<MISSING>',
                  phone[n],
-                 typ[n],
+                 '<MISSING>',
                  latitude[n],
                  longitude[n],
                  '<INACCESSIBLE>'
@@ -91,12 +95,12 @@ def fetch_data():
                  'US',
                  '<MISSING>',
                  phone[n],
-                 typ[n],
+                 '<MISSING>',
                  latitude[n],
                  longitude[n],
                  '<INACCESSIBLE>'
                  ])
-    
+    print(len(data))
     return data
 
 def scrape():
