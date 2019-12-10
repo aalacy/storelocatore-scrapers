@@ -100,7 +100,7 @@ class Scraper(Scrape):
             lon = '<MISSING>'
 
             # Hour
-            hour = self.exceptions[store]['hours'] if store in self.exceptions else ' '.join([hour.get_attribute('textContent').strip() for hour in driver.find_elements_by_css_selector('div.store-hours-container > div.store-hours')])
+            hour = self.exceptions[store]['hours'] if store in self.exceptions else ' '.join([hour.get_attribute('textContent').strip() for hour in driver.find_elements_by_css_selector('div.store-hours')])
 
             # Country
             country = 'Canada'
@@ -161,7 +161,7 @@ class Scraper(Scrape):
             lon = '<MISSING>'
 
             # Hour
-            hour = self.exceptions[store]['hours'] if store in self.exceptions else ' '.join([hour.get_attribute('textContent').strip() for hour in driver.find_elements_by_css_selector('div.store-hours-container > div.store-hours')])
+            hour = self.exceptions[store]['hours'] if store in self.exceptions else ' '.join([hour.get_attribute('textContent').strip() for hour in driver.find_elements_by_css_selector('div.store-hours')])
 
             # Country
             country = 'US'
