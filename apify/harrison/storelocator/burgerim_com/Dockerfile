@@ -8,4 +8,4 @@ USER root
 
 RUN npm install
 
-CMD npm start
+CMD node main.js
