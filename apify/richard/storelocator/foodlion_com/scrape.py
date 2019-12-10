@@ -30,25 +30,54 @@ class Scraper(Scrape):
         page_urls = []
         stores = []
 
-        headers = {
-            'Accept': 'application/json, text/javascript, */*; q=0.01',
-            'Referer': 'https://www.foodlion.com//stores/',
-            'DNT': '1',
-            'X-Requested-With': 'XMLHttpRequest',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36',
+        cookies = {
+            'ApplicationGatewayAffinity': '57301a2606756ddb086aab8bfdbd554a',
+            'userCountryCode': 'US',
+            'gig_bootstrap_3_UoPaW48GjoIEQA-bkrH8ymLLtpVgtrAjwnUZYjgKAU1tEL48qefotwm0zjRKYRza': 'ver2',
+            '_ga': 'GA1.2.170935166.1573882175',
+            '_gcl_au': '1.1.1809662216.1573882176',
+            '__utmzz': 'utmcsr=(direct)|utmcmd=(none)|utmccn=(not set)',
+            '__utmzzses': '1',
+            '_fbp': 'fb.1.1573882176636.1424744212',
+            '__gads': 'ID=1c8fe9e1f38404b0:T=1573882176:S=ALNI_MZ_hSMDanMwziFDgZ8eEAvHHL9S9w',
+            'userRegionCode': 'CA',
+            'monthlyVisitPopUp': 'false',
+            'userCity': 'FREMONT',
+            'userCounty': 'ALAMEDA',
+            'userZip': '94536-94539+94555',
+            'userLat': '37.5710',
+            'userLong': '-121.9858',
+            '_gid': 'GA1.2.785592302.1576002304',
+            '_gat_UA-1002630-3': '1',
+            'JSESSIONID': 'node01j1n2b3tl368s41bksbletvx9449311.node0',
+            '_derived_epik': 'dj0yJnU9TFpJRHJteUZsNHUydkV0U3VQRXRpU2h5cWNrOGRrWDAmbj1YejdkYnlVN1Z5NTJ6MEtSdy1IcFBBJm09NyZ0PUFBQUFBRjN2NHdR',
         }
 
-        for coord_search in sgzip.coords_for_radius(50):
+        headers = {
+            'Connection': 'keep-alive',
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'DNT': '1',
+            'X-Requested-With': 'XMLHttpRequest',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36',
+            'Sec-Fetch-Site': 'same-origin',
+            'Sec-Fetch-Mode': 'cors',
+            'Referer': 'https://www.foodlion.com/stores/',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.9,zh-TW;q=0.8,zh;q=0.7',
+        }
+
+        # for coord_search in sgzip.coords_for_radius(50):
+        for zipsearch, coord_search in zip(sgzip.for_radius(50), sgzip.coords_for_radius(50)):
             params = (
-                ('zip', 'Salisbury, North Carolina'),
-                ('lat', coord_search[0]),
-                ('lng', coord_search[1]),
+                ('zip', zipsearch),
+                # ('lat', coord_search[0]),
+                # ('lng', coord_search[1]),
                 ('distance', '50'),
                 ('onlyPharmacyEnabledStores', 'false'),
             )
             data = json.loads(requests.get('https://www.foodlion.com/bin/foodlion/search/storelocator.json', headers=headers, params=params).json()['result'])
             stores.extend(data)
-            print(f"{len(data)} locations scraped for {coord_search[0]}, {coord_search[1]}")
+            print(f"{len(data)} locations scraped for {zipsearch}.")
 
         for store in stores:
             if store['id'] not in self.seen:
