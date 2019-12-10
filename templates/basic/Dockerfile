@@ -1,19 +1,7 @@
-FROM node:10-alpine
+FROM safegraph/apify-node:latest
 
 COPY . ./
 
-RUN npm --quiet set progress=false \
- && npm install --only=prod --no-optional \
- && echo "Installed NPM packages:" \
- && npm list \
- && echo "Node.js version:" \
- && node --version \
- && echo "NPM version:" \
- && npm --version
+RUN npm install
 
-USER root
-
-ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max_old_space_size=30000"
-
-CMD npm start
+CMD npm start && ./check_output.sh
