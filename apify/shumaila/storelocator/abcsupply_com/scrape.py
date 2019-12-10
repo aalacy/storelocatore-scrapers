@@ -4,9 +4,7 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
+
 
 
 def write_output(data):
@@ -92,22 +90,7 @@ def fetch_data():
                 start = end
                 hours = hoursd[p].text
                 hours = re.sub(pattern," ",hours)
-                print([
-                    'https://www.abcsupply.com/',
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    "US",
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours
-                ])
+                
                 data.append([
                     'https://www.abcsupply.com/',
                     link,
@@ -128,7 +111,7 @@ def fetch_data():
 
 
 
-        print("............................")
+        #print("............................")
     return data
 
 def scrape():
