@@ -113,7 +113,8 @@ def fetch_data():
         st=div.find('span', {'class': 'c-address-street-1'}).text
         z=div.find('span', {'class': 'c-address-postal-code'}).text
         if s+c+z+st in key_set:
-          street.append("<MISSING>") 
+          print("This is a duplicate, but its data is added to the file")
+          """street.append("<MISSING>") 
           locs.append("<MISSING>")
           street.append("<MISSING>")
           cities.append("<MISSING>")
@@ -125,7 +126,7 @@ def fetch_data():
           long.append(re.findall(r';(-?[\d\.]+)',latlng)[0])
           #del countries[page_url.index(url)]
           #k=1
-          continue
+          continue"""
         key_set.add(s+c+z+st)
         locs.append(soup.find('span',{'class':'LocationName-geo'}).text)
         street.append(st)
@@ -147,8 +148,8 @@ def fetch_data():
     all = []
     for i in range(0, len(locs)):
         row = []
-        if street[i]=="<MISSING>":
-           continue
+        #if street[i]=="<MISSING>":
+        #  continue
         row.append("https://stores.champssports.com")
         row.append(locs[i])
         row.append(street[i])

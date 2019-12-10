@@ -30,6 +30,7 @@ def fetch_data():
         tem_var =[]
         Facility_ID = loc['provider_id']
         location_name = loc['hospital_name']
+        print(location_name)
         street_address = loc['address']
         city = loc['city']
         state = loc['state']

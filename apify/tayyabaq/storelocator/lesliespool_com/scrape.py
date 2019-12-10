@@ -15,7 +15,7 @@ def parse_geo(url):
 
 
 def write_output(df):
-    df.to_csv('nl.csv', index=False)
+    df.to_csv('data.csv', index=False)
 
 def get_driver():
     options = Options()

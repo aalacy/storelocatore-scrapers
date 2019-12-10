@@ -1,1 +1,1 @@
-Ignoring StreetAddressHasNumber check due to the data present on the site
+Ignoring StreetAddressHasNumber, LatLngDuplicationValidation and CentroidValidator checks due to the data present on the site
