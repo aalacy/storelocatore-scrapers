@@ -20,10 +20,10 @@ async function listDataFiles() {
 
 async function readDataFiles(files) {
 	let pois = [];
-	files.forEach(async function(file) {
+	for (file of files) {
 		const data = await readFileAsync(file, {encoding: "utf8"});
 		pois.push(JSON.parse(data));
-	});
+	}
 	return pois;
 }
 
