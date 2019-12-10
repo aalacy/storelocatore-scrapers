@@ -33,7 +33,7 @@ function fail(message) {
 		fail("scraper did not produce any output data!");
 	}
 
-	fs.readdir('./apify_storage/datasets/', function(err, items) {	
+	fs.readdir('./apify_storage/datasets/default/', function(err, items) {	
 		console.log(items);	
 
 		for (var i=0; i<items.length; i++) {	
