@@ -33,14 +33,14 @@ def fetch_data():
         st=requests.get(link)
         soup=BeautifulSoup(st.content,"html.parser")
         loc=soup.find('h1',class_='store-locator-header').text
+        loc=loc.strip()
         details=soup.find('div',class_='store-details')
         add=details.text
         add2=(add.split("Address:")[1]).split("Store")[0]
+        ctry ="US"
         add1=usaddress.parse(add2)
-        
         for key,values in add1:
-            ctry='US'
-            if values in ['AddressNumber','StreetName','StreetNamePostType','StreetNamePostDirectional','OccupancyIdentifier',"USPSBoxType",'USPSBoxID']:
+            if values in ['AddressNumber','StreetName','StreetNamePostType','StreetNamePostDirectional','BuildingName','Recipient','OccupancyType','OccupancyIdentifier',"USPSBoxType",'USPSBoxID']:
                 street+=" "
                 street+=key
             elif values in ['PlaceName']:
@@ -48,35 +48,35 @@ def fetch_data():
             elif values in ['StateName']:
                 sts=key
             elif values in ['ZipCode']:
-                    zcode=key
-        if not street:
-            for key,values in add1:
-                if values in ['AddressNumber','StreetName','StreetNamePostType','StreetNamePostDirectional','BuildingName','Recipient','OccupancyIdentifier',"USPSBoxType",'USPSBoxID']:
-                    street+=" "
-                    street+=key
-                elif values in ['PlaceName']:
-                    cty=key
-                elif values in ['StateName']:
-                    sts=key
-                elif values in ['ZipCode']:
-                    zcode=key
+                zcode=key
         if any(c.isalpha() for c in zcode):
             ctry='CA'
             zcode=add2[-10:]
             sts=add2[-13:-10]
             for key,values in add1:
-                if values in ['AddressNumber','StreetName','StreetNamePostType','StreetNamePostDirectional','OccupancyIdentifier',"USPSBoxType",'USPSBoxID']:
+                if values in ['AddressNumber','StreetName','StreetNamePostType','StreetNamePostDirectional','BuildingName','Recipient','OccupancyType','OccupancyIdentifier',"USPSBoxType",'USPSBoxID']:
                     street+=" "
                     street+=key
                 elif values in ['PlaceName']:
                     cty=key  
         num=soup.find("div",class_="number").text
         num=num.replace("Store #","")
+        num=num.replace("\t","")
+        num=num.strip()
+        zcode=zcode.strip()
         ph=soup.find("a",class_="alt-link").text
         hours= str(soup.find('div',class_="hours"))
         hours=hours.replace("<br/>"," ")
         hours=(hours.split("</div>")[1]).split("</div")[0]
+        hours=hours.replace("\t","")
         street=street.replace("\n"," ")
+        street=street.replace(" +","")
+        cty=cty.replace(",","")
+        coord = soup.find("input",id="address")["value"]
+        lat=coord.split(",")[0]
+        lng=coord.split(",")[1]
+        hours=hours.replace(" +","")
+        hours=hours.strip()
         data.append([
                 'https://www.talbots.com/',
                  link,
@@ -89,8 +89,8 @@ def fetch_data():
                  num,
                  ph,
                  '<MISSING>',
-                 '<MISSING>',
-                 '<MISSING>',
+                 lat,
+                 lng,
                  hours
                  ])
     

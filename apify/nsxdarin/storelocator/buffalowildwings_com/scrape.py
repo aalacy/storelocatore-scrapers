@@ -107,7 +107,7 @@ def fetch_data():
                     hours = hours + '; Sun: ' + item['HourOfOperationSunOpen'] + '-' + item['HourOfOperationSunClose']
                 except:
                     hours = '<MISSING>'
-                if add != '' and store not in ids and len(state) == 2 and country = 'United States':
+                if add != '' and store not in ids and len(state) == 2 and country == 'United States':
                     ids.append(store)
                     yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             except:

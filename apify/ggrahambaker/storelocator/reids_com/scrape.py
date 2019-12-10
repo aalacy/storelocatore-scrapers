@@ -71,6 +71,8 @@ def fetch_data():
         store_number = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
+        if ':' in phone_number:
+            phone_number = phone_number.split(':')[1].strip()
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                      store_number, phone_number, location_type, lat, longit, hours ]

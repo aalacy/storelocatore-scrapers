@@ -117,8 +117,8 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
 
-                #print("data = " + str(store))
-                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 # return_main_object.append(store)
                 yield store
         

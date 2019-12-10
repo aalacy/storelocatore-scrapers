@@ -69,7 +69,7 @@ def fetch_data():
 			
 	for p in pages:
 		driver_page.get(p)
-		time.sleep(3)
+		time.sleep(5)
 		locs.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1').text.split(',')[0])
 		print(locs)
 		streets.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[1]/p[1]').text)
@@ -89,7 +89,7 @@ def fetch_data():
 		print(phones)
 		timing.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[4]').text.replace('\n',' '))
 		print(timing)
-		types.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1').text.split(',')[0].split(' ')[2])
+		types.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1').text.split(',')[0].split(' ')[1])
 		print(types)
 		lats.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]').get_attribute('data-lat'))
 		print(lats)

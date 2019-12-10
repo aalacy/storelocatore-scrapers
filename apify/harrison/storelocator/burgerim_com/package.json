@@ -4,7 +4,7 @@
   "description": "BurgerIM Store Location Scraper",
   "main": "scrape.js",
   "scripts": {
-    "start": "node scrape.js"
+    "start": "node main.js"
   },
   "author": "Harrison Hayes",
   "license": "ISC",

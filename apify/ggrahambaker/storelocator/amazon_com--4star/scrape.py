@@ -68,6 +68,7 @@ def fetch_data():
 
 
     all_store_data = []
+    print(len(link_list))
     for link in link_list:
     
         driver.get(link)
@@ -77,7 +78,7 @@ def fetch_data():
         location_name = loc_anchor.find_element_by_css_selector('a').text
 
         cont = loc_anchor.find_elements_by_xpath('p')
-        phone_number = cont[1].text
+        phone_number = cont[1].text.replace('Phone:', '')
         if 'To come' in phone_number:
             continue
         
