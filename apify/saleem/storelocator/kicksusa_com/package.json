@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
+    "request": "^2.88.0",
     "request-promise": "^4.2.4",
     "xml-js": "^1.6.11"
   },
