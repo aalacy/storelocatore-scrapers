@@ -54,25 +54,44 @@ def fetch_data():
 	
 	links=driver.find_elements_by_class_name("Directory-listItem")
 	for l in links:
-		link.append(l.find_element_by_tag_name("a"))
+		if l.get_attribute("data-count")!="(1)":
+			link.append(l.find_element_by_tag_name("a"))
+		else:
+			pages.append(l.find_element_by_tag_name("a"))
 	print(link)
+	print(pages)
 	
 	for a in range(len(link)):
-		pages_url.append(link[a].get_attribute('href'))
-		print(pages_url)
+		if link[a].get_attribute("data-count")!="(1)":
+			pages_url.append(link[a].get_attribute('href'))
+		else:
+			pages.append(link[a].get_attribute('href'))
+	print(pages_url)
+	print(pages)
 		
 	for u in pages_url:
 		driver_page.get(u)
 		time.sleep(3)
 		stores=driver_page.find_elements_by_class_name("Directory-listItem")
 		for s in stores:
-			pages.append(s.find_element_by_tag_name("a").get_attribute('href'))
-			print(pages)
+			try:
+				if s.find_element_by_tag_name("a").get_attribute("data-count")=="(1)":
+					pages.append(s.find_element_by_tag_name("a").get_attribute('href'))
+				else:
+					driver_page.get(s.find_element_by_tag_name("a").get_attribute('href'))
+					time.sleep(3)
+					stores_pages=driver_page.find_elements_by_class_name("Directory-listTeaser")
+					for sp in stores_pages:
+						pages.append(sp.find_element_by_tag_name("a").get_attribute('href'))
+			except:
+				continue
+				
+		print(pages)
 			
 	for p in pages:
 		driver_page.get(p)
 		time.sleep(5)
-		locs.append(str(p).split('/')[-2])
+		locs.append(driver_page.find_element_by_xpath('/html/body/main/div/div[3]/div/div/div/div[1]/div[1]/address/div[1]/span').text)
 		print(locs)
 		streets.append(driver_page.find_element_by_xpath('/html/body/main/div/div[3]/div/div/div/div[1]/div[1]/address/div[1]/span').text)
 		print(streets)
@@ -92,7 +111,10 @@ def fetch_data():
 		except:
 			phones.append("<MISSING>")
 		print(phones)
-		timing.append(driver_page.find_element_by_xpath('/html/body/main/div/div[3]/div/div/div/div[2]/div[2]/div/div/table/tbody').text.replace('\n',' '))
+		try:
+			timing.append(driver_page.find_element_by_xpath('/html/body/main/div/div[3]/div/div/div/div[2]/div[2]/div/div/table/tbody').text.replace('\n',' '))
+		except:
+			timing.append("<MISSING>")
 		print(timing)
 		types.append(driver_page.find_element_by_xpath('/html/body/main/div/div[1]/div/div/div[1]/h1/span/span[1]').text)
 		print(types)
