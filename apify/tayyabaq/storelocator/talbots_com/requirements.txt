@@ -1,3 +1,4 @@
 requests
 usaddress
 beautifulsoup4
+bs4
