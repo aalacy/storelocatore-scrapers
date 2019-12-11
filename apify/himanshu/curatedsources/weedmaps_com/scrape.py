@@ -23,8 +23,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 20
-    MAX_DISTANCE = 100
-    urls = []
+    MAX_DISTANCE = 20
     addresses = []
     coord = search.next_coord()
     while coord:
@@ -38,9 +37,6 @@ def fetch_data():
         store_count = 0
         for store_data in data:
             page_url = "https://weedmaps.com/dispensaries/" + str(store_data["slug"]) + "/about"
-            if page_url in urls:
-                continue
-            urls.append(page_url)
             location_request = requests.get(page_url,headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             location_data = json.loads(location_soup.find("script",{'type':"application/ld+json"}).text)
@@ -88,10 +84,10 @@ def fetch_data():
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             # print(store)
             yield store
-        if store_count < MAX_RESULTS:
+        if len(data) < MAX_RESULTS:
             #print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
-        elif store_count == MAX_RESULTS:
+        elif len(data) == MAX_RESULTS:
             #print("max count update")
             search.max_count_update(result_coords)
         else:
@@ -100,8 +96,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 20
-    MAX_DISTANCE = 100
-    urls = []
+    MAX_DISTANCE = 20
     addresses = []
     coord = search.next_coord()
     while coord:
@@ -115,9 +110,6 @@ def fetch_data():
         store_count = 0
         for store_data in data:
             page_url = "https://weedmaps.com/deliveries/" + str(store_data["slug"]) + "/about"
-            if page_url in urls:
-                continue
-            urls.append(page_url)
             location_request = requests.get(page_url,headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             location_data = json.loads(location_soup.find("script",{'type':"application/ld+json"}).text)
@@ -165,10 +157,10 @@ def fetch_data():
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             # print(store)
             yield store
-        if store_count < MAX_RESULTS:
+        if len(data) < MAX_RESULTS:
             #print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
-        elif store_count == MAX_RESULTS:
+        elif len(data) == MAX_RESULTS:
             #print("max count update")
             search.max_count_update(result_coords)
         else:
