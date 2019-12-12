@@ -6,6 +6,7 @@ import re
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+import json
 
 options = Options()
 options.add_argument('--headless')
@@ -49,7 +50,6 @@ def fetch_data():
     for i in range(0,len(name)):
             driver2.get(name[i])
             page_url = name[i]
-            #print(page_url)
             time.sleep(1)
             location_name = driver2.find_element_by_css_selector('h2.title-gamma.upper.pt-1.pb-05').text
             store_id = store_ids[i]
@@ -75,8 +75,15 @@ def fetch_data():
                 hours_of_op = '<MISSING>'
                 loc_type = 'REVENDEUR'
             country ="CA"
-            latitude = '<MISSING>'
-            longitude = '<MISSING>'
+            try:
+                text = driver2.find_element_by_xpath("//script[@type='application/json']").get_attribute('innerHTML')
+                req_json = json.loads(text)
+                json_data = req_json['geolocation']
+                latitude = json_data['lat1']
+                longitude = json_data['long1']
+            except:
+                latitude = '<MISSING>'
+                longitude = '<MISSING>'
             data.append([
                         'https://www.longchamp.com/',
                         page_url,
@@ -106,7 +113,6 @@ def fetch_data():
     for i in range(0, len(name)):
         driver2.get(name[i])
         page_url = name[i]
-        #print(page_url)
         time.sleep(1)
         try:
             location_name = driver2.find_element_by_css_selector('h2.title-gamma.upper.pt-1.pb-05').text
@@ -145,8 +151,15 @@ def fetch_data():
             hours_of_op = '<MISSING>'
             loc_type = 'Reseller'
         country = "US"
-        latitude = '<MISSING>'
-        longitude = '<MISSING>'
+        try:
+            text = driver2.find_element_by_xpath("//script[@type='application/json']").get_attribute('innerHTML')
+            req_json = json.loads(text)
+            json_data = req_json['geolocation']
+            latitude = json_data['lat1']
+            longitude = json_data['long1']
+        except:
+            latitude = '<MISSING>'
+            longitude = '<MISSING>'
         data.append([
             'https://www.longchamp.com/',
             page_url,
