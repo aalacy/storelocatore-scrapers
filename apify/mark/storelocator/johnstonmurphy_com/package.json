@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "apify": "^0.15.1",
+    "request": "^2.88.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
