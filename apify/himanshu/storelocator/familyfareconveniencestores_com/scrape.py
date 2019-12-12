@@ -40,7 +40,7 @@ def get_driver():
 def fetch_data():
     # print("start")
 
-    base_url = "https://www.familyfareconveniencestores.com"
+    base_url = "http://www.familyfareconveniencestores.com"
 
     addresses = []
     driver = get_driver()
@@ -52,15 +52,19 @@ def fetch_data():
     for button in driver.find_elements_by_xpath("//select[@name='ctl00$LeftNavigation$CommunityDDL$CityDDL']/option"):
         city = button.get_attribute("value")
         # print("city === " + city)
-        if len(city) != 2:
-            continue
-        cities.append(city)
-
+        if len(city) == 0:
+            pass
+        else:
+            # print("city === " + city)
+            # print(city)
+            cities.append(city)
+    
+    
     for city in cities:
         driver.find_element_by_xpath("//select[@name='ctl00$LeftNavigation$CommunityDDL$CityDDL']").click()
         driver.find_element_by_xpath("//option[@value='" + city + "']").click()
         # WebDriverWait(driver, 10).until(lambda x: x.find_element_by_xpath("//option[@value='']"))  # wait until data
-
+        # print(city)
         list_a = []
         for a_tag in driver.find_elements_by_xpath("//a[contains(@id,'MainContent_ResultsGridView_LocationHL')]"):
             list_a.append(a_tag.get_attribute("id"))

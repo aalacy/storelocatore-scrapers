@@ -8,7 +8,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from geopy.geocoders import Nominatim
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:

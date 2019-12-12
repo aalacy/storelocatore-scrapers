@@ -3,19 +3,23 @@ import requests
 import json
 import sgzip
 from bs4 import BeautifulSoup
-import time
-from random import randrange
+# import time
+# from random import randrange
 import re
 
+
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
+
 
 def fetch_data():
     headers = {
@@ -24,66 +28,87 @@ def fetch_data():
     base_url = "https://www.zipscarwash.com"
     return_main_object = []
     addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 8
-    coord = search.next_coord()
-    while coord:
-        result_coords = []
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
-        x = coord[0]
-        y = coord[1]
-        # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        r = requests.get("https://www.zipscarwash.com/locations?field_map_proximity-lat=" + str(x) + "&field_map_proximity-lng=" + str(y) + "&field_map_proximity=1500000",headers=headers)
-        soup = BeautifulSoup(r.text,"lxml")
-        for location in soup.find_all("div",{"class":"views-col"}):
-            geo_location = location.find("a",text="Directions")["href"]
-            lat = geo_location.split("lat=")[1].split("&")[0]
-            lng = geo_location.split("long=")[1].split("&")[0]
-            result_coords.append((lat, lng))
-            store = []
-            name = " ".join(list(location.find("div",{"class":"views-field-title"}).stripped_strings))
-            address = " ".join(list(location.find("span",{"class":"address-line1"}).stripped_strings))
-            city = " ".join(list(location.find("span",{"class":"locality"}).stripped_strings))
-            state = " ".join(list(location.find("span",{"class":"administrative-area"}).stripped_strings))
-            store_zip = " ".join(list(location.find("span",{"class":"postal-code"}).stripped_strings))
-            page_url = base_url + location.find("a")["href"]
-            if location.find("a",{"href":re.compile("tel:")}):
-                phone = location.find("a",{"href":re.compile("tel:")}).text
-            else:
-                phone = "<MISSING>"
-            store = []
-            store.append("https://www.zipscarwash.com")
-            store.append(name)
-            store.append(address)
-            if store[-1] in addresses:
-                continue
-            addresses.append(store[-1])
-            store.append(city)
-            store.append(state)
-            store.append(store_zip if store_zip else "<MISSING>")
-            store.append("US")
-            store.append(page_url.split("/")[-1])
-            store.append(phone)
-            store.append("<MISSING>")
-            store.append(geo_location.split("lat=")[1].split("&")[0])
-            store.append(geo_location.split("long=")[1].split("&")[0])
-            location_request = requests.get(page_url,headers=headers)
-            location_soup = BeautifulSoup(location_request.text,"lxml")
-            hours = " ".join(list(location_soup.find("div",{"class":"office-hours"}).stripped_strings))
-            store.append(hours.replace("  ","") if hours else "<MISSING>")
-            store.append(page_url)
-            # print(store)
-            yield store
-        if len(soup.find_all("div",{"class":"views-col"})) == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_coord()
+    r = requests.get('https://www.zipscarwash.com/search-by-state')
+    soup = BeautifulSoup(r.text, 'lxml')
+    select = soup.find('select', {'name': 'field_address_administrative_area'})
+    for option in select.find_all('option'):
+        if "All" not in option['value']:
+            state_code = option['value']
+            # print('https://www.zipscarwash.com/search-by-state?field_address_administrative_area=' + str(state_code))
+            loc_r = requests.get(
+                'https://www.zipscarwash.com/search-by-state?field_address_administrative_area=' + str(state_code))
+            soup = BeautifulSoup(loc_r.text, 'lxml')
+            for loc in soup.find_all('div', class_='address-column'):
+                for col in loc.find_all('div', class_='views-col'):
+                    locator_domain = base_url
+                    store_number = "<MISSING>"
+                    location_type = "<MISSING>"
+                    page_url = base_url + \
+                        col.find('div', class_='views-field-title').a['href']
+                    location_name = col.find(
+                        'div', class_='views-field-title').text.split('(')[0].strip()
+                    # city = location_name.split(',')[0].strip()
+                    # state = location_name.split(',')[-1].strip()
+                    street_address = col.find('p', class_='address').find(
+                        'span', class_='address-line1').text.strip()
+                    city = col.find('p', class_='address').find(
+                        'span', class_='locality').text.strip()
+                    state = col.find('p', class_='address').find(
+                        'span', class_='administrative-area').text.strip()
+                    zipp = col.find('p', class_='address').find(
+                        'span', class_='postal-code').text.strip()
+                    # country_code = col.find('p', class_='address').find(
+                    #     'span', class_='country').text.strip()
+                    country_code = "US"
+                    if col.find('div', class_='views-field-field-phone-no') != None:
+                        phone = col.find(
+                            'div', class_='views-field-field-phone-no').text.strip().replace('Phone:', '').strip()
+                    else:
+                        phone = "<MISSING>"
+                    if col.find('div', class_='views-field-field-location-hours') != None:
+                        hours_of_operation = col.find(
+                            'div', class_='views-field-field-location-hours').text.strip().replace('Hours: ', '').strip()
+                    else:
+                        hours_of_operation = "<MISSING>"
+                    direction = col.find(
+                        "div", text=re.compile("Directions")).a['href']
+                    latitude = direction.split(
+                        '?')[-1].split('&')[0].split('=')[-1].strip()
+                    longitude = direction.split(
+                        '?')[-1].split('&')[-1].split('=')[-1].strip()
+                    store = []
+
+                    store.append(locator_domain)
+                    store.append(
+                        location_name if location_name else "<MISSING>")
+                    store.append(
+                        street_address if street_address else "<MISSING>")
+                    store.append(city if city else "<MISSING>")
+                    store.append(state if state else "<MISSING>")
+                    store.append(zipp if zipp else "<MISSING>")
+                    store.append(country_code if country_code else "<MISSING>")
+                    store.append(store_number if store_number else "<MISSING>")
+                    store.append(phone if phone else "<MISSING>")
+                    store.append(
+                        location_type if location_type else "<MISSING>")
+                    store.append(latitude if latitude else "<MISSING>")
+                    store.append(longitude if longitude else "<MISSING>")
+                    store.append(
+                        hours_of_operation if hours_of_operation else "<MISSING>")
+                    store.append(page_url if page_url else "<MISSING>")
+                    if store[2] in addresses:
+                        continue
+
+                    addresses.append(store[2])
+                    #print("===", str(store))
+                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # return_main_object.append(store)
+                    yield store
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

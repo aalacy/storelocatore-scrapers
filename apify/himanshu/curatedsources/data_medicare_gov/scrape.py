@@ -30,6 +30,7 @@ def fetch_data():
         tem_var =[]
         Facility_ID = loc['provider_id']
         location_name = loc['hospital_name']
+        print(location_name)
         street_address = loc['address']
         city = loc['city']
         state = loc['state']
@@ -53,7 +54,7 @@ def fetch_data():
         
         tem_var.append(Facility_ID)
         tem_var.append("https://data.medicare.gov/Hospital-Compare/Hospital-General-Information/xubh-q36u/data")
-        tem_var.append(location_name.capitalize())
+        tem_var.append(location_name)
         tem_var.append(street_address.capitalize())
         tem_var.append(city.capitalize())
         tem_var.append(state)
@@ -70,10 +71,11 @@ def fetch_data():
         if tem_var[2] in addresses:
             continue
         addresses.append(tem_var[2])
-        # print(tem_var)
-        return_main_object.append(tem_var)
+        #print(tem_var)
+        # return_main_object.append(tem_var)
+        yield tem_var
         
-    return return_main_object
+    # return return_main_object
 
 
 def scrape():

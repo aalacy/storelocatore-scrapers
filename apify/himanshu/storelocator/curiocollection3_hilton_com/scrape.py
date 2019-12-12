@@ -5,6 +5,16 @@ import re
 import json
 import time
 
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
+        # Header
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        # Body
+        for row in data:
+            writer.writerow(row)
+
 def request_wrapper(url,method,headers,data=None):
     request_counter = 0
     if method == "get":
@@ -37,16 +47,6 @@ def request_wrapper(url,method,headers,data=None):
     else:
         return None
 
-def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
-        for row in data:
-            writer.writerow(row)
-
 def fetch_data():
     headers = {
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
@@ -70,14 +70,14 @@ def fetch_data():
                 "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
                 "content-type": "application/json"
             }
-            # print(address)
             location_json_request = request_wrapper("https://www.hilton.com/graphql/customer?pod=brands&operationName=hotel",'post',data=request_data,headers=request_header)
             if location_json_request == None:
                 continue
-            # print(location_json_request.json())
+            if  location_json_request.json()["data"] == None:
+                continue
+            if location_json_request.json()["data"]["hotel"] == None:
+                continue
             location_url = location_json_request.json()["data"]["hotel"]["homepageUrl"]
-            # print(location_url)
-            # time.sleep(2)
             location_request = request_wrapper(location_url,'get',headers=headers)
             if location_request == None:
                 continue
@@ -125,7 +125,7 @@ def fetch_data():
             store.append(store_zip)
             store.append(address["country"])
             store.append("<MISSING>")
-            store.append(phone.replace("=","") if phone else "<MISSING>")
+            store.append(phone if phone else "<MISSING>")
             store.append("<MISSING>")
             store.append(cord["latitude"])
             store.append(cord["longitude"])

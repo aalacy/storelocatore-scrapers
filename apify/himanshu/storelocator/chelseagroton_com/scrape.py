@@ -45,7 +45,6 @@ def fetch_data():
         }
     base_url= "https://www.chelseagroton.com/Home/Why-Chelsea-Groton/Locations-Hours"
     r = requests.get(base_url,headers=headers)
-    
     soup= BeautifulSoup(r.text,"lxml")
     href= soup.find_all("div",{"class":"mfp-hide white-popup-block"})[2:-5]
     id1 = []
@@ -58,7 +57,6 @@ def fetch_data():
             id1.append(i.attrs['id'])
             lat1.append(lat.split(",")[0])
             lng1.append(lat.split(",")[1])
-
        
     link = (soup.find_all("a",{"class":"LA-ui-accordion-header"}))
 
@@ -83,7 +81,6 @@ def fetch_data():
             state_list = re.findall(r' ([A-Z]{2}) ', str(full_address))[-1]
             phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(full_address))[0]
             phone_list1 = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(full_address))[-1]
-
             name = i.text
             city = name.replace(" (Lending Center Only)","").replace("Center ","").replace(" Auto Bank Express","").replace(", Westside","")
             address = (" ".join(loc[1:4]).replace(state_list,"").replace(zip1,"").replace(phone_list,"").split("Address")[-1].replace("Get Directions","").strip().replace(",","").replace(city,"").replace("Groton","").replace("Mystic","").replace("Mystic","").replace("Norwich",""))
@@ -97,14 +94,13 @@ def fetch_data():
             tem_var.append("US")
             tem_var.append("<MISSING>")
             tem_var.append(phone_list.encode('ascii', 'ignore').decode('ascii').strip() if phone_list.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>")
-            tem_var.append("<MISSING>")
+            tem_var.append("branch")
             tem_var.append(latitude1 if latitude1 else "<MISSING>")
             tem_var.append(longitude1 if longitude1 else "<MISSING>")
             tem_var.append(hours)
             tem_var.append("<MISSING>")
             # print(tem_var)
             return_main_object.append(tem_var)
-
         else:
             strong = data1.find_all("strong")
             for tage in strong:
@@ -119,9 +115,6 @@ def fetch_data():
                     city = tage.next_sibling.next_sibling.replace("\n","").strip().split(",")[0]
                     state = tage.next_sibling.next_sibling.replace("\n","").strip().split(",")[1].split( )[0]
                     zip1 = tage.next_sibling.next_sibling.replace("\n","").strip().split(",")[1].split( )[1]
-
-
-
   
                 tem_var1.append("https://www.chelseagroton.com")
                 tem_var1.append(tage.text.encode('ascii', 'ignore').decode('ascii').strip().replace("&#8211;",""))
@@ -132,7 +125,7 @@ def fetch_data():
                 tem_var1.append("US")
                 tem_var1.append("<MISSING>")
                 tem_var1.append("<MISSING>")
-                tem_var1.append("<MISSING>")
+                tem_var1.append("ATM")
                 tem_var1.append("<MISSING>")
                 tem_var1.append("<MISSING>")
                 tem_var1.append("<MISSING>")

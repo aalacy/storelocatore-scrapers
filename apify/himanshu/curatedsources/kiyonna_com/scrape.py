@@ -3,13 +3,14 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import unicodedata
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","raw_address"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url","raw_address"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -20,7 +21,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for store_data in soup.find_all("div",{"class":"icon"}):
-        if "USA" not in store_data["address1"] and "Canada" not in store_data["address1"]:
+        if "USA" not in store_data["address1"] and "Canada" not in store_data["address1"] and "United States" not in store_data["address1"]:
             continue
         store = []
         store.append("https://www.kiyonna.com")
@@ -29,7 +30,7 @@ def fetch_data():
         store.append(store_data["address1"].split(",")[0])
         store.append("<INACCESSIBLE>")
         store.append("<INACCESSIBLE>")
-        if "USA" in store_data["address1"]:
+        if "USA" in store_data["address1"] or "United States" in store_data["address1"]:
             store.append("US")
         if "Canada" in store_data["address1"]:
             store.append("CA")
@@ -47,9 +48,14 @@ def fetch_data():
         if len(hours) == 14 and hours.count("-") == 3:
             hours = "<MISSING>"
         store.append(hours if store[-4] != hours and "hours" not in hours.lower() else "<MISSING>")
+        store.append("https://www.kiyonna.com/GMAP.html")
         store.append(store_data["address1"].split(",")[1])
-        return_main_object.append(store)
-    return return_main_object
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        yield store
 
 def scrape():
     data = fetch_data()

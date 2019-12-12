@@ -56,6 +56,7 @@ def fetch_data():
         zips.append(info['postcode'].strip())
 
         page_url.append("https://locations.jamba.com"+store['llp_url'])
+        print(info['locality'])
     #page_url=list(set(page_url))
     headers = {
 
@@ -89,16 +90,19 @@ def fetch_data():
             phones.append("<MISSING>")
         else:
             phones.append(ph)
-        tim=info['store_hours']
+        tim=info['store_hours'].replace("1,","Monday:").replace(";2,",";Tuesday:").replace(";3,",";Wednesday:").replace(";4,",";Thusrday:").replace(";5,",";Friday:").replace(";6,",";Saturday:").replace(";7,",";Sunday:")
         if tim=="":
             timing.append("<MISSING>")
         else:
+
             timing.append(tim)
         lat.append(info['latitude'])
         long.append(info['longitude'])
     all = []
     for i in range(0, len(locs)):
         row = []
+        if lat[i]=="<MISSING>" and long[i]=="<MISSING>" and ids[i]=="<MISSING>" :
+            continue
         row.append("https://www.jamba.com/")
         row.append(locs[i])
         row.append(street[i])

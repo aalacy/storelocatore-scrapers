@@ -48,7 +48,7 @@ def fetch_data():
     country_code = ""
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "rogers"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
@@ -68,7 +68,11 @@ def fetch_data():
         "channelID":"ROGERS"
         }
         # print("data ===" + data)
-        r= requests.post ('https://1-dot-rogers-store-finder.appspot.com/searchRogersStoresService',data = data,headers = headers)
+        try:
+
+            r= requests.post ('https://1-dot-rogers-store-finder.appspot.com/searchRogersStoresService',data = data,headers = headers)
+        except:
+            continue
         json_data = r.json()
         # except:
         #     continue

@@ -48,14 +48,14 @@ def fetch_data():
     for index in range(1, len(select.options)):
         select = Select(driver.find_element_by_tag_name('select'))
         select.select_by_index(index)
-        time.sleep(10)
+        time.sleep(3)
         locs = driver.find_elements_by_css_selector('div.loc-result > a')
         #print("locs..........", locs)
         for loc in locs:
             url = loc.get_attribute('href')
             print(url)
             driver2.get(url)
-            time.sleep(3)
+            time.sleep(1)
             try:
                 location_name = driver2.find_element_by_css_selector('h1.cg-black.caps').text
             except:
@@ -63,13 +63,17 @@ def fetch_data():
             street_addr = driver2.find_element_by_css_selector('p.mb-0 > span:nth-child(1)').text
             state_city_zip = driver2.find_element_by_css_selector('p.mb-0 > span:nth-child(2)').text
             city = state_city_zip.split(",")[0]
-            state = state_city_zip.split(",")[1].split(" ")[-2]
-            zipcode = state_city_zip.split(",")[1].split(" ")[-1]
+            try:
+                state = state_city_zip.split(",")[1].split(" ")[-2]
+                zipcode = state_city_zip.split(",")[1].split(" ")[-1]
+            except:
+                state = state_city_zip.split(",")[2].split(" ")[-2]
+                zipcode = state_city_zip.split(",")[2].split(" ")[-1]            
             phone = driver2.find_element_by_css_selector('div.absolute.phone > a').get_attribute('href').split("tel:")[1]
             hours_of_op = driver2.find_element_by_css_selector('span.d-block.pt-3.italic.newtime').text.replace("\n", " ")
             geomap = driver2.find_element_by_xpath("//a[contains(@href,'maps.google.com')]").get_attribute('href')
             driver3.get(geomap)
-            time.sleep(10)
+            time.sleep(5)
             lat, lon = parse_geo(driver3.current_url)
             data.append([
                 'https://calibercollision.com',

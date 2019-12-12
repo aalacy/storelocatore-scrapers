@@ -1,1 +1,0 @@
-['www.gamestop.com', 'Legacy Plaza - GameStop', '5610 W 4100TH S', 'West Valley City', 'UT', '84128', 'US', '0961', '(801) 968-1793', 'gamestop', 40.68209, -112.0250181, 'Mon-Sat 10am-9pm, Sun 11am-6pm']am-6pm']

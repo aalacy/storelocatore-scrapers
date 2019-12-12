@@ -11,7 +11,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -25,7 +25,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 50
-    MAX_DISTANCE = 50.0
+    MAX_DISTANCE = 25.0
     coord = search.next_coord()
     while coord:
         while True:
@@ -35,7 +35,7 @@ def fetch_data():
                 x = coord[0]
                 y = coord[1]
                 # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-                r = requests.get("https://www.navyfederal.org/branches-atms/location_search.php?lat="+ str(x) + "&lon=" + str(y) + "&dist=50&loc=100",headers=headers)
+                r = requests.get("https://www.navyfederal.org/branches-atms/location_search.php?lat="+ str(x) + "&lon=" + str(y) + "&dist=25&loc=50",headers=headers)
                 data = r.json()["coordLocation"]["data"]["locations"]
                 for store_data in data:
                     if store_data["country"] != "USA":
@@ -58,7 +58,7 @@ def fetch_data():
                     store.append("US")
                     store.append("<MISSING>")
                     store.append(store_data["phone"] if "phone" in store_data and store_data["phone"] != "" and store_data["phone"] != None  else "<MISSING>")
-                    store.append("navy federal credit union" + store_data["locationType"])
+                    store.append(store_data["locationType"] if store_data["locationType"] else "<MISSING>")
                     store.append(lat)
                     store.append(lng)
                     hours = ""
@@ -77,12 +77,11 @@ def fetch_data():
                     if 'sunopen' in store_data and store_data["sunopen"] != None:
                         hours = hours + " sunday " + store_data["sunopen"] + " - " + store_data["satclose"]
                     store.append(hours if hours != "" else "<MISSING>")
-                    return_main_object.append(store)
+                    store.append("<MISSING>")
+                    yield store
                 if len(data) < MAX_RESULTS:
-                
                     search.max_distance_update(MAX_DISTANCE)
                 elif len(data) == MAX_RESULTS:
-                
                     search.max_count_update(result_coords)
                 else:
                     raise Exception("expected at most " + str(MAX_RESULTS) + " results")
@@ -90,7 +89,6 @@ def fetch_data():
                 break
             except:
                 continue
-    return return_main_object
 
 def scrape():
     data = fetch_data()

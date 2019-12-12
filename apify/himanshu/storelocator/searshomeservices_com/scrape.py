@@ -81,6 +81,7 @@ def fetch_data():
     for script_state in soup.find_all("a", {"class": "state"}):
 
         location_state_url = base_url + script_state["href"]
+        
         # print("state_location_url === " + str(location_state_url))
 
         # while True:
@@ -93,7 +94,7 @@ def fetch_data():
         #         continue
         
         r_state_location = request_wrapper(location_state_url,"get", headers=headers)
-
+        # print(r_state_location)
         if r_state_location == None:
             continue
 
@@ -125,39 +126,71 @@ def fetch_data():
             soup_store_detail = BeautifulSoup(r_store_detail.text, "lxml")
 
             if soup_store_detail.find("span",{"class":"store-hours"}):
-                hours_of_operation = " ".join(list(soup_store_detail.find("span",{"class":"store-hours"}).stripped_strings))
+                hours_of_operation = " ".join(list(soup_store_detail.find("span",{"class":"store-hours"}).stripped_strings)).replace('Hours','').strip()
             else:
                 hours_of_operation = ""
 
             try:
                 json_str = (soup_store_detail.text.split("config.currentStore = ")[1]+"{").split("}]};")[0]+"}]}"
+                json_data = json.loads(json_str)
+
+                street_address = str(json_data["address"])
+                location_name = str(json_data["location_name"])
+                # print(location_name)
+                city = str(json_data["city"])
+                state = str(json_data["state"])
+                zipp = str(json_data["zip"])
+                phone = str(json_data["phone"])
+                store_number = str(json_data["id"])
+                latitude = str(json_data["lat"])
+                longitude = str(json_data["long"])
+                location_type = str(json_data["location_type"])
+
+                ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp))
+                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp))
+
+                country_code = ""
+                if ca_zip_list:
+                    zipp = ca_zip_list[-1]
+                    country_code = "CA"
+
+                if us_zip_list:
+                    zipp = us_zip_list[-1]
+                    country_code = "US"
             except:
-                continue
+                if "metro-area" not in page_url :
+                    head= soup_store_detail.find('div',class_='headerMain-utilZone03')
+                    if head != None:
+                        
+                        city = head.find('span',{'itemprop':'addressLocality'}).text.strip()
+                        state = head.find('span',{'itemprop':'addressRegion'}).text.strip()
+                        phone = head.find('nav',{'class':'navCallout'}).find('a')['href'].replace('tel:','').strip()
+                        location_name = city
+                        street_address = "<MISSING>"
+                        zipp = "<MISSING>"
+                        location_type = "<MISSING>"
+                        store_number = "<MISSING>"
+                        latitude = "<MISSING>"
+                        longitude = "<MISSING>"
+                        hours_of_operation = "<MISSING>"
+                        country_code = "US"
+                        page_url = page_url
 
-            json_data = json.loads(json_str)
+                    else:
+                        #this page has no detail information 
+                        continue
+                        # print(page_url)
 
-            street_address = str(json_data["address"])
-            location_name = str(json_data["location_name"])
-            city = str(json_data["city"])
-            state = str(json_data["state"])
-            zipp = str(json_data["zip"])
-            phone = str(json_data["phone"])
-            store_number = str(json_data["id"])
-            latitude = str(json_data["lat"])
-            longitude = str(json_data["long"])
-            location_type = str(json_data["location_type"])
+                        
 
-            ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp))
-            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp))
+                else:
+                    # this pages have duplicate location 
+                    continue
 
-            country_code = ""
-            if ca_zip_list:
-                zipp = ca_zip_list[-1]
-                country_code = "CA"
 
-            if us_zip_list:
-                zipp = us_zip_list[-1]
-                country_code = "US"
+                
+
+            
 
             # print("hours_of_operation == "+ str(store_number))
 

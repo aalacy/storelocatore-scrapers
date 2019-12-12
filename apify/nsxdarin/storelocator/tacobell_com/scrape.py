@@ -31,8 +31,7 @@ def fetch_data():
         if '<loc>https://www.tacobell.com/food?store=' in line:
             sid = line.split('store=')[1].split('<')[0]
             if sid not in locs:
-                locs.append(sid)
-    
+                locs.append(sid)    
     for loc in locs:
         print('Pulling Location %s...' % loc)
         website = 'tacobell.com'
@@ -54,13 +53,13 @@ def fetch_data():
             if 'property="og:title" content="' in line2:
                 name = line2.split('property="og:title" content="')[1].split(' |')[0]
                 add = line2.split('<span class="c-address-street-1">')[1].split('<')[0].strip()
-                city = line2.split('<span itemprop="addressLocality">')[1].split('<')[0]
+                city = line2.split('<span class="c-address-city">')[1].split('<')[0]
                 state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
                 zc = line2.split('itemprop="postalCode">')[1].split('<')[0].strip()
-                phone = line2.split('itemprop="telephone" id="telephone">')[1].split('<')[0]
+                phone = line2.split('itemprop="telephone" id="phone-main">')[1].split('<')[0]
                 lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
                 lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]
-                hrs = line2.split('Restaurant Hours</h4>')[1].split("}]' data-")[0]
+                hrs = line2.split('Restaurant Hours</h2>')[1].split("}]' data-")[0]
                 days = hrs.split('"day":"')
                 for day in days:
                     if '"intervals":' in day:

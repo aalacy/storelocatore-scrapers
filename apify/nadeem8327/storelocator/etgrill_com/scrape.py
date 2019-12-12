@@ -15,7 +15,7 @@ opts.add_argument("--headless")
 prefs= {"profile.default_content_setting_values.geolocation":2}
 opts.add_experimental_option("prefs",prefs)
 capabilities = webdriver.DesiredCapabilities.CHROME
-driver=webdriver.Chrome("/home/nadeem/Downloads/chromedriver",options=opts,desired_capabilities=capabilities)
+driver=webdriver.Chrome("chromedriver",options=opts,desired_capabilities=capabilities)
 url= "https://www.etgrill.com/contact/brea/"
 locator_domain=url
 driver.get(url)

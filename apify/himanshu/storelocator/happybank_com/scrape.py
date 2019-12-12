@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import sgzip
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -11,62 +11,106 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
+    return_main_object = []
+    addresses = []
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 50
+    MAX_DISTANCE = 50
+    current_results_len = 0     # need to update with no of count.
+    zip_code = search.next_zip()
+
     headers = {
-    "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
-
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
-    base_url= "https://www.happybank.com/Locations"
-    r = requests.get(base_url,headers=headers)
-    soup= BeautifulSoup(r.text,"lxml")
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
-    address=[]
-    k= soup.find('table',{"id":"OfficerList"}).find_all("a")
-    for i in k:
-        # print(i['href'])
-        r = requests.get("https://www.happybank.com/Locations"+i['href'],headers=headers)
-        soup1= BeautifulSoup(r.text,"lxml")
-        script  = soup1.find_all("script",{"type":"text/javascript"})
-        lat= []
-        lng=[]
-        for i in script:
-            if "var jData" in i.text:
-                k1 = (i.text.split("var jData =")[1].split("$(function () {")[0].replace(";",""))
-                for j in json.loads(k1):
-                    tem_var=[]
-                    tem_var.append("https://www.happybank.com/")
-                    tem_var.append(j['name'])
-                    tem_var.append(j['address'])
-                    tem_var.append(j["city"])
-                    tem_var.append(j["state"])
-                    tem_var.append(j['postal'])
-                    tem_var.append("US")
-                    tem_var.append("<MISSING>")
-                    tem_var.append(j['phone'].replace("-BANK",""))
-                    tem_var.append("happybank")
-                    tem_var.append(j['lat'])
-                    tem_var.append(j['lng'])
-                    tem_var.append("<MISSING>")
-                    if tem_var[3] in address:
-                        continue
+
+    base_url = "https://www.happybank.com"
+
+    while zip_code:
+        result_coords = []
+        # print("zip_code === "+zip_code)
+        try:
+            location_url = "https://www.happybank.com/Locations?bh-sl-address="+str(zip_code)+"&locpage=search"
+            r = requests.get(location_url,headers=headers)
+            soup = BeautifulSoup(r.text, "lxml")
+        except:
+            continue
+        locator_domain = base_url
+        location_name = ""
+        street_address = ""
+        city = ""
+        state = ""
+        zipp = ""
+        country_code = "US"
+        store_number = ""
+        phone = ""
+        location_type = ""
+        latitude = ""
+        longitude = ""
+        raw_address = ""
+        hours_of_operation = ""
+        script = soup.find_all("script",{"type":"text/javascript"})
         
-                    address.append(tem_var[3])
-
-
+        for i in script:
+            if "dataRaw" in i.text:
+                json_data = json.loads(i.text.split("JSON.stringify(")[1].split("),")[0])
+                current_results_len = len(json_data)
+                for data in json_data:
+                    location_name = data["name"]
+                    street_address = data['address'] + ' ' +data['address2'] 
+                    city = data['city']
+                    state = data['state']
+                    zipp = data['postal']
+                    country_code = data['category']
+                    phone = data['phone']
+                    # re.sub(r'[\W_]+', '', data['phone'])
+                    location_type = data['category']
+                    latitude = data['lat']
+                    longitude = data['lng']
+                    page_url = data['web']
+                    phone = data['phone'].replace("BANK ","")
+                    # phone1 = ''.join(filter(lambda x: x.isdigit(), data['phone']))
+                    # index = 3
+                    # char = '-'
+                    # phone2 = phone1[:index] + char + phone1[index + 1:]
                     
-                    return_main_object.append(tem_var)
-                   
- 
+                    # index = 7
+                    # char = '-'
+                    # phone = phone2[:index] + char + phone2[index + 1:]
+                    # print(phone)
+                    # print("-----------------------------",phone)
+                    # print("https://www.happybank.com/Locations"+page_url)
+                    r1 = requests.get("https://www.happybank.com/Locations"+page_url,headers=headers)
+                    soup1 = BeautifulSoup(r1.text, "lxml")
+                    hours_of_operation = " ".join(list(soup1.find("div",{"id":"hours"}).stripped_strings)).split("Special")[0]
+                    result_coords.append((latitude, longitude))
+                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                            store_number, phone, location_type, latitude, longitude, hours_of_operation,"https://www.happybank.com/Locations"+page_url]
+                    if store[2] in addresses:
+                        continue
+                    addresses.append(store[2])
+                    store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-    return return_main_object
+                    # print("data = " + str(store))
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    yield store
+
+        if current_results_len < MAX_RESULTS:
+            # print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            # print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        zip_code = search.next_zip()
 
 
 def scrape():
@@ -75,5 +119,3 @@ def scrape():
 
 
 scrape()
-
-

@@ -42,9 +42,9 @@ def fetch_data():
     soup = BeautifulSoup(page.content, 'html.parser')
     stores = soup.find_all('div', {'class': 'row'})
     all_store_data = []
-
-    content_i = [1, 3, 5]
-    div = stores[2].find_all('div', {'class':'col-xs-12 col-sm-6'})
+    
+    content_i = [1, 3, 5, 7]
+    div = stores[3].find_all('div', {'class':'col-xs-12 col-sm-6'})
 
     for i in content_i:
         store = div[i]
@@ -58,17 +58,21 @@ def fetch_data():
         phone_number = ps[1].text.replace('Store Phone: ', '').strip()
         br_h = ps[2].find_all('br')
         hours = ''
-        if i < 4:
+        if i < 4 or i > 6:
             hours = br_h[0].nextSibling.strip() + ' ' + br_h[1].nextSibling.strip()
         else:
             hours = br_h[0].nextSibling.strip() + ' '+ ps[3].text
             
-
+        if ' Director' in hours:
+            hours = hours.split(' Director')[0]
+        
         country_code = 'US'
         location_type = '<MISSING>'
         store_number = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
+        if ':' in phone_number:
+            phone_number = phone_number.split(':')[1].strip()
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                      store_number, phone_number, location_type, lat, longit, hours ]

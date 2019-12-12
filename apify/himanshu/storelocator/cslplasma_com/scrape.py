@@ -4,7 +4,11 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+import platform
 
+system = platform.system()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -18,8 +22,19 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    if "linux" in system.lower():
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)
+    else:
+        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def fetch_data():
+    browser = get_driver()
     base_url = "https://www.cslplasma.com"
     r = requests.get(base_url + "/locations/search-results-state")
     soup = BeautifulSoup(r.text, "lxml")
@@ -58,14 +73,41 @@ def fetch_data():
                     'div', {"class": "center-search-item-contact"}).stripped_strings)
 
                 phone = ""
-                if "Ph" in location_hours:
-                    phone = location_hours[location_hours.index("Ph") + 1]
-                    # print(phone)
+                if "Ph:" in location_hours:
+                    phone = location_hours[location_hours.index("Ph:") + 1]
+                else:
+                    phone = "<MISSING>"
+                #print(phone)
                 page_url = base_url + location.find_all("a")[-1]['href']
-                # print(page_url)
-                geo_location = location.find('a')['href']
-                #print(geo_location)
-                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                import warnings
+                warnings.filterwarnings('ignore')
+                browser.get(page_url)
+                iframe = browser.find_element_by_tag_name("iframe")
+                browser.switch_to.default_content()
+                browser.switch_to.frame(iframe)
+                # print(browser.current_url)
+                iframe_source = browser.page_source
+                soup = BeautifulSoup(iframe_source, 'lxml')
+                l1 = []
+                l2 = []
+                for script in soup.find_all("script"):
+                    if "initEmbed" in script.text:
+                        try:
+                            coords = json.loads(script.text.split(
+                                'initEmbed(')[1].split(');')[0])[5][-2][0][-1][1]
+                            res = [i for i in coords if i]
+                            lat = res[2][-2]
+                            lng = res[2][-1]
+                            l1.append(lat)
+                            l2.append(lng)
+                        except:
+                            # print(json.loads(script.text.split(
+                            #     'initEmbed(')[1]))
+                            # print(soup.prettify())
+                            lat = "<MISSING>"
+                            lng = "<MISSING>"
+                            l1.append(lat)
+                            l2.append(lng)
 
                 store = []
                 store.append("https://www.cslplasma.com")
@@ -78,13 +120,13 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append(phone if phone != "" else "<MISSING>")
                 store.append("<MISSING>")
-                store.append("<MISSING>")
-                store.append("<MISSING>")
+                store.append(l1.pop(0))
+                store.append(l2.pop(0))
                 store.append(location_hours[-1] if location_hours[-1] !=
                              "Contact Info" and location_hours[-1] != "Coming Soon" else "<MISSING>")
                 store.append(page_url)
-                # print(str(store[2]))
-                # print('~~~~~~~~~~~~~~~~~~~~`')
+                #print("===" + str(store))
+                #print('~~~~~~~~~~~~~~~~~~~~`')
                 return_main_object.append(store)
     return return_main_object
 

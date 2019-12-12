@@ -10,3 +10,5 @@ Remember to update `package.json` with all dependencies needed to run your scrap
 Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
+
+address with no number,address contains state name,invalid phon3,zip,same lat & lng and  i checked all data is true this website

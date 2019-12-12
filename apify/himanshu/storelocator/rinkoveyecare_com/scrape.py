@@ -4,9 +4,10 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-from urllib3.exceptions import InsecureRequestWarning
+# from urllib3.exceptions import InsecureRequestWarning
 import time
-requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+# requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+requests.packages.urllib3.disable_warnings()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="UTF-8") as output_file:
@@ -70,8 +71,7 @@ def fetch_data():
                     except:
                         time.sleep(2)
                         location_count = location_count + 1
-                        if location_count > 10:
-                            # print("failed to get this location " + str(store_data["permalink"]))
+                        if location_count > 10:                          
                             break
                         continue
                 

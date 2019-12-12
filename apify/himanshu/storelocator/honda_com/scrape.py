@@ -71,39 +71,34 @@ def fetch_data():
         st =  "<MISSING>"
 
         result_coords = []
-        #print(zip_code)
         try:
-
-            r = requests.get(
+            k = requests.get(
                 'https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE),
                 headers=headers,
-        
-            )
+            ).json()
         except:
             continue
+
+        #print('https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE))
         name =''
-        soup= BeautifulSoup(r.text,"lxml")
-        try:
-            k = json.loads(soup.text)
-        except:
-            continue
-        time =''
+        # soup= BeautifulSoup(r.text,"lxml")
+        # try:
+        #     k = json.loads(soup.text)
+        # except:
+        #     continue
+        
         if k != None and k !=[]:
             current_results_len = len(k['Dealers'])
             for i in k['Dealers']:
-                h1= (i['Departments'])
-
-                p=''
+                h1= i['Departments']
+                time =''
                 for h in h1:
                     t=''
                     type1 = h['Type']
+                    
                     for q in h['OperationHours']:
                         t= t+' '+q['Day']+ ' '+q['Hours']
                     time = time +' ' +type1 + ' '+t
-
-                #print(i)
-                # print(p)
-                # exit()
                 
                 if "Name" in i:
                     name  = i['Name']
@@ -115,11 +110,13 @@ def fetch_data():
                     zipp = i['Address']['Zip']
                     latitude = str(i['Address']['Latitude'])
                     longitude = str(i['Address']['Longitude'])
-
+                #print("=====================================================================")
                 if "Phone" in i:
                     phone = i['Phone']
-
-                # result_coords.append((latitude, longitude))
+                if " Sales " == time:
+                    time = time.replace(" Sales ","<MISSING>")
+                result_coords.append((latitude, longitude))
+                
                 tem_var =[]
                 tem_var.append("https://www.honda.com/")
                 tem_var.append(name if name else "<MISSING>" )
@@ -133,22 +130,22 @@ def fetch_data():
                 tem_var.append("<MISSING>")
                 tem_var.append(latitude)
                 tem_var.append(longitude)
-                tem_var.append(time if time else "<MISSING>" )
+                tem_var.append(time.replace(" Parts  Sales ","<MISSING>") if time.replace(" Parts  Sales ","<MISSING>") else "<MISSING>" )
                 tem_var.append("<MISSING>")
                 
                 if tem_var[2] in addresses:
                     continue
                 addresses.append(tem_var[2])
                 yield tem_var
-                # print("============================")
+                #print("============================",tem_var)
                 # print(tem_var)
                 # exit()
 
         if current_results_len < MAX_RESULTS:
-            #print("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            #print("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

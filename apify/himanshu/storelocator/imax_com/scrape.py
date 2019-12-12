@@ -44,8 +44,6 @@ def fetch_data():
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
 
-   
- 
     return_main_object = []
     addresses = []
 
@@ -59,14 +57,20 @@ def fetch_data():
  
     while coord:
         result_coords = []
+        country_code =''
         # data = '{"strLocation":"85029","strLat":33.5973469,"strLng":-112.10725279999997,"strRadius":"100","country":"US"}'
         # print("zips === " + str(zip_code))
-       # print(coord)
-        r = requests.get(
-            'https://www.imax.com/showtimes/ajax/theatres?date=2019-09-13&lat='+str(coord[0])+'&lon='+str(coord[1]),
-            headers=headers)
-        soup1= BeautifulSoup(r.text,"lxml").text
-        k = json.loads(soup1)
+        #print(coord)
+        try:
+            r = requests.get(
+                'https://www.imax.com/showtimes/ajax/theatres?date=2019-09-13&lat='+str(coord[0])+'&lon='+str(coord[1]),
+                headers=headers)
+
+            soup1= BeautifulSoup(r.text,"lxml").text
+            k = json.loads(soup1)
+        except:
+            continue
+
         current_results_len =len(k['rows'])
         for i in k['rows']:
             tem_var=[]
@@ -93,23 +97,39 @@ def fetch_data():
                 st = " ".join(v2[0:2])
                 city  = v2[3].strip()
                 state1 = v2[4].strip().split( )[0]
-                zip1 = v2[4].strip().split( )[-1]
-                # print("55555555555   ",zip1)
-             
+                # zip1 = v2[4].strip().split( )[-1]
 
+                ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(v2[4].strip()))
+                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(v2[4].strip()))
+                
+
+                if ca_zip_list:
+                    zip1 = ca_zip_list[-1]
+
+                if us_zip_list:
+                    zip1 = us_zip_list[-1]
+                
             elif len(v2)==3:
                 st = v2[0]
                 city  = v2[1].strip()
                 state = v2[2].strip().split( )[0]
+
                 state1 =''
                 if len(v2[2].strip().split( ))==2:
-                    
                     state1 = (v2[2].strip().split( )[0])
-                    zip1 = v2[2].strip().split( )[1]
+                    # zip1 = v2[2].strip().split( )[1]
+                    ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(v2[2].strip()))
+                    us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(v2[2].strip()))
+                
+
+                if ca_zip_list:
+                    zip1 = ca_zip_list[-1]
+
+                if us_zip_list:
+                    zip1 = us_zip_list[-1]
 
                 elif len(v2[2].strip().split( ))==3:
                     state = v2[2].strip().split( )
-                    
                     if len(state)==3:
                         if len(state[1])!=3:
                             state1 = (" ".join(state[:2]))
@@ -117,8 +137,17 @@ def fetch_data():
                             state1 = state[0]
                     else:
                         state1 = state[0]
-                    zip1 = " ".join(v2[2].strip().split( )[1:]).replace("Jersey","").replace("Zealand 1005","<MISSING>").replace("and Tobago","")
-                    
+                        
+                    # zip1 = " ".join(v2[2].strip().split( )[1:]).replace("Jersey","").replace("Zealand 1005","<MISSING>").replace("and Tobago","")
+                    ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(" ".join(v2[2].strip().split( )[1:])))
+                    us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(" ".join(v2[2].strip().split( )[1:])))
+                
+                    if ca_zip_list:
+                        zip1 = ca_zip_list[-1]
+
+                    if us_zip_list:
+                        zip1 = us_zip_list[-1]
+        
                 elif len(v2[2].strip().split( ))==1:
                     state1 = v2[2].strip().split( )[0]
                     zip1 = "<MISSING>"
@@ -127,14 +156,20 @@ def fetch_data():
                 # print("33333333333   ",zip1)
             elif len(v2)==4:
                 if "Canada" in  v2[-1].strip():
-                    state = " ".join(v2[-2:]).strip().replace("Canada","").split('  ')[0]
-                    zip1 = " ".join(v2[-2:]).strip().replace("Canada","").split('  ')[-1]
+                    ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(" ".join(v2[-2:])))
+                    if ca_zip_list:
+                        zip1 = ca_zip_list[-1]
+
+                    state1 = " ".join(v2[-2:]).strip().replace("Canada","").split('  ')[0].replace("NY","ON")
+                    # zip1 = " ".join(v2[-2:]).strip().replace("Canada","").split('  ')[-1]
                     city = v2[-3].strip()
                     st = v2[0]
-                    # print(" ".join(v2[-2:]).strip().replace("Canada","").split('  ')[-1])
                 else:
-                    state =v2[-1].strip().split(  )[0]
-                    zip1 = v2[-1].strip().split(  )[-1]
+                    # state1 =v2[-1]
+                    ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(v2[-1]))
+                    if ca_zip_list:
+                        zip1 = ca_zip_list[-1]
+                    # zip1 = v2[-1].strip().split(  )[-1]
                     city = v2[-2].strip()
                     st = " ".join(v2[:2])
                 
@@ -160,33 +195,47 @@ def fetch_data():
                 zip1 = v2[1].strip().split( )[1]
                 # print("other ===",zip1)
 
+            ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zip1))
+            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zip1))
 
-            if len(zip1)==6 or len(zip1)==7:
-                c = "CA"
-            else:
-                c = "US"
+            if ca_zip_list:
+                zipp = ca_zip_list[-1]
+                country_code = "CA"
+                state1 = state1.replace("NY","ON")
+
+            if us_zip_list:
+                zipp = us_zip_list[-1]
+                country_code = "US"
+
+            # if len(zip1)==6 or len(zip1)==7:
+            #     c = "CA"
+            # else:
+            #     c = "US"
             # print(state1)
+            
             tem_var.append("https://www.imax.com/")
-            tem_var.append(name if name else "<MISSING>" )
-            tem_var.append(st if st else "<MISSING>"  )
-            tem_var.append(city if city else "<MISSING>" )
-            tem_var.append(state1 if state1 else "<MISSING>" )
-            tem_var.append(zip1 if zip1 else "<MISSING>" )
-            tem_var.append(c)
+            tem_var.append(name.encode('ascii', 'ignore').decode('ascii').strip() if name.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>" )
+            tem_var.append(st.encode('ascii', 'ignore').decode('ascii').strip() if st.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>"  )
+            tem_var.append(city.encode('ascii', 'ignore').decode('ascii').strip() if city.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>" )
+            tem_var.append(state1.strip().lstrip().replace("Canada","<MISSING>") if state1.strip().lstrip().replace("Canada","<MISSING>") else "<MISSING>" )
+            tem_var.append(zip1.replace("York ","").replace("Canada","").replace("720021","<MISSING>").encode('ascii', 'ignore').decode('ascii').strip() if zip1.replace("York ","").replace("Canada","").replace("720021","<MISSING>").encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>" )
+            tem_var.append(country_code if country_code else "<MISSING>")
             tem_var.append("<MISSING>")
             tem_var.append("<MISSING>")
-            tem_var.append("imax")
+            tem_var.append("<MISSING>")
             tem_var.append(lat if lat else "<MISSING>" )
             tem_var.append(lon if lon else "<MISSING>" ) 
-            tem_var.append(time2 if time2 else "<MISSING>" )
+            tem_var.append(time2.encode('ascii', 'ignore').decode('ascii').strip() if time2.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>" )
             tem_var.append("<MISSING>" )
-
-            # print(tem_var)
+            # print("----------------------------------",tem_var)
+            
             if tem_var[2] in addresses:
                 continue
             addresses.append(tem_var[2])
-            # print(tem_var)
-            yield tem_var
+            if "Australia" in tem_var or "Japan" in tem_var or "China" in tem_var:
+                pass
+            else:
+                yield tem_var
 
         if current_results_len < MAX_RESULTS:
             # print("max distance update")

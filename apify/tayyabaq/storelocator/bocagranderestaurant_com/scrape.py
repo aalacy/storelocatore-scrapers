@@ -20,7 +20,7 @@ def fetch_data():
     url ="http://bocagranderestaurant.com/contact-us/"
     r = requests.get(url)
     soup = BeautifulSoup(r.content, 'html.parser')
-    location = soup.findAll("div", {"class": " row tm_pb_row tm_pb_row_1"})
+    location = soup.findAll("div", {"class": "row tm_pb_row tm_pb_row_1"})
     stores=[location[n].get_text() for n in range(0,len(location))]
     for n in range(0,len(stores)):
         a = stores[n].split("\n")
@@ -49,7 +49,7 @@ def fetch_data():
             'http://bocagranderestaurant.com/contact-us/',
             location_name[n],
             street_address[n],
-            '<MISSING>',
+            city[n],
             state[n],
             zipcode[n],
             'US',

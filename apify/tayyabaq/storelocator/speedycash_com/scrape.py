@@ -3,6 +3,8 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
+import requests
+from bs4 import BeautifulSoup
 
 def get_driver():
     options = Options() 
@@ -36,17 +38,31 @@ def fetch_data():
             capture = False
         if capture:
             script.append(line)
-    stores = driver.execute_script('\n'.join(script) + "\n return stores2;");
+    stores = driver.execute_script('\n'.join(script) + "\n return stores2;")
     lat = re.findall(r'addr=(.*?)\%2C', str(stores))
+    print(len(lat))
     lon = re.findall(r"%2C(.*?)\',", str(stores))
-    street_address = re.findall(r"address': '(.*?)\',", str(stores))
+    print(len(lon))
+    street_address = re.findall(r"address': u'(.*?)\',", str(stores))
+    print(len(street_address))
     #street_address = [lat_lon[n].replace("': u'","").split(",")[0] for n in range(1,len(lat_lon))]
-    city = re.findall(r"city': '(.*?)\',", str(stores))
-    state = re.findall(r"state': '(.*?)\',", str(stores))
-    zipcode = re.findall(r"zip': '(.*?)\'}", str(stores))
-    print (zipcode)
-    phone = re.findall(r"phone': '(.*?)\',", str(stores))
-    page_url = re.findall(r"url': '(.*?)\',", str(stores))
+    city = re.findall(r"city': u'(.*?)\',", str(stores))
+    print(len(city))
+    state = re.findall(r"state': u'(.*?)\',", str(stores))
+    print(len(state))
+    zipcode = re.findall(r"zip': u'(.*?)\',", str(stores))
+    print(len(zipcode))
+    phone = re.findall(r"phone': u'(.*?)\',", str(stores))
+    print(len(phone))
+    page_url = re.findall(r"url': u'(.*?)\',", str(stores))
+    page_url = [('https://www.speedycash.com' + url) for url in page_url]
+    HOO = []
+    for n in range(0,len(page_url)):
+        soup = BeautifulSoup(requests.get(page_url[n]).text, "html.parser")
+        HOO_elem = (soup.find('div', {'id':'storehours'})).findAll('span')
+        HOO.append("")
+        for i in range(len(HOO_elem)):
+            HOO[n] = HOO[n] + HOO_elem[i].text + " "
     for n in range(0,len(street_address)):
         data.append([
             'https://www.speedycash.com',
@@ -62,7 +78,7 @@ def fetch_data():
             '<MISSING>',
             lat[n],
             lon[n],
-            '<INACCESSIBLE>'
+            HOO[n]
         ])
     driver.quit()
     return data

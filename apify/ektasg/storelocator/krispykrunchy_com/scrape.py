@@ -21,8 +21,14 @@ def parse_geo(url):
     try:
         lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
     except:
-        lon = re.findall(r'\,(-?[\d\.]*)', url)[0]
-    lat = re.findall(r'\@(-?[\d\.]*)', url)[0]
+        try:
+            lon = re.findall(r'\,(-?[\d\.]*)', url)[0]
+        except:
+            lon = '<MISSING>'
+    try:
+        lat = re.findall(r'\@(-?[\d\.]*)', url)[0]
+    except:
+        lat ='<MISSING>'
     return lat, lon
 
 
@@ -44,7 +50,7 @@ def fetch_data():
     data = []
     count=0
     driver.get("https://www.krispykrunchy.com/locations/")
-    time.sleep(15)
+    time.sleep(10)
     state_list = ['alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia'
                   ,'Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts',
                   'Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey',
@@ -57,9 +63,8 @@ def fetch_data():
         elem.clear()
         elem.send_keys(state)
         driver.find_element_by_xpath("//button[@id='btn-search']").click()
-        time.sleep(10)
+        time.sleep(2)
         stores = driver.find_elements_by_css_selector('div.store-item')
-        #print("state...." , state, "........." , len(stores))
         if len(stores)>0:
             for store in stores:
                 info = store.find_element_by_css_selector('div:nth-child(2)').text.splitlines()
@@ -88,13 +93,11 @@ def fetch_data():
                     store_id = store.find_element_by_css_selector('a.store-item-link').get_attribute('href').split('store-')[1]
                     store_link = store.find_element_by_css_selector('a.store-item-link').get_attribute('href')
                     driver2.get(store_link)
-                    time.sleep(4)
+                    time.sleep(1)
                     geomap = driver2.find_element_by_xpath("//a[contains(@href, 'maps.google.com')]").get_attribute('href')
                     driver2.get(geomap)
                     time.sleep(5)
-                    #print(driver2.current_url)
                     lat,lon = parse_geo(driver2.current_url)
-                    #print(lat,lon)
                     data.append([
                          'https://www.krispykrunchy.com/',
                           "https://www.krispykrunchy.com/locations/",

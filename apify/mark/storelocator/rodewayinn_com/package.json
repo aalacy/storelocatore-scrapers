@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "apify": "^0.15.1",
+    "request": "^2.88.0",
     "underscore": "^1.9.1"
   },
   "devDependencies": {

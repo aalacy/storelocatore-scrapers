@@ -34,7 +34,10 @@ def fetch_data():
         zip_code = data['postal_code']
         state = data['region']
         city = data['locality']
-        street_address = data['street_address']
+        street_address = data['street_address'] 
+        if data['extended_address'] != None:
+            street_address += ' ' + data['extended_address']
+        
 
         store_number = '<MISSING>'
         location_type = '<MISSING>'

@@ -3,14 +3,11 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
-# import time
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
@@ -21,109 +18,115 @@ def write_output(data):
 
 
 def fetch_data():
-    return_main_object = []
-    addresses = []
-    zips = sgzip.for_radius(50)
+    base_url= "https://www.pga.com/play"
+    r = requests.get(base_url)
+    soup= BeautifulSoup(r.text,"lxml")
+    store_name=[]
+    addressess = []
+    store_detail=[]
+    return_main_object=[]
 
-
-
-    headers = {
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
-
-        'content-type': "application/json",
-        'accept': "*/*",
-        'cache-control': "no-cache"
-
-    }
-
-    # it will used in store data.
-    locator_domain = "https://www.pga.com/"
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = "US"
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
-
-    url = "https://api.pga.com/graphql"
-    for zip_code in zips:
-        try:
-            loc_url = "https://www.pga.com/play/search?searchText="+str(zip_code)
-            r_page = requests.get(loc_url,headers = headers)
-            soup = BeautifulSoup(r_page.text,'lxml')
-            div = soup.find('div',class_='MuiGrid-root MuiGrid-container MuiGrid-spacing-xs-2')
-            link = []
-            for a in  div.find_all('a'):
-                p_url  = a['href']
-                link.append(p_url)
-            # print(link)
-
-        except:
-            continue
-        payload = "{\"operationName\":\"SearchCourses\",\"variables\":{\"searchText\":\""+str(zip_code)+"\"},\"query\":\"query SearchCourses($searchText: String!) {\\n  searchCourses(searchText: $searchText) {\\n    name\\n    photo_facility\\n    facility_id\\n    city\\n    state\\n    zip\\n    address1\\n    address2\\n    __typename\\n  }\\n}\\n\"}"
+    all_state =soup.find("div",{"class":re.compile("jss176 jss367")}).find_all("a")
+    for state1 in all_state:
 
         try:
-            response = requests.request("POST", url, data=payload, headers=headers)
-            json_data = response.json()
+            r1 = requests.get("https://www.pga.com"+state1['href'])
         except:
-            continue
+            pass
 
-        if json_data['data']['searchCourses'] != None:
-            for loc in json_data['data']['searchCourses']:
-                facility_id= loc['facility_id']
-                payload1 = "{\"operationName\":\"Facility\",\"variables\":{\"id\":\""+str(facility_id)+"\"},\"query\":\"query Facility($id: String!) {\\n  facility(facility_id: $id) {\\n    facility_id\\n    facility_name\\n    state\\n    state_name\\n    city\\n    zip\\n    phone\\n    photo_facility\\n    course_type_label\\n    address1\\n    address2\\n    address3\\n    address4\\n    universal_id\\n    members {\\n      name\\n      photo_profile\\n      universal_id\\n      member_class_description\\n      member_class\\n      member_type\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\"}"
+        soup1= BeautifulSoup(r1.text,"lxml")
+        all_city =soup1.find("ul",{"class":re.compile("jss182 jss183")}).find_all("a")
+        
+        for city in all_city:
+            # print("city====================== ","https://www.pga.com"+city['href'])
+            try:
+                r2 = requests.get("https://www.pga.com"+city['href'])
+            except:
+                pass
+
+            soup2= BeautifulSoup(r2.text,"lxml")
+            all_store_link =soup2.find_all("a",{"data-gtm-content-type":re.compile("Facility")})
+            for store1 in all_store_link:
+                name = ''
+                st =''
+                zipp =''
+                tem_var =[]
+                state =''
+                stopwords = "','"
+                new_words = [word for word in list(store1.stripped_strings) if word not in stopwords]
+
+                if len(new_words) == 5:
+                    name = new_words[0]
+                    state_list = re.findall(r'([A-Z]{2})', str(new_words[-2].strip().lstrip()))
+                    # print('--------------------------------------',state_list,new_words[-2].strip().lstrip())
+                    if state_list:
+                        state = state_list[-1]
+                        # print('-----------------------------------------',state)      
+
+                    if len(new_words[1:-2])==2:
+                        st = new_words[1:-2][0]
+                        city = new_words[1:-2][1]
+
+                    us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(new_words[-1]))
+                    if us_zip_list:
+                        zipp = us_zip_list[-1]
+
+                    page_url ="https://www.pga.com"+store1['href']
+
+                elif len(new_words) == 4:
+                    name = new_words[0]
+                    city = new_words[1]
+                    us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(new_words[-1].strip().lstrip()))
+
+                    state_list = re.findall(r'([A-Z]{2})', str(new_words[-2].strip().lstrip()))
+                    if state_list:
+                        state = state_list[-1]
+
+                    if us_zip_list:
+                        zipp = us_zip_list[-1]
+
+                    page_url ="https://www.pga.com"+store1['href']
+                # else:
+                #     print("https://www.pga.com"+store1['href'])
+                #     print("===================== len ", len(new_words))
+                    # print(new_words)
+
                 try:
-                    r = requests.request("POST", url, data=payload1, headers=headers)
-                    r_data = r.json()
+                    r3 = requests.get("https://www.pga.com"+store1['href'])
                 except:
-                    continue
-                store_number = r_data['data']['facility']['facility_id']
-
-                location_name = r_data['data']['facility']['facility_name']
-                street_address = r_data['data']['facility']['address1']
-                city = r_data['data']['facility']['city']
-                state = r_data['data']['facility']['state']
-                zipp_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(r_data['data']['facility']['zip']))
-                if zipp_list == []:
-                    zipp = "<MISSING>"
-                else:
-                    zipp= zipp_list[0].strip()
-                # print(zipp,state,street_address)
-
-
-                phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(r_data['data']['facility']['phone']))
-                if phone_list  !=  []:
-                    phone = phone_list[0].strip().replace(')','')
-                else:
-                    phone = "<MISSING>"
-                # print(state + " | "+zipp)
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                if link != []:
-                    page_url = "https://www.pga.com"+link.pop(0)
-                else:
                     pass
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-                store = ["<MISSING>" if x == ""  or x== None else x for x in store]
-                if store_number in addresses:
+
+                soup3 = BeautifulSoup(r3.text,"lxml")
+                all_data = list(soup3.find("div",{"class":"MuiGrid-root MuiGrid-item MuiGrid-grid-xs-12 MuiGrid-grid-md-4"}).stripped_strings)
+                phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(all_data))
+
+                if phone_list:
+                    phone = phone_list[-1]
+                else:
+                    phone = ""
+                
+                
+                tem_var.append("https://pga.com")
+                tem_var.append(name if name else "<MISSING>")
+                tem_var.append(st.replace("Do not use, AZ 85226","<MISSING>").replace("No Address Available","<MISSING>").strip().lstrip() if st.replace("No Address Available","<MISSING>").replace("Do not use, AZ 85226","<MISSING>").strip().lstrip() else "<MISSING>")
+                tem_var.append(city.replace("Do not use","<MISSING>").strip() if  city.replace("Do not use","<MISSING>").strip() else "<MISSING>")
+                tem_var.append(state if state else "<MISSING>")
+                tem_var.append(zipp if zipp else "<MISSING>")
+                tem_var.append("US")
+                tem_var.append("<MISSING>")
+                tem_var.append(phone if phone else "<MISSING>")
+                tem_var.append("<MISSING>")
+                tem_var.append("<MISSING>")
+                tem_var.append("<MISSING>")
+                tem_var.append("<MISSING>")
+                tem_var.append(page_url)
+                # print("========================",tem_var)
+                if tem_var[2] in addressess:
                     continue
-                addresses.append(store_number)
-
-                #print("data = " + str(store))
-                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-                return_main_object.append(store)
-    return return_main_object
-
-
+                addressess.append(tem_var[2])
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                yield tem_var
+                
 
 
 def scrape():
@@ -132,4 +135,5 @@ def scrape():
 
 
 scrape()
+
 

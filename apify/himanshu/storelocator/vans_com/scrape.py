@@ -44,21 +44,24 @@ def fetch_data():
                     address=loc.find('address1').text.strip()
                     city=loc.find('city').text.strip()
                     state=loc.find('state').text.strip()
-                    zip = loc.find('postalcode').text.strip()
+                    zip = loc.find('postalcode').text.strip().replace('000wa','<MISSING>')
                     if zip  == '00000':
                         zip = ''
 
-                    if len(zip) != 5 and zip != '':
-                        index = 5
-                        char = '-'
-                        zip = zip[:index] + char + zip[index + 1:]
-                        # print(word)
-                    # print("zipppppppppppppppppp   ",zip) 
-                    phone=loc.find('phone').text.strip()
+
+      
+                    phone=loc.find('phone').text.strip().replace('T&#xe9;l.','').replace('&#xa0;','')
                     storeno=loc.find('sn').text.strip()
                     if storeno == '0':
                         storeno = "<MISSING>"
                     country = loc.find('country').text.strip()
+
+                    if country=="US":
+                        if len(zip) != 5 and zip != '':
+                            index = 5
+                            char = '-'
+                            zip = zip[:index] + char + zip[index + 1:]
+                    
                     lat=loc.find('latitude').text
                     lng=loc.find('longitude').text
                     result_coords.append((lat, lng))
@@ -71,7 +74,7 @@ def fetch_data():
                     store.append(address.encode('ascii', 'ignore').decode('ascii').strip() if address.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>")
                     store.append(city.encode('ascii', 'ignore').decode('ascii').strip() if city.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>")
                     store.append(state.encode('ascii', 'ignore').decode('ascii').strip() if state.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>")
-                    store.append(zip if zip else "<MISSING>")
+                    store.append(zip.replace("O","0").replace('000wa','<MISSING>') if zip.replace("O","0").replace('000wa','<MISSING>') else "<MISSING>")
                     store.append(country if country else "<MISSING>")
                     store.append(storeno.encode('ascii', 'ignore').decode('ascii').strip() if storeno.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>")
                     store.append(phone.encode('ascii', 'ignore').decode('ascii').strip() if phone.encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>")
@@ -81,7 +84,7 @@ def fetch_data():
                     store.append(hour.encode('ascii', 'ignore').decode('ascii').strip() if hour.strip().encode('ascii', 'ignore').decode('ascii').strip() else "<MISSING>")
                     store.append("<MISSING>")
 
-                    adrr =name+' '+address + ' ' + city + ' ' + state + ' ' + zip
+                    # adrr =name+' '+address + ' ' + city + ' ' + state + ' ' + zip
                     if address  in addresses:
                         continue
                     addresses.append(address)
@@ -90,10 +93,10 @@ def fetch_data():
                     yield store
                 # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         if data_len < MAX_RESULTS:
-            #print("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif data_len == MAX_RESULTS:
-            #print("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

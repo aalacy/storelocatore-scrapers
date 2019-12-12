@@ -54,7 +54,7 @@ def fetch_data():
     }
 
     # it will used in store data.
-    locator_domain = "https://www.drmartens.com"
+    locator_domain = ""
     location_name = ""
     street_address = "<MISSING>"
     city = "<MISSING>"
@@ -72,20 +72,18 @@ def fetch_data():
     while coord:
         result_coords = []
         try:
-
             r = requests.get(
                 "https://www.kwiktrip.com/locproxy.php?Latitude="+str(coord[0])+"&Longitude="+str(coord[1])+"&maxDistance="+str(MAX_DISTANCE)+"&limit="+str(MAX_RESULTS),
                 headers=headers,
         
             )
+            soup= BeautifulSoup(r.text,"lxml")
+            k = json.loads(soup.text)
         except:
-            continue    
-        soup= BeautifulSoup(r.text,"lxml")
+            continue
     # print("=====================================================================",soup)
     # print('https://www.kwiktrip.com/locproxy.php?Latitude='+zip_code[0]+'&Longitude='+zip_code[1] +'&maxDistance='+str(MAX_DISTANCE)+'&limit='+str(MAX_RESULTS))
-   
-        k = json.loads(soup.text)
-       
+        
         if len(k) != 1 or k in 'stores':
             current_results_len = len(k['stores'])
             for i in k['stores']:
@@ -113,15 +111,15 @@ def fetch_data():
                     continue
 
                 address.append(tem_var[2])
-                #print("tem_var==============================",tem_var)
+                # print("tem_var==============================",tem_var)
                 yield tem_var
             # return_main_object.append(tem_var)
             
         if current_results_len < MAX_RESULTS:
-            #print("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            #print("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

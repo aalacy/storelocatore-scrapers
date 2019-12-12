@@ -35,13 +35,17 @@ def fetch_data():
     link_list = []
     for loc in loc_links:
         link = loc.get_attribute('href')
-        #print(link)
+        if 'las-vegas-(w.-charleston)' in link:
+
+            link = 'https://www.carrabbas.com/locations/nv/las-vegas-(w-charleston)'
+
+        if '/fl/oviedo' in link:
+            link = 'https://www.carrabbas.com/locations/fl/winter-springs-(oviedo)'
         link_list.append(link)
 
 
     all_store_data = []
     for link in link_list:
-        print(link)
         driver.get(link)
         driver.implicitly_wait(10)
         source = str(driver.page_source)

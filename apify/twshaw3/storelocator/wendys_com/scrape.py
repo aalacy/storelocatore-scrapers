@@ -1,31 +1,38 @@
 import requests
 import csv
+import os
 
 class Wendys:
     csv_filename = 'data.csv'
     domain_name = 'wendys.com'
     url = 'https://locationservices.wendys.com/LocationServices/rest/nearbyLocations'
     seen = set()
-    csv_fieldnames = ['locator_domain', 'location_name', 'street_address', 'city', 'state', 'zip', 'country_code', 'store_number', 'phone', 'location_type', 'latitude', 'longitude', 'hours_of_operation']
+    csv_fieldnames = ['locator_domain', 'page_url', 'location_name', 'street_address', 'city', 'state', 'zip', 'country_code', 'store_number', 'phone', 'location_type', 'latitude', 'longitude', 'hours_of_operation']
 
     def encode(self, string):
         return string.encode('utf-8')
 
+    def handle_missing(self, field):
+        if field == None or (type(field) == type('x') and len(field.strip()) == 0):
+            return '<MISSING>'
+        return field
+
     def map_data(self, row):
         return {
             'locator_domain': self.domain_name
-            ,'location_name': self.encode(row.get('name', '<MISSING>'))
-            ,'street_address': self.encode(row.get('address1', '<MISSING>'))
-            ,'city': self.encode(row.get('city', '<MISSING>'))
-            ,'state': self.encode(row.get('state', '<MISSING>'))
-            ,'zip': self.encode(row.get('postal', '<MISSING>')) if len(row.get('postal', '')) <= 6 else None
-            ,'country_code': self.encode(row.get('country', '<MISSING>'))
-            ,'store_number': self.encode(row.get('id', '<MISSING>'))
-            ,'phone': self.encode(row.get('phone', '<MISSING>')) if len(row.get('phone', '')) >= 10 else None
-            ,'location_type': row.get('utcOffset', '<MISSING>')
-            ,'latitude': row.get('lat', '<MISSING>')
-            ,'longitude': row.get('lng', '<MISSING>')
-            ,'hours_of_operation': ', '.join('%s-%s; day %d' % (d.get('openTime'), d.get('closeTime'), d.get('day')) for d in row.get('daysOfWeek', ''))
+            ,'page_url': '<MISSING>'
+            ,'location_name': self.handle_missing(self.encode(row.get('name', '<MISSING>')))
+            ,'street_address': self.handle_missing(self.encode(row.get('address1', '<MISSING>')))
+            ,'city': self.handle_missing(self.encode(row.get('city', '<MISSING>')))
+            ,'state': self.handle_missing(self.encode(row.get('state', '<MISSING>')))
+            ,'zip': self.handle_missing(self.encode(row.get('postal', '<MISSING>')) if len(row.get('postal', '')) <= 6 else None)
+            ,'country_code': self.handle_missing(self.encode(row.get('country', '<MISSING>')))
+            ,'store_number': self.handle_missing(self.encode(row.get('id', '<MISSING>')))
+            ,'phone': self.handle_missing(self.encode(row.get('phone', '<MISSING>')) if len(row.get('phone', '')) >= 10 else None)
+            ,'location_type': '<MISSING>'
+            ,'latitude': self.handle_missing(row.get('lat', '<MISSING>'))
+            ,'longitude': self.handle_missing(row.get('lng', '<MISSING>'))
+            ,'hours_of_operation': self.handle_missing(', '.join('%s-%s; day %d' % (d.get('openTime'), d.get('closeTime'), d.get('day')) for d in row.get('daysOfWeek', '')))
         }
 
     def crawl(self):
@@ -33,19 +40,27 @@ class Wendys:
         session.headers.update({
             'Accept': 'application/json'
             ,'cache-control': 'no-cache'
-            ,'Content-Type': 'application/json'
-            ,'Origin': 'https://find.wendys.com'
-            ,'Referer': 'https://find.wendys.com/'
+            ,'path': '/LocationServices/rest/nearbyLocations?&lang=en&cntry=US&sourceCode=ORDER.WENDYS&version=5.31.3&address=94107&limit=10000&filterSearch=true&radius=5000'
+            ,'Origin': 'https://order.wendys.com'
+            ,'Referer': 'https://order.wendys.com/location?site=find'
             ,'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
         })
+        proxy_password = os.environ["PROXY_PASSWORD"]
+        proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
+        proxies = {
+            'http': proxy_url,
+            'https': proxy_url
+        }
+        session.proxies = proxies
         query_params = {
             'lang': 'en'
             ,'cntry': 'US'
-            ,'sourceCode': 'FIND.WENDYS'
-            ,'version': '5.22.0'
+            ,'sourceCode': 'ORDER.WENDYS'
+            ,'version': '5.31.3'
             ,'address': '94107'
-            ,'limit': 100000
-            ,'radius': 13000
+            ,'limit': 10000
+            ,'radius': 5000
+            ,'filterSearch': True
         }
         r = session.get(self.url, params=query_params)
         if r.status_code == 200:

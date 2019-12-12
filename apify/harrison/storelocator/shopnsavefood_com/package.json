@@ -7,9 +7,7 @@
     "start": "node scrape.js"
   },
   "author": "Harrison Hayes",
-  "license": "ISC",
   "dependencies": {
-    "apify": "^0.14.10",
     "mkdirp": "^0.5.1",
     "objects-to-csv": "^1.2.1",
     "puppeteer": "^1.17.0"

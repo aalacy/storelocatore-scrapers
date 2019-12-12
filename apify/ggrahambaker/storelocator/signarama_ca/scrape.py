@@ -148,8 +148,9 @@ def fetch_data():
             start = src.find('!2d')
             if start > 0:
                 end = src.find('!3m')
+                
                 coords = src[start + 3: end].split('!3d')
-                lat = coords[1]
+                lat = coords[1].split('!2m')[0]
                 longit = coords[0]
             
 
@@ -172,7 +173,7 @@ def fetch_data():
         phone_number = phone_number.replace('+', '').strip()
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
+                      store_number, phone_number, location_type, lat, longit, hours, page_url]
         
         all_store_data.append(store_data)
 

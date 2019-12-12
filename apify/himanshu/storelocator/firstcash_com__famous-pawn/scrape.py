@@ -5,10 +5,10 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import unicodedata
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -49,7 +49,10 @@ def fetch_data():
         store_number =  str(location['storeNumber'])
         http = "http://find.cashamerica.us/api/stores/"+str(store_number)+"?key=D21BFED01A40402BADC9B931165432CD"
         page_url =http
-        all_data = requests.get(http, headers=headers).json()
+        try:
+            all_data = requests.get(http, headers=headers).json()
+        except:
+            continue
         location_name = location['brand']
         street_address = all_data['address']['address1']
         city = all_data['address']['city']
@@ -74,6 +77,11 @@ def fetch_data():
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             # print("data = " + str(store))
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            for i in range(len(store)):
+                if type(store[i]) == str:
+                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            store = [x.replace("–","-") if type(x) == str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
 
         

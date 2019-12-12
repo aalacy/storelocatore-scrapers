@@ -5,6 +5,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+# import pprint
+# pp = pprint.PrettyPrinter(indent=4)
 import sgzip
 
 
@@ -81,12 +83,12 @@ def fetch_data():
                 phone = i['telephone']
                 hours_of_operation = i['openType']
                 store_number = i['storeNumber']
-                location_name = i['storeName'].split(",")[0]
+                location_name = '<MISSING>'
                 latitude = lat
                 longitude = lng
                 page_url = "https://www.wawa.com/about/locations/store-locator"
                 result_coords.append((latitude, longitude))
-                store = [locator_domain, location_name.encode('ascii', 'ignore').decode('ascii').strip(), street_address.encode('ascii', 'ignore').decode('ascii').strip().replace(" (@",""), city.encode('ascii', 'ignore').decode('ascii').strip(), state.encode('ascii', 'ignore').decode('ascii').strip(), zipp.encode('ascii', 'ignore').decode('ascii').strip(), country_code,
+                store = [locator_domain, location_name, street_address.encode('ascii', 'ignore').decode('ascii').strip().replace(" (@",""), city.encode('ascii', 'ignore').decode('ascii').strip(), state.encode('ascii', 'ignore').decode('ascii').strip(), zipp.encode('ascii', 'ignore').decode('ascii').strip(), country_code,
                         store_number, phone.encode('ascii', 'ignore').decode('ascii').strip(), location_type, latitude, longitude, hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip(),page_url]
 
                 # store = [locator_domain, location_name.strip(), street_address.strip().replace(" (@",""), city.strip(), state, zipp.strip(), country_code,

@@ -35,7 +35,7 @@ def fetch_data():
     close = driver.find_element_by_css_selector('div.mailer__close')
     driver.execute_script("arguments[0].click();", close)
 
-    cities = driver.find_elements_by_css_selector('div.city')
+    cities = driver.find_elements_by_css_selector('li.location')
     link_list = []
     for city in cities:
         link = city.find_element_by_css_selector('a').get_attribute('href')
@@ -48,8 +48,11 @@ def fetch_data():
     all_store_data = []
     dup_tracker = []
     for link in link_list:
+        print(link)
         if 'undefined' in link:
             continue
+
+        
         driver.get(link)
 
         time.sleep(4)
@@ -61,10 +64,11 @@ def fetch_data():
         if 'Closed' in location_name:
             continue
         
-        if location not in dup_tracker:
+        if location_name not in dup_tracker:
             dup_tracker.append(location_name)
         else:
             continue
+
         street_address = driver.find_element_by_css_selector('li.location-detail__address-line-1').text
         city = driver.find_element_by_css_selector('li.location-detail__locality').text
         state = driver.find_element_by_css_selector('span.state').text

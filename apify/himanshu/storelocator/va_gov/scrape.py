@@ -46,11 +46,6 @@ def fetch_data():
         page_request = requests.get("https://api.va.gov/v0/facilities/va?address=Test,%20Coffeyville,%20Kansas%2067337,%20United%20States&bbox[]=-1.26265&bbox[]=187.6656&bbox[]=-179.65656&bbox[]=1.55965&type=all&page="+ str(i),headers=headers)
         for store_data in page_request.json()["data"]:
             location_url = "https://www.va.gov/find-locations/facility/" + store_data["id"]
-            # print(location_url)
-            # driver.get(location_url)
-            # element = WebDriverWait(driver, 10).until(lambda x: x.find_element_by_xpath("//h4[contains(text(), 'Hours of Operation')]"))
-            # location_soup = BeautifulSoup(driver.page_source,"lxml")
-            # hours = " ".join(list(location_soup.find("h4",text=re.compile("Hours of Operation")).parent.stripped_strings))
             if "address_1" not in store_data["attributes"]["address"]["physical"]:
                 continue
             address = ""
@@ -76,15 +71,21 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(store_data["attributes"]["lat"])
             store.append(store_data["attributes"]["long"])
-            hours = ""
-            for key in store_data["attributes"]["hours"]:
-                if store_data["attributes"]["hours"][key] == None:
-                    hours = hours + " " + key + " N/A - N/A" 
-                else:
-                    hours = hours + " " + key + " " + store_data["attributes"]["hours"][key]
-            store.append(hours if hours != "" else "<MISSING>")
-            if store[-1].count("24/7") == 7:
-                store[-1] = store[-1].replace("24/7","N/A - N/A")
+            try:
+                driver.get(location_url)
+                element = WebDriverWait(driver, 10).until(lambda x: x.find_element_by_xpath("//h4[contains(text(), 'Hours of Operation')]"))
+                location_soup = BeautifulSoup(driver.page_source,"lxml")
+                hours = " ".join(list(location_soup.find("h4",text=re.compile("Hours of Operation")).parent.stripped_strings))
+            except:
+                hours = ""
+                for key in store_data["attributes"]["hours"]:
+                    if store_data["attributes"]["hours"][key] == None:
+                        hours = hours + " " + key + " N/A - N/A" 
+                    else:
+                        hours = hours + " " + key + " " + store_data["attributes"]["hours"][key]
+                if hours.count("24/7") == 7:
+                    hours = hours.replace("24/7","N/A - N/A")
+            store.append(hours.split("In addition")[0] if hours != "" else "<MISSING>")
             store.append(location_url)
             if hours.count("Closed") > 6:
                 continue

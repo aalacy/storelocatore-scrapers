@@ -9,61 +9,98 @@ import lxml.html
 import urllib.request as urllib2
 
 def write_output(data):
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
         # Header
-        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
-            if row:
-                writer.writerow(row)
+            writer.writerow(row)
 
 def fetch_data():
-    data=[];hours_of_operation=[]; latitude=[];longitude=[];zipcode=[];location_name=[];city=[];street_address=[]; state=[]; phone=[]
+    data=[];location_name=[];page_url=[];street_address=[];city=[];state=[];zipcode=[];phone=[];latitude=[];longitude=[];typ=[];hrs=[];
     url = "https://www.childrens.com/wps/FusionServiceCMC/publicsearch/api/apollo/collections/Childrens/query-profiles/ls/select?q=*&start=0&rows=100"
     content = json.load(urllib2.urlopen(url))
-    title=re.findall(r"title_s(.*?)\}", str(content))
-    location_name = [title[n].split("u'")[-1].replace("'","").replace(': u"','').replace('"','') for n in range(1,len(title))]
-    address=re.findall(r'streetAddress_ss(.*?)\]', str(content))
-    street_address = [address[n].replace("': [u'","").replace(", u'"," ").replace("'","") for n in range(1,len(address))]
-    phones=re.findall(r'telephone_s(.*?)\,', str(content))
-    zipc=re.findall(r'postalCode_s(.*?)\,', str(content))
-    zipcode = [zipc[n].replace("': u'","").replace("'","") for n in range(1,len(zipc))]
-    states=re.findall(r'addressRegion_s(.*?)\,', str(content))
-    state = [states[n].replace("': u'","").replace("'","") for n in range(1,len(states))]
-    cities=re.findall(r'addressLocality_s(.*?)\,', str(content))
-    city = [cities[n].replace("': u'","").replace("'","") for n in range(1,len(cities))]
-    lat_lon = re.findall(r'latlng_p(.*?)\',', str(content))
-    latitude = [lat_lon[n].replace("': u'","").split(",")[0] for n in range(1,len(lat_lon))]
-    longitude = [lat_lon[n].replace("': u'","").split(",")[1] for n in range(1,len(lat_lon))]
-    page = re.findall(r"id':(.*?)\,", str(content))
-    page_url = [page[n].replace(" u'","").replace("'","").strip() for n in range(0,len(page))]
-    analyze = re.findall(r'title_s(.*?)\postalCode_s', str(content))
-    for n in range(0,len(analyze)):
+    res=content['response']
+    docs=res['docs']
+    print(len(docs))
+    for i in range(0,len(docs)):
+        loc=docs[i]
+        l=str(loc)
+        pg=(l.split("\'id\': \'"))[1].split("\'")[0]
+        coord=loc['latlng_p']
+        lat=coord.split(",")[0]
+        long=coord.split(",")[1]
+        page_url.append(pg)
+        latitude.append(lat)
+        longitude.append(long)
+        
+    print(len(page_url))   
+    for link in page_url:
+        page = requests.get(link)
+        soup = BeautifulSoup(page.content,"html.parser")
+        loc=soup.find("h1",itemprop='name').text
+        loc=loc.replace("\u2120","")
+        loc=loc.replace("\n","")
         try:
-            phone.append(analyze[n].split("telephone_s': u'")[1].split("',")[0])
+            hr=soup.find("span",class_="open-hours")
+            hr=hr['data-hours']
         except:
-            if (n==0) and (location_name[0]=="Children\u2019s Health\u2120 Andrews Institute for Orthopaedics & Sports Medicine"):
-                phone.append("469-303-3000")
-            else:
-                phone.append("<MISSING>")
+            hr="<MISSING>"
+        else:
+            hr=hr.replace(" +","")
+        if not hr:
+            hr="<MISSING>"
+        street=soup.find("span",itemprop="streetAddress").text
+        street=street.replace("\n","")
+        for i in range(1,10):
+            street=street.replace("  "," ")
+        
+        street=street.lstrip()
+        cty=soup.find("span",itemprop='addressLocality').text
+        cty=cty.replace(",","")
+        ste=soup.find("span",itemprop='addressRegion').text
+        zcode=soup.find("span",itemprop='postalCode').text
+        zcode=zcode.strip()
+        ph=soup.find("span",itemprop='telephone').text
+        location_name.append(loc)
+        street_address.append(street)
+        city.append(cty)
+        state.append(ste)
+        zipcode.append(zcode)
+        hrs.append(hr)
+        if any(c.isalpha() for c in ph):
+            phone.append("<MISSING>")
+        elif ph == "":
+            phone.append("<MISSING>")
+        else:
+            phone.append(ph)
+        
+    c=0    
     for n in range(0,len(location_name)): 
-        data.append([
-            'https://www.childrens.com/',
-            page_url[n],
-            location_name[n],
-            street_address[n],
-            '<MISSING>',
-            state[n],
-            zipcode[n],
-            'US',
-            '<MISSING>',
-            phone[n],
-            '<MISSING>',
-            latitude[n],
-            longitude[n],
-            '<INACCESSIBLE>'
-        ])
+        cnt = False
+        for i in data:
+            if location_name[n] == i[2]:
+                cnt= True
+        if cnt == False:
+            data.append([
+                'https://www.childrens.com/',
+                 page_url[n],
+                 location_name[n],
+                 street_address[n],
+                 city[n],
+                 state[n],
+                 zipcode[n],
+                 'US',
+                 '<MISSING>',
+                 phone[n],
+                 '<MISSING>',
+                 latitude[n],
+                 longitude[n],
+                 hrs[n]
+                 ])
+    print(len(data))
     return data
 
 def scrape():

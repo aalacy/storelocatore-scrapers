@@ -41,7 +41,8 @@ def fetch_data():
         location_url = "https://www.oldnational.com/API/Locations.svc/Get/"
         lat = coord[0]
         lng = coord[1]
-
+        hours_of_operation3= ''
+        hours_of_operation4=''
         conn = http.client.HTTPSConnection("www.oldnational.com")
 
         # payload = "{\"Lat\":40.72266940.7226698,\"Lon\":-73.51818329999998,\"UserLat\":40.7226698,\"UserLon\":-73.51818329999998,\"Filters\":[\"BR\",\"ATM\",\"PATM\",\"WM\"]}"
@@ -70,7 +71,6 @@ def fetch_data():
                 types = "Branche"
             else:
                 types = "ATM"
-            # print(types)
             location_type = types
             locator_domain = base_url
             location_name = value['Name'].strip()
@@ -92,16 +92,19 @@ def fetch_data():
             hours_of_operation1 = value['DriveThroughHours']
             hours_of_operation2 = value['LobbyHours']
             if  hours_of_operation1 != None:
-                hours_of_operation ='DriveThroughHours'+' '+ " ".join(hours_of_operation1)
+                hours_of_operation3 ='DriveThroughHours'+' '+ " ".join(hours_of_operation1)
             
             if  hours_of_operation2 != None:
-                hours_of_operation = 'LobbyHours'+' '+ " ".join(hours_of_operation2)
+                hours_of_operation4 = 'LobbyHours'+' '+ " ".join(hours_of_operation2)
 
             result_coords.append((latitude, longitude))
             if street_address in addresses:
                 continue
             addresses.append(street_address)
             store = []
+            time = hours_of_operation3+' '+hours_of_operation4
+            new_time = time.replace("DriveThroughHours None","").replace("LobbyHours By appointment.","").strip().lstrip()
+            
             store.append(locator_domain if locator_domain else '<MISSING>')
             store.append(location_name if location_name else '<MISSING>')
             store.append(street_address if street_address else '<MISSING>')
@@ -114,7 +117,7 @@ def fetch_data():
             store.append(location_type if location_type else '<MISSING>')
             store.append(latitude if latitude else '<MISSING>')
             store.append(longitude if longitude else '<MISSING>')
-            store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+            store.append(new_time if new_time else '<MISSING>')
             store.append(page_url if page_url else '<MISSING>')
             
             #print("data = " + str(store))
