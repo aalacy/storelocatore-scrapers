@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
 import time
 import unicodedata
 
@@ -49,86 +48,92 @@ def request_wrapper(url,method,headers,data=None):
     else:
         return None
 
+def parser(location_soup,url):
+    street_address = " ".join(list(location_soup.find("span",{'class':"c-address-street-1"}).stripped_strings))
+    if location_soup.find("span",{'class':"c-address-street-2"}) != None:
+        street_address = street_address + " " +  " ".join(list(location_soup.find("span",{'class':"c-address-street-2"}).stripped_strings))
+    if location_soup.find("span",{'class':"LocationName"}):
+        name = " ".join(list(location_soup.find("span",{'class':"LocationName"}).stripped_strings))
+    else:
+        name = " ".join(list(location_soup.find("span",{'id':"location-name"}).stripped_strings))
+    if location_soup.find("span",{'class':"c-address-city"}):
+        city = location_soup.find("span",{'class':"c-address-city"}).text
+    else:
+        state = url.split("/")[-2]
+    if location_soup.find("abbr",{'class':"c-address-state"}):
+        state = location_soup.find("abbr",{'class':"c-address-state"}).text
+    else:
+        state = url.split("/")[-3].upper()
+    store_zip = location_soup.find("span",{'class':"c-address-postal-code"}).text
+    if location_soup.find("span",{'itemprop':"telephone"}) == None:
+        phone = "<MISSING>"
+    else:
+        phone = location_soup.find("span",{'itemprop':"telephone"}).text
+    country = location_soup.find("abbr",{'itemprop':"addressCountry"}).text.strip()
+    hours = " ".join(list(location_soup.find("table",{'class':"c-location-hours-details"}).find("tbody").stripped_strings))
+    lat = location_soup.find("meta",{'itemprop':"latitude"})["content"]
+    lng = location_soup.find("meta",{'itemprop':"longitude"})["content"]
+    store = []
+    store.append("https://bestbuy.com")
+    store.append(name)
+    store.append(street_address)
+    store.append(city)
+    store.append(state)
+    store.append(store_zip)
+    store.append(country)
+    store.append(url.split("-")[-1].replace(".html","").split('/')[0])
+    store.append(phone if phone != "" else "<MISSING>")
+    store.append("<MISSING>")
+    store.append(lat)
+    store.append(lng)
+    store.append(hours)
+    store.append(url)
+    #print(store)
+    return store
+
 def fetch_data():
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
+    base_url = "https://bestbuy.com"
+    r = requests.get("https://stores.bestbuy.com/index.html",headers=headers)
+    soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
-    addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 20
-    # MAX_DISTANCE = 15
-    zip = search.next_zip()
-    while zip:
-        result_coords = []
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
-        # print('Pulling Lat-Long %s...' % (str(zip)))
-        # print("https://www.bestbuy.com/browse-api/2.0/store-locator/" + str(zip))
-        r = request_wrapper("https://www.bestbuy.com/browse-api/2.0/store-locator/" + str(zip),"get",headers=headers)
-        if r == None:
-            # print("failed to pull" + str("https://www.bestbuy.com/browse-api/2.0/store-locator/" + str(zip)))
-            continue
-        data = r.json()["data"]["stores"]
-        for store_data in data:
-            if store_data["country"] not in ["CA","US"]:
-                continue
-            if store_data["hours"] == []:
-                continue
-            lat = store_data["latitude"]
-            lng = store_data["longitude"]
-            result_coords.append((lat, lng))
-            store = []
-            store.append("https://www.bestbuy.com")
-            url = "http://stores.bestbuy.com/" + str(store_data["id"])
-            # print(url)
-            if store_data["locationType"] != "Store":
-                if store_data["locationType"] != "Warehouse":
-                    pass
-                    # print("new type =================" + str(store_data["locationType"]))
-                continue
-            location_request = request_wrapper(url,"get",headers=headers)
-            if location_request == None:
-                # print("failed to pull" + str(url))
-                continue
+    for states in soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
+        if states["href"].count("/") == 2:
+            #print("https://stores.bestbuy.com/" + states["href"].replace("../",""))
+            location_request = requests.get("https://stores.bestbuy.com/" + states["href"].replace("../",""))
             location_soup = BeautifulSoup(location_request.text,"lxml")
-            if location_soup.find("span",{"class":'LocationName-geo'}):
-                name = location_soup.find("span",{"class":'LocationName-geo'}).text.strip()
-            else:
-                name = location_soup.find("span",{"id":'location-name'}).text.strip()
-            store.append(name)
-            store.append(store_data["addr1"] + " " + store_data["addr2"] if "addr2" in store_data else store_data["addr1"])
-            if store[-1] in addresses:
+            if location_soup.find("h2",text=re.compile("We're sorry. This store is permanently closed.")):
                 continue
-            addresses.append(store[-1])
-            store.append(store_data["city"]  if store_data["city"] else "<MISSING>")
-            store.append(store_data["state"]  if store_data["state"] else "<MISSING>")
-            store.append(store_data["zipCode"] if store_data["zipCode"] else "<MISSING>")
-            store.append(store_data["country"])
-            store.append(store_data["id"])
-            store.append(store_data["phone"] if "phone" in store_data and store_data["phone"] else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(lat)
-            store.append(lng)
-            hours = " ".join(list(location_soup.find("table",{"class":"c-location-hours-details"}).stripped_strings))
-            store.append(hours if hours != "" else "<MISSING>")
-            store.append(url)
-            for i in range(len(store)):
-                if type(store[i]) == str:
-                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-            store = [x.replace("–","-") if type(x) == str else x for x in store]
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-            # print(store)
-            yield store
-        # if len(data) < MAX_RESULTS:
-        #     print("max distance update")
-        #     search.max_distance_update(MAX_DISTANCE)
-        if len(data) == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
+            store_data = parser(location_soup,"https://stores.bestbuy.com/" + states["href"])
+            yield store_data
         else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip = search.next_zip()
+            state_request = requests.get("https://stores.bestbuy.com/" + states["href"])
+            state_soup = BeautifulSoup(state_request.text,"lxml")
+            for city in state_soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
+                if city["href"].count("/") == 2:
+                    #print("https://stores.bestbuy.com/" + city["href"].replace("../",""))
+                    location_request = requests.get("https://stores.bestbuy.com/" + city["href"].replace("../",""))
+                    location_soup = BeautifulSoup(location_request.text,"lxml")
+                    if location_soup.find("h2",text=re.compile("We're sorry. This store is permanently closed.")):
+                        continue
+                    store_data = parser(location_soup,"https://stores.bestbuy.com/" + city["href"].replace("../",""))
+                    yield store_data
+                else:
+                    #print("https://stores.bestbuy.com/" + city["href"].replace("../",""))
+                    city_request = requests.get("https://stores.bestbuy.com/" + city["href"].replace("../",""))
+                    city_soup = BeautifulSoup(city_request.text,"lxml")
+                    for location in city_soup.find_all("a",{'class':"Teaser-titleLink"}):
+                        #print("https://stores.bestbuy.com/" + location["href"].replace("../",""))
+                        location_request = requests.get("https://stores.bestbuy.com/" + location["href"].replace("../",""))
+                        location_soup = BeautifulSoup(location_request.text,"lxml")
+                        if location_soup.find("h2",text=re.compile("We're sorry. This store is permanently closed.")):
+                            continue
+                        store_data = parser(location_soup,"https://stores.bestbuy.com/" + location["href"].replace("../",""))
+                        yield store_data
+
+
 
 
 def scrape():
