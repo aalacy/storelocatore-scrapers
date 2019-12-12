@@ -1,4 +1,5 @@
 import os
+import csv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
@@ -80,7 +81,7 @@ def fetch_data():
         except NoSuchElementException:
             continue
             
-        location_name = loc_anchor.find_element_by_css_selector('a').text
+        location_name = loc_anchor.find_element_by_css_selector('h2').text
 
         cont = loc_anchor.find_elements_by_xpath('p')
         phone_number = cont[1].text.replace('Phone:', '').strip()

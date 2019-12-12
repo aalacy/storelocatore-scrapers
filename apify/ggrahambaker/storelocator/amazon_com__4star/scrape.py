@@ -68,14 +68,14 @@ def fetch_data():
 
 
     all_store_data = []
-    print(len(link_list))
+    #print(len(link_list))
     for link in link_list:
     
         driver.get(link)
         driver.implicitly_wait(10)
         
         loc_anchor = driver.find_element_by_xpath("//h2[contains(text(),'Amazon 4-star')]").find_element_by_xpath('..')
-        location_name = loc_anchor.find_element_by_css_selector('a').text
+        location_name = loc_anchor.find_element_by_css_selector('h2').text
 
         cont = loc_anchor.find_elements_by_xpath('p')
         phone_number = cont[1].text.replace('Phone:', '')

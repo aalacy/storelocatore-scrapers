@@ -75,9 +75,8 @@ def fetch_data():
         
         
         if 'Mon–' in loc_div.text:
-            
-                
             cont = loc_div.text.split('\n')
+            
             if len(cont) == 4:
                 location_name = cont[0]
                 if '30 Rockefeller Plaza' in location_name:
@@ -118,6 +117,12 @@ def fetch_data():
                 street_address, city, state, zip_code = addy_parser(cont[1])
                 hours = cont[2]
                 location_type = cont[3]
+            elif len(cont) == 6:  
+                location_name = cont[0]
+                street_address, city, state, zip_code = addy_parser(cont[1])
+                hours = cont[2] + ' ' + cont[3] 
+                location_type = cont[4] + ' ' + cont[5]
+
             else:
                 continue
 
