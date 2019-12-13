@@ -51,7 +51,7 @@ def fetch_data():
         driver.get(url)
         inp=driver.find_element_by_xpath('/html/body/div[3]/main/section[1]/div/form/fieldset/input')
         inp.click()
-        time.sleep(0.1)
+        time.sleep(5)
 
         try:
             divs=driver.find_element_by_xpath('//div[@class="col contact-info-hlder"]')
@@ -75,7 +75,7 @@ def fetch_data():
                 else:
                     phones.append("<MISSING>")
                 if tim!="":
-                    timing.append(tim.replace("\n","").strip())
+                    timing.append(tim.replace("\n"," ").strip().replace("  "," "))
                 else:
                     timing.append("<MISSING>")
 
