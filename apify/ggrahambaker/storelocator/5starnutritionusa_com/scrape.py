@@ -16,7 +16,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -48,10 +48,16 @@ def fetch_data():
         details = li.text.split('\n')
         location_name = details[0]
         street_address = details[1]
-        if 'Nutrition Blacksburg' in location_name or 'Hattiesburg' in location_name or 'Texarkana' in location_name:
+        
+
+        if 'Nutrition Blacksburg' in location_name or 'Hattiesburg' in location_name or 'Texarkana' in location_name or 'Braunfels' in location_name:
             street_address += ' ' + details[2]
             city, state, zip_code = addy_ext(details[3])
-            phone_number = details[5]
+            if 'Braunfels' in location_name:
+                phone_number = details[4]
+            else:
+                phone_number = details[5]
+
         elif 'Tuscaloosa' in location_name:
             addy = details[2].split(',')
             city = addy[0]
@@ -77,10 +83,15 @@ def fetch_data():
         location_type = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
-        hours = '<MISSING>'
+        hours = ''
+        for h in details[-7:]:
+            hours += h + ' '
+
+    
+        page_url = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
+                      store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
 
     driver.quit()
