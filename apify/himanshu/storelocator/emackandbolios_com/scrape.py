@@ -7,158 +7,75 @@ import json
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    
-    base_url = "http://www.emackandbolios.com/mastores/"
-    r = requests.get(base_url)
-    main_soup= BeautifulSoup(r.text,"lxml")
-    return_main_object =[]
-    store_detail =[]
-    store_name=[]
+    base_url = "https://emackandbolios.com"
+    locator_domain = base_url
+    location_name = ""
+    street_address = "<MISSING>"
+    city = "<MISSING>"
+    state = "<MISSING>"
+    zipp = "<MISSING>"
+    country_code = "US"
+    store_number = "<MISSING>"
+    phone = "<MISSING>"
+    location_type = "<MISSING>"
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
+    raw_address = ""
+    hours_of_operation = "<MISSING>"
+    page_url = "https://emackandbolios.com/locations/"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+    }
+    r = requests.get("https://emackandbolios.com/locations/", headers=headers)
+    soup = BeautifulSoup(r.text, 'lxml')
+    content = soup.find("section", {"id": "usa"})
+    # print(content.prettify())
+    for div in content.find_all("div", class_="elementor-text-editor"):
+        list_add = list(div.stripped_strings)
+        phone_list = re.findall(re.compile(
+            ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_add[-1]))
+        # print(list_add)
+        # print(len(list_add))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~")
+        location_name = list_add[0]
 
-    link = main_soup.find("div",{"id":"tabNav","class":"menu-shop-locations-menu-container"})
-    a = link.find_all("a")
-    
-    for i in a:
-        if re.search("Int’l",i.text):
-            pass
-        elif re.search("FL",i.text):
-            r = requests.get(i['href'])
-            soup= BeautifulSoup(r.text,"lxml")
-            data = soup.find("div",{"class":"entry-content group"})
-            names =(data.find_all('h2') [len(data.find_all('h2'))-1])
-            store_name.append(names.text)
-            info = data.find_all("p")
-            for j in info:
-                temp_var =[]
-                if list(j.stripped_strings) !=[]:
-                    city = list(j.stripped_strings)[0].split(',')[0]
-
-                    street_address = "<MISSING>"
-                    state = list(j.stripped_strings)[0].split(',')[1].split( )[0]
-                    zipcode = list(j.stripped_strings)[0].split(',')[1].split( )[1]
-                    phone = list(j.stripped_strings)[1]
-                    temp_var.append(street_address)
-                    temp_var.append(city)
-                    temp_var.append(state)
-                    temp_var.append(zipcode)
-                    temp_var.append("US")
-                    temp_var.append("<MISSING>")
-                    temp_var.append(phone)
-                    temp_var.append("emackandbolios")
-                    temp_var.append("<MISSING>")
-                    temp_var.append("<MISSING>")
-                    temp_var.append("<MISSING>")
-                    store_detail.append(temp_var)
-                        
+        if len(list_add) > 3:
+            street_address = " ".join(list_add[1:-2]).strip()
+            city = list_add[2].split(',')[0].strip()
+            state = list_add[2].split(',')[-1].strip()
 
         else:
-            r = requests.get(i['href'])
-            soup= BeautifulSoup(r.text,"lxml")
-            data = soup.find("div",{"class":"entry-content group"})
-            info = data.find_all("p")
-            for i in info:
-                temp_var =[]
-                phone =''
-                if list(i.stripped_strings) !=[]:
-                    if len(list(i.stripped_strings)) ==1:
-                        pass
-                    else:
-                        if "Amsterdam Ave" in list(i.stripped_strings) or "Brooklyn Heights" in list(i.stripped_strings):
-                            street_address1 = list(i.stripped_strings)[1]
-                            
-                            if "Between 78th & 79th" in street_address1:
-                                street_address = "<MISSING>"
-                            
-                            else:
-                                street_address = street_address1
-                                
+            if phone_list:
+                street_address = "<MISSING>"
+                city = list_add[1].split(',')[0].strip()
+                state = list_add[1].split(',')[-1].strip()
+            else:
+                street_address = list_add[1].strip()
+                city = list_add[2].split(',')[0].strip()
+                state = list_add[2].split(',')[-1].strip()
 
-                            store_name.append(street_address1)
-                            city = list(i.stripped_strings)[2].split(',')[0]
-                            state =list(i.stripped_strings)[2].split(',')[1].split( )[0]
-                            zipcode = list(i.stripped_strings)[2].split(',')[1].split( )[1]
-                            phone = list(i.stripped_strings)[3]
-
-                            temp_var.append(street_address)
-                            temp_var.append(city)
-                            temp_var.append(state)
-                            temp_var.append(zipcode)
-                            temp_var.append("US")
-                            temp_var.append("<MISSING>")
-                            temp_var.append(phone)
-                            temp_var.append("emackandbolios")
-                            temp_var.append("<MISSING>")
-                            temp_var.append("<MISSING>")
-                            temp_var.append("<MISSING>")
-                            store_detail.append(temp_var)
-                            
-
-                        else:
-                            street_address1 = list(i.stripped_strings)[0]
-
-                            if "Popponesset Marketplace" in street_address1 or "Peoria Riverfront Visitor Center" in street_address1 or "North Station" in street_address1:
-                                street_address = "<MISSING>"
-                            else:
-                                street_address =street_address1
-
-                            store_name.append(street_address1)
-                            city = list(i.stripped_strings)[1].split(',')[0]
-                            state = list(i.stripped_strings)[1].split(',')[1].split( )[0]
-                            zipcode = list(i.stripped_strings)[1].split(',')[1].split( )[1]
-                            if len(list(i.stripped_strings)) == 4:
-                                phone = list(i.stripped_strings)[2]
-                            elif len(list(i.stripped_strings)) == 3:
-                                phone = list(i.stripped_strings)[2]
-                            elif len(list(i.stripped_strings)) == 2:
-                                phone = '(908) 228-3967'
-
-                            
-                            temp_var.append(street_address)
-                            temp_var.append(city)
-                            temp_var.append(state)
-                            temp_var.append(zipcode)
-                            temp_var.append("US")
-                            temp_var.append("<MISSING>")
-                            temp_var.append(phone)
-                            temp_var.append("emackandbolios")
-                            temp_var.append("<MISSING>")
-                            temp_var.append("<MISSING>")
-                            temp_var.append("<MISSING>")
-                            store_detail.append(temp_var)
-        
-            
-    for i in range(len(store_name)):
-        store =  list()
-        store.append("http://www.emackandbolios.com")
-        store.append(store_name[i])
-        store.extend(store_detail[i])
-        return_main_object.append(store)
-    print(return_main_object)
-    data = soup.find("div",{"class":"entry-content group"})
-
-    info = data.find_all("p")
-
-    # for i in info:
-    #     if list(i.stripped_strings) !=[]:
-    #         print(list(i.stripped_strings) )
-    
-    
-
-   
-    
-        
-    return return_main_object
+        if phone_list:
+            phone = phone_list[0].strip()
+        else:
+            phone = "<MISSING>"
+        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+        store = ["<MISSING>" if x == "" else x for x in store]
+        # print("data ===" + str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        yield store
 
 
 def scrape():

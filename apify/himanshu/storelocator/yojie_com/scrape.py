@@ -8,11 +8,12 @@ import sys
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -20,60 +21,66 @@ def write_output(data):
 
 def fetch_data():
     headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-    base_url= "https://www.yojie.com/locations"
-    r = requests.get(base_url,headers)
-    soup= BeautifulSoup(r.text,"lxml")
-    store_name=[]
-    store_detail=[]
-    
-    k = (soup.find_all("div",{"id":"ctl01_pSpanDesc","class":"t-edit-helper"}))
-    return_main_object=[]
-    for i in k:
-        tem_var =[]
-        
-        if list(i.stripped_strings) != []:
-            if "CONTACT" in list(i.stripped_strings):
-                pass
-            else:
-                name = list(i.stripped_strings)[0]
-                st = list(i.stripped_strings)[1]
-                city = list(i.stripped_strings)[2].split(',')[0]
-                state =  list(i.stripped_strings)[2].split(',')[1].split( )[0]
-                zipcode = list(i.stripped_strings)[2].split(',')[1].split( )[1]
-                phone  =  list(i.stripped_strings)[3]
-                hours = " ".join(list(i.stripped_strings)[4:])
+    base_url = "https://www.yojie.com"
+    locator_domain = base_url
+    location_name = ""
+    street_address = "<MISSING>"
+    city = "<MISSING>"
+    state = "<MISSING>"
+    zipp = "<MISSING>"
+    country_code = "US"
+    store_number = "<MISSING>"
+    phone = "<MISSING>"
+    location_type = "<MISSING>"
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
+    raw_address = ""
+    hours_of_operation = "<MISSING>"
+    page_url = "https://www.yojie.com/locations.html"
+    r = requests.get(page_url, headers=headers)
+    soup = BeautifulSoup(r.text, "lxml")
+    # print(soup.prettify())
+    coord = []
+    l1 = soup.find(lambda tag: (tag.name == "script")
+                   and "initMap" in tag.text).text.split("var artesia =")[1].split(';')[0]
+    l2 = soup.find(lambda tag: (tag.name == "script")
+                   and "initMap" in tag.text).text.split("var lasvegas =")[1].split(';')[0]
+    coord.append(l1)
+    coord.append(l2)
+    c1 = []
+    c2 = []
+    for coords in coord:
+        c1.append(coords.split(',')[0].replace("{lat:", "").strip())
+        c2.append(coords.split(',')[1].replace(
+            "lng:", "").replace("}", "").strip())
 
-                
-                tem_var.append("https://www.yojie.com")
-                tem_var.append(name)
-                tem_var.append(st)
-                tem_var.append(city)
-                tem_var.append(state.strip())
-                tem_var.append(zipcode.strip())
-                tem_var.append("US")
-                tem_var.append("<MISSING>")
-                tem_var.append(phone)
-                tem_var.append("yojie")
-                tem_var.append("<MISSING>")
-                tem_var.append("<MISSING>")
-                tem_var.append(hours)
-                store_detail.append(tem_var)
-               
-   
-   
-    for i in range(len(store_detail)):
-        store =list()
-        store.extend(store_detail[i])
-     
-        return_main_object.append(store) 
+    for loc in soup.find("div", class_="about-us-1").find_all("div", {"class": "locations"}):
+        list_loc = list(loc.stripped_strings)
+        street_address = list_loc[0].strip()
+        city = list_loc[1].split(',')[0].strip()
+        state = list_loc[1].split(',')[1].split()[0].strip()
+        zipp = list_loc[1].split(',')[1].split()[-1].strip()
+        phone = list_loc[2].strip()
+        location_name = city
+        hours_of_operation = " ".join(list_loc[4:]).strip()
+        if c1 != []:
+            latitude = c1.pop(0)
+        if c2 != []:
+            longitude = c2.pop(0)
 
-    return return_main_object
+        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+        store = ["<MISSING>" if x == "" else x for x in store]
+        # print("data ===" + str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        yield store
 
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

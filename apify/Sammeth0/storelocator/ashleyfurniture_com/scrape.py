@@ -50,7 +50,7 @@ def fetch_data():
 	driver = get_driver()
 	driver_page = get_driver()
 	driver.get(location_url)
-	time.sleep(3)
+	time.sleep(5)
 	
 	link=driver.find_element_by_class_name("state-col")
 	links=link.find_elements_by_tag_name("a")
@@ -61,7 +61,7 @@ def fetch_data():
 		
 	for u in pages_url:
 		driver_page.get(u)
-		time.sleep(3)
+		time.sleep(5)
 		stores=driver_page.find_elements_by_xpath("/html/body/div[1]/div[2]/div/div[1]/div/div[4]/div")
 		for s in stores:
 			pages.append(s.find_element_by_tag_name("a").get_attribute('href'))
@@ -69,7 +69,7 @@ def fetch_data():
 			
 	for p in pages:
 		driver_page.get(p)
-		time.sleep(3)
+		time.sleep(5)
 		locs.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1').text.split(',')[0])
 		print(locs)
 		streets.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[1]/p[1]').text)
