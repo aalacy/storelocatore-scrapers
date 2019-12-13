@@ -49,49 +49,37 @@ def fetch_data():
 	driver_page = get_driver()
 	driver.get(location_url)
 	time.sleep(3)
-	
-	links=driver.find_elements_by_class_name("btn-primary location-results__btn")
+	link=driver.find_element_by_class_name('locations-list__items')
+	links=link.find_elements_by_tag_name("a")
 	for l in links:
-		pages.append(l.find_element_by_tag_name("a").get_attribute('href'))
+		pages.append(l.get_attribute('href'))
 	print(pages)
 		
-	for u in pages:
-		driver_page.get(u)
-		time.sleep(3)
-		stores=driver_page.find_elements_by_class_name("Directory-listItem")
-		for s in stores:
-			pages.append(s.find_element_by_tag_name("a").get_attribute('href'))
-			
-		print(pages)
 			
 	for p in pages:
 		driver_page.get(p)
-		time.sleep(5)
-		locs.append(driver_page.find_element_by_xpath('/html/body/div[1]/div/main/div/main/div/div/h1').text)
+		time.sleep(3)
+		locs.append(driver_page.find_element_by_xpath('/html/body/div/section/div[1]/div/h1').text)
 		print(locs)
-		streets.append(driver_page.find_element_by_xpath('/html/body/div[1]/div/main/div/main/div/div/div[1]/div[2]/span[2]').text)
+		streets.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[1]').text)
 		print(streets)
-		cities.append(driver_page.find_element_by_xpath('/html/body/div[1]/div/main/div/main/div/div/div[1]/div[2]/span[3]/span').text)
+		cities.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[2]').text.split(',')[0])
 		print(cities)
-		states.append(driver_page.find_element_by_xpath('/html/body/div[1]/div/main/div/main/div/div/div[1]/div[2]/span[4]').text)
+		states.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[2]').text.split(',')[1])
 		print(states)
-		zips.append(driver_page.find_element_by_xpath('/html/body/div[1]/div/main/div/main/div/div/div[1]/div[2]/span[5]').text)
+		zips.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[3]').text)
 		print(zips)
-		ids.append(str(p).split('/')[-1])
-		print(ids)
 		try:
-			phones.append(driver_page.find_element_by_xpath('/html/body/div[1]/div/main/div/main/div/div/div[2]/div[1]/div[2]/div/span').text)
+			phones.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[1]/dl/dd/a').text)
 		except:
 			phones.append("<MISSING>")
 		print(phones)
-		try:
-			timing.append(driver_page.find_element_by_xpath('/html/body/div[1]/div/main/div/main/div/div/div[1]/div[3]/div/div').text)
-		except:
-			timing.append("<MISSING>")
-		print(timing)
-		lats.append(driver_page.find_element_by_xpath('/html/head/meta[18]').get_attribute('content'))
+		lat_long_link=driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/a').get_attribute('href')
+		driver_page.get(lat_long_link)
+		time.sleep(3)
+		lats.append(driver_page.find_element_by_xpath('/html/head/meta[8]').get_attribute('content').split('center=')[1].split('%2C')[0])
 		print(lats)
-		longs.append(driver_page.find_element_by_xpath('/html/head/meta[19]').get_attribute('content'))
+		longs.append(driver_page.find_element_by_xpath('/html/head/meta[8]').get_attribute('content').split('%2C')[1].split('&zoom')[0])
 		print(longs)
 			
 						
@@ -104,13 +92,13 @@ def fetch_data():
 		row.append(cities[l] if cities[l] else "<MISSING>")
 		row.append(states[l] if states[l] else "<MISSING>")
 		row.append(zips[l] if zips[l] else "<MISSING>")
-		row.append("US")
-		row.append(ids[l] if ids[l] else "<MISSING>")
+		row.append("CA")
+		row.append("<MISSING>")
 		row.append(phones[l] if phones[l] else "<MISSING>")
 		row.append("<MISSING>")
 		row.append(lats[l] if lats[l] else "<MISSING>")
 		row.append(longs[l] if longs[l] else "<MISSING>")
-		row.append(timing[l] if timing[l] else "<MISSING>")
+		row.append("<MISSING>")
 		row.append(pages[l] if pages[l] else "<MISSING>") 
 		
 		return_main_object.append(row)
