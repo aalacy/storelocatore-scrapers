@@ -67,12 +67,12 @@ class Scraper(Scrape):
         }
 
         # for coord_search in sgzip.coords_for_radius(50):
-        for zipsearch, coord_search in zip(sgzip.for_radius(50), sgzip.coords_for_radius(50)):
+        for zipsearch in sgzip.for_radius(50):
             params = (
                 ('zip', zipsearch),
                 # ('lat', coord_search[0]),
                 # ('lng', coord_search[1]),
-                ('distance', '50'),
+                ('distance', '100'),
                 ('onlyPharmacyEnabledStores', 'false'),
             )
             data = json.loads(requests.get('https://www.foodlion.com/bin/foodlion/search/storelocator.json', headers=headers, params=params).json()['result'])
