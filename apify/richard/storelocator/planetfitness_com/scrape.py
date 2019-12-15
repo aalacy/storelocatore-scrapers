@@ -1,6 +1,8 @@
 import requests
 
 from Scraper import Scrape
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 URL = "https://www.planetfitness.com/"
 
@@ -26,6 +28,12 @@ class Scraper(Scrape):
         location_types = []
         page_urls = []
         stores = []
+
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
         headers = {
             'authority': 'www.planetfitness.com',
@@ -59,6 +67,7 @@ class Scraper(Scrape):
 
                 # Page url
                 page_url = 'https://www.planetfitness.com/gyms/' + store['slug']
+                driver.get(page_url)
 
                 # Type
                 location_type = 'Gym'
@@ -85,7 +94,7 @@ class Scraper(Scrape):
                 lon = store['location']['longitude']
 
                 # Hour
-                hour = '24 Hours'
+                hour = driver.find_element_by_css_selector('div.columns.small-12.medium-6 > p').get_attribute('textContent')
 
                 # Country
                 country = store['location']['address']['countryCode']
