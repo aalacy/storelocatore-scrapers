@@ -103,14 +103,18 @@ class Scraper(Scrape):
             # Long
             lon = store['longitude']
 
-            for hour_type in store['openingHours']['weekDayOpeningList']:
-                if hour_type['hourType'] == 'STOREOPEN':
-                    hour_day = hour_type['openingTime']['formattedHour'] + ' - ' + hour_type['closingTime']['formattedHour']
-                    days = hour_type['daysList']
-                    break
+            hour_list = []
+            if location_id == '1814':
+                for hour_type in store['openingHours']['weekDayOpeningList'][2:]:
+                    if hour_type['hourType'] == 'STOREOPEN':
+                        hour_list.append(', '.join(hour_type['daysList']) + ": " + hour_type['openingTime']['formattedHour'] + ' - ' + hour_type['closingTime']['formattedHour'])
+            else:
+                for hour_type in store['openingHours']['weekDayOpeningList']:
+                    if hour_type['hourType'] == 'STOREOPEN':
+                        hour_list.append(', '.join(hour_type['daysList']) + ": " + hour_type['openingTime']['formattedHour'] + ' - ' + hour_type['closingTime']['formattedHour'])
 
             # Hour
-            hour = ' '.join([f"{day}: {hour_day}" for day in days])
+            hour = ' '.join([day for day in hour_list])
 
             # Country
             country = store['address']['country']['isocode']
