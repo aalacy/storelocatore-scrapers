@@ -28,7 +28,7 @@ def fetch_data():
     repo_list = maindiv.findAll('option')
     cleanr = re.compile('<.*?>')
     pattern = re.compile(r'\s\s+')
-    print(len(repo_list))
+    #print(len(repo_list))
     for n in range(1,len(repo_list)):
         repo = repo_list[n]
         link = "https://www.habitat.org" + repo['value']
@@ -41,7 +41,7 @@ def fetch_data():
             detail = re.sub(pattern, "|", detail)
             detail = detail.replace("\n", "|")
             detail = detail[1:len(detail)]
-            print(detail)
+            #print(detail)
             start = detail.find("(")
             if start != -1:
                 end = detail.find("|", start)
@@ -52,7 +52,7 @@ def fetch_data():
                 ccode = 'US'
                 maplink = card.find('a')
                 maplink = "https://www.habitat.org" + maplink['href']
-                print(maplink)
+                #print(maplink)
 
                 start = 0
                 end = detail.find("|", start)
@@ -191,10 +191,10 @@ def fetch_data():
                     start = end + 1
                     end = detail.find("|", start)
                     temp = detail[start:end]
-                    print(temp)
+                    #print(temp)
                     start = temp.find(" ")
                     city = temp[0:start]
-                    print(city)
+                    #print(city)
                     start = start + 1
                     end = temp.find(" ", start)
                     state = temp[start:end]
@@ -244,17 +244,7 @@ def fetch_data():
             if len(longt) > 12 or longt.find("<") > -1:
                 longt = "<MISSING>"
 
-            #print(title)
-            #print(street)
-            #print(city)
-            #print(state)
-            #print(pcode)
-            #print(ccode)
-            #print(phone)
-            #print(lat)
-            #print(longt)
-            #print(p)
-            #print("..............")
+          
             p += 1
             data.append([
                 'https://www.habitat.org',

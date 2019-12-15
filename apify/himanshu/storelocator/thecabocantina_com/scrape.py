@@ -43,6 +43,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find_all('div', class_='elementor-image'):
         page_url = link.a['href']
+        location_name = link.a.find("img")["alt"]
 
         r_loc = requests.get(page_url, headers=headers)
         soup_loc = BeautifulSoup(r_loc.text, 'lxml')
@@ -76,8 +77,6 @@ def fetch_data():
                 state = address[1].split(',')[1].split()[0].strip()
                 zipp = address[1].split(',')[1].split()[-1].strip()
                 phone = address[-1].strip()
-            location_name = city
-            print(location_name)
             iframe = soup_loc.find('iframe')['src']
             r_coords = requests.get(iframe, headers=headers)
             soup_coord = BeautifulSoup(r_coords.text, 'lxml')

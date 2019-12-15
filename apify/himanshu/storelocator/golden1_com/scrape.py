@@ -79,6 +79,7 @@ def fetch_data():
                 store.append(latitude if latitude else '<MISSING>')
                 store.append(longitude if longitude else '<MISSING>')
                 store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+                print(store)
                 store.append('<MISSING>')
                 if store[2] in addressess:
                     continue

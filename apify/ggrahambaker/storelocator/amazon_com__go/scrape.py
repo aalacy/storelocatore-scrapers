@@ -92,7 +92,7 @@ def fetch_data():
                     location_type = cont[3]            
             
             elif len(cont) == 5:
-                #print(loc_div.text.split('\n'))
+            
                 location_name = cont[0]
                 if 'Mart' in location_name:
                     street_address, city, state, zip_code = addy_parser(cont[1] + ' ' + cont[2])

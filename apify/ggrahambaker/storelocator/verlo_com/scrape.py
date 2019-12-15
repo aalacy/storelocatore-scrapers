@@ -24,7 +24,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    locator_domain = 'https://5starnutritionusa.com/'
+    locator_domain = 'https://verlo.com/'
     url = 'https://code.metalocator.com/index.php?option=com_locator&view=directory&layout=combined&Itemid=11493&tmpl=component&framed=1&source=js'
 
     driver = get_driver()
