@@ -59,6 +59,8 @@ class Scraper(Scrape):
 
         for store in stores:
             if store['status'] in ['OPEN', 'OPEN_RECENTLY'] and store['location']['address']['countryCode'] in ['US', 'CA']:
+                print(f"Getting location information for {'https://www.planetfitness.com/gyms/' + store['slug']}")
+
                 # Store ID
                 location_id = store['pfClubId']
 
