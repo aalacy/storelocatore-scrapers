@@ -62,13 +62,7 @@ def fetch_data():
 
                 if len(hour) < 3:
                     hour = "<MISSING>"
-                try:
-                    l_type = i['branchtype']
-                    loc_type = re.sub(r'(((?<=\s)|^|-)[a-z])', lambda x: x.group().upper(), l_type)
-                    if loc_type == '':
-                        loc_type = "ATM"
-                except Exception as e:
-                    loc_type = "<MISSING>"
+                
                 try:
                     new = i['address']
                     st=new.replace("(", "").replace(")", "")
@@ -108,6 +102,7 @@ def fetch_data():
 
                 page_url = j
                 location_name = "TD BANK"
+                loc_type = "ATM"
                 country_code = "CA"
                 locator_domain = "https://www.td.com"
 
