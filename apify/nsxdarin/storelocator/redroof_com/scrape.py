@@ -16,7 +16,7 @@ def write_output(data):
 def fetch_data():
     url = 'https://www.redroof.com/sitemap.xml'
     locs = []
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
         if 'https://www.redroof.com/property/' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
@@ -40,7 +40,7 @@ def fetch_data():
         lng = '<MISSING>'
         hours = '<MISSING>'
         store = loc.rsplit('/',1)[1]
-        r2 = session.get(loc, headers=headers)
+        r2 = session.get(loc, headers=headers, verify=False)
         for line2 in r2.iter_lines():
             if 'name="og:title" content="' in line2:
                 try:
