@@ -1,8 +1,8 @@
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import csv
 import re
+import csv
 import requests
 import time
 
@@ -13,16 +13,23 @@ def parse_geo(url):
     return lat, lon
 
 
-def write_output(df):
-    df.to_csv('data.csv', index=False)
+def write_output(data):
+    with open('leslies.csv', mode='w',newline='') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
+        # Header
+        writer.writerow(
+            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
+             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+
+        writer.writerows(data)
 
 def get_driver():
     options = Options()
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
+    driver = webdriver.Chrome("chromedriver", options=options)
 
 driver1 = get_driver()
 
@@ -165,7 +172,7 @@ def fetch_data():
                             store_numbr, phn, location_type, lat, lon, hour]
                 print(n_list)
                 data_list.append(n_list)
-        time.sleep(3)
+        time.sleep(2)
         driver1.quit()
         return data_list
 
