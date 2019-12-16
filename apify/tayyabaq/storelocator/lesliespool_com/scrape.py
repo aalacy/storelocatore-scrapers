@@ -26,11 +26,10 @@ def write_output(data):
 
 def get_driver():
     options = Options()
-    # options.add_argument('--headless')
+    options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome("C:/Users/Latika Bisht/PycharmProjects/chromedriver.exe", options=options)
-    # driver = webdriver.Chrome("chromedriver", options=options)
+    driver = webdriver.Chrome("chromedriver", options=options)
 
 driver1 = get_driver()
 
