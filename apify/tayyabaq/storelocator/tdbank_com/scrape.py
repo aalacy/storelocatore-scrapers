@@ -101,12 +101,15 @@ def fetch_data():
 
                 except Exception as e:
                     zip_code = "<MISSING>"
+                   
+                store_numbr = i.get('branchN', "<MISSING>")
+                if len(store_numbr) < 3:
+                    store_numbr = "<MISSING>"
 
                 page_url = j
                 location_name = "TD BANK"
                 country_code = "CA"
                 locator_domain = "https://www.td.com"
-                store_numbr = "<MISSING>"
 
                 new = [locator_domain, page_url,location_name, street, city, state, zip_code, country_code,store_numbr, phn,
                      loc_type, lat, lng, hour]
