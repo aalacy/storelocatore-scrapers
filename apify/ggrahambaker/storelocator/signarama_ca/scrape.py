@@ -148,8 +148,9 @@ def fetch_data():
             start = src.find('!2d')
             if start > 0:
                 end = src.find('!3m')
+                
                 coords = src[start + 3: end].split('!3d')
-                lat = coords[1]
+                lat = coords[1].split('!2m')[0]
                 longit = coords[0]
             
 

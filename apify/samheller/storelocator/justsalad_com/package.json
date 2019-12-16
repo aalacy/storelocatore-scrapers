@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "apify": "^0.15",
     "areacodes": "^0.2.1",
     "axios": "^0.19.0",
     "canvas": "^2.6.0",

@@ -1,19 +1,12 @@
-# Known Data Issues
+# How to write a Node.js scraper for SafeGraph using the Apify BasicCrawler
 
-## Canadian Postal Codes
+You can start writing your scraper in scrape.js between `// Begin scraper` and `// End scraper` comments. 
 
-Following invalid postal codes are being retrieved
-```
-invalid Canadian postal code: T15 5T4
-invalid Canadian postal code: TOA 3A2
-invalid Canadian postal code: VIR 4N7
-invalid Canadian postal code: R6W 252
-```
+Your logic will run agianst every URL in the RequestList. Note that you can use a RequestQueue instead of a RequestList if this scrape requires URLs to be generated dynamically (https://sdk.apify.com/docs/api/requestqueue).
 
-## Edge Case Phone Number
+Documentation on using the BasicCrawler: https://sdk.apify.com/docs/api/basiccrawler
 
-Flagging as an invalid number, it's just an awkward (but valid) format
-
-```
-invalid Canadian phone number: 1-877-606-4233 p. 341
-```
+Remember to update `package.json` with all dependencies needed to run your scraper.
+Please make sure that:
+* Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh
+* The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py

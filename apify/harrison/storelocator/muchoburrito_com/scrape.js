@@ -6,7 +6,6 @@ async function scrape() {
 	let res = await axios.get('https://momentfeed-prod.apigee.net/api/llp.json?auth_token=GTKDWXDZMLHWYIKP&pageSize=9999999');
 	let data = res.data;
 	for(let store of data){
-		console.log(store)
 		let s = {
 			locator_domain: 'https://momentfeed-prod.apigee.net/',
 			page_url: store.store_info.website,

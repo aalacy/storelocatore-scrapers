@@ -1,10 +1,9 @@
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import csv
 import re
+import csv
 import requests
-import pandas as pd
 import time
 
 
@@ -14,36 +13,28 @@ def parse_geo(url):
     return lat, lon
 
 
-def write_output(df):
-    df.to_csv('data.csv', index=False)
+def write_output(data):
+    with open('leslies.csv', mode='w',newline='') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
+        # Header
+        writer.writerow(
+            ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
+             "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+
+        writer.writerows(data)
 
 def get_driver():
     options = Options()
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
+    driver = webdriver.Chrome("chromedriver", options=options)
 
 driver1 = get_driver()
 
 data_list = []
-cities = []
-states = []
-hours = []
-zip_codes = []
-phones = []
-street_address = []
-lats = []
-longts = []
-location_names = []
-locator_domains = []
-page_urls = []
-country_codes = []
-store_numbrs = []
-location_types = []
 pattern = re.compile(r'\s+')
-
 
 def fetch_data():
     try:
@@ -63,7 +54,6 @@ def fetch_data():
                 continue
             if response.status_code == 200:
                 page_url = url
-                page_urls.append(page_url)
                 res = response
                 response.close()
                 data = res.text
@@ -76,24 +66,20 @@ def fetch_data():
 
                 except Exception as e:
                     city = "<MISSING>"
-                print(city)
-                cities.append(city)
 
                 try:
                     st = soup.find('h1', class_="top_heading").text.strip()
                     state = st.split(',')[-1].strip()
                 except Exception as e:
                     state = "<MISSING>"
-                print(state)
-                states.append(state)
 
                 try:
                     strt = soup.find('div', class_="location").contents
-                    street = strt[0]
+                    street_add = strt[0]
+                    street = re.sub(r'(((?<=\s)|^|-)[a-z])', lambda x: x.group().upper(), street_add)
+
                 except Exception as e:
                     street = "<MISSING>"
-                print(street)
-                street_address.append(street)
 
                 try:
                     store = soup.find('div', class_="location").contents[2]
@@ -106,8 +92,6 @@ def fetch_data():
                 except Exception as e:
                     store_numbr = "<MISSING>"
 
-                store_numbrs.append(store_numbr)
-
                 try:
                     store = soup.find('div', class_="location").contents[2]
                     zp = store.split('-')[0]
@@ -119,8 +103,6 @@ def fetch_data():
 
                 except Exception as e:
                     zip_code = "<MISSING>"
-                zip_codes.append(zip_code)
-                print(zip_code)
 
                 try:
                     for i in soup.find('div', class_='store_page').findAll('div', class_='phone'):
@@ -130,12 +112,10 @@ def fetch_data():
 
                 except Exception as e:
                     phn = "<MISSING>"
-                phones.append(phn)
-                print(phn)
 
-                result = soup.findAll('div', class_='hours_col')
-                hour = ''
                 try:
+                    result = soup.findAll('div', class_='hours_col')
+                    h = []
                     for i in result:
                         n = i.findAll('span', class_='store_day')
                         m = i.findAll('span', class_='store_hours')
@@ -146,34 +126,30 @@ def fetch_data():
                             b = i.text.strip()
                             pat1 = re.sub(pattern, "", b)
 
-                            hoo = pat1 + ' ' + pat + ' ' + '|'
-                            hour = hour + hoo + ' '
+                            hoo = pat1 + ' ' + pat + ' '
+                            h.append(hoo)
+
+                        hour = '| '.join(h)
                     if len(hour) < 3:
                         hour = "<MISSING>"
 
                 except Exception as e:
                     hour = "<MISSING>"
-                print(hour)
-                hours.append(hour)
+#                 print(hour)
 
                 try:
                     lc = soup.find('h1', class_="top_heading")
                     l_name = lc.text.strip()
-                    location_name= l_name.split(',')[0]
+                    location_name = l_name.split(',')[0]
 
                 except Exception as e:
                     location_name = "<MISSING>"
 
-                location_names.append(location_name)
-
                 country_code = "US"
-                country_codes.append(country_code)
 
                 location_type = "<MISSING>"
-                location_types.append(location_type)
 
                 locator_domain = "https://www.lesliespool.com"
-                locator_domains.append(locator_domain)
 
                 new_list = [page_url]
                 try:
@@ -192,24 +168,16 @@ def fetch_data():
                     lat = "<MISSING>"
                     lon = "<MISSING>"
 
-                print(lat)
-                lats.append(lat)
-                print(lon)
-                longts.append(lon)
-
-        dic = {'locator_domain': locator_domains, 'page_url': page_urls, 'location_name': location_names,
-               'street_address': street_address, 'city': cities, 'state': states,
-               'zip': zip_codes, 'country_code': country_codes, 'phone': phones, 'location_type': location_types,
-               'latitude': lats, 'longitude': longts, 'hours_of_operation': hours, 'store_number': store_numbrs}
-        d = pd.DataFrame(dic)
-        df = d.drop_duplicates()
+                n_list = [locator_domain, page_url, location_name, street, city, state, zip_code, country_code,
+                            store_numbr, phn, location_type, lat, lon, hour]
+                print(n_list)
+                data_list.append(n_list)
+        time.sleep(2)
         driver1.quit()
-        return df
-
+        return data_list
 
     except Exception as e:
         print(str(e))
-
 
 def scrape():
     data = fetch_data()

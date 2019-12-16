@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -21,8 +21,7 @@ def fetch_data():
     return_main_object = []
     main=soup.find('div',{"class":'cinema-list'}).find_all('a',{"class":"btn-link"})
     for atag in main:
-        storeno=atag['href'].split('/')[-1].strip()
-        print(atag['href'])
+        #print(atag['href'])
         r1 = requests.get(base_url+atag['href'])
         soup1=BeautifulSoup(r1.text,'lxml')
         name=soup1.find('cinema-structured-data')['data-name'].strip()
@@ -33,6 +32,7 @@ def fetch_data():
         phone=soup1.find('cinema-structured-data')['data-telephone'].strip()
         lat=soup1.find('cinema-structured-data')['data-lat'].strip()
         lng=soup1.find('cinema-structured-data')['data-lon'].strip()
+        storeno=r1.url.split('/')[-1].strip()
         store=[]
         store.append(base_url)
         store.append(name)
@@ -43,12 +43,12 @@ def fetch_data():
         store.append("US")
         store.append(storeno)
         store.append(phone)
-        store.append("regmovies")
+        store.append("<MISSING>")
         store.append(lat)
         store.append(lng)
         store.append("<MISSING>")
-        return_main_object.append(store)
-    return return_main_object
+        store.append(r1.url)
+        yield store
 
 def scrape():
     data = fetch_data()

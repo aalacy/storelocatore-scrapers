@@ -37,8 +37,8 @@ def fetch_data():
         state = ''
         zc = ''
         phone = ''
-        lat = ''
-        lng = ''
+        lat = '<MISSING>'
+        lng = '<MISSING>'
         hours = ''
         lines = r2.iter_lines()
         for line2 in lines:
@@ -54,10 +54,6 @@ def fetch_data():
                 zc = line2.split('id="PostalCode" name="PostalCode" value="')[1].split('"')[0]
             if 'itemprop="telephone">' in line2:
                 phone = line2.split('itemprop="telephone">')[1].split('<')[0]
-            if 'coords[0] = ' in line2:
-                lat = line2.split('coords[0] = ')[1].split(';')[0]
-            if 'coords[1] = ' in line2:
-                lng = line2.split('coords[1] = ')[1].split(';')[0]
             if 'itemprop="openingHours">' in line2:
                 g = next(lines)
                 hours = g.split('</table>')[0].strip().replace('\t','').replace('</td></tr><tr><td>','; ').replace('<tr><td>','').replace('</td></tr>','').replace('</td><td>',': ')

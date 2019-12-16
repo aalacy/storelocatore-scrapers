@@ -2,85 +2,123 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
-import io
 import json
+
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
     headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-    base_url = "https://www.graduatehotels.com"
-    r = requests.get(base_url, headers=headers)
+    addresses = []
+    base_url = "https://www.graduatehotels.com/"
+    locator_domain = base_url
+    location_name = ""
+    street_address = ""
+    city = ""
+    state = ""
+    zipp = ""
+    country_code = "US"
+    store_number = "<MISSING>"
+    phone = ""
+    location_type = "<MISSING>"
+    latitude = ""
+    longitude = ""
+    hours_of_operation = ""
+    page_url = ""
+
+    r = requests.get("https://www.graduatehotels.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
-    address = []
-    exists = soup.find('a', {'class', 'js-location-toggle'})
-    if exists:
-        for data in soup.findAll('a', {'class', 'hotel-location'}):
-            if data.get('href') == "#":
-                pass
+    for li in soup.find("ul", class_="directory-navigation").find_all("a", class_="location-item"):
+        page_url = li['href']
+        r_loc = requests.get(page_url, headers=headers)
+        soup_loc = BeautifulSoup(r_loc.text, "lxml")
+        try:
+            address = list(soup_loc.find(
+                "div", class_="footer-address").find("address").stripped_strings)
+            street_address = address[0].strip()
+            city = address[1].split(',')[0].strip()
+            state = address[1].split(',')[1].split()[0].strip()
+            zipp = address[1].split(',')[1].split()[-1].strip()
+            location_name = city
+            phone_tag = " ".join(list(soup_loc.find(
+                "div", class_="footer-contact").stripped_strings))
+            phone_list = re.findall(re.compile(
+                ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
+            if phone_list:
+                phone = phone_list[0].strip()
             else:
-                print(data.get('href'))
-                detail_url = requests.get(data.get('href'), headers=headers)
-                detail_soup = BeautifulSoup(detail_url.text, "lxml")
-                if detail_soup.find('div', {'class', 'footer-address'}):
-                    for br in detail_soup.find('div', {'class', 'footer-address'}).select('.lead')[0].findAll('br'):
-                        br.replace_with("\n")
-                    location_name = data.get_text()
-                    address = detail_soup.find('div', {'class', 'footer-address'}).select('.lead')[0].get_text().split('\n')
-                    if len(address) == 4:
-                        street_address = address[0].strip()
-                        city = data.select('.location-name')[0].get_text().strip()
-                        state = data.select('.location-state')[0].get_text().strip()
-                        zip_val = address[-1].strip()
-                        if len(str(zip_val)) > 6:
-                            zip = address[1].split(',')[1].split(' ')[-1]
-                        else:
-                            zip = address[-1].strip()
-                    else:
-                        street_address = address[0].strip()
-                        city = data.select('.location-name')[0].get_text().strip()
-                        state = data.select('.location-state')[0].get_text().strip()
-                        zip = address[1].split(',')[-1].strip().split(' ')[-1].strip()
-                    phone_val = detail_soup.find('div', {'class', 'footer-contact'}).find('a').get('href')[6:].strip()
-                    if phone_val[-1].isdigit():
-                        phone = detail_soup.find('div', {'class', 'footer-contact'}).find('a').get('href')[6:].strip()
-                    else:
-                        phone = "<MISSING>"
-                    if len(detail_soup.find('a', {'class', 'logo'}).find('img').get('alt').strip()) == 0:
-                        location_type = "<MISSING>"
-                    else:
-                        location_type = detail_soup.find('a', {'class', 'logo'}).find('img').get('alt').strip()
-                    store = []
-                    store.append(data.get('href'))
-                    store.append(location_name)
-                    store.append(street_address)
-                    store.append(city)
-                    store.append(state)
-                    store.append(zip)
-                    store.append("US")
-                    store.append("<MISSING>")
-                    store.append(phone)
-                    store.append(location_type)
-                    store.append("<MISSING>")
-                    store.append("<MISSING>")
-                    store.append("<MISSING>")
-                    return_main_object.append(store)
-                else:
-                    pass
-        return return_main_object
+                phone = "<MISSING>"
+            coord = soup_loc.find(
+                "div", class_="footer-address").find("address").find("a", class_="map-link")['href']
+            r_c = requests.get(coord, headers=headers)
+            soup_c = BeautifulSoup(r_c.text, 'lxml')
+            latitude = soup_c.find_all(
+                "meta")[-7]["content"].split("markers=")[1].split("%2C")[0].strip()
+            longitude = soup_c.find_all(
+                "meta")[-7]["content"].split("markers=")[1].split("%2C")[1].split('&')[0].strip()
+            # print(latitude, longitude)
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        except:
+            pass
+            main = soup_loc.find("main", {"id": "main-container"})
+            # print(main.prettify())
+            # print("~~~~~~~~~~~~~~~~~~~~~~")
+            list_main = " ".join(list(main.stripped_strings))
+            phone_list = re.findall(re.compile(
+                ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_main))
+            if phone_list:
+                phone = phone_list[0].strip()
+            else:
+                phone = "<MISSING>"
+            location_name = main.h1.text.strip()
+            address = list(main.h2.find_next("p").stripped_strings)
+            if "United Kingdom" in address[-1]:
+                continue
+            street_address = address[0].strip()
+            city = address[1].split(',')[0].strip()
+            state = " ".join(address[1].split(',')[1].split()[:-1]) .strip()
+            us_zip_list = re.findall(re.compile(
+                r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(address[1]))
+            if us_zip_list:
+                zipp = us_zip_list[0].strip()
+            else:
+                zipp = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+
+            # print(page_url)
+
+        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+        store = ["<MISSING>" if x == "" else x for x in store]
+        store = [str(x).encode('ascii', 'ignore').decode(
+            'ascii').strip() if x else "<MISSING>" for x in store]
+
+        if store[1] + " " + store[2] in addresses:
+            continue
+        addresses.append(store[1] + " " + store[2])
+        # print("data = " + str(store))
+        # print(
+        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        yield store
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
+
 scrape()

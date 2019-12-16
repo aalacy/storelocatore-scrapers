@@ -54,7 +54,7 @@ def fetch_data():
         
         tem_var.append(Facility_ID)
         tem_var.append("https://data.medicare.gov/Hospital-Compare/Hospital-General-Information/xubh-q36u/data")
-        tem_var.append(location_name.capitalize())
+        tem_var.append(location_name)
         tem_var.append(street_address.capitalize())
         tem_var.append(city.capitalize())
         tem_var.append(state)

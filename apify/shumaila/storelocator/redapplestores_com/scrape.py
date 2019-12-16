@@ -35,7 +35,8 @@ def fetch_data():
     data = []
     p = 1
     #driver = webdriver.Chrome('/Users/Dell/local/chromedriver')
-    driver = webdriver.Chrome('chromedriver')
+    #driver = webdriver.Chrome('chromedriver')
+    driver = get_driver()
     links = []
     prov = []
     url = "http://www.redapplestores.com/store/52974/"

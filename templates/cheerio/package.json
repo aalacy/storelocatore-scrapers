@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "apify": "^0.15"
   },
   "devDependencies": {
     "apify-cli": "^0.3.9",

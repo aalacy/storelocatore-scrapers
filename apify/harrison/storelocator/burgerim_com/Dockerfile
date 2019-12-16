@@ -1,7 +1,5 @@
 FROM safegraph/apify-node:latest
 
-RUN ls -al
-
 COPY . ./
 
 USER root

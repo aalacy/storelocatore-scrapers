@@ -5,7 +5,8 @@
   "dependencies": {
     "apify": "^0.15.2",
     "decode-html": "^2.0.0",
-    "parse-address": "^1.1.2"
+    "parse-address": "^1.1.2",
+    "request": "^2.88.0"
   },
   "devDependencies": {
     "apify-cli": "^0.3.9",

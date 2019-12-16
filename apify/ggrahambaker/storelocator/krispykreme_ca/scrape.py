@@ -2,7 +2,7 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+import time
 
 def get_driver():
     options = Options()
@@ -30,8 +30,10 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(locator_domain + ext)
-
+    time.sleep(4)
+    driver.implicitly_wait(30)
     locs = driver.find_elements_by_css_selector('div.store-section')
+
     all_store_data = []
     for loc in locs:
         
@@ -63,15 +65,16 @@ def fetch_data():
         
         
         
-        gmap_script = loc.find_element_by_css_selector('div.store-section-map').find_element_by_css_selector('script').get_attribute('innerHTML')
+        gmap_script = loc.find_element_by_css_selector('div.store-section-map').find_element_by_css_selector('iframe').get_attribute('src')
         
-        start = gmap_script.find('.LatLng(')
-        temp = gmap_script[start + len('.LatLng('):]
-        end = temp.find(')')
-        coords = temp[:end].split(',')
+        start = gmap_script.find('!2d')
 
-        lat = coords[0]
-        longit = coords[1]
+        end = gmap_script.find('!2m')
+
+        coords = gmap_script[start + 3: end ].split('!3d')
+        
+        lat = coords[1]
+        longit = coords[0]
 
         
         country_code = 'CA'
