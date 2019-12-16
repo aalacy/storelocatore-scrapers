@@ -1,6 +1,7 @@
 import csv
 import re
 import requests
+import json
 
 urls = [
     'https://www.tdbank.com/net/get12.ashx?longitude=-127.64762050000002&latitude=53.7266683&country=CA&locationtypes=3&json=y&searchradius=500&searchunit=km&numresults=100',
@@ -16,15 +17,15 @@ urls = [
     'https://www.tdbank.com/net/get12.ashx?longitude=-135&latitude=64.2823274&country=CA&locationtypes=3&json=y&searchradius=500&searchunit=km&numresults=100'
 ]
 
+
 def write_output(data):
-    with open('tdbank.csv', mode='w',newline='') as output_file:
+    with open('Tdlat.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(
             ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
              "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-
         writer.writerows(data)
 
 data_list = []
@@ -47,9 +48,15 @@ def fetch_data():
                 phn = i.get('phoneNo', "<MISSING>")
                 if len(phn) < 3:
                     phn = "<MISSING>"
+                hr = []
                 hoo = i.get('hours', "<MISSING>")
-                if len(hoo) < 3:
-                    hoo = "<MISSING>"
+                for key, value in hoo.items():
+                    n = key + " " + value
+                    hr.append(n)
+                hour = "| ".join(hr)
+                if len(hour) < 3:
+                    hour = "<MISSING>"
+
                 try:
                     l_type = i['branchtype']
                     loc_type = re.sub(r'(((?<=\s)|^|-)[a-z])', lambda x: x.group().upper(), l_type)
@@ -80,9 +87,8 @@ def fetch_data():
                 locator_domain = "https://www.td.com"
                 store_numbr = "<MISSING>"
                 new = [locator_domain, page_url,location_name, street, city, state, zp, country_code,store_numbr, phn,
-                     loc_type, lat, lng, hoo]
+                     loc_type, lat, lng, hour]
                 data_list.append(new)
-        print(data_list)
         return data_list
 
     except Exception as e:
@@ -95,3 +101,4 @@ def scrape():
 
 
 scrape()
+
