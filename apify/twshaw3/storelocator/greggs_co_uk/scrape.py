@@ -51,7 +51,11 @@ def fetch_data():
         phone = handle_missing(store['phone'])
         location_type = handle_missing(store['type'])
         latitude = handle_missing(store['latitude'])
+        if latitude == 0.0:
+            latitude = '<MISSING>'
         longitude = handle_missing(store['longitude'])
+        if longitude == 0.0:
+            longitude = '<MISSING>'
         hours_of_operation = '<MISSING>'
         locations.append([locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
     return locations
