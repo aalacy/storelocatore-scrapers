@@ -4,8 +4,11 @@ from bs4 import BeautifulSoup, Comment
 import re
 import json
 
+
+
 def hasNumbers(inputString):
-     return any(char.isdigit() for char in inputString)
+    return any(char.isdigit() for char in inputString)
+
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -14,7 +17,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -62,15 +65,42 @@ def fetch_data():
 
         street_address = "".join(address_list).split(',')[0]
         state_tag = "".join(address_list).split(',')[-1]
-        if hasNumbers(state_tag):
-            state_list = re.findall(r' ([A-Z]{2}) ', str(state_tag))
-            if state_list != []:
-                state = state_list[0].strip().replace('Vancouver','').replace('Richmond','').strip()
-            else:
+        state_list = state_tag.split()
+        if len(state_list) == 1:
+            state = state_list[0]
+            # print(state)
+            if "Burnaby" == state:
                 state = "<MISSING>"
+        elif len(state_list) == 2:
+            if hasNumbers(state_list[-1]):
+                state = address_list[0].split(',')[-2].split()[-1].strip()
+                if "Vancouver" == state:
+                    state = "<MISSING>"
+            else:
+                state = state_list[-1].strip()
+        elif len(state_list) == 3:
+            state = state_list[0].strip()
+        elif len(state_list) == 4:
+            state = state_list[1]
+        elif len(state_list) == 5:
+            state = state_list[2].strip()
+            if "St." == state:
+                state = state_list[-1].strip()
         else:
+            pass
 
-            state = state_tag.strip().replace('Vancouver','').replace('Richmond','').strip()
+        # print(state_tag)
+        # if hasNumbers(state_tag):
+        #     state_list = re.findall(r' ([A-Z]{2}) ', str(state_tag))
+        #     if state_list != []:
+        #         state = state_list[0].strip().replace(
+        #             'Vancouver', '').replace('Richmond', '').strip()
+        #     else:
+        #         # print(address_list)
+        #         state = "<MISSING>"
+        # else:
+
+        #     state = state_tag.strip().replace('Vancouver', '').replace('Richmond', '').strip()
         if "Burnaby" in state:
             state = "<MISSING>"
         c_list = "".join(address_list).split(',')[1].split()
@@ -85,13 +115,17 @@ def fetch_data():
         if "0B5" == c_list[-1]:
             city = "North Vancouver"
 
-        ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str("".join(address_list)))
+        ca_zip_list = re.findall(
+            r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str("".join(address_list)))
         if ca_zip_list:
             zipp = ca_zip_list[0].strip()
         else:
             zipp = "<MISSING>"
+        # if "3437 Main Street" == street_address:
+        #     state  = ad
+
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
         store = ["<MISSING>" if x == "" else x for x in store]
         # print("data = " + str(store))
         # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
