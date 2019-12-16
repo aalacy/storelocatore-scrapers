@@ -40,7 +40,8 @@ def fetch_data():
         try:
             detail_url = requests.get(detail_page_url, headers=headers)
         except:
-            continue
+            pass
+
         detail_soup = BeautifulSoup(detail_url.text, "lxml")
         script = detail_soup.find(lambda tag: (
             tag.name == "script") and "Chilis.LocationData" in tag.text)
@@ -48,7 +49,6 @@ def fetch_data():
             1].split("]")[0] + "]"
         # print(script_text)
         json_data = json.loads(script_text)
-
         for loc in json_data:
             store_number = loc["restaurantId"]
             location_name = loc["name"]
@@ -93,9 +93,9 @@ def fetch_data():
                 continue
             addresses.append(attr)
             return_main_object.append(store)
-            # print("data = " + str(store))
-            # print(
-            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            print("data = " + str(store))
+            print(
+                '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     return return_main_object
 
 

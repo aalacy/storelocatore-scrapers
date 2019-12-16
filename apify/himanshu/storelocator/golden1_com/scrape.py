@@ -40,10 +40,10 @@ def fetch_data():
         # print("ramiang zip =====" + str(search.current_zip))
         data = "golden1branches=true&golden1homecenters=false&golden1atm=false&sharedbranches=false&sharedatm=false&swlat="+str(coords[0])+"&swlng="+str(coords[1])+"&nelat="+str(coords[0])+"&nelng="+str(coords[1])+"&centerlat="+str(coords[0])+"&centerlng="+str(coords[1])+"&userlat=&userlng="
         location_url = 'https://www.golden1.com/api/BranchLocator/GetLocations'
-        try:           
+        try:            
             data = requests.post(location_url, headers=header, data=data).json()
         except:
-            continue
+            pass
         store_number =''
         location_type =''
         if data['locations'] != []:
@@ -57,12 +57,17 @@ def fetch_data():
                 location_name = json_data['title']
                 latitude =  json_data['lat']
                 longitude=  json_data['lng']
-                branch =  json_data['switchedToCoOpBranch']
-                atm =  json_data['switchedToCoOpATM']
-                if branch==True:
+                branch =  str(json_data['switchedToCoOpBranch'])
+                atm =  str(json_data['switchedToCoOpATM'])
+                hasatm = str(json_data['hasatm'])
+                if hasatm=="true":
+                    location_type = "hasatm"
+
+                if branch=="true":
                     location_type ="branch"
-                if atm==True:
+                if atm=="true":
                     location_type = "ATM"
+
                 hours_of_operation = " ".join(list(BeautifulSoup(hours, "lxml").stripped_strings)).replace("\\n","")
                 store = []
                 result_coords.append((latitude, longitude))
@@ -79,11 +84,11 @@ def fetch_data():
                 store.append(latitude if latitude else '<MISSING>')
                 store.append(longitude if longitude else '<MISSING>')
                 store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-                print(store)
                 store.append('<MISSING>')
                 if store[2] in addressess:
                     continue
                 addressess.append(store[2])
+                #print(store)
                 yield store
         if data_len < MAX_RESULTS:
             # print("max distance update")
