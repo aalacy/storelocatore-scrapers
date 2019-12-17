@@ -4,6 +4,8 @@ import requests
 import sgzip
 import json
 
+requests.packages.urllib3.disable_warnings()
+
 session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -20,7 +22,7 @@ def fetch_data():
     for code in sgzip.for_radius(50):
         print('Pulling Zip Code %s...' % code)
         url = 'https://savealot.com/grocery-stores/locationfinder/modules/multilocation/?near_location=' + code + '&threshold=4000&services__in=&within_business=true'
-        r = session.get(url, headers=headers)
+        r = session.get(url, headers=headers, verify=False)
         array = json.loads(r.content)['objects']
         for item in array:
             website = 'savealot.com'
