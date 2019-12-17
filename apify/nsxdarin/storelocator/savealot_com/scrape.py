@@ -37,13 +37,17 @@ def fetch_data():
             lat = item['lat']
             lng = item['lon']
             hrs = item['hours_by_type']['primary']['hours']
-            hours = 'Mon: ' + hrs[0][0][0] + '-' + hrs[0][0][1]
-            hours = hours + '; ' + 'Tue: ' + hrs[1][0][0] + '-' + hrs[1][0][1]
-            hours = hours + '; ' + 'Wed: ' + hrs[2][0][0] + '-' + hrs[2][0][1]
-            hours = hours + '; ' + 'Thu: ' + hrs[3][0][0] + '-' + hrs[3][0][1]
-            hours = hours + '; ' + 'Fri: ' + hrs[4][0][0] + '-' + hrs[4][0][1]
-            hours = hours + '; ' + 'Sat: ' + hrs[5][0][0] + '-' + hrs[5][0][1]
-            hours = hours + '; ' + 'Sun: ' + hrs[6][0][0] + '-' + hrs[6][0][1]
+            try:
+                hours = 'Mon: ' + hrs[0][0][0] + '-' + hrs[0][0][1]
+                hours = hours + '; ' + 'Tue: ' + hrs[1][0][0] + '-' + hrs[1][0][1]
+                hours = hours + '; ' + 'Wed: ' + hrs[2][0][0] + '-' + hrs[2][0][1]
+                hours = hours + '; ' + 'Thu: ' + hrs[3][0][0] + '-' + hrs[3][0][1]
+                hours = hours + '; ' + 'Fri: ' + hrs[4][0][0] + '-' + hrs[4][0][1]
+                hours = hours + '; ' + 'Sat: ' + hrs[5][0][0] + '-' + hrs[5][0][1]
+                hours = hours + '; ' + 'Sun: ' + hrs[6][0][0] + '-' + hrs[6][0][1]
+            except:
+                hours = '<MISSING>'
+            hours = hours.replace(':00:00',':00').replace(':30:00',':30')
             if store not in ids:
                 ids.append(store)
                 yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
