@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -62,10 +62,8 @@ def fetch_data():
             tem_var.append("US")
             tem_var.append("<MISSING>")
             tem_var.append(phone)
-            tem_var.append("graffitijunktion")
-            # tem_var.append("<MISSING>")
-            # tem_var.append("<MISSING>")
-            hours.append(hours1)
+            tem_var.append("<MISSING>")            
+            hours.append(hours1)            
             store_detail.append(tem_var)
             
         
@@ -77,6 +75,7 @@ def fetch_data():
         store.append(lat[i])
         store.append(lng[i])
         store.append(hours[i])
+        store.append('<MISSING>')
         return_main_object.append(store) 
     return return_main_object
 
