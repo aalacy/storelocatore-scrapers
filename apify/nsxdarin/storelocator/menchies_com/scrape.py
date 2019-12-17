@@ -18,20 +18,28 @@ def write_output(data):
 def fetch_data():
     url = 'https://www.menchies.com/all-locations'
     locs = []
+    alllocs = []
     r = session.get(url, headers=headers, verify=False)
+    country = 'US'
     for line in r.iter_lines():
         if '<div class="loc-name"><span class="font-purple title-case"><a href="' in line:
             items = line.split('<div class="loc-name"><span class="font-purple title-case"><a href="')
             for item in items:
-                if '<div class="country-wrapper country1">' not in item:
+                if 'name">Canada' in item:
+                    country = 'CA'
+                if '<div class="country-wrapper country1">' not in item and country != 'AU':
                     lurl = 'https://www.menchies.com' + item.split('"')[0]
-                    if lurl not in locs:
-                        locs.append(lurl)
+                    if lurl not in alllocs:
+                        alllocs.append(lurl)
+                        locs.append(lurl + '|' + country)
+                if 'name">Australia</h3>' in item:
+                    country = 'AU'
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
         name = ''
         add = ''
-        country = ''
+        country = loc.split('|')[1]
+        lurl = loc.split('|')[0]
         lat = ''
         lng = ''
         hours = ''
@@ -40,10 +48,10 @@ def fetch_data():
         state = ''
         zc = ''
         phone = '<MISSING>'
-        print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % lurl)
         website = 'menchies.com'
         typ = '<MISSING>'
-        r2 = session.get(loc, headers=headers, verify=False)
+        r2 = session.get(lurl, headers=headers, verify=False)
         for line2 in r2.iter_lines():
             if '<h1 class="h2">' in line2:
                 name = line2.split('<h1 class="h2">')[1].split('<')[0]
@@ -83,7 +91,7 @@ def fetch_data():
             if 'var point = new google.maps.LatLng(' in line2:
                 lat = line2.split('var point = new google.maps.LatLng(')[1].split(',')[0]
                 lng = line2.split('var point = new google.maps.LatLng(')[1].split(',')[1].split(')')[0].strip()
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
