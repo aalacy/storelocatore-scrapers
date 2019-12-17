@@ -15,8 +15,54 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    usa = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA", 
+          "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", 
+          "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", 
+          "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
+          "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
+    canada = ['NF','NS','PE','NB','SK','ON','QC','PQ','YK','NT','NU','AB']
     locs = []
-    url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&callback=jQuery1720034581823033266845_1566253080293&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
+    url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        if 'LOC_ID' in line:
+            items = line.split('{"LOC_ID":"')
+            for item in items:
+                if '{"features":' not in item:
+                    lid = item.split('"')[0]
+                    if lid not in locs:
+                        locs.append(lid)
+    url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-120.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        if 'LOC_ID' in line:
+            items = line.split('{"LOC_ID":"')
+            for item in items:
+                if '{"features":' not in item:
+                    lid = item.split('"')[0]
+                    if lid not in locs:
+                        locs.append(lid)
+    url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-157.9859414%2C+20.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        if 'LOC_ID' in line:
+            items = line.split('{"LOC_ID":"')
+            for item in items:
+                if '{"features":' not in item:
+                    lid = item.split('"')[0]
+                    if lid not in locs:
+                        locs.append(lid)
+    url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-105.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        if 'LOC_ID' in line:
+            items = line.split('{"LOC_ID":"')
+            for item in items:
+                if '{"features":' not in item:
+                    lid = item.split('"')[0]
+                    if lid not in locs:
+                        locs.append(lid)
+    url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-157.9859414%2C+55.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if 'LOC_ID' in line:
@@ -49,14 +95,21 @@ def fetch_data():
         hours = hours + '; Sun: ' + array['SUN_BUS_HRS_1_OPEN_TIME'] + '-' + array['SUN_BUS_HRS_1_CLOSE_TIME']
         if '0' not in hours:
             hours = '<MISSING>'
-        country = 'US'
+        country = ''
         typ = array['LOC_SUB_TYPE']
         store = loc
         if phone == '':
             phone = '<MISSING>'
         if typ == '':
             typ = '<MISSING>'
-        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if state == '':
+            state = '<MISSING>'
+        if state in canada:
+            country = 'CA'
+        if state in usa:
+            country = 'US'
+        if country == 'US' or country == 'CA':
+            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
