@@ -14,12 +14,12 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://www.homegoods.com/sitemap.xml'
+    url = 'https://www.homegoods.com/all-stores'
     locs = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if '<loc>https://www.homegoods.com/store-details/' in line:
-            lurl = line.split('<loc>')[1].split('<')[0]
+        if '<a class="arrow-link" href="' in line:
+            lurl = 'https://www.homegoods.com' + line.split('href="')[1].split('"')[0]
             locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
