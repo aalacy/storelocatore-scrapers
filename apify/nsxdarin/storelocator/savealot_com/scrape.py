@@ -21,38 +21,41 @@ def fetch_data():
     ids = []
     for code in sgzip.for_radius(50):
         print('Pulling Zip Code %s...' % code)
-        url = 'https://savealot.com/grocery-stores/locationfinder/modules/multilocation/?near_location=' + code + '&threshold=4000&services__in=&within_business=true'
-        r = session.get(url, headers=headers, verify=False)
-        array = json.loads(r.content)['objects']
-        for item in array:
-            website = 'savealot.com'
-            phone = item['phonemap_e164']['phone']
-            state = item['state_name']
-            store = item['id']
-            purl = item['location_url']
-            city = item['city']
-            name = 'Save A Lot'
-            add = item['street']
-            zc = item['postal_code']
-            country = 'US'
-            typ = 'Store'
-            lat = item['lat']
-            lng = item['lon']
-            hrs = item['hours_by_type']['primary']['hours']
-            try:
-                hours = 'Mon: ' + hrs[0][0][0] + '-' + hrs[0][0][1]
-                hours = hours + '; ' + 'Tue: ' + hrs[1][0][0] + '-' + hrs[1][0][1]
-                hours = hours + '; ' + 'Wed: ' + hrs[2][0][0] + '-' + hrs[2][0][1]
-                hours = hours + '; ' + 'Thu: ' + hrs[3][0][0] + '-' + hrs[3][0][1]
-                hours = hours + '; ' + 'Fri: ' + hrs[4][0][0] + '-' + hrs[4][0][1]
-                hours = hours + '; ' + 'Sat: ' + hrs[5][0][0] + '-' + hrs[5][0][1]
-                hours = hours + '; ' + 'Sun: ' + hrs[6][0][0] + '-' + hrs[6][0][1]
-            except:
-                hours = '<MISSING>'
-            hours = hours.replace(':00:00',':00').replace(':30:00',':30')
-            if store not in ids:
-                ids.append(store)
-                yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        try:
+            url = 'https://savealot.com/grocery-stores/locationfinder/modules/multilocation/?near_location=' + code + '&threshold=4000&services__in=&within_business=true'
+            r = session.get(url, headers=headers, verify=False)
+            array = json.loads(r.content)['objects']
+            for item in array:
+                website = 'savealot.com'
+                phone = item['phonemap_e164']['phone']
+                state = item['state_name']
+                store = item['id']
+                purl = item['location_url']
+                city = item['city']
+                name = 'Save A Lot'
+                add = item['street']
+                zc = item['postal_code']
+                country = 'US'
+                typ = 'Store'
+                lat = item['lat']
+                lng = item['lon']
+                hrs = item['hours_by_type']['primary']['hours']
+                try:
+                    hours = 'Mon: ' + hrs[0][0][0] + '-' + hrs[0][0][1]
+                    hours = hours + '; ' + 'Tue: ' + hrs[1][0][0] + '-' + hrs[1][0][1]
+                    hours = hours + '; ' + 'Wed: ' + hrs[2][0][0] + '-' + hrs[2][0][1]
+                    hours = hours + '; ' + 'Thu: ' + hrs[3][0][0] + '-' + hrs[3][0][1]
+                    hours = hours + '; ' + 'Fri: ' + hrs[4][0][0] + '-' + hrs[4][0][1]
+                    hours = hours + '; ' + 'Sat: ' + hrs[5][0][0] + '-' + hrs[5][0][1]
+                    hours = hours + '; ' + 'Sun: ' + hrs[6][0][0] + '-' + hrs[6][0][1]
+                except:
+                    hours = '<MISSING>'
+                hours = hours.replace(':00:00',':00').replace(':30:00',':30')
+                if store not in ids:
+                    ids.append(store)
+                    yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        except:
+            pass
 
 def scrape():
     data = fetch_data()
