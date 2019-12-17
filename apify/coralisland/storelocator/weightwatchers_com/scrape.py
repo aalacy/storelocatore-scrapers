@@ -102,6 +102,33 @@ def fetch_data():
                     store_hours.append(validate(hour['meetingDay']['name']) + ' ' + validate(hour['meetingTime']).split('T')[-1] + '-' + validate(hour['meetingEndTime']).split('T')[-1])
                 output.append(get_value(store_hours)) #opening hours
                 output_list.append(output)        
+    url = "https://api1.weightwatchers.ca/meetings/v1/locations?limit=1000000&locale=CA&page=0&radius=10000&searchText=QC"
+    page_url = ''
+    request = session.get(url, headers=headers)
+    store_list = json.loads(request.text)['locations']
+    for store in store_list:
+        output = []
+        if get_value(store['id']) not in history:
+            history.append(get_value(store['id']))
+            page_url = base_url + '/us/find-a-meeting/'+get_value(store['id'])+'/'+get_value(store['slugTitleGeo'])
+            output.append(base_url) # url
+            output.append(page_url) # page url
+            output.append(get_value(store['name'])) #location name
+            output.append(get_value(store['address']['address1'])) #address
+            output.append(get_value(store['address']['city'])) #city
+            output.append(get_value(store['address']['state'])) #state
+            output.append(get_value(store['address']['zipCode'])) #zipcode
+            output.append(get_value(store['address']['country'])) #country code
+            output.append(get_value(store['id'])) #store_number
+            output.append('<MISSING>') #phone
+            output.append('WW (Weight Watchers)') #location type
+            output.append(get_value(store['address']['gpsCoordinates']['latitude'])) #latitude
+            output.append(get_value(store['address']['gpsCoordinates']['longitude'])) #longitude
+            store_hours = []    
+            for hour in store['openHours']:
+                store_hours.append(validate(hour['meetingDay']['name']) + ' ' + validate(hour['meetingTime']).split('T')[-1] + '-' + validate(hour['meetingEndTime']).split('T')[-1])
+            output.append(get_value(store_hours)) #opening hours
+            output_list.append(output)        
     return output_list
 
 def scrape():
