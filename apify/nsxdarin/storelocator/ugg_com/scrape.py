@@ -60,7 +60,7 @@ def fetch_data():
                 typ = item['storetype']
                 if typ == '':
                     typ = 'Store'
-                store = item['clientkey']
+                store = item['clientkey'].encode('utf-8')
                 if item['mon_hours']:
                     hours = 'Mon: ' + item['mon_hours']
                     hours = hours + '; Tue: ' + item['tue_hours']
