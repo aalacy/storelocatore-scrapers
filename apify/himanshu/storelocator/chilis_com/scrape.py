@@ -93,9 +93,9 @@ def fetch_data():
                 continue
             addresses.append(attr)
             return_main_object.append(store)
-            print("data = " + str(store))
-            print(
-                '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print(
+            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     return return_main_object
 
 

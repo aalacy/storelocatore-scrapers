@@ -35,10 +35,7 @@ def fetch_data():
     while zip_code:
         #print("---------------------------------",zip_code)
         result_coords = []
-        try:
-            r = requests.get(base_url+"/locations/?user_search="+zip_code,headers=headers)
-        except:
-            continue
+        r = requests.get(base_url+"/locations/?user_search="+zip_code,headers=headers)
         soup=BeautifulSoup(r.text,'lxml')
         if soup.find('div',{"id":"locations-search-form-results"})!=None:
             main=soup.find('div',{"id":"locations-search-form-results"}).find_all('section',{'class':"locations-result"})
@@ -88,10 +85,10 @@ def fetch_data():
                         yield store
 
         if current_results_len < MAX_RESULTS:
-            #print("max distance update")
+           # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            #print("max count update")
+           # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

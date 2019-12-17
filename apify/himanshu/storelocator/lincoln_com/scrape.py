@@ -5,8 +5,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-# import pprint
-# pp = pprint.PrettyPrinter(indent=4)
 import sgzip
 
 
@@ -65,8 +63,6 @@ def fetch_data():
         longitude = ""
         raw_address = ""
         hours_of_operation = ""
-
-
         # lat = coord[0]
         # lng = coord[1]
 
@@ -83,7 +79,7 @@ def fetch_data():
         try:
             k = requests.get(get_u, headers=headers).json()
         except:
-            continue
+            pass
         if "Response" in k and "Dealer" in k['Response']:
             if list ==type(k['Response']["Dealer"]):
                 x = len(k['Response']["Dealer"])
@@ -92,17 +88,13 @@ def fetch_data():
                         phone =  i['ldlrcalltrk_lad']
                     else:
                         phone = i["Phone"]
-
                     if "Street1"  in i["Address"]:
                         street_address = i["Address"]['Street1'] #+ ' ' +i["Address"]['Street2']+ ' ' +i["Address"]['Street3']
                     else:
                         street_address = "<MISSING>"
-                    # location_name = i["Name"]
-                    # store_name.append()
                     city = i["Address"]['City']
                     state = i["Address"]['State']
                     zipp =i["Address"]['PostalCode']
-                    # phone = i["Phone"]
                     time=''
                     time1 = ''
                     h1 =''
@@ -122,71 +114,68 @@ def fetch_data():
                     hours_of_operation = " SalesHours " + time + " ServiceHours " + time1
                     latitude = i['Latitude']
                     longitude = i['Longitude']
-                    tem_var =[]
-                    # tem_var.append("https://www.lincoln.com/")
+                    tem_var1 =[]
                     store_name.append(i["Name"])
-                    tem_var.append(street_address)
-                    tem_var.append(city)
-                    tem_var.append(state)
-                    tem_var.append(zipp)
-                    tem_var.append("US")
-                    tem_var.append("<MISSING>")
-                    tem_var.append(phone if phone else "<MISSING>" )
-                    tem_var.append("<MISSING>")
-                    tem_var.append(latitude)
-                    tem_var.append(longitude)
-                    tem_var.append(hours_of_operation.replace(" SalesHours  ServiceHours ","<MISSING>") if hours_of_operation else "<MISSING>")
-                    tem_var.append("https://www.lincoln.com/dealerships/dealer-details/"+i['urlKey'])
-                    store_detail.append(tem_var)
-                    # if tem_var[2] in addresses:
-                    #     continue
-                    # addresses.append(tem_var[2])  
-                    # yield tem_var
-                    #print(tem_var)
+                    tem_var1.append(street_address)
+                    tem_var1.append(city)
+                    tem_var1.append(state)
+                    tem_var1.append(zipp)
+                    tem_var1.append("US")
+                    tem_var1.append("<MISSING>")
+                    tem_var1.append(phone if phone else "<MISSING>" )
+                    tem_var1.append("<MISSING>")
+                    tem_var1.append(latitude)
+                    tem_var1.append(longitude)
+                    tem_var1.append(hours_of_operation.replace(" SalesHours  ServiceHours ","<MISSING>") if hours_of_operation else "<MISSING>")
+                    tem_var1.append("https://www.lincoln.com/dealerships/dealer-details/"+i['urlKey'])
+                    store_detail.append(tem_var1)
+                    # print(tem_var1)
           
 
         if "Response" in k and "Dealer" in k['Response']:
             if dict==type(k['Response']["Dealer"]):
                 y = len(k['Response']["Dealer"])
-
-                if "Street1"  in i["Address"]:
-                    street_address = i["Address"]['Street1'] #+ ' ' +i["Address"]['Street2']+ ' ' +i["Address"]['Street3']
+                
+                if "Street1"  in k['Response']["Dealer"]["Address"]:
+                    street_address = k['Response']["Dealer"]["Address"]['Street1'] 
                 else:
                     street_address = "<MISSING>"
 
-                if i['ldlrcalltrk_lad']:
-                    phone =  i['ldlrcalltrk_lad']
-                else:
-                    phone = i["Phone"]
+                # print(street_address)
 
-                store_name.append(i["Name"])
-                city = i["Address"]['City']
-                state = i["Address"]['State']
-                zipp =i["Address"]['PostalCode']
+                if k['Response']["Dealer"]['ldlrcalltrk_lad']:
+                    phone =  k['Response']["Dealer"]['ldlrcalltrk_lad']
+                else:
+                    phone = k['Response']["Dealer"]["Phone"]
+
+                
+                city = k['Response']["Dealer"]["Address"]['City']
+                state = k['Response']["Dealer"]["Address"]['State']
+                zipp =k['Response']["Dealer"]["Address"]['PostalCode']
                 # phone = i["Phone"]
                 time=''
                 time1 = ''
                 h1 =''
-                if "Day" in i["SalesHours"]:
-                    for j in i["SalesHours"]['Day']:
+                if "Day" in k['Response']["Dealer"]["SalesHours"]:
+                    for j in k['Response']["Dealer"]["SalesHours"]['Day']:
                         if "closed" in j and j=="true":
                             h1  = j['name'] + ' ' +"closed"
                         elif "open" in j:
                             time =  time + ' '+j['name'] + ' ' +j['open'] + ' '+j['close'] + ' '+h1
             
-                if "Day" in i["ServiceHours"]:
-                    for j in i["ServiceHours"]['Day']:
+                if "Day" in k['Response']["Dealer"]["ServiceHours"]:
+                    for j in k['Response']["Dealer"]["ServiceHours"]['Day']:
                         if "closed" in j and j=="true":
                             h1  = j['name'] + ' ' +"closed"
                         elif "open" in j:
                             time1 = time1 + ' '+j['name'] + ' ' +j['open'] + ' '+j['close'] + ' '+h1
 
                 hours_of_operation = " SalesHours " + time + " ServiceHours " + time1
-                latitude = i['Latitude']
-                longitude = i['Longitude']
+                latitude = k['Response']["Dealer"]['Latitude']
+                longitude = k['Response']["Dealer"]['Longitude']
                 tem_var =[]
                 # tem_var.append("https://www.lincoln.com")
-                store_name.append(i["Name"])
+                store_name.append(k['Response']["Dealer"]["Name"])
                 tem_var.append(street_address)
                 tem_var.append(city)
                 tem_var.append(state)
@@ -199,13 +188,8 @@ def fetch_data():
                 tem_var.append(longitude)
                 tem_var.append(hours_of_operation.replace(" SalesHours  ServiceHours ","<MISSING>") if hours_of_operation else "<MISSING>")
                 tem_var.append("https://www.lincoln.com/dealerships/dealer-details/"+i['urlKey'])
-                store_detail.append(tem_var)
-
-                # if tem_var[2] in addresses1:
-                #     continue
-                # addresses1.append(tem_var[2])  
-                # yield tem_var
-                #print(tem_var)
+                store_detail.append(tem_var)            
+                # print(tem_var)
      
         result_coords.append((latitude, longitude))
         if x+y < MAX_RESULTS:
@@ -218,7 +202,9 @@ def fetch_data():
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         # coord = search.next_coord()   # zip_code = search.next_zip()  
         zip_code = search.next_zip()  
-
+    
+    # print(len(store_name))
+    # print(len(store_detail))
 
     for i in range(len(store_name)):
         store = list()

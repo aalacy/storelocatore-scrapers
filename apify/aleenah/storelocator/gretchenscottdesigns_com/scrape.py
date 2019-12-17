@@ -29,10 +29,18 @@ def fetch_data():
     timing = []
     ids=[]
     page_url=[]
-
-    res = requests.get("https://www.gretchenscottdesigns.com")
+    headers={"accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
+"accept-encoding": "gzip, deflate, br",
+"accept-language": "en-US,en;q=0.9",
+"cache-control": "max-age=0",
+    "sec-fetch-mode": "navigate",
+"sec-fetch-site": "none",
+"sec-fetch-user": "?1",
+"upgrade-insecure-requests": "1",
+"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"}
+    res = requests.get("https://www.gretchenscottdesigns.com",headers=headers)
     soup = BeautifulSoup(res.text, 'html.parser')
-    #print(soup)
+    print(soup)
     sa = soup.find('div', {'class': 'f_block f_block3'}).find_all("a")
 
     for a in sa:
@@ -40,7 +48,7 @@ def fetch_data():
         locs.append(a.text)
 
     for url in page_url:
-        res = requests.get(url)
+        res = requests.get(url,headers=headers)
         soup = BeautifulSoup(res.text, 'html.parser')
         # print(soup)
         sa = soup.find('div', {'class': 'grid12-7'}).find_all("h3")
