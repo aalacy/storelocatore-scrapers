@@ -18,25 +18,24 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        if '<h5>' in line:
+            sname = line.split('<h5>')[1].split('<')[0].strip()
         if '<a class="arrow-link" href="' in line:
             lurl = 'https://www.homegoods.com' + line.split('href="')[1].split('"')[0]
-            locs.append(lurl)
+            locs.append(lurl + '|' + sname)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
-        name = ''
         add = ''
         city = ''
         state = ''
         zc = ''
         phone = ''
-        print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc.split('|')[0])
         website = 'homegoods.com'
         typ = 'Store'
-        r2 = session.get(loc, headers=headers)
+        r2 = session.get(loc.split('|')[0], headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            if '<h1>' in line2:
-                name = line2.split('<h1>')[1].split('<')[0]
             if '<h2>' in line2:
                 g = next(lines)
                 h = next(lines)
@@ -52,9 +51,10 @@ def fetch_data():
         store = loc.rsplit('/',1)[1]
         lat = '<MISSING>'
         lng = '<MISSING>'
+        name = loc.split('|')[1]
         if name == '':
             name = 'Home Goods'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        yield [website, loc.split('|')[0], name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
