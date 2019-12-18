@@ -19,7 +19,7 @@ urls = [
 
 
 def write_output(data):
-    with open('tbnk.csv', mode='w',newline='') as output_file:
+    with open('data.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
