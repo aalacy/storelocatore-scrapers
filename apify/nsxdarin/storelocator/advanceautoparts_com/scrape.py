@@ -144,7 +144,6 @@ def fetch_data():
         while LFound:
             try:
                 LFound = False
-                print('Pulling Location %s...' % loc)
                 typ = 'Advance Auto Parts'
                 r = session.get(loc, headers=headers, timeout=5)
                 name = ''
