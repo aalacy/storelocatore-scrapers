@@ -55,7 +55,7 @@ def fetch_data():
 
     addresses = []
     base_url = "https://www.fresh.com"
-
+    # print(base_url)
     locator_domain = base_url
     location_name = ""
     street_address = ""
@@ -78,7 +78,7 @@ def fetch_data():
     results = soup.find('div',class_='storelocator_results')
     # print(results.prettify())
     for stores in results.find_all('div',class_='card store_card'):
-        
+        store_number ='<MISSING>'
         location_type = stores['data-store-type']
         location_name = stores.find('div',class_='card-header').a['aria-label'].capitalize()
         page_url = "https://www.fresh.com/us/stores"+stores.find('div',class_='card-header').a['href'].capitalize()
@@ -221,7 +221,10 @@ def fetch_data():
 
 
 
-
+        if "17600" in zipp or "10355" in zipp:
+            zipp = "<MISSING>"
+            # print(addr)
+            # print("~~~~~~~~~~~~~~~~~")
         if "Vancouver" in state:
             state = addr[-3].strip()
 

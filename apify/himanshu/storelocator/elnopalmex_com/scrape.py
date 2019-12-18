@@ -27,8 +27,9 @@ def fetch_data():
     base_url = "http://www.elnopalmex.com"
 
     # print("Start ")
-
+ 
     r = requests.post("http://elnopalmex.com/locations.html", headers=headers)
+   
     soup = BeautifulSoup(r.text, "lxml")
 
     # print("second ")
@@ -49,7 +50,7 @@ def fetch_data():
     hours_of_operation = ""
 
     for script in soup.find("table", {"id": "Table_01"}).find_all("a"):
-        page_url = base_url + "/" +str(script["href"])
+        page_url = base_url + "/" + str(script["href"])
 
         if "restaurants" in page_url:
             page_url = base_url + "/" + str(script["href"])
@@ -101,18 +102,36 @@ def fetch_data():
 
                 except Exception as e:
                     # print("Error === "+ str(e))
-                    street_address = full_address_url.split("&q=")[1].split(",")[
-                        0].replace("+", " ")
-                    city = full_address_url.split("&q=")[1].split(",")[
-                        1].replace("+", "")
-                    state = full_address_url.split("&q=")[1].split(
-                        ",")[2].split("&")[0].replace("+", "")
-                    zipp = full_address_url.split(
-                        "&t=")[0].split("+")[-1].replace("+", "")
-                    latitude = full_address_url.split(
-                        "&ll=")[1].split(",")[0]
-                    longitude = full_address_url.split("&ll=")[1].split(",")[
-                        1].split("&")[0]
+                    try:
+                        street_address = full_address_url.split("&q=")[1].split(",")[
+                            0].replace("+", " ")
+                    except:
+                        street_address = "<MISSING>"
+                    try:
+                        city = full_address_url.split("&q=")[1].split(",")[
+                            1].replace("+", "")
+                    except:
+                        city = "<MISSING>"
+                    try:
+                        state = full_address_url.split("&q=")[1].split(
+                            ",")[2].split("&")[0].replace("+", "")
+                    except:
+                        state = "<MISSING>"
+                    try:
+                        zipp = full_address_url.split(
+                            "&t=")[0].split("+")[-1].replace("+", "")
+                    except:
+                        zipp = "<MISSING>"
+                    try:
+                        latitude = full_address_url.split(
+                            "&ll=")[1].split(",")[0]
+                    except:
+                        latitude = "<MISSING>"
+                    try:
+                        longitude = full_address_url.split("&ll=")[1].split(",")[
+                            1].split("&")[0]
+                    except:
+                        longitude = "<MISSING>"
                     location_name = city
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
@@ -124,9 +143,9 @@ def fetch_data():
                 store = [x.encode('ascii', 'ignore').decode(
                     'ascii').strip() if x else "<MISSING>" for x in store]
 
-                #print("data = " + str(store))
-                #print(
-                    # '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print(
+                #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
 

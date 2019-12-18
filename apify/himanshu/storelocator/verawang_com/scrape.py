@@ -10,7 +10,8 @@ from shapely.geometry import mapping, shape
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
@@ -18,14 +19,18 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
+
 def hasNumbers(inputString):
     return any(char.isdigit() for char in inputString)
+
 
 countries = {}
 
 
 def getcountrygeo():
-    data = requests.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
+    data = requests.get(
+        "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
 
     for feature in data["features"]:
         geom = feature["geometry"]
@@ -75,6 +80,7 @@ def fetch_data():
     json_data = r.json()
     # print("rtext === " + str(json_data))
     soup = BeautifulSoup(json_data["locations"], "lxml")
+    # print(soup.prettify())
 
     for script in soup.find_all("div", {"data-js": "openInfoBox"}):
 
@@ -94,8 +100,10 @@ def fetch_data():
         else:
             country_code = "US"
         address_list = list(script.find("address").stripped_strings)
-        phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(" ".join(address_list)))
-        if phone_list :
+
+        phone_list = re.findall(re.compile(
+            ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(" ".join(address_list)))
+        if phone_list:
             phone = phone_list[-1]
         else:
             phone = "<MISSING>"
@@ -103,82 +111,129 @@ def fetch_data():
             street_address = " ".join(address_list[:2]).strip()
             city = address_list[2].split(',')[0].strip()
             state = address_list[2].split(',')[-1].strip()
-            zipp= address_list[3].strip()
-        elif len(address_list) ==5:
-            phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str("".join(address_list[-1])))
+            # zipp = address_list[3].strip()
+        elif len(address_list) == 5:
+            phone_list = re.findall(re.compile(
+                ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str("".join(address_list[-1])))
             if phone_list:
                 street_address = " ".join(address_list[:2]).strip()
                 city = address_list[2].split(',')[0].strip()
                 state = address_list[2].split(',')[-1].strip()
-                zipp= address_list[3].strip()
+                # zipp = address_list[3].strip()
             else:
-                phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str("".join(address_list[-2])))
-                if phone_list :
+                phone_list = re.findall(re.compile(
+                    ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str("".join(address_list[-2])))
+                if phone_list:
                     street_address = address_list[0].strip()
                     city = address_list[1].split(',')[0].strip()
                     state = address_list[1].split(',')[-1].strip()
-                    zipp = address_list[2].strip()
+                    # zipp = address_list[2].strip()
                 else:
                     street_address = address_list[1].strip()
                     city = address_list[2].split(',')[0].strip()
                     state = address_list[2].split(',')[-1].strip()
-                    zipp = address_list[-2].strip()
+                    # zipp = address_list[-2].strip()
         elif len(address_list) == 4:
-            phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str("".join(address_list[-2])))
-            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(address_list[-1]))
+            phone_list = re.findall(re.compile(
+                ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str("".join(address_list[-2])))
+            us_zip_list = re.findall(re.compile(
+                r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(address_list[-1]))
             if "Canada" in " ".join(address_list) or phone_list:
                 street_address = address_list[0].strip()
                 city = address_list[1].split(',')[0].strip()
                 state = address_list[1].split(',')[1].split()[0].strip()
-                zipp= " ".join(address_list[1].split(',')[1].split()[1:]).strip()
+                # zipp = " ".join(address_list[1].split(',')[
+                # 1].split()[1:]).strip()
                 # print(street_address+ "  | "+city +" | "+state+" | "+zipp)
             elif us_zip_list:
                 street_address = " ".join(address_list[:2]).strip()
                 city = address_list[2].split(',')[0].strip()
                 state = address_list[2].split(',')[-1].strip()
-                zipp = address_list[-1].strip()
+                # zipp = address_list[-1].strip()
             else:
                 street_address = address_list[0].strip()
                 city = address_list[1].split(',')[0].strip()
                 state = address_list[1].split(',')[1].strip()
-                zipp = address_list[-2].strip()
-        elif len(address_list) ==3:
+                # zipp = address_list[-2].strip()
+        elif len(address_list) == 3:
             street_address = address_list[0].strip()
-            ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(address_list[1]))
-            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(address_list[1]))
-            if us_zip_list:
-                zipp=us_zip_list[-1]
-            elif ca_zip_list:
-                zipp = ca_zip_list[-1]
-            else:
-                zipp = "<MISSING>"
-            if len(address_list[1].split(','))> 1:
+            # ca_zip_list = re.findall(
+            #     r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(address_list[1]))
+            # us_zip_list = re.findall(re.compile(
+            #     r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(address_list[1]))
+            # if us_zip_list:
+            #     zipp = us_zip_list[-1]
+            # elif ca_zip_list:
+            #     zipp = ca_zip_list[-1]
+            # else:
+            #     zipp = "<MISSING>"
+            if len(address_list[1].split(',')) > 1:
                 city = address_list[1].split(',')[0].strip()
                 state_tag = address_list[1].split(',')[1].strip()
-                if hasNumbers(state_tag) ==  True:
+                if hasNumbers(state_tag) == True:
                     # stata_tag = state
-                    state = " ".join(state_tag.split()[:-1]).replace("V6B","")
-                    
+                    state = " ".join(state_tag.split()[:-1]).replace("V6B", "")
+
                 else:
                     state = state_tag
-                
-                
 
             else:
                 city = address_list[1].split()[0].strip()
                 state = address_list[1].split()[1].strip()
         else:
             pass
+        # if "1888 Coney Island Avenue" in street_address:
+            # print(address_list)
+
+        us_zip_list = re.findall(re.compile(
+            r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(" ".join(address_list)))
+        ca_zip_list = re.findall(
+            r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(" ".join(address_list)))
+        # print(address_list)
+        # print(us_zip_list, ca_zip_list)
+        if us_zip_list:
+            zipp = us_zip_list[-1].strip()
+        elif ca_zip_list:
+            zipp = ca_zip_list[-1].strip()
+        else:
+            # zipp = ''
+            req = requests.post(
+                "https://www.verawang.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=42170ab7d4&load_all=1&layout=1", headers=headers).json()
+            z = []
+            for loc in req:
+                if loc["country"] in ["Canada", "United States"]:
+                    st = loc["street"]
+                    if st in street_address:
+                        # print(st)
+                        if loc["postal_code"] != None:
+                            zip = loc["postal_code"].strip()
+
+                        else:
+                            # print(st)
+                            zip = "<MISSING>"
+
+                        z.append(zip)
+                    else:
+                        zip = "<MISSING>"
+            # print(z)
+            if z != []:
+                zipp = "".join(z)
+            else:
+                zipp = "<MISSING>"
+            # print(street_address, zipp)
+
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
         if str(store[2]) + str(store[-3]) not in addresses:
             addresses.append(str(store[2]) + str(store[-3]))
 
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [x.encode('ascii', 'ignore').decode(
+                'ascii').strip() if x else "<MISSING>" for x in store]
 
-            #print("data = " + str(store))
-            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print(
+            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

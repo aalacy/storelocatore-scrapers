@@ -35,14 +35,15 @@ def fetch_data():
             'ascii').strip()
         store_name.append(name.encode('ascii', 'ignore').decode(
             'ascii').strip())
-        street_address1 = data[1]
-        street_address = street_address1.replace(
-            "(212) 787-9368", "").replace("(212) 580-8300", "").replace("\n", "").replace("\r", "")
-        if "Order" in data[2]:
-            phone = street_address1.replace("\n", "").replace("469 Columbus Ave", "").replace(
-                "469 Columbus Ave", "302 Columbus Ave").replace("\r", "")
-        else:
-            phone = data[2]
+        # street_address1 = data[1]
+        # # print(data)
+        # street_address = street_address1.replace(
+        #     "(212) 787-9368", "").replace("(212) 580-8300", "").replace("\n", "").replace("\r", "")
+        # if "Order" in data[2]:
+        #     phone = street_address1.replace("\n", "").replace("469 Columbus Ave", "").replace(
+        #         "469 Columbus Ave", "302 Columbus Ave").replace("\r", "")
+        # else:
+        #     phone = data[2]
 
         hours = ''
         if len(data) == 7:
@@ -59,17 +60,23 @@ def fetch_data():
         elif len(data) == 6:
             hours = hours + data[4] + ' ' + data[5]
         a = i.find("a", class_="restaurants-buttons")['href'].strip()
-        store_number = i.find("a", class_="restaurants-buttons")['href'].strip().split('/')[-1].replace('store','')
-        
+        store_number = i.find(
+            "a", class_="restaurants-buttons")['href'].strip().split('/')[-1].replace('store', '').strip()
         r_loc = requests.get(a)
         soup_loc = BeautifulSoup(r_loc.text, "lxml")
         details = list(soup_loc.find(
             "div", class_="footer_two").stripped_strings)
         details = [el.replace('\x95', ' ') for el in details]
         # details = [el.replace('\n', ' ') for el in details]
+        # print(details)
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        street_address = details[0].split("\n")[1].strip()
+        # print(street_address)
         city = details[0].split("\n")[-1].split(',')[0].strip()
         state = details[0].split("\n")[-1].split(',')[1].split()[0].strip()
         zipp = details[0].split("\n")[-1].split(',')[1].split()[-1].strip()
+        phone = details[-2].strip()
+        # print(phone)
         # print(city, state, zipp)
 
         tem_var.append(street_address)
