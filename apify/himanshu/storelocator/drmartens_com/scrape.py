@@ -40,16 +40,13 @@ def fetch_data():
     MAX_DISTANCE = 10
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
-
     return_main_object = []
     addresses = []
-
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
         "Accept": "/",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
-
     # it will used in store data.
     locator_domain = "https://www.drmartens.com"
     location_name = ""
@@ -65,19 +62,19 @@ def fetch_data():
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
-
     while zip_code:
         result_coords = []
         #print("zips === " + str(zip_code))
         page_no = 0
-        isFinish = False
-        while isFinish is not True:
+        isFinish = True
+        while isFinish:
             try:
                 r = requests.get(
                     "https://www.drmartens.com/us/en/store-finder?q=+" + str(zip_code) + "&page=" + str(page_no),
                     headers=headers)
                 json_data = r.json()
+                #print(page_no)
+                current_results_len = len(json_data['data'])
                 for address_list in json_data['data']:
                     location_name = address_list['displayName']
                     latitude = address_list['latitude']
@@ -87,32 +84,31 @@ def fetch_data():
                     city = address_list['town'].split(',')[0]
                     state = address_list['town'].split(',')[1]
                     zipp = address_list['postalCode']
-                    hours_of_operation = str(address_list['openings']).replace('{', "").replace('}', "")
+                    page_url = "<MISSING>"
+                    hours_of_operation = str(address_list['openings']).replace('{', "").replace('}', "").replace("-","Close")
+                    result_coords.append((latitude, longitude))
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                             store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+                                store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
                     if store[2] in addresses:
                         continue
                     addresses.append(store[2])
-                    print("data = " + str(store))
-                    print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # print("data = " + str(store))
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     yield  store
                 page_no += 1
             except:
-                isFinish = True
-                continue
-        
+                isFinish = False
+                break
+            
         if current_results_len < MAX_RESULTS:
-            #print("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            #print("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
-
-    # return return_main_object
-
 
 def scrape():
     data = fetch_data()

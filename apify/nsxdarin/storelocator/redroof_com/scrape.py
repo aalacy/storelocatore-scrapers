@@ -25,7 +25,6 @@ def fetch_data():
             locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         if '-CA/' in loc:
             country = 'CA'
         else:

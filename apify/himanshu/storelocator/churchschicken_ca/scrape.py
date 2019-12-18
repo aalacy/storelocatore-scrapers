@@ -8,7 +8,6 @@ import ast
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
@@ -68,6 +67,22 @@ def fetch_data():
                         name  = len1[0]
                         st = len1[1]
                         city = len1[2].replace("ON","")
+                        state_list = re.findall(r' ([A-Z]{2})', str(len1[-1]))
+                        
+                        #  state_list[-1]
+                        # if state_list:
+                        #     state = len1[-1].split(" ")[0]
+                        # else:
+                        #     state = len1[-2].split(" ")[-1]
+
+                        state = len1[-1].replace("L6Y 4M3","ON").split(" ")[0]
+                
+                        # print(state)
+                        # print("line1111111111 ",len1)
+                        # print("statttttttttt ",state)
+                        # print("lllllllllllllllllen ",len1[-1])
+                        # print("state_liststate_list   ",state_list)
+                        
                         ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(len1[3]))
                         if ca_zip_list:
                             zipp = ca_zip_list[-1]
@@ -93,7 +108,7 @@ def fetch_data():
                     tem_var.append(name if name else "<MISSING>")
                     tem_var.append(st)
                     tem_var.append(city)
-                    tem_var.append(state if state else "<MISSING>")
+                    tem_var.append(state.strip().lstrip() if state.strip().lstrip() else "<MISSING>")
                     tem_var.append(zipp)
                     tem_var.append("CA")
                     tem_var.append("<MISSING>")

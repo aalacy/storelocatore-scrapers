@@ -27,7 +27,6 @@ def fetch_data():
             locs.append(lurl + '|' + stype)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
-        print('Pulling Location %s...' % loc.split('|')[0])
         website = 'lululemon.com'
         typ = loc.split('|')[1]
         hours = ''

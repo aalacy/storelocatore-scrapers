@@ -58,8 +58,10 @@ def fetch_data():
         data = "query="+str(zip_code)
         # driver = get_driver()
         # data = '{"query":"'+str("85029")+'"}'
-     
-        r = requests.post('https://www.farmandfleet.com/store-finder/a/find', headers=header, data=data).json()
+        try:
+            r = requests.post('https://www.farmandfleet.com/store-finder/a/find', headers=header, data=data).json()
+        except:
+            continue
         # for loc in data:
         #     print(loc['address1'])
         # print(soup.text.split("window.headerJson")[1].replace(" = ","").replace("};","}"))
