@@ -55,7 +55,6 @@ def fetch_data():
         while CFound:
             try:
                 CFound = False
-                print('Pulling City %s...' % city)
                 coords = []
                 stores = []
                 typ = 'Advance Auto Parts'
