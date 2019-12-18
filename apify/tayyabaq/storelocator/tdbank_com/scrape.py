@@ -103,7 +103,7 @@ def fetch_data():
                 page_url = j
                 location_name = "TD BANK"
                 loc_type = "ATM"
-                country_code = "CA"
+                country_code = "USA"
                 locator_domain = "https://www.td.com"
 
                 new = [locator_domain, page_url,location_name, street, city, state, zip_code, country_code,store_numbr, phn,
