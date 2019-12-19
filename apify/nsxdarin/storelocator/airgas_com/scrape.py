@@ -44,6 +44,9 @@ def fetch_data():
                 store = '<MISSING>'
                 typ = 'BRANCH'
                 website = 'airgas.com'
+                phone = ''
+                lat = ''
+                lng = ''
                 try:
                     city = g.split('>')[1].split(',')[0]
                     state = g.split('&nbsp;')[1]
@@ -67,6 +70,12 @@ def fetch_data():
                     if add != '':
                         if zc == '':
                             zc = '<MISSING>'
+                        if lat == '':
+                            lat = '<MISSING>'
+                        if lng == '':
+                            lng = '<MISSING>'
+                        if phone == '':
+                            phone = '<MISSING>'
                         stores.append(info)
                         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
