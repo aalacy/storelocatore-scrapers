@@ -60,7 +60,7 @@ def fetch_data():
             longitude = c[index]['value']
             result_coords.append((latitude, longitude))
             store = []
-            store.append("https://http://big5sportinggoods.com/")
+            store.append("https://big5sportinggoods.com/")
             store.append(location_name)
             store.append(street_address)
             store.append(city)

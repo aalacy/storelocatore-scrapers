@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import urllib.parse
 import time
 import sgzip
 
@@ -61,7 +60,7 @@ def fetch_data():
         try:
             r = requests.post('https://www.farmandfleet.com/store-finder/a/find', headers=header, data=data).json()
         except:
-            continue
+            continue       
         # for loc in data:
         #     print(loc['address1'])
         # print(soup.text.split("window.headerJson")[1].replace(" = ","").replace("};","}"))
