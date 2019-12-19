@@ -62,6 +62,7 @@ def fetch_data():
                 r = session.get(city, headers=headers, timeout=5)
                 for line in r.iter_lines():
                     if '<div class="LocationName-geo">' in line:
+                        name = name + ' ' + line.split('<div class="LocationName-geo">')[1].split('<')[0].strip()
                         add = line.split('class="c-address-street-1"')[1].split('>')[1].split('<')[0]
                         city = line.split('<span class="c-address-city"')[1].split('>')[1].split('<')[0]
                         try:

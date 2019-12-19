@@ -33,14 +33,29 @@ def parse_geo(url):
 def fetch_data():
     # Your scraper here
     data=[]
+
+    titles=[]
+    names=[]
     driver.get("https://imxpilates.com/studios.php")
     stores = driver.find_elements_by_xpath("//div[contains(@class,'studionewcol')]//p//a[contains(@href,'http://')]")
-    names = [stores[i].get_attribute('href') for i in range(0,len(stores))]
-    names = list(dict.fromkeys(names))
+    for i in range(0,len(stores)):
+       if "coming soon" not in stores[i].text.lower() :
+        names.append(stores[i].get_attribute('href'))
+        titles.append(stores[i].text )
+    
+    
+    print(len(names))
+    print(len(titles))
     count =0
     for j in range(len(names)):
+        #print(names[j])
+        #print(titles[j])
+        #if "coming soon" in titles[j].lower():
+        #    print("contnued")
+        #    continue
         driver.get(names[j])
         time.sleep(5)
+        #print("time")
         page_url = names[j]
         try:
             location_name = driver.current_url.split("branchname=")[1]

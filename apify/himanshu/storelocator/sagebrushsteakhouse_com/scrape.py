@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
+requests.packages.urllib3.disable_warnings()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -11,7 +11,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -20,7 +20,7 @@ def write_output(data):
 def fetch_data():
 
     base_url= "https://www.sagebrushsteakhouse.com/north-carolina"
-    r = requests.get(base_url)
+    r = requests.get(base_url,verify=False)
     soup1= BeautifulSoup(r.text,"lxml")
     
 
@@ -30,11 +30,14 @@ def fetch_data():
     hours =[]
     k1  =soup1.find_all("ul",{"class":"subnavigation"})
     phone =[]
+    page_url = []
     for a in k1:
         a1 = a.find_all("li",{"class":"js-subpage"})
         for link in a1:
             if "KENTUCKY" in link.a.text or "NORTH CAROLINA" in link.a.text or "TENNESSEE" in link.a.text or "VIRGINIA" in link.a.text :
+                page_url1=link.a['href']
                 
+                # print(page_url)
                 r = requests.get(link.a['href'])
                 soup= BeautifulSoup(r.text,"lxml")
                 k = soup.find_all("div",{"id":"ctl01_pSpanDesc","class":"t-edit-helper"})
@@ -48,12 +51,13 @@ def fetch_data():
                             store_name.append("SAGEBRUSH OF".join(new.split("SAGEBRUSH OF")))
                     else:
                         store_name.append(new)
+                        
 
                 for i in k:
-                    
                     p =i.find_all('p')
                     tem_var =[]
                     if p != []:
+                        page_url.append(page_url1)
                         street = (p[1].text)
                         phone.append(p[0].text.replace("PHONE - ",""))
                         city = p[2].text.split(',')[0]
@@ -75,19 +79,21 @@ def fetch_data():
                                 time = (j.text)
                             hours.append(time)
 
-    
+   
     for i in range(len(store_name)):
         store = list()
         store.append("https://www.sagebrushsteakhouse.com")
-        store.append(store_name[i])
+        store.append(store_name[i].encode('ascii', 'ignore').decode('ascii').strip())
         store.extend(store_detail[i])
         store.append("US")
         store.append("<MISSING>")
-        store.append(" ".join(phone[i].split('-')[1:]))
-        store.append("sagebrushsteakhouse")
+        store.append(" ".join(phone[i].split('-')[1:]).encode('ascii', 'ignore').decode('ascii').strip())
         store.append("<MISSING>")
         store.append("<MISSING>")
-        store.append(hours[i])
+        store.append("<MISSING>")
+        store.append(hours[i].encode('ascii', 'ignore').decode('ascii').strip())
+        store.append(page_url[i])
+       
         return_main_object.append(store) 
 
     return return_main_object
