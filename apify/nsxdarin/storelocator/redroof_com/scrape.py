@@ -1,6 +1,7 @@
 import csv
 import urllib2
 import requests
+import os
 
 requests.packages.urllib3.disable_warnings()
 
