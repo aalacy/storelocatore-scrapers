@@ -83,7 +83,7 @@ def fetch_data():
             if len(store_numbr) < 3:
                 store_numbr = "<MISSING>"
 
-            page_url = y
+            page_url = y[0]
             location_name = "TD BANK"
             loc_type = "ATM"
             country_code = "USA"
