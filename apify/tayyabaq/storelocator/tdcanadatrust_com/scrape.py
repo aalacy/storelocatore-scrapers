@@ -5,8 +5,6 @@ import json
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36'}
 
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36'}
-
 r = requests.get('https://www.tdbank.com/net/get12.ashx?longitude=-79.2998&latitude=85.1076&country=CA&locationtypes=3&json=y&searchradius=4000&searchunit=mi&numresults=1900',headers=headers)      
 cont = json.loads(r.content,strict=False)
 l = cont['markers']['marker']
@@ -73,7 +71,6 @@ def fetch_data():
             try:
                 zp =i['address'].split(',')[-1].strip().replace("V7X1KB", "V7X1L4").replace("KOE1T0", "K0E1T0").replace("JOL1NO","J0L1N0")
 
-#                 zp = i['address'].split(',')[-1].strip().replace("V7X1KB", "V7X1L4")
             except Exception as e:
                 zp = "<MISSING>"
 
