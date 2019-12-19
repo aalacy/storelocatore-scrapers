@@ -57,12 +57,14 @@ def fetch_data():
                 name = line2.split('<h1 class="h2">')[1].split('<')[0]
             if '<em class="fa fa-map show-phone info-fa"></em>' in line2:
                 addinfo = line2.split('<em class="fa fa-map show-phone info-fa"></em>')[1].split('</strong>')[0]
-                if 
                 if addinfo.count('<br />') == 2:
                     add = addinfo.split('<br />')[0] + ' ' + addinfo.split('<br />')[1]
                     city = addinfo.split('<br />')[2].split(',')[0]
                     state = addinfo.split('<br />')[2].split(',')[1].strip().split(' ')[0]
-                    zc = addinfo.split('<br />')[2].split(',')[1].strip().split(' ',1)[1]
+                    try:
+                        zc = addinfo.split('<br />')[1].split(',')[1].strip().split(' ',1)[1]
+                    except:
+                        zc = '<MISSING>'
                 if addinfo.count('<br />') == 1:
                     add = addinfo.split('<br />')[0]
                     city = addinfo.split('<br />')[1].split(',')[0]
@@ -75,7 +77,10 @@ def fetch_data():
                     add = addinfo.split('<br />')[0] + ' ' + addinfo.split('<br />')[1]
                     city = addinfo.split('<br />')[3].split(',')[0]
                     state = addinfo.split('<br />')[3].split(',')[1].strip().split(' ')[0]
-                    zc = addinfo.split('<br />')[3].split(',')[1].strip().split(' ',1)[1]
+                    try:
+                        zc = addinfo.split('<br />')[1].split(',')[1].strip().split(' ',1)[1]
+                    except:
+                        zc = '<MISSING>'
                 if ' ' in zc:
                     country = 'CA'
                 else:

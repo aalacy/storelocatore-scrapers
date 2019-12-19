@@ -41,9 +41,9 @@ def fetch_data():
         locs.append(strong.text.strip())
 
     del tex[0]
-    print(tex)
+    #print(tex)
     for t in tex:
-        t=t.replace("xxx-xxxx","")
+        t=t.replace("xxx-xxxx","").replace("xxx-xxx-xxxx","").replace("xxx-","")
         id=re.findall(r'Phone([\d]+)@',t)
         if id==[]:
             id = re.findall(r'Fax([\d]+)@', t)
@@ -79,9 +79,9 @@ def fetch_data():
         te=te.replace(num,"").strip()
         c=re.findall('[A-Z][^A-Z]*',te.split(" ")[-2])[-1]
         s=te.split(" ")[-1]
-        states.append(s)
-        cities.append(c)
-        street.append(te.replace(c,"").replace(s,""))
+        states.append(s.strip())
+        cities.append(c.replace(",","").strip())
+        street.append(re.sub(r"(\w)([A-Z])", r"\1 \2",te.replace(c,"").replace(s,"")).strip().strip(","))
 
 
         #break

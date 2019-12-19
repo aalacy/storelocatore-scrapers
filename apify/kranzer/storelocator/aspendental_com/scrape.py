@@ -48,7 +48,6 @@ class Scrape(base.Spider):
                     i.add_value('location_type', js['@type'])
                     if lat_lng not in self.crawled:
                         self.crawled.add(lat_lng)
-                        print(i)
                         return i
 
     async def _fetch_stores(self, session, urls):

@@ -113,7 +113,7 @@ def fetch_data():
             page_url = "<MISSING>"
             result_coords.append((latitude, longitude))
             store = [locator_domain, location_name, street_address2, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,get_url]
 
             if store[2] in addresses:
                 continue
@@ -122,8 +122,8 @@ def fetch_data():
 
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            #print("data = " + str(store))
-            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
         if current_results_len < MAX_RESULTS:

@@ -33,7 +33,6 @@ class Scrape(base.Spider):
                 lon = coords[0].strip().split(' ')[1]
                 i.add_value('latitude', lat)
                 i.add_value('longitude', lon)
-            print(i)
             return i
 
     async def _fetch_all_states(self, profiles, loop):
