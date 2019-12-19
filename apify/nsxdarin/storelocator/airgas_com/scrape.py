@@ -76,6 +76,8 @@ def fetch_data():
                             lng = '<MISSING>'
                         if phone == '':
                             phone = '<MISSING>'
+                        if city == '':
+                            city = '<MISSING>'
                         stores.append(info)
                         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
