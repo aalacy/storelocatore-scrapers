@@ -1,1 +1,1 @@
-python validate.py data.csv --ignore StreetAddressHasNumber
+python validate.py data.csv --ignore StreetAddressHasNumber --ignore StreetAddressHasStateName
