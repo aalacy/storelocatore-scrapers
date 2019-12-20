@@ -16,31 +16,41 @@ def write_output(data):
                 writer.writerow([unicode(s).encode("utf-8") for s in row])
                 
 def fetch_data():
-    #Variables
-    data=[]; store_no=[];location_name=[];location_type=[];city=[];street_address=[]; state=[]; phone=[]
-    url ="http://www.speedystop.com/mapservice.php?option=locations"
+    # Variables
+    data = [];
+    store_no = [];
+    location_name = [];
+    location_type = [];
+    city = [];
+    street_address = [];
+    state = [];
+    phone = []
+    url = "http://www.speedystop.com/locations.html"
     r = requests.get(url)
     soup = BeautifulSoup(r.content, 'html.parser')
     stores = soup.find_all('td')
-    for i in xrange(0,len(stores),4):
+    for i in xrange(0, len(stores), 4):
         location_name.append(stores[i].get_text())
         store_no.append(stores[i].get_text().split("#")[1])
-    for i in xrange(1,len(stores),4):
-        street_address.append(stores[i].get_text().split(",")[0])
-        state.append(stores[i].get_text().split(",")[1].strip())
-    for i in xrange(2,len(stores),4):
+    for i in xrange(1, len(stores), 4):
+        addr=str(stores[i]).replace("\r\n","").split("<br/>")
+        street_address.append(re.findall(r'">(.*)',addr[0])[0].strip())
+        addr=addr[1].replace("</td>","").split(",")
+        city.append(addr[0].strip())
+        state.append(addr[1].strip())
+    for i in xrange(2, len(stores), 4):
         phone.append(stores[i].get_text())
-    for i in xrange(3,len(stores),4):
-        if stores[i].get_text()!="":
+    for i in xrange(3, len(stores), 4):
+        if stores[i].get_text() != "":
             location_type.append(stores[i].get_text().split()[-1].strip())
         else:
             location_type.append("<MISSING>")
-    for n in range(0,len(location_name)): 
+    for n in range(0, len(location_name)):
         data.append([
             'http://www.speedystop.com',
             location_name[n],
             street_address[n],
-            '<MISSING>',
+            city[n],
             state[n],
             '<MISSING>',
             'US',
@@ -53,8 +63,10 @@ def fetch_data():
         ])
     return data
 
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
