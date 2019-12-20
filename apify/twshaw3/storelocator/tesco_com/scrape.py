@@ -16,7 +16,7 @@ def write_output(data):
 URL_TEMPLATE = 'https://api.tesco.com/tescolocation/v3/locations/search?offset=0&limit=100&sort=near:%22{},{}%22&filter=category:Store%20AND%20isoCountryCode:x-uk&fields=name,geo,openingHours,altIds.branchNumber,contact'
 
 search = sgzip.ClosestNSearch()
-search.initialize(country_codes = ['uk'])
+search.initialize(country_codes = ['gb'])
 
 MAX_RESULTS = 100
 
@@ -109,7 +109,7 @@ def fetch_data():
             city = handle_missing(store['contact']['address']['town'])
             state = '<MISSING>'
             zip_code = handle_missing(store['contact']['address']['postcode'])
-            country_code = 'UK'
+            country_code = 'GB'
             phone = '<MISSING>'
             if len(store['contact']['phoneNumbers']) > 0 and 'number' in store['contact']['phoneNumbers'][0]:
                 phone = handle_missing(store['contact']['phoneNumbers'][0]['number'])

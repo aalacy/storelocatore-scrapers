@@ -3,23 +3,17 @@ import re
 import requests
 import json
 
-urls = [
-    'https://www.tdbank.com/net/get12.ashx?longitude=-127.64762050000002&latitude=53.7266683&country=CA&locationtypes=3&json=y&searchradius=500&searchunit=km&numresults=100',
-    'https://www.tdbank.com/net/get12.ashx?longitude=-116.5765035&latitude=53.9332706&country=CA&locationtypes=3&json=y&searchradius=500&searchunit=km&numresults=100',
-    'https://www.tdbank.com/net/get12.ashx?longitude=-98.81387619999998&latitude=53.7608608&country=CA&locationtypes=3&json=y&searchradius=500&searchunit=km&numresults=100',
-    'https://www.tdbank.com/net/get12.ashx?longitude=-66.4619164&latitude=46.56531629999999&country=CA&locationtypes=3&json=y&searchradius=500&searchunit=km&numresults=100',
-    'https://www.tdbank.com/net/get12.ashx?longitude=-57.66043639999998&latitude=53.1355091&country=CA&locationtypes=3&json=y&searchradius=500&searchunit=km&numresults=100',
-    'https://www.tdbank.com/net/get12.ashx?longitude=-63.74431100000004&latitude=44.68198659999999&country=CA&locationtypes=3&json=y&searchradius=500&searchunit=km&numresults=100',
-    'https://www.tdbank.com/net/get12.ashx?longitude=-85.32321400000001&latitude=51.25377499999999&country=CA&locationtypes=3&json=y&searchradius=500&searchunit=km&numresults=100',
-    'https://www.tdbank.com/net/get12.ashx?longitude=-63.416813599999955&latitude=46.510712&country=CA&locationtypes=3&json=y&searchradius=500&searchunit=km&numresults=100',
-    'https://www.tdbank.com/net/get12.ashx?longitude=-71.2079809&latitude=46.8138783&country=CA&locationtypes=3&json=y&searchradius=500&searchunit=km&numresults=100',
-    'https://www.tdbank.com/net/get12.ashx?longitude=-106.4508639&latitude=52.9399159&country=CA&locationtypes=3&json=y&searchradius=500&searchunit=km&numresults=100',
-    'https://www.tdbank.com/net/get12.ashx?longitude=-135&latitude=64.2823274&country=CA&locationtypes=3&json=y&searchradius=500&searchunit=km&numresults=100'
-]
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36'}
 
+r = requests.get('https://www.tdbank.com/net/get12.ashx?longitude=-79.2998&latitude=85.1076&country=CA&locationtypes=3&json=y&searchradius=4000&searchunit=mi&numresults=1900',headers=headers)      
+cont = json.loads(r.content,strict=False)
+l = cont['markers']['marker']
+
+addresses=[]
+data_list=[]
 
 def write_output(data):
-    with open('data.csv', mode='w',newline='') as output_file:
+    with open('data.csv', mode='w',newline='',encoding='utf-8') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -29,76 +23,73 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-data_list = []
-addresses = []
-
-
 def fetch_data():
-    try:
-        for j in urls:
-            response = requests.request('GET', j, verify=True)
-            cont = response.json() #json.loads(html.content)
-            l = cont.get('markers', {}).get('marker', [])
-
-            for i in l:
-                if i.get('address') in addresses:
-                    continue
-                addresses.append(i.get('address'))
-                lat = i.get('lat', "<MISSING>")
-                lng = i.get('lng', "<MISSING>")
-                phn = i.get('phoneNo', "<MISSING>")
-                if len(phn) < 3:
-                    phn = "<MISSING>"
-                hr = []
-                hoo = i.get('hours', "<MISSING>")
-                for key, value in hoo.items():
-                    n = key + " " + value
-                    hr.append(n)
+    try:    
+        for i in l:
+            if i.get('address') in addresses:
+                continue
+            addresses.append(i.get('address'))
+            lat = i.get('lat', "<MISSING>")
+            lng = i.get('lng', "<MISSING>")
+            phn = i.get('phoneNo', "<MISSING>")
+            if len(phn) < 3:
+                phn = "<MISSING>"
+            hr=[]
+            hoo = i.get('hours', "<MISSING>")
+            for key, value in hoo.items():
+                n = key + " " + value
+                hr.append(n)
                 hour = "| ".join(hr)
-                if len(hour) < 3:
-                    hour = "<MISSING>"
 
-                try:
-                    l_type = i['branchtype']
-                    loc_type = re.sub(r'(((?<=\s)|^|-)[a-z])', lambda x: x.group().upper(), l_type)
-                    if loc_type == '':
-                        loc_type = "ATM"
-                except Exception as e:
-                    loc_type = "<MISSING>"
-                try:
-                    street = i['address'].split(',')[0]
-                except Exception as e:
-                    street = "<MISSING>"
-                try:
-                    city = i['address'].split(',')[1].strip()
-                except Exception as e:
-                    city = "<MISSING>"
-                try:
-                    state = i['address'].split(',')[2].strip().replace("PQ", "QC")
+            if len(hour) < 3:
+                hour = "<MISSING>"
+                
+            try:
+                l_type = i['branchtype']
+                loc_type = re.sub(r'(((?<=\s)|^|-)[a-z])', lambda x: x.group().upper(), l_type)
+                if loc_type == '':
+                    loc_type = "ATM"
+            except Exception as e:
+                loc_type = "<MISSING>"
 
-                except Exception as e:
-                    state = "<MISSING>"
-                try:
-                    zp = i['address'].split(',')[-1].strip().replace("V7X1KB", "V7X1L4")
-                except Exception as e:
-                    zp = "<MISSING>"
-                page_url = j
-                location_name = "TD Canada Trust"
-                country_code = "CA"
-                locator_domain = "https://www.td.com"
-                store_numbr = "<MISSING>"
-                new = [locator_domain, page_url,location_name, street, city, state, zp, country_code,store_numbr, phn,
-                     loc_type, lat, lng, hour]
-                data_list.append(new)
+            try:
+                street = i['address'].split(',')[0]
+            except Exception as e:
+                street = "<MISSING>"
+
+            try:
+                city = i['address'].split(',')[-3].strip()
+            except Exception as e:
+                city = "<MISSING>"
+
+            try:
+                state = i['address'].split(',')[-2].strip().replace("PQ", "QC")
+
+            except Exception as e:
+                state = "<MISSING>"
+            
+            try:
+                zp =i['address'].split(',')[-1].strip().replace("V7X1KB", "V7X1L4").replace("KOE1T0", "K0E1T0").replace("JOL1NO","J0L1N0")
+
+            except Exception as e:
+                zp = "<MISSING>"
+
+            page_url = y[0]
+            location_name = "TD CANADA TRUST"
+            country_code = "CA"
+            locator_domain = "https://www.td.com"
+            store_numbr = "<MISSING>"
+
+            new = [locator_domain, page_url,location_name, street, city, state, zp, country_code,store_numbr, phn,
+                 loc_type, lat, lng, hour]
+            data_list.append(new)
         return data_list
 
     except Exception as e:
         print(str(e))
 
-
 def scrape():
     data=fetch_data()
     write_output(data)
-
 
 scrape()

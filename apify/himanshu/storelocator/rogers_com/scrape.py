@@ -53,10 +53,12 @@ def fetch_data():
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
-    page_url = "<MISSING>"
+    # page_url = "<MISSING>"
+
+
     while coord:
         result_coords = []
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
         # try:
@@ -69,7 +71,6 @@ def fetch_data():
         }
         # print("data ===" + data)
         try:
-
             r= requests.post ('https://1-dot-rogers-store-finder.appspot.com/searchRogersStoresService',data = data,headers = headers)
         except:
             continue
@@ -79,14 +80,14 @@ def fetch_data():
         # print(json_data['features'])
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         features_len = len(json_data['features'])
-        #print(features_len)
+        # print(features_len)
         if json_data['features'] != []:
-
             for z in json_data['features']:
                 location_name = z['properties']['LocationName'] + "-" +z['properties']['City']
-
+                
                 street_address = z['properties']['Address2'] +" " +z['properties']['Intersection']+ " "+z['properties']['AddressOrIntersection']
-
+                page_url = "https://www.rogers.com/business/contact-us/store-locator?store="+z['properties']['SCID']
+                # print(page_url)
                 city = z['properties']['City']
 
                 state = z['properties']['StateOrProvince']
@@ -98,7 +99,7 @@ def fetch_data():
                 if us_zip_list:
                     zipp = us_zip_list[0]
                     country_code = "US"
-                #print(zipp)
+                # print(zipp)
 
 
                 phone = z['properties']['Business_Phone']
@@ -138,8 +139,8 @@ def fetch_data():
                 # print(location_name+" | "+street_address + " | " + city + " | " +state +" | "+ zipp + " | "+phone+"  | "+hours_of_operation + " | "+ latitude+" | "+ longitude +" | "+store_number)
 
 
-                #print("data===="+str(store))
-                #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                # print("data===="+str(store))
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
                 # return_main_object.append(store)
                 yield store

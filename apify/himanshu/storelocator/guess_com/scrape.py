@@ -20,7 +20,7 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url = "https://www.guess.com/"
+    base_url = "https://shop.guess.com/en/storelocator//"
     return_main_object = []
     addresses = []
     search = sgzip.ClosestNSearch()
@@ -41,55 +41,65 @@ def fetch_data():
 
     soup = BeautifulSoup(r.text,"lxml")
 
-    for x in soup.find('ul',{'class':'custom-map-list'}).find_all('a'):
+    for i in soup.find('ul',{'class':'custom-map-list'}).find_all('a'):
 
-        r = requests.get(x['href'], headers=headers)
-        soup = BeautifulSoup(r.text, "lxml")
-        for x in soup.find('ul',{'class':'custom-map-list'}).find_all('a'):
-            r = requests.get(x['href'], headers=headers)
-            soup = BeautifulSoup(r.text, "lxml")
-            for x in soup.find('ul', {'class': 'custom-map-list'}).find_all('li'):
+        r1 = requests.get(i['href'], headers=headers)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        for j in soup1.find('ul',{'class':'custom-map-list'}).find_all('a'):
+            r2 = requests.get(j['href'], headers=headers)
+            soup2 = BeautifulSoup(r2.text, "lxml")
+            for k in soup2.find('ul', {'class': 'custom-map-list'}).find_all('li'):
+                r3 = requests.get(k.find('a')['href'], headers=headers)
+                soup3 = BeautifulSoup(r3.text, "lxml")
+                if soup3.find('div',{'class':'location-name-wrap'}) !=None:
+                    location_name =  soup3.find('span',{'class':'location-name capitalize underline'}).text
+                    phone = soup3.find('a',{'class':'phone'}).text.strip()
+                    latitude = soup3.find('a',{'class':'directions'})['href'].split(',')[-2].split('=')[-1]
+                    longitude = soup3.find('a',{'class':'directions'})['href'].split(',')[-1]
+                    hours_of_operation = re.sub(r"\s+", " ", soup3.find('div',{'class':'hours'}).text)
+                    page_url =  k.find('a')['href']
 
-                r = requests.get(x.find('a')['href'], headers=headers)
-                soup = BeautifulSoup(r.text, "lxml")
+                    if len(list(soup3.find("p",{"class":"address"}).stripped_strings)) == 3:
+                    
+                        street_address = ' '.join(list(soup3.find("p",{"class":"address"}).stripped_strings)[0:2])
+                        city = list(soup3.find("p",{"class":"address"}).stripped_strings)[-1].split(',')[0]
+                        state = list(soup3.find("p",{"class":"address"}).stripped_strings)[-1].split(',')[1].split(' ')[1]
+                        zip = list(soup3.find("p",{"class":"address"}).stripped_strings)[-1].split(',')[1].split(' ')[2]
+                    else:
+                        street_address = ''.join(list(soup3.find("p",{"class":"address"}).stripped_strings)[0])
+                        city = list(soup3.find("p",{"class":"address"}).stripped_strings)[-1].split(',')[0]
+                        state = list(soup3.find("p",{"class":"address"}).stripped_strings)[-1].split(',')[1].split(' ')[1]
+                        zip = list(soup3.find("p",{"class":"address"}).stripped_strings)[-1].split(',')[1].split(' ')[2]
 
+                    ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zip))
+                    us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zip))
+
+                    if ca_zip_list:
+                        zip = ca_zip_list[-1]
+                        country_code = "CA"
+                    if us_zip_list:
+                        zip = us_zip_list[-1]
+                        country_code = "US"
+
+
+                else:
+                    location_name = soup2.find("span",{"class":"location-name uppercase"}).text
+                    street_address =  list(soup2.find("div",{"class":"address"}).stripped_strings)[0]
+                    city = list(soup2.find("div",{"class":"address"}).stripped_strings)[1].split(',')[0]
+                    state = list(soup2.find("div",{"class":"address"}).stripped_strings)[1].split(',')[1].split(' ')[1]
+                    zip = list(soup2.find("div",{"class":"address"}).stripped_strings)[1].split(',')[1].split(' ')[2]
+                    phone = "<MISSING>"
+                    hours_of_operation = "<MISSING>"
+                    page_url = j['href']
+                  
+                    latitude = soup2.find("div",{"class":"map-list-item-link flex space-between mt-10"}).find('a')['href'].split(',')[-2].split('=')[-1]
+                    longitude = soup2.find("div",{"class":"map-list-item-link flex space-between mt-10"}).find('a')['href'].split(',')[-1]
+                
                 locator_domain = base_url
-
-                location_name =  soup.find('span',{'class':'location-name'}).text;
-                street_address = soup.find('meta',{'name':'address'})['content'].strip().split(',')[0];
-
-                city = soup.find('meta',{'name':'city'})['content'].strip()
-                state =  soup.find('meta',{'name':'state'})['content'].strip().split(',')[0]
-                zip =  soup.find('meta',{'name':'zip'})['content'].strip()
-
-                ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zip))
-                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zip))
-
-                if ca_zip_list:
-                    zip = ca_zip_list[-1]
-                    country_code = "CA"
-                if us_zip_list:
-                    zip = us_zip_list[-1]
-                    country_code = "US"
-
-
                 store_number = ''
-                page_url =  x.find('a')['href']
-                phone = soup.find('a',{'class':'phone'}).text.strip()
-
+               
                 location_type = '<MISSING>'
-                latitude = soup.find('a',{'class':'directions'})['href'].split(',')[-2].split('=')[-1]
-
-
-                longitude = soup.find('a',{'class':'directions'})['href'].split(',')[-1]
-
-
-
-                hours_of_operation = re.sub(r"\s+", " ", soup.find('div',{'class':'hours'}).text).strip().replace('Thu Holiday Hours','Thu').replace('Holiday','').replace('Hours ','')
-                print(hours_of_operation)
-
-
-
+               
                 if street_address in addresses:
                     continue
 
@@ -110,7 +120,7 @@ def fetch_data():
                 store.append(longitude if longitude else '<MISSING>')
                 store.append(hours_of_operation if hours_of_operation else '<MISSING>')
                 store.append(page_url if page_url else '<MISSING>')
-                #print("===", str(store))
+                # print("===", str(store))
                 # return_main_object.append(store)
                 yield store
 
