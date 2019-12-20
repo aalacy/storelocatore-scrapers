@@ -139,7 +139,7 @@ def fetch_data():
             store_name.append(add.text)
         
         for i in range(len(address2)):
-            locator_domain = ("https://www.officedepot.com")
+            locator_domain = ("https://www.officemax.com")
             location_name = store_name[i] if store_name[i] else "<MISSING>" 
             street_address = (address2[i])
             city = (city2[i])

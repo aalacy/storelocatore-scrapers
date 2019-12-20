@@ -30,7 +30,6 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(include_canadian_fsas = True)
     # print("====")
-
     MAX_RESULTS = 51
     MAX_DISTANCE = 50
     current_results_len = 0 
@@ -43,6 +42,7 @@ def fetch_data():
     }
     coord = search.next_zip()
     while coord:
+        # print("================",coord)
         count = 0
         result_coords =[]
         locator_domain = "https://publicstoragecanada.com"
@@ -63,12 +63,16 @@ def fetch_data():
         # print("==============",str(search.current_zip))
         # "N4W"
         # data1 = "useCookies=1&lang=&q=A1A+1A1&searchBranch=1&searchATM=1"
-        data = 'action=search_locations_ajax&location=+'+str(search.current_zip)
+        data = 'action=search_locations_ajax&location=+'+str(coord)
         try:
             data = requests.post("https://publicstoragecanada.com/wp-admin/admin-ajax.php",headers=headers,data=data).json()
         except:
-            continue
-        current_results_len = len(data['data'])
+            pass
+        # except:
+        #     continue
+        if type(len(data['data']))==int:
+            current_results_len = len(data['data'])
+            
         for loc in data['data']:
             # soup= BeautifulSoup(loc["address"],"lxml")
             city_state_zipp = loc["address"].split(",<br/>")[-1]
