@@ -18,6 +18,7 @@ def write_output(data):
 def fetch_data():
     url = 'https://www.hibbett.com/storedirectory'
     states = []
+    ids = []
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
         if '<a href="/storedirectory?state=' in line:
@@ -41,7 +42,7 @@ def fetch_data():
                 add = ''
                 city = ''
                 state = ''
-                store = ''
+                store = loc.rsplit('/',1)[1]
                 lat = ''
                 lng = ''
                 hours = ''
@@ -56,8 +57,6 @@ def fetch_data():
                 for line4 in lines:
                     if '<title>' in line4 and name == '':
                         name = line4.split('<title>')[1].split(' |')[0]
-                    if 'type="hidden" name="storeid" value="' in line4:
-                        store = line4.split('type="hidden" name="storeid" value="')[1].split('"')[0]
                     if '<div itemprop="streetAddress">' in line4:
                         g = next(lines)
                         add = g.replace('\r','').replace('\t','').replace('\n','').strip()
@@ -80,7 +79,13 @@ def fetch_data():
                             hours = hrs
                         else:
                             hours = hours + '; ' + hrs
-                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                if phone == '':
+                    phone = '<MISSING>'
+                if hours == '':
+                    hours = '<MISSING>'
+                if store not in ids:
+                    ids.append(store)
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
