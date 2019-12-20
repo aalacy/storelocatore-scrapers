@@ -47,46 +47,55 @@ def fetch_data():
         print('Pulling Location %s...' % loc)
         website = 'smartstyle.com'
         typ = 'Salon'
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            if '<h2 class="hidden-xs salontitle_salonlrgtxt">' in line2:
-                name = line2.split('<h2 class="hidden-xs salontitle_salonlrgtxt">')[1].split('<')[0]
-            if 'var salonDetailLat = "' in line2:
-                lat = line2.split('var salonDetailLat = "')[1].split('"')[0]
-            if 'var salonDetailLng = "' in line2:
-                lng = line2.split('var salonDetailLng = "')[1].split('"')[0]
-            if 'itemprop="streetAddress">' in line2:
-                add = line2.split('itemprop="streetAddress">')[1].split('<')[0]
-            if '<span  itemprop="addressLocality">' in line2:
-                city = line2.split('<span  itemprop="addressLocality">')[1].split('<')[0]
-            if '<span itemprop="addressRegion">' in line2:
-                state = line2.split('<span itemprop="addressRegion">')[1].split('<')[0]
-            if '"postalCode">' in line2:
-                zc = line2.split('"postalCode">')[1].split('<')[0]
-            if 'id="sdp-phn" value="' in line2:
-                phone = line2.split('id="sdp-phn" value="')[1].split('"')[0]
-            if "sc_secondLevel = '/content/smartstyle/www/en-us/locations/" in line2:
-                stabb = line2.split("sc_secondLevel = '/content/smartstyle/www/en-us/locations/")[1].split("'")[0]
-        if stabb in canada:
-            country = 'CA'
-        if add != '':
-            r3 = session.get('https://info3.regiscorp.com/salonservices/siteid/6/salon/' + store,headers=headers)
-            for line3 in r3.iter_lines():
-                if '{"days":"' in line3:
-                    items = line3.split('{"days":"')
-                    for item in items:
-                        if '"hours":' in item:
-                            hrs = item.split('"')[0] + ': ' + item.split('"open":"')[1].split('"')[0] + '-' + item.split('"close":"')[1].split('"')[0]
-                            if hours == '':
-                                hours = hrs
-                            else:
-                                hours = hours + '; ' + hrs
-            if phone == '':
-                phone = '<MISSING>'
-            if hours == '':
-                hours = '<MISSING>'
-            state = state.replace('&nbsp;','')
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        PFound = True
+        retries = 0
+        while PFound:
+            try:
+                PFound = False
+                retries = retries + 1
+                r2 = session.get(loc, headers=headers, timeout=5)
+                for line2 in r2.iter_lines():
+                    if '<h2 class="hidden-xs salontitle_salonlrgtxt">' in line2:
+                        name = line2.split('<h2 class="hidden-xs salontitle_salonlrgtxt">')[1].split('<')[0]
+                    if 'var salonDetailLat = "' in line2:
+                        lat = line2.split('var salonDetailLat = "')[1].split('"')[0]
+                    if 'var salonDetailLng = "' in line2:
+                        lng = line2.split('var salonDetailLng = "')[1].split('"')[0]
+                    if 'itemprop="streetAddress">' in line2:
+                        add = line2.split('itemprop="streetAddress">')[1].split('<')[0]
+                    if '<span  itemprop="addressLocality">' in line2:
+                        city = line2.split('<span  itemprop="addressLocality">')[1].split('<')[0]
+                    if '<span itemprop="addressRegion">' in line2:
+                        state = line2.split('<span itemprop="addressRegion">')[1].split('<')[0]
+                    if '"postalCode">' in line2:
+                        zc = line2.split('"postalCode">')[1].split('<')[0]
+                    if 'id="sdp-phn" value="' in line2:
+                        phone = line2.split('id="sdp-phn" value="')[1].split('"')[0]
+                    if "sc_secondLevel = '/content/smartstyle/www/en-us/locations/" in line2:
+                        stabb = line2.split("sc_secondLevel = '/content/smartstyle/www/en-us/locations/")[1].split("'")[0]
+                if stabb in canada:
+                    country = 'CA'
+                if add != '':
+                    r3 = session.get('https://info3.regiscorp.com/salonservices/siteid/6/salon/' + store,headers=headers)
+                    for line3 in r3.iter_lines():
+                        if '{"days":"' in line3:
+                            items = line3.split('{"days":"')
+                            for item in items:
+                                if '"hours":' in item:
+                                    hrs = item.split('"')[0] + ': ' + item.split('"open":"')[1].split('"')[0] + '-' + item.split('"close":"')[1].split('"')[0]
+                                    if hours == '':
+                                        hours = hrs
+                                    else:
+                                        hours = hours + '; ' + hrs
+                    if phone == '':
+                        phone = '<MISSING>'
+                    if hours == '':
+                        hours = '<MISSING>'
+                    state = state.replace('&nbsp;','')
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            except:
+                if retries <= 3:
+                    PFound = True
 
 def scrape():
     data = fetch_data()
