@@ -76,7 +76,7 @@ def fetch_data():
         try:
             r2 = session.get(loc, headers=headers, verify=False)
         except ConnectionError:
-            pass
+            continue
         for line2 in r2.iter_lines():
             if 'name="og:title" content="' in line2:
                 try:
