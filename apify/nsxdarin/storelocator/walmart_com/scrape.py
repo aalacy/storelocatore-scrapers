@@ -65,6 +65,8 @@ def fetch_data():
                 phone = line.split(',"phone":"')[1].split('"')[0]
         if 'Supercenter' in name:
             typ = 'Supercenter'
+        if hours == '':
+            hours = '<MISSING>'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
