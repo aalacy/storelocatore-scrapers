@@ -38,15 +38,14 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
-        # print("zip_code === " + zip_code)
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("zip_code === " + zip_code)
 
         location_url = "https://www.deadriver.com/LocationFinder.asmx/GetLocation"
         # print("location url = "+ location_url +'{"zipCode":"' + zip_code + '"}')
-        try:
-            r = requests.post(location_url, headers=headers, data='{"zipCode":"' + zip_code + '"}')
-        except:
-            continue
+
+        r = requests.post(location_url, headers=headers, data='{"zipCode":"' + zip_code + '"}')
+
         # print("text_data ==== " + str(r.text))
 
         soup = BeautifulSoup(r.text, "lxml")
@@ -79,6 +78,7 @@ def fetch_data():
 
         if current_results_len > 0:
             for location in json_data["d"]:
+               # print(location)
                 street_address = location["AddressOne"] + " " + location["AddressTwo"]
                 city = location["City"]
                 zipp = location["ZipCode"]
@@ -102,8 +102,8 @@ def fetch_data():
 
                     # return_main_object.append(store)
                     yield store
-                    # print("data = " + str(store))
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    print("data = " + str(store))
+                    print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         if current_results_len < MAX_RESULTS:
             # print("max distance update")

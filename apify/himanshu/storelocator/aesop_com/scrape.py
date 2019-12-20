@@ -69,8 +69,9 @@ def fetch_data():
         # print('location_url ==' +location_url))
         try:
             r = requests.get(location_url, headers=headers)
+            print(location_url +'true')
         except:
-            continue
+            print(location_url +'false')
         soup = BeautifulSoup(r.text, "lxml")
         k = json.loads(soup.text)['items']
         current_results_len = len(k)
