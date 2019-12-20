@@ -46,7 +46,7 @@ def fetch_data():
         city = handle_missing(store['town'])
         state = '<MISSING>'
         zip_code = handle_missing(store['postcode'])
-        country_code = 'UK'
+        country_code = 'GB'
         store_number = handle_missing(store['id'])
         phone = handle_missing(store['phone'])
         location_type = handle_missing(store['type'])
