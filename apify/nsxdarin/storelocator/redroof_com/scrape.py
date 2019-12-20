@@ -4,6 +4,7 @@ import requests
 import os
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+from requests.exceptions import ConnectionError
 
 requests.packages.urllib3.disable_warnings()
 
@@ -71,7 +72,11 @@ def fetch_data():
         lng = '<MISSING>'
         hours = '<MISSING>'
         store = loc.rsplit('/',1)[1]
-        r2 = session.get(loc, headers=headers, verify=False)
+        r2 = None
+        try:
+            r2 = session.get(loc, headers=headers, verify=False)
+        except ConnectionError:
+            pass
         for line2 in r2.iter_lines():
             if 'name="og:title" content="' in line2:
                 try:
