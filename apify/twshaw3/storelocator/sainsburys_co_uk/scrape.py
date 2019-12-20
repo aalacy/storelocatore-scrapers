@@ -67,7 +67,7 @@ def fetch_data():
             state = '<MISSING>'
             zip_code = handle_missing(store['contact']['post_code'])
             country_code = handle_missing(store['contact']['country'])
-            country_code = 'UK'
+            country_code = 'GB'
             store_number = store['code']
             phone = handle_missing(store['contact']['telephone'])
             location_type = handle_missing(store['store_type'])
