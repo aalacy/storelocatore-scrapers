@@ -37,9 +37,10 @@ def fetch_data():
         y = coord[1]
         #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:70.0) Gecko/20100101 Firefox/70.0',
             "Origin": "https://www.choicehotels.com",
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+            "content-type": "application/x-www-form-urlencoded",
+            "cookie":'',
         }
         data = "adults=1&checkInDate=" + str(today) + "&checkOutDate=" + str(tomorrow) + "&lat=" + str(x) + "&lon=" + str(y) + "&minors=0&optimizeResponse=image_url&platformType=DESKTOP&preferredLocaleCode=en-us&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100&siteName=us&siteOpRelevanceSortMethod=ALGORITHM_B"
         time.sleep(2)
