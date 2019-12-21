@@ -54,7 +54,7 @@ def fetch_data():
     }
 
     # it will used in store data.
-    locator_domain = "https://www.drmartens.com"
+    locator_domain = ""
     location_name = ""
     street_address = "<MISSING>"
     city = "<MISSING>"

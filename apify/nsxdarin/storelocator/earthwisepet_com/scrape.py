@@ -1,0 +1,82 @@
+import csv
+import urllib2
+import requests
+
+requests.packages.urllib3.disable_warnings()
+
+session = requests.Session()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        for row in data:
+            writer.writerow(row)
+
+def fetch_data():
+    url = 'https://www.earthwisepet.com/sitemap.xml'
+    locs = []
+    r = session.get(url, headers=headers, verify=False)
+    for line in r.iter_lines():
+        if '<loc>http://earthwisepet.com/stores/view/' in line:
+            items = line.split('<loc>http://earthwisepet.com/stores/view/')
+            for item in items:
+                if '</priority></url><url>' in item:
+                    locs.append('http://earthwisepet.com/stores/view/' + item.split('<')[0])
+    print('Found %s Locations.' % str(len(locs)))
+    for loc in locs:
+        name = ''
+        add = ''
+        city = ''
+        state = ''
+        store = '<MISSING>'
+        lat = ''
+        lng = ''
+        hours = ''
+        country = 'US'
+        zc = ''
+        phone = ''
+        print('Pulling Location %s...' % loc)
+        website = 'earthwisepet.com'
+        typ = 'Store'
+        r2 = session.get(loc, headers=headers)
+        for line2 in r2.iter_lines():
+            if '<h3 tabindex="0" class="desc-store">' in line2:
+                name = line2.split('<h3 tabindex="0" class="desc-store">')[1].split('<')[0]
+            if '<a tabindex="0" href="https://maps.google.com/?q=' in line2:
+                addinfo = line2.split('<a tabindex="0" href="https://maps.google.com/?q=')[1].split('"')[0].strip()
+                if addinfo.count(',') == 3:
+                    add = addinfo.split(',')[0].strip()
+                    city = addinfo.split(',')[1].strip()
+                    state = addinfo.split(',')[2].strip()
+                    zc = addinfo.split(',')[3].strip()
+                else:
+                    add = addinfo.split(',')[0].strip() + ' ' + addinfo.split(',')[1].strip()
+                    city = addinfo.split(',')[2].strip()
+                    state = addinfo.split(',')[3].strip()
+                    zc = addinfo.split(',')[4].strip()
+            if 'href="tel:' in line2:
+                phone = line2.split('href="tel:')[1].split('"')[0].strip()
+            if 'google-map" data-lng=' in line2:
+                lat = line2.split("data-lat='")[1].split("'")[0]
+                lng = line2.split("data-lng='")[1].split("'")[0]
+            if 'week-nm">' in line2:
+                if hours == '':
+                    hours = line2.split('week-nm">')[1].split('<')[0]
+                else:
+                    hours = hours + '; ' + line2.split('week-nm">')[1].split('<')[0]
+            if 'timing">' in line2:
+                hours = hours + ': ' + line2.split('timing">')[1].split('<')[0]
+        if phone == '':
+            phone = '<MISSING>'
+        if hours == '':
+            hours = '<MISSING>'
+        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()

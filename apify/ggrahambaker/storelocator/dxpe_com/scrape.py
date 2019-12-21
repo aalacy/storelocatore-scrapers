@@ -6,7 +6,7 @@ import time
 
 def get_driver():
     options = Options()
-    options.add_argument('--headless')
+    #options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     return webdriver.Chrome('chromedriver', options=options)
@@ -17,7 +17,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -51,20 +51,24 @@ def peel_info(driver, locator_domain, all_store_data, dup_list):
     locs = main.find_elements_by_css_selector('div.results_entry')
 
     for loc in locs:
-        #print(loc.text.split('\n'))
+        
         content = loc.text.split('\n')
-        #print(len(content))
-        location_name = '<MISSING>'
-        type_arr = content[0].split(' ')
-        #print(len(type_arr))
-        if len(type_arr) == 6:
-            location_type = type_arr[0] + ' ' + type_arr[1] + ' ' + type_arr[4] + ' ' + type_arr[5]
-        elif len(type_arr) == 5:
-            location_type = type_arr[0] + ' ' + type_arr[3] + ' ' + type_arr[4]
+        if 'Center' not in content[2]:
+            if 'Office' in content[2]:
+                off = 0
+                location_type = content[2]
+            else:
+                off = -1
+                location_type = '<MISSING>'
+            
         else:
-            location_type = '<MISSING>'
+            off = 0
+            location_type = content[2]
+        
+        location_name = '<MISSING>'
+        
 
-        street_address = content[1]
+        street_address = content[3 + off]
         if 'Carretera a Nogales' in street_address:
             continue
         if street_address == '0':
@@ -77,8 +81,10 @@ def peel_info(driver, locator_domain, all_store_data, dup_list):
             state = 'British Columbia'
             zip_code = ' V1A 2J5'
         else:
-            city, state, zip_code, country_code = addy_ext(content[2])
-        phone_number = content[3]
+            city, state, zip_code, country_code = addy_ext(content[4 + off])
+        
+        
+        phone_number = content[5 + off]
         if 'Email' in phone_number:
             phone_number = '<MISSING>'
 
@@ -87,11 +93,12 @@ def peel_info(driver, locator_domain, all_store_data, dup_list):
         lat = '<MISSING>'
         longit = '<MISSING>'
         hours = '<MISSING>'
+        page_url = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                         store_number, phone_number, location_type, lat, longit, hours ]
+                         store_number, phone_number, location_type, lat, longit, hours, page_url ]
         all_store_data.append(store_data)
-        print()
+        
 
 
 def fetch_data():
@@ -111,7 +118,7 @@ def fetch_data():
     for zip_search in zip_array:
         search_bar = driver.find_element_by_css_selector('input#autocomplete')
         search_bar.clear()
-        print(zip_search)
+        
         search_bar.send_keys(zip_search)
 
         sub = driver.find_element_by_css_selector('input#addressSubmit')

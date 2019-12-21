@@ -48,10 +48,10 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         r = requests.get("https://global.tommy.com/en_int/api/store_finder?lat="+ str(x) + "&lng=" + str(y) + "&radius=50000000",headers=headers)
         data = r.json()["data"]
         for store_data in data:

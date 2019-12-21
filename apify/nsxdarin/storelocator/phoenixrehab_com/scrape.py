@@ -1,0 +1,70 @@
+import csv
+import urllib2
+import requests
+
+requests.packages.urllib3.disable_warnings()
+
+session = requests.Session()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        for row in data:
+            writer.writerow(row)
+
+def fetch_data():
+    url = 'https://www.phoenixrehab.com/locations/'
+    locs = []
+    r = session.get(url, headers=headers, verify=False)
+    for line in r.iter_lines():
+        if '<li class=""><a href="https://www.phoenixrehab.com/' in line:
+            locs.append(line.split('href="')[1].split('"')[0])
+    print('Found %s Locations.' % str(len(locs)))
+    for loc in locs:
+        name = ''
+        add = ''
+        city = ''
+        state = ''
+        store = '<MISSING>'
+        lat = ''
+        lng = ''
+        hours = ''
+        country = 'US'
+        zc = ''
+        phone = ''
+        print('Pulling Location %s...' % loc)
+        website = 'phoenixrehab.com'
+        typ = '<MISSING>'
+        r2 = session.get(loc, headers=headers)
+        for line2 in r2.iter_lines():
+            if '{"@type":"Organization' in line2:
+                name = line2.rsplit('"name":"',1)[1].split('"')[0]
+            if 'itemprop="streetAddress">' in line2:
+                add = line2.split('itemprop="streetAddress">')[1].split('<')[0]
+            if 'itemprop="addressLocality">' in line2:
+                city = line2.split('itemprop="addressLocality">')[1].split('<')[0]
+                state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
+                zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
+            if 'itemprop="telephone" content="' in line2:
+                phone = line2.split('itemprop="telephone" content="')[1].split('"')[0]
+            if '<div class="map--id">Store #' in line2:
+                store = line2.split('<div class="map--id">Store #')[1].split('<')[0]
+            if 'map_marker.png' in line2:
+                lat = line2.split('map_marker.png')[1].split('%7C')[1].split('%')[0]
+                lng = line2.split('map_marker.png')[1].split('%2C')[1].split('&')[0]
+            if 'data-loc-tt="{&quot;' in line2:
+                hours = line2.split('data-loc-tt="{&quot;')[1].split('}">')[0]
+                hours = hours.replace(':{&quot;open&quot;:false,&quot;close&quot;:false}','Closed')
+                hours = hours.replace('},&quot;','; ').replace('&quot;',' ').strip().replace('  ',' ')
+                hours = hours.replace(' , close : ','-').replace('{ open : ',' ')
+                hours = hours.replace(' :',':').replace(' ;',';').replace(', sunday','; sunday')
+        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()

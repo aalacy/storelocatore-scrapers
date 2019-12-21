@@ -17,7 +17,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -43,15 +43,15 @@ def fetch_data():
     driver.get(locator_domain + ext)
 
     all_store_data = []
-    for i in range(1, 16):
-        div = driver.find_element_by_css_selector('div#loc' + str(i))
 
-        coord_element = div.find_element_by_css_selector('span.distance.hideDistance')
+    locs = driver.find_elements_by_css_selector('div.loclisting')
+    for loc in locs:
+        
+        coord_element = loc.find_element_by_css_selector('span.distance')
         longit = coord_element.get_attribute('lon')
         lat = coord_element.get_attribute('lat')
 
-        content = div.text.split('\n')
-
+        content = loc.text.split('\n')
         location_name = content[1]
         street_address = content[3]
 
@@ -65,9 +65,10 @@ def fetch_data():
         country_code = 'US'
         location_type = '<MISSING>'
         store_number = '<MISSING>'
+        page_url = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
+                      store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
 

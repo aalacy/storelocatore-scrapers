@@ -7,6 +7,8 @@ options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
+options.add_argument('--window-size=1920,1080')
+options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
 #driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
 driver = webdriver.Chrome("chromedriver", options=options)
 #driver2 = webdriver.Chrome("C:\chromedriver.exe", options=options)
@@ -55,21 +57,55 @@ def fetch_data():
                         time.sleep(1)
                         page_url = store_view_details_lnks[k]
                         #print(page_url)
-                        location_name = driver4.find_element_by_css_selector('h1.h1_custom').text
-                        store_id = driver4.find_element_by_css_selector('div.detailsPad > div:nth-child(7) > span:nth-child(1)').text
-                        store_id = store_id.split("#")[1]
-                        street_addr = driver4.find_element_by_xpath("//span[contains(@itemprop, 'streetAddress')]").text
-                        city = driver4.find_element_by_xpath("//span[contains(@itemprop, 'addressLocality')]").text
-                        state = driver4.find_element_by_xpath("//span[contains(@itemprop, 'addressRegion')]").text
+                        try:
+                            location_name = driver4.find_element_by_css_selector('h1.h1_custom').text
+                        except:
+                            location_name = '<MISSING>'
+                        try:
+                            store_id = driver4.find_element_by_css_selector('div.detailsPad > div:nth-child(7) > span:nth-child(1)').text
+                            store_id = store_id.split("#")[1]
+                        except:
+                            store_id = '<MISSING>'
                         try:
                             zipcode = driver4.find_element_by_xpath("//span[contains(@itemprop, 'postalCode')]").text.split("-")[0]
                         except:
                             zipcode = '<MISSING>'
-                        country = driver4.find_element_by_xpath("//span[contains(@itemprop, 'addressCountry')]").text
-                        phone = driver4.find_element_by_xpath("//div[contains(@itemprop, 'telephone')]").text
-                        hours_of_op = driver4.find_element_by_css_selector('div.hours').text.replace("\n", " ")
-                        latitude = driver4.find_element_by_xpath("//meta[contains(@property, 'place:location:latitude')]").get_attribute('content')
-                        longitude = driver4.find_element_by_xpath("//meta[contains(@property, 'place:location:longitude')]").get_attribute('content')
+                        try:
+                            street_addr = driver4.find_element_by_xpath("//span[contains(@itemprop, 'streetAddress')]").text
+                            city = driver4.find_element_by_xpath("//span[contains(@itemprop, 'addressLocality')]").text
+                            state = driver4.find_element_by_xpath("//span[contains(@itemprop, 'addressRegion')]").text
+                        except:
+                            try:
+                                street_addr = driver4.find_element_by_xpath("//p[contains(@class, 'dc-al')]").text
+                                state_city_zip = driver4.find_element_by_css_selector("#body_wrap_i > div.dc-sc-container > p:nth-child(3)").text
+                                state = state_city_zip.split(",")[1].split(" ")[-2]
+                                city= state_city_zip.split(",")[0]
+                                zipcode = state_city_zip.split(",")[1].split(" ")[-1]
+                            except:
+                                street_addr = '<MISSING>'
+                                city = '<MISSING>'
+                                state = '<MISSING>'
+
+                        try:
+                            country = driver4.find_element_by_xpath("//span[contains(@itemprop, 'addressCountry')]").text
+                        except:
+                            country ="US"
+                        try:
+                            phone = driver4.find_element_by_xpath("//div[contains(@itemprop, 'telephone')]").text
+                        except:
+                            phone = '<MISSING>'
+                        try:
+                            hours_of_op = driver4.find_element_by_css_selector('div.hours').text.replace("\n", " ")
+                        except:
+                            hours_of_op = '<MISSING>'
+                        try:
+                            latitude = driver4.find_element_by_xpath("//meta[contains(@property, 'place:location:latitude')]").get_attribute('content')
+                        except:
+                            latitude = '<MISSING>'
+                        try:
+                            longitude = driver4.find_element_by_xpath("//meta[contains(@property, 'place:location:longitude')]").get_attribute('content')
+                        except:
+                            longitude = '<MISSING>'
                         data.append([
                             'https://www.dollartree.com/',
                             page_url,

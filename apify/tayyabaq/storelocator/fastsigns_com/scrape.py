@@ -64,6 +64,7 @@ def fetch_data():
             # countries.append(country[n].text)
     for n in range(0, len(links)):
         #print(links[n])
+        
         driver.get(links[n])
 
         time.sleep(5)
@@ -103,10 +104,7 @@ def fetch_data():
             #print(c)
             #rint(street_address)
             #print(z)
-            if len(z) == 5:
-                countries.append('US')
-            else:
-                countries.append('CA')
+            countries.append(country[n].text)
             ids.append(str(links[n]).split('/')[-1].split('-')[0])
             #rint(ids)
             if driver.find_element_by_class_name('phone').text != "Coming Soon":

@@ -36,7 +36,7 @@ Apify.main(async () => {
   const crawler = new Apify.PuppeteerCrawler({
     requestQueue,
     launchPuppeteerOptions: {
-      headless: false,
+      headless: true,
       useChrome: true,
       stealth: true,
     },

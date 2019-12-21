@@ -46,11 +46,14 @@ def fetch_data():
 	pages_url=[]
 	pages=[]
 	link=[]
+	sub_pages=[]
 	
 	driver = get_driver()
 	driver_page = get_driver()
+	driver_link = get_driver()
+	driver_sub_page=get_driver()
 	driver.get(location_url)
-	time.sleep(3)
+	time.sleep(5)
 	
 	links=driver.find_elements_by_class_name("Directory-listItem")
 	for l in links:
@@ -60,6 +63,8 @@ def fetch_data():
 			pages.append(l.find_element_by_tag_name("a"))
 	print(link)
 	print(pages)
+	print(len(pages))
+
 	
 	for a in range(len(link)):
 		if link[a].get_attribute("data-count")!="(1)":
@@ -68,29 +73,29 @@ def fetch_data():
 			pages.append(link[a].get_attribute('href'))
 	print(pages_url)
 	print(pages)
+	print(len(pages))
+
 		
 	for u in pages_url:
-		driver_page.get(u)
-		time.sleep(3)
-		stores=driver_page.find_elements_by_class_name("Directory-listItem")
+		driver_link.get(u)
+		time.sleep(11)
+		stores=driver_link.find_elements_by_class_name("Directory-listItem")
 		for s in stores:
-			try:
-				if s.find_element_by_tag_name("a").get_attribute("data-count")=="(1)":
-					pages.append(s.find_element_by_tag_name("a").get_attribute('href'))
-				else:
-					driver_page.get(s.find_element_by_tag_name("a").get_attribute('href'))
-					time.sleep(3)
-					stores_pages=driver_page.find_elements_by_class_name("Directory-listTeaser")
-					for sp in stores_pages:
-						pages.append(sp.find_element_by_tag_name("a").get_attribute('href'))
-			except:
-				continue
+			if s.find_element_by_tag_name("a").get_attribute("data-count")=="(1)":
+				pages.append(s.find_element_by_tag_name("a").get_attribute('href'))
+			else:
+				driver_sub_page.get(s.find_element_by_tag_name("a").get_attribute('href'))
+				time.sleep(5)
+				stores_pages=driver_sub_page.find_elements_by_class_name("Directory-listTeaser")
+				for sp in stores_pages:
+					pages.append(sp.find_element_by_tag_name("a").get_attribute('href'))
 				
 		print(pages)
+		print(len(pages))
 			
 	for p in pages:
 		driver_page.get(p)
-		time.sleep(5)
+		time.sleep(3)
 		locs.append(driver_page.find_element_by_xpath('/html/body/main/div/div[3]/div/div/div/div[1]/div[1]/address/div[1]/span').text)
 		print(locs)
 		streets.append(driver_page.find_element_by_xpath('/html/body/main/div/div[3]/div/div/div/div[1]/div[1]/address/div[1]/span').text)
@@ -122,7 +127,7 @@ def fetch_data():
 		print(lats)
 		longs.append(driver_page.find_element_by_xpath('/html/body/main/div/div[3]/div/div/div/div[1]/div[1]/span/meta[2]').get_attribute('content'))
 		print(longs)
-			
+		print(len(locs))	
 						
 	return_main_object = []	
 	for l in range(len(locs)):

@@ -18,17 +18,25 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def addy_ext(addy):
     address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
+    if len(address) == 1:
+        state_zip = address[0].strip().split(' ')
+        city = state_zip[0]
+        state = state_zip[1]
+        zip_code = '<MISSING>'
+    else:
+        city = address[0]
+        state_zip = address[1].strip().split(' ')
+
+        state = state_zip[0]
+        zip_code = state_zip[1]
+    
     return city, state, zip_code
 
 
@@ -50,20 +58,26 @@ def fetch_data():
         driver.implicitly_wait(10)
 
         divs = driver.find_elements_by_css_selector('div.mbr-article')
-
+        
         addy = divs[0].text.split('\n')
+        
         if 'Regina Pizz' in addy[0]:
             del addy[0]
 
-
+        
         street_address = addy[0]
         city, state, zip_code = addy_ext(addy[1])
 
-        phone_number = addy[2]
-        if len(phone_number) > 13:
-            phone_number = '<MISSING>'
+    
+        if len(divs) == 2:
+            hours = addy[3]
+            phone_number = addy[4].replace('Telephone number:', '').strip()
+        else:
+            hours = divs[3].text.replace('\n', ' ')
+            phone_number = addy[2]
+            if len(phone_number) > 13:
+                phone_number = '<MISSING>'
 
-        hours = divs[3].text.replace('\n', ' ')
         country_code = 'US'
         location_type = '<MISSING>'
         store_number = '<MISSING>'
@@ -73,9 +87,9 @@ def fetch_data():
 
         start_idx = link.find('.com/')
         location_name = link[start_idx + 5:].replace('.html', '').replace('_', ' ')
-
+        page_url = link
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
+                      store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
 
     driver.quit()

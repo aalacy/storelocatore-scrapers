@@ -71,13 +71,13 @@ def fetch_data():
         st =  "<MISSING>"
 
         result_coords = []
+        get_url='https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE)
         try:
-            k = requests.get(
-                'https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE),
-                headers=headers,
-            ).json()
+            k = requests.get(get_url,headers=headers).json()
+            
         except:
-            continue
+            pass
+            
 
         #print('https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE))
         name =''
@@ -130,14 +130,14 @@ def fetch_data():
                 tem_var.append("<MISSING>")
                 tem_var.append(latitude)
                 tem_var.append(longitude)
-                tem_var.append(time.replace(" Parts  Sales ","<MISSING>") if time.replace(" Parts  Sales ","<MISSING>") else "<MISSING>" )
-                tem_var.append("<MISSING>")
+                tem_var.append(time.replace(" Parts  Sales ","<MISSING>").replace(' Service  ','') if time.replace(" Parts  Sales ","<MISSING>").replace(' Service  ','') else "<MISSING>" )
+                tem_var.append(get_url)
                 
                 if tem_var[2] in addresses:
                     continue
                 addresses.append(tem_var[2])
                 yield tem_var
-                #print("============================",tem_var)
+                print("============================",tem_var)
                 # print(tem_var)
                 # exit()
 

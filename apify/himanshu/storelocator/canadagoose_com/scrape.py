@@ -36,20 +36,46 @@ def fetch_data():
             city = poi.find("city").text.strip()
             latitude = poi.find("latitude").text.strip()
             longitude = poi.find("longitude").text.strip()
-            phone = poi.find("phone").text.strip()
+            phone_tag = poi.find("phone").text.strip()
+            phone_list = re.findall(re.compile(
+                ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
+            if phone_list:
+                phone = phone_list[-1].strip()
+            else:
+                phone = "<MISSING>"
             state = poi.find("state").text.strip()
-            zipp = poi.find("postalcode").text.strip()
+            if len(state) > 2:
+                state = "<MISSING>"
+            if "YK" in state:
+                state = "<MISSING>"
+
             hours_of_operation = "<MISSING>"
             country_code = poi.find("country").text.strip()
             store_number = "<MISSING>"
             location_type = "<MISSING>"
             page_url = "https://www.canadagoose.com/ca/en/find-a-retailer/find-a-retailer.html"
-            if len(zipp) == 4:
-                zipp = "0" + zipp
-            if zipp == "0":
-                zipp = "<MISSING>"
+            zip = poi.find("postalcode").text.strip()
+
+            if len(zip) == 4:
+                zip = "0" + zip
+
             if "7017" == location_name:
                 location_name = city
+            ca_zip_list = re.findall(
+                r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zip))
+
+            us_zip_list = re.findall(re.compile(
+                r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zip))
+            if us_zip_list:
+                zipp = us_zip_list[-1]
+            elif ca_zip_list:
+                zipp = ca_zip_list[-1]
+            else:
+                zipp = "<MISSING>"
+
+            if zipp == "00000":
+                zipp = "<MISSING>"
+            # print(zipp)
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -61,8 +87,8 @@ def fetch_data():
                     'ascii').strip() if x else "<MISSING>" for x in store]
                 if "SoHo 101 Wooster Street" in store or "800 Boylston St" in store or "6455 Macleod Trail SW" in store or "1200 Morris Turnpike" in store or "1020 Saint-Catherine St W" in store:
                     pass
-                #print("data = " + str(store))
-                #print(
+                # print("data = " + str(store))
+                # print(
                     # '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
@@ -79,6 +105,8 @@ def fetch_data():
         street_address = re.sub(' +', ' ', street_address)
         city = store.find('span', {'itemprop': "addressLocality"}).text.strip()
         state = store.find('span', {'itemprop': "addressRegion"}).text.strip()
+        if "France" in state:
+            continue
         zipp_tag = store.find('span', {'itemprop': "postalCode"}).text.strip()
         phone = store.find('span', {'itemprop': "telephone"}).text.strip()
         location_type = "<MISSING>"
@@ -125,9 +153,9 @@ def fetch_data():
 
             store = [str(x).encode('ascii', 'ignore').decode(
                 'ascii').strip() if x else "<MISSING>" for x in store]
-            #print("data = " + str(store))
-           # print(
-                # '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print(
+            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

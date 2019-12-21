@@ -59,10 +59,6 @@ def fetch_data():
 
     all_store_data = []
     for i, link in enumerate(link_list):
-        print('--------------')
-        print(str(i) + '/' + str(len(link_list)))
-        print(link)
-        
         page = requests.get(link)
         soup = BeautifulSoup(page.content, 'html.parser')
         loc_jsons = soup.find_all('script')
@@ -95,9 +91,7 @@ def fetch_data():
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
-        print()
-        print(store_data)
-        print()
+
         all_store_data.append(store_data)
                 
                 

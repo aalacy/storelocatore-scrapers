@@ -2,7 +2,7 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+import time
 
 def get_driver():
     options = Options()
@@ -41,6 +41,9 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(locator_domain + ext)
+    time.sleep(5)
+    driver.implicitly_wait(30)
+
 
     locations = driver.find_element_by_css_selector('ul.store-locations-list')
     links = locations.find_elements_by_css_selector('a.store-locations-list-link')

@@ -77,7 +77,7 @@ def fetch_data(search):
 
 def scrape():
     search = sgzip.ClosestNSearch()
-    search.initialize(include_canadian_fsas = True)
+    search.initialize(country_codes = ['us', 'ca'])
     data = fetch_data(search)
     write_output(data)
 
