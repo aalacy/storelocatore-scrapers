@@ -24,11 +24,12 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    locator_domain = 'https://www.signaturestyle.com/'
+    locator_domain = 'https://www.signaturestyle.com/brands/famous-hair.html'
+    loc_domain = 'https://www.signaturestyle.com/'
     ext = 'salon-directory.html'
 
     driver = get_driver()
-    driver.get(locator_domain + ext)
+    driver.get(loc_domain + ext)
 
     sections = driver.find_elements_by_css_selector('div.acs-commons-resp-colctrl-row')
     state_link_list = []
@@ -51,7 +52,6 @@ def fetch_data():
     duplicate_checker = []
     for link in store_link_list:
         driver.get(link)
-        print(link)
         driver.implicitly_wait(30)
 
         try:
@@ -90,9 +90,7 @@ def fetch_data():
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
-        print()
-        print(store_data)
-        print()
+    
         all_store_data.append(store_data)
 
     driver.quit()
