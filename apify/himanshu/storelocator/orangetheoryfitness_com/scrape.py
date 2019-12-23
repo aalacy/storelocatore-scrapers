@@ -5,8 +5,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -35,15 +33,12 @@ def getDecodedPhoneNo(encoded_phone_no):
                 _dg = key
         _real_phone += _dg
     return _real_phone
-
-
-
 def fetch_data():
     return_main_object = []
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 50
+    MAX_RESULTS = 150
     MAX_DISTANCE = 10
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
@@ -51,8 +46,6 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
-
-    
 
     while zip_code:
         result_coords = []
@@ -63,8 +56,11 @@ def fetch_data():
         try:
             r = requests.get(base_url)
         except:
-            continue
+            search.max_distance_update(MAX_DISTANCE)
+            zip_code = search.next_zip()
+            pass
         json_data = r.json()
+        current_results_len =len(json_data['markers'])
         # print(len(json_data['markers']))
         for i in json_data['markers']:
             store_number = i['id']
@@ -85,13 +81,7 @@ def fetch_data():
             latitude  = i['lat']
             longitude = i['lon']
             page_url = i['web_site']
-
-
-
             result_coords.append((latitude, longitude))
-
-
-
             store = []
             store.append("https://www.orangetheoryfitness.com/")
             store.append(location_name if location_name else "<MISSING>") 
@@ -116,8 +106,7 @@ def fetch_data():
             else:
 
                 yield store
-            # print("--------------------",store)
-
+            #print("--------------------",store)
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
@@ -127,8 +116,6 @@ def fetch_data():
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
-
-
 def scrape():
     data = fetch_data()
     write_output(data)

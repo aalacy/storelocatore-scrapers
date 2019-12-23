@@ -5,6 +5,8 @@ import re
 import json
 import time
 import platform
+import os
+
 
 
 def write_output(data):
