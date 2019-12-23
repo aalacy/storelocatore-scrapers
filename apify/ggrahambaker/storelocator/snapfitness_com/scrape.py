@@ -26,6 +26,13 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def parse_can_addy(addy):
+    street_address = addy[0]
+    rest_addy = addy[1].split(' ')
+    city = rest_addy[0]
+    state = rest_addy[1]
+    zip_code = rest_addy[2] + ' ' + rest_addy[3]
+    return street_address, city, state, zip_code
 
 def parse_addy(addy):
     parsed_add = usaddress.tag(addy)[0]
@@ -59,65 +66,87 @@ def fetch_data():
     locator_domain = 'https://www.snapfitness.com/'
 
     driver = get_driver()
-    driver.get('https://www.snapfitness.com/us/gyms/?q=united%20states')
-    time.sleep(5)
-    link_list = []
-    locs = driver.find_elements_by_css_selector('div.club-overview')
-    for loc in locs:
-        href = loc.find_element_by_css_selector('a.btn.btn-primary').get_attribute('href')
-        if href not in link_list:
-            link_list.append(href)
-
-
+    urls = ['https://www.snapfitness.com/ca/gyms/?q=canada', 'https://www.snapfitness.com/us/gyms/?q=united%20states']
     all_store_data = []
-    for i, link in enumerate(link_list):
-        driver.get(link)
+    for url in urls:
+
+        driver.get(url)
+        
+        time.sleep(5)
+        go = driver.find_element_by_xpath("//button[contains(text(),'Go')]")
+        driver.execute_script("arguments[0].click();", go)
+
         driver.implicitly_wait(10)
+        time.sleep(3)
+        link_list = []
+        locs = driver.find_elements_by_css_selector('div.club-overview')
         
-        main = driver.find_element_by_css_selector('div.details')
-        location_name = main.find_element_by_css_selector('h3').text
-        phone_number = main.find_element_by_css_selector('a.link_phonenumber').text.strip()
-        if phone_number == '':
-            phone_number = '<MISSING>'
-        
-        addy = driver.find_elements_by_css_selector('div.content-holder')[2].text.replace('\n', ' ')
-        if '1433 B (68 Place) Highway 68 North' in addy:
-            street_address = '1433 B (68 Place) Highway 68 North' 
-            city = 'Oak Ridge'
-            state = 'NC'
-            zip_code = '27310'
-        elif '1515 US-22' in addy:
-            street_address = '1515 US-22'
-            city = 'Watchung'
-            state = 'NJ'
-            zip_code = '07069'
+        for loc in locs:
+            href = loc.find_element_by_css_selector('a.btn.btn-primary').get_attribute('href')
+            if href not in link_list:
+                link_list.append(href)
 
-        else:
-            street_address, city, state, zip_code = parse_addy(addy)
-        
-        
-        google_href = driver.find_element_by_css_selector('a#map').get_attribute('href')
-        
-        start = google_href.find('&query=')
-        coords = google_href[start + len('&query='):].split(',')
 
-        lat = coords[0]
-        longit = coords[1]
-        try:
-            hours = driver.find_element_by_css_selector('section#overviewSection').find_element_by_css_selector('h2').text
-        except NoSuchElementException:
-            hours = 'Open 24/7 to members'
-        
-        country_code = 'US'
+        for i, link in enumerate(link_list):
+            driver.get(link)
+    
+            driver.implicitly_wait(10)
+            
+            main = driver.find_element_by_css_selector('div.details')
+            location_name = main.find_element_by_css_selector('h3').text
+            phone_number = main.find_element_by_css_selector('a.link_phonenumber').text.strip()
+            if phone_number == '':
+                phone_number = '<MISSING>'
+            
 
-        location_type = '<MISSING>'
-        page_url = link
+            if 'canada' in url:
+                country_code = 'CA'
+                addy = driver.find_elements_by_css_selector('div.content-holder')[2].text.split('\n')
+                street_address, city, state, zip_code = parse_can_addy(addy)
+            else:
+                country_code = 'US'
+                addy = driver.find_elements_by_css_selector('div.content-holder')[2].text.replace('\n', ' ')
 
-        store_number = '<MISSING>'
+                if '1433 B (68 Place) Highway 68 North' in addy:
+                    street_address = '1433 B (68 Place) Highway 68 North' 
+                    city = 'Oak Ridge'
+                    state = 'NC'
+                    zip_code = '27310'
+                elif '1515 US-22' in addy:
+                    street_address = '1515 US-22'
+                    city = 'Watchung'
+                    state = 'NJ'
+                    zip_code = '07069'
 
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                        store_number, phone_number, location_type, lat, longit, hours, page_url]
-        all_store_data.append(store_data)
+                else:
+                    street_address, city, state, zip_code = parse_addy(addy)
+            
+            
+            
+            google_href = driver.find_element_by_css_selector('a#map').get_attribute('href')
+            
+            start = google_href.find('&query=')
+            coords = google_href[start + len('&query='):].split(',')
+
+            lat = coords[0]
+            longit = coords[1]
+            try:
+                hours = driver.find_element_by_css_selector('section#overviewSection').find_element_by_css_selector('h2').text
+            except NoSuchElementException:
+                hours = 'Open 24/7 to members'
+            
+            
+
+            location_type = '<MISSING>'
+            page_url = link
+
+            store_number = '<MISSING>'
+
+            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                            store_number, phone_number, location_type, lat, longit, hours, page_url]
+            
+            
+            all_store_data.append(store_data)
 
 
 

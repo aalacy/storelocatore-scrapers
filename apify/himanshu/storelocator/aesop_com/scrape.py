@@ -4,8 +4,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-# import pprint
-# pp = pprint.PrettyPrinter(indent=4)
 import sgzip
 
 
@@ -59,8 +57,8 @@ def fetch_data():
         hours_of_operation = ""
         lat = coord[0]
         lng = coord[1]
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
-        #print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
         # lat = -42.225
         # lng = -42.225
         # zip_code = 11576
@@ -69,9 +67,8 @@ def fetch_data():
         # print('location_url ==' +location_url))
         try:
             r = requests.get(location_url, headers=headers)
-            print(location_url +'true')
         except:
-            print(location_url +'false')
+            pass
         soup = BeautifulSoup(r.text, "lxml")
         k = json.loads(soup.text)['items']
         current_results_len = len(k)
@@ -190,8 +187,8 @@ def fetch_data():
                         continue
                     addresses.append(tem_var[2])
                     yield tem_var
-                    # print("data == " + str(tem_var))
-                    # print("~~~~~~~~~~~")
+                    print("data == " + str(tem_var))
+                    print("~~~~~~~~~~~")
 
         if current_results_len < MAX_RESULTS:
             # print("max distance update")

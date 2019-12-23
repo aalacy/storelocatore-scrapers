@@ -5,6 +5,36 @@ import re
 import unicodedata
 import sgzip
 import datetime
+import os
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
+requests.packages.urllib3.disable_warnings()
+
+def requests_retry_session(
+    retries=3,
+    backoff_factor=0.3,
+    status_forcelist=(500, 502, 504)
+):
+    session = requests.Session()
+    proxy_password = os.environ["PROXY_PASSWORD"]
+    proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
+    proxies = {
+        'http': proxy_url,
+        'https': proxy_url
+    }
+    session.proxies = proxies
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -15,6 +45,8 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
+session = requests_retry_session()
 
 def fetch_data():
     main_url = "https://choicehotels.com/ascend"
@@ -36,13 +68,13 @@ def fetch_data():
         y = coord[1]
         #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:70.0) Gecko/20100101 Firefox/70.0',
             "Origin": "https://www.choicehotels.com",
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+            "content-type": "application/x-www-form-urlencoded",
+            "cookie":'',
         }
         data = "adults=1&checkInDate=" + str(today) + "&checkOutDate=" + str(tomorrow) + "&lat=" + str(x) + "&lon=" + str(y) + "&minors=0&optimizeResponse=image_url&platformType=DESKTOP&preferredLocaleCode=en-us&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100&siteName=us&siteOpRelevanceSortMethod=ALGORITHM_B"
-        r = requests.post("https://www.choicehotels.com/webapi/location/hotels",headers=headers,data=data)
-        
+        r = session.post("https://www.choicehotels.com/webapi/location/hotels",headers=headers,data=data)
         if "hotels" not in r.json():
             search.max_distance_update(MAX_DISTANCE)
             coord = search.next_coord()
