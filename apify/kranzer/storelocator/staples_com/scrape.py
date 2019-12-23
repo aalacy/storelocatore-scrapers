@@ -42,7 +42,6 @@ class Scrape(base.Spider):
                         lambda x: '; '.join(x), lambda x: x.strip())
             if lat_lng not in self.crawled:
                 self.crawled.add(lat_lng)
-                print(i)
                 return i
 
     async def _fetch_stores(self, session, urls):
@@ -101,7 +100,6 @@ class Scrape(base.Spider):
             if len(sp) == 3:
                 href = sp[0]
             states.append(urljoin(base_url, href))
-        print(states)
         loop = asyncio.get_event_loop()
         stores = loop.run_until_complete(self._fetch_all_states(states, loop))
         return stores
