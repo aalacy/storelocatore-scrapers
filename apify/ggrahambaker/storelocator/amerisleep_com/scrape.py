@@ -69,15 +69,9 @@ def fetch_data():
             street_address = address[0] + ' ' + address[1]
             city, state, zip_code = addy_ext(address[2])
         else:
-            if 'SW Washington Square' in address[0]:
-                street_address = address[0]
-                addy = address[1].split(',')
-                city = addy[0]
-                state = addy[1].strip()
-                zip_code = '<MISSING>'
-            else:
-                street_address = address[0]
-                city, state, zip_code = addy_ext(address[1])
+        
+            street_address = address[0]
+            city, state, zip_code = addy_ext(address[1])
 
         hours = driver.find_element_by_css_selector('div.o-local-grid__container').text.replace('\n', ' ').strip()
         

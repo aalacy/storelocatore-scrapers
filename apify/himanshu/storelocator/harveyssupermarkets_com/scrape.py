@@ -4,6 +4,42 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+import time
+
+def request_wrapper(url, method, headers, data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url, headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url, headers=headers, data=data)
+                else:
+                    r = requests.post(url, headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
+
+
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -31,29 +67,29 @@ def fetch_data():
     }
     while zip_code: 
         result_coords = []
-        #print("zip_code === "+zip_code)
+        # print("zip_code === "+zip_code)
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         data = "fhController=ContentComponentsController&fhAction=StoreLocatorResults&sitename=harveys&bannerName=Harveys+Supermarket+%23+&CurrentState=StrTab&StoreZipCode="+str(zip_code)+"&MilesSelectedValue=25&MilesSelectedValue=25&strCommand=Search&ATM=false&Floral=false&Lottery=false&RedBox=false&CoinCounter=false&FreshMeat=false&MTMO=false&SeaFood=false&DeliBakery=false&GlutenFree=false&Pharmacy=false&Sushi=false&ATM=false&Floral=false&Lottery=false&RedBox=false&CoinCounter=false&FreshMeat=false&MTMO=false&SeaFood=false&DeliBakery=false&GlutenFree=false&Pharmacy=false&Sushi=false"
-        try:
-            r = requests.post("https://www.harveyssupermarkets.com/Locator", headers=headers,data=data)
-        except:
-            continue
+  
+        r = request_wrapper("https://www.harveyssupermarkets.com/Locator",'post',headers=headers,data=data)
+
         soup = BeautifulSoup(r.text, "lxml")
         info = soup.find_all("a",{"class":"store-details storeLink"})
         current_results_len = len(info)
         for i in info:
             href = "https://www.harveyssupermarkets.com"+str(i['href'])
-            try:
-                r1 = requests.get(href)
-            except:
-                continue       
+ 
+            r1 = request_wrapper(href,'get',headers=headers)  
+
             soup1 = BeautifulSoup(r1.text, "lxml")
             info1 = soup1.find_all("div",{"class":"row storeDetailsRow"})[-1]
             info2 = soup1.find_all("script")
             hours = list(info1.stripped_strings)
             hours_of_operation = ''.join(hours[1:4])
-            for i in info2:
-                if "var locations  =" in i.text:
-                    data =i.text.split("var locations  =")[1].split(";")[0]
+            
+            for j in info2:
+                if "var locations  =" in j.text:
+                    data =j.text.split("var locations  =")[1].split(";")[0]
                     street_address = ''.join(json.loads(data)[0][0].split(',')[:-2])
                     city= json.loads(data)[0][0].split(',')[-2]
                     state = json.loads(data)[0][0].split(',')[-1].split(' ')[1]
@@ -70,7 +106,7 @@ def fetch_data():
                     store.append("https://www.harveyssupermarkets.com")
                     store.append(location_name)
                     store.append(street_address)
-                    store.append(city.replace('\n','').strip())
+                    store.append(city.replace('\n',''))
                     store.append(state)
                     store.append(zip1)   
                     store.append("US")
@@ -85,6 +121,8 @@ def fetch_data():
                         continue     
                     addresess.append(store[2])
                     yield store
+
+
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)

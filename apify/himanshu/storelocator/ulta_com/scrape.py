@@ -8,11 +8,12 @@ import ast
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -25,18 +26,21 @@ def fetch_data():
     }
 
     base_url = "https://www.ulta.com"
-    r = requests.get('https://api.sweetiq.com/store-locator/public/locations/582b2f2f588e96c131eefa9f?perPage=5000&searchFields%5B0%5D=name', headers=headers)
+    r = requests.get('https://api.sweetiq.com/store-locator/public/locations/582b2f2f588e96c131eefa9f?categories=&geo%5B0%5D=-95.7129&geo%5B1%5D=37.0902&tag=&perPage=1000000000000&page=1&search=&searchFields%5B0%5D=name&clientIds%5B0%5D=57b75cf805fbd94379859661&box%5B0%5D=-180&box%5B1%5D=-71.03870026971174&box%5B2%5D=180&box%5B3%5D=71.03870026970304', headers=headers)
     data = r.json()['records']
     soup = BeautifulSoup(r.text, "lxml")
     for store_data in data:
         store = []
-        location_name =  store_data['mallName']
+        location_name = store_data['mallName']
         street_address = store_data['address']
         city = store_data['city']
         state = store_data['province']
-        store_zip = store_data['postalCode']
+        store_zip = store_data['postalCode'].strip()
+        if len(store_zip) == 4:
+            store_zip = "0" + store_zip
         phone = store_data['phone']
         store_number = store_data['_id']
+        page_url = store_data["website"]
         if(location_name == '' or location_name is None):
             location_name = "<MISSING>"
         if (street_address == '' or state is None):
@@ -52,7 +56,7 @@ def fetch_data():
         if (store_number == '' or store_number is None):
             store_number = "<MISSING>"
         for Sun in store_data['hoursOfOperation']['Sun']:
-           sun_time = 'Sun: '+Sun[0]+' - '+Sun[1]
+            sun_time = 'Sun: ' + Sun[0] + ' - ' + Sun[1]
         for Sat in store_data['hoursOfOperation']['Sat']:
             sat_time = 'Sat: ' + Sat[0] + ' - ' + Sat[1]
         for Fri in store_data['hoursOfOperation']['Fri']:
@@ -65,7 +69,8 @@ def fetch_data():
             tue_time = 'Tue: ' + Tue[0] + ' - ' + Tue[1]
         for Mon in store_data['hoursOfOperation']['Mon']:
             mon_time = 'Mon: ' + Sat[0] + ' - ' + Mon[1]
-        hour = mon_time+', '+tue_time+', '+wed_time+', '+thu_time+', '+fri_time+', '+sat_time+', '+sun_time
+        hour = mon_time + ', ' + tue_time + ', ' + wed_time + ', ' + \
+            thu_time + ', ' + fri_time + ', ' + sat_time + ', ' + sun_time
         if (hour == '' or hour is None):
             hour = "<MISSING>"
         return_object = []
@@ -76,20 +81,21 @@ def fetch_data():
         return_object.append(state)
         return_object.append(store_zip)
         return_object.append("US")
-        return_object.append(store_number)
+        return_object.append("<MISSING>")
         return_object.append(phone)
-        return_object.append("Ulta Beauty")
+        return_object.append("<MISSING>")
         return_object.append(store_data["geo"][1])
         return_object.append(store_data["geo"][0])
         return_object.append(hour)
-        return_object.append("<MISSING>")
+        return_object.append(page_url)
         yield return_object
+        # print("--" + str(str(return_object)))
+        # print("~~~~~~~~~~~~~~~~~~~~~~")
 
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
+
 scrape()
-
-

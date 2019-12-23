@@ -6,7 +6,7 @@ import time
 
 def get_driver():
     options = Options()
-    #options.add_argument('--headless')
+    options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     return webdriver.Chrome('chromedriver', options=options)
@@ -53,14 +53,15 @@ def peel_info(driver, locator_domain, all_store_data, dup_list):
     for loc in locs:
         
         content = loc.text.split('\n')
+    
         if 'Center' not in content[2]:
             if 'Office' in content[2]:
-                off = 0
                 location_type = content[2]
+                off = 0
             else:
                 off = -1
                 location_type = '<MISSING>'
-            
+                
         else:
             off = 0
             location_type = content[2]
@@ -89,7 +90,6 @@ def peel_info(driver, locator_domain, all_store_data, dup_list):
             phone_number = '<MISSING>'
 
         store_number = '<MISSING>'
-        location_type = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
         hours = '<MISSING>'

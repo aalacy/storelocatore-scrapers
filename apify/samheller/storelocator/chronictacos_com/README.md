@@ -1,12 +1,18 @@
-# How to write a Node.js scraper for SafeGraph using the Apify BasicCrawler
 
-You can start writing your scraper in scrape.js between `// Begin scraper` and `// End scraper` comments. 
+## Ignore StateLevelCountValidator
 
-Your logic will run agianst every URL in the RequestList. Note that you can use a RequestQueue instead of a RequestList if this scrape requires URLs to be generated dynamically (https://sdk.apify.com/docs/api/requestqueue).
+State Count 
+```
+When we looked at the number of POI in your data by state, we noticed large differences for 1 states in total. This might be because you incorrectly scraped data for these states (though it might also indicate an issue with our truthset or with differences in how we format states. Below are a handful of state for which we noticed issues. Go back to the store locator to ensure you're scraping the correct number of locations. If you think that this is a problem with our truthset or validation code, ignore this check and write down your reasoning for skipping the check in your README.
 
-Documentation on using the BasicCrawler: https://sdk.apify.com/docs/api/basiccrawler
+Example of states in your data that overlap with our truthset but which have significant differences in counts:
+   expected_cnt  your_cnt state
+0           8.0        29    CA
+```
+29 is accurate count, see `chronictaco_ca_locations.png` for screenshot.
 
-Remember to update `package.json` with all dependencies needed to run your scraper.
-Please make sure that:
-* Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh
-* The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
+Unexpected States
+```
+Examples of states that we saw in your data but didn't expect to see: ['AZ' 'TX'].
+```
+Arizona and Texas both have store locations see `chronictacos_az_locations.png` and `chronictacos_tx_locations.png` for screenshots.
