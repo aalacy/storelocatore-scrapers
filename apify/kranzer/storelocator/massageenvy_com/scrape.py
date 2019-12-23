@@ -34,7 +34,6 @@ class Scrape(base.Spider):
             i.add_xpath('hours_of_operation', '//table[@class="c-location-hours-details"]//tr[td]', lambda x: '; '.join([' '.join(s.xpath('.//text()')) for s in x]), lambda x: x.replace('  ', ' ').strip())
             if lat_lng not in self.crawled:
                 self.crawled.add(lat_lng)
-                print(i)
                 return i
 
     async def _fetch_stores(self, session, urls):

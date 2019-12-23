@@ -7,35 +7,40 @@ import requests, json
 from urllib.parse import urljoin
 
 from w3lib.html import remove_tags
-from lxml import etree
+from lxml import html
 crawled = []
 class Scrape(base.Spider):
 
     def crawl(self):
-        base_url = "https://stores.staples.ca/"
-        r = requests.get('https://stores.staples.ca/api/5d3b0e02763b7ca0181ab030/locations-details')
-        for info in r.json()['features']:
-            i = base.Item(info)
-            i.add_value('location_name', info['properties']['name'])
-            i.add_value('locator_domain', base_url)
-            i.add_value('page_url', info['properties']['website'])
-            hours = []
-            for k, v in info['properties']['hoursOfOperation'].items():
-                if v:
-                    hours.append('{} {}-{}'.format(k, v[0][0], v[0][1]))
-                else:
-                    hours.append('{} {}'.format(k, "Closed."))
-            if hours:
-                i.add_value('hours_of_operation', '; '.join(hours))
-            i.add_value('phone', info['properties']['phoneNumber'])
-            i.add_value('latitude', info['geometry']['coordinates'][1])
-            i.add_value('longitude', info['geometry']['coordinates'][0])
-            i.add_value('street_address', ' '.join([s for s in [info['properties']['addressLine1'], info['properties']['addressLine2']] if s]))
-            i.add_value('city', info['properties']['city'])
-            i.add_value('state', info['properties']['province'])
-            i.add_value('zip', info['properties']['postalCode'])
-            i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
-            i.add_value('store_number', info['properties']['branch'], lambda x: x.replace('CA-',''))
+        r = requests.get('https://www.blueskycstores.com/locations')
+        sel = html.fromstring(r.text)
+        iframe_lnk = sel.xpath('//iframe/@data-src')[0]
+        r = requests.get(iframe_lnk)
+        sel = html.fromstring(r.text)
+        script = sel.xpath('//script[contains(text(), "markerOpts")]/text()')[0]
+
+        for st in script.split('var markerOpts = new Object();')[1:]:
+            i = base.Item(sel)
+            id_ = re.findall(r"markerOpts\['id'\] = (.+?);",st)
+            if id_:
+                i.add_value('store_number', id_[0])
+            lat = re.findall(r"markerOpts\['markerLat'\] = (.+?);",st)
+            if lat:
+                i.add_value('latitude', lat[0])
+            lng = re.findall(r"markerOpts\['markerLng'\] = (.+?);",st)
+            if lng:
+                i.add_value('longitude', lng[0])
+            htm_ = re.findall(r"markerOpts\['bubbleHtml'\] = (.+?);",st)
+            if htm_:
+                htm = htm_[0].split('</p><p>')
+                htm = [remove_tags(s.replace('\xa0','')) for s in htm]
+                if len(htm) == 2:
+                    htm.append('')
+                i.add_value('location_name', htm[0], lambda x: x.replace('\'',''))
+                i.add_value('phone', htm[1], lambda x: x.replace('\'',''))
+                i.add_value('hours_of_operation', htm[2], lambda x: x.replace('\'',''), lambda x: x if x else '<MISSING>')
+            i.add_value('locator_domain', 'https://www.blueskycstores.com/locations')
+            i.add_value('page_url', 'https://www.blueskycstores.com/locations')
             yield i
 
 

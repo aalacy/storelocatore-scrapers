@@ -18,31 +18,29 @@ class Scrape(base.Spider):
             resp = await response.text()
             sel = lxml.html.fromstring(resp)
             i = base.Item(sel)
-            i.add_value('locator_domain', 'https://www.clarksoneyecare.com/locations/')
+            i.add_value('locator_domain', 'https://www.mavistire.com/locations/')
             i.add_value('page_url', url)
-            i.add_xpath('location_name', '//h1[@class="location-name"]/text()', base.get_first)
-            i.add_xpath('phone', '//div[@class="phone-number"]/a/text()', base.get_first)
-            i.add_xpath('street_address', '//address[@id="prgmStoreAddress"]/text()',
-                        base.get_first, lambda x: x.strip())
-            ct = sel.xpath('//address[@id="prgmStoreAddress"]/text()')[-1]
-            tup = re.findall(r'(.+?),\s+?([A-Z]+)\s+(\d+)', ct)
-            if tup:
-                i.add_value('city', tup[0][0])
-                i.add_value('state', tup[0][1], lambda x: x.upper())
-                i.add_value('zip', tup[0][2])
-                i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
-            i.add_xpath('hours_of_operation', '//div[contains(@class, "day")]',
-                        lambda x: [' '.join(s.xpath('.//text()')) for s in x],
-                        lambda x: '; '.join([re.sub(r'\s+', ' ', s.replace('\n', '').strip()) for s in x]))
-            i.add_xpath('latitude', '//div[@class="marker"]/@data-lat', base.get_first)
-            i.add_xpath('longitude', '//div[@class="marker"]/@data-lng', base.get_first)
-            coords = (i.as_dict()['latitude'], i.as_dict()['longitude'])
-            if coords not in crawled:
-                crawled.add(coords)
-                return i
+            i.add_xpath('location_name', '//h1/text()', base.get_first)
+            i.add_xpath('phone', '//span[@itemprop="telephone"]/text()', base.get_first)
+            i.add_xpath('street_address', '//span[@itemprop="streetAddress"]/text()', base.get_first, lambda x: x.strip())
+            i.add_xpath('city', '//span[@itemprop="addressLocality"]/text()', base.get_first)
+            i.add_xpath('state', '//span[@itemprop="addressRegion"]/text()', base.get_first)
+            i.add_value('country_code', base.get_country_by_code(i.as_dict()['state']))
+            i.add_xpath('zip', '//span[@itemprop="postalCode"]/text()', base.get_first)
+            i.add_xpath('hours_of_operation', '//span[@itemprop="openingHours"]/text()', lambda x: '; '.join(x))
+            coords_sc = sel.xpath('//script/text()[contains(., "Lat")]')
+            if coords_sc:
+                i.add_value('latitude', coords_sc[0], lambda x: x[x.find('Lat:')+4:], lambda x: x[:x.find(',')])
+                i.add_value('longitude', coords_sc[0], lambda x: x[x.find('Lng:')+4:], lambda x: x[:x.find(',')])
+                i.add_value('store_number', coords_sc[0], lambda x: x[x.find('Store:')+6:], lambda x: x[:x.find(',')], lambda x: x.replace('\'',''))
+                coords = (i.as_dict()['latitude'], i.as_dict()['longitude'])
+                if coords not in crawled:
+                    crawled.add(coords)
+                    print(i)
+                    return i
 
     async def _fetch_stores(self, urls, loop):
-        connector = aiohttp.TCPConnector(limit=10)
+        connector = aiohttp.TCPConnector(limit=100)
         async with aiohttp.ClientSession(loop=loop, connector=connector) as session:
             results = await asyncio.gather(
                     *[self._fetch_store(session, url) for url in urls],
@@ -51,14 +49,13 @@ class Scrape(base.Spider):
         return results
 
     def crawl(self):
-        base_url = "https://www.clarksoneyecare.com/locations-sitemap.xml"
+        base_url = "https://www.mavistire.com/locations/"
         response = requests.get(base_url, headers={"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"})
         sitemap = response.content
         urls = []
-        for sel in etree.fromstring(sitemap).xpath('//x:urlset/x:url/x:loc', namespaces={"x":"http://www.sitemaps.org/schemas/sitemap/0.9"}):
-            url = sel.text
-            if not url.endswith('locations/'):
-                urls.append(url)
+        for sel in lxml.html.fromstring(sitemap).xpath('//tr/td[last()]/a[contains(text(), "hours")]/@href'):
+            url = urljoin(base_url, sel)
+            urls.append(url)
         loop = asyncio.get_event_loop()
         stores = loop.run_until_complete(self._fetch_stores(urls, loop))
         return [s for s in stores if s]
