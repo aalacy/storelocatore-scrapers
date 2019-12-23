@@ -53,7 +53,7 @@ def fetch_data():
         }
         data = "adults=1&checkInDate=" + str(today) + "&checkOutDate=" + str(tomorrow) + "&lat=" + str(x) + "&lon=" + str(y) + "&minors=0&optimizeResponse=image_url&platformType=DESKTOP&preferredLocaleCode=en-us&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100&siteName=us&siteOpRelevanceSortMethod=ALGORITHM_B"
         r = session.post("https://www.choicehotels.com/webapi/location/hotels",headers=headers,data=data)
-        print(r.content)
+        print(r.content[0:3000])
         if "hotels" not in r.json():
             search.max_distance_update(MAX_DISTANCE)
             coord = search.next_coord()
