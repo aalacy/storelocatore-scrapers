@@ -43,84 +43,78 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = ""
 
-    location_url = "https://www.circlek.com/stores_new.php?lat=33.6&lng=-112.12&distance=10000000000000&services=&region=global"
-    r = requests.get(location_url, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-
-    k = json.loads(soup.text)['stores']
-    for i in k:
-        while True:
-            try:
-                r1 = requests.get(base_url + k[i]['url'], headers=headers)
-                soup1 = BeautifulSoup(r1.text, "lxml")
-                break
-            except:
-                continue
-        # r1 = requests.get(base_url+k[i]['url'], headers=headers)
-
-        location_name1 = '<MISSING>'
-        street_address1 = soup1.find("h1", {"class": "heading-big"})
-        if street_address1 != None:
-            street_address = street_address1.text.replace(
-                "\n", "").split(",")[-1].strip()
-        else:
-            street_address = "<MISSING>"
-        zipp1 = soup1.find("h2", {"class": "heading-small"})
-        if zipp1 != None:
-            zipp = list(zipp1.stripped_strings)[-1]
-        else:
-            zipp = "<MISSING>"
-
-        if len(zipp) == 6 or len(zipp) == 7:
-            country_code = "CA"
-        else:
-            country_code = "US"
-
-        city1 = soup1.find("h2", {"class": "heading-small"})
-        if city1 != None:
-            city = list(city1.stripped_strings)[0]
-        else:
-            city = "<MISSING>"
-        state1 = soup1.find("h2", {"class": "heading-small"})
-        if state1 != None:
-            state2 = re.sub('\s+', ' ', state1.text).split(',')
-            if len(state2) != 2:
-                state = state2[1]
+    location_url = "https://www.circlek.com/stores_new.php?lat=40.8&lng=-73.65&distance=100000&services=&region=global"
+    r = requests.get(location_url, headers=headers).json()
+    for key, value in r["stores"].items():
+        if value["country"] in ["US", "Canada", "CA"]:
+            street_address = value["address"]
+            store_number = value["cost_center"]
+            street_address = value["address"]
+            city = value["city"]
+            location_name = city
+            latitude = value["latitude"]
+            longitude = value["longitude"]
+            if value["country"] in ["Canada", "CA"]:
+                country_code = "CA"
             else:
+                country_code = "US"
+            location_type = value["display_brand"]
+            page_url = "https://www.circlek.com" + value["url"]
+            # print(page_url)
+            r_loc = requests.get(page_url, headers=headers)
+            soup_loc = BeautifulSoup(r_loc.text, "lxml")
+            try:
+                csz = list(soup_loc.find(
+                    "h2", class_="heading-small").stripped_strings)
+                csz = [el.replace('\n', '') for el in csz]
+                # print(csz)
+                if len(csz) < 4:
+                    state = "<MISSING>"
+                else:
+                    state = csz[-3].strip()
+                zipp = csz[-1].strip()
+                # print(city, state, zipp, country_code)
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~")
+
+                # ca_zip_list = re.findall(
+                #     r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(" ".join(csz)))
+                # us_zip_list = re.findall(re.compile(
+                #     r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(" ".join(csz)))
+                # state_list = re.findall(r' ([A-Z]{2}) ', str(" ".join(csz)))
+
+                # if ca_zip_list:
+                #     zipp = ca_zip_list[0]
+                # else:
+                #     zipp = "<MISSING>"
+
+                # if us_zip_list:
+                #     zipp = us_zip_list[0]
+                # else:
+                #     zipp = "<MISSING>"
+                # if state_list:
+                #     state = state_list[0]
+                # else:
+                #     state = "<MISSING>"
+                phone = soup_loc.find(
+                    "a", {"itemprop": "telephone"}).text.strip()
+                hours_of_operation = " ".join(list(soup_loc.find(
+                    "div", class_="columns large-12 middle hours-wrapper").stripped_strings)).replace("hours", "").strip()
+            except:
+                zipp = "<MISSING>"
                 state = "<MISSING>"
-        else:
-            state = "<MISSING>"
-        phone1 = soup1.find("div", {
-                            "class": "store-info__item store-info__item--phone icon-circlek_icons_telephone"})
-        if phone1 != None:
-            phone = phone1.text.replace("\n", "")
-        else:
-            phone = "<MISSING>"
-        if "(5200 868-8097" == phone :
-            phone = "<MISSING>"
-        hours_of_operation1 = soup1.find(
-            "div", {"class": "columns large-12 middle hours-wrapper"})
-        if hours_of_operation1 != None:
-            hours_of_operation = " ".join(
-                list(hours_of_operation1.stripped_strings))
-        else:
-            hours_of_operation = "<MISSING>"
-        latitude = k[i]['latitude']
-        longitude = k[i]['longitude']
-        page_url = base_url + k[i]['url']
+                hours_of_operation = "<MISSING>"
+                phone = "<MISSING>"
+            # print(phone)
         store = [locator_domain, location_name.encode('ascii', 'ignore').decode('ascii').strip(), street_address.encode('ascii', 'ignore').decode('ascii').strip(), city.encode('ascii', 'ignore').decode('ascii').strip(), state.encode('ascii', 'ignore').decode('ascii').strip(), zipp.encode('ascii', 'ignore').decode('ascii').strip(), country_code,
                  store_number, phone.encode('ascii', 'ignore').decode('ascii').strip(), location_type, latitude, longitude, hours_of_operation.replace("hours", "").encode('ascii', 'ignore').decode('ascii').strip(), page_url]
 
-        if "<MISSING>" in store[2]:
-            pass
-        else:
-            if str(store[2]) + str(store[-3]) not in addresses:
-                addresses.append(str(store[2]) + str(store[-3]))
-                store = [x if x else "<MISSING>" for x in store]
-                #print("data = " + str(store))
-                #print(
-                    # '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
+        if str(store[2]) + str(store[-3]) not in addresses:
+            addresses.append(str(store[2]) + str(store[-3]))
+            store = [x if x else "<MISSING>" for x in store]
+            # print("data = " + str(store))
+            # print(
+            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            yield store
 
 
 def scrape():
