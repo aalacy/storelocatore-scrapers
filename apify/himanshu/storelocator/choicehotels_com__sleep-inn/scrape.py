@@ -18,7 +18,7 @@ def requests_retry_session(
 ):
     session = requests.Session()
     proxy_password = os.environ["PROXY_PASSWORD"]
-    proxy_url = "http://groups-RESIDENTIAL,session-s1:{}@proxy.apify.com:8000/".format(proxy_password)
+    proxy_url = "http://groups-RESIDENTIAL:{}@proxy.apify.com:8000/".format(proxy_password)
     proxies = {
         'http': proxy_url,
         'https': proxy_url
