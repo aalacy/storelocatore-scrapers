@@ -12,3 +12,4 @@ Please make sure that:
 address with no number,address contains state name,same lat & Lng
 
 so for the location id there is a main location id and then sub category id and both of these combined are unique so lets say some of the location have same main id but different category id i tried to combine them but the validator keep throwing error so for now i have put missing for the id
+
