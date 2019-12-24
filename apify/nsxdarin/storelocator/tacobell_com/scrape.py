@@ -112,6 +112,8 @@ def fetch_data():
                     if lng == '':
                         lng = '<MISSING>'
                     if name != '':
+                        if store == '':
+                            store = '<MISSING>'
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                 except:
                     PFound = True
