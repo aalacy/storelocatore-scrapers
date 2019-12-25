@@ -5,11 +5,11 @@ import json
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36'}
 
-r = requests.get('https://www.tdbank.com/net/get11.ashx?longitude=-94.57868&latitude=43.0997&searchradius=9000&searchunit=mi&locationtypes=3&numresults=1300&json=y&country=us',headers=headers)      
+r = requests.get('https://www.tdbank.com/net/get11.ashx?longitude=-94.57868&latitude=43.0997&searchradius=14000&searchunit=mi&locationtypes=3&numresults=1900&json=y&country=us',headers=headers)
 cont = json.loads(r.content,strict=False)
 l = cont['markers']['marker']
 
-y=['https://www.tdbank.com/net/get11.ashx?longitude=-94.57868&latitude=43.0997&searchradius=9000&searchunit=mi&locationtypes=3&numresults=1300&json=y&country=us']
+y=['https://www.tdbank.com/net/get11.ashx?longitude=-94.57868&latitude=43.0997&searchradius=14000&searchunit=mi&locationtypes=3&numresults=1900&json=y&country=us']
 
 addresses=[]
 data_list=[]
