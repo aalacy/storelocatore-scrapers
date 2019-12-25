@@ -84,11 +84,18 @@ def fetch_data():
 
             except Exception as e:
                 zip_code = "<MISSING>"
-
-            store_numbr = i.get('branchN', "<MISSING>")
-            if len(store_numbr) < 3:
+                
+            try: 
+                store_numbr = i['branchN']
+                if store_numbr == '':
+                    store_numbr = "<MISSING>"
+                else:
+                    store_numbr = i['branchN']
+            
+            
+            except Exception as e:
                 store_numbr = "<MISSING>"
-
+                
             page_url = y[0]
             location_name = "<MISSING>"
             loc_type = "<MISSING>"
