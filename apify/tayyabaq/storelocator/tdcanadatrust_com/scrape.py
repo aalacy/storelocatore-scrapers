@@ -85,6 +85,10 @@ def fetch_data():
             
             try:
                 store_numbr =i['id']
+                if store_numbr == '':
+                    store_numbr = "<MISSING>"
+                else:
+                    store_numbr = i['id']
 
             except Exception as e:
                 store_numbr = "<MISSING>"
