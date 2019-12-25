@@ -73,7 +73,8 @@ def fetch_data():
 
             try:
                 zp = i['address']
-                zp_code = re.findall(r"\d{5}", zp)
+                p=zp.split(",",1)[1]
+                zp_code = re.findall(r"\d{5}", p)
                 zip_code=zp_code[0]
 
             except Exception as e:
