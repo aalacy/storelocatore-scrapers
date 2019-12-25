@@ -77,10 +77,16 @@ def fetch_data():
                 zp = "<MISSING>"
 
             page_url = y[0]
+            
+            try:
+                store_numbr =i['id']
+
+            except Exception as e:
+                store_numbr = "<MISSING>"
+                
             location_name = "TD CANADA TRUST"
             country_code = "CA"
             locator_domain = "https://www.td.com"
-            store_numbr = "<MISSING>"
 
             new = [locator_domain, page_url,location_name, street, city, state, zp, country_code,store_numbr, phn,
                  loc_type, lat, lng, hour]
