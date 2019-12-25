@@ -29,7 +29,7 @@ def get_driver():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome("chromedriver", options=options)
+    return webdriver.Chrome("chromedriver", options=options)
 
 driver1 = get_driver()
 
