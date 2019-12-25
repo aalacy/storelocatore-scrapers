@@ -85,7 +85,7 @@ def fetch_data():
 
             page_url = y[0]
             location_name = "TD BANK"
-            loc_type = "ATM"
+            loc_type = "<MISSING>"
             country_code = "USA"
             locator_domain = "https://www.td.com"
 
