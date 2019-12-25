@@ -15,7 +15,7 @@ addresses=[]
 data_list=[]
 
 def write_output(data):
-    with open('data.csv', mode='w',newline='') as output_file:
+    with open('TDBANKF.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -36,15 +36,20 @@ def fetch_data():
             phn = i.get('phoneNo', "<MISSING>")
             if len(phn) < 3:
                 phn = "<MISSING>"
-            hr=[]
-            hoo = i.get('hours', "<MISSING>")
-            for key, value in hoo.items():
-                n = key + " " + value
-                hr.append(n)
-                hour = "| ".join(hr)
+            try: 
+                new = i['hours']
+                if new=={}:
+                    new = "<MISSING>"
+                    hour=new
+                else:
+                    hr=[]
+                    for key, value in new.items():
+                        n = key + " " + value
+                        hr.append(n)
+                        hour = "| ".join(hr)
 
-            if len(hour) < 3:
-                hour = "<MISSING>"
+            except Exception as e:
+                hour = "<MISSING>"    
 
             try:
                 new = i['address']
@@ -85,13 +90,14 @@ def fetch_data():
                 store_numbr = "<MISSING>"
 
             page_url = y[0]
-            location_name = "TD BANK"
+            location_name = "<MISSING>"
             loc_type = "<MISSING>"
             country_code = "USA"
             locator_domain = "https://www.td.com"
 
             new = [locator_domain, page_url,location_name, street, city, state, zip_code, country_code,store_numbr, phn,
                  loc_type, lat, lng, hour]
+            print(new)
             data_list.append(new)
         return data_list
 
