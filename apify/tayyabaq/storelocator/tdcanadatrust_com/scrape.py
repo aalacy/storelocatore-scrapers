@@ -36,14 +36,19 @@ def fetch_data():
             phn = i.get('phoneNo', "<MISSING>")
             if len(phn) < 3:
                 phn = "<MISSING>"
-            hr=[]
-            hoo = i.get('hours', "<MISSING>")
-            for key, value in hoo.items():
-                n = key + " " + value
-                hr.append(n)
-                hour = "| ".join(hr)
+            try: 
+                new = i['hours']
+                if new=={}:
+                    new = "<MISSING>"
+                    hour=new
+                else:
+                    hr=[]
+                    for key, value in new.items():
+                        n = key + " " + value
+                        hr.append(n)
+                        hour = "| ".join(hr)
 
-            if len(hour) < 3:
+            except Exception as e:
                 hour = "<MISSING>"
                 
             try:
@@ -84,7 +89,7 @@ def fetch_data():
             except Exception as e:
                 store_numbr = "<MISSING>"
                 
-            location_name = "TD CANADA TRUST"
+            location_name = "<MISSING>"
             country_code = "CA"
             locator_domain = "https://www.td.com"
 
