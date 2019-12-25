@@ -9,6 +9,8 @@ r = requests.get('https://www.tdbank.com/net/get12.ashx?longitude=-79.2998&latit
 cont = json.loads(r.content,strict=False)
 l = cont['markers']['marker']
 
+y=['https://www.tdbank.com/net/get12.ashx?longitude=-79.2998&latitude=85.1076&country=CA&locationtypes=3&json=y&searchradius=4000&searchunit=mi&numresults=1900']
+
 addresses=[]
 data_list=[]
 
