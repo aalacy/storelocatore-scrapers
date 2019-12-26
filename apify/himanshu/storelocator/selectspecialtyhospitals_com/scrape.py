@@ -79,7 +79,7 @@ def fetch_data():
             latitude = ""
             longitude = ""
             raw_address = ""
-            hours_of_operation = "<INACCESIBLE>"
+            hours_of_operation = "<INACCESSIBLE>"
             if json_data["Results"] != []:
                 for location in json_data["Results"]:
 

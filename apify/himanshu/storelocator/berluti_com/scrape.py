@@ -37,7 +37,7 @@ def fetch_data():
     city = "<MISSING>"
     state = "<MISSING>"
     zipp = "<MISSING>"
-    country_code = "US"
+    country_code = ""
     store_number = "<MISSING>"
     phone = "<MISSING>"
     location_type = "<MISSING>"
@@ -60,19 +60,22 @@ def fetch_data():
             # print(len(address_list))
             # print("~~~~~~~~~~~~~~~~~~~~~~~~")
             location_name = address_list[0]
+            country_code = "US"
             if len(address_list) > 14:
                 street_address = address_list[1] + ", " + address_list[2]
-                city = address_list[5].strip()
+                city = address_list[3].strip()
                 state = address_list[6].split()[0].strip()
                 zipp = address_list[6].split()[-1].strip()
                 phone = address_list[7].strip()
-                # print(zipp)
             else:
                 street_address = address_list[1].strip()
                 city = address_list[2].strip()
                 state = address_list[4].strip()
                 zipp = address_list[5].split()[-1].strip()
                 phone = address_list[6].strip()
+                # print(address_list)
+                # print(city)
+                # print("~~~~~~~~~~~~~~~~~~~~`")
 
             hours_url = "http://store.berluti.com" + \
                 script_us.find("a", {
@@ -84,19 +87,66 @@ def fetch_data():
 
             hours_of_operation = " ".join(list(soup_hours.find(
                 "div", {"class": "components-outlet-item-hours-retail"}).stripped_strings)).replace("Opening hours", "").strip()
+            latitude = soup_hours.find(
+                "meta", {"itemprop": "latitude"})["content"]
+            longitude = soup_hours.find(
+                "meta", {"itemprop": "longitude"})["content"]
+
+            # print(latitude, longitude)
 
             # print("hours_of_operationty ====== " + str(hours_of_operation))
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
+            yield store
             # print("data = " + str(store))
             # print(
             #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
-            return_main_object.append(store)
+    r_ca = requests.get(
+        "http://store.berluti.com/search?country=ca", headers=headers)
+    soup_us = BeautifulSoup(r_ca.text, "lxml")
 
-    return return_main_object
+    for script_us in soup_us.find_all('div', {'class': 'container'}):
+        address_list = list(script_us.stripped_strings)
+
+        if 'Closed' in address_list:
+            # print(str(address_list))
+            # print(len(address_list))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~")
+            location_name = address_list[0]
+            country_code = "CA"
+            street_address = address_list[1].strip()
+            city = address_list[2].strip()
+            state = address_list[4].strip()
+            zipp = address_list[5].split("  ")[-1].strip()
+            phone = address_list[6].strip()
+
+            hours_url = "http://store.berluti.com" + \
+                script_us.find("a", {
+                               "class": "components-outlet-item-search-result-basic__link__details__link"})["href"]
+            page_url = hours_url
+            # print("script_us === " + str(hours_url))
+            r_hours = requests.get(hours_url, headers=headers)
+            soup_hours = BeautifulSoup(r_hours.text, "lxml")
+
+            hours_of_operation = " ".join(list(soup_hours.find(
+                "div", {"class": "components-outlet-item-hours-retail"}).stripped_strings)).replace("Opening hours", "").strip()
+            latitude = soup_hours.find(
+                "meta", {"itemprop": "latitude"})["content"]
+            longitude = soup_hours.find(
+                "meta", {"itemprop": "longitude"})["content"]
+
+            # print(latitude, longitude)
+
+            # print("hours_of_operationty ====== " + str(hours_of_operation))
+
+            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+            yield store
+            # print("data = " + str(store))
+            # print(
+            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
 
 def scrape():

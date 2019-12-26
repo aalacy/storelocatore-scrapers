@@ -66,8 +66,14 @@ def fetch_data():
                     continue
 
                 soup1 = BeautifulSoup(r1.text, "lxml")
-                hours = list(soup1.find("dl",{"class":"available-hours"}).stripped_strings)
-                hours_of_operation = ' '.join(hours)
+                if soup1.find("dl",{"class":"available-hours"}) != [] and soup1.find("dl",{"class":"available-hours"}) != None:
+
+                    hours = list(soup1.find("dl",{"class":"available-hours"}).stripped_strings)
+                    hours_of_operation = ' '.join(hours)
+
+                else:
+                    hours_of_operation = "<MISSING>"
+                    
                 zipp = soup1.find("span",{"class":"postal-code"}).text
                 phone = soup1.find("span",{"class":"tel"}).text.strip().lstrip()
 
