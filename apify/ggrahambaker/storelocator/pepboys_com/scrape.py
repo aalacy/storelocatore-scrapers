@@ -61,7 +61,7 @@ def fetch_data():
 
     all_store_data = []
 
-    for i, link in enumerate(link_list):
+    for i, link in enumerate(link_list[:10]):
         if '..' in link:
             link = link.replace('../', to_scrape)
         page = requests.get(link)
@@ -95,10 +95,15 @@ def fetch_data():
             if len(day_of_week['intervals']) == 0:
                 hours += day + ' Closed '
                 continue
-            start = day_of_week['intervals'][0]['start']
-            end = day_of_week['intervals'][0]['end']
-            
+
+            start_temp = str(day_of_week['intervals'][0]['start'])
+            start = start_temp[:-2] + ':' + start_temp[-2:]
+            end_temp = str(day_of_week['intervals'][0]['end'])
+            end = end_temp[:-2] + ':' + end_temp[-2:]
+
+         
             hours += day + ' ' + str(start) + ' : ' + str(end) + ' '
+
         
         hours = hours.strip()
         
