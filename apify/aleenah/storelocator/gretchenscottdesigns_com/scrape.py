@@ -40,7 +40,7 @@ def fetch_data():
 "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36"}
     res = requests.get("https://www.gretchenscottdesigns.com",headers=headers)
     soup = BeautifulSoup(res.text, 'html.parser')
-    print(soup)
+  #  print(soup)
     sa = soup.find('div', {'class': 'f_block f_block3'}).find_all("a")
 
     for a in sa:
@@ -82,6 +82,8 @@ def fetch_data():
         else:
             phones.append(p[0])
             tex=tex.replace(p[0],"")
+        tex=re.findall(r'(.*pm)',tex)[0]
+        #print(tex)
         timing.append(tex)
 
     all = []
