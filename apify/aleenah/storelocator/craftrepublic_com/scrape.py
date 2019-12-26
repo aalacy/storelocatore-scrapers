@@ -58,7 +58,7 @@ def fetch_data():
         #res=requests.get(url,headers=header)
         #print(res)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-        ids.append(soup.find('div', {'class': 'mfcard'}).get('location_id'))
+        #ids.append(soup.find('div', {'class': 'mfcard'}).get('location_id'))
         locs.append(soup.find('h3', {'itemprop': 'name'}).text)
         states.append(soup.find('span', {'itemprop': 'addressRegion'}).text)
         c=soup.find('span', {'itemprop': 'addressLocality'}).text
@@ -70,7 +70,7 @@ def fetch_data():
         phones.append(soup.find('span', {'itemprop': 'telephone'}).text)
         lat.append(soup.find('meta', {'itemprop': 'latitude'}).get('content'))
         long.append(soup.find('meta', {'itemprop': 'longitude'}).get('content'))
-        types.append(soup.find('meta', {'property': 'og:type'}).get('content'))
+        #types.append(soup.find('meta', {'property': 'og:type'}).get('content'))
         hr=soup.find('dl', {'itemprop': 'openingHours'})
 
         dts=hr.find_all('dt')
@@ -90,9 +90,9 @@ def fetch_data():
         row.append(states[i])
         row.append(zips[i])
         row.append("US")
-        row.append(ids[i])  # store #
+        row.append("<MISSING>")  # store #
         row.append(phones[i])  # phone
-        row.append(types[i])  # type
+        row.append( "<MISSING>")  # type
         row.append(lat[i])  # lat
         row.append(long[i])  # long
         row.append(timing[i])  # timing
