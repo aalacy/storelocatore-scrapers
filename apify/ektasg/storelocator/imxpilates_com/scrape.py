@@ -34,18 +34,19 @@ def fetch_data():
     # Your scraper here
     data=[]
 
-    titles=[]
+
     names=[]
     driver.get("https://imxpilates.com/studios.php")
     stores = driver.find_elements_by_xpath("//div[contains(@class,'studionewcol')]//p//a[contains(@href,'http://')]")
     for i in range(0,len(stores)):
        if "coming soon" not in stores[i].text.lower() :
-        names.append(stores[i].get_attribute('href'))
-        titles.append(stores[i].text )
+        if stores[i].get_attribute('href')not in names:
+         names.append(stores[i].get_attribute('href'))
+
     
     
     print(len(names))
-    print(len(titles))
+
     count =0
     for j in range(len(names)):
         #print(names[j])
@@ -57,12 +58,16 @@ def fetch_data():
         time.sleep(5)
         #print("time")
         page_url = names[j]
-        try:
+        """try:
             location_name = driver.current_url.split("branchname=")[1]
         except:
-            location_name = driver.current_url.split("branches/")[1]
+            location_name = driver.current_url.split("branches/")[1]"""
+        location_name= driver.find_element_by_css_selector('div.location-banner-block > h1').text.split(",")[0].strip()
         text = driver.find_element_by_css_selector('div.footer-logo > p').text.splitlines()
-        street_address = text[0]
+        if "Plaza" in text[0]:
+          street_address = text[0].split("Plaza")[1].strip()
+        else:
+          street_address = text[0]
         state_city_zip = text[1]
         zipcode = state_city_zip.split(" ")[-1]
         state = state_city_zip.split(" ")[-2]
