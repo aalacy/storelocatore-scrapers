@@ -3,38 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import os
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from sgrequests import SgRequests
 
-requests.packages.urllib3.disable_warnings()
-
-def requests_retry_session(
-    retries=20,
-    backoff_factor=0.3,
-    status_forcelist=(500, 502, 504)
-):
-    session = requests.Session()
-    proxy_password = os.environ["PROXY_PASSWORD"]
-    proxy_url = "http://groups-RESIDENTIAL:{}@proxy.apify.com:8000/".format(proxy_password)
-    proxies = {
-        'http': proxy_url,
-        'https': proxy_url
-    }
-    session.proxies = proxies
-    retry = Retry(
-        total=retries,
-        read=retries,
-        connect=retries,
-        backoff_factor=backoff_factor,
-        status_forcelist=status_forcelist,
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
-    return session
-
-session = requests_retry_session()
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -61,7 +32,8 @@ def fetch_data():
     link1 = soup.find_all('loc')[:-1]
     for i in link1:
         link = i.text
-        r1= session.get(link, headers=headers, timeout=(10, 10))
+        print(link)
+        r1= session.get(link, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         main1=soup1.find('div', {'class': 'StoreAddress-storeAddressGuts'})
         if main1 != None:
