@@ -38,8 +38,11 @@ def fetch_data():
         zc = ''
         country = ''
         phone = ''
+        CS = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            if 'Coming Soon' in line2:
+                CS = True
             if 'property="og:title" content="' in line2:
                 name = line2.split('property="og:title" content="')[1].split('"')[0]
             if 'property="og:latitude" content="' in line2:
@@ -74,7 +77,7 @@ def fetch_data():
             lng = '<MISSING>'
         if state in canada:
             country = 'CA'
-        if add != '':
+        if add != '' and CS is False:
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
