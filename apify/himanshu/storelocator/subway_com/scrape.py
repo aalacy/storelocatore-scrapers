@@ -6,13 +6,45 @@ import json
 import sgzip
 import time
 import time
+import os
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
+requests.packages.urllib3.disable_warnings()
+
+def requests_retry_session(
+    retries=3,
+    backoff_factor=0.3,
+    status_forcelist=(500, 502, 504)
+):
+    session = requests.Session()
+    proxy_password = os.environ["PROXY_PASSWORD"]
+    proxy_url = "http://groups-RESIDENTIAL:{}@proxy.apify.com:8000/".format(proxy_password)
+    proxies = {
+        'http': proxy_url,
+        'https': proxy_url
+    }
+    session.proxies = proxies
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
+
+session = requests_retry_session()
 
 def request_wrapper(url,method,headers,data=None):
    request_counter = 0
    if method == "get":
        while True:
            try:
-               r = requests.get(url,headers=headers)
+               r = session.get(url,headers=headers)
                return r
                break
            except:
@@ -25,9 +57,9 @@ def request_wrapper(url,method,headers,data=None):
        while True:
            try:
                if data:
-                   r = requests.post(url,headers=headers,data=data)
+                   r = session.post(url,headers=headers,data=data)
                else:
-                   r = requests.post(url,headers=headers)
+                   r = session.post(url,headers=headers)
                return r
                break
            except:
