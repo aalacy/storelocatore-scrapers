@@ -9,7 +9,7 @@ from requests.exceptions import ConnectionError
 requests.packages.urllib3.disable_warnings()
 
 def requests_retry_session(
-    retries=3,
+    retries=10,
     backoff_factor=0.3,
     status_forcelist=(500, 502, 504)
 ):
@@ -75,7 +75,7 @@ def fetch_data():
         store = loc.rsplit('/',1)[1]
         r2 = None
         try:
-            r2 = session.get(loc, headers=headers, verify=False, timeout=(10, 10))
+            r2 = session.get(loc, headers=headers, verify=False, timeout=(60, 60))
         except ConnectionError:
             print('Failed to connect to ' + loc + ' ... skipping!')
             continue
