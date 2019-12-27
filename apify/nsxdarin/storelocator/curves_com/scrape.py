@@ -22,16 +22,13 @@ def fetch_data():
         x = coord[0]
         y = coord[1]
         print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        url = 'https://www.curves.com/find-a-club?location=10002&lat=' + x + '&lng=' + y
+        url = 'https://www.curves.com/locations/' + str(x) + ',' + str(y) + '?page=0'
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
-            if '<h3><span>' in line:
-                phone = ''
-            if '1F4DE' in line and '</i>' in line:
-                try:
-                    phone = line.split('</i>')[1].split('<')[0]
-                except:
-                    phone = ''
+            if 'views-field views-field-title-field">' in line:
+                phone = '<MISSING>'
+            if 'franchise-phone">' in line:
+                phone = line.split('franchise-phone">')[1].split('">')[1].split('<')[0]
             if '<a href="https://www.wellnessliving.com' in line:
                 purl = line.split('href="')[1].split('"')[0]
                 if purl not in ids:
