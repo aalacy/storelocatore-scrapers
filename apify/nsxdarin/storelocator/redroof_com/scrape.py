@@ -56,6 +56,7 @@ def fetch_data():
             locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
+        print(loc)
         if '-CA/' in loc:
             country = 'CA'
         else:
@@ -74,8 +75,9 @@ def fetch_data():
         store = loc.rsplit('/',1)[1]
         r2 = None
         try:
-            r2 = session.get(loc, headers=headers, verify=False)
+            r2 = session.get(loc, headers=headers, verify=False, timeout=(10, 10))
         except ConnectionError:
+            print('Failed to connect to ' + loc + ' ... skipping!')
             continue
         for line2 in r2.iter_lines():
             if 'name="og:title" content="' in line2:
