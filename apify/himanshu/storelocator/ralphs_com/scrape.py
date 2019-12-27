@@ -10,7 +10,7 @@ from requests.packages.urllib3.util.retry import Retry
 requests.packages.urllib3.disable_warnings()
 
 def requests_retry_session(
-    retries=10,
+    retries=20,
     backoff_factor=0.3,
     status_forcelist=(500, 502, 504)
 ):
