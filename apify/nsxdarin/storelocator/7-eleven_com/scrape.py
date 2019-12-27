@@ -24,7 +24,6 @@ def fetch_data():
             if count == 6:
                 locs.append(lurl)
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         website = '7-eleven.com'
         typ = ''
         name = '7-Eleven'
