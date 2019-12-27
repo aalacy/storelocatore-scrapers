@@ -63,6 +63,8 @@ def fetch_data():
         tem_var.append(link)
        
         if tem_var[2] in address1:
+            print('skipping location! ' + location_name)
+            print(tem_var[2])
             continue
         address1.append(tem_var[2])
         return_main_object.append(tem_var) 
