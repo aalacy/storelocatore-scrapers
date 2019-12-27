@@ -43,7 +43,6 @@ def fetch_data():
     for loc in locs:
         r2 = session.get(loc, headers=headers, verify=False)
         website = 'bankofamerica.com'
-        print('Pulling Location %s...' % loc)
         name = ''
         add = ''
         city = ''

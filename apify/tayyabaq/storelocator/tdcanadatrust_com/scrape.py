@@ -9,6 +9,8 @@ r = requests.get('https://www.tdbank.com/net/get12.ashx?longitude=-79.2998&latit
 cont = json.loads(r.content,strict=False)
 l = cont['markers']['marker']
 
+y=['https://www.tdbank.com/net/get12.ashx?longitude=-79.2998&latitude=85.1076&country=CA&locationtypes=3&json=y&searchradius=4000&searchunit=mi&numresults=1900']
+
 addresses=[]
 data_list=[]
 
@@ -34,14 +36,19 @@ def fetch_data():
             phn = i.get('phoneNo', "<MISSING>")
             if len(phn) < 3:
                 phn = "<MISSING>"
-            hr=[]
-            hoo = i.get('hours', "<MISSING>")
-            for key, value in hoo.items():
-                n = key + " " + value
-                hr.append(n)
-                hour = "| ".join(hr)
+            try: 
+                new = i['hours']
+                if new=={}:
+                    new = "<MISSING>"
+                    hour=new
+                else:
+                    hr=[]
+                    for key, value in new.items():
+                        n = key + " " + value
+                        hr.append(n)
+                        hour = "| ".join(hr)
 
-            if len(hour) < 3:
+            except Exception as e:
                 hour = "<MISSING>"
                 
             try:
@@ -75,10 +82,20 @@ def fetch_data():
                 zp = "<MISSING>"
 
             page_url = y[0]
-            location_name = "TD CANADA TRUST"
+            
+            try:
+                store_numbr =i['id']
+                if store_numbr == '':
+                    store_numbr = "<MISSING>"
+                else:
+                    store_numbr = i['id']
+
+            except Exception as e:
+                store_numbr = "<MISSING>"
+                
+            location_name = "<MISSING>"
             country_code = "CA"
             locator_domain = "https://www.td.com"
-            store_numbr = "<MISSING>"
 
             new = [locator_domain, page_url,location_name, street, city, state, zp, country_code,store_numbr, phn,
                  loc_type, lat, lng, hour]

@@ -44,7 +44,6 @@ def fetch_data():
         zc = ''
         phone = ''
         HFound = False
-        print('Pulling Location %s...' % loc)
         website = 'smartstyle.com'
         typ = 'Salon'
         PFound = True

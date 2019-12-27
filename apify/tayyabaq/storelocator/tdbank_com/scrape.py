@@ -5,17 +5,17 @@ import json
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36'}
 
-r = requests.get('https://www.tdbank.com/net/get11.ashx?longitude=-94.57868&latitude=43.0997&searchradius=9000&searchunit=mi&locationtypes=3&numresults=1300&json=y&country=us',headers=headers)      
+r = requests.get('https://www.tdbank.com/net/get11.ashx?longitude=-94.57868&latitude=43.0997&searchradius=14000&searchunit=mi&locationtypes=3&numresults=1900&json=y&country=us',headers=headers)
 cont = json.loads(r.content,strict=False)
 l = cont['markers']['marker']
 
-y=['https://www.tdbank.com/net/get11.ashx?longitude=-94.57868&latitude=43.0997&searchradius=9000&searchunit=mi&locationtypes=3&numresults=1300&json=y&country=us']
+y=['https://www.tdbank.com/net/get11.ashx?longitude=-94.57868&latitude=43.0997&searchradius=14000&searchunit=mi&locationtypes=3&numresults=1900&json=y&country=us']
 
 addresses=[]
 data_list=[]
 
 def write_output(data):
-    with open('data.csv', mode='w',newline='') as output_file:
+    with open('TDBANKF.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -36,15 +36,20 @@ def fetch_data():
             phn = i.get('phoneNo', "<MISSING>")
             if len(phn) < 3:
                 phn = "<MISSING>"
-            hr=[]
-            hoo = i.get('hours', "<MISSING>")
-            for key, value in hoo.items():
-                n = key + " " + value
-                hr.append(n)
-                hour = "| ".join(hr)
+            try: 
+                new = i['hours']
+                if new=={}:
+                    new = "<MISSING>"
+                    hour=new
+                else:
+                    hr=[]
+                    for key, value in new.items():
+                        n = key + " " + value
+                        hr.append(n)
+                        hour = "| ".join(hr)
 
-            if len(hour) < 3:
-                hour = "<MISSING>"
+            except Exception as e:
+                hour = "<MISSING>"    
 
             try:
                 new = i['address']
@@ -73,24 +78,33 @@ def fetch_data():
 
             try:
                 zp = i['address']
-                zp_code = re.findall(r"\d{5}", zp)
+                p=zp.split(",",1)[1]
+                zp_code = re.findall(r"\d{5}", p)
                 zip_code=zp_code[0]
 
             except Exception as e:
                 zip_code = "<MISSING>"
-
-            store_numbr = i.get('branchN', "<MISSING>")
-            if len(store_numbr) < 3:
+                
+            try: 
+                store_numbr = i['branchN']
+                if store_numbr == '':
+                    store_numbr = "<MISSING>"
+                else:
+                    store_numbr = i['branchN']
+            
+            
+            except Exception as e:
                 store_numbr = "<MISSING>"
-
+                
             page_url = y[0]
-            location_name = "TD BANK"
-            loc_type = "ATM"
+            location_name = "<MISSING>"
+            loc_type = "<MISSING>"
             country_code = "USA"
             locator_domain = "https://www.td.com"
 
             new = [locator_domain, page_url,location_name, street, city, state, zip_code, country_code,store_numbr, phn,
                  loc_type, lat, lng, hour]
+            print(new)
             data_list.append(new)
         return data_list
 

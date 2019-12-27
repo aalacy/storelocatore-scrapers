@@ -1,4 +1,3 @@
-
 import csv
 import requests
 from bs4 import BeautifulSoup
@@ -20,144 +19,115 @@ def write_output(data):
 
 
 def fetch_data():
-    arr = ["US", "CA"]
-    return_main_object = []
-    return_main_object1 = []
     addresses = []
-    for i in range(len(arr)):
-        base_url1 = 'https://hosted.where2getit.com/canadagoose/ajax?xml_request=<request><appkey>8949AAF8-550E-11DE-B2D5-479533A3DD35</appkey><formdata id="getlist"><objectname>StoreLocator</objectname><limit>5000</limit><order>rank::numeric</order><where><city><ne>Quam</ne></city><country><eq>' + \
-            str(arr[i]) + '</eq></country></where><radiusuom></radiusuom></formdata></request>'
-        r1 = requests.get(base_url1)
-        main_soup1 = BeautifulSoup(r1.text, "lxml")
-        for poi in main_soup1.find_all('poi'):
-            locator_domain = "https://www.canadagoose.com/"
-            location_name = poi.find("name").text.strip()
-            street_address = poi.find("address1").text.strip()
-            city = poi.find("city").text.strip()
-            latitude = poi.find("latitude").text.strip()
-            longitude = poi.find("longitude").text.strip()
-            phone_tag = poi.find("phone").text.strip()
-            phone_list = re.findall(re.compile(
-                ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
-            if phone_list:
-                phone = phone_list[-1].strip()
-            else:
-                phone = "<MISSING>"
-            state = poi.find("state").text.strip()
-            if len(state) > 2:
-                state = "<MISSING>"
-            if "YK" in state:
-                state = "<MISSING>"
+    headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+    }
+    base_url = "https://www.canadagoose.com/"
 
-            hours_of_operation = "<MISSING>"
-            country_code = poi.find("country").text.strip()
-            store_number = "<MISSING>"
-            location_type = "<MISSING>"
-            page_url = "https://www.canadagoose.com/ca/en/find-a-retailer/find-a-retailer.html"
-            zip = poi.find("postalcode").text.strip()
+    page_url = "https://www.canadagoose.com/ca/en/find-a-retailer/find-a-retailer.html"
 
-            if len(zip) == 4:
-                zip = "0" + zip
+    r= requests.get("https://hosted.where2getit.com/canadagoose/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E8949AAF8-550E-11DE-B2D5-479533A3DD35%3C%2Fappkey%3E%3Cformdata+id%3D%22getlist%22%3E%3Cobjectname%3EStoreLocator%3C%2Fobjectname%3E%3Climit%3E5000%3C%2Flimit%3E%3Corder%3Erank%3A%3Anumeric%3C%2Forder%3E%3Cwhere%3E%3Ccity%3E%3Cne%3EQuam%3C%2Fne%3E%3C%2Fcity%3E%3Ccountry%3E%3Ceq%3ECA%3C%2Feq%3E%3C%2Fcountry%3E%3C%2Fwhere%3E%3Cradiusuom%3E%3C%2Fradiusuom%3E%3C%2Fformdata%3E%3C%2Frequest%3E", headers=headers)
 
-            if "7017" == location_name:
-                location_name = city
-            ca_zip_list = re.findall(
-                r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zip))
+    soup = BeautifulSoup(r.text, "lxml")
 
-            us_zip_list = re.findall(re.compile(
-                r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zip))
-            if us_zip_list:
-                zipp = us_zip_list[-1]
-            elif ca_zip_list:
-                zipp = ca_zip_list[-1]
-            else:
-                zipp = "<MISSING>"
+    for i in soup.find_all("poi"):
 
-            if zipp == "00000":
-                zipp = "<MISSING>"
-            # print(zipp)
+        location_name = i.find("name").text
 
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+        if i.find("address1").text != '':
+            street_address = i.find("address1").text + str(i.find("address2").text)
+        else:
+            street_address = "<MISSING>"
 
-            if str(store[1]) + str(store[2]) not in addresses and country_code:
-                addresses.append(str(store[1]) + str(store[2]))
+        city = i.find("city").text
+        state = i.find("province").text
 
-                store = [str(x).encode('ascii', 'ignore').decode(
-                    'ascii').strip() if x else "<MISSING>" for x in store]
-                if "SoHo 101 Wooster Street" in store or "800 Boylston St" in store or "6455 Macleod Trail SW" in store or "1200 Morris Turnpike" in store or "1020 Saint-Catherine St W" in store:
-                    pass
-                # print("data = " + str(store))
-                # print(
-                    # '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
+        if i.find("postalcode").text != '':
+            zipp = i.find("postalcode").text
+        else:
+            zipp = "<MISSING>"
 
-    base_url = "https://www.canadagoose.com/ca/en/find-a-retailer/find-a-retailer.html"
-    addresses = []
-    r = requests.get(base_url)
-    main_soup = BeautifulSoup(r.text, "lxml")
-    for store in main_soup.find_all('div', class_='store'):
-        locator_domain = "https://www.canadagoose.com/"
-        location_name = list(store.find(
-            'h3', {'class': 'section-break'}).stripped_strings)[-1].strip()
-        street_address = store.find(
-            'span', {'itemprop': "streetAddress"}).text.strip()
-        street_address = re.sub(' +', ' ', street_address)
-        city = store.find('span', {'itemprop': "addressLocality"}).text.strip()
-        state = store.find('span', {'itemprop': "addressRegion"}).text.strip()
-        if "France" in state:
+        country_code = "CA"
+
+        if i.find("phone").text != '':
+            phone = i.find("phone").text
+        else:
+            phone = "<MISSING>"
+
+        latitude = i.find("latitude").text
+        longitude = i.find("longitude").text
+
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append(country_code)
+        store.append("<MISSING>") 
+        store.append(phone)
+        store.append("<MISSING>")
+        store.append(latitude)
+        store.append(longitude)
+        store.append("<MISSING>")
+        store.append(page_url)
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        yield store
+
+    r1 = requests.get("https://hosted.where2getit.com/canadagoose/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E8949AAF8-550E-11DE-B2D5-479533A3DD35%3C%2Fappkey%3E%3Cformdata+id%3D%22getlist%22%3E%3Cobjectname%3EStoreLocator%3C%2Fobjectname%3E%3Climit%3E5000%3C%2Flimit%3E%3Corder%3Erank%3A%3Anumeric%3C%2Forder%3E%3Cwhere%3E%3Ccity%3E%3Cne%3EQuam%3C%2Fne%3E%3C%2Fcity%3E%3Ccountry%3E%3Ceq%3EUS%3C%2Feq%3E%3C%2Fcountry%3E%3C%2Fwhere%3E%3Cradiusuom%3E%3C%2Fradiusuom%3E%3C%2Fformdata%3E%3C%2Frequest%3E", headers=headers)
+
+    soup1 = BeautifulSoup(r1.text, "lxml")
+
+    for j in soup1.find_all("poi"):
+
+        location_name = j.find("name").text
+
+        if j.find("address1").text != '':
+            street_address = j.find("address1").text + str(j.find("address2").text)
+        else:
+            street_address = "<MISSING>"
+
+        city = j.find("city").text
+        state = j.find("state").text
+
+        if j.find("postalcode").text != '':
+            zipp = j.find("postalcode").text
+        else:
+            zipp = "<MISSING>"
+
+        country_code = "US"
+
+        if j.find("phone").text != '':
+            phone = j.find("phone").text
+        else:
+            phone = "<MISSING>"
+
+        latitude = j.find("latitude").text
+        longitude = j.find("longitude").text
+
+
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp.replace('00000','<MISSING>'))
+        store.append(country_code)
+        store.append("<MISSING>") 
+        store.append(phone)
+        store.append("<MISSING>")
+        store.append(latitude)
+        store.append(longitude)
+        store.append("<MISSING>")
+        store.append(page_url)
+        if store[2] in addresses:
             continue
-        zipp_tag = store.find('span', {'itemprop': "postalCode"}).text.strip()
-        phone = store.find('span', {'itemprop': "telephone"}).text.strip()
-        location_type = "<MISSING>"
-        store_number = "<MISSING>"
-        ca_zip_list = re.findall(
-            r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp_tag))
-        us_zip_list = re.findall(re.compile(
-            r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp_tag))
-
-        country_code = ""
-        if ca_zip_list:
-            zipp = ca_zip_list[-1]
-            country_code = "CA"
-
-        if us_zip_list:
-            zipp = us_zip_list[-1]
-            country_code = "US"
-        else:
-            pass
-        page_url = store.find('a', {'class': "more-info"})['href']
-        r_loc = requests.get(page_url)
-        soup_loc = BeautifulSoup(r_loc.text, 'lxml')
-        if soup_loc.find('div', class_='store-info') != None:
-            store_info = list(soup_loc.find(
-                'div', class_='store-info').stripped_strings)
-            hours_of_operation = " ".join(store_info).split(
-                '.com')[-1].replace('Directions', "").strip()
-            coord = soup_loc.find('div', class_='store-info').find(lambda tag: (
-                tag.name == 'a') and "Directions" in tag.text.strip())
-            if coord == None:
-                latitude = "<MISSING>"
-                longitude = "<MISSING>"
-            else:
-                latitude = coord['href'].split('@')[-1].split(',')[0]
-                longitude = coord['href'].split('@')[-1].split(',')[1]
-
-        else:
-            pass
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-        if str(store[1]) + str(store[2]) not in addresses and country_code:
-            addresses.append(str(store[1]) + str(store[2]))
-
-            store = [str(x).encode('ascii', 'ignore').decode(
-                'ascii').strip() if x else "<MISSING>" for x in store]
-            # print("data = " + str(store))
-            # print(
-            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            yield store
-
+        addresses.append(store[2])
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        yield store
 
 def scrape():
     data = fetch_data()

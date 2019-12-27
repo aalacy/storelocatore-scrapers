@@ -2,6 +2,8 @@ import csv
 import urllib2
 import requests
 
+requests.packages.urllib3.disable_warnings()
+
 session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -16,7 +18,7 @@ def write_output(data):
 def fetch_data():
     url = 'https://www.trugreen.com/local-sitemap.xml'
     locs = []
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
         if '<loc>https://www.trugreen.com/local-lawn-care/' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
@@ -32,10 +34,9 @@ def fetch_data():
         zc = ''
         phone = ''
         hours = ''
-        print('Pulling Location %s...' % loc)
         website = 'trugreen.com'
         typ = 'Location'
-        r2 = session.get(loc, headers=headers)
+        r2 = session.get(loc, headers=headers, verify=False)
         for line2 in r2.iter_lines():
             if '"name": "' in line2:
                 name = line2.split('"name": "')[1].split('"')[0]

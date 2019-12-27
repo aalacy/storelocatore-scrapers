@@ -3,96 +3,121 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+import time
+from selenium.webdriver.support.wait import WebDriverWait
+import platform
+
+system = platform.system()
+
+
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    if "linux" in system.lower():
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)
+    else:
+        return webdriver.Firefox(executable_path='geckodriver', options=options)
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+    with open('data.csv', 'w') as output_file:
+        writer = csv.writer(output_file, delimiter=",")
 
-        # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
-        # Body
-        for row in data:
-            writer.writerow(row)
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+
+        # print("data::" + str(data))
+        for i in data or []:
+            writer.writerow(i)
 
 
 def fetch_data():
-  
+    driver = get_driver()
+    return_main_object = []
+    addresses = []
+
+    locator_domain = "https://www.bahamabucks.com/"
+    page_url = "<MISSING>"
+    location_name = ""
+    street_address = "<MISSING>"
+    city = "<MISSING>"
+    state = "<MISSING>"
+    zipp = "<MISSING>"
+    country_code = "US"
+    store_number = "<MISSING>"
+    phone = "<MISSING>"
+    location_type = "<MISSING>"
+    latitude = "<MISSING>"
+    longitude = "<MISSING>"
+    raw_address = ""
+    hours_of_operation = "<MISSING>"
+    page_url = 'https://www.bahamabucks.com/locations/index.html'
+
+    driver.get("https://www.bahamabucks.com/sc/fns/locations.php")
+    s = requests.Session()
+    cookies_list = driver.get_cookies()
+
+    cookies_json = {}
+    for cookie in cookies_list:
+        cookies_json[cookie['name']] = cookie['value']
+
+    cookies_string = str(cookies_json).replace("{", "").replace("}", "").replace("'", "").replace(": ", "=").replace(
+        ",", ";")
+
+    # print(cookies_string)
+
     headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-    "Content-Type":"application/x-www-form-urlencoded; charset=UTF-8"
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        "Cookie": cookies_string
+
+
     }
-    data="status=All"
-    base_url= "http://bahamabucks.com/sc/fns/locations.php"
-    r = requests.post(base_url,headers=headers,data=data)
-    soup= BeautifulSoup(r.text,"lxml")
-  
-    store_name=[]
-    store_detail=[]
-    phone=[]
-    lat=[]
-    log =[]
-    hours=[]
-    return_main_object=[]
-    k=(soup.find_all("div",{"class":"col-md-12 col-sm-12"}))
-    
-    for i in k:
-        tem_var=[]
-        
-        
-        if i.find_all("div",{"id":"locations-center-icons"}) !=[]:
-            lat.append(i.find_all("div",{"id":"locations-center-icons"})[0].a['href'].split("'/'")[-1].split(',')[0])
-            log.append(i.find_all("div",{"id":"locations-center-icons"})[0].a['href'].split("'/'")[-1].split(',')[1].replace("'",""))
+    add = []
+    hours = []
+    page_url1 = []
+    data = "status=All"
+    r = s.post(
+        "https://www.bahamabucks.com/sc/fns/locations.php", data=data, headers=headers)
+    soup = BeautifulSoup(r.text, "lxml")
+    for info in soup.find("div", {"class": "container"}).find_all("div", class_="row"):
+        list_info = list(info.stripped_strings)
+        location_name = list_info[0].strip()
+        street_address = list_info[1].strip()
+        city = list_info[2].split(',')[0].strip()
+        state = list_info[2].split(',')[-1].split()[0].strip()
+        zipp = list_info[2].split(',')[-1].split()[-1].strip()
+        phone = list_info[3].strip()
+        hours_of_operation = " ".join(list_info[5:]).strip()
+        latitude = info.find(
+            'img', {"alt": "Get Directions"}).parent["href"].split("'")[-2].split(',')[0].strip()
+        longitude = info.find(
+            'img', {"alt": "Get Directions"}).parent["href"].split("'")[-2].split(',')[-1].replace("'", "").strip()
+        if "HOURS" == phone:
+            phone = "<MISSING>"
+            hours_of_operation = " ".join(list_info[4:]).strip()
+            # print(phone, hours_of_operation)
 
-          
-   
+        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+        store = ["<MISSING>" if x == "" or x == None else x for x in store]
+        store = [str(x).encode('ascii', 'ignore').decode(
+            'ascii').strip() if x else "<MISSING>" for x in store]
 
-        if "HOURS" in list(i.stripped_strings):
-            hourss = " ".join(list(i.stripped_strings)).replace("HOURS","")
-            if hourss:
-                hours.append(hourss)
-                # print(hourss)
-            else:
-                hours.append("<MISSING>")
-                # print("<MISSING>")
+        if street_address in addresses:
+            continue
+        addresses.append(street_address)
+        # print(state)
+        # print("data = " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
-            # hours.append(" ".join(list(i.stripped_strings)).replace("HOURS","<MISSING>"))
-        else:
-            name = list(i.stripped_strings)[0]
-            st = list(i.stripped_strings)[1].replace("PR","")
-            city = list(i.stripped_strings)[2].split(',')[0]
-            state = list(i.stripped_strings)[2].split(',')[1].split( )[0]
-            zipcode = list(i.stripped_strings)[2].split(',')[1].split( )[1]
-
-           
-            if list(i.stripped_strings)[3:] !=[]:
-                phone = list(i.stripped_strings)[3]
-            else:
-                phone ="<MISSING>"
-            
-            store_name.append(name)
-            tem_var.append(st)
-            tem_var.append(city)
-            tem_var.append(state)
-            tem_var.append(zipcode)
-            tem_var.append("US")
-            tem_var.append("<MISSING>")
-            tem_var.append(phone)
-            tem_var.append("bahamabucks")
-            store_detail.append(tem_var)
-
-    for i in range(len(store_name)):
-        store = list()
-        store.append("http://bahamabucks.com")
-        store.append(store_name[i])
-        store.extend(store_detail[i])
-        store.append(lat[i])
-        store.append(log[i])
-        store.append(hours[i])
-        return_main_object.append(store) 
-
-    return return_main_object
+        yield store
 
 
 def scrape():
@@ -101,7 +126,3 @@ def scrape():
 
 
 scrape()
-
-
-
-

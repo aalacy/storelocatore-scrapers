@@ -61,6 +61,7 @@ def fetch_data():
         ids.append(id)
         te=t.split("Phone")[0]
         te=re.sub("#"+id,"",te).strip()
+        #print(te)
         num=re.findall(r'[0-9\-]+',te)[-1]
         if num == "-":
             num=re.findall(r'[0-9\-]+',te)[-2]
@@ -81,7 +82,8 @@ def fetch_data():
         s=te.split(" ")[-1]
         states.append(s.strip())
         cities.append(c.replace(",","").strip())
-        street.append(re.sub(r"(\w)([A-Z])", r"\1 \2",te.replace(c,"").replace(s,"")).strip().strip(","))
+        #print(te)
+        street.append(re.sub(r"(\w)([A-Z][a-z]+)", r"\1 \2",te.replace(c,"").replace(s,"")).strip().strip(","))
 
 
         #break
