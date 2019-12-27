@@ -3,8 +3,38 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import os
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
+requests.packages.urllib3.disable_warnings()
 
+def requests_retry_session(
+    retries=3,
+    backoff_factor=0.3,
+    status_forcelist=(500, 502, 504)
+):
+    session = requests.Session()
+    proxy_password = os.environ["PROXY_PASSWORD"]
+    proxy_url = "http://groups-RESIDENTIAL:{}@proxy.apify.com:8000/".format(proxy_password)
+    proxies = {
+        'http': proxy_url,
+        'https': proxy_url
+    }
+    session.proxies = proxies
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
+
+session = requests_retry_session()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -27,12 +57,12 @@ def fetch_data():
     return_main_object = []
     address1 = []
     location_name =[]    
-    r = requests.get("https://www.ralphs.com/storelocator-sitemap.xml", headers=headers)    
+    r = session.get("https://www.ralphs.com/storelocator-sitemap.xml", headers=headers)    
     soup = BeautifulSoup(r.text, "lxml")
     link1 = soup.find_all('loc')[:-1]
     for i in link1:
         link = i.text
-        r1= requests.get(link, headers=headers)
+        r1= session.get(link, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         main1=soup1.find('div', {'class': 'StoreAddress-storeAddressGuts'})
         if main1 != None:
@@ -45,13 +75,6 @@ def fetch_data():
             phone = soup1.find('span', {'class': 'PhoneNumber-phone'}).text
             hour = soup1.find('div', {'class': 'StoreInformation-storeHours'}).text
             location_name = soup1.find('h1', {'class': 'StoreDetails-header'}).text
-
-  
-   
-    
-  
-
-
         tem_var=[]           
         tem_var.append('https://www.ralphs.com/')
         tem_var.append(location_name)
@@ -71,11 +94,7 @@ def fetch_data():
         if tem_var[2] in address1:
             continue
         address1.append(tem_var[2])
-        return_main_object.append(tem_var)
-
-
-                   
- 
+        return_main_object.append(tem_var) 
     return return_main_object
 
 
