@@ -38,7 +38,7 @@ def fetch_data():
                 city = line2.split('span itemprop="addressLocality">')[1].split('<')[0]
                 state = line2.split('<span itemprop="addressRegion">')[1].split('<')[0]
                 zc = line2.split('"postalCode">')[1].split('<')[0]
-                country = 'CA'
+                country = 'US'
             if AFound and '<p item' not in line2 and '</p>' in line2 and '<p>' in line2:
                 add = add + ' ' + line2.split('<p>')[1].split('<')[0]
             if '<h2 itemprop="name">' in line2:
