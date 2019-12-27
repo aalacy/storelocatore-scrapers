@@ -4,6 +4,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+# import pprint
+# pp = pprint.PrettyPrinter(indent=4)
 import sgzip
 
 
@@ -68,7 +70,7 @@ def fetch_data():
         try:
             r = requests.get(location_url, headers=headers)
         except:
-            pass
+            continue
         soup = BeautifulSoup(r.text, "lxml")
         k = json.loads(soup.text)['items']
         current_results_len = len(k)
@@ -87,91 +89,61 @@ def fetch_data():
 
                     ln = len(v.replace(", Canada", "").replace(
                         ", USA", "").split(","))
-                    if ln == 3:
-                        us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(
-                            v.replace(", Canada", "").replace(", USA", "").split(",")))
-                        ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(
-                            v.replace(", Canada", "").replace(", USA", "").split(",")[1:]))
-                        state_list = re.findall(
-                            r' ([A-Z]{2}) ', str(v.replace(", Canada", "").replace(", USA", "").split(",")[1:]))
-                        if us_zip_list:
-                            zipp = us_zip_list[-1]
-
-                        if ca_zip_list:
-                            zipp = ca_zip_list[-1]
-
-                        if state_list:
-                            state = state_list[-1]
-                        st = v.replace(", Canada", "").replace(
-                            ", USA", "").split(",")[0]
-                        city = v.replace(", Canada", "").replace(", USA", "").split(",")[1].replace(
-                            "1101D", "").replace("NY", "").replace("Viateur Ouest", "")
-
-                    elif ln == 4:
-                        us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(
-                            " ".join(v.replace(", Canada", "").replace(", USA", "").split(",")[1:])))
-                        ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(
-                            " ".join(v.replace(", Canada", "").replace(", USA", "").split(",")[1:])))
-                        state_list = re.findall(
-                            r' ([A-Z]{2}) ', str(" ".join(v.replace(", Canada", "").replace(", USA", "").split(",")[2:])))
-                        if us_zip_list:
-                            zipp = us_zip_list[-1]
-
-                        if ca_zip_list:
-                            zipp = ca_zip_list[-1]
-
-                        city = v.replace(", Canada", "").replace(
-                            ", USA", "").split(",")[1].replace(" Suite 2245", "")
-                        st = (" ".join(v.replace(", Canada", "").replace(
-                            ", USA", "").split(",")[:2]).replace(city, ""))
-                    elif ln == 5:
-                        zipp = v.replace(", Canada", "").replace(
-                            ", USA", "").split(",")[-1].strip()
-                        state = v.replace(", Canada", "").replace(
-                            ", USA", "").split(",")[-2].strip()
-                        city = v.replace(", Canada", "").replace(
-                            ", USA", "").split(",")[-3].strip()
-                        st = " ".join(v.replace(", Canada", "").replace(
-                            ", USA", "").split(",")[:2])
-
-                    if ln == 2:
-                        # print(v.split(','))
-                        # print("~~~~~~~~~~~~~~~~~~~~~~")
-                        if len(v.split(',')[-1].split()) > 3:
-                            zipp = v.split(',')[-1].split()[-1].strip()
-                            state = v.split(',')[-1].split()[-2].strip()
-                            city = " ".join(
-                                v.split(',')[-1].split()[:-2]).strip()
-                            st = v.split(',')[0].strip()
+                    if ln == 4:
+                        add_list = v.split(",")
+                        if "" == add_list[-1]:
+                            add_list.remove("")
+                        state = add_list[-1].split()[0].strip()
+                        zipp = add_list[-1].split()[-1].strip()
+                        if "The Village at Corte Madera" not in add_list[0]:
+                            street_address = " ".join(add_list[:-2]).strip()
+                            city = add_list[-2].strip()
                         else:
-                            zipp = " ".join(
-                                v.split(',')[-1].split()[1:]).strip()
-                            state = v.split(',')[-1].split()[0].strip()
-                            city = v.split(',')[0].split()[-1].strip()
-                            if "Francisco" == city:
-                                city = " ".join(
-                                    v.split(',')[0].split()[-2:]).strip()
-                            st = " ".join(v.split(',')[0].split()[
-                                          :-1]).replace("San", "").strip()
-                    if " Space D207" == city:
-                        st = " ".join(
-                            v.split(',')[2].split()[:-2]).strip()
-                        city = " ".join(v.split(',')[2].split()[-2:]).strip()
-
-                        # zipp = v.replace(", Canada", "").replace(
-                        #     ", USA", "").split(",")[-1].strip().split(" ")[1]
-                        # state = v.replace(", Canada", "").replace(
-                        #     ", USA", "").split(",")[-1].strip().split(" ")[0]
-                        # city = v.replace(", Canada", "").replace(
-                        #     ", USA", "").split(",")[0].split(".")[1]
-
-                        # st = v.replace(", Canada", "").replace(
-                        #     ", USA", "").split(",")[0].split(".")[0]
-
+                            street_address = " ".join(add_list[2].split()[:-2])
+                            city = " ".join(add_list[2].split()[-2:])
+                    elif ln == 3:
+                        add_list = v.split(',')
+                        if " USA" in add_list[-1]:
+                            add_list.remove(" USA")
+                        street_address = add_list[0].strip()
+                        city = add_list[1].strip()
+                        state = add_list[-1].split()[0].strip()
+                        zipp = add_list[-1].split()[-1].strip()
+                    elif ln == 2:
+                        add_list = v.split(',')
+                        if " Boston" in add_list[-1]:
+                            street_address = " ".join(
+                                add_list[0].split()[:-2]).strip()
+                            city = add_list[-1].strip()
+                            state = add_list[0].split()[-2].strip()
+                            zipp = add_list[0].split()[-1].strip()
+                        elif "NY10011" in add_list[-1]:
+                            street_address = " ".join(
+                                add_list[0].split()[:-2]).strip()
+                            city = " ".join(add_list[0].split()[-2:])
+                            state = add_list[-1].replace("10011", "").strip()
+                            zipp = "10011"
+                        elif len(add_list[-1].split()) > 2:
+                            street_address = add_list[0].strip()
+                            city = " ".join(add_list[-1].split()[:-2]).strip()
+                            state = add_list[-1].split()[-2].strip()
+                            zipp = add_list[-1].split()[-1].strip()
+                        else:
+                            street_address = " ".join(
+                                add_list[0].split()[:-2]).strip()
+                            city = " ".join(add_list[0].split()[-2:])
+                            state = add_list[-1].split()[0].strip()
+                            zipp = add_list[-1].split()[-1].strip()
+                    else:
+                        street_address = " ".join(v.split()[:-4]).strip()
+                        city = " ".join(v.split()[-4:-2]).strip()
+                        state = v.split()[-2].strip()
+                        zipp = v.split()[-1].strip()
                     tem_var = []
                     tem_var.append("https://www.aesop.com")
                     tem_var.append(name1 if name1 else "<MISSING>")
-                    tem_var.append(st if st else "<MISSING>")
+                    tem_var.append(
+                        street_address if street_address else "<MISSING>")
                     tem_var.append(city if city else "<MISSING>")
                     tem_var.append(state if state else "<MISSING>")
                     tem_var.append(zipp if zipp else "<MISSING>")
@@ -183,12 +155,15 @@ def fetch_data():
                     tem_var.append(lng if lng else "<MISSING>")
                     tem_var.append("<MISSING>")
                     tem_var.append("<MISSING>")
+                    tem_var = [x.encode('ascii', 'ignore').decode(
+                        'ascii').strip() if type(x) == str else x for x in tem_var]
+                    tem_var = ["<MISSING>" if x == "" else x for x in tem_var]
                     if tem_var[2] in addresses:
                         continue
                     addresses.append(tem_var[2])
                     yield tem_var
-                    print("data == " + str(tem_var))
-                    print("~~~~~~~~~~~")
+                    # print("data == " + str(tem_var))
+                    # print("~~~~~~~~~~~")
 
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
@@ -200,7 +175,7 @@ def fetch_data():
             raise Exception("expected at most " +
                             str(MAX_RESULTS) + " results")
         coord = search.next_coord()   # zip_code = search.next_zip()
-        # break
+        break
 
 
 def scrape():

@@ -9,21 +9,23 @@ import time
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
-def request_wrapper(url,method,headers,data=None):
+
+def request_wrapper(url, method, headers, data=None):
     request_counter = 0
     if method == "get":
         while True:
             try:
-                r = requests.get(url,headers=headers)
+                r = requests.get(url, headers=headers)
                 return r
                 break
             except:
@@ -36,9 +38,9 @@ def request_wrapper(url,method,headers,data=None):
         while True:
             try:
                 if data:
-                    r = requests.post(url,headers=headers,data=data)
+                    r = requests.post(url, headers=headers, data=data)
                 else:
-                    r = requests.post(url,headers=headers)
+                    r = requests.post(url, headers=headers)
                 return r
                 break
             except:
@@ -49,6 +51,7 @@ def request_wrapper(url,method,headers,data=None):
                     break
     else:
         return None
+
 
 def fetch_data():
     return_main_object = []
@@ -77,72 +80,93 @@ def fetch_data():
 
         # zip_code = "11576"
 
-        data = "{\"query\":\"\\n      query storeSearch($searchText: String!, $filters: [String]!) {\\n        storeSearch(searchText: $searchText, filters: $filters) {\\n          stores {\\n            ...storeSearchResult\\n          }\\n          fuel {\\n            ...storeSearchResult\\n          }\\n          shouldShowFuelMessage\\n        }\\n      }\\n      \\n  fragment storeSearchResult on Store {\\n    banner\\n    vanityName\\n    divisionNumber\\n    storeNumber\\n    phoneNumber\\n    showWeeklyAd\\n    showShopThisStoreAndPreferredStoreButtons\\n    storeType\\n    distance\\n    latitude\\n    longitude\\n    tz\\n    ungroupedFormattedHours {\\n      displayName\\n      displayHours\\n      isToday\\n    }\\n    address {\\n      addressLine1\\n      addressLine2\\n      city\\n      countryCode\\n      stateCode\\n      zip\\n    }\\n    pharmacy {\\n      phoneNumber\\n    }\\n    departments {\\n      code\\n    }\\n    fulfillmentMethods{\\n      hasPickup\\n      hasDelivery\\n    }\\n  }\\n\",\"variables\":{\"searchText\":\""+str(zip_code)+"\",\"filters\":[]},\"operationName\":\"storeSearch\"}"
+        data = "{\"query\":\"\\n      query storeSearch($searchText: String!, $filters: [String]!) {\\n        storeSearch(searchText: $searchText, filters: $filters) {\\n          stores {\\n            ...storeSearchResult\\n          }\\n          fuel {\\n            ...storeSearchResult\\n          }\\n          shouldShowFuelMessage\\n        }\\n      }\\n      \\n  fragment storeSearchResult on Store {\\n    banner\\n    vanityName\\n    divisionNumber\\n    storeNumber\\n    phoneNumber\\n    showWeeklyAd\\n    showShopThisStoreAndPreferredStoreButtons\\n    storeType\\n    distance\\n    latitude\\n    longitude\\n    tz\\n    ungroupedFormattedHours {\\n      displayName\\n      displayHours\\n      isToday\\n    }\\n    address {\\n      addressLine1\\n      addressLine2\\n      city\\n      countryCode\\n      stateCode\\n      zip\\n    }\\n    pharmacy {\\n      phoneNumber\\n    }\\n    departments {\\n      code\\n    }\\n    fulfillmentMethods{\\n      hasPickup\\n      hasDelivery\\n    }\\n  }\\n\",\"variables\":{\"searchText\":\"" + str(zip_code) + "\",\"filters\":[]},\"operationName\":\"storeSearch\"}"
         locations_url = "https://www.kroger.com/stores/api/graphql"
-        r_locations = request_wrapper(locations_url,"post", headers=headers,data=data)
+        r_locations = request_wrapper(
+            locations_url, "post", headers=headers, data=data)
 
         # print("r_locations.text ==== " + r_locations.text)
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
         locations_json = r_locations.json()
 
-        current_results_len = len(locations_json["data"]["storeSearch"]["stores"])  # it always need to set total len of record.
+        # it always need to set total len of record.
+        try:
+            current_results_len = len(
+                locations_json["data"]["storeSearch"]["stores"])
+
         # print("current_results_len === " + str(current_results_len))
 
-        for script in locations_json["data"]["storeSearch"]["stores"]:
+            for script in locations_json["data"]["storeSearch"]["stores"]:
 
-            locator_domain = base_url
-            location_name = ""
-            street_address = ""
-            city = ""
-            state = ""
-            zipp = ""
-            country_code = "US"
-            store_number = ""
-            phone = ""
-            location_type = ""
-            latitude = ""
-            longitude = ""
-            raw_address = ""
-            page_url = ""
-            hours_of_operation = ""
+                locator_domain = base_url
+                location_name = ""
+                street_address = ""
+                city = ""
+                state = ""
+                zipp = ""
+                country_code = "US"
+                store_number = ""
+                phone = ""
+                location_type = ""
+                latitude = ""
+                longitude = ""
+                raw_address = ""
+                page_url = ""
+                hours_of_operation = ""
 
-            # do your logic here
-            # print('script["address"] === '+ str(script["address"]))
+                # do your logic here
+                # print('script["address"] === '+ str(script["address"]))
 
-            street_address = script["address"]["addressLine1"]
-            if "addressLine2" in script["address"] and script["address"]["addressLine2"]:
-                street_address += " "+ script["address"]["addressLine2"]
-            city = script["address"]["city"]
-            country_code = script["address"]["countryCode"]
-            state = script["address"]["stateCode"]
-            zipp = script["address"]["zip"]
-            phone = script["phoneNumber"]
-            #store_number = script["storeNumber"]
-            latitude = script["latitude"]
-            longitude = script["longitude"]
-            #location_type = script["storeType"]
-            location_name = script["vanityName"]
-            page_url = "https://www.kroger.com/stores/details/"+str(script["divisionNumber"])+"/"+str(script["storeNumber"])
+                street_address = script["address"]["addressLine1"]
+                if "addressLine2" in script["address"] and script["address"]["addressLine2"]:
+                    street_address += " " + script["address"]["addressLine2"]
+                city = script["address"]["city"]
+                country_code = script["address"]["countryCode"]
+                state = script["address"]["stateCode"]
+                zipp = script["address"]["zip"]
+                phone = script["phoneNumber"]
+                store_number = script["storeNumber"]
+                latitude = script["latitude"]
+                longitude = script["longitude"]
+                if script["pharmacy"] == None and script["departments"] == []:
+                    ltype = script["storeType"]
+                    location_type = "kroger"
+                else:
+                    location_type = "Ralph's"
+                    # print(location_type)
 
-            hours_of_operation = ""
-            for day_hours in script["ungroupedFormattedHours"]:
-                hours_of_operation += day_hours["displayName"] +" = "+day_hours["displayHours"]+"  "
+                # print(location_type)
+                location_name = script["vanityName"]
+                page_url = "https://www.kroger.com/stores/details/" + \
+                    str(script["divisionNumber"]) + \
+                    "/" + str(script["storeNumber"])
+                # print(page_url)
+                # print("~~~~~~~~~~~~~~~~~~`")
 
-            # print("hours_of_operation == "+ hours_of_operation)
+                hours_of_operation = ""
+                for day_hours in script["ungroupedFormattedHours"]:
+                    hours_of_operation += day_hours["displayName"] + \
+                        " = " + day_hours["displayHours"] + "  "
 
-            result_coords.append((latitude, longitude))
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+                # print("hours_of_operation == "+ hours_of_operation)
 
-            if str(store[2]) not in addresses and country_code:
-                addresses.append(str(store[2]))
+                result_coords.append((latitude, longitude))
+                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                         store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                if str(store[2]) not in addresses and country_code:
+                    addresses.append(str(store[2]))
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
+                    store = [str(x).encode('ascii', 'ignore').decode(
+                        'ascii').strip() if x else "<MISSING>" for x in store]
 
+                    # print("data = " + str(store))
+                    # print(
+                    #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    yield store
+        except:
+            pass
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
@@ -150,7 +174,8 @@ def fetch_data():
             # print("max count update")
             search.max_count_update(result_coords)
         else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+            raise Exception("expected at most " +
+                            str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
 
 

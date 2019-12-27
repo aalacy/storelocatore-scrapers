@@ -93,6 +93,15 @@ def fetch_data():
                 latitude = loc['latitude']
                 longitude = loc['longitude']
                 country_name = getplace(latitude, longitude)
+                if country_name not in["United States of America", "Canada", "unknown"]:
+                    continue
+                if "United States of America" in country_name:
+                    country_code = "US"
+                elif "Canada" in country_name:
+                    country_code = "CA"
+                else:
+                    continue
+                #print(country_code)
                 name = loc['name'].strip()
                 address = loc['address1'].strip()
                 city = loc['city'].strip()
@@ -107,20 +116,15 @@ def fetch_data():
                         r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(loc["postalCode"]))
                     if us_zip_list:
                         zipp = us_zip_list[0]
-                        country_code = "US"
                     elif ca_zip_list:
                         zipp = ca_zip_list[0]
-                        country_code = "CA"
                     else:
                         continue
                 else:
-                    # print("country_name === "+str(country_name))
-                    if "United States of America" == country_name:
-                        zipp = "<MISSING>"
-                        country_code = "US"
-                    else:
-                        zipp = "<MISSING>"
-                        country_code = "CA"
+                    # print(loc)
+                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+
+                    zipp = "<MISSING>"
                 # print(zipp, country_code)
                 try:
                     hours = BeautifulSoup(loc["storeHours"], "lxml")

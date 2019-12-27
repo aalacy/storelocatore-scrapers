@@ -18,7 +18,7 @@ def fetch_data():
     url = 'https://local.lenscrafters.com/sitemap.xml'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if 'hreflang="en" href="https://local.lenscrafters.com/' in line:
+        if 'hreflang="en" href="https://local.lenscrafters.com/' in line and 'hreflang="en" href="https://local.lenscrafters.com/eyedoctors' not in line:
             lurl = line.split('href="')[1].split('"')[0]
             count = lurl.count('/')
             if count == 5:
@@ -55,7 +55,10 @@ def fetch_data():
                 if 'address-street-2">' in line2:
                     add = add + ' ' + line2.split('address-street-2">')[1].split('<')[0]
                 city = line2.split('<span class="c-address-city">')[1].split('<')[0]
-                state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
+                if '/pr/' in loc:
+                    state = 'PR'
+                else:
+                    state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
                 country = 'US'
                 zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
                 phone = line2.split('itemprop="telephone"')[1].split('">')[1].split('<')[0]

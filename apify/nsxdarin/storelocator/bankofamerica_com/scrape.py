@@ -41,53 +41,59 @@ def fetch_data():
         print(str(len(locs)) + ' Locations Found...')
     stores = []
     for loc in locs:
-        r2 = session.get(loc, headers=headers, verify=False)
-        website = 'bankofamerica.com'
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        zc = ''
-        country = ''
-        store = ''
-        phone = ''
-        lat = ''
-        lng = ''
-        typ = ''
-        hours = ''
-        AFound = False
-        lines = r2.iter_lines()
-        for line2 in lines:
-            if "var fid = '" in line2:
-                store = line2.split("var fid = '")[1].split("'")[0]
-            if '<div class="location-type" aria-label="' in line2:
-                typ = line2.split('<div class="location-type" aria-label="')[1].split('"')[0]
-            if add == '' and '"streetAddress": "' in line2:
-                add = line2.split('"streetAddress": "')[1].split('"')[0]
-            if city == '' and '"addressLocality": "' in line2:
-                city = line2.split('"addressLocality": "')[1].split('"')[0]
-            if state == '' and '"addressRegion": "' in line2:
-                state = line2.split('"addressRegion": "')[1].split('"')[0]
-            if zc == '' and '"postalCode": "' in line2:
-                zc = line2.split('"postalCode": "')[1].split('"')[0]
-            if country == '' and '"@type": "Country",' in line2:
-                country = next(lines).split('"name": "')[1].split('"')[0]
-            if lat == '' and '"latitude": "' in line2:
-                lat = line2.split('"latitude": "')[1].split('"')[0]
-            if lng == '' and '"longitude": "' in line2:
-                lng = line2.split('"longitude": "')[1].split('"')[0]
-            if phone == '' and '"telephone": "' in line2:
-                phone = line2.split('"telephone": "')[1].split('"')[0]
-            if hours == '' and '"openingHours": "' in line2:
-                hours = line2.split('"openingHours": "')[1].split('"')[0].strip()
-            if '"location_name\\": \\"' in line2:
-                name = line2.split('"location_name\\": \\"')[1].split('\\')[0]
-        if name != '':
-            if phone == '':
-                phone = '<MISSING>'
-            if typ == '':
-                typ = '<MISSING>'
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        PFound = True
+        while PFound:
+            try:
+                PFound = False
+                r2 = session.get(loc, headers=headers, verify=False)
+                website = 'bankofamerica.com'
+                name = ''
+                add = ''
+                city = ''
+                state = ''
+                zc = ''
+                country = ''
+                store = ''
+                phone = ''
+                lat = ''
+                lng = ''
+                typ = ''
+                hours = ''
+                AFound = False
+                lines = r2.iter_lines()
+                for line2 in lines:
+                    if "var fid = '" in line2:
+                        store = line2.split("var fid = '")[1].split("'")[0]
+                    if '<div class="location-type" aria-label="' in line2:
+                        typ = line2.split('<div class="location-type" aria-label="')[1].split('"')[0]
+                    if add == '' and '"streetAddress": "' in line2:
+                        add = line2.split('"streetAddress": "')[1].split('"')[0]
+                    if city == '' and '"addressLocality": "' in line2:
+                        city = line2.split('"addressLocality": "')[1].split('"')[0]
+                    if state == '' and '"addressRegion": "' in line2:
+                        state = line2.split('"addressRegion": "')[1].split('"')[0]
+                    if zc == '' and '"postalCode": "' in line2:
+                        zc = line2.split('"postalCode": "')[1].split('"')[0]
+                    if country == '' and '"@type": "Country",' in line2:
+                        country = next(lines).split('"name": "')[1].split('"')[0]
+                    if lat == '' and '"latitude": "' in line2:
+                        lat = line2.split('"latitude": "')[1].split('"')[0]
+                    if lng == '' and '"longitude": "' in line2:
+                        lng = line2.split('"longitude": "')[1].split('"')[0]
+                    if phone == '' and '"telephone": "' in line2:
+                        phone = line2.split('"telephone": "')[1].split('"')[0]
+                    if hours == '' and '"openingHours": "' in line2:
+                        hours = line2.split('"openingHours": "')[1].split('"')[0].strip()
+                    if '"location_name\\": \\"' in line2:
+                        name = line2.split('"location_name\\": \\"')[1].split('\\')[0]
+                if name != '':
+                    if phone == '':
+                        phone = '<MISSING>'
+                    if typ == '':
+                        typ = '<MISSING>'
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            except:
+                PFound = True
 
 def scrape():
     data = fetch_data()

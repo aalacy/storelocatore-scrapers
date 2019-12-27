@@ -23,7 +23,7 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 100
+    MAX_RESULTS = 5
     MAX_DISTANCE = 10
     current_results_len = 0  # need to update with no of count.
     zip_code = search.next_zip()
@@ -38,8 +38,8 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
-        #print("zip_code === " + zip_code)
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("zip_code === " + zip_code)
 
         location_url = "https://www.deadriver.com/LocationFinder.asmx/GetLocation"
         # print("location url = "+ location_url +'{"zipCode":"' + zip_code + '"}')
@@ -78,7 +78,7 @@ def fetch_data():
 
         if current_results_len > 0:
             for location in json_data["d"]:
-               # print(location)
+                # print(location)
                 street_address = location["AddressOne"] + " " + location["AddressTwo"]
                 city = location["City"]
                 zipp = location["ZipCode"]
@@ -94,6 +94,7 @@ def fetch_data():
                 result_coords.append((latitude, longitude))
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+                # print(store)
 
                 if str(store[2]) + str(store[-3]) not in addresses:
                     addresses.append(str(store[2]) + str(store[-3]))
@@ -102,8 +103,8 @@ def fetch_data():
 
                     # return_main_object.append(store)
                     yield store
-                    print("data = " + str(store))
-                    print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    # print("data = " + str(store))
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         if current_results_len < MAX_RESULTS:
             # print("max distance update")

@@ -65,15 +65,10 @@ def fetch_data():
         # print('location_url ==' +location_url))
         # print("===============================================",zip_code)
         
-        # try:
         location_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius="+str(MAX_DISTANCE)+"&location="+zip_code+"&limit="+str(MAX_RESULTS)+"&api_key=56bb34af25f122cb7752babc1c8b9767&v=20181201&resolvePlaceholders=true&entityTypes=location"
         k = requests.get(location_url, headers=headers).json()
-        # except:
-        #     continue
-        # print(location_url)
         current_results_len = len(k['response']['entities'])
         for i in k['response']['entities']:
-            # print(i)
             street_address =i["address"]['line1']
             city = i["address"]['city']
             state =  i["address"]['region']
@@ -87,19 +82,15 @@ def fetch_data():
           
             # print("=============================",i["hours"])
             # hours_of_operation =time
-
-            latitude = i['yextRoutableCoordinate']['latitude']
-            longitude = i['yextRoutableCoordinate']['longitude']
-            # print("================k ",i)
+            latitude = i['yextDisplayCoordinate']['latitude']
+            longitude = i['yextDisplayCoordinate']['longitude']
             # page_url = i['landingPageUrl']
             if "landingPageUrl" in i:
                 page_url =i['landingPageUrl']
                 k1 = requests.get(page_url, headers=headers)
                 soup2 = BeautifulSoup(k1.text, "html.parser")
                 time = (" ".join(list(soup2.find("tbody",{"class":"hours-body"}).stripped_strings)))
-
             else:
-                
                 page_url = "<MISSING>"
             result_coords.append((latitude, longitude))
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
@@ -108,15 +99,15 @@ def fetch_data():
             if str(store[2]) + str(store[-3]) not in addresses:
                 addresses.append(str(store[2]) + str(store[-3]))                   
                 store = [x if x else "<MISSING>" for x in store]
-                #print("data = " + str(store))
-                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
         if current_results_len < MAX_RESULTS:
-            #print("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            #print("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

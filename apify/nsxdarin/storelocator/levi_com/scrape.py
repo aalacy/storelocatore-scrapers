@@ -34,7 +34,7 @@ def fetch_data():
         lng = ''
         name = ''
         typ = 'Store'
-        if '/en-us/' in lurl:
+        if '/en-us/' in loc:
             country = 'US'
         else:
             country = 'CA'

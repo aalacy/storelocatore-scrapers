@@ -4,11 +4,11 @@ import requests
 
 session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-           'cookie': 'visid_incap_2192629=AswTebp/SjiRWaJU7I5hj1dJ4V0AAAAAQUIPAAAAAABE0Sr4y6r9VVq5ieEVtL/F; _ga=GA1.2.106458393.1575045458; _gid=GA1.2.1458319218.1575045458; tk_ai=woo%3ACv25GvN7xG24qvqAC14EGELP; incap_ses_513_2192629=2VzsIjV8rgzEP1cGaYweB3JM4V0AAAAAPd14bVE10wDJmPF6lKvsrw==; incap_ses_678_2192629=ZAXCf3LQNAzgrsw/ddxoCa9N4V0AAAAA9yl2lgfHMp5/lNelTyeFlQ==; _gat_UA-12821136-3=1'
+           'cookie': '_ga=GA1.2.106458393.1575045458; incap_ses_678_2192629=3OHGJri4GR6CiCOYd9xoCSM1Bl4AAAAAbVS29GeDUW0oCtvQXTLzHQ==; visid_incap_2192629=AswTebp/SjiRWaJU7I5hj1dJ4V0AAAAAQkIPAAAAAACAjSuRAUPcCqa1gZtjwlA1ZikzPTMxfN3/; _gid=GA1.2.246621817.1577465130; _gat_UA-12821136-3=1'
            }
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('datapaulmacs.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:

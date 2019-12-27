@@ -55,7 +55,7 @@ def fetch_data():
                     add = add + ' ' + line2.split('address-street-2')[1].split('">')[1].split('<')[0]
                 city = line2.split('itemprop="addressLocality">')[1].split('<')[0]
                 state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
-                country = 'US'
+                country = 'CA'
                 zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
                 phone = line2.split('itemprop="telephone"')[1].split('">')[1].split('<')[0]
             if 'itemprop="latitude" content="' in line2:

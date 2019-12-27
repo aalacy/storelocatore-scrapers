@@ -72,7 +72,7 @@ def fetch_data1():
         # print(soup)
         hours = soup.find_all("contents")
         name = soup.find_all("title")
-        locator_domain = "homestarbank.com"
+        locator_domain = "https://homestarbank.com"
         store_number = "<MISSING>"
 
         for i in range(len(address1)):
@@ -248,7 +248,7 @@ def fetch_data2():
             # print(zipp)
             hours_of_operation = "<MISSING>"
             store_number = "<MISSING>"
-            locator_domain = "homestarbank.com"
+            locator_domain = "https://homestarbank.com"
 
             result_coords.append((latitude, longitude))
             # if street_address in addresses2:

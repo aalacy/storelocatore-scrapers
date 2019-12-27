@@ -16,6 +16,9 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
            'x-app-key': 'pyHnMuBXUM1p4AovfkjYraAJp6'
            }
 
+headers2 = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -31,19 +34,19 @@ def fetch_data():
         if '"externalId" : "' in line:
             lid = line.split('" : "')[1].split('"')[0]
             locs.append(lid)
+    print('Found %s Locations...' % str(len(locs)))
     for loc in locs:
-        time.sleep(5)
-        lurl = 'https://apps.pnc.com/locator-api/locator/api/v2/location/' + loc
-        r2 = session.get(lurl, headers=headers, timeout=3, verify=False)
-        lines = r2.iter_lines()
-        website = 'pnc.com'
-        HFound = False
-        hours = ''
-        TypFound = False
         PageFound = True
+        lurl = 'https://apps.pnc.com/locator-api/locator/api/v2/location/' + loc
         while PageFound:
             try:
                 PageFound = False
+                r2 = session.get(lurl, headers=headers2, timeout=3, verify=False)
+                lines = r2.iter_lines()
+                website = 'pnc.com'
+                HFound = False
+                hours = ''
+                TypFound = False
                 print('Pulling Location %s...' % loc)
                 for line2 in lines:
                     if '"locationName" : "' in line2:
@@ -91,6 +94,7 @@ def fetch_data():
                 yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             except:
                 PageFound = True
+            
 
 def scrape():
     data = fetch_data()

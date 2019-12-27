@@ -69,7 +69,7 @@ def fetch_data():
             country_code = "CA"
             store_number = ""
             phone = ""
-            location_type = ""
+            location_type = "ATM"
             latitude = ""
             longitude = ""
             raw_address = ""
@@ -118,7 +118,8 @@ def fetch_data():
             
 
             result_coords.append((latitude, longitude))
-          
+            # store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+            #          store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
             store=[]
             store.append(base_url)
@@ -130,7 +131,7 @@ def fetch_data():
             store.append(country_code if country_code else "<MISSING>")
             store.append("<MISSING>")
             store.append(phone_list if phone_list else "<MISSING>")
-            store.append("<MISSING>")
+            store.append("ATM")
             store.append(lat if lat else "<MISSING>")
             store.append(lng if lng else "<MISSING>")
             store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
@@ -140,7 +141,7 @@ def fetch_data():
                 continue
             addressess.append(store[2])
             yield store
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
         for script in soup.find_all("marker"):
 
@@ -153,7 +154,7 @@ def fetch_data():
             country_code = "CA"
             store_number = ""
             phone = ""
-            location_type = ""
+            location_type = "Branch"
             latitude = ""
             longitude = ""
             raw_address = ""
@@ -211,7 +212,7 @@ def fetch_data():
             store.append(country_code if country_code else "<MISSING>")
             store.append("<MISSING>")
             store.append(phone_list if phone_list else "<MISSING>")
-            store.append("<MISSING>")
+            store.append("Branch")
             store.append(lat if lat else "<MISSING>")
             store.append(lng if lng else "<MISSING>")
             store.append(hours_of_operation if hours_of_operation.strip() else "<MISSING>")
@@ -233,7 +234,11 @@ def fetch_data():
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         coord = search.next_coord()
 
-    
+    # for q in range(len(store_detail)):
+        # if store_detail[2] in addresses:
+        #     continue
+        # addresses.append(store_detail[2])
+        # yield store_detail[q]
       
 
 def scrape():
