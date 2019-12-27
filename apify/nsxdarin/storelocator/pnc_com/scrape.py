@@ -30,7 +30,8 @@ def fetch_data():
     for line in r.iter_lines():
         if '"externalId" : "' in line:
             lid = line.split('" : "')[1].split('"')[0]
-            locs.append(lid)
+            if lid != '01298040':
+                locs.append(lid)
     for loc in locs:
         time.sleep(5)
         lurl = 'https://apps.pnc.com/locator-api/locator/api/v2/location/' + loc
