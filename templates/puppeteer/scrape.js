@@ -13,7 +13,8 @@ Apify.main(async () => {
 			const heading = await page.evaluate(() => document.querySelector('h1.heading-primary').innerText);
 
       const poi = {
-        locator_domain: 'safegraph.com',
+				locator_domain: 'safegraph.com',
+				page_url: '<MISSING>',
         location_name: heading,
         street_address: '1543 mission st',
         city: 'san francisco',

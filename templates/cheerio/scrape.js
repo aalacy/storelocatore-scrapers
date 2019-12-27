@@ -13,7 +13,8 @@ const Apify = require('apify');
 			// Begin scraper
 
 			const poi = {
-        locator_domain: 'safegraph.com',
+				locator_domain: 'safegraph.com',
+				page_url: '<MISSING>',
         location_name: $('title').text(),
         street_address: '1543 mission st',
         city: 'san francisco',

@@ -12,7 +12,8 @@ Apify.main(async () => {
 		// Begin scraper
 
 		const poi = {
-      locator_domain: 'safegraph.com',
+			locator_domain: 'safegraph.com',
+			page_url: '<MISSING>',
       location_name: 'safegraph',
       street_address: '1543 mission st',
       city: 'san francisco',
