@@ -47,7 +47,6 @@ def write_output(data):
         for i in data or []:
             writer.writerow(i)
 
-
 def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
@@ -62,7 +61,7 @@ def fetch_data():
     link1 = soup.find_all('loc')[:-1]
     for i in link1:
         link = i.text
-        r1= session.get(link, headers=headers)
+        r1= session.get(link, headers=headers, timeout=(10, 10))
         soup1 = BeautifulSoup(r1.text, "lxml")
         main1=soup1.find('div', {'class': 'StoreAddress-storeAddressGuts'})
         if main1 != None:
@@ -97,10 +96,8 @@ def fetch_data():
         return_main_object.append(tem_var) 
     return return_main_object
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()
