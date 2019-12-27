@@ -6,6 +6,7 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from requests.exceptions import ConnectionError
 from sgrequests import SgRequests
+import collections 
 
 session = SgRequests()
 
@@ -29,7 +30,10 @@ def fetch_data():
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
-    for loc in locs:
+    q = collections.deque(locs)
+    attempts = {}
+    while q:
+        loc = q.popleft()
         print(loc)
         if '-CA/' in loc:
             country = 'CA'
@@ -51,7 +55,13 @@ def fetch_data():
         try:
             r2 = session.get(loc, headers=headers)
         except ConnectionError:
-            print('Failed to connect to ' + loc + ' ... skipping!')
+            print('Failed to connect to ' + loc)
+            if attempts.get(loc, 0) >= 3:
+                print('giving up on ' + loc)
+            else:
+                q.append(loc)
+                attempts[loc] = attempts.get(loc, 0) + 1
+                print('attempts: ' + attempts[loc])
             continue
         for line2 in r2.iter_lines():
             if 'name="og:title" content="' in line2:
