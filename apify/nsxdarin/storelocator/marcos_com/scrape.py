@@ -8,7 +8,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
            }
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('datamarcos.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
@@ -19,6 +19,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     for item in json.loads(r.content)['results']:
         name = item['name']
+        country = 'US'
         store = name.split(' ')[0]
         try:
             purl = item['baseUrl']
@@ -51,12 +52,12 @@ def fetch_data():
         typ = 'Restaurant'
         if '#' in name:
             store = name.split('#')[1].strip()
-        country = 'US'
         if '999-' not in phone and state != 'BH' and state != '<MISSING>':
             if purl == '<MISSING>' and store == '8533':
                 pass
             else:
-                yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                if "u'status', u'value': 2" not in str(item):
+                    yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
