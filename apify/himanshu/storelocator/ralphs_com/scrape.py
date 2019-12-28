@@ -61,9 +61,14 @@ def fetch_data():
         tem_var.append("<MISSING>")
         tem_var.append(hour)
         tem_var.append(link)
-       
+
+        if tem_var[2] == '25104 Marguerite Pkwy':
+            print('found Marguerite!')
+            print(link)
+
         if tem_var[2] in address1:
             print('skipping location! ' + location_name)
+            print(link)
             print(tem_var[2])
             continue
         address1.append(tem_var[2])
