@@ -1,25 +1,3 @@
-'''
-    issue:Traceback (most recent call last):
-  File "lids_com.py", line 69, in <module>
-    scrape()
-  File "lids_com.py", line 65, in scrape
-    data = fetch_data()
-  File "lids_com.py", line 25, in fetch_data
-    data = r.json()
-  File "/Library/Frameworks/Python.framework/Versions/3.8/lib/python3.8/site-packages/requests/models.py", line 897, in json
-    return complexjson.loads(self.text, **kwargs)
-  File "/Library/Frameworks/Python.framework/Versions/3.8/lib/python3.8/json/__init__.py", line 357, in loads
-    return _default_decoder.decode(s)
-  File "/Library/Frameworks/Python.framework/Versions/3.8/lib/python3.8/json/decoder.py", line 337, in decode
-    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
-  File "/Library/Frameworks/Python.framework/Versions/3.8/lib/python3.8/json/decoder.py", line 355, in raw_decode
-    raise JSONDecodeError("Expecting value", s, err.value) from None
-json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
-
-resolution : added user-agent into the headers and rerun , and now it worked fine and also added page_url
-'''
-
-
 import csv
 import requests
 from bs4 import BeautifulSoup
