@@ -1,38 +1,8 @@
 import csv
 import urllib2
-import requests
-import os
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from sgrequests import SgRequests
 
-requests.packages.urllib3.disable_warnings()
-
-def requests_retry_session(
-    retries=3,
-    backoff_factor=0.3,
-    status_forcelist=(500, 502, 504)
-):
-    session = requests.Session()
-    proxy_password = os.environ["PROXY_PASSWORD"]
-    proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
-    proxies = {
-        'http': proxy_url,
-        'https': proxy_url
-    }
-    session.proxies = proxies
-    retry = Retry(
-        total=retries,
-        read=retries,
-        connect=retries,
-        backoff_factor=backoff_factor,
-        status_forcelist=status_forcelist,
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
-    return session
-
-session = requests_retry_session()
+session = SgRequests()
 
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -47,7 +17,7 @@ def write_output(data):
 def fetch_data():
     url = 'https://info.lululemon.com/stores?mnid=ftr;en-US;store-locator'
     locs = []
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if "type: '" in line:
             stype = line.split("type: '")[1].split("'")[0]
@@ -61,7 +31,7 @@ def fetch_data():
         hours = ''
         store = '<MISSING>'
         locurl = loc.split('|')[0]
-        r2 = session.get(locurl, headers=headers, verify=False)
+        r2 = session.get(locurl, headers=headers)
         for line2 in r2.iter_lines():
             if ',"streetAddress":"' in line2:
                 add = line2.split(',"streetAddress":"')[1].split('"')[0]
