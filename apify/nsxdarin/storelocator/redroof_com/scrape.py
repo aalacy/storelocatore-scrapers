@@ -61,7 +61,7 @@ def fetch_data():
             else:
                 q.append(loc)
                 attempts[loc] = attempts.get(loc, 0) + 1
-                print('attempts: ' + attempts[loc])
+                print('attempts: ' + str(attempts[loc]))
             continue
         for line2 in r2.iter_lines():
             if 'name="og:title" content="' in line2:
