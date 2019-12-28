@@ -62,14 +62,14 @@ def fetch_data():
         tem_var.append(hour)
         tem_var.append(link)
 
-        if tem_var[2] in ['25104 Marguerite Pkwy', '2652 Jamacha Rd', '32555 Golden Lantern St', '910 Lincoln Blvd', '5345 Alton Pkwy']:
-            print('found address dup!')
-            print(link)
+        print(address)
 
         if tem_var[2] in address1:
+            print()
             print('skipping location! ' + location_name)
             print(link)
             print(tem_var[2])
+            print()
             continue
         address1.append(tem_var[2])
         return_main_object.append(tem_var) 
