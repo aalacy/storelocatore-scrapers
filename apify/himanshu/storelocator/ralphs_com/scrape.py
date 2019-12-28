@@ -34,6 +34,9 @@ def fetch_data():
         link = i.text
         print(link)
         r1= session.get(link, headers=headers)
+        if 'store location information cannot be found at this time' in r1.text:
+            print('skipping bad link')
+            continue
         soup1 = BeautifulSoup(r1.text, "lxml")
         main1=soup1.find('div', {'class': 'StoreAddress-storeAddressGuts'})
         if main1 != None:
