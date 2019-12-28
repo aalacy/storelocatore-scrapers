@@ -5,36 +5,9 @@ import re
 import unicodedata
 import sgzip
 import datetime
-import os
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from sgrequests import SgRequests
 
-requests.packages.urllib3.disable_warnings()
-
-def requests_retry_session(
-    retries=3,
-    backoff_factor=0.3,
-    status_forcelist=(500, 502, 504)
-):
-    session = requests.Session()
-    proxy_password = os.environ["PROXY_PASSWORD"]
-    proxy_url = "http://groups-RESIDENTIAL:{}@proxy.apify.com:8000/".format(proxy_password)
-    proxies = {
-        'http': proxy_url,
-        'https': proxy_url
-    }
-    session.proxies = proxies
-    retry = Retry(
-        total=retries,
-        read=retries,
-        connect=retries,
-        backoff_factor=backoff_factor,
-        status_forcelist=status_forcelist,
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
-    return session
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -45,8 +18,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-session = requests_retry_session()
 
 def fetch_data():
     main_url = "https://choicehotels.com/ascend"
