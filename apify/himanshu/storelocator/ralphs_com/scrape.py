@@ -62,8 +62,8 @@ def fetch_data():
         tem_var.append(hour)
         tem_var.append(link)
 
-        if tem_var[2] == '25104 Marguerite Pkwy':
-            print('found Marguerite!')
+        if tem_var[2] in ['25104 Marguerite Pkwy', '2652 Jamacha Rd', '32555 Golden Lantern St', '910 Lincoln Blvd', '5345 Alton Pkwy']:
+            print('found address dup!')
             print(link)
 
         if tem_var[2] in address1:
