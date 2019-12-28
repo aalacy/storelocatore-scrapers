@@ -1,10 +1,9 @@
 import csv
 import urllib2
 import requests
+import sgrequests
 
-requests.packages.urllib3.disable_warnings()
-
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -18,7 +17,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = 'https://www.7-eleven.com/sitemap.xml'
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if '<loc>https://www.7-eleven.com/locations/' in line:
             lurl = line.split('>')[1].split('<')[0]
@@ -39,7 +38,7 @@ def fetch_data():
         lat = ''
         lng = ''
         country = 'US'
-        r2 = session.get(loc, headers=headers, verify=False)
+        r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             if '"hours":{"message":"' in line2:
                 hours = line2.split('"hours":{"message":"')[1].split('"')[0]
