@@ -52,7 +52,7 @@ def fetch_data():
             hours = hours.strip()
 
             country_code = 'US'
-            location_name = '<MISSING>'
+            location_name = city
             location_type = '<MISSING>'
             store_number = '<MISSING>'
 
