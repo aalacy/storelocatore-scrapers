@@ -42,13 +42,16 @@ def fetch_data():
                     hours = week[day['day'] - 1] + ': ' + day['open'] + '-' + day['close']
                 else:
                     hours = hours + '; ' + week[day['day'] - 1] + ': ' + day['open'] + '-' + day['close']
-            if '000' not in phone and hours != '':
-                if typ == '':
-                    typ = '<MISSING>'
-                if lat == '':
-                    lat = '<MISSING>'
-                    lng = '<MISSING>'
-                yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            if typ == '':
+                typ = '<MISSING>'
+            if lat == '':
+                lat = '<MISSING>'
+                lng = '<MISSING>'
+            if hours == '':
+                hours = '<MISSING>'
+            if '000' in phone:
+                phone = '<MISSING>'
+            yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
