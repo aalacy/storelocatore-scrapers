@@ -4,89 +4,73 @@ const { JSDOM } = jsdom;
 const axios = require('axios');
 
 Apify.main(async () => {
-  await scrape();
+  let targets = await getTargets();
+  for (let t of targets){
+    data = await scrape(t);
+    await Apify.pushData([data]);
+  } 
 });
 
-async function scrape() {
+async function getTargets() {
   return await axios({
     method: 'GET',
     url: 'https://www.chezcora.com/en/breakfast-restaurants'
   }).then(async (resp) => {
       document = new JSDOM(resp.data).window.document;
       rows = document.querySelectorAll('.resto-contact');
+      const links = [];
       for (let row of rows){
-        latlon = extractLatLon(row.querySelector('script').textContent)
-        store = row.querySelector('h2').textContent
-          .replace('Cora -', '')
-          .trim()
-        address = row.querySelector('p:nth-child(4)')
-          .innerHTML
-          .replace('<br>', "\n")
-        address = sanitize(address);
-        area = address[1].split(', ')
-        address = address[0];
-        phone = row.querySelector('p.telephone').textContent.trim();
-        hours = sanitize(row.querySelector('.tabHoraire').textContent).join(", ");
-        
-        //Edge case cleaning
-        hours = hours.replace(/^The.*?, /, '').replace(/, \*\*.*/, '');
-
-        await Apify.pushData([{
-          locator_domain: 'chezcora.com',
-          location_name: store,
-          street_address: address,
-          city: area[0].trim(),
-          state: area[1].trim(),
-          zip: area[2].trim(),
-          country_code: 'CA',
-          store_number: '<MISSING>',
-          phone: phone,
-          location_type: '<MISSING>',
-          latitude: latlon.lat,
-          longitude: latlon.lon,
-          hours_of_operation: hours,
-        }]);
-
+        links.push('https://www.chezcora.com' + row.querySelector('div.btn-plus > a').getAttribute('href'));
       }
+      return links;
   })
 }
 
-
-function extractLatLon(scriptText){
-  data = sanitize(scriptText);
-  return {
-    lat: data[1].replace('lat:', '').replace(',', '').trim(),
-    lon: data[2].replace('lon:', '').replace(',', '').trim()
-  }
+async function scrape(target){
+  return await axios({
+    method: 'GET',
+    url: target
+  }).then( async (resp) => {
+    document = new JSDOM(resp.data).window.document;
+    addr = document.querySelector('.sous-contenu > p').innerHTML
+      .replace(/\n|\t/g, "")
+      .replace(/<!--.*/g, '')
+      .split('<br>');
+    street = addr[0].replace(',', '');
+    loc = addr[1].split(',');
+    phone = document.querySelector('p.telephone').innerHTML;
+    name = document.querySelector('.resto-contact-seul > h2').innerHTML.replace('Cora -', '');
+    latLon = document.querySelectorAll('script');
+    for (let l of latLon){
+      if (l.innerHTML.includes('restaurants_bounds.push')){
+        eval(l.innerHTML);
+      }
+    }
+    hours = document.querySelector('.tabHoraire')
+      .textContent
+      .replace(/\n|\t/g, " ")
+      .replace(/Holiday.*/g, "");
+    return {
+      locator_domain: 'chezcora.com',
+      page_url: target,
+      location_name: sanitize(name),
+      street_address: sanitize(street),
+      city: sanitize(loc[0]),
+      state: sanitize(loc[1]),
+      zip: sanitize(loc[2]),
+      country_code: 'CA',
+      store_number: '<MISSING>',
+      phone: sanitize(phone),
+      location_type: '<MISSING>',
+      latitude: restaurants_bounds[0].lat,
+      longitude: restaurants_bounds[0].lon,
+      hours_of_operation: sanitize(hours),
+    };
+  });
 }
 
-function sanitize(textRow){
-  sane = [];
-  for (s of textRow.split("\n")){
-    s = s.trim();
-    if (s !== ''){sane.push(s);}
-  }
-  return sane;
+function sanitize(str){
+  if (!str instanceof String) return '<MISSING>';
+  if (!str.trim()) return '<MISSING>';
+  return str.trim();
 }
-// 	const record = {
-//     locator_domain: 'safegraph.com',
-//     location_name: 'safegraph',
-//     street_address: '1543 mission st',
-//     city: 'san francisco',
-//     state: 'CA',
-//     zip: '94107',
-//     country_code: 'US',
-// 		store_number: '<MISSING>',
-// 		phone: '<MISSING>',
-// 		location_type: '<MISSING>',
-//     naics_code: '518210',
-//     latitude: -122.417774,
-//     longitude: -122.417774,
-// 		hours_of_operation: '<MISSING>',
-// 	};
-
-// 	return [record];
-
-// 	// End scraper
-
-// }
