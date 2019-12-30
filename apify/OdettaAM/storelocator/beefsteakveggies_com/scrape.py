@@ -10,7 +10,7 @@ options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 #driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-#chrome_path = '/Users/Dell/local/chromedriver'
+chrome_path = '/Users/Dell/local/chromedriver'
 driver = webdriver.Chrome('chromedriver', options=options)
 
 def write_output(data):
@@ -38,6 +38,7 @@ def fetch_data():
         address = address[0:start]
         if address.find('food truck') == -1:
             address = usaddress.parse(address)
+            print(address)
             m = 0
             street = ""
             city = ""
@@ -63,10 +64,11 @@ def fetch_data():
             pcode = '<MISSING>'
             
         street = street.lstrip()
-        city = street.lstrip()
+        city = city.lstrip()
         state = state.lstrip()
         pcode = pcode.lstrip()
-            
+        
+        
         if city.find("Building") > -1:
             street = street + " " + city            
             city,state = state.split(' ',1)
@@ -75,6 +77,8 @@ def fetch_data():
                 city,state = state.split(' ',1)
         except:
             pass
+            
+        city = city.replace(',','')
         try:
             phone = store.find_element_by_css_selector('div.contact-info').text
             
@@ -112,7 +116,7 @@ def fetch_data():
               longitude,
               hours_of_op
             ])
-        #print(data[i])
+        
         i+=1
 
     time.sleep(3)
