@@ -46,7 +46,7 @@ def fetch_data():
                     for key, value in new.items():
                         n = key + " " + value
                         hr.append(n)
-                        hour = "| ".join(hr)
+                        hour = " ".join(hr)
 
             except Exception as e:
                 hour = "<MISSING>"    
