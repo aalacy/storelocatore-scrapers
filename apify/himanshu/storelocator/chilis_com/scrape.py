@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
 import time
 
 def write_output(data):
@@ -24,16 +23,25 @@ def fetch_data():
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url = "https://www.chilis.com"
-    state_r = requests.get("https://www.chilis.com/locations/us/all",headers=headers)
+    try:
+        state_r = requests.get("https://www.chilis.com/locations/us/all",headers=headers)
+    except:
+        pass
     state_soup = BeautifulSoup(state_r.text, "lxml")
     for link in state_soup.find_all("a",{"class":"city-link"}):
         city_link = base_url + link['href']
-        city_r = requests.get(city_link, headers=headers)
+        try:
+            city_r = requests.get(city_link, headers=headers)
+        except:
+            pass
         city_soup = BeautifulSoup(city_r.text, "lxml")
 
         for href in city_soup.find_all("a",class_="btn slim details-btn"):
             store_link = base_url + href['href']
-            store_r = requests.get(store_link, headers=headers)
+            try:
+                store_r = requests.get(store_link, headers=headers)
+            except:
+                pass
             store_soup = BeautifulSoup(store_r.text, "lxml")
             data = json.loads(store_soup.find_all("script", {"type":"application/ld+json"})[1].text)
             location_name = data['name']
@@ -48,7 +56,7 @@ def fetch_data():
             latitude = data['geo']['latitude']
             longitude = data['geo']['longitude']
             hours_of_operation = store_soup.find("table").text
-            page_url = data['url']
+            page_url = data['url'] 
             
             store = []
             store.append(base_url)
@@ -68,7 +76,8 @@ def fetch_data():
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
-            
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+
             yield store
 def scrape():
     data = fetch_data()

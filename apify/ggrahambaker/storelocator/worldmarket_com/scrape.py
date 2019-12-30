@@ -4,6 +4,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 import json
+import time
 
 def get_driver():
     options = Options()
@@ -37,8 +38,14 @@ def fetch_data():
     city_list = []
     for loc in locs:
         link = loc.get_attribute('href')
+        
         if len(link) > 38:
-            link_list.append(link)
+            
+            if 'brooklyn.html' in link:
+                print('appended!!!!')
+                city_list.append(link)
+            else:
+                link_list.append(link)
         else:
             state_list.append(link)
 
@@ -47,10 +54,12 @@ def fetch_data():
         driver.get(link)
         driver.implicitly_wait(10)
         cities = driver.find_elements_by_css_selector('a.c-directory-list-content-item-link')
-        for city in cities:        
+        for city in cities:      
+            
+            
             city_link = city.get_attribute('href')
 
-            if len(city_link.split('-')) > 2:
+            if len(city_link.split('/')) > 5:
                 link_list.append(city_link)
             else:
                 city_list.append(city_link)
@@ -58,6 +67,7 @@ def fetch_data():
         
     for link in city_list:
         driver.get(link)
+
         driver.implicitly_wait(10)
         in_cities = driver.find_elements_by_css_selector('a.c-location-grid-item-name-link')
         for loc in in_cities:
@@ -67,34 +77,61 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        print(link)
         driver.get(link)
+        print(link)
         driver.implicitly_wait(10)
+        is_bed = False
         try:
             lat = driver.find_element_by_xpath('//meta[@itemprop="latitude"]').get_attribute('content')
         except NoSuchElementException:
-            continue
-        longit = driver.find_element_by_xpath('//meta[@itemprop="longitude"]').get_attribute('content')
+            time.sleep(5)
+            print('splet....')
+            print(driver.current_url)
+            if 'bedbathandbeyond' in driver.current_url:
+                print('yayayayayayay')
+                print()
+                print()
+                is_bed = True
+            else:
+                continue
+
+        if is_bed:
+            hours = driver.find_element_by_id('store-hours').text.replace('Store Hours', '').replace('/n', ' ')
+            
+            hours = ' '.join(hours.split())
+            print(hours)
+            lat = '<MISSING>'
+            longit = '<MISSING>'
+
+            phone_number = driver.find_element_by_xpath("//span[contains(text(), 'World Market')]").text.replace('World Market', '').strip()
+            
+            location_name = 'Liberty View'
+            state = driver.find_element_by_xpath('//span[@itemprop="addressRegion"]').text
+            zip_code = '<MISSING>'
+        
+        else:
+            longit = driver.find_element_by_xpath('//meta[@itemprop="longitude"]').get_attribute('content')
+            location_name = driver.find_element_by_css_selector('h1#location-name').text.replace('\n', ' ')
+            phone_number = driver.find_element_by_xpath('//span[@itemprop="telephone"]').text
+            state = driver.find_element_by_xpath('//abbr[@itemprop="addressRegion"]').text
+            zip_code = driver.find_element_by_xpath('//span[@itemprop="postalCode"]').text
+            days = driver.find_elements_by_css_selector('tr.c-location-hours-details-row.js-day-of-week-row')
+            hours = ''
+            for day in days:
+                day_hours = day.get_attribute('content')
+                if day_hours == None:
+                    continue
+                hours += day_hours + ' '
+
+        
         street_address = driver.find_element_by_xpath('//span[@itemprop="streetAddress"]').text
         city = driver.find_element_by_xpath('//span[@itemprop="addressLocality"]').text.replace(',', '').strip()
-        state = driver.find_element_by_xpath('//abbr[@itemprop="addressRegion"]').text
-        zip_code = driver.find_element_by_xpath('//span[@itemprop="postalCode"]').text
+        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         page_url = link
-        
-        phone_number = driver.find_element_by_xpath('//span[@itemprop="telephone"]').text
 
-        location_name = driver.find_element_by_css_selector('h1#location-name').text.replace('\n', ' ')
-        days = driver.find_elements_by_css_selector('tr.c-location-hours-details-row.js-day-of-week-row')
-        hours = ''
-        for day in days:
-            day_hours = day.get_attribute('content')
-            if day_hours == None:
-                continue
-            hours += day_hours + ' '
-        
         
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,

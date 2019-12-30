@@ -51,6 +51,7 @@ def fetch_data():
                             locs.append('https://stores.advanceautoparts.com/' + item.split('"')[0].replace('..',''))
                                 
     for city in cities:
+        #print('Pulling City %s...' % city)
         CFound = True
         while CFound:
             try:
@@ -139,6 +140,7 @@ def fetch_data():
             except:
                 CFound = True
     for loc in locs:
+        #print('Pulling Location %s...' % loc)
         LFound = True
         while LFound:
             try:
@@ -157,12 +159,16 @@ def fetch_data():
                 phone = ''
                 store = ''
                 LocFound = False
+                NFound = False
                 for line in r.iter_lines():
+                    if NFound is False and '<span class="LocationName-brand">' in line:
+                        NFound = True
+                        name = line.split('<span class="LocationName-brand">')[1].split('</span>')[0].strip().replace('<span>','').replace('  ',' ')
                     if '"store_id":"' in line:
                         store = line.split('"store_id":"')[1].split('"')[0]
                     if '<div class="LocationName-geo">' in line and LocFound is False:
                         LocFound = True
-                        name = line.split('<div class="LocationName-geo">')[1].split('<')[0]
+                        name = name + ' ' + line.split('<div class="LocationName-geo">')[1].split('<')[0]
                         add = line.split('class="c-address-street-1"')[1].split('>')[1].split('<')[0]
                         if '<span class="c-address-street-2"' in line:
                             add = add + ' ' + line.split('<span class="c-address-street-2"')[1].split('>')[1].split('<')[0]
