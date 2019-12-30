@@ -4,17 +4,36 @@ const { JSDOM } = jsdom;
 const axios = require('axios');
 
 Apify.main(async () => {
-  let targets = await getTargets();
-  for (let t of targets){
-    data = await scrape(t);
-    await Apify.pushData([data]);
-  } 
+  let regions = await getRegions();
+  for (let region of regions){
+    targets = await getTargets(region);
+    for (let target of targets){
+      data = await scrape(target);
+      if (data.hours_of_operation.startsWith('Opening')) continue;
+      await Apify.pushData([data]);
+    } 
+  }
 });
 
-async function getTargets() {
+async function getRegions(){
   return await axios({
     method: 'GET',
     url: 'https://www.chezcora.com/en/breakfast-restaurants'
+  }).then(async (resp) => {
+    document = new JSDOM(resp.data).window.document;
+    const regions = [];
+    for (let r of document.querySelectorAll('nav.sidebnav > ul > li > a')){
+      regions.push(r.getAttribute('href'));
+    }
+    return regions;
+  })
+}
+
+async function getTargets(region) {
+  console.log(region);
+  return await axios({
+    method: 'GET',
+    url: 'https://www.chezcora.com' + region
   }).then(async (resp) => {
       document = new JSDOM(resp.data).window.document;
       rows = document.querySelectorAll('.resto-contact');
@@ -40,6 +59,7 @@ async function scrape(target){
     loc = addr[1].split(',');
     phone = document.querySelector('p.telephone').innerHTML;
     name = document.querySelector('.resto-contact-seul > h2').innerHTML.replace('Cora -', '');
+    restaurants_bounds = [{lat: '<MISSING>', lon: '<MISSING>'}];
     latLon = document.querySelectorAll('script');
     for (let l of latLon){
       if (l.innerHTML.includes('restaurants_bounds.push')){
@@ -62,15 +82,23 @@ async function scrape(target){
       store_number: '<MISSING>',
       phone: sanitize(phone),
       location_type: '<MISSING>',
-      latitude: restaurants_bounds[0].lat,
-      longitude: restaurants_bounds[0].lon,
+      latitude: restaurants_bounds[0].lat.toString(),
+      longitude: restaurants_bounds[0].lon.toString(),
       hours_of_operation: sanitize(hours),
     };
+  })
+  .catch(e => {
+    console.log(e);
   });
 }
 
 function sanitize(str){
-  if (!str instanceof String) return '<MISSING>';
-  if (!str.trim()) return '<MISSING>';
-  return str.trim();
+  try {
+    if (!str instanceof String) return '<MISSING>';
+    if (!str.trim()) return '<MISSING>';
+    return str.trim();
+  } catch (e){
+    return str;
+  }
+  
 }
