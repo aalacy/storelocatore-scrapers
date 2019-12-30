@@ -104,7 +104,6 @@ def fetch_data():
 
             new = [locator_domain, page_url,location_name, street, city, state, zip_code, country_code,store_numbr, phn,
                  loc_type, lat, lng, hour]
-            print(new)
             data_list.append(new)
         return data_list
 
