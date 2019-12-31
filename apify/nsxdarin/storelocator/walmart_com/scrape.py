@@ -1,10 +1,8 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 
-requests.packages.urllib3.disable_warnings()
-
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -15,7 +13,8 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def fetch_data():
+def fetch_store_urls():
+    session = SgRequests()
     url = 'https://www.walmart.com/sitemap_store_main.xml'
     locs = []
     r = session.get(url, headers=headers, verify=False)
@@ -25,8 +24,11 @@ def fetch_data():
             for item in items:
                 if 'details<' in item:
                     lurl = 'https://www.walmart.com/store/' + item.split('<')[0]
-                    locs.append(lurl)     
-    print('Found %s Locations.' % str(len(locs)))
+                    locs.append(lurl)
+    return locs
+
+def fetch_data():
+    locs = fetch_store_urls()
     for loc in locs:
         store = loc.split('/store/')[1].split('/')[0]
         name = ''
@@ -39,7 +41,6 @@ def fetch_data():
         country = 'US'
         zc = ''
         phone = ''
-        print('Pulling Location %s...' % loc)
         website = 'walmart.com'
         typ = 'Store'
         r2 = session.get(loc, headers=headers)
