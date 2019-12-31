@@ -51,57 +51,62 @@ def fetch_data():
         print('Pulling Location %s...' % lurl)
         website = 'menchies.com'
         typ = '<MISSING>'
-        r2 = session.get(lurl, headers=headers, verify=False)
-        for line2 in r2.iter_lines():
-            if '<h1 class="h2">' in line2:
-                name = line2.split('<h1 class="h2">')[1].split('<')[0]
-            if '<em class="fa fa-map show-phone info-fa"></em>' in line2:
-                addinfo = line2.split('<em class="fa fa-map show-phone info-fa"></em>')[1].split('</strong>')[0]
-                if addinfo.count('<br />') == 2:
-                    add = addinfo.split('<br />')[0] + ' ' + addinfo.split('<br />')[1]
-                    city = addinfo.split('<br />')[2].split(',')[0]
-                    state = addinfo.split('<br />')[2].split(',')[1].strip().split(' ')[0]
-                    try:
-                        zc = addinfo.split('<br />')[1].split(',')[1].strip().split(' ',1)[1]
-                    except:
-                        zc = '<MISSING>'
-                if addinfo.count('<br />') == 1:
-                    add = addinfo.split('<br />')[0]
-                    city = addinfo.split('<br />')[1].split(',')[0]
-                    state = addinfo.split('<br />')[1].split(',')[1].strip().split(' ')[0]
-                    try:
-                        zc = addinfo.split('<br />')[1].split(',')[1].strip().split(' ',1)[1]
-                    except:
-                        zc = '<MISSING>'
-                if addinfo.count('<br />') == 3:
-                    add = addinfo.split('<br />')[0] + ' ' + addinfo.split('<br />')[1]
-                    city = addinfo.split('<br />')[3].split(',')[0]
-                    state = addinfo.split('<br />')[3].split(',')[1].strip().split(' ')[0]
-                    try:
-                        zc = addinfo.split('<br />')[1].split(',')[1].strip().split(' ',1)[1]
-                    except:
-                        zc = '<MISSING>'
-                if ' ' in zc:
-                    country = 'CA'
-                else:
-                    country = 'US'
-            if '<a href="tel' in line2:
-                phone = line2.split('<a href="tel')[1].split('>')[1].split('<')[0]
-            if '<p class="loc-hours">' in line2:
-                days = line2.split('<p class="loc-hours">')
-                for day in days:
-                    if 'loc-phone' not in day:
-                        if hours == '':
-                            hours = day.split('<')[0].strip()
+        PFound = True
+        while PFound:
+            try:
+                PFound = False
+                r2 = session.get(lurl, headers=headers, timeout=5, verify=False)
+                for line2 in r2.iter_lines():
+                    if '<h1 class="h2">' in line2:
+                        name = line2.split('<h1 class="h2">')[1].split('<')[0]
+                    if '<em class="fa fa-map show-phone info-fa"></em>' in line2:
+                        addinfo = line2.split('<em class="fa fa-map show-phone info-fa"></em>')[1].split('</strong>')[0]
+                        if addinfo.count('<br />') == 2:
+                            add = addinfo.split('<br />')[0] + ' ' + addinfo.split('<br />')[1]
+                            city = addinfo.split('<br />')[2].split(',')[0]
+                            state = addinfo.split('<br />')[2].split(',')[1].strip().split(' ')[0]
+                            try:
+                                zc = addinfo.split('<br />')[2].split(',')[1].strip().split(' ',1)[1]
+                            except:
+                                zc = '<MISSING>'
+                        if addinfo.count('<br />') == 1:
+                            add = addinfo.split('<br />')[0]
+                            city = addinfo.split('<br />')[1].split(',')[0]
+                            state = addinfo.split('<br />')[1].split(',')[1].strip().split(' ')[0]
+                            try:
+                                zc = addinfo.split('<br />')[1].split(',')[1].strip().split(' ',1)[1]
+                            except:
+                                zc = '<MISSING>'
+                        if addinfo.count('<br />') == 3:
+                            add = addinfo.split('<br />')[0] + ' ' + addinfo.split('<br />')[1]
+                            city = addinfo.split('<br />')[3].split(',')[0]
+                            state = addinfo.split('<br />')[3].split(',')[1].strip().split(' ')[0]
+                            try:
+                                zc = addinfo.split('<br />')[3].split(',')[1].strip().split(' ',1)[1]
+                            except:
+                                zc = '<MISSING>'
+                        if ' ' in zc:
+                            country = 'CA'
                         else:
-                            hours = hours + '; ' + day.split('<')[0].strip()
-            if '<span class="favorite fav-' in line2:
-                store = line2.split('<span class="favorite fav-')[1].split('"')[0]
-            if 'var point = new google.maps.LatLng(' in line2:
-                lat = line2.split('var point = new google.maps.LatLng(')[1].split(',')[0]
-                lng = line2.split('var point = new google.maps.LatLng(')[1].split(',')[1].split(')')[0].strip()
-        yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-
+                            country = 'US'
+                    if '<a href="tel' in line2:
+                        phone = line2.split('<a href="tel')[1].split('>')[1].split('<')[0]
+                    if '<p class="loc-hours">' in line2:
+                        days = line2.split('<p class="loc-hours">')
+                        for day in days:
+                            if 'loc-phone' not in day:
+                                if hours == '':
+                                    hours = day.split('<')[0].strip()
+                                else:
+                                    hours = hours + '; ' + day.split('<')[0].strip()
+                    if '<span class="favorite fav-' in line2:
+                        store = line2.split('<span class="favorite fav-')[1].split('"')[0]
+                    if 'var point = new google.maps.LatLng(' in line2:
+                        lat = line2.split('var point = new google.maps.LatLng(')[1].split(',')[0]
+                        lng = line2.split('var point = new google.maps.LatLng(')[1].split(',')[1].split(')')[0].strip()
+                yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            except:
+                PFound = True
 def scrape():
     data = fetch_data()
     write_output(data)
