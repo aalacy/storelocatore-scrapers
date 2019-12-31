@@ -25,7 +25,8 @@ def parser(location_soup,page_url):
         phone = location_soup.find("div",{'itemprop':"telephone"}).text
     else:
         phone = "<MISSING>"
-    hours = " ".join(list(location_soup.find("table",{'class':"c-hours-details"}).stripped_strings))
+    hour = " ".join(list(location_soup.find("table",{'class':"c-hours-details"}).stripped_strings))
+    hours = (hour.split("Day of the Week Hours")[1])
     lat = location_soup.find("meta",{'itemprop':"latitude"})["content"]
     lng = location_soup.find("meta",{'itemprop':"longitude"})["content"]
     store = []
@@ -47,7 +48,7 @@ def parser(location_soup,page_url):
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('//home//mayurkumar//Desktop//mayur//Qafail//data6.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -78,7 +79,7 @@ def fetch_data():
             for city in state_soup.find_all("a",{'class':"Directory-listLink"}):
                 if city["href"].count("/") == 4:
                     page_url = "https://stores.footlocker.com/" + city["href"].replace("../","")
-                    print("https://stores.footlocker.com/" + city["href"].replace("../",""))
+                    # print("https://stores.footlocker.com/" + city["href"].replace("../",""))
                     location_request = requests.get("https://stores.footlocker.com/" + city["href"].replace("../",""),headers=headers)
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                     store_data = parser(location_soup,page_url)

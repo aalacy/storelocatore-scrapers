@@ -30,7 +30,6 @@ async function getRegions(){
 }
 
 async function getTargets(region) {
-  console.log(region);
   return await axios({
     method: 'GET',
     url: 'https://www.chezcora.com' + region
@@ -70,7 +69,7 @@ async function scrape(target){
       .textContent
       .replace(/\n|\t/g, " ")
       .replace(/Holiday.*/g, "");
-    return {
+    data =  {
       locator_domain: 'chezcora.com',
       page_url: target,
       location_name: sanitize(name),
@@ -86,6 +85,7 @@ async function scrape(target){
       longitude: restaurants_bounds[0].lon.toString(),
       hours_of_operation: sanitize(hours),
     };
+    return data;
   })
   .catch(e => {
     console.log(e);
@@ -98,7 +98,7 @@ function sanitize(str){
     if (!str.trim()) return '<MISSING>';
     return str.trim();
   } catch (e){
-    return str;
+    return '<MISSING>';
   }
   
 }

@@ -62,7 +62,7 @@ def fetch_data():
                     city = addinfo.split('<br />')[2].split(',')[0]
                     state = addinfo.split('<br />')[2].split(',')[1].strip().split(' ')[0]
                     try:
-                        zc = addinfo.split('<br />')[1].split(',')[1].strip().split(' ',1)[1]
+                        zc = addinfo.split('<br />')[2].split(',')[1].strip().split(' ',1)[1]
                     except:
                         zc = '<MISSING>'
                 if addinfo.count('<br />') == 1:
@@ -78,7 +78,7 @@ def fetch_data():
                     city = addinfo.split('<br />')[3].split(',')[0]
                     state = addinfo.split('<br />')[3].split(',')[1].strip().split(' ')[0]
                     try:
-                        zc = addinfo.split('<br />')[1].split(',')[1].strip().split(' ',1)[1]
+                        zc = addinfo.split('<br />')[3].split(',')[1].strip().split(' ',1)[1]
                     except:
                         zc = '<MISSING>'
                 if ' ' in zc:

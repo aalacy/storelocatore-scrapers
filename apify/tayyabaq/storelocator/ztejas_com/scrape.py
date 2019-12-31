@@ -3,8 +3,9 @@ import os
 import re, time
 import requests
 from bs4 import BeautifulSoup
-import lxml.html
 import usaddress
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -15,50 +16,97 @@ def write_output(data):
         for row in data:
             if row:
                 writer.writerow(row)
-
+ 
 def fetch_data():
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36'}
-    data=[];page_url=[];hours_of_operation=[]; latitude=[];longitude=[];zipcode=[];location_name=[];city=[];street_address=[]; state=[]; phone=[]
+    data = []
+    p = 0
+
     url ="https://ztejas.com/locations/"
-    r = requests.get(url, headers=headers)
-    soup = BeautifulSoup(r.content, 'html.parser')
-    doc = lxml.html.fromstring(r.content)
-    location_name = doc.xpath('//nav/a/text()')
-    for n in range(0,len(location_name)):
-        url = "https://ztejas.com/locations/%s/contact"%location_name[n].replace(" ","-").lower()
-        page_url.append(url)
-        r=requests.get(url)
-        doc1 = lxml.html.fromstring(r.content)
-        store = doc1.xpath('//div[@class="grid-x"]/div[1]/p[2]/text()')
-        print (store)
-        tagged =usaddress.tag(' '.join(store).replace("Phone:",""))[0]
-        street = ' '.join(store).replace("Phone:","").split(",")[0].split("\n")
-        if street[0][0].isdigit()==True:
-            street_address.append(' '.join(street))
-        else:
-            street_address.append(' '.join(street[1:]))
-        phone.append(doc1.xpath('//a[contains(@href,"tel")]/text()')[0])
-        city.append(tagged['PlaceName'])
-        state.append(tagged['StateName'])
-        zipcode.append(tagged['ZipCode'])
-        hours_of_operation.append(str("Monday "+' '.join(doc1.xpath('//div[@class="grid-x"]/div[1]/p/text()')).split("Monday")[1].strip()))
-    for n in range(0,len(location_name)): 
+    page = requests.get(url)
+    soup = BeautifulSoup(page.text, 'html.parser')
+    mainlist = soup.find('aside').findAll('a')
+    for repo in mainlist:        
+        link = 'https://ztejas.com/locations/' + repo['href']+'/contact/'
+        title = repo.text
+        print(link)
+        page1 = requests.get(link)        
+        #driver.get(link)
+        #time.sleep(5)
+        soup1 = BeautifulSoup(page1.text, 'html.parser')
+        coord = soup1.find('div',{'class':'marker'})
+        lat = coord['data-lat']
+        longt = coord['data-lng']
+        contact = soup1.find('div',{'class':'contact-info'}).text
+        #print(contact)
+        start = contact.find('Phone')
+        address = contact[0:start]
+        end = contact.find('Fax')
+        phone = contact[start:end]
+        phone = phone.replace('Phone:','')
+        phone = phone.replace('\n','')
+        address = address.replace('\n',' ')
+        address = address.replace('Contact','')
+        address = usaddress.parse(address)        
+        m = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
+        while m < len(address):
+            temp = address[m]                
+            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
+                    "USPSBoxID") != -1:
+                street = street + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]                    
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
+                
+            m += 1
+
+        street = street.lstrip()
+        city = city.lstrip()
+        state = state.lstrip()
+        pcode = pcode.lstrip()
+        
+        start = contact.find('Dining Hours')
+        end = contact.find('PURCHASE GIFT CARD')
+        hours = contact[start:end]
+         
+        if len(hours) < 1:
+            contact = str(soup1)
+            start = contact.find('Dining Hours')
+            end = contact.find('PURCHASE GIFT CARD')
+            hours = contact[start:end]
+            cleanr = re.compile('<.*?>')
+            hours = re.sub(cleanr, '', hours)
+            #print(hours)
+        hours = hours.replace('\n', ' ')
+        hours = hours.replace('Hours', 'Hours ')
+        hours = hours.replace('Happy Hour', '')
+        hours = hours.replace('Brunch','Brunch ')
+        
         data.append([
-            'https://ztejas.com',
-            page_url[n],
-            location_name[n],
-            street_address[n],
-            city[n],
-            state[n],
-            zipcode[n],
-            'US',
-            '<MISSING>',
-            phone[n],
-            '<MISSING>',
-            '<MISSING>',
-            '<MISSING>',
-            hours_of_operation[n]
-        ])
+             'https://ztejas.com/',
+              link,
+              title,
+              street,
+              city,
+              state,
+              pcode,             
+              'US',
+              '<MISSING>',
+              phone,
+              '<MISSING>',
+              lat,
+              longt,
+              hours
+            ])
+        #print(data[p])
+        p += 1
+        
     return data
 
 def scrape():

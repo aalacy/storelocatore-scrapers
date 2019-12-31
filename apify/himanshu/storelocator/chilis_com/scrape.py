@@ -44,13 +44,13 @@ def fetch_data():
                 pass
             store_soup = BeautifulSoup(store_r.text, "lxml")
             data = json.loads(store_soup.find_all("script", {"type":"application/ld+json"})[1].text)
-            location_name = data['name']
-            street_address = data['address']['streetAddress']
-            city = data['address']['addressLocality']
-            state = data['address']['addressRegion']
+            location_name = data['name'].replace("&#39;","'")
+            street_address = data['address']['streetAddress'].replace("&#39;","'")
+            city = data['address']['addressLocality'].replace("&#39;","'")
+            state = data['address']['addressRegion'].replace("&#39;","'")
             zipp = data['address']['postalCode']
-            country_code = "US"
-            store_number = data['branchCode']
+            country_code = "US" 
+            store_number = "<MISSING>"
             phone = data['telephone']
             location_type = data['@type']
             latitude = data['geo']['latitude']
@@ -76,9 +76,10 @@ def fetch_data():
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
+            # store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            # print(store)
             yield store
+
 def scrape():
     data = fetch_data()
 

@@ -26,7 +26,10 @@ def fetch_data():
     addressess = []
     return_main_object = []
     for href in soup.find_all("a",{"class":"btn-link"}):
-        r1 = requests.get("https://www.regmovies.com/"+href['href'],headers=headers)
+        try:
+            r1 = requests.get("https://www.regmovies.com/"+href['href'],headers=headers)
+        except:
+            pass
         # print("https://www.regmovies.com/"+href['href'])
         soup1 = BeautifulSoup(r1.text,"lxml")
         store_data = soup1.find(lambda tag: tag.name == "cinema-structured-data")

@@ -1,16 +1,6 @@
 import csv
-import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+import requests
 from bs4 import BeautifulSoup
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -18,101 +8,81 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
-    
-    locator_domain = 'https://local.skechers.com/'
+    us_url = 'https://hosted.where2getit.com/skechers/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E8C3F989C-6D95-11E1-9DE0-BB3690553863%3C%2Fappkey%3E%3Cformdata+id%3D%22getlist%22%3E%3Cobjectname%3EStoreLocator%3C%2Fobjectname%3E%3Corder%3Erank%3C%2Forder%3E%3Climit%3E1000%3C%2Flimit%3E%3Cwhere%3E%3Ccountry%3E%3Ceq%3EUS%3C%2Feq%3E%3C%2Fcountry%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E'
+    can_url = 'https://hosted.where2getit.com/skechers/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E8C3F989C-6D95-11E1-9DE0-BB3690553863%3C%2Fappkey%3E%3Cformdata+id%3D%22getlist%22%3E%3Cobjectname%3EStoreLocator%3C%2Fobjectname%3E%3Corder%3Erank%3C%2Forder%3E%3Climit%3E200%3C%2Flimit%3E%3Cwhere%3E%3Ccountry%3E%3Ceq%3ECA%3C%2Feq%3E%3C%2Fcountry%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E'
 
-    driver = get_driver()
-    driver.get(locator_domain)
-    driver.implicitly_wait(10)
-
-
-    main = driver.find_element_by_css_selector('div#content')
-
-    state_hrefs = main.find_elements_by_css_selector('a.contentlist_item')
-    state_links = []
-    for state in state_hrefs:
-        state_links.append(state.get_attribute('href'))
-
-
-    link_list = []
-    for link in state_links:
-        driver.get(link)
-        driver.implicitly_wait(10)
-        main = driver.find_element_by_css_selector('div#content')
-
-        loc_hrefs = main.find_elements_by_css_selector('a.contentlist_item')
-        
-        for loc in loc_hrefs:
-            link_list.append(loc.get_attribute('href'))
-        
-
+    url_arr = [us_url, can_url]
+    locator_domain = 'https://www.skechers.com/'
+    xml_cont = requests.get(can_url)
     all_store_data = []
-    
-    for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
+    for url in url_arr:
+        xml_cont = requests.get(url)
+        xml_tree = BeautifulSoup(xml_cont.content, features='lxml')
 
-        element = driver.find_element_by_css_selector('a.city_link')
-        driver.execute_script("arguments[0].click();", element)
-        driver.implicitly_wait(10)
+        locs = xml_tree.find_all('poi')
+        for loc in locs:
+            location_name = loc.find('name').text + ' ' + loc.find('name2').text
+            location_name = location_name.strip()            
+            street_address = loc.find('address1').text + ' ' + loc.find('address2').text
+            street_address = street_address.strip()
+            country_code = loc.find('country').text.strip()
+            if country_code == 'CA':
+                state = loc.find('province').text
 
-        if 'Coming Soon' in driver.find_element_by_css_selector('div#storeinformation').text:
-            continue
+            else:
+                state = loc.find('state').text
+            city = loc.find('city').text
+            zip_code = loc.find('postalcode').text
 
-        xml = driver.find_element_by_css_selector('xml').get_attribute('innerHTML')
+            lat = loc.find('latitude').text
+            longit = loc.find('longitude').text
 
-        xml_tree = BeautifulSoup(xml, features='lxml')
-        
-        poi = xml_tree.find('poi')
-        location_name = poi.find('name').text + ' ' + poi.find('name2').text
-        location_name = location_name.strip()
-        street_address = poi.find('address1').text + ' ' + poi.find('address2').text
-        street_address = street_address.strip()
-        city = poi.find('city').text
-        state = poi.find('state').text
-        zip_code = poi.find('postalcode').text
-        
-        lat = poi.find('latitude').text
-        longit = poi.find('longitude').text
-        
-        phone_number = poi.find('phone').text
+            phone_number = loc.find('phone').text
 
-        if phone_number == '':
-            phone_number = '<MISSING>'
+            if phone_number == '':
+                phone_number = '<MISSING>'
 
-        if poi.find('rmon').text == '':
-            hours = '<MISSING>'
-        else:
-            hours = 'Monday ' + poi.find('rmon').text + ' '
-            hours += 'Tuesday ' + poi.find('rtues').text + ' '
-            hours += 'Wednesday ' + poi.find('rwed').text + ' '
-            hours += 'Thursday ' + poi.find('rthurs').text + ' '
-            hours += 'Friday ' + poi.find('rfri').text + ' '
-            hours += 'Saturday ' + poi.find('rsat').text + ' '
-            hours += 'Sunday ' + poi.find('rsun').text
-        
-        location_type = poi.find('name').text.replace('SKECHERS', '').strip()
-        
-        
-        store_number = '<MISSING>'
-        country_code = 'US'
+            if loc.find('rmon').text == '':
+                hours = '<MISSING>'
+            else:
+                hours = 'Monday ' + loc.find('rmon').text + ' '
+                hours += 'Tuesday ' + loc.find('rtues').text + ' '
+                hours += 'Wednesday ' + loc.find('rwed').text + ' '
+                hours += 'Thursday ' + loc.find('rthurs').text + ' '
+                hours += 'Friday ' + loc.find('rfri').text + ' '
+                hours += 'Saturday ' + loc.find('rsat').text + ' '
+                hours += 'Sunday ' + loc.find('rsun').text
 
+            location_type = loc.find('name').text.replace('SKECHERS', '').replace('Skechers', '').strip()    
+            store_number = loc.find('storeid').text.replace('Store ', '').strip()
+            if 'SFO' in store_number:
+                store_number = '<MISSING>'
+            if store_number == '':
+                store_number = '<MISSING>'
+                
+            country_code = loc.find('country').text
 
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                     store_number, phone_number, location_type, lat, longit, hours ]
+            page_url = '<MISSING>'
+            
+            
+            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
+                    store_number, phone_number, location_type, lat, longit, hours, page_url]
+
+            all_store_data.append(store_data)
 
 
 
-        all_store_data.append(store_data)
-        
 
-    driver.quit()
+
+
+
+
     return all_store_data
 
 def scrape():
