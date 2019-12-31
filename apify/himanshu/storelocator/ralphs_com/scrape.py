@@ -34,21 +34,20 @@ def fetch_data():
         link = i.text
         print(link)
         r1= session.get(link, headers=headers)
-        if 'store location information cannot be found at this time' in r1.text:
-            print('skipping bad link')
-            continue
         soup1 = BeautifulSoup(r1.text, "lxml")
         main1=soup1.find('div', {'class': 'StoreAddress-storeAddressGuts'})
-        if main1 != None:
-            address_tmp1 =soup1.find('div', {'class': 'StoreAddress-storeAddressGuts'})
-            address_tmp = list(address_tmp1.stripped_strings)
-            address = address_tmp[0]
-            city = address_tmp[1]
-            state = address_tmp[3]
-            zip = address_tmp[4]
-            phone = soup1.find('span', {'class': 'PhoneNumber-phone'}).text
-            hour = soup1.find('div', {'class': 'StoreInformation-storeHours'}).text
-            location_name = soup1.find('h1', {'class': 'StoreDetails-header'}).text
+        if main1 == None:
+            print('skipping bad link')
+            continue
+        address_tmp1 =soup1.find('div', {'class': 'StoreAddress-storeAddressGuts'})
+        address_tmp = list(address_tmp1.stripped_strings)
+        address = address_tmp[0]
+        city = address_tmp[1]
+        state = address_tmp[3]
+        zip = address_tmp[4]
+        phone = soup1.find('span', {'class': 'PhoneNumber-phone'}).text
+        hour = soup1.find('div', {'class': 'StoreInformation-storeHours'}).text
+        location_name = soup1.find('h1', {'class': 'StoreDetails-header'}).text
         tem_var=[]           
         tem_var.append('https://www.ralphs.com/')
         tem_var.append(location_name)

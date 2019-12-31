@@ -15,7 +15,7 @@ addresses=[]
 data_list=[]
 
 def write_output(data):
-    with open('TDBANKF.csv', mode='w',newline='') as output_file:
+    with open('data.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -46,7 +46,7 @@ def fetch_data():
                     for key, value in new.items():
                         n = key + " " + value
                         hr.append(n)
-                        hour = "| ".join(hr)
+                        hour = " ".join(hr)
 
             except Exception as e:
                 hour = "<MISSING>"    
@@ -104,7 +104,6 @@ def fetch_data():
 
             new = [locator_domain, page_url,location_name, street, city, state, zip_code, country_code,store_numbr, phn,
                  loc_type, lat, lng, hour]
-            print(new)
             data_list.append(new)
         return data_list
 

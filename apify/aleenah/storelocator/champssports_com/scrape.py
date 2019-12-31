@@ -34,7 +34,7 @@ def fetch_data():
     res=requests.get("https://stores.champssports.com/")
     soup = BeautifulSoup(res.text, 'html.parser')
     uls = soup.find('div', {'class': 'Directory-content'}).find_all("ul")
-    usa = uls[0].find_all('a')
+    usa = uls[0].find_all('a')+uls[2].find_all('a')+uls[3].find_all('a')
     can=uls[1].find_all('a')
 
     for a in usa:
