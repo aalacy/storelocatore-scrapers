@@ -52,6 +52,7 @@ def fetch_data():
     country = driver.find_elements_by_xpath('//tbody/tr/td[5]')
     address_type = driver.find_elements_by_xpath('//tbody/tr/td[2]')
     #print(address_type)
+    f_countries=[]
     for n in range(0, len(stores_href)):
         if (('COMING SOON' not in address_type[n].text) and ('COMING SOON!' not in address_type[n].text)) and (
                 ('US' in country[n].text) or ('CA' in country[n].text)):
@@ -61,7 +62,7 @@ def fetch_data():
 
             # print(state)
 
-            # countries.append(country[n].text)
+            countries.append(country[n].text)
     for n in range(0, len(links)):
         #print(links[n])
         
@@ -104,7 +105,7 @@ def fetch_data():
             #print(c)
             #rint(street_address)
             #print(z)
-            countries.append(country[n].text)
+            f_countries.append(countries[n].text)
             ids.append(str(links[n]).split('/')[-1].split('-')[0])
             #rint(ids)
             if driver.find_element_by_class_name('phone').text != "Coming Soon":
@@ -136,7 +137,7 @@ def fetch_data():
         row.append(city[i] if city[i] else "<MISSING>")
         row.append(state[i] if state[i] else "<MISSING>")
         row.append(zipcode[i] if zipcode[i] else "<MISSING>")
-        row.append(countries[i] if countries[i] else "<MISSING>")
+        row.append(f_countries[i] if f_countries[i] else "<MISSING>")
         row.append(ids[i] if ids[i] else "<MISSING>")
         row.append(phone[i] if phone[i] else "<MISSING>")
         row.append("<MISSING>")
