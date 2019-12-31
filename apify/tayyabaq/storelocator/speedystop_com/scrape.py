@@ -25,12 +25,28 @@ def fetch_data():
     street_address = [];
     state = [];
     phone = []
+    lat=[]
+    long=[]
     url = "http://www.speedystop.com/locations.html"
     r = requests.get(url)
     soup = BeautifulSoup(r.content, 'html.parser')
     stores = soup.find_all('td')
+    
     for i in xrange(0, len(stores), 4):
+        coord=stores[i].find('a').get('onclick')
+        print(coord)
+        la=re.findall(r'\((-?[\d\.]+),-?[\d\.]+',coord)
+        lo=re.findall(r'\(-?[\d\.]+,(-?[\d\.]+)',coord)
+        if la != []:
+         lat.append(la[0])
+        else:
+         lat.append('<MISSING>')
+        if lo != []:
+         long.append(lo[0])
+        else:
+         long.append('<MISSING>')
         location_name.append(stores[i].get_text())
+        print(stores[i].get_text())
         store_no.append(stores[i].get_text().split("#")[1])
     for i in xrange(1, len(stores), 4):
         addr=str(stores[i]).replace("\r\n","").split("<br/>")
@@ -57,8 +73,8 @@ def fetch_data():
             store_no[n],
             phone[n],
             location_type[n],
-            '<MISSING>',
-            '<MISSING>',
+            lat[n],
+            long[n],
             '<MISSING>'
         ])
     return data
