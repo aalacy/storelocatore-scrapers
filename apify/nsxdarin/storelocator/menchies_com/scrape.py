@@ -51,7 +51,7 @@ def fetch_data():
         print('Pulling Location %s...' % lurl)
         website = 'menchies.com'
         typ = '<MISSING>'
-        r2 = session.get(lurl, headers=headers, timeout=5, verify=False)
+        r2 = session.get(lurl, headers=headers, verify=False)
         for line2 in r2.iter_lines():
             if '<h1 class="h2">' in line2:
                 name = line2.split('<h1 class="h2">')[1].split('<')[0]
