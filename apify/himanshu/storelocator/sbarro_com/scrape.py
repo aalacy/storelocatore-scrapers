@@ -100,7 +100,8 @@ def fetch_data():
                         "h1", {"class": "location-name"}).text.strip()
                     try:
                         hours_of_operation = (" ".join(
-                            list(main1.find("div", {"class": "location-hours"}).stripped_strings)))
+                            list(main1.find("div", {"class": "location-hours"}).stripped_strings))).replace('Hours of Operation','').strip()
+                        print(hours_of_operation)
                     except:
                         hours_of_operation = "<MISSING>"
                     store_number = "<MISSING>"

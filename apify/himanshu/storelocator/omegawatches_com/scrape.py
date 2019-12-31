@@ -76,7 +76,7 @@ def fetch_data():
                 if hours != [] and hours != None:
                     hours_of_operation =  ' '.join(list(hours.stripped_strings))
                 else:
-                    hours_of_operation = "MISSING"
+                    hours_of_operation = "<MISSING>"
 
             store = []
             store.append(base_url)
