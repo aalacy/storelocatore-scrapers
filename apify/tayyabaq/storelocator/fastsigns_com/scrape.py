@@ -105,7 +105,7 @@ def fetch_data():
             #print(c)
             #rint(street_address)
             #print(z)
-            f_countries.append(countries[n].text)
+            f_countries.append(countries[n])
             ids.append(str(links[n]).split('/')[-1].split('-')[0])
             #rint(ids)
             if driver.find_element_by_class_name('phone').text != "Coming Soon":
