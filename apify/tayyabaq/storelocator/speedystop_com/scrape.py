@@ -34,7 +34,7 @@ def fetch_data():
     
     for i in xrange(0, len(stores), 4):
         coord=stores[i].find('a').get('onclick')
-        print(coord)
+        #print(coord)
         la=re.findall(r'\((-?[\d\.]+),-?[\d\.]+',coord)
         lo=re.findall(r'\(-?[\d\.]+,(-?[\d\.]+)',coord)
         if la != []:
@@ -45,8 +45,8 @@ def fetch_data():
          long.append(lo[0])
         else:
          long.append('<MISSING>')
-        location_name.append(stores[i].get_text())
-        print(stores[i].get_text())
+        location_name.append(stores[i].get_text().replace('\xc2\xa0',' '))
+        #print(stores[i].get_text())
         store_no.append(stores[i].get_text().split("#")[1])
     for i in xrange(1, len(stores), 4):
         addr=str(stores[i]).replace("\r\n","").split("<br/>")
