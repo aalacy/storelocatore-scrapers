@@ -55,7 +55,6 @@ def parse_hours(store):
         return '<MISSING>'
 
 def parse(store):
-    #print(store)
     website = 'starbucks.com'
     store_id = handle_missing(store['storeNumber'])
     name = handle_missing(store['name'])
@@ -106,7 +105,6 @@ def fetch_data():
         print("remaining zipcodes: " + str(len(search.zipcodes)))
         stores = query_locator(query_coord)
         if len(stores) == 0:
-            print('max distance update')
             search.max_distance_update(MAX_DISTANCE)
         else:
             for store in stores:
@@ -115,7 +113,6 @@ def fetch_data():
                     ids.add(store_id)
                     locations.append(parse(store))
             result_coords = get_result_coords(stores)
-            print('max count update')
             search.max_count_update(result_coords)
         query_coord = search.next_coord()
     for loc in locations:
