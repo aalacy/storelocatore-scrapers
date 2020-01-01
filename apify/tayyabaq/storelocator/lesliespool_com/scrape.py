@@ -127,7 +127,7 @@ def fetch_data():
                             hoo = pat1 + ' ' + pat + ' '
                             h.append(hoo)
 
-                        hour = '| '.join(h)
+                        hour = ' '.join(h)
                     if len(hour) < 3:
                         hour = "<MISSING>"
 
