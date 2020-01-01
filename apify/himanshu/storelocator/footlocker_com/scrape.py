@@ -48,7 +48,7 @@ def parser(location_soup,page_url):
 
 
 def write_output(data):
-    with open('//home//mayurkumar//Desktop//mayur//Qafail//data6.csv', mode='w') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -67,13 +67,13 @@ def fetch_data():
     for states in soup.find_all("a",{'class':"Directory-listLink"}):
         if states["href"].count("/") == 3:
             page_url = "https://stores.footlocker.com/" + states["href"].replace("../","")
-            print("https://stores.footlocker.com/" + states["href"].replace("../",""))
+            # print("https://stores.footlocker.com/" + states["href"].replace("../",""))
             location_request = requests.get("https://stores.footlocker.com/" + states["href"].replace("../",""),headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             store_data = parser(location_soup,page_url)
             yield store_data
         else:
-            print("https://stores.footlocker.com/" + states["href"])
+            # print("https://stores.footlocker.com/" + states["href"])
             state_request = requests.get("https://stores.footlocker.com/" + states["href"],headers=headers)
             state_soup = BeautifulSoup(state_request.text,"lxml")
             for city in state_soup.find_all("a",{'class':"Directory-listLink"}):
@@ -85,12 +85,12 @@ def fetch_data():
                     store_data = parser(location_soup,page_url)
                     yield store_data
                 else:
-                    print("https://stores.footlocker.com/" + city["href"].replace("../",""))
+                    # print("https://stores.footlocker.com/" + city["href"].replace("../",""))
                     city_request = requests.get("https://stores.footlocker.com/" + city["href"].replace("../",""))
                     city_soup = BeautifulSoup(city_request.text,"lxml")
                     for location in city_soup.find_all("a",{'class':"Teaser-titleLink"}):
                         page_url = "https://stores.footlocker.com/" + location["href"].replace("../","")
-                        print("https://stores.footlocker.com/" + location["href"].replace("../",""))
+                        # print("https://stores.footlocker.com/" + location["href"].replace("../",""))
                         location_request = requests.get("https://stores.footlocker.com/" + location["href"].replace("../",""),headers=headers)
                         location_soup = BeautifulSoup(location_request.text,"lxml")
                         store_data = parser(location_soup,page_url)

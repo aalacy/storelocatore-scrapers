@@ -43,7 +43,7 @@ def fetch_data():
         store_hours = store_data["normalHours"]
         hours = ""
         for k in range(len(store_hours)):
-            hours = hours + " " + store_hours[k]["dayOfWeek"] + " from " + store_hours[k]["openTime"] + " to " + store_hours[k]["closeTime"]
+            hours = hours + " " + store_hours[k]["dayOfWeek"] + " from " + store_hozzurs[k]["openTime"] + " to " + store_hours[k]["closeTime"]
         store.append(hours if hours != "" else "<MISSING>")
         return_main_object.append(store)
     return return_main_object
