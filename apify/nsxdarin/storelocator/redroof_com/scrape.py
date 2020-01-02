@@ -34,7 +34,6 @@ def fetch_data():
     attempts = {}
     while q:
         loc = q.popleft()
-        print(loc)
         if '-CA/' in loc:
             country = 'CA'
         else:
