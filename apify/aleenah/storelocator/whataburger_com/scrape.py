@@ -54,8 +54,9 @@ def fetch_data():
         h=0
         if "\\u0026" in url:
             url =url.replace("\\u0026","&")
+        url="https://locations.whataburger.com/"+url
         print(url)
-        driver.get("https://locations.whataburger.com/"+url)
+        driver.get(url)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         div = soup.find('div', {'class': 'NAP-main'})
 
@@ -71,43 +72,18 @@ def fetch_data():
         id=re.findall(r'.*"id":([0-9]+)', tex)[0]
         la=re.findall(r'.*"latitude":(-?[\d\.]*)', tex)[0]
         lo=re.findall(r'.*"longitude":(-?[\d\.]*)', tex)[0]
-
+        tim1=""
+        tim2=""
         try:
-            tim = div.find('div', {'class': 'HoursToday-dineIn'}).text
-            types.append("dineIn")
-            locs.append(l)
-            street.append(st)
-            cities.append(c)
-            states.append(s)
-            zips.append(z)
-            phones.append(p)
-            timing.append("MON-SUN: "+tim.strip())
-            lat.append(la)
-            long.append(lo)
-            ids.append(id)
-            page_url.append(url)
-
+            tim1 = div.find('div', {'class': 'HoursToday-dineIn'}).text
         except:
             k=1
-
+            
         try:
-            tim = div.find('div', {'class': 'HoursToday-driveThru'}).text.replace("\n", ",")
-            types.append("driveThru")
-            locs.append(l)
-            street.append(st)
-            cities.append(c)
-            states.append(s)
-            zips.append(z)
-            phones.append(p)
-            timing.append("MON-SUN: " + tim)
-            lat.append(la)
-            long.append(lo)
-            ids.append(id)
-            page_url.append(url)
-
+            tim2 = div.find('div', {'class': 'HoursToday-driveThru'}).text.replace("\n", ",")
         except:
             h=1
-
+            
         if k==1 and h==1:
             types.append("driveThru")
             locs.append(l)
@@ -121,13 +97,80 @@ def fetch_data():
             long.append(lo)
             ids.append(id)
             page_url.append(url)
+        else:            
+         if tim1==tim2 and tim1!="": 
+            types.append("dineIn, driveThru")
+            locs.append(l)
+            street.append(st)
+            cities.append(c)
+            states.append(s)
+            zips.append(z)
+            phones.append(p)
+            timing.append("MON-SUN: " + tim1.strip())
+            lat.append(la)
+            long.append(lo)
+            ids.append(id)
+            page_url.append(url)
+            
+         elif tim1 == "":
+            types.append("driveThru")
+            locs.append(l)
+            street.append(st)
+            cities.append(c)
+            states.append(s)
+            zips.append(z)
+            phones.append(p)
+            timing.append("MON-SUN: " + tim2.strip())
+            lat.append(la)
+            long.append(lo)
+            ids.append(id)
+            page_url.append(url)
+            
+         elif tim2 == "":
+            types.append("dineIn")
+            locs.append(l)
+            street.append(st)
+            cities.append(c)
+            states.append(s)
+            zips.append(z)
+            phones.append(p)
+            timing.append("MON-SUN: " + tim1.strip())
+            lat.append(la)
+            long.append(lo)
+            ids.append(id)
+            page_url.append(url)
+        
+         else:
+            types.append("dineIn")
+            locs.append(l)
+            street.append(st)
+            cities.append(c)
+            states.append(s)
+            zips.append(z)
+            phones.append(p)
+            timing.append("MON-SUN: " + tim1.strip())
+            lat.append(la)
+            long.append(lo)
+            ids.append(id)
+            page_url.append(url)
 
-
-
-
+            types.append("driveThru")
+            locs.append(l)
+            street.append(st)
+            cities.append(c)
+            states.append(s)
+            zips.append(z)
+            phones.append(p)
+            timing.append("MON-SUN: " + tim2.strip())
+            lat.append(la)
+            long.append(lo)
+            ids.append(id)
+            page_url.append(url)
+        
     all = []
     for i in range(0, len(locs)):
         row = []
+        
         row.append("https://whataburger.com")
         row.append(locs[i])
         row.append(street[i])
