@@ -49,7 +49,10 @@ def fetch_data():
                 zipcode.append(driver.find_element_by_xpath("//div[@class='details']/p[2]").text.split(",")[1].split()[1].strip())
                 phone.append(driver.find_element_by_xpath("//div[@class='details']/p[3]").text)
             hours = driver.find_element_by_class_name('details')
-            hours_of_operation.append(hours.text.replace(u'\u2014',' ').replace(u'\u2013',' ').split("RESTAURANT HOURS")[1].strip().split('CHECK')[0])
+            if "RESTAURANT HOURS" in hours.text:
+                 hours_of_operation.append(hours.text.replace(u'\u2014',' ').replace(u'\u2013',' ').split("RESTAURANT HOURS")[1].strip().split('CHECK')[0])
+            else:
+                 hours_of_operation.append("<MISSING>")
     for n in range(0,len(location_name)): 
         data.append([
             'http://www.pinktaco.com',
