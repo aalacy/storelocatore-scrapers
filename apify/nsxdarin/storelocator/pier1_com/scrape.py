@@ -26,8 +26,11 @@ def fetch_data():
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if '<a href="/on/demandware.store/Sites-pier1_us-Site/default/LocalStore?storeId=' in line:
-            locs.append('https://www.pier1.com' + line.split('href="')[1].split('"')[0])
+            lurl = 'https://www.pier1.com' + line.split('href="')[1].split('"')[0]
+            locs.append(lurl)
+    print('Found %s Locations...' % str(len(locs)))
     for loc in locs:
+        PFound = True
         time.sleep(3)
         print('Pulling Location %s...' % loc)
         website = 'pier1.com'
@@ -42,26 +45,32 @@ def fetch_data():
         phone = ''
         lat = ''
         lng = ''
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            if '"name": "' in line2:
-                name = line2.split('"name": "')[1].split('"')[0]
-            if '"address":' in line2:
-                add = line2.split('"streetAddress":"')[1].split('"')[0]
-                state = line2.split('"addressRegion":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-                city = line2.split('"addressLocality":"')[1].split('"')[0]
-            if '"telephone": "' in line2:
-                phone = line2.split('"telephone": "')[1].split('"')[0]
-            if '"openingHours": ["' in line2:
-                hours = line2.split('"openingHours": ["')[1].split('"]')[0].replace('","','; ')
-            if '<img src="https://maps.googleapis.com/' in line2:
-                lat = line2.split('|')[1].split(',')[0]
-                lng = line2.split('|')[1].split(',')[1].split('&')[0]
-        if hours == '':
-            hours = '<MISSING>'
-        country = 'US'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        while PFound:
+            try:
+                PFound = False
+                r2 = session.get(loc, headers=headers)
+                for line2 in r2.iter_lines():
+                    if '"name": "' in line2:
+                        name = line2.split('"name": "')[1].split('"')[0]
+                    if '"address":' in line2:
+                        add = line2.split('"streetAddress":"')[1].split('"')[0]
+                        state = line2.split('"addressRegion":"')[1].split('"')[0]
+                        zc = line2.split('"postalCode":"')[1].split('"')[0]
+                        city = line2.split('"addressLocality":"')[1].split('"')[0]
+                    if '"telephone": "' in line2:
+                        phone = line2.split('"telephone": "')[1].split('"')[0]
+                    if '"openingHours": ["' in line2:
+                        hours = line2.split('"openingHours": ["')[1].split('"]')[0].replace('","','; ')
+                    if '<img src="https://maps.googleapis.com/' in line2:
+                        lat = line2.split('|')[1].split(',')[0]
+                        lng = line2.split('|')[1].split(',')[1].split('&')[0]
+                if hours == '':
+                    hours = '<MISSING>'
+                country = 'US'
+                if add != '':
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            except:
+                PFound = True
 
 def scrape():
     data = fetch_data()
