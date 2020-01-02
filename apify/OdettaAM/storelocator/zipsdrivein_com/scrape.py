@@ -115,7 +115,7 @@ def fetch_data():
                       '<MISSING>',
                       '<MISSING>',
                       '<MISSING>',
-                       hours_of_op
+                       hours_of_op.replace("\n"," ")
                  ])
 
     time.sleep(3)

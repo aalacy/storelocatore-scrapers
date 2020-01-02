@@ -10,6 +10,7 @@ import time
 import platform
 system = platform.system()
 
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -28,12 +29,11 @@ def get_driver():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
+    options.add_argument('--window-size=1920,1080')    
     if "linux" in system.lower():
         return webdriver.Firefox(executable_path='./geckodriver', options=options)
-    else:        
+    else:
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
-
 
 def fetch_data():
     addresses = []
@@ -45,9 +45,13 @@ def fetch_data():
         if len(state) != 2:
             continue
         states.append(state)
-    for state in states:
-        time.sleep(3)
+    WebDriverWait(driver, 10).until(lambda x: x.find_element_by_xpath(
+        "//button[@id='onetrust-accept-btn-handler']")).click()
+    time.sleep(3)
 
+    for state in states:
+
+        # time.sleep(3)
         element = WebDriverWait(driver, 100).until(
             lambda x: x.find_element_by_xpath("//option[@value='" + state + "']"))
         create = driver.find_element_by_xpath(
@@ -57,10 +61,10 @@ def fetch_data():
             "//input[@name='locatorForm:j_idt44']").click()
         # exit()
         try:
-            # print("----------------------",state)
+            #print("----------------------", state)
             element = WebDriverWait(driver, 10).until(
                 lambda x: x.find_element_by_xpath("//li[@style='color:red; display:block']"))
-            # print("----------------------",state)
+            #print("----------------------", state)
             continue
         except:
             pass
@@ -106,7 +110,7 @@ def fetch_data():
             store.append("<MISSING>")  # hours
             store.append("<MISSING>")  # page_url
             store.append(address.replace(state, "").replace(
-                store_zip, "").replace(",", ""))
+                store_zip, "").replace(",", "").strip())
             if store[-1] in addresses:
                 continue
             addresses.append(store[-1])

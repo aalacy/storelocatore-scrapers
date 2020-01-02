@@ -17,38 +17,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def request_wrapper(url,method,headers,data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = requests.get(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:
-                if data:
-                    r = requests.post(url,headers=headers,data=data)
-                else:
-                    r = requests.post(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None
-
 def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
@@ -57,86 +25,35 @@ def fetch_data():
     }
 
     addresses = []
-    base_url = "http://www.searshomeservices.com"
+    base_url = "https://www.searshomeservices.com"
+    addresses = []
+   
+    r = requests.get("https://www.searshomeservices.com/locations/", headers=headers)
+    
+    soup= BeautifulSoup(r.text,"lxml")
+    links = soup.find_all('a', class_='state')
 
-    locator_domain = base_url
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zipp = ""
-    country_code = "US"
-    store_number = ""
-    phone = ""
-    location_type = ""
-    latitude = ""
-    longitude = ""
-    raw_address = ""
-    hours_of_operation = ""
-    page_url = ""
-
-    r = requests.get("https://www.searshomeservices.com/locations", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-
-    for script_state in soup.find_all("a", {"class": "state"}):
-
-        location_state_url = base_url + script_state["href"]
-        
-        # print("state_location_url === " + str(location_state_url))
-
-        # while True:
-        #     try:
-        #         r_state_location = requests.get(location_state_url, headers=headers)
-        #         break
-        #     except Exception as e:
-        #         # print("State Error = "+ str(e))
-        #         time.sleep(10)
-        #         continue
-        
-        r_state_location = request_wrapper(location_state_url,"get", headers=headers)
-        # print(r_state_location)
-        if r_state_location == None:
+    for link in links:
+        try:
+            r1 = requests.get(base_url+link['href'], headers=headers)
+        except:
             continue
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        loc_links = soup1.find_all('a', class_='see-more')
 
-        soup_state_location = BeautifulSoup(r_state_location.text, "lxml")
+        for loc_link in loc_links:
 
-        for script_store in soup_state_location.find_all("div", {"class": "state-store-item state-store-item-default"}):
-
-            if "http" in script_store.find("a")["href"]:
-                page_url = script_store.find("a")["href"]
-            else:
-                page_url = base_url + script_store.find("a")["href"]
-
-            # print("location_url === " + str(page_url))
-
-            # while True:
-            #     try:
-            #         r_store_detail = requests.get(page_url, headers=headers)
-            #         break
-            #     except Exception as e:
-            #         # print("Store Error = "+ str(e))
-            #         time.sleep(10)
-            #         continue
-
-            r_store_detail = request_wrapper(page_url,"get", headers=headers)
-
-            if r_store_detail == None:
-                continue
-
-            soup_store_detail = BeautifulSoup(r_store_detail.text, "lxml")
-
-            if soup_store_detail.find("span",{"class":"store-hours"}):
-                hours_of_operation = " ".join(list(soup_store_detail.find("span",{"class":"store-hours"}).stripped_strings)).replace('Hours','').strip()
-            else:
-                hours_of_operation = ""
-
-            try:
-                json_str = (soup_store_detail.text.split("config.currentStore = ")[1]+"{").split("}]};")[0]+"}]}"
+            if "http" not in loc_link['href']:
+                page_url = base_url+loc_link['href']
+                try:
+                    r4 = requests.get(page_url, headers=headers)
+                except:
+                    pass                    
+                soup4 = BeautifulSoup(r4.text, "lxml")
+                json_str = (soup4.text.split("config.currentStore = ")[1]+"{").split("}]};")[0]+"}]}"
                 json_data = json.loads(json_str)
-
                 street_address = str(json_data["address"])
                 location_name = str(json_data["location_name"])
-                # print(location_name)
                 city = str(json_data["city"])
                 state = str(json_data["state"])
                 zipp = str(json_data["zip"])
@@ -153,21 +70,57 @@ def fetch_data():
                 if ca_zip_list:
                     zipp = ca_zip_list[-1]
                     country_code = "CA"
-
+            
                 if us_zip_list:
                     zipp = us_zip_list[-1]
                     country_code = "US"
-            except:
-                if "metro-area" not in page_url :
-                    head= soup_store_detail.find('div',class_='headerMain-utilZone03')
-                    if head != None:
-                        
-                        city = head.find('span',{'itemprop':'addressLocality'}).text.strip()
-                        state = head.find('span',{'itemprop':'addressRegion'}).text.strip()
-                        phone = head.find('nav',{'class':'navCallout'}).find('a')['href'].replace('tel:','').strip()
+
+            else:
+                page_url = loc_link['href'].lower()
+                # print(page_url)
+                try:
+                    r3 = requests.get(page_url, headers=headers)
+                except:
+                    pass
+                soup3 = BeautifulSoup(r3.text, "lxml")
+                head= soup3.find('div',class_='headerMain-utilZone03')
+
+                if head != None:                    
+                    city = head.find('span',{'itemprop':'addressLocality'}).text.strip()
+                    state = head.find('span',{'itemprop':'addressRegion'}).text.strip()
+                    phone = head.find('nav',{'class':'navCallout'}).find('a')['href'].replace('tel:','').strip()
+                    # print(phone)
+                    location_name = city
+                    street_address = "<MISSING>"
+                    zipp = "<MISSING>"
+                    location_type = "<MISSING>"
+                    store_number = "<MISSING>"
+                    latitude = "<MISSING>"
+                    longitude = "<MISSING>"
+                    hours_of_operation = "<MISSING>"
+                    country_code = "US"
+                    page_url = page_url
+
+                else:
+                    if soup3.find("label",{"id":"currentUrl"}) != None:
+                        city = soup3.find("label",{"id":"currentUrl"}).text.split(',')[0].strip()
+                        state = soup3.find("label",{"id":"currentUrl"}).text.split(',')[1].strip()
+                        phone = soup3.find("div", {"itemprop":"telephone"}).text
+                        # print(phone)
                         location_name = city
-                        street_address = "<MISSING>"
-                        zipp = "<MISSING>"
+                        info = soup3.find("div", {"class":"subcontainer rightside"})
+                        if info != None:
+                            if info.find("div", {"itemprop":"streetAddress"}):
+                                street_address = info.find("div", {"itemprop":"streetAddress"}).text.strip()
+                            else:
+                                street_address = "<MISSING>"
+                            if info.find("span", {"itemprop":"postalCode"}):
+                                zipp = info.find("span", {"itemprop":"postalCode"}).text.strip()
+                            else:
+                                zipp = "<MISSING>"
+                        else:
+                            street_address = "<MISSING>"
+                            zipp = "<MISSING>"
                         location_type = "<MISSING>"
                         store_number = "<MISSING>"
                         latitude = "<MISSING>"
@@ -175,37 +128,46 @@ def fetch_data():
                         hours_of_operation = "<MISSING>"
                         country_code = "US"
                         page_url = page_url
-
                     else:
-                        #this page has no detail information 
-                        continue
-                        # print(page_url)
+                        #page not found
+                        pass
 
-                        
+            try:
+                loc_r = requests.get(page_url, headers=headers)
+            except:
+                continue
 
-                else:
-                    # this pages have duplicate location 
-                    continue
+            loc_soup = BeautifulSoup(loc_r.text, "lxml")
 
-
-                
-
+            if loc_soup.find("span",{"class":"store-hours"}):
             
-
-            # print("hours_of_operation == "+ str(store_number))
-
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-            if str(store[1]) + str(store[2]) not in addresses and country_code:
-                addresses.append(str(store[1]) + str(store[2]))
-
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
-
+                hours_of_operation = " ".join(list(loc_soup.find("span",{"class":"store-hours"}).stripped_strings)).replace('Hours','').strip()
+            else:
+                hours_of_operation = "<MISSINGH>"
+        
+                
+               
+            store = []
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
+            store.append(country_code)
+            store.append(store_number) 
+            store.append(phone)
+            store.append(location_type)
+            store.append(latitude)
+            store.append(longitude)
+            store.append(hours_of_operation)
+            store.append(page_url)
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            # print(store)
+            yield store
 
 def scrape():
     data = fetch_data()

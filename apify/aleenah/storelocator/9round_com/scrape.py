@@ -83,13 +83,13 @@ def fetch_data():
             phones.append("<MISSING>")
             continue
         m=m[0]
-        but = m.find_all('button')
+        """but = m.find_all('button')
         if but==[]:
             but="<MISSING>"
         else:
             but=but[0].get('data-url')
             but=re.findall(r'franchise_id=(.*)', but)[0].replace('\u202a',"")
-        ids.append(but)
+        ids.append(but)"""
         ph = m.find_all('a')
         if ph!=[]:
             ph=ph[0].text.strip().replace('\u202a',"")
@@ -144,7 +144,7 @@ def fetch_data():
         row.append(states[i])
         row.append(zips[i])
         row.append(countries[i])
-        row.append(ids[i])  # store #
+        row.append("<MISSING>")  # store #
         row.append(phones[i])  # phone
         row.append("<MISSING>")  # type
         row.append(lat[i])  # lat

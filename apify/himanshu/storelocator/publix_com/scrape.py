@@ -77,7 +77,7 @@ class Random_Proxy(object):
         while True:
             try:
                 proxy = self.__random_proxy()
-                print("Using Proxy {}".format(proxy))
+               # print("Using Proxy {}".format(proxy))
                 r = requests.request(
                     request_type, url, proxies=proxy, headers=self.__headers, timeout=8, **kwargs)
                 return r
@@ -181,12 +181,13 @@ if __name__ == "__main__":
                 phone = data["data"]['PHONE']
                 if "-" == phone:
                     phone = "<MISSING>"
+                # print(phone)
                 # print(hours_of_operation)
                 # do your logic.
                 # result_coords.append(
                 #     (data["data"]['CLAT'], data["data"]['CLON']))
                 store = [locator_domain, data["data"]['NAME'], data["data"]['ADDR'], data["data"]['CITY'], data["data"]['STATE'], data["data"]['ZIP'], country_code,
-                         store_number, data["data"]['PHONE'], location_type,  data["data"]['CLAT'],  data["data"]['CLON'], hours_of_operation.strip(), page_url]
+                         store_number, phone, location_type,  data["data"]['CLAT'],  data["data"]['CLON'], hours_of_operation.strip(), page_url]
 
                 if store[2] + store[-3] in addresses:
                     continue
@@ -194,9 +195,9 @@ if __name__ == "__main__":
                 store = [x.encode('ascii', 'ignore').decode(
                     'ascii').strip() if x else "<MISSING>" for x in store]
 
-                #print("data = " + str(store))
-                #print(
-                    # '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print(
+                #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 yield store
                 # return_main_object.append(store)
