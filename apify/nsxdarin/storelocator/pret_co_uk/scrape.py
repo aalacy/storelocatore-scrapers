@@ -4,6 +4,8 @@ import requests
 import sgzip
 import json
 
+requests.packages.urllib3.disable_warnings()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -30,8 +32,7 @@ def fetch_data():
         print("remaining zipcodes: " + str(len(search.zipcodes)))
         x, y = coord[0], coord[1]
         url = 'https://www.pret.co.uk/en-gb/find-a-pret/' + str(x) + ',' + str(y)
-        print(url)
-        r = session.get(url, headers=headers)
+        r = session.get(url, headers=headers, verify=False)
         lines = r.iter_lines()
         website = 'pret.co.uk'
         typ = 'Restaurant'
