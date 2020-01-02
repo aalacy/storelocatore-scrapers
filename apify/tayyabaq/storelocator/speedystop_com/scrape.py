@@ -5,7 +5,7 @@ import re, time
 from bs4 import BeautifulSoup
 
 def write_output(data):
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
@@ -13,7 +13,7 @@ def write_output(data):
         for row in data:
             if row:
                 #Keep the trailing zeroes in zipcodes
-                writer.writerow([unicode(s).encode("utf-8") for s in row])
+                writer.writerow([s for s in row])
                 
 def fetch_data():
     # Variables
@@ -32,7 +32,7 @@ def fetch_data():
     soup = BeautifulSoup(r.content, 'html.parser')
     stores = soup.find_all('td')
     
-    for i in xrange(0, len(stores), 4):
+    for i in range(0, len(stores), 4):
         coord=stores[i].find('a').get('onclick')
         #print(coord)
         la=re.findall(r'\((-?[\d\.]+),-?[\d\.]+',coord)
@@ -48,15 +48,15 @@ def fetch_data():
         location_name.append(stores[i].get_text().replace('\xc2\xa0',' '))
         #print(stores[i].get_text())
         store_no.append(stores[i].get_text().split("#")[1])
-    for i in xrange(1, len(stores), 4):
+    for i in range(1, len(stores), 4):
         addr=str(stores[i]).replace("\r\n","").split("<br/>")
         street_address.append(re.findall(r'">(.*)',addr[0])[0].strip())
         addr=addr[1].replace("</td>","").split(",")
         city.append(addr[0].strip())
         state.append(addr[1].strip())
-    for i in xrange(2, len(stores), 4):
+    for i in range(2, len(stores), 4):
         phone.append(stores[i].get_text())
-    for i in xrange(3, len(stores), 4):
+    for i in range(3, len(stores), 4):
         if stores[i].get_text() != "":
             location_type.append(stores[i].get_text().split()[-1].strip())
         else:
