@@ -30,55 +30,61 @@ def fetch_data():
                     locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
-        url = loc
-        add = ''
-        city = ''
-        state = ''
-        zc = ''
-        country = 'US'
-        phone = ''
-        hours = ''
-        lat = ''
-        lng = ''
-        store = loc.rsplit('/',1)[1]
-        name = 'Cracker Barrel'
-        website = 'crackerbarrel.com'
-        typ = 'Restaurant'
-        r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
-        for line2 in lines:
-            if "name : '" in line2:
-                name = line2.split("name : '")[1].split("'")[0]
-            if "address1 : '" in line2:
-                add = line2.split("address1 : '")[1].split("'")[0]
-            if "city : '" in line2:
-                city = line2.split("city : '")[1].split("'")[0]
-            if "state : '" in line2:
-                state = line2.split("state : '")[1].split("'")[0]
-            if "postalcode : '" in line2:
-                zc = line2.split("postalcode : '")[1].split("'")[0]
-            if "latitude : '" in line2:
-                lat = line2.split("latitude : '")[1].split("'")[0]
-            if "longitude : '" in line2:
-                lng = line2.split("longitude : '")[1].split("'")[0]
-            if "phone : '" in line2:
-                phone = line2.split("phone : '")[1].split("'")[0]
-            if "country : '" in line2:
-                country = line2.split("country : '")[1].split("'")[0]
-            if 'hours" style="display: none;"><span>' in line2:
+        PageFound = True
+        while PageFound:
+            try:
+                PageFound = False
+                print('Pulling Location %s...' % loc)
+                url = loc
+                add = ''
+                city = ''
+                state = ''
+                zc = ''
+                country = 'US'
+                phone = ''
+                hours = ''
+                lat = ''
+                lng = ''
+                store = loc.rsplit('/',1)[1]
+                name = 'Cracker Barrel'
+                website = 'crackerbarrel.com'
+                typ = 'Restaurant'
+                r2 = session.get(loc, headers=headers)
+                lines = r2.iter_lines()
+                for line2 in lines:
+                    if "name : '" in line2:
+                        name = line2.split("name : '")[1].split("'")[0]
+                    if "address1 : '" in line2:
+                        add = line2.split("address1 : '")[1].split("'")[0]
+                    if "city : '" in line2:
+                        city = line2.split("city : '")[1].split("'")[0]
+                    if "state : '" in line2:
+                        state = line2.split("state : '")[1].split("'")[0]
+                    if "postalcode : '" in line2:
+                        zc = line2.split("postalcode : '")[1].split("'")[0]
+                    if "latitude : '" in line2:
+                        lat = line2.split("latitude : '")[1].split("'")[0]
+                    if "longitude : '" in line2:
+                        lng = line2.split("longitude : '")[1].split("'")[0]
+                    if "phone : '" in line2:
+                        phone = line2.split("phone : '")[1].split("'")[0]
+                    if "country : '" in line2:
+                        country = line2.split("country : '")[1].split("'")[0]
+                    if 'hours" style="display: none;"><span>' in line2:
+                        if hours == '':
+                            hours = line2.split('hours" style="display: none;"><span>')[1].split('</span></div>')[0].replace('</span>','').replace('<span>','')
+                        else:
+                            hours = hours + '; ' + line2.split('hours" style="display: none;"><span>')[1].split('</span></div>')[0].replace('</span>','').replace('<span>','')
                 if hours == '':
-                    hours = line2.split('hours" style="display: none;"><span>')[1].split('</span></div>')[0].replace('</span>','').replace('<span>','')
-                else:
-                    hours = hours + '; ' + line2.split('hours" style="display: none;"><span>')[1].split('</span></div>')[0].replace('</span>','').replace('<span>','')
-        if hours == '':
-            hours = '<MISSING>'
-        if phone == '':
-            phone = '<MISSING>'
-        latlng = lat + '|' + lng
-        if latlng not in coords and add != '':
-            coords.append(latlng)
-            yield [website, url, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    hours = '<MISSING>'
+                if phone == '':
+                    phone = '<MISSING>'
+                latlng = lat + '|' + lng
+                if latlng not in coords and add != '':
+                    coords.append(latlng)
+                    yield [website, url, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            except:
+                PageFound = True
 
 def scrape():
     data = fetch_data()
