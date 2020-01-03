@@ -58,9 +58,14 @@ def fetch_data():
                             except:
                                 zc = '<MISSING>'
                         else:
-                            city = csz.split(',')[1].strip()
-                            state = csz.split(',')[2].strip().split(' ')[0]
-                            zc = csz.split(',')[2].strip().split(' ',1)[1]
+                            try:
+                                city = csz.split(',')[1].strip()
+                                state = csz.split(',')[2].strip().split(' ')[0]
+                                zc = csz.split(',')[2].strip().split(' ',1)[1]
+                            except:
+                                city = '<MISSING>'
+                                state = '<MISSING>'
+                                zc = '<MISSING>'
                         country = csz.rsplit(',',1)[1].strip()
                         website = 'subway.co.uk'
                         hours = ''
@@ -81,7 +86,7 @@ def fetch_data():
                                     hours = hrs
                                 else:
                                     hours = hours + '; ' + hrs
-                        if store not in ids:
+                        if store not in ids and state != '<MISSING>':
                             ids.append(store)
                             if '0' not in hours:
                                 hours = '<MISSING>'
