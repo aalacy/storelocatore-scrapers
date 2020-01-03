@@ -44,11 +44,11 @@ def fetch_data():
                 if '<' in name:
                     name = name.split('<')[0]
                 typ = line2.split('<div class="location-type">')[1].split('<')[0]
-                add = line2.split('c-address-street-1" >')[1].split('<')[0]
-                city = line2.split('class="c-address-city"><span >')[1].split('<')[0]
-                state = line2.split('"c-address-state" >')[1].split('<')[0]
-                zc = line2.split(' class="c-address-postal-code" >')[1].split('<')[0].strip()
-                phone = line2.split('<a href="tel:')[1].split('">')[1].split('<')[0]
+                add = line2.split('c-address-street-1')[1].split('">')[1].split('<')[0]
+                city = line2.split('class="c-address-city')[1].split('">')[1].split('<')[0]
+                state = line2.split('"c-address-state')[1].split('>')[1].split('<')[0]
+                zc = line2.split(' class="c-address-postal-code')[1].split('>')[1].split('<')[0].strip()
+                phone = line2.split('href="tel:')[1].split('">')[1].split('<')[0]
                 days = line2.split("data-days='")[1].split("}]' data")[0].split('"day":"')
                 for day in days:
                     if '"intervals"' in day:
