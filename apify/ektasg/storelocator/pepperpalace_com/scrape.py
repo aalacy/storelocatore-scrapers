@@ -83,13 +83,13 @@ def fetch_data():
             phno='<MISSING>'
             raw_address = fullcontent[store]
         if(location_name in raw_address):
-            raw_address=raw_address.replace(location_name,"")
-        
+            raw_address=raw_address.replace(location_name,"").replace("pepperpalacemallga@gmail.com","")
+        #print(raw_address)
         if store>=len(fullcontent)-canadaElements:
             country='CA'
         else:
             country='US'
-        try:
+        """try:
             tagged = usaddress.tag(raw_address)[0]
         except:
             pass
@@ -146,7 +146,27 @@ def fetch_data():
         if('pepper' in state):
             state=state.split('pepper')[0]
         if "Pepper Palace Niagara Falls" in location_name:
-            zipcode = 'L2G 3W6'
+            zipcode = 'L2G 3W6'"""
+        #raw_address=raw_address.decode('utf-8').replace(u"​\u200b","").encode('utf-8')
+        addr=raw_address.replace(u"​\u2022","").strip().split(",")
+        sz=addr[-1].strip()
+        state=sz.split(" ")[0]
+        zipcode = sz.replace(state,"").strip()
+        addr=raw_address.replace(sz,"").strip()
+        cit=re.findall(r'[0-9A-Za-z\.]([A-Z][a-z]+)',addr)
+        if cit != []:
+          city=cit[-1]+addr.split(cit[-1])[-1].replace(",","")
+          #print(cit)
+        else:
+          city=addr.split(" ")[-1].replace(",","")
+          #print("!!!!!!!!!!!!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        street_addr=addr.replace(city,"").strip()
+
+        #print(street_addr)
+        #print(city)
+        #print(state)
+        #print(zipcode)
+        #print("*******************************")
         data.append([
              'https://pepperpalace.com/',
              locationURLs[store],
