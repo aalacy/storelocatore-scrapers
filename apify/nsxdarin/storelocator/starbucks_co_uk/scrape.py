@@ -39,7 +39,7 @@ def fetch_data():
         try:
             array = json.loads(r.content)
             for item in array['stores']:
-                website = 'starbucks.com'
+                website = 'starbucks.co.uk'
                 store = item['storeNumber']
                 name = item['name'].encode('utf-8')
                 phone = item['phoneNumber']
@@ -84,7 +84,8 @@ def fetch_data():
                             hours = '<MISSING>'
                         if zc is None or zc == '':
                             zc = '<MISSING>'
-                        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                        purl = '<MISSING>'
+                        yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         except:
             pass
         print("max count update")

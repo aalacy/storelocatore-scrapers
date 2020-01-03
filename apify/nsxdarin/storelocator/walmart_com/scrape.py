@@ -1,8 +1,11 @@
 import csv
 import urllib2
-from sgrequests import SgRequests
+import requests
+import sgzip
 
-session = SgRequests()
+requests.packages.urllib3.disable_warnings()
+
+session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -13,63 +16,42 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def fetch_store_urls():
-    session = SgRequests()
-    url = 'https://www.walmart.com/sitemap_store_main.xml'
-    locs = []
-    r = session.get(url, headers=headers, verify=False)
-    for line in r.iter_lines():
-        if '<loc>https://www.walmart.com/store/' in line:
-            items = line.split('<loc>https://www.walmart.com/store/')
-            for item in items:
-                if 'details<' in item:
-                    lurl = 'https://www.walmart.com/store/' + item.split('<')[0]
-                    locs.append(lurl)
-    return locs
-
 def fetch_data():
-    locs = fetch_store_urls()
-    for loc in locs:
-        store = loc.split('/store/')[1].split('/')[0]
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        lat = ''
-        lng = ''
-        hours = ''
-        country = 'US'
-        zc = ''
-        phone = ''
+    url = 'https://www.walmart.com/sitemap_store_main.xml'
+    ids = []
+    for code in sgzip.for_radius(50):
+        print('Pulling Zip Code %s...' % code)
+        url = 'https://www.walmart.com/store/finder/electrode/api/stores?singleLineAddr=' + code + '&distance=100'
         website = 'walmart.com'
         typ = 'Store'
-        r2 = session.get(loc, headers=headers)
+        r2 = session.get(url, headers=headers)
         for line2 in r2.iter_lines():
-            if '"storeType":{"id":"' in line2:
-                name = line2.split('"storeType":{"id":"')[0].rsplit('"displayName":"',1)[1].split('"')[0]
-                phone = line2.split('"storeType":{"id":"')[1].split('"phone":"')[1].split('"')[0]
-                add = line2.split('"address":"')[1].split('"')[0]
-                city = line2.split('"city":"')[1].split('"')[0]
-                state = line2.split('"state":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-                hours = 'Mon: ' + line2.split('"storeType":{"id":"')[1].split('"mondayHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + line2.split('"storeType":{"id":"')[1].split('"mondayHrs":')[1].split('"endHr":"')[1].split('"')[0]
-                hours = hours + '; Tue: ' + line2.split('"storeType":{"id":"')[1].split('"tuesdayHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + line2.split('"storeType":{"id":"')[1].split('"tuesdayHrs":')[1].split('"endHr":"')[1].split('"')[0]
-                hours = hours + '; Wed: ' + line2.split('"storeType":{"id":"')[1].split('"wednesdayHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + line2.split('"storeType":{"id":"')[1].split('"wednesdayHrs":')[1].split('"endHr":"')[1].split('"')[0]
-                hours = hours + '; Thu: ' + line2.split('"storeType":{"id":"')[1].split('"thursdayHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + line2.split('"storeType":{"id":"')[1].split('"thursdayHrs":')[1].split('"endHr":"')[1].split('"')[0]
-                hours = hours + '; Fri: ' + line2.split('"storeType":{"id":"')[1].split('"fridayHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + line2.split('"storeType":{"id":"')[1].split('"fridayHrs":')[1].split('"endHr":"')[1].split('"')[0]
-                hours = hours + '; Sat: ' + line2.split('"storeType":{"id":"')[1].split('"saturdayHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + line2.split('"storeType":{"id":"')[1].split('"saturdayHrs":')[1].split('"endHr":"')[1].split('"')[0]
-                hours = hours + '; Sun: ' + line2.split('"storeType":{"id":"')[1].split('"sundayHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + line2.split('"storeType":{"id":"')[1].split('"sundayHrs":')[1].split('"endHr":"')[1].split('"')[0]
-            if '"geoPoint":{"latitude":' in line2:
-                lat = line2.split('"geoPoint":{"latitude":')[1].split(',')[0]
-                lng = line2.split('"longitude":')[1].split('}')[0]
-            if ',"phone":"' in line2 and phone == '':
-                phone = line.split(',"phone":"')[1].split('"')[0]
-        if 'Supercenter' in name:
-            typ = 'Supercenter'
-        if hours == '':
-            hours = '<MISSING>'
-        if add != '':
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            if '{"distance":' in line2:
+                items = line2.split('{"distance":')
+                for item in items:
+                    if '"buId":"' in item:
+                        loc = item.split('"detailsPageURL":"')[1].split('"')[0]
+                        name = item.split('"storeType":{"id":"')[0].rsplit('"displayName":"',1)[1].split('"')[0]
+                        phone = item.split('"storeType":{"id":"')[1].split('"phone":"')[1].split('"')[0]
+                        add = item.split('"address":"')[1].split('"')[0]
+                        city = item.split('"city":"')[1].split('"')[0]
+                        state = item.split('"state":"')[1].split('"')[0]
+                        zc = item.split('"postalCode":"')[1].split('"')[0]
+                        store = item.split('"id":')[1].split(',')[0]
+                        country = 'US'
+                        hours = 'Mon-Fri: ' + item.split('}}],"operationalHours":{"')[1].split('"monToFriHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + item.split('}}],"operationalHours":{"')[1].split('"monToFriHrs":')[1].split('"endHr":"')[1].split('"')[0]
+                        hours = hours + '; Sat: ' + item.split('}}],"operationalHours":{"')[1].split('"saturdayHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + item.split('}}],"operationalHours":{"')[1].split('"saturdayHrs":')[1].split('"endHr":"')[1].split('"')[0]
+                        hours = hours + '; Sun: ' + item.split('}}],"operationalHours":{"')[1].split('"sundayHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + item.split('}}],"operationalHours":{"')[1].split('"sundayHrs":')[1].split('"endHr":"')[1].split('"')[0]
+                        lat = item.split('"geoPoint":{"latitude":')[1].split(',')[0]
+                        lng = item.split('"longitude":')[1].split('}')[0]
+                        phone = item.split(',"phone":"')[1].split('"')[0]
+                        if 'Supercenter' in name:
+                            typ = 'Supercenter'
+                        if hours == '':
+                            hours = '<MISSING>'
+                        if add != '' and store not in ids:
+                            ids.append(store)
+                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
