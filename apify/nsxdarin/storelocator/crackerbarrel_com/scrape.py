@@ -51,24 +51,29 @@ def fetch_data():
                 typ = 'Restaurant'
                 r2 = session.get(loc, headers=headers)
                 lines = r2.iter_lines()
+                Found = False
                 for line2 in lines:
-                    if "name : '" in line2:
+                    if 'W2GI.collection.poi = [' in line2:
+                        Found = True
+                    if Found and 'onlineordering' in line2:
+                        Found = False
+                    if "name : '" in line2 and Found:
                         name = line2.split("name : '")[1].split("'")[0]
-                    if "address1 : '" in line2:
+                    if "address1 : '" in line2 and Found:
                         add = line2.split("address1 : '")[1].split("'")[0]
-                    if "city : '" in line2:
+                    if "city : '" in line2 and Found:
                         city = line2.split("city : '")[1].split("'")[0]
-                    if "state : '" in line2:
+                    if "state : '" in line2 and Found:
                         state = line2.split("state : '")[1].split("'")[0]
-                    if "postalcode : '" in line2:
+                    if "postalcode : '" in line2 and Found:
                         zc = line2.split("postalcode : '")[1].split("'")[0]
-                    if "latitude : '" in line2:
+                    if "latitude : '" in line2 and Found:
                         lat = line2.split("latitude : '")[1].split("'")[0]
-                    if "longitude : '" in line2:
+                    if "longitude : '" in line2 and Found:
                         lng = line2.split("longitude : '")[1].split("'")[0]
-                    if "phone : '" in line2:
+                    if "phone : '" in line2 and Found:
                         phone = line2.split("phone : '")[1].split("'")[0]
-                    if "country : '" in line2:
+                    if "country : '" in line2 and Found:
                         country = line2.split("country : '")[1].split("'")[0]
                     if 'hours" style="display: none;"><span>' in line2:
                         if hours == '':
