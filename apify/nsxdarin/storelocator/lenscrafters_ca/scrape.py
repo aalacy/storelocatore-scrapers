@@ -39,7 +39,7 @@ def fetch_data():
                 for day in days:
                     if 'interval' in day:
                         dname = day.split('"')[0]
-                        if 'isClosed":true' in day:
+                        if '[]' in day:
                             hrs = 'Closed'
                         else:
                             hrs = day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
@@ -55,7 +55,7 @@ def fetch_data():
                     add = add + ' ' + line2.split('address-street-2')[1].split('">')[1].split('<')[0]
                 city = line2.split('itemprop="addressLocality">')[1].split('<')[0]
                 state = line2.split('itemprop="addressRegion">')[1].split('<')[0]
-                country = 'CA'
+                country = 'US'
                 zc = line2.split('itemprop="postalCode">')[1].split('<')[0]
                 phone = line2.split('itemprop="telephone"')[1].split('">')[1].split('<')[0]
             if 'itemprop="latitude" content="' in line2:
