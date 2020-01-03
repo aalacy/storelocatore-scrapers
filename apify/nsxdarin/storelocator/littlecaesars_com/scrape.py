@@ -29,7 +29,7 @@ def fetch_data():
     while coord:
         print("remaining zipcodes: " + str(len(search.zipcodes)))
         website = 'littlecaesars.com'
-        print('%s...' % coord)
+        #print('%s...' % coord)
         url = 'https://api.cloud.littlecaesars.com/bff/api/stores?zip=' + coord
         r = session.get(url, headers=headers, verify=False)
         result_coords = []
