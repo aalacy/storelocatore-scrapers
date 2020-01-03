@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -15,10 +15,12 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+}
+session = SgRequests()
+
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
-    }
     return_main_object = []
     addresses = []
     MAX_RESULTS = 19
@@ -27,11 +29,10 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        r = requests.get("https://www.ritasice.com/wp-admin/admin-ajax.php?action=ritas_store_locator_function&latitude=" + str(x) + "&longitude="+ str(y),headers=headers)
+        r = session.get("https://www.ritasice.com/wp-admin/admin-ajax.php?action=ritas_store_locator_function&latitude=" + str(x) + "&longitude="+ str(y),headers=HEADERS)
         soup = BeautifulSoup(r.text,"lxml")
         for script in soup.find_all("script"):
             if "var locations = " in script.text:
@@ -40,8 +41,7 @@ def fetch_data():
                     json_text = json_text[:-2] + json_text[-1:]
                 location_list = json.loads(json_text)
                 for location in location_list:
-                    # print("https://www.ritasice.com/wp-admin/admin-ajax.php?action=ritas_store_detail_function&id=" + str(location[-1]))
-                    location_request = requests.get("https://www.ritasice.com/wp-admin/admin-ajax.php?action=ritas_store_detail_function&id=" + str(location[-1]),headers=headers)
+                    location_request = session.get("https://www.ritasice.com/wp-admin/admin-ajax.php?action=ritas_store_detail_function&id=" + str(location[-1]),headers=HEADERS)
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                     name = location_soup.find("h4",{"class":"location-name"}).text.strip()
                     address = location_soup.find("span",{'class':"address"}).text.strip()
@@ -81,7 +81,6 @@ def fetch_data():
                         continue
                     store.append(page_url)
                     yield store
-        # print("max count update")
         search.max_count_update(result_coords)
         coord = search.next_coord()
 
