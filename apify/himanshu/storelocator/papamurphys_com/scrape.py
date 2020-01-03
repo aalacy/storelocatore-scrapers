@@ -27,7 +27,19 @@ def fetch_data():
     zip_code = search.next_zip()
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+
+        'authority': 'order.papamurphys.com',
+        'method': 'GET',
+        'scheme': 'https',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/',
+       'accept-encoding': 'gzip, deflate, br',
+        'accept-language': 'en-US,en;q=0.9,gu;q=0.8',
+        'cache-control': 'max-age=0.',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-site': 'none',
+        'sec-fetch-user': '?1',
+        'upgrade-insecure-requests': '1',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
     }
 
     base_url = "https://www.papamurphys.com"
@@ -37,19 +49,18 @@ def fetch_data():
 
         # print("zip_code === "+zip_code)
 
-        location_url = "https://order.papamurphys.com/vendor/search?StreetAddress="+str(zip_code)+"&mode=Order"
-        try:
-            r = requests.get(location_url,headers=headers)
-        except:
-            continue
-
+        location_url = "https://order.papamurphys.com/vendor/search?StreetAddress="+str(zip_code)
+         
+        r = requests.get(location_url, headers=headers)      
+    
         soup = BeautifulSoup(r.text, "lxml")
-        data = soup.find_all("script",{"type":"text/javascript"})[6].text
+        data = soup.find(lambda tag: (tag.name == "script") and "$(document).ready(function()" in tag.text).text
+
         str_json =  data.split('OLO.Search.mapVendors = ')[1].split('OLO.Search.mapsCallback')[0].replace('}];','}]').replace("[];",'').strip().lstrip()
         if str_json:
 
             json_data = json.loads(str_json)
-
+ 
             current_results_len = len(json_data)
 
             for i in json_data:
@@ -63,7 +74,7 @@ def fetch_data():
                 try:
                     r1 = requests.get(page_url, headers=headers)
                 except:
-                    continue
+                    pass
 
                 soup1 = BeautifulSoup(r1.text, "lxml")
                 if soup1.find("dl",{"class":"available-hours"}) != [] and soup1.find("dl",{"class":"available-hours"}) != None:
@@ -73,8 +84,10 @@ def fetch_data():
 
                 else:
                     hours_of_operation = "<MISSING>"
-                    
-                zipp = soup1.find("span",{"class":"postal-code"}).text
+                if  soup1.find("span",{"class":"postal-code"}).text != None and soup1.find("span",{"class":"postal-code"}).text != []:
+                    zipp = soup1.find("span",{"class":"postal-code"}).text
+                else:
+                    zipp = "<MISSING>"
                 phone = soup1.find("span",{"class":"tel"}).text.strip().lstrip()
 
                 result_coords.append((latitude, longitude))
@@ -96,6 +109,7 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
+                # print("data====="+str(store))
                 yield store
     
 
