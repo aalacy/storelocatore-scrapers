@@ -7,6 +7,8 @@ import sgzip
 search = sgzip.ClosestNSearch()
 search.initialize()
 
+requests.packages.urllib3.disable_warnings()
+
 session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -29,7 +31,7 @@ def fetch_data():
         website = 'littlecaesars.com'
         print('%s...' % coord)
         url = 'https://api.cloud.littlecaesars.com/bff/api/stores?zip=' + coord
-        r = session.get(url, headers=headers)
+        r = session.get(url, headers=headers, verify=False)
         result_coords = []
         array = []
         for item in json.loads(r.content)['stores']:
