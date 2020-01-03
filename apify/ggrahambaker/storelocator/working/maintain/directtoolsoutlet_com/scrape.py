@@ -16,6 +16,7 @@ def fetch_data():
 
     locator_domain = 'https://www.directtoolsoutlet.com/'
     ext = 'store-finder?q=&page=0&latitude=19.429620900000003&longitude=-99.1312268'
+    print(locator_domain + ext)
     to_scrape = locator_domain + ext
     page = requests.get(to_scrape)
     assert page.status_code == 200
