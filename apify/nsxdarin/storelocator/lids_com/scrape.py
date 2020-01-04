@@ -21,7 +21,6 @@ def fetch_data():
         if '<url><loc>https://www.lids.com/store/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         website = 'lids.com'
         typ = '<MISSING>'
         hours = ''
