@@ -1,9 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -35,7 +37,7 @@ def fetch_data():
         location_name =''
         #print("zip_code === "+zip_code)
         try:
-            r = requests.get("https://locations.comerica.com/?q=me"+str(zip_code)+"&filter=all")
+            r = session.get("https://locations.comerica.com/?q=me"+str(zip_code)+"&filter=all")
         except:
             continue
         soup=BeautifulSoup(r.text ,"lxml")
