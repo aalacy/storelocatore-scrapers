@@ -67,7 +67,7 @@ def fetch_data():
 
 	
 	for a in range(len(link)):
-		if link[a].get_attribute("data-count")=="(2)":
+		if link[a].get_attribute("data-count")!="(1)":
 			pages_url.append(link[a].get_attribute('href'))
 		else:
 			pages.append(link[a].get_attribute('href'))
