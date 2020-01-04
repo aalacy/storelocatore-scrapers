@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -16,6 +16,9 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
+session = SgRequests()
+
 def fetch_data():
     addressess = []
 
@@ -23,25 +26,16 @@ def fetch_data():
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url = "https://www.chilis.com"
-    try:
-        state_r = requests.get("https://www.chilis.com/locations/us/all",headers=headers)
-    except:
-        pass
+    state_r = session.get("https://www.chilis.com/locations/us/all",headers=headers)
     state_soup = BeautifulSoup(state_r.text, "lxml")
     for link in state_soup.find_all("a",{"class":"city-link"}):
         city_link = base_url + link['href']
-        try:
-            city_r = requests.get(city_link, headers=headers)
-        except:
-            pass
+        city_r = session.get(city_link, headers=headers)
         city_soup = BeautifulSoup(city_r.text, "lxml")
 
         for href in city_soup.find_all("a",class_="btn slim details-btn"):
             store_link = base_url + href['href']
-            try:
-                store_r = requests.get(store_link, headers=headers)
-            except:
-                pass
+            store_r = session.get(store_link, headers=headers)
             store_soup = BeautifulSoup(store_r.text, "lxml")
             data = json.loads(store_soup.find_all("script", {"type":"application/ld+json"})[1].text)
             location_name = data['name'].replace("&#39;","'")
@@ -76,8 +70,6 @@ def fetch_data():
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
-            # store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # print(store)
             yield store
 
 def scrape():
