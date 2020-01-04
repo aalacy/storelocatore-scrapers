@@ -22,14 +22,7 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    states = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
-              "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois",
-              "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
-              "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana",
-              "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York",
-              "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania",
-              "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah",
-              "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"]
+   
 
     MAX_RESULTS = 20  # max number of results the website gives
     MAX_DISTANCE = 50.0  # max number of distance from the zip it covers
@@ -45,9 +38,10 @@ def fetch_data():
         count = 0
         result_coords = []  # mantain the list of coords of data collected
         # for s in range(0,len(states)):
+        url = 'https://www.ymca.net/find-your-y/?address=' + query_coord
+        print(url)
         try:
-            url = 'https://www.ymca.net/find-your-y/?address=' + query_coord
-            print(url)
+
             page = requests.get(url)
             soup = BeautifulSoup(page.text, "html.parser")
             mainul = soup.findAll('ul', {'class': 'find-y-page'})
@@ -56,12 +50,15 @@ def fetch_data():
                 li_list = ul.findAll('li')
                 count += len(li_list)  # to calculate total # of results
                 for li in li_list:
+                    
+                    lat = li['data-latitude']
+                    longt = li['data-longitude']
+                    result_coords.append((lat, longt))  # add coords to list
+                    link = li.find('a')
+
+                    link = "https://www.ymca.net" + link['href']
                     try:
-                        lat = li['data-latitude']
-                        longt = li['data-longitude']
-                        result_coords.append((lat, longt))  # add coords to list
-                        link = li.find('a')
-                        link = "https://www.ymca.net" + link['href']
+                        #link = 'https://www.ymca.net/y-profile/?id=2973'
                         page1 = requests.get(link)
                         soup1 = BeautifulSoup(page1.text, "html.parser")
                         soup1 = soup1.find('div', {'class': 'col-md-4'})
@@ -105,14 +102,44 @@ def fetch_data():
                         city = city.lstrip()
                         city = city.replace(",", "")
                         state = state.lstrip()
-                        hours = hours.replace("Hours of Operation: ", "")
+                        hours = hours.lstrip()
+                        hours = hours.replace("Hours of Operation:", "")
 
                         store = link[link.find("=") + 1:len(link)]
                         if len(phone) < 3:
                             phone = "<MISSING>"
-                        hours = hours.replace("Hours of Operation:","")
+
                         if len(hours) < 3:
                             hours = "<MISSING>"
+                        if len(store) < 3:
+                            store = "<MISSING>"
+                        if len(street) < 3:
+                            street = "<MISSING>"
+                        if len(lat) < 3:
+                            lat = "<MISSING>"
+                        if len(longt) < 3:
+                            longt = "<MISSING>"
+                        if len(city) < 3:
+                            city = "<MISSING>"
+                        #https://www.ymca.net/y-profile/?id=2973'
+                        if len(state) < 2:
+                            state = "<MISSING>"
+                        else:
+                            try:
+                                state = state.lstrip()
+                                temp,state = state.split(' ',1)
+                            except:
+                                pass
+                        if len(pcode) < 3:
+                            pcode = "<MISSING>"
+
+                        try:
+                            if pcode.find("/") > -1:
+                                temp,pcode = pcode.split(' ',1)
+                            else:
+                                pcode, temp = pcode.split(' ', 1)
+                        except:
+                            pass
 
 
                         flag = True
@@ -140,22 +167,26 @@ def fetch_data():
                                 longt,
                                 hours
                             ])
-                            print(p, ",", data[p])
+                            #print(p, ",", data[p])
                             p += 1
 
-                    except:
-                        pass
+                    except Exception as e:
+                        print(link)
+                        print(e)
+                        #pass
         except:
+            #print(url)
+            #print(e)
             pass
-        if count < MAX_RESULTS:  # check a near zip code
-            print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif count == MAX_RESULTS:  # check to save lat lngs to find zip that excludes them
-            print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            print("oops! the maxcount should be", count)
-            raise Exception("expected at most " + MAX_RESULTS + " results")
+        #if count < MAX_RESULTS:  # check a near zip code
+        #print("max distance update")
+        search.max_distance_update(MAX_DISTANCE)
+        '''elif count == MAX_RESULTS:  # check to save lat lngs to find zip that excludes them
+            print("max count update")'''
+        search.max_count_update(result_coords)
+        #else:
+         #   print("oops! the maxcount should be", count)
+          #  raise Exception("expected at most " + MAX_RESULTS + " results")
 
         query_coord = search.next_zip()
 
