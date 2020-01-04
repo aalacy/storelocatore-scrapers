@@ -44,10 +44,10 @@ def fetch_data():
                     linklist = maindiv.findAll('a',{'itemprop':'url'})
                     for blinks in linklist:
                         link = blinks['href']
-                        if link.find("http") == -1 and blinks.text.find("Sears Store") > -1 :
+                        if link.find("http") == -1 and blinks.text.find("Outlet") > -1 :
                             #print("enter")
                             link = "https://www.sears.com" + link
-                            print(link)
+                            #print(link)
                             flag = True
                             while flag:
                                 try:
@@ -128,7 +128,7 @@ def fetch_data():
                                     #print(longt)
 
                                     data.append([
-                                        'https://www.sears.com/',
+                                        'https://www.searsoutlet.com/',
                                         link,
                                         title,
                                         street,
