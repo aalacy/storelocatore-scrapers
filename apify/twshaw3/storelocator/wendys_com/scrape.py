@@ -1,4 +1,4 @@
-import requests
+from sgrequests import SgRequests
 import csv
 import os
 
@@ -36,7 +36,7 @@ class Wendys:
         }
 
     def crawl(self):
-        session = requests.Session()
+        session = SgRequests()
         session.headers.update({
             'Accept': 'application/json'
             ,'cache-control': 'no-cache'
@@ -45,13 +45,6 @@ class Wendys:
             ,'Referer': 'https://order.wendys.com/location?site=find'
             ,'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
         })
-        proxy_password = os.environ["PROXY_PASSWORD"]
-        proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
-        proxies = {
-            'http': proxy_url,
-            'https': proxy_url
-        }
-        session.proxies = proxies
         query_params = {
             'lang': 'en'
             ,'cntry': 'US'
