@@ -1,8 +1,8 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -28,7 +28,6 @@ def fetch_data():
                 locs.append(line.split('<loc>')[1].split('<')[0] + '|US')
     for loc in locs:
         country = loc.split('|')[1]
-        print('Pulling Location %s...' % loc.split('|')[0])
         r2 = session.get(loc.split('|')[0], headers=headers, verify=False)
         lines = r2.iter_lines()
         typ = 'Location'
