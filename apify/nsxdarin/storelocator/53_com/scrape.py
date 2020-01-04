@@ -1,0 +1,76 @@
+import csv
+import urllib2
+import requests
+
+session = requests.Session()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        for row in data:
+            writer.writerow(row)
+
+def fetch_data():
+    locs = []
+    url = 'https://locations.53.com/sitemap.xml'
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        if '<loc>https://locations.53.com/' in line:
+            lurl = line.split('>')[1].split('<')[0]
+            count = lurl.count('/')
+            if count == 5:
+                locs.append(lurl)
+    for loc in locs:
+        print('Pulling Location %s...' % loc)
+        website = '53.com'
+        typ = 'Branch'
+        name = ''
+        add = ''
+        city = ''
+        state = ''
+        phone = ''
+        zc = ''
+        lat = ''
+        lng = ''
+        country = 'US'
+        hours = ''
+        r2 = session.get(loc, headers=headers)
+        for line2 in r2.iter_lines():
+            if '<span class="name">' in line2:
+                name = line2.split('<span class="name">')[1].split('</span></span>')[0].replace('</span> <span class="geomodifier">',' ')
+                if '<' in name:
+                    name = name.split('<')[0]
+                typ = line2.split('<div class="location-type">')[1].split('<')[0]
+                add = line2.split('c-address-street-1')[1].split('">')[1].split('<')[0]
+                city = line2.split('class="c-address-city')[1].split('">')[1].split('<')[0]
+                state = line2.split('"c-address-state')[1].split('>')[1].split('<')[0]
+                zc = line2.split(' class="c-address-postal-code')[1].split('>')[1].split('<')[0].strip()
+                phone = line2.split('href="tel:')[1].split('">')[1].split('<')[0]
+                days = line2.split("data-days='")[1].split("}]' data")[0].split('"day":"')
+                for day in days:
+                    if '"intervals"' in day:
+                        if '"intervals":[]' in day:
+                            hrs = day.split('"')[0] + ': Closed'
+                        else:
+                            hrs = day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                        if hours == '':
+                            hours = hrs
+                        else:
+                            hours = hours + '; ' + hrs
+        lat = '<MISSING>'
+        lng = '<MISSING>'
+        if hours == '':
+            hours = '<MISSING>'
+        if phone == '':
+            phone = '<MISSING>'
+        store = '<MISSING>'
+        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()
