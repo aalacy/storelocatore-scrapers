@@ -68,6 +68,8 @@ def fetch_data():
         if phone == '':
             phone = '<MISSING>'
         store = '<MISSING>'
+        if ' ' in zc:
+            country = 'CA'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
