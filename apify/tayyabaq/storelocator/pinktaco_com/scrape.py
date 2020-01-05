@@ -21,7 +21,7 @@ def get_driver():
     return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def fetch_data():
-    data=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
+    data=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; lat=[]; long=[]; hours_of_operation=[]; phone=[]
     #Driver
     driver = get_driver()
     driver.get('http://www.pinktaco.com/locations/')
@@ -49,10 +49,20 @@ def fetch_data():
                 zipcode.append(driver.find_element_by_xpath("//div[@class='details']/p[2]").text.split(",")[1].split()[1].strip())
                 phone.append(driver.find_element_by_xpath("//div[@class='details']/p[3]").text)
             hours = driver.find_element_by_class_name('details')
-            if "RESTAURANT HOURS" in hours.text:
-                 hours_of_operation.append(hours.text.replace(u'\u2014',' ').replace(u'\u2013',' ').split("RESTAURANT HOURS")[1].strip().split('CHECK')[0])
+           if "RESTAURANT HOURS" in hours.text:
+                 hours_of_operation.append(hours.text.replace(u'\u2013',' ').split("RESTAURANT HOURS")[1].strip().split('CHECK')[0].replace('\n',' '))
+
             else:
                  hours_of_operation.append("<MISSING>")
+
+            cs = driver.find_element_by_class_name('map-location').find_elements_by_tag_name('a')
+            for a in cs:
+              if a.get_attribute('title') == "Open this area in Google Maps (opens a new window)":
+                 coord= a.get_attribute('href')
+                 lat.append(re.findall(r'll=(-?[\d\.]+),',coord)[0])
+                 long.append(re.findall(r'll=-?[\d\.]+,(-?[\d\.]+)',coord)[0])
+                 break
+    
     for n in range(0,len(location_name)): 
         data.append([
             'http://www.pinktaco.com',
@@ -65,8 +75,8 @@ def fetch_data():
             '<MISSING>',
             phone[n],
             '<MISSING>',
-            '<INACCESSIBLE>',
-            '<INACCESSIBLE>',
+            lat[n],
+            long[n],
             hours_of_operation[n]
         ])
     driver.quit()
