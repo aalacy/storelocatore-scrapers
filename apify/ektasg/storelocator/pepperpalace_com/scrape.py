@@ -52,7 +52,7 @@ def fetch_data():
     fullcontent=[]
     for i in locationURLs:
         driver.get(i)   
-        text=driver.find_element_by_xpath("//meta[@name='description']").get_attribute('content') 
+        text=driver.find_element_by_xpath("//meta[@name='description']").get_attribute('content').replace('\u200b',' ').replace('\u00A0',' ')
         fullcontent.append(text)
         count=count+1
         print(count)
