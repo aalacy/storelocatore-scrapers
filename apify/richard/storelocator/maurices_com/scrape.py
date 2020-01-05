@@ -94,7 +94,7 @@ class Scraper(Scrape):
             hour = driver.find_element_by_css_selector('table.c-hours-details').get_attribute('textContent')
 
             # Country
-            country = store.replace('https://').split('/')[1].upper()
+            country = store.replace('https://', '').split('/')[1].upper()
 
             # Store data
             locations_ids.append(location_id)
