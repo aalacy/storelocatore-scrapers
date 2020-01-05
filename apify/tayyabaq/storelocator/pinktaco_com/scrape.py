@@ -21,7 +21,7 @@ def get_driver():
     return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def fetch_data():
-    data=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; latitude=[]; longitude=[]; hours_of_operation=[]; phone=[]
+    data=[]; location_name=[];address_stores=[]; city=[];street_address=[]; zipcode=[]; state=[]; lat=[]; long=[]; hours_of_operation=[]; phone=[]
     #Driver
     driver = get_driver()
     driver.get('http://www.pinktaco.com/locations/')
@@ -75,8 +75,8 @@ def fetch_data():
             '<MISSING>',
             phone[n],
             '<MISSING>',
-            '<INACCESSIBLE>',
-            '<INACCESSIBLE>',
+            lat[n],
+            long[n],
             hours_of_operation[n]
         ])
     driver.quit()
