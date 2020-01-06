@@ -6,11 +6,13 @@ import io
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
+                         "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -59,7 +61,7 @@ def fetch_data():
                 else:
                     pass
                 store = []
-                store.append(detail_page.find('a', {'class', 'viewbtn'}).get('href'))
+                store.append("https://beardpapas.com")
                 store.append(location_name)
                 store.append(street_address)
                 store.append(city)
@@ -68,10 +70,11 @@ def fetch_data():
                 store.append("US")
                 store.append("<MISSING>")
                 store.append(phone)
-                store.append("Beard Papa")
+                store.append("<MISSING>")
                 store.append(latitude)
                 store.append(longitude)
                 store.append(hours_of_operation)
+                store.append(detail_page.find('a', {'class', 'viewbtn'}).get('href'))
                 return_main_object.append(store)
         other = soup.find('ul', {'class', 'footer_loc'}).find_next('ul')
         for data in other.findAll('li'):
@@ -115,7 +118,7 @@ def fetch_data():
                 else:
                     pass
                 store = []
-                store.append(detail_page.find('a', {'class', 'viewbtn'}).get('href'))
+                store.append("https://beardpapas.com")
                 store.append(location_name)
                 store.append(street_address)
                 store.append(city)
@@ -124,10 +127,11 @@ def fetch_data():
                 store.append("US")
                 store.append("<MISSING>")
                 store.append(phone)
-                store.append("Beard Papa")
+                store.append("<MISSING>")
                 store.append(latitude)
                 store.append(longitude)
                 store.append(hours_of_operation)
+                store.append(detail_page.find('a', {'class', 'viewbtn'}).get('href'))
                 return_main_object.append(store)
         return return_main_object
     else:

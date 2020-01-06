@@ -53,7 +53,7 @@ def write_output(data):
 
 
 def fetch_data():
-    return_main_object = []
+   
     addresses = []
     search = sgzip.ClosestNSearch()
     # search.initialize(country_codes=[‘us’, ‘ca’])
@@ -72,23 +72,6 @@ def fetch_data():
 
 
     }
-
-    # it will used in store data.
-    locator_domain = "https://www.truevaluecompany.com/"
-    page_url = "<MISSING>"
-    location_name = ""
-    street_address = "<MISSING>"
-    city = "<MISSING>"
-    state = "<MISSING>"
-    zipp = "<MISSING>"
-    country_code = ""
-    store_number = "<MISSING>"
-    phone = "<MISSING>"
-    location_type = "<MISSING>"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    raw_address = ""
-    hours_of_operation = "<MISSING>"
 
     while zip_code:
         result_coords = []
@@ -110,10 +93,12 @@ def fetch_data():
             # print(current_results_len)
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             for poi in main:
+                country = poi.find('country').text.strip()
+                if country not in ["US", "CA"]:
+                    continue
                 name = poi.find('name').text.strip().capitalize()
                 address = poi.find('address1').text.strip().capitalize()
-                city = poi.find('city').text.strip().capitalize()
-                country = poi.find('country').text.strip()
+                city = poi.find('city').text.strip().capitalize()               
                 state = poi.find('state').text.strip()
                 lat = poi.find('latitude').text.strip()
                 lng = poi.find('longitude').text.strip()
@@ -178,9 +163,9 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
 
-                #print("data = " + str(store))
-                #print(
-                    # '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print(
+                #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
         except:
             pass
@@ -204,3 +189,4 @@ def scrape():
 
 
 scrape()
+#PR

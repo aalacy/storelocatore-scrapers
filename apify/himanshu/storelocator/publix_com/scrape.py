@@ -39,8 +39,10 @@ def fetch_data():
 
         location_url = "https://services.publix.com/api/v1/storelocation?zipCode="+str(zip_code)
         
-
-        r = requests.get(location_url,headers=headers).json()
+        try:
+            r = requests.get(location_url,headers=headers).json()
+        except:
+            continue
         current_results_len = len(r['Stores'])
 
         locator_domain = base_url
