@@ -21,6 +21,7 @@ def fetch_data():
     # Your scraper here
     data = []
     p = 1
+    requests.packages.urllib3.disable_warnings()
     url = 'https://www.habitat.org/volunteer/near-you/find-your-local-habitat'
     page = session.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
