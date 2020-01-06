@@ -52,7 +52,7 @@ def fetch_data():
     fullcontent=[]
     for i in locationURLs:
         driver.get(i)   
-        text=driver.find_element_by_xpath("//meta[@name='description']").get_attribute('content') 
+        text=driver.find_element_by_xpath("//meta[@name='description']").get_attribute('content').replace('\u200b',' ').replace('\u00A0',' ')
         fullcontent.append(text)
         count=count+1
         print(count)
@@ -152,6 +152,8 @@ def fetch_data():
         sz=addr[-1].strip()
         state=sz.split(" ")[0]
         zipcode = sz.replace(state,"").strip()
+        if zipcode == "":
+                zipcode="<MISSING>"
         addr=raw_address.replace(sz,"").strip()
         cit=re.findall(r'[0-9A-Za-z\.]([A-Z][a-z]+)',addr)
         if cit != []:

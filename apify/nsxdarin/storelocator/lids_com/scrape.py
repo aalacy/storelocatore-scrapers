@@ -1,8 +1,8 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -21,7 +21,6 @@ def fetch_data():
         if '<url><loc>https://www.lids.com/store/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         website = 'lids.com'
         typ = '<MISSING>'
         hours = ''

@@ -89,7 +89,11 @@ def fetch_data():
 				stores_pages=driver_sub_page.find_elements_by_class_name("Directory-listTeaser")
 				for sp in stores_pages:
 					pages.append(sp.find_element_by_tag_name("a").get_attribute('href'))
-				
+		s_b= driver_link.find_elements_by_class_name('Directory-listTeaser')		
+		if s_b:
+			for b in s_b:
+				pages.append(b.find_element_by_xpath('//*[@id="main"]/div/div[3]/div/section/div[2]/ul/li[1]/article/h2/a').get_attribute('href'))
+		
 		print(pages)
 		print(len(pages))
 			

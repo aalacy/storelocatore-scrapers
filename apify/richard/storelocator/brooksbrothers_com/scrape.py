@@ -86,7 +86,10 @@ class Scraper(Scrape):
             zipcode = store['postalcode']
 
             # State
-            state = store['province']
+            state = store['state']
+            
+            # Province
+            province = store['province']
 
             # Phone
             phone = store['phone']
@@ -110,6 +113,9 @@ class Scraper(Scrape):
 
             # Country
             country = store['country']
+            
+            if country == 'CA':
+            	state = province
 
             # Store data
             locations_ids.append(location_id)
