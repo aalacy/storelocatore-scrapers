@@ -59,8 +59,7 @@ def fetch_data():
                     ids.append(store)
                     if hours == '':
                         hours = '<MISSING>'
-                    if purl == '':
-                        purl = '<MISSING>'
+                    purl = '<MISSING>'
                     if phone == '':
                         phone = '<MISSING>'
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
