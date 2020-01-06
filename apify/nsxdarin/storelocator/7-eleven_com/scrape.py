@@ -34,7 +34,10 @@ def fetch_data():
                 items = line2.split('<li><a href="/locations/')
                 for item in items:
                     if 'class="locations-list">' not in item:
-                        cities.append('https://www.7-eleven.com/locations/' + item.split('"')[0])
+                        if state == 'wv' and 'st-albans' in item:
+                            pass
+                        else:
+                            cities.append('https://www.7-eleven.com/locations/' + item.split('"')[0])
         for city in cities:
             r3 = session.get(city, headers=headers)
             for line3 in r3.iter_lines():
