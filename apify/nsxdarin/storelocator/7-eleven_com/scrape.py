@@ -1,6 +1,6 @@
 import csv
 import urllib2
-import requests
+from requests.exceptions import ConnectionError
 from sgrequests import SgRequests
 import collections
 
