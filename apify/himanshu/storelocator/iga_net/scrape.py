@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
+# import sgzip
 
 
 def write_output(data):
@@ -13,14 +13,14 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    zips = sgzip.coords_for_radius(50)
+    # zips = sgzip.coords_for_radius(50)
     return_main_object = []
     addresses = []
 
@@ -29,7 +29,7 @@ def fetch_data():
     }
 
     # it will used in store data.
-    locator_domain = "https://www.iga.com/"
+    locator_domain = "https://www.iga.net/"
     location_name = ""
     street_address = "<MISSING>"
     city = "<MISSING>"
@@ -38,23 +38,23 @@ def fetch_data():
     country_code = "CA"
     store_number = "<MISSING>"
     phone = "<MISSING>"
-    location_type = "iga"
+    location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
-
+    # skip = 0
+    # while True:
+    #     print(skip)
     r = requests.get(
-        "https://www.iga.net/api/en/Store/get?Latitude=45.489599&Longitude=-73.585324&Skip=0&Max=324", headers=headers);
+        "https://www.iga.net/api/en/Store/get?Latitude=45.489599&Longitude=-73.585324&Skip=0&Max=500", headers=headers);
 
     json_data = r.json()
-    # print("--json==" + str(json_data))
-    # print("~~~~~~~~~~~~~~~~~`")
-
     for x in json_data['Data']:
-        locator_domain = "https://www.iga.com/"
+        locator_domain = "https://www.iga.net/"
         location_name = x['Name']
         hours_of_operation = x['OpeningHours']
+        # print(hours_of_operation)
         street_address = x['AddressMain']['Line']
         city = x['AddressMain']['City']
         state = x['AddressMain']['Province']
@@ -64,16 +64,26 @@ def fetch_data():
         longitude = x['Coordinates']['Longitude']
         raw_address = x['RawName']
         store_number = x['Number']
+        page_url = "https://www.iga.net" + x["StoreDetailPageUrl"]
+        r_loc = requests.get(page_url, headers=headers)
+        soup_loc = BeautifulSoup(r_loc.text, "lxml")
+        div = soup_loc.find("div", {"id": "body_0_main_0_PnlOpenHours"})
+        if div == None:
+            hours_of_operation = "<MISSING>"
+        else:
+
+            hours_of_operation = " ".join(
+                list(div.stripped_strings)).replace("Open hours", "").strip()
+            # print(hours_of_operation)
+            # print("~~~~~~~~~~~~~~~~~~~~`")
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation]
-        store = ["<MISSING>" if x == "" else x for x in store]
-        print("data = " + str(store))
-        print(
-            '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-        return_main_object.append(store)
-
-    return return_main_object
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+        # store = ["<MISSING>" if x == "" else x for x in store]
+        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        # print("data = " + str(store))
+        # print(
+        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        yield store
 
 
 def scrape():

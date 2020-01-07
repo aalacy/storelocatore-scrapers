@@ -28,22 +28,24 @@ def fetch_data():
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
 
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+   
+    base_url= "https://chase.com/"
+
+    
+    headers = {   
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',        
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
+        'accept': 'application/json'
     }
-
-    base_url = "https://www.chase.com/"
-
-    while zip_code:
-        result_coords = []
-        # print("zip_code === "+zip_code)
-        headers = {   
-            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',        
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
-            'accept': 'application/json'
-        }
-        # base_url= "https://locator.chase.com/"
-        r = requests.get("https://locator.chase.com/search?q="+str(zip_code)+"&l=en", headers=headers).json()
+    offset = []
+    for data in range(553):
+        
+        
+        offset.append(data*10)
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~"+str(offset[data]))
+        location_url = "https://locator.chase.com/search?offset="+str(offset[data])
+    
+        r = requests.get(location_url, headers=headers).json()
         current_results_len = len(r['response']['entities'])
 
         for i in r['response']['entities']:
@@ -52,7 +54,10 @@ def fetch_data():
             state = i['profile']['address']['region']
             zipp = i['profile']['address']['postalCode']
             location_type = i['profile']['c_bankLocationType']
-            location_name = i['profile']['c_geomodifier']
+            if "c_geomodifier" in i['profile']:
+                location_name = i['profile']['c_geomodifier']
+            else:
+                location_name = "<MISSING>"
             phone = i['profile']['mainPhone']['display']
             country_code = i['profile']['mainPhone']['countryCode']
             if "displayCoordinate" in i['profile']:
@@ -74,7 +79,7 @@ def fetch_data():
                     
                     if drive['isClosed'] == False:
                         for interval in (drive['intervals']):
-                            value_starttime = datetime.strptime(str(interval['end']), "%H%M")
+                            value_starttime = datetime.strptime(str(interval['start']), "%H%M")
                             starttime= value_starttime.strftime("%I:%M %p")
                             value_endtime = datetime.strptime(str(interval['end']), "%H%M")
                             endtime= value_endtime.strftime("%I:%M %p")
@@ -86,7 +91,7 @@ def fetch_data():
                     
                     if lobby['isClosed'] == False:
                         for interval in (lobby['intervals']):
-                            value_starttime = datetime.strptime(str(interval['end']), "%H%M")
+                            value_starttime = datetime.strptime(str(interval['start']), "%H%M")
                             starttime= value_starttime.strftime("%I:%M %p")
                             value_endtime = datetime.strptime(str(interval['end']), "%H%M")
                             endtime= value_endtime.strftime("%I:%M %p")
@@ -102,7 +107,7 @@ def fetch_data():
 
 
             store = []
-            result_coords.append((latitude, longitude))
+            # result_coords.append((latitude, longitude))
             store.append(base_url)
             store.append(location_name)
             store.append(street_address if street_address else '<MISSING>')
@@ -121,24 +126,15 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # print("data =="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            #print("data =="+str(store))
+            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
 
        
 
             
             
-        # yield store
-        if current_results_len < MAX_RESULTS:
-            # print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
+        
 
 
 def scrape():

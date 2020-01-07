@@ -69,6 +69,7 @@ def fetch_data():
                 city = loc["HotelCity"]
                 state = loc["HotelState"]
                 zipp = loc["HotelZip"]
+                # print(zipp)
                 page_url = loc["MinisiteUrl"]
                 # print(page_url)
                 store_number = loc["HotelId"]
@@ -85,17 +86,22 @@ def fetch_data():
                             "span", text="Hours of Operation").parent.stripped_strings)
                         hours_of_operation = " ".join(hours).replace(
                             "Hours of Operation", "").strip()
-                        # print(hours_of_operation)
+                        #print(hours_of_operation)
                         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                    except:
+                    except Exception as e:
                         hours_of_operation = "<MISSING>"
+                        # print(e)
                         # print(page_url)
-                        # print("**************************")
+                        # print("**************************************")
+
                     # print(phone)
                 except:
                     phone = "<MISSING>"
                     # print(phone)
                     # print(page_url)
+                if "<MISSING>" == hours_of_operation:
+                    hours_of_operation = "Open 24 hours a day, seven days a week"
+
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                 store = ["<MISSING>" if x == "" else x for x in store]
