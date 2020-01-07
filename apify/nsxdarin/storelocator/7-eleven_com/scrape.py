@@ -83,11 +83,6 @@ def fetch_data():
                 attempts[loc] = attempts.get(loc, 0) + 1
                 print('attempts: ' + str(attempts[loc]))
             continue
-        except Exception:
-            if broken_store_page(loc):
-                continue
-            else:
-                raise
         for line2 in r2.iter_lines():
             if '"hours":{"message":"' in line2:
                 hours = line2.split('"hours":{"message":"')[1].split('"')[0]
