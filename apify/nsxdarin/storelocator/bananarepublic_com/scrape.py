@@ -57,7 +57,7 @@ def fetch_data():
                 lines = r4.iter_lines()
                 for line4 in lines:
                     if '<div class="location-name"' in line4:
-                        name = next(lines).split('<div class="store-carries">')[0].strip().replace('\t','')
+                        name = next(lines).split('<')[0].strip().replace('\t','')
                     if '"latitude": "' in line4:
                         lat = line4.split('"latitude": "')[1].split('"')[0]
                     if '"longitude": "' in line4:
