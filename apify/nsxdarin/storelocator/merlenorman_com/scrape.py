@@ -31,7 +31,7 @@ def fetch_data():
     print(str(len(locs)) + ' Locations Found...')
     for loc in locs:
         r2 = session.get(loc, headers=headers)
-        website = 'merlenormanstudio.com'
+        website = 'merlenorman.com'
         print('Pulling Location %s...' % loc)
         name = ''
         add = ''
