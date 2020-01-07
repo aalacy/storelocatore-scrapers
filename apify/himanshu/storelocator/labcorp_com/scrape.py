@@ -76,7 +76,7 @@ def fetch_data():
                     store.append(latitude)
                     store.append(longitude)
                     store.append(hours_of_operation)
-                    store.append(location_url)
+                    store.append("<MISSING>")
                     if store[2] in addresses:
                         continue
                     addresses.append(store[2])

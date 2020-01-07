@@ -57,7 +57,7 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 50
+    MAX_RESULTS = 100
     MAX_DISTANCE = 30
     # current_results_len = 0  # need to update with no of count.
     zip_code = search.next_zip()
@@ -91,7 +91,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         time.sleep(1)
         r = request_wrapper('https://www.cinnabon.com/Location/Map/Get?brand={A019D0E8-A707-40CC-B647-F3A4670AE0AB}&ZipOrCity=' + str(
@@ -102,10 +102,10 @@ def fetch_data():
             if location_list['ComingSoon'] == False and "Cinnabon" in location_list['LocationName']:
 
                 country_code = location_list['CountryName']
-                location_name = "<MISSING>"
+                location_name = location_list["AlternativeName"]
                 phone = location_list['Tel']
                 zipp = location_list['PostalCode']
-                #print(zipp)
+                # print(location_name)
                 state = location_list['Region']
                 city = location_list['Locality']
                 street_address = location_list['StreetAddress']
@@ -114,6 +114,12 @@ def fetch_data():
                 longitude = location_list['Longitude']
                 store_number = location_list['StoreNumber']
                 page_url = location_list['Website']
+                # print(page_url)
+                if page_url == None:
+                    page_url = "https://www.cinnabon.com/" + \
+                        state.lower() + "/" + "-".join(city.lower().split()) + \
+                        "/" + "bakery-" + store_number
+                    # print(page_url)
                 h = []
                 if location_list != {}:
                     for day, hours in location_list['Hours'].items():
@@ -139,8 +145,9 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
 
-                #print("data = " + str(store))
-                
+                # print("data = " + str(store))
+                # print(
+                #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
                 # return_main_object.append(store)
 
@@ -149,7 +156,7 @@ def fetch_data():
             #     continue
 
         if len(current_results_len) < MAX_RESULTS:
-            #print("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         if len(current_results_len) == MAX_RESULTS:
             # print("max count update")

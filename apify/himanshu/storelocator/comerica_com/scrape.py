@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from tenacity import *
+import timeout_decorator
 
 session = SgRequests()
 
@@ -17,8 +19,11 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def fetch_data():
+@timeout_decorator.timeout(30)
+def query_locator(zip_code):
+    return session.get("https://locations.comerica.com/?q={}&filter=bc".format(zip_code))
 
+def fetch_data():
     return_main_object = []
     addressess = []
     search = sgzip.ClosestNSearch()
@@ -27,18 +32,16 @@ def fetch_data():
     MAX_DISTANCE = 10
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
-
-
     base_url = "https://www.comerica.com"
 
-
     while zip_code:
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
         location_name =''
-        #print("zip_code === "+zip_code)
         try:
-            r = session.get("https://locations.comerica.com/?q=me"+str(zip_code)+"&filter=all")
+            r = query_locator(zip_code)
         except:
+            zip_code = search.next_zip()
             continue
         soup=BeautifulSoup(r.text ,"lxml")
         return_main_object = []
@@ -59,7 +62,6 @@ def fetch_data():
                     for data in val['location']['entities']:
                         if "name" in data:
                             location_name  = data['name']
-                            # print()
                         location_type  = data['type']
                         phone = data['phone']
                         drive1 = ''
@@ -84,8 +86,6 @@ def fetch_data():
                                     lobby = lobby +' ' +data1 +' '+ str(dictOfWords[data1])
                                 lobby1 = ' lobby ' + lobby
                         
-                        
-                    # name = val['location']['name']
                     hours_of_operation =drive1 + ' ' + lobby1
                     store.append(location_name if location_name else "<MISSING>")
                     store.append(val['location']['street']+' '+additional)
@@ -108,20 +108,13 @@ def fetch_data():
                         continue
                     addressess.append(store[2])
                     yield store
-                    #print("=================================",store)
-
-
-
         if current_results_len < MAX_RESULTS:
-            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
-        # return return_main_object
 
 def scrape():
     data = fetch_data()
