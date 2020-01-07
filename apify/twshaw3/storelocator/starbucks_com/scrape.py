@@ -81,6 +81,8 @@ def parse(store):
     if country == 'PR':
         country = 'US'
     page_url = '<MISSING>'
+    if 'id' in store and 'slug' in store:
+        page_url = "starbucks.com/store-locator/store/{}/{}".format(store['id'], store['slug'])
     return [website, page_url, name, add, city, state, zc, country, store_id, phone, typ, lat, lng, hours]
 
 def get_result_coords(stores):
