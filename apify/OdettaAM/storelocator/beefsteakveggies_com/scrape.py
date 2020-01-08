@@ -35,7 +35,11 @@ def fetch_data():
         location_name = store.find_element_by_css_selector('h2.contact-title').text
         address = store.find_element_by_tag_name('address').find_element_by_tag_name('p').text
         start = address.find('At the corner')
-        address = address[0:start]
+        if start != -1:
+            address = address[0:start]
+
+        address = address.replace("'",'')
+       
         if address.find('food truck') == -1:
             address = usaddress.parse(address)
             print(address)
@@ -79,6 +83,7 @@ def fetch_data():
             pass
             
         city = city.replace(',','')
+        street = street.replace(',','')
         try:
             phone = store.find_element_by_css_selector('div.contact-info').text
             
