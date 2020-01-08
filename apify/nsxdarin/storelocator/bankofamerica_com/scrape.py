@@ -5,8 +5,6 @@ import requests
 import gzip
 import os
 
-requests.packages.urllib3.disable_warnings()
-
 session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -22,7 +20,7 @@ def fetch_data():
     locs = []
     sitemaps = []
     url = 'https://locators.bankofamerica.com/sitemap/sitemap_index.xml'
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if '<loc>' in line:
             sitemaps.append(line.split('>')[1].split('<')[0])
@@ -37,7 +35,8 @@ def fetch_data():
                     if '<loc>https://locators.bankofamerica.com/' in line:
                         lurl = line.split('<loc>')[1].split('<')[0]
                         if '.html' in lurl and '.m.' not in lurl:
-                            locs.append(lurl)
+                            if lurl not in locs:
+                                locs.append(lurl)
         print(str(len(locs)) + ' Locations Found...')
     stores = []
     for loc in locs:
@@ -45,8 +44,9 @@ def fetch_data():
         while PFound:
             try:
                 PFound = False
-                r2 = session.get(loc, headers=headers, verify=False)
+                r2 = session.get(loc, headers=headers)
                 website = 'bankofamerica.com'
+                print('Pulling Location %s...' % loc)
                 name = ''
                 add = ''
                 city = ''
@@ -91,7 +91,10 @@ def fetch_data():
                         phone = '<MISSING>'
                     if typ == '':
                         typ = '<MISSING>'
-                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    addinfo = add + city + state
+                    if addinfo not in addinfos:
+                        addinfos.append(addinfo)
+                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             except:
                 PFound = True
 
