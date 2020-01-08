@@ -19,6 +19,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     sitemaps = []
+    addinfos = []
     url = 'https://locators.bankofamerica.com/sitemap/sitemap_index.xml'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
