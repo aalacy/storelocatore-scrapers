@@ -22,7 +22,7 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 50
+    MAX_RESULTS = 30
     MAX_DISTANCE = 10
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
@@ -36,9 +36,11 @@ def fetch_data():
     while zip_code:
         result_coords = []
         # print("zips === " + str(zip_code))
-        
-        r = requests.get("https://www.drmartens.com/us/en/store-finder?q="+str(zip_code), headers=headers)
-        
+        try:
+            r = requests.get("https://www.drmartens.com/us/en/store-finder?q="+str(zip_code), headers=headers)
+        except:
+            pass
+            raise Exception(r)
         if '<html lang="en">' not in r.text:       
             location_url = r.json()
             current_results_len = len(location_url['data'])
