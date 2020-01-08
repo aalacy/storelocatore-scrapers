@@ -20,7 +20,7 @@ session = SgRequests()
 def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
-    search.initialize(country_codes=[‘us’, ‘ca’])
+    search.initialize(country_codes=['us', 'ca'])
     MAX_RESULTS = 1000000
     MAX_DISTANCE = 30
     zip_code = search.next_zip()
