@@ -19,8 +19,9 @@ def broken_page(loc):
     response = requests.get(loc, headers=headers)
     return 'something went wrong' in response.content.lower()
 
-def fetch_data():
+def fetch_store_urls():
     states = []
+    locs = []
     url = 'https://www.7-eleven.com/locations'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
@@ -31,7 +32,6 @@ def fetch_data():
                     states.append('https://www.7-eleven.com/locations/' + item.split('"')[0])
     for state in reversed(states):
         cities = []
-        locs = []
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
             if '<li><a href="/locations/' in line:
@@ -54,6 +54,11 @@ def fetch_data():
                     for item in items:
                         if '<!DOCTYPE html>' not in item:
                             locs.append('https://www.7-eleven.com/locations/' + item.split('"')[0])
+    return locs
+
+
+def fetch_data():
+    locs = fetch_store_urls()
     q = collections.deque(locs)
     attempts = {}
     while q:
