@@ -27,7 +27,7 @@ def get_driver():
     options.add_argument("--disable-notifications")
     #options.add_argument("--start-maximized")
     #return webdriver.Chrome('chromedriver', chrome_options=options)
-    return webdriver.Chrome('/Users/Dell/local/chromedriver',chrome_options=options)
+    return webdriver.Chrome('chromedriver',chrome_options=options)
 
 
 def fetch_data():
