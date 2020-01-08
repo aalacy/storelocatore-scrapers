@@ -49,14 +49,16 @@ def fetch_data():
             hr=soup.find_all("span",itemprop="dayOfWeek")  
             op=soup.find_all("time",itemprop='opens')
             cl=soup.find_all("time",itemprop='closes')
+            DY=['SUN','MON','TUE','WED','THU','FRI','SAT']
             hours=""
             for k in range(0,len(op)) :
                 hours+=hr[k].text+" "
+                if hr[k].text != 'TODAY':
+                    DY.remove(hr[k].text)
                 hours+=op[k]['content']+"-"
                 hours+=cl[k]['content']+" "
-            now = datetime.datetime.now()
-            dy=now.strftime("%a").upper()
-            hours=hours.replace("TODAY",dy)
+            hours=hours.replace("TODAY",DY[0])
+            hours=hours.replace("-null","")
             data.append([
                 'https://www.petmarts.ca/',
                  ul,

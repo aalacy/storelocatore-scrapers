@@ -234,7 +234,7 @@ def fetch_data():
             p += 1
             data.append([
                 'https://www.habitat.org',
-                link,
+                maplink,
                 title,
                 street,
                 city,

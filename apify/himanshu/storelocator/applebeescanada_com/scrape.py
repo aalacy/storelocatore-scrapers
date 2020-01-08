@@ -6,19 +6,23 @@ import io
 import json
 import time
 
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
     headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "http://www.applebeescanada.com/restaurants/location-finder"
     r = requests.get(base_url, headers=headers)
@@ -39,7 +43,8 @@ def fetch_data():
             if detail_block:
                 location_name = detail_soup.find('h1').get_text().strip()
                 address = detail_block.find('h5').get_text().strip().split(',')
-                street_address = ''.join(address[:-1]).strip().replace('Calgary','').replace('Alberta','').strip()
+                street_address = ''.join(
+                    address[:-1]).strip().replace('Calgary', '').replace('Alberta', '').strip()
                 # print(street_address)
                 if address[0][0:2].isdigit():
                     city = address[-2]
@@ -47,27 +52,32 @@ def fetch_data():
                     city = address[-3]
                 else:
                     city = address[0]
-                ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(address))
-                if ca_zip_list !=[]:
+                ca_zip_list = re.findall(
+                    r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(address[-1]))
+                if ca_zip_list != []:
                     zip = ca_zip_list[0].strip()
                 else:
-                    zip = (list(detail_soup.find("div",{"class":"address"}).stripped_strings)[-1].split(",")[-1])
-                    # zip = "<MISSING>"
-                phone = detail_block.find('h5').find_next('h3').get_text().strip()[5:]
+
+                    zip = "<MISSING>"
+                phone = detail_block.find('h5').find_next(
+                    'h3').get_text().strip()[5:]
                 if "Meet" in detail_block.find('h5').find_next('p').find_next('p').get_text().strip():
-                    hours_of_operation = detail_block.find('h5').find_next('p').get_text().strip().replace('Winter Hours','').replace(', Name: Peter Ennis','').replace("&",'to').strip()
+                    hours_of_operation = detail_block.find('h5').find_next('p').get_text().strip().replace(
+                        'Winter Hours', '').replace(', Name: Peter Ennis', '').replace("&", 'to').strip()
 
                 else:
-                    hours = detail_block.find('h5').find_next('p').get_text().strip() + ", " + detail_block.find('h5').find_next('p').find_next('p').get_text().strip()
+                    hours = detail_block.find('h5').find_next('p').get_text().strip(
+                    ) + ", " + detail_block.find('h5').find_next('p').find_next('p').get_text().strip()
                     if "Heather Lennie" in hours:
                         hours_of_operation = "<MISSING>"
                     else:
-                        hours_of_operation =hours.replace(', Name: Peter Ennis','').replace('&','to').strip()
+                        hours_of_operation = hours.replace(
+                            ', Name: Peter Ennis', '').replace('&', 'to').strip()
                 # print(hours_of_operation)
                 store = []
                 store.append("http://www.applebeescanada.com")
 
-                store.append(location_name.encode('ascii', 'ignore').decode('ascii').strip())
+                store.append(location_name)
                 store.append(street_address)
                 store.append(city)
                 store.append(state)
@@ -78,17 +88,23 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append("<MISSING>")
                 store.append("<MISSING>")
-                store.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip())
+                store.append(hours_of_operation.encode(
+                    'ascii', 'ignore').decode('ascii').strip())
                 store.append(page_url)
-                #print(store[-2])
-                #print("data == "+str(store))
-                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                store = [str(x).encode('ascii', 'ignore').decode(
+                    'ascii').strip() if x else "<MISSING>" for x in store]
+                # print(store[-2])
+                # print("data == " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 return_main_object.append(store)
             else:
                 pass
     return return_main_object
 
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
+
 scrape()

@@ -80,13 +80,13 @@ def fetch_data():
                     phone_tag = requests.get(page_url, headers=headers)
                     soup_phone = BeautifulSoup(phone_tag.text, 'lxml')
                     phone = soup_phone.find(
-                        'span', {'id': 'cpd_HotelMiniSite_14_lblHotelPhone'}).text.strip()
+                        'span', {'id': 'cpd_HotelMiniSite_15_lblHotelPhone'}).text.strip()
                     try:
                         hours = list(soup_phone.find(
                             "span", text="Hours of Operation").parent.stripped_strings)
                         hours_of_operation = " ".join(hours).replace(
                             "Hours of Operation", "").strip()
-                        #print(hours_of_operation)
+                        # print(hours_of_operation)
                         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                     except Exception as e:
                         hours_of_operation = "<MISSING>"
@@ -96,9 +96,11 @@ def fetch_data():
 
                     # print(phone)
                 except:
-                    phone = "<MISSING>"
-                    # print(phone)
                     # print(page_url)
+                    phone = "<MISSING>"
+
+                # print(phone)
+                # print(page_url)
                 if "<MISSING>" == hours_of_operation:
                     hours_of_operation = "Open 24 hours a day, seven days a week"
 
