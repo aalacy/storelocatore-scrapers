@@ -1,12 +1,12 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import sgzip
 
 search = sgzip.ClosestNSearch()
 search.initialize()
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -50,7 +50,10 @@ def fetch_data():
                 add = line.split('"streetAddress" class="resultItem-Street">')[1].split('<')[0]
             if 'class="resultItem-City" data-city="' in line:
                 city = line.split('class="resultItem-City" data-city="')[1].split(',')[0]
-                state = line.split('class="resultItem-City" data-city="')[1].split(',')[1].split('"')[0].strip()
+                try:
+                    state = line.split('class="resultItem-City" data-city="')[1].split(',')[1].split('"')[0].strip()
+                except:
+                    state = '<MISSING>'
                 zc = line.split('">')[1].split('<')[0].strip().rsplit(' ',1)[1]
                 country = 'US'
                 store = '<MISSING>'
