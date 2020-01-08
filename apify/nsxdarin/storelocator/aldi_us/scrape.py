@@ -24,7 +24,6 @@ def fetch_data():
     ids = set()
     locations = []
     coord = search.next_zip()
-    print(coord)
     while coord:
         print("remaining zipcodes: " + str(len(search.zipcodes)))
         website = 'aldi.us'
@@ -49,15 +48,15 @@ def fetch_data():
             if '"streetAddress" class="resultItem-Street">' in line:
                 add = line.split('"streetAddress" class="resultItem-Street">')[1].split('<')[0]
             if 'class="resultItem-City" data-city="' in line:
-                city = line.split('class="resultItem-City" data-city="')[1].split(',')[0]
                 try:
+                    city = line.split('class="resultItem-City" data-city="')[1].split(',')[0]
                     state = line.split('class="resultItem-City" data-city="')[1].split(',')[1].split('"')[0].strip()
+                    zc = line.split('">')[1].split('<')[0].strip().rsplit(' ',1)[1]
+                    country = 'US'
+                    store = '<MISSING>'
+                    phone = '<MISSING>'
                 except:
                     state = '<MISSING>'
-                zc = line.split('">')[1].split('<')[0].strip().rsplit(' ',1)[1]
-                country = 'US'
-                store = '<MISSING>'
-                phone = '<MISSING>'
             if '<td class="open">' in line:
                 if hours == '':
                     hours = line.split('<td class="open">')[1].split('<')[0] + ': '
@@ -73,7 +72,8 @@ def fetch_data():
                     locations.append(info)
                     if hours == '':
                         hours = '<MISSING>'
-                    yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    if state != '<MISSING>':
+                        yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         if len(array) <= MAX_RESULTS:
             print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
