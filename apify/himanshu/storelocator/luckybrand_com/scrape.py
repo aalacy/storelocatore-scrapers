@@ -16,8 +16,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-session = SgRequests()
-
 search = sgzip.ClosestNSearch()
 search.initialize(country_codes = ['us', 'ca'])
 
@@ -48,6 +46,7 @@ def fetch_data():
         result_coords = []
         ts = int(round(time.time() * 1000))
         query_lat, query_lng = coord[0], coord[1]
+        session = SgRequests()
         r = session.get("https://luckybrand.radius8.com/api/v1/streams/stores?lat={}&lng={}&radius=1000&units=MI&limit=50&_ts={}".format(query_lat, query_lng, ts),headers=HEADERS)
         parsed = r.json()
         for val in parsed['results']:
