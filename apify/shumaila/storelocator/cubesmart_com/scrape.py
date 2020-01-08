@@ -25,8 +25,9 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-notifications")
-    return webdriver.Chrome('chromedriver', chrome_options=options)
-    #return webdriver.Chrome('/Users/Dell/local/chromedriver')
+    #options.add_argument("--start-maximized")
+    #return webdriver.Chrome('chromedriver', chrome_options=options)
+    return webdriver.Chrome('/Users/Dell/local/chromedriver',chrome_options=options)
 
 
 def fetch_data():
@@ -40,6 +41,8 @@ def fetch_data():
     driver = get_driver()
     driver.get(url)
     time.sleep(1)
+
+
     #soup = BeautifulSoup(page.text, "html.parser")
     soup = BeautifulSoup(driver.page_source, "html.parser")
 
@@ -60,10 +63,13 @@ def fetch_data():
         #print(link)
         #driver = get_driver()
         driver.get(link)
-        time.sleep(1)
+        #time.sleep(1)
 
         soup2 = BeautifulSoup(driver.page_source, "html.parser")
         try:
+            
+            phone = soup2.find('span', {'class': 'tel'}).text
+            phone = ""
             title = soup2.find('h1').text
             street = soup2.find('span', {'itemprop': 'streetAddress'}).text
             city = soup2.find('span', {'itemprop': 'addressLocality'}).text
@@ -73,7 +79,7 @@ def fetch_data():
             lat = lat['content']
             longt = soup2.find('meta', {'itemprop': 'longitude'})
             longt = longt['content']
-            phone = soup2.find('span', {'class': 'dphoneA primaryPhone'}).text
+           
             hdetail = soup2.findAll('h3', {'class': 'csHoursTitle'})
             htimes = soup2.findAll('p', {'class': 'csHoursList'})
             hours = ""
@@ -87,9 +93,18 @@ def fetch_data():
             if len(hours) < 3:
                 hours = "<MISSING>"
             if len(phone) <3:
-                phone = "<MISSING>"
+                phonelist = soup2.find('div', {'class': 'csFacilityPhone'})
+                phonelist = phonelist.findAll('p')
+                phone = phonelist[1].text
+                if len(phone) <3:
+                    phone = phonelist[0].find('span').text
+                    if len(phone) <3:
+                        phone = "<MISSING>"
 
 
+            phone = phone.replace('Current Customers:','')
+            phone = phone.replace('New Customers:','')
+            phone = phone.lstrip()
             start = link.find("storage") + 4
             start =  link.find("storage", start)
             start =  link.find("/",start) + 1
