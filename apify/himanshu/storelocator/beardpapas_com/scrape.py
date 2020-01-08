@@ -91,7 +91,7 @@ def fetch_data():
                 store.append(country_code)
                 store.append("<MISSING>")
                 store.append(phone)
-                store.append("Beard Papa")
+                store.append("<MISSING>"")
                 store.append(latitude)
                 store.append(longitude)
                 store.append(hours_of_operation)
