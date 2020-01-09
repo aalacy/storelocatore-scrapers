@@ -6,8 +6,8 @@ from selenium.webdriver.chrome.options import Options
 options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
+#options.add_argument('--disable-dev-shm-usage')
+#options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
 driver = webdriver.Chrome("chromedriver", options=options)
 
 #driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe')#, options=options)
@@ -35,6 +35,11 @@ def fetch_data():
         store_location=driver.find_element_by_xpath('//div[@class="address"]').text
         store_dir=driver.find_element_by_xpath('//a[@class="btn btn-info btn-sm"][2]').get_attribute('href')
         
+        try:
+            driver.find_element_by_xpath('//span[@aria-hidden="true"]').click()
+        except:
+            pass
+
         data['hours_of_operation'].append(driver.find_element_by_xpath('//ul[@class="list list-space-sm"]').text)
         data['page_url'].append(store)
         data['locator_domain'].append('https://www.lowes.ca/stores')       
