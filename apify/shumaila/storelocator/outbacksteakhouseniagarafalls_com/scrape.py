@@ -55,12 +55,15 @@ def fetch_data():
             address = address.lstrip()
 
             title,street = re.split('\d',address,1)
-            title = "Outback Steakhouse " + title
+            
             address = address.replace(title,"")
             street,phone = re.split('•',address,1)
             phone = phone.lstrip()
 
-
+            #print(street)
+            street = street.replace(title,"")
+            #print(title)
+            title = "Outback Steakhouse " + title
             data.append([
                 'http://outbacksteakhouseniagarafalls.com/',
                 'http://outbacksteakhouseniagarafalls.com/',

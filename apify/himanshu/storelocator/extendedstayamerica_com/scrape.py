@@ -69,6 +69,7 @@ def fetch_data():
                 city = loc["HotelCity"]
                 state = loc["HotelState"]
                 zipp = loc["HotelZip"]
+                # print(zipp)
                 page_url = loc["MinisiteUrl"]
                 # print(page_url)
                 store_number = loc["HotelId"]
@@ -79,7 +80,7 @@ def fetch_data():
                     phone_tag = requests.get(page_url, headers=headers)
                     soup_phone = BeautifulSoup(phone_tag.text, 'lxml')
                     phone = soup_phone.find(
-                        'span', {'id': 'cpd_HotelMiniSite_14_lblHotelPhone'}).text.strip()
+                        'span', {'id': 'cpd_HotelMiniSite_15_lblHotelPhone'}).text.strip()
                     try:
                         hours = list(soup_phone.find(
                             "span", text="Hours of Operation").parent.stripped_strings)
@@ -87,15 +88,22 @@ def fetch_data():
                             "Hours of Operation", "").strip()
                         # print(hours_of_operation)
                         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                    except:
+                    except Exception as e:
                         hours_of_operation = "<MISSING>"
+                        # print(e)
                         # print(page_url)
-                        # print("**************************")
+                        # print("**************************************")
+
                     # print(phone)
                 except:
-                    phone = "<MISSING>"
-                    # print(phone)
                     # print(page_url)
+                    phone = "<MISSING>"
+
+                # print(phone)
+                # print(page_url)
+                if "<MISSING>" == hours_of_operation:
+                    hours_of_operation = "Open 24 hours a day, seven days a week"
+
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                 store = ["<MISSING>" if x == "" else x for x in store]

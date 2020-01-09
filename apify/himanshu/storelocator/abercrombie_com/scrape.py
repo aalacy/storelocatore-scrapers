@@ -1,20 +1,26 @@
+
+
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
+
 session = SgRequests()
+
 
 def fetch_data():
     headers = {
@@ -25,8 +31,8 @@ def fetch_data():
     addresses = []
     base_url = "https://www.abercrombie.com"
 
-    r = session.get("https://www.abercrombie.com/api/ecomm/a-us/storelocator/search?country=US&radius=10000",
-                     headers=headers)
+    r = session.get("https://www.abercrombie.com/api/ecomm/a-wd/storelocator/search?country=US&radius=10000",
+                    headers=headers)
     json_data = r.json()
 
     return_main_object = []
@@ -46,8 +52,9 @@ def fetch_data():
     longitude = ""
     raw_address = ""
     hours_of_operation = ""
+    page_url = ""
 
-    # print("soup  ==== "+ str(json_data))
+    # print("soup  ==== " + str(json_data))
 
     for location in json_data["physicalStores"]:
         # print("location ==== " + str(location))
@@ -65,24 +72,72 @@ def fetch_data():
 
         hours_of_operation = ""
         index = 0
-        days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        days = ["Sunday", "Monday", "Tuesday",
+                "Wednesday", "Thursday", "Friday", "Saturday"]
         for time_period in location["physicalStoreAttribute"][-1]["value"].split(","):
-            hours_of_operation += days[index] + " " + time_period.replace("|", " - ") + " "
+            hours_of_operation += days[index] + " " + \
+                time_period.replace("|", " - ") + " "
             index += 1
-
+        page_url = "https://www.abercrombie.com/shop/wd/clothing-stores/US/" + \
+            "".join(city.split()) + "/" + state + "/" + store_number
         # print("phone === "+ str(hours_of_operation))
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
-        if str(store[2]) + str(store[-3]) not in addresses:
-            addresses.append(str(store[2]) + str(store[-3]))
+        if str(store[2]) not in addresses:
+            addresses.append(str(store[2]))
 
             # store = [x if x else "<MISSING>" for x in store]
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            store = [x.encode('ascii', 'ignore').decode(
+                'ascii').strip() if x else "<MISSING>" for x in store]
 
             # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print(
+            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            yield store
+    r = session.get("https://www.abercrombie.com/api/ecomm/a-wd/storelocator/search?country=CA&radius=10000",
+                    headers=headers)
+    json_data = r.json()
+    for location in json_data["physicalStores"]:
+        # print("location ==== " + str(location))
+
+        store_number = location["storeNumber"]
+        location_name = location["name"]
+        city = location["city"]
+        state = location["stateOrProvinceName"]
+        zipp = location["postalCode"]
+        country_code = location["country"]
+        latitude = str(location["latitude"])
+        longitude = str(location["longitude"])
+        phone = location["telephone"]
+        street_address = ", ".join(location["addressLine"])
+
+        hours_of_operation = ""
+        index = 0
+        days = ["Sunday", "Monday", "Tuesday",
+                "Wednesday", "Thursday", "Friday", "Saturday"]
+        for time_period in location["physicalStoreAttribute"][-1]["value"].split(","):
+            hours_of_operation += days[index] + " " + \
+                time_period.replace("|", " - ") + " "
+            index += 1
+
+        page_url = "https://www.abercrombie.com/shop/wd/clothing-stores/CA/" + \
+            "".join(city.split()) + "/" + state + "/" + store_number
+
+        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+
+        if str(store[2]) not in addresses:
+            addresses.append(str(store[2]))
+
+            # store = [x if x else "<MISSING>" for x in store]
+            store = [x.encode('ascii', 'ignore').decode(
+                'ascii').strip() if x else "<MISSING>" for x in store]
+
+            # print("data = " + str(store))
+            # print(
+            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
 

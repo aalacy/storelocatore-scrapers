@@ -32,8 +32,8 @@ def fetch_data():
     base_url = "https://www.publicstorage.com"
     while zip_code:
         result_coords = []
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
-        # print('Pulling Lat-Long %s...' % (str(zip)))
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print('Pulling Lat-Long %s...' % (str(zip)))
         data = '{"location":"' + str(zip_code) + '"}'
         
         r = requests.post("https://www.publicstorage.com/api/sitecore/LocationSearch/RedoSearch",headers=headers,data=data).json()

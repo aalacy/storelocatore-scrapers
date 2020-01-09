@@ -1,9 +1,8 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,14 +15,15 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+session = SgRequests()
 
 def fetch_data():
     base_url= "https://www.choicehotels.com/cms/pages/comfort-suites/sitemap?d=DESKTOP&applocale=en-us&sitename=us"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     
     base = "https://www.choicehotels.com/comfort-suites/sitemap"
-    r1 = requests.get(base)
+    r1 = session.get(base)
     soup1= BeautifulSoup(r1.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -33,8 +33,7 @@ def fetch_data():
     link = (soup.find_all("h6",{"class":"col-xs-6"}))
     for i in link:
         if i.a != None:
-            # print("state ====",i.text,"============",i.a['href'].split("/")[1])
-            r1 = requests.get("https://www.choicehotels.com/cms/pages/choice-hotels/"+str(i.a['href'].split("/")[1])+"/comfort-suites?d=DESKTOP&applocale=en-us&sitename=us")
+            r1 = session.get("https://www.choicehotels.com/cms/pages/choice-hotels/"+str(i.a['href'].split("/")[1])+"/comfort-suites?d=DESKTOP&applocale=en-us&sitename=us")
             soup1= BeautifulSoup(r1.text,"lxml")
             link2 = (soup1.find_all("a"))
             if link2 !=[]:
@@ -44,14 +43,13 @@ def fetch_data():
                         pass
                     else:
                         tem_var=[]
-                        json_data = requests.get("https://www.choicehotels.com/webapi/hotel/"+str(id1)+"?preferredLocaleCode=en-us&rooms=10&siteName=us").json()
+                        json_data = session.get("https://www.choicehotels.com/webapi/hotel/"+str(id1)+"?preferredLocaleCode=en-us&rooms=10&siteName=us").json()
                         
                         country = json_data['hotel']['address']['country'].strip()
                         if 'US' == country or 'CA' == country:
                             name = json_data['hotel']['name']
                             city = json_data['hotel']['address']['city']
                             st = json_data['hotel']['address']['line1']
-                            # print(country)
                             if "postalCode" in json_data['hotel']['address']:
                                 zip1 = json_data['hotel']['address']['postalCode']
                             else:
@@ -78,11 +76,9 @@ def fetch_data():
                             tem_var.append(lon)
                             tem_var.append("<MISSING>")
                             tem_var.append("https://www.choicehotels.com"+j['href'])
-                    
                             if tem_var[2] in addresses:
                                 continue
                             addresses.append(tem_var[2])
-                            print(tem_var)
                             yield tem_var
   
 def scrape():

@@ -1,19 +1,20 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import time
 
-requests.packages.urllib3.disable_warnings()
-
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
            'x-frame-options': 'ALLOW-FROM https://www.apply2.pnc.com/',
            'x-xss-protection': '1; mode=block',
+           'x-ua-compatible': 'IE=Edge',
+           'strict-transport-security': 'max-age=31536000',
            'authority': 'apps.pnc.com',
            'method': 'GET',
            'scheme': 'https',
            'accept': 'application/json, text/plain, */*',
-           'x-app-key': 'pyHnMuBXUM1p4AovfkjYraAJp6'
+           'x-app-key': 'pyHnMuBXUM1p4AovfkjYraAJp6',
+           'content-encoding': 'gzip'
            }
 
 headers2 = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -27,8 +28,8 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://apps.pnc.com/locator-api/locator/api/v1/locator/browse?t=1575479568229'
-    r = session.get(url, headers=headers, verify=False)
+    url = 'https://apps.pnc.com/locator-api/locator/api/v1/locator/browse?t=1578513813794'
+    r = session.get(url, headers=headers)
     locs = []
     for line in r.iter_lines():
         if '"externalId" : "' in line:
@@ -41,13 +42,13 @@ def fetch_data():
         while PageFound:
             try:
                 PageFound = False
-                r2 = session.get(lurl, headers=headers2, timeout=3, verify=False)
+                print('Pulling Location %s...' % loc)
+                r2 = session.get(lurl, headers=headers2)
                 lines = r2.iter_lines()
                 website = 'pnc.com'
                 HFound = False
                 hours = ''
                 TypFound = False
-                print('Pulling Location %s...' % loc)
                 for line2 in lines:
                     if '"locationName" : "' in line2:
                         name = line2.split('"locationName" : "')[1].split('"')[0]
