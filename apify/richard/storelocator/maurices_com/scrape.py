@@ -37,11 +37,13 @@ class Scraper(Scrape):
         country_urls = ['https://locations.maurices.com/ca', 'https://locations.maurices.com/us']
 
         for url in country_urls:
+            print(f"Getting info for {url}")
             driver.get(url)
             state_data = [state_url.get_attribute('href') for state_url in driver.find_elements_by_css_selector('a.Directory-listLink')]
             state_urls.extend(state_data)
 
         for state_url in state_urls:
+            print(f"Getting info for {state_url}")
             driver.get(state_url)
             stores.extend([city.get_attribute('href') for city in driver.find_elements_by_css_selector('a.Directory-listLink') if city.get_attribute('data-count') == '(1)'])
             multi_stores = [city.get_attribute('href') for city in driver.find_elements_by_css_selector('a.Directory-listLink') if city.get_attribute('data-count') != '(1)']
@@ -49,6 +51,14 @@ class Scraper(Scrape):
                 driver.get(multi_store)
                 stores_links = [link.get_attribute('href') for link in driver.find_elements_by_css_selector('div.Teaser-link.Teaser-cta > a') if link.get_attribute('textContent') == 'Store Details']
                 stores.extend(stores_links)
+
+        stores.extend(
+            [
+                'https://locations.maurices.com/us/md/lavale/1262-vocke-road',
+                'https://locations.maurices.com/us/ri/lincoln/622-george-washington-highway',
+                'https://locations.maurices.com/ca/pe/charlottetown/202-buchanan-drive'
+            ]
+        )
 
         for store in stores:
             print(f"Getting details for {store}")
