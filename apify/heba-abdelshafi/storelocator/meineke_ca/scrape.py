@@ -12,7 +12,7 @@ options.add_argument('--disable-dev-shm-usage')
 options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
 driver = webdriver.Chrome("chromedriver", options=options)
 
-driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe')#, options=options)
+#driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe')#, options=options)
 
 
 def write_output(data):
@@ -23,13 +23,13 @@ def write_output(data):
 def fetch_data():
 
     data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[],'page_url':[]}
-    driver.get('https://www.meineke.ca/locations/')    
+    driver.get('https://www.meineke.ca/locations/')
     status_url=[i.get_attribute('href') for i in driver.find_elements_by_xpath('//div[@class="col-md-4 col-sm-5 left-list "]//li/a')]
-    
-    city_urls=[]    
+
+    city_urls=[]
     for city in status_url:
         driver.get(city)
-        city_urls.append([i.get_attribute('href') for i in driver.find_elements_by_xpath('//div[@class="desktop-tablet"]//li/a[@class="city-link"]')])    
+        city_urls.append([i.get_attribute('href') for i in driver.find_elements_by_xpath('//div[@class="desktop-tablet"]//li/a[@class="city-link"]')])
     city_urls=list(itertools.chain.from_iterable(city_urls))
 
     locations=[]
@@ -69,7 +69,7 @@ def fetch_data():
             else:
                 data['zip'].append(i[8].split(':')[-1])
             data['phone'].append(i[10].split(':')[-1])
-            
+
 
     driver.close()
     return data

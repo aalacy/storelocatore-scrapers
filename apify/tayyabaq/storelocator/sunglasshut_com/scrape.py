@@ -100,6 +100,13 @@ def fetch_data():
             hours+=" "
         if hours == "":
             hours='<MISSING>'
+        hours=hours.replace("Mo","MON")
+        hours=hours.replace("Tu","TUE")
+        hours=hours.replace("We","WED")
+        hours=hours.replace("Th","THU")
+        hours=hours.replace("Fr","FRI")
+        hours=hours.replace("Sa","SAT")
+        hours=hours.replace("Su","SUN")
         data.append([
              'https://www.sunglasshut.com/',
               u,

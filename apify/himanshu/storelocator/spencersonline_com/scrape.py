@@ -22,7 +22,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
     tag_store = soup.find(lambda tag: (tag.name == "script") and "var allStores" in  tag.text.strip())
     m = (tag_store.text)
-    for i in range(1,699):
+    for i in range(1,684):
         store_number = (m.split("store.STORE_NUMBER = '")[i].split("store.ADDRESS_LINE_1")[0].replace("';","").strip().lstrip())
         street_address1 = (m.split("store.ADDRESS_LINE_1 = '")[i].split("store.ADDRESS_LINE_2 =")[0].replace("';","").strip())
         street_address2 = (m.split("store.ADDRESS_LINE_2 = '")[i].split("store.CITY = '")[0].replace("';","").strip())
@@ -37,6 +37,7 @@ def fetch_data():
         location_name = (m.split("store.STORE_NAME = '")[i].split("store.STORE_NUMBER = '")[0].replace("';","").strip())
         hours_of_operation = (m.split("store.STORE_STATUS = '")[i].split("';")[0].strip())
         STORE_ID = (m.split("store.STORE_ID = '")[i].split("store.STORE_NAME = '")[0].replace("';","").strip())
+        # print(STORE_ID)
         page_url = "https://www.spencersonline.com/store/"+str(location_name.strip().lstrip())+"/"+str(STORE_ID.strip().lstrip())+".uts"
         ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp))
         us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp))

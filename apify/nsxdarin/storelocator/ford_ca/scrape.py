@@ -55,11 +55,14 @@ def fetch_data():
                             hours = dname + ': ' + hrs
                         else:
                             hours = hours + '; ' + dname + ': ' + hrs
+                try:
+                    purl = item['URL']
+                except:
+                    purl = '<MISSING>'
                 if store not in ids:
                     ids.append(store)
                     if hours == '':
                         hours = '<MISSING>'
-                    purl = '<MISSING>'
                     if phone == '':
                         phone = '<MISSING>'
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]

@@ -37,13 +37,22 @@ def fetch_data():
             page = requests.get(ul)
             soup = BeautifulSoup(page.content, "html.parser")
             loc=soup.find('h1', class_ ='store-name').text
-            street = soup.find('div', itemprop='streetAddress').text
+            try:
+                street = soup.find('div', itemprop='streetAddress').text
+            except:
+                street="<MISSING>"
             city = soup.find('span',itemprop='addressLocality')
             cty=city.text
             sts = city.find_next('span',itemprop='addressLocality').text
-            zcode = soup.find('span',itemprop='postalCode').text
+            try:
+                zcode = soup.find('span',itemprop='postalCode').text
+            except:
+                zcode = "<MISSING>"
             num=j['id']
-            ph=soup.find("a",class_="store-contact-info").text
+            try:
+                ph=soup.find("a",class_="store-contact-info").text
+            except:
+                ph="<MISSING>"
             lat=soup.find("meta",itemprop='latitude')['content']
             lng=soup.find("meta",itemprop='longitude')['content']
             hr=soup.find_all("span",itemprop="dayOfWeek")  

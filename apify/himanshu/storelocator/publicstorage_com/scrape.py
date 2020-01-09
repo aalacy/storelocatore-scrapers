@@ -51,7 +51,7 @@ def fetch_data():
             try:
                 r1 = requests.get(page_url, headers=headers)
             except:
-                continue
+                pass
             soup1 = BeautifulSoup(r1.text, "lxml")
             location_name = soup1.find("h1",{"class":"ps-properties-property-header__header"}).text
 

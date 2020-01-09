@@ -125,7 +125,7 @@ class Scraper(Scrape):
                 location_title = store['displayName']
 
                 # Page url
-                page_url = store['url']
+                page_url = 'https://www.zales.com' + store['url']
 
                 # Type
                 location_type = 'Retail'
