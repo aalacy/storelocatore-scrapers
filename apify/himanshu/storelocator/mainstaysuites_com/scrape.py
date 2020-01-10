@@ -6,7 +6,6 @@ import json
 import sgzip
 import datetime
 
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -19,7 +18,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-session = SgRequests()
 
 def fetch_data():
     today = datetime.date.today().strftime("%Y-%m-%d")
@@ -56,6 +54,7 @@ def fetch_data():
             'cache-control': "no-cache"
         }
 
+        session = SgRequests()
         r = session.post(url, data=payload, headers=headers, params=querystring)
 
         if "hotels" not in r.json():
