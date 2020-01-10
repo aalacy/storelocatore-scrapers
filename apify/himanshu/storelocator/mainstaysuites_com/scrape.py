@@ -84,6 +84,7 @@ def fetch_data():
                 store[-1] = store[-1][:5] + "-" + store[-1][6:]
             store.append(store_data["address"]["country"])
             store.append(store_data["id"])
+            store.append(store_data["phone"])
             store.append("<MISSING>")
             store.append(store_data["lat"])
             store.append(store_data["lon"])
