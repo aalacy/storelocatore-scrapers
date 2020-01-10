@@ -80,7 +80,7 @@ def fetch_data():
             json_data = json.loads(script.text)
             latitude = json_data["Longitude"]
             longitude = json_data["Latitude"]
-            print(latitude, longitude)
+           # print(latitude, longitude)
         except Exception as e:
             latitude = "<MISSING>"
             longitude = "<MISSING>"
