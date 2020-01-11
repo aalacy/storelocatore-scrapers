@@ -9,9 +9,9 @@ options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
-#driver = webdriver.Chrome("chromedriver", options=options)
+driver = webdriver.Chrome("chromedriver", options=options)
 
-driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe')#, options=options)
+#driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe', options=options)
 
 
 def write_output(data):
