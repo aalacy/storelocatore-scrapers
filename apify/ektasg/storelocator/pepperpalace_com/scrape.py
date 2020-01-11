@@ -51,11 +51,22 @@ def fetch_data():
     count=0
     fullcontent=[]
     for i in locationURLs:
+        if i == "https://pepperpalace.com/pages/new-orleans-decatur-street":
+            print("coming soon!")
+            continue
+        if i == "https://pepperpalace.com/pages/new-orleans-chartres":
+            driver.get(i)   
+            text=driver.find_element_by_class_name("rte").text.replace('\u200b',' ').replace('\u00A0',' ')
+            fullcontent.append(text)
+            count=count+1
+            print(count)
+            continue
         driver.get(i)   
         text=driver.find_element_by_xpath("//meta[@name='description']").get_attribute('content').replace('\u200b',' ').replace('\u00A0',' ')
         fullcontent.append(text)
         count=count+1
         print(count)
+    del locationURLs[locationURLs.index("https://pepperpalace.com/pages/new-orleans-decatur-street")]
     for store in range(len(fullcontent)):        
         loc_name_splitter=re.search(r'\d+', fullcontent[store]).group()
     
@@ -65,6 +76,7 @@ def fetch_data():
             location_name=locationText[store]
         if('Â' in location_name):
             location_name=location_name.replace('Â','')
+        
         city = locationText[store].lower()
         if('(' in fullcontent[store]):
             phno='('+fullcontent[store].split('(')[1]
