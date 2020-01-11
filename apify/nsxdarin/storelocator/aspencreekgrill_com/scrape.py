@@ -75,6 +75,7 @@ def fetch_data():
                 phone = line2.split('CALL AHEAD:')[1].split('<')[0].strip()
         if '<' in zc:
             zc = zc.split('<')[0]
+        hours = hours.replace('&amp;','&')
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

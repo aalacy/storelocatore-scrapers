@@ -37,9 +37,12 @@ def fetch_data():
                         zc = item.split('"postalCode":"')[1].split('"')[0]
                         store = item.split('"id":')[1].split(',')[0]
                         country = 'US'
-                        hours = 'Mon-Fri: ' + item.split('}}],"operationalHours":{"')[1].split('"monToFriHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + item.split('}}],"operationalHours":{"')[1].split('"monToFriHrs":')[1].split('"endHr":"')[1].split('"')[0]
-                        hours = hours + '; Sat: ' + item.split('}}],"operationalHours":{"')[1].split('"saturdayHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + item.split('}}],"operationalHours":{"')[1].split('"saturdayHrs":')[1].split('"endHr":"')[1].split('"')[0]
-                        hours = hours + '; Sun: ' + item.split('}}],"operationalHours":{"')[1].split('"sundayHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + item.split('}}],"operationalHours":{"')[1].split('"sundayHrs":')[1].split('"endHr":"')[1].split('"')[0]
+                        try:
+                            hours = 'Mon-Fri: ' + item.split('}}],"operationalHours":{"')[1].split('"monToFriHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + item.split('}}],"operationalHours":{"')[1].split('"monToFriHrs":')[1].split('"endHr":"')[1].split('"')[0]
+                            hours = hours + '; Sat: ' + item.split('}}],"operationalHours":{"')[1].split('"saturdayHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + item.split('}}],"operationalHours":{"')[1].split('"saturdayHrs":')[1].split('"endHr":"')[1].split('"')[0]
+                            hours = hours + '; Sun: ' + item.split('}}],"operationalHours":{"')[1].split('"sundayHrs":')[1].split('"startHr":"')[1].split('"')[0] + '-' + item.split('}}],"operationalHours":{"')[1].split('"sundayHrs":')[1].split('"endHr":"')[1].split('"')[0]
+                        except:
+                            hours = '<MISSING>'
                         lat = item.split('"geoPoint":{"latitude":')[1].split(',')[0]
                         lng = item.split('"longitude":')[1].split('}')[0]
                         phone = item.split(',"phone":"')[1].split('"')[0]

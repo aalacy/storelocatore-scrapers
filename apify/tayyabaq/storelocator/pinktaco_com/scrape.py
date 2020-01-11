@@ -49,7 +49,7 @@ def fetch_data():
                 zipcode.append(driver.find_element_by_xpath("//div[@class='details']/p[2]").text.split(",")[1].split()[1].strip())
                 phone.append(driver.find_element_by_xpath("//div[@class='details']/p[3]").text)
             hours = driver.find_element_by_class_name('details')
-           if "RESTAURANT HOURS" in hours.text:
+            if "RESTAURANT HOURS" in hours.text:
                  hours_of_operation.append(hours.text.replace(u'\u2013',' ').split("RESTAURANT HOURS")[1].strip().split('CHECK')[0].replace('\n',' '))
 
             else:

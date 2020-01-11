@@ -8,11 +8,12 @@ import sgzip
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -43,8 +44,11 @@ def fetch_data():
         base_url = "https://www.bn.com"
 
         # zip_code = 11030
-        r = requests.get("https://stores.barnesandnoble.com/stores?page=0&size=1000000&searchText=" + str(
+        try:
+            r = requests.get("https://stores.barnesandnoble.com/stores?page=0&size=1000000&searchText=" + str(
             zip_code) + "+&storeFilter=all&view=list&v=1", headers=headers)
+        except:
+            continue
         soup = BeautifulSoup(r.text, "lxml")
 
         # it will used in store data.
@@ -57,52 +61,66 @@ def fetch_data():
         country_code = "US"
         store_number = "<MISSING>"
         phone = "<MISSING>"
-        location_type = "barnesandnoble"
+        location_type = "<MISSING>"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
         raw_address = ""
         hours_of_operation = "<MISSING>"
-
-        # print("data ==== "+str(soup))
+        page_url = "<MISSING>"
 
         for script in soup.find_all("div", {"class": "col-md-7 col-lg-7 col-sm-7 col-xs-7"}):
-            # address_list = list(script.stripped_strings)
-            location_url = "https://stores.barnesandnoble.com" + script.find('a')['href']
+            location_url = "https://stores.barnesandnoble.com" + \
+                script.find('a')['href']
+            page_url = location_url
             # print("location_url === " + str(location_url))
 
             r_location = requests.get(location_url, headers=headers)
             soup_location = BeautifulSoup(r_location.text, "lxml")
-
-            address_list = list(
-                soup_location.find('div', {'class': 'col-sm-8 col-md-4 col-lg-4 col-xs-6'}).stripped_strings)
-
-            store_hours_index = [i for i, s in enumerate(address_list) if 'Store Hours:' in s]
-
-            scz_index = -1
-            for val in address_list:
-                if str(val[-5:]).isdigit():
-                    scz_index = address_list.index(val)
-
-            # print(str(scz_index) + " ----------- address_list === " + str(address_list))
-
-            location_name = address_list[0]
-            hours_of_operation = " ".join(address_list[store_hours_index[0]:-1])
-
-            if scz_index >= 0:
-                city = address_list[scz_index].split(',')[0]
-                state = address_list[scz_index].split(',')[1].strip().split(' ')[0]
-                zipp = address_list[scz_index].split(',')[1].strip().split(' ')[1]
-                phone = address_list[scz_index+1][:12]
-                street_address = ", ".join(address_list[1:scz_index])
-            else:
-                city = "<MISSING>"
-                state = "<MISSING>"
-                zipp = "<MISSING>"
+            try:
+                address_list = soup_location.find(
+                    'div', {'class': 'col-sm-8 col-md-4 col-lg-4 col-xs-6'})
+                location_name = address_list.find("h4").text.strip()
+            except:
+                location_name = "<MISSING>"
+            # print(location_name)
+            try:
+                street_address = list(soup_location.find(
+                    "span", {"itemprop": "streetAddress"}).stripped_strings)
+                if "Suite" not in street_address[0]:
+                    street_address = street_address[-1]
+                else:
+                    street_address = " ".join(street_address)
+                #print(street_address)
+            except:
                 street_address = "<MISSING>"
-                phone = '<MISSING>'
+            try:
+                city = soup_location.find(
+                    "span", {"itemprop": "addressLocality"}).text.strip()
+            except:
+                city = "<MISSING>"
+            try:
+                state = soup_location.find(
+                    "span", {"itemprop": "addressRegion"}).text.strip()
+            except:
+                state = "<MISSING>"
+            try:
+                zipp = soup_location.find(
+                    "span", {"itemprop": "postalCode"}).text.strip()
+            except:
+                zipp = "<MISSING>"
+            try:
+                phone = soup_location.find(
+                    "span", {"itemprop": "telephone"}).text.replace("(main)", "").strip()
+            except:
+                phone = "<MISSING>"
+            try:
+                hours_of_operation = " ".join(list(soup_location.find(lambda tag: (
+                    tag.name == "h4") and "Store Hours:"in tag.text.strip()).parent.stripped_strings)).replace("Store Hours:", "").strip()
+            except:
+                hours_of_operation = "<MISSING>"
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
             if store[2] in addresses:
                 continue
@@ -112,11 +130,9 @@ def fetch_data():
             store = ["<MISSING>" if x == "" else x for x in store]
 
             # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-            return_main_object.append(store)
-        # break
-    return return_main_object
+            # print(
+            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            yield store
 
 
 def scrape():

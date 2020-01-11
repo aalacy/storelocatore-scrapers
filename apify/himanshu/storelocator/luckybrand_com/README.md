@@ -8,4 +8,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-Zip is invalid on the site,addrsss with no number this website
+address with no number,address contains state name,and i checked all data is true this website

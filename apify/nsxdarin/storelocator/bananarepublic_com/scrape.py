@@ -15,6 +15,7 @@ def write_output(data):
 
 def fetch_data():
     stnames = []
+    ids = []
     states = []
     url = 'https://bananarepublic.gap.com/stores/'
     r = session.get(url, headers=headers)
@@ -76,7 +77,9 @@ def fetch_data():
                         zc = line4.split('"postalCode": "')[1].split('"')[0]
                 if hours == '':
                     hours = '<MISSING>'
-                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                if store not in ids:
+                    ids.append(store)
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

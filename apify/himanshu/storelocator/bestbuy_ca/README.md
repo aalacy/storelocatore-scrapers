@@ -10,3 +10,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 address with no number,zipcode not in state,invalid zip,same  lat & Lng,and same location name but other details differnt so i have scraped and i check all data is true this website
+

@@ -6,8 +6,8 @@ from selenium.webdriver.chrome.options import Options
 options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
+#options.add_argument('--disable-dev-shm-usage')
+#options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
 driver = webdriver.Chrome("chromedriver", options=options)
 
 #driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe')#, options=options)
@@ -29,9 +29,14 @@ def fetch_data():
     cities_url=[i.get_attribute('href') for i in driver.find_elements_by_xpath('//div[@class="col-7"]/p[@class="store-title"]/a')]
             
     for store in cities_url:
-        driver.get(store)
+        driver.get(store)                    
+        try:
+            driver.find_element_by_xpath('//span[@aria-hidden="true"]').click()
+        except:
+            pass
+        
+        
         sleep(5)
-            
         store_location=driver.find_element_by_xpath('//div[@class="address"]').text
         store_dir=driver.find_element_by_xpath('//a[@class="btn btn-info btn-sm"][2]').get_attribute('href')
         
@@ -48,11 +53,6 @@ def fetch_data():
         data['location_type'].append('Store')        
         data['longitude'].append(store_dir.split('=')[-1].split(',')[1])
         data['latitude'].append(store_dir.split('=')[-1].split(',')[0])
-            
-        try:
-            driver.find_element_by_xpath('//span[@aria-hidden="true"]').click()
-        except:
-            continue
         
     driver.close()
     return data

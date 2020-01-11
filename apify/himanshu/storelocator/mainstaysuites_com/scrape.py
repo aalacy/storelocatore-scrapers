@@ -1,11 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import datetime
-
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -55,8 +54,8 @@ def fetch_data():
             'cache-control': "no-cache"
         }
 
-        r = requests.request(
-            "POST", url, data=payload, headers=headers, params=querystring)
+        session = SgRequests()
+        r = session.post(url, data=payload, headers=headers, params=querystring)
 
         if "hotels" not in r.json():
             continue
@@ -83,7 +82,6 @@ def fetch_data():
             store.append(store_data["address"]["postalCode"])
             if len(store[-1]) == 10:
                 store[-1] = store[-1][:5] + "-" + store[-1][6:]
-            # print(store[-1])
             store.append(store_data["address"]["country"])
             store.append(store_data["id"])
             store.append(store_data["phone"])
@@ -92,15 +90,10 @@ def fetch_data():
             store.append(store_data["lon"])
             store.append("<MISSING>")
             store.append("<MISSING>")
-            # print("data = " + str(store))
-            # print(
-            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
-
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

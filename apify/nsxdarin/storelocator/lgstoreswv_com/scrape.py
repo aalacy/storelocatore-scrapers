@@ -8,8 +8,8 @@ headers = {'authority': 'lgstoreswv.com',
            'method': 'POST',
            'scheme': 'https',
            'x-requested-with': 'XMLHttpRequest',
-           'x-wp-nonce': '0d62884d5f',
-           'x-wpgmza-action-nonce': '336411b60a',
+           'x-wp-nonce': '1d0fe044a4',
+           'x-wpgmza-action-nonce': 'deebbcd111',
            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
            }
