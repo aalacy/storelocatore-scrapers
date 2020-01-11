@@ -49,7 +49,8 @@ def fetch_data():
         website = 'dickswingsandgrill.com'
         typ = 'Restaurant'
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        lines = r2.iter_lines()
+        for line2 in lines:
             if '<title>' in line2:
                 name = line2.split('<title>')[1].split(' |')[0]
             if '<h2>' in line2 and '<h2><' not in line2 and 'Weekly' not in line2:
@@ -67,6 +68,20 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + '; ' + hrs
+            if 'pm<' in line2 and 'wrapper' not in line2:
+                hrs = line2.replace('\r','').replace('\n','').replace('\t','').replace('<strong>','').replace('</strong>','').replace('&#8211;','-').replace('<p style="text-align: right;">','').strip()
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
+            if 'CLOSED<' in line2:
+                hrs = line2.replace('\r','').replace('\n','').replace('\t','').replace('<strong>','').replace('</strong>','').replace('&#8211;','-').replace('<p style="text-align: right;">','').strip()
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
+            if '<p><strong>MON-SUN:<br />' in line2:
+                hours = 'MON-SUN: ' + next(lines).split('strong>')[1].split('<')[0].replace('&#8211;','-')                    
         if '•' in add:
             add = add.split('•')[0].strip()
         if phone == '':
@@ -86,7 +101,7 @@ def fetch_data():
         if state == '':
             state = 'FL'
         hours = hours.replace('<br />','').replace('</p>','')
-        if 'pm' not in hours:
+        if 'pm' not in hours.lower():
             hours = '<MISSING>'
         if '(' in add:
             add = add.split('(')[0].strip()

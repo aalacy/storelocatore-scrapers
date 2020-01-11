@@ -21,11 +21,14 @@ def fetch_data():
         if '<url><loc>https://www.lids.com/store/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
+        print('Pulling Location %s...' % loc)
         website = 'lids.com'
         typ = '<MISSING>'
         hours = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            if '"storeBrand":"' in line2:
+                typ = line2.split('"storeBrand":"')[1].split('"')[0]
             if '"storeId":"' in line2:
                 store = line2.split('"storeId":"')[1].split('"')[0]
                 name = line2.split('"storeId":"')[1].split('"name":"')[1].split('"')[0]
@@ -55,6 +58,10 @@ def fetch_data():
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
+        if "Macy's Locker" in add:
+            add = add.split(" Macy's Locker")[0].strip()
+        if 'Fanzz' in add:
+            add = add.split('Fanzz')[0].strip()
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
