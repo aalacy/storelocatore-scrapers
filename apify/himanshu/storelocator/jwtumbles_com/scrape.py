@@ -30,6 +30,7 @@ def fetch_data():
     loc= soup.find_all("li",{"class":"dropdown"})
     for i in loc:
         for data in i.find_all("li"):
+            page_url = data.find("a")['href']
             loc1 = requests.get(data.find("a")['href'])
             soup= BeautifulSoup(loc1.text,"lxml")
             hours = " ".join(list(soup.find("div",{"class":'col-md-4 opening-hours'}).stripped_strings)).replace("\xa0","")
@@ -48,7 +49,7 @@ def fetch_data():
                 country_code = "US"
 
             tem_var =[]
-            tem_var.append("https://tumbles.net/")
+            tem_var.append("https://jwtumbles.com")
             tem_var.append(name)
             tem_var.append(st)
             tem_var.append(city)
@@ -61,7 +62,7 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append("<MISSING>")
             tem_var.append(hours)
-            tem_var.append(loc1)
+            tem_var.append(page_url)
             # print(tem_var)
             return_main_object.append(tem_var)
         
