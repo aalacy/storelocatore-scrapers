@@ -37,7 +37,8 @@ def fetch_data():
         sleep(3)
         locations.append([i.get_attribute('data-ng-click')[i.get_attribute('data-ng-click').find("(")+1:i.get_attribute('data-ng-click').find("rawSemCamPhone")].replace('\'','').split(',') for i in driver.find_elements_by_xpath("//div[contains(@data-ng-click, 'vm.reloadMap')]")])
         data['hours_of_operation'].append([i.text.replace('Store Hours\n','') for i in driver.find_elements_by_xpath('//div[@class="segment-store"]')])
-        data['page_url'].append([i.get_attribute('href') for i in driver.find_elements_by_xpath('//div[@class="segment-store-info"]/a')])
+        data['page_url'].append([i.get_attribute('href') for i in driver.find_elements_by_xpath('//div[@class="segment-store-info"]/a')]) 
+        
     locations=list(itertools.chain.from_iterable(locations))
     data['hours_of_operation']=list(itertools.chain.from_iterable(data['hours_of_operation']))
     data['page_url']=list(itertools.chain.from_iterable(data['page_url']))
@@ -60,12 +61,17 @@ def fetch_data():
             data['phone'].append(i[9].split(':')[-1])
 
         elif len(i)==15:
-            data['street_address'].append(i[5].split(':')[-1]+' '+i[6])
+            data['street_address'].append(i[5].split(':')[-1]+' '+i[6]+' '+i[7].split(':')[-1])
             data['state'].append(i[8].split(':')[-1])
             data['zip'].append(i[9].split(':')[-1])
             data['phone'].append(i[10].split(':')[-1])
-
-
+        else:
+            data['street_address'].append(i[5].split(':')[-1]+' '+i[6]+' '+i[7])
+            data['state'].append(i[9].split(':')[-1])
+            data['zip'].append(i[10].split(':')[-1])
+            data['phone'].append(i[11].split(':')[-1])
+                           
+            
     driver.close()
     return data
 
