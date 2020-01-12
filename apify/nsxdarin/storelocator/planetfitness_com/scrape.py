@@ -51,7 +51,7 @@ def fetch_data():
             if Found and '24' in line2:
                 hours = '24 Hours, 7 Days A Week'
             if Found and 'Hours' not in line2:
-                hrs = line2.split('<')[0].replace(',','')
+                hrs = line2.replace('<p>','').split('<')[0].replace(',','')
                 if hours == '':
                     hours = hrs
                 else:
