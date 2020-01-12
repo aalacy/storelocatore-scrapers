@@ -1,8 +1,9 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
+import time
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -22,6 +23,7 @@ def fetch_data():
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
     for loc in locs:
+        time.sleep(1)
         print('Pulling Location %s...' % loc)
         website = 'longhornsteakhouse.com'
         typ = 'Restaurant'
