@@ -52,42 +52,26 @@ def fetch_data():
 	for ls in links:	
 		link=ls.find_elements_by_tag_name('a')
 		for l in link:
-			print(l.get_attribute('href'))
 			pages.append(l.get_attribute('href'))	
-	print(pages)
-	print(len(pages))
 	
 	for p in pages:
 		driver_page.get(p)
 		time.sleep(3)
 		locs.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/input[3]').get_attribute('value'))
-		print(locs)
-		print(len(locs))
 		streets.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/form/div[4]/div[1]').text.split('\n')[0])
-		print(streets)
 		cities.append(driver_page.find_element_by_xpath('/html/head/meta[13]').get_attribute('content').split('/')[-3].split('-')[-3])
-		print(cities)
 		states.append(driver_page.find_element_by_xpath('/html/head/meta[13]').get_attribute('content').split('/')[-3].split('-')[-2])
-		print(states)
 		zips.append(driver_page.find_element_by_xpath('/html/head/meta[13]').get_attribute('content').split('/')[-3].split('-')[-1])
-		print(zips)
 		ids.append(driver_page.find_element_by_xpath('/html/head/meta[13]').get_attribute('content').split('/')[-2])
-		print(ids)
 		try:
 			phones.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[4]').text)
 		except:
 			phones.append("<MISSING>")
-		print(phones)
 		timing.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[1]').text
 		+' '+driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[2]').text.replace('\n',' '))
-		print(timing)
 		types.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul').text)
-		print(types)
 		lats.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/input[1]').get_attribute('value'))
-		print(lats)
 		longs.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/input[2]').get_attribute('value'))
-		print(longs)
-
 			
 						
 	return_main_object = []	
