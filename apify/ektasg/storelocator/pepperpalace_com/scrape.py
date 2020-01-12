@@ -45,7 +45,7 @@ def fetch_data():
     data=[]
     locationelements_1=driver.find_elements_by_xpath("//h4//a")
     locationele=list(filter(lambda x: (not(x.text == '')) , locationelements_1))
-    locationURLs=[i.get_attribute('href') for i in locationele]
+    locationURLs=list(set([i.get_attribute('href') for i in locationele]))
     locationText=[i.text  for i in locationele]
     canadaElements=len(driver.find_elements_by_xpath("//h4[preceding-sibling::p]//a"))
     count=0
@@ -55,18 +55,25 @@ def fetch_data():
             print("coming soon!")
             continue
         if i == "https://pepperpalace.com/pages/new-orleans-chartres":
+            print("new-orleans-chartres")
             driver.get(i)   
             text=driver.find_element_by_class_name("rte").text.replace('\u200b',' ').replace('\u00A0',' ')
             fullcontent.append(text)
             count=count+1
             print(count)
+            #print(text)
             continue
         driver.get(i)   
         text=driver.find_element_by_xpath("//meta[@name='description']").get_attribute('content').replace('\u200b',' ').replace('\u00A0',' ')
         fullcontent.append(text)
         count=count+1
         print(count)
+ 
     del locationURLs[locationURLs.index("https://pepperpalace.com/pages/new-orleans-decatur-street")]
+
+    if "https://pepperpalace.com/pages/new-orleans-decatur-street" in  locationURLs:
+        print("something's wrong!!!!!!!!!1111")
+    print(len(locationURLs))
     for store in range(len(fullcontent)):        
         loc_name_splitter=re.search(r'\d+', fullcontent[store]).group()
     
@@ -174,13 +181,11 @@ def fetch_data():
         else:
           city=addr.split(" ")[-1].replace(",","")
           #print("!!!!!!!!!!!!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        street_addr=addr.replace(city,"").strip()
-
-        #print(street_addr)
-        #print(city)
-        #print(state)
-        #print(zipcode)
-        #print("*******************************")
+        street_addr=addr.replace(city,"").strip().strip(",").strip()
+        if locationURLs[store] =="https://pepperpalace.com/pages/new-orleans-chartres":
+            #uff = street_addr.split(" ")[-1]
+            street_addr=street_addr.replace("New","")
+            city= "New "+city.strip()
         data.append([
              'https://pepperpalace.com/',
              locationURLs[store],
