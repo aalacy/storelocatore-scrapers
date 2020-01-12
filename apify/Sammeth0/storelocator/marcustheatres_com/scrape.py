@@ -52,32 +52,22 @@ def fetch_data():
 	link=driver.find_elements_by_class_name('theatre-listing__info')
 	for i in link:
 		locs.append(i.find_element_by_tag_name("a").text)
-		print(locs)
 		streets.append(i.find_element_by_xpath('/html/body/div/div/section/section/div[1]/div[3]/section[1]/div/div[2]/div[1]').text.split('\n')[0])
-		print(streets)
 		cities.append(i.find_element_by_xpath('/html/body/div/div/section/section/div[1]/div[3]/section[1]/div/div[2]/div[1]').text.split('\n')[1].split(',')[0])
-		print(cities)
 		states.append(i.find_element_by_xpath('/html/body/div/div/section/section/div[1]/div[3]/section[1]/div/div[2]/div[1]').text.split(', ')[1].split(' ')[0])
-		print(states)
 		zips.append(i.find_element_by_xpath('/html/body/div/div/section/section/div[1]/div[3]/section[1]/div/div[2]/div[1]').text.split(', ')[1].split(' ')[1].split('\n')[0])
-		print(zips)
 		try:
 			phones.append(i.find_element_by_xpath('/html/body/div/div/section/section/div[1]/div[3]/section[1]/div/div[2]/div[1]').text.split('\n')[3])
 		except:
 			phones.append("<MISSING>")
-		print(phones)
 		types.append(i.find_element_by_xpath('/html/body/div/div/section/section/div[1]/div[3]/section[1]/div/div[1]/a/div/p').text)
-		print(types)
 		loc_page=i.find_element_by_xpath('/html/body/div/div/section/section/div[1]/div[3]/section[1]/div/div[2]/div[1]/div[2]/div[1]/a').get_attribute('href')
 		pages.append(loc_page)
-		print(loc_page)
 		driver_page.get(loc_page)
 		time.sleep(3)
 		lat_long_link=driver_page.find_element_by_xpath('/html/body/div/div/section/section/div[2]/div[1]/div/div[1]/a').get_attribute('href')
 		lats.append(lat_long_link.split('loc:')[1].split('+')[0])
-		print(lats)
 		longs.append(lat_long_link.split('+')[1])
-		print(longs)
 			
 						
 	return_main_object = []	

@@ -10,3 +10,5 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 address contains state name,invalid zip same lat & lng this website
+
+It takes a while but the data coming fine

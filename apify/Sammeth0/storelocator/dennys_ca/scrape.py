@@ -52,36 +52,25 @@ def fetch_data():
 	link=driver.find_element_by_class_name('locations-list__items')
 	links=link.find_elements_by_tag_name("a")
 	for l in links:
-		pages.append(l.get_attribute('href'))
-	print(pages)
-		
+		pages.append(l.get_attribute('href'))		
 			
 	for p in pages:
 		driver_page.get(p)
 		time.sleep(3)
 		locs.append(driver_page.find_element_by_xpath('/html/body/div/section/div[1]/div/h1').text)
-		print(locs)
 		streets.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[1]').text)
-		print(streets)
 		cities.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[2]').text.split(',')[0])
-		print(cities)
 		states.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[2]').text.split(',')[1])
-		print(states)
 		zips.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[3]').text)
-		print(zips)
 		try:
 			phones.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[1]/dl/dd/a').text)
 		except:
 			phones.append("<MISSING>")
-		print(phones)
 		lat_long_link=driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/a').get_attribute('href')
 		driver_page.get(lat_long_link)
 		time.sleep(3)
 		lats.append(driver_page.find_element_by_xpath('/html/head/meta[8]').get_attribute('content').split('center=')[1].split('%2C')[0])
-		print(lats)
-		longs.append(driver_page.find_element_by_xpath('/html/head/meta[8]').get_attribute('content').split('%2C')[1].split('&zoom')[0])
-		print(longs)
-			
+		longs.append(driver_page.find_element_by_xpath('/html/head/meta[8]').get_attribute('content').split('%2C')[1].split('&zoom')[0])			
 						
 	return_main_object = []	
 	for l in range(len(locs)):

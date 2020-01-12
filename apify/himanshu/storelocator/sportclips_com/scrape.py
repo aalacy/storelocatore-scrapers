@@ -18,37 +18,34 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-# def request_wrapper(url,method,headers,data=None):
-#     request_counter = 0
-#     if method == "get":
-#         while True:
-#             try:
-#                 r = requests.get(url,headers=headers)
-#                 return r
-#                 break
-#             except:
-#                 time.sleep(2)
-#                 request_counter = request_counter + 1
-#                 if request_counter > 10:
-#                     return None
-#                     break
-#     elif method == "post":
-#         while True:
-#             try:
-#                 if data:
-#                     r = requests.post(url,headers=headers,data=data)
-#                 else:
-#                     r = requests.post(url,headers=headers)
-#                 return r
-#                 break
-#             except:
-#                 time.sleep(2)
-#                 request_counter = request_counter + 1
-#                 if request_counter > 10:
-#                     return None
-#                     break
-#     else:
-#         return None
+def request_wrapper(url,method,headers,data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:            
+                r = requests.post(url,headers=headers,data=data)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
 
 def fetch_data():
     cords = sgzip.coords_for_radius(100)
@@ -63,59 +60,85 @@ def fetch_data():
     for cord in cords:
         base_url = "https://sportclips.com"
         r_data = '{"strLocation":"1","strLat":' + str(cord[0]) + ',"strLng":' + str(cord[1]) + ',"strRadius":"100","country":"US"}'
-        r = requests.post("https://sportclips.com/CustomWeb/StoreLocator.asmx/SearchByLocation", headers=r_headers,data=r_data)
+        r = request_wrapper("https://sportclips.com/CustomWeb/StoreLocator.asmx/SearchByLocation", "post", headers=r_headers,data=r_data)
         if r == None:
             continue
         data = json.loads(r.json()["d"])["Results"]
         for i in data:
             page_url = i['Url']
-            if "https://www.haircutmenfivetownplazaspringfieldma.com/" or "https://www.haircutmendorvalcrossingwestoakvilleon.ca/" in page_url: 
-                continue
             location_name = i['Title']
             if "COMING SOON!" in i['Address']:
                 continue
+            # print(page_url)
             address_list = i['Address'].split('|')
-            print(page_url)
-            print(address_list)
-            if len(address_list) == 5:
-                street_address = " ".join(address_list[:2]).replace("\t",'')
-                city = address_list[2].split(',')[0]
-                state = i['ExtCode'][:2]
-                zipp = address_list[2].split(',')[1].split(' ')[-1]
-                phone = address_list[-1]
-            elif len(address_list) == 3:
-                street_address = address_list[0].replace("\t",'')
-                city = address_list[1].split(',')[0]
-                state = i['ExtCode'][:2]
-                zipp = address_list[1].split(',')[1].split(' ')[-1]
-                phone = address_list[-1]
-            else:
-                street_address = address_list[0].replace("\t",'')
-                state = i['ExtCode'][:2]
-                try:
-                    city = address_list[1].split(',')[0]               
-                    zipp = address_list[1].split(',')[1].split(' ')[-1]
-                except:
+            # print(address_list)
+            if ".com" in i['Url']:
+                if len(address_list) == 5:
+                    street_address = " ".join(address_list[:2]).replace("\t",'')
                     city = address_list[2].split(',')[0]
+                    
                     zipp = address_list[2].split(',')[1].split(' ')[-1]
-                phone = address_list[-1]
+                
+                elif len(address_list) == 3:
+                    street_address = address_list[0].replace("\t",'')
+                    city = address_list[1].split(',')[0]
+                    zipp = address_list[1].split(',')[1].split(' ')[-1]
+                    
+                else:
+                    street_address = address_list[0].replace("\t",'') 
+                    try:
+                        city = address_list[1].split(',')[0]               
+                        zipp = address_list[1].split(',')[1].split(' ')[-1]
+                    except:
+                        city = address_list[2].split(',')[0]
+                        zipp = address_list[2].split(',')[1].split(' ')[-1]
+            else:
+                if len(address_list) == 5:
+                    street_address = " ".join(address_list[:2]).replace("\t",'')
+                    city = address_list[2].split(',')[0]
+                    
+                    zipp = ' '.join(address_list[2].split(',')[1].split(' ')[-2:])
+                
+                elif len(address_list) == 3:
+                    street_address = address_list[0].replace("\t",'')
+                    city = address_list[1].split(',')[0]
+                    zipp = ' '.join(address_list[1].split(',')[1].split(' ')[-2:])
+                    
+                else:
+                    street_address = address_list[0].replace("\t",'') 
+                    try:
+                        city = address_list[1].split(',')[0]               
+                        zipp = ' '.join(address_list[1].split(',')[1].split(' ')[-2:])
+                    except:
+                        city = address_list[2].split(',')[0]
+                        zipp = ' '.join(address_list[2].split(',')[1].split(' ')[-2:])
 
+            phone = address_list[-1]
+            state = i['ExtCode'][:2]
             latitude = i['Lat']
             longitude = i['Long']
             location_type = "HairSalon"
-            
-            r1 = requests.get(page_url, headers=r_headers)
-            soup1 = BeautifulSoup(r1.text, "lxml")
-            
-    
-            if ".com" in i['Url']:
-                country_code = "US"
-                hours_of_operation = "".join(soup1.find("table").text.strip())
+            try:
+                r1 = requests.get(page_url, headers=r_headers)
+          
+             
+                soup1 = BeautifulSoup(r1.text, "lxml")
                 
-               
-            else:
-                country_code = "CA"
-                hours_of_operation = " ".join(list(soup1.find("div",{"class":"container second"}).find("div",{"class":"wtp-article"}).stripped_strings)).replace("STORE HOURS",'')
+        
+                if ".com" in i['Url']:
+                    country_code = "US"
+                    hours_of_operation = "".join(soup1.find("table").text.strip())
+                    
+                
+                else:
+                    country_code = "CA"
+                    hours = ''
+                    for i in range(0,7):
+                        hours = hours+" "+soup1.find_all("div",{"class":"wtp-responsive-row row cols-25-75"})[i].text.strip()
+                    hours_of_operation = hours
+        
+            except:
+                hours_of_operation = "<MISSING>"
         
             store = []
             store.append(base_url)
@@ -140,8 +163,8 @@ def fetch_data():
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-            print("data == "+str(store))
-            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # print("data == "+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
 
 def scrape():

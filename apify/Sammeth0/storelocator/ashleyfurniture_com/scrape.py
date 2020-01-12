@@ -57,7 +57,6 @@ def fetch_data():
 	
 	for a in range(len(links)):
 		pages_url.append(links[a].get_attribute('href'))
-		print(pages_url)
 		
 	for u in pages_url:
 		driver_page.get(u)
@@ -65,39 +64,25 @@ def fetch_data():
 		stores=driver_page.find_elements_by_xpath("/html/body/div[1]/div[2]/div/div[1]/div/div[4]/div")
 		for s in stores:
 			pages.append(s.find_element_by_tag_name("a").get_attribute('href'))
-			print(pages)
 			
 	for p in pages:
 		driver_page.get(p)
 		time.sleep(5)
 		locs.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1').text.split(',')[0])
-		print(locs)
-		print(len(locs))
 		streets.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[1]/p[1]').text)
-		print(streets)
 		cities.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[1]/p[2]').text.split(',')[0])
-		print(cities)
 		states.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1/span').text.split(',')[1])
-		print(states)
 		zips.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[1]/p[2]').text.split(' ')[-1])
-		print(zips)
 		ids.append(str(p).split('/')[-2])
-		print(ids)
 		try:
 			phones.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[3]/a').text)
 		except:
 			phones.append("<MISSING>")
-		print(phones)
 		timing.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]/div[1]/div/div[2]/div[4]').text.replace('\n',' '))
-		print(timing)
 		types.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1').text.split(',')[0].split(' ')[0]
 		+' '+driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[2]/div/h1').text.split(',')[0].split(' ')[1])
-		print(types)
 		lats.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]').get_attribute('data-lat'))
-		print(lats)
-		longs.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]').get_attribute('data-lng'))
-		print(longs)
-			
+		longs.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[2]/div/div[1]/div/div[3]').get_attribute('data-lng'))			
 						
 	return_main_object = []	
 	for l in range(len(locs)):

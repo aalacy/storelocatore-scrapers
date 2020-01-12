@@ -5,6 +5,7 @@ import re
 import json
 import sgzip
 import phonenumbers
+import time
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -12,11 +13,42 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
+def request_wrapper(url, method, headers, data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url, headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url, headers=headers, data=data)
+                else:
+                    r = requests.post(url, headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
 
 def fetch_data():
     return_main_object = []
@@ -48,10 +80,8 @@ def fetch_data():
         hours_of_operation = ""
         base_url = "https://www.owensmarket.com"
         location_url= "https://www.owensmarket.com/stores/search?searchText="+str(zip_code)
-        try:
-            r = requests.get(location_url, headers=headers)
-        except:
-            pass
+        r = request_wrapper(location_url,'get',headers=headers)
+        # r = requests.get(location_url, headers=headers)
         soup= BeautifulSoup(r.text,"lxml")
         script = soup.find(lambda tag: (tag.name == "script") and "window.__INITIAL_STATE__" in tag.text).text
         str_json = script.split("JSON.parse('")[1].split("')")[0].replace("\\","\\\\")
@@ -77,7 +107,7 @@ def fetch_data():
                 store = []
                 store.append(base_url)
                 store.append(location_name if location_name else "<MISSING>") 
-                store.append(street_address.replace('None','').strip()  if street_address.replace('None','').strip()  else "<MISSING>")
+                store.append(street_address if street_address else "<MISSING>")
                 store.append(city if city else "<MISSING>")
                 store.append(state if state else "<MISSING>")
                 store.append(zipp if zipp else "<MISSING>")
@@ -125,7 +155,7 @@ def fetch_data():
                 store = []
                 store.append(base_url)
                 store.append(location_name if location_name else "<MISSING>") 
-                store.append(street_address.replace('None','').strip() if street_address.replace('None','').strip()  else "<MISSING>")
+                store.append(street_address if street_address else "<MISSING>")
                 store.append(city if city else "<MISSING>")
                 store.append(state if state else "<MISSING>")
                 store.append(zipp if zipp else "<MISSING>")
