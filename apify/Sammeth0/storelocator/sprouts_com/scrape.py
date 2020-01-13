@@ -59,13 +59,13 @@ def fetch_data():
     driver.get(location_url)
     res=[]
     all_states = driver.find_element_by_id("wpv-view-layout-4479").find_elements_by_tag_name("a")
-    print(len(all_states))    
+    #print(len(all_states))    
     for sta in all_states:
         driver_page.get(sta.get_attribute('href'))
-        print(sta.get_attribute('href'))
+        #print(sta.get_attribute('href'))
         sts= driver_page.find_element_by_id("wpv-view-layout-4514").find_elements_by_tag_name("div")
         del sts[0]
-        print(len(sts))
+        #print(len(sts))
         for st in sts:
           if "Coming Soon" in st.text:
                    print(st.find_element_by_tag_name('a').text)
