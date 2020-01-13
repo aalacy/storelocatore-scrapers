@@ -79,7 +79,7 @@ def fetch_data():
         r2 = None
         try :
             r2 = session.get(loc, headers=headers)
-        except ConnectionError:
+        except requests.exceptions.ConnectionError:
             print('Failed to connect to ' + loc)
             if attempts.get(loc, 0) >= 3:
                 print('giving up on ' + loc)
