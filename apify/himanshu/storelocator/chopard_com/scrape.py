@@ -96,8 +96,8 @@ def fetch_data():
                          store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
                 store = ["<MISSING>" if x == "" or x == None or x == "." else x for x in store]
 
-                print("data = " + str(store))
-                print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+               # print("data = " + str(store))
+               # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 return_main_object.append(store)
         except:
