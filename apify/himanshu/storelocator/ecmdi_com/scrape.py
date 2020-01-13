@@ -22,7 +22,7 @@ def fetch_data():
         }
     base_url = "https://www.ecmdi.com"
     r = requests.get("https://www.ecmdi.com/storelocator/index/storeSearch/?lat=40.7226698&lng=-73.51818329999998&radius=12000",headers=headers)
-    print(r.text)
+    #print(r.text)
     data = r.json()["stores"]
     return_main_object = []
     for i in range(len(data)):

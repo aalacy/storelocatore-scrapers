@@ -35,7 +35,7 @@ def fetch_data():
     base_url = "https://www.comerica.com"
 
     while zip_code:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
         location_name =''
         try:
