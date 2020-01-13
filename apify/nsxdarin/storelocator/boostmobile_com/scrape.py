@@ -26,8 +26,8 @@ def fetch_data():
     locations = []
     coord = search.next_zip()
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
-        print('%s...' % coord)
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print('%s...' % coord)
         url = 'https://boostmobile.nearestoutlet.com/cgi-bin/jsonsearch-cs.pl?showCaseInd=false&brandId=bst&results=50&zipcode=' + coord + '&page=1'
         r = session.get(url, headers=headers)
         array = json.loads(r.content)
@@ -64,7 +64,7 @@ def fetch_data():
                 ids.append(store)
                 yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         if len(array) <= MAX_RESULTS:
-            print("max distance update")
+            #print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
