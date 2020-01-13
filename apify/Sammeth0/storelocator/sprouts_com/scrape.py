@@ -57,36 +57,19 @@ def fetch_data():
     driver_url = get_driver()
     time.sleep(3)
     driver.get(location_url)
-    soons = driver.find_element_by_id("wpv-view-layout-12233-TCPID4476").find_elements_by_tag_name("a")
-    coming_soons=[]
-    for tag in soons:
-        coming_soons.append(tag.get_attribute('href'))
+    res=[]
+    all_states = driver.find_element_by_id("wpv-view-layout-4479").find_elements_by_tag_name("a")
+    print(len(all_states))    
+    for sta in all_states:
+        driver_page.get(sta.get_attribute('href'))
+        sts= driver_page.find_element_by_class_name("grid-x grid-padding-x grid-margin-y").find_element_by_tag_name("div")
+        print(sta.get_attribute('href'),len(sts))
+        for st in sts:
+          if st.find_elements_by_class_name("opening-date red") !=[]:
+                   print(sts.find('a').text)
+          else:
+               res.append(st.find('a').get_attribute('href'))
 
-    print(len(coming_soons))
-    locations = driver.find_elements_by_tag_name("a")
-    for a in range(34, len(locations) - 25):
-        link=locations[a].get_attribute('href')
-        if str(link) != "None":
-           pages_url.append(link)
-
-    for u in pages_url:
-        #print(u)
-        driver_page.get(u)
-        time.sleep(3)
-        stores = driver_page.find_elements_by_class_name("cell medium-4 large-3 list-by-state")
-        for s in stores:
-            if s.find_elements_by_class_name("opening-date red") !=[]:
-               print(s.find_elements_by_tag_name("a").text)
-               continue
-            if u.find('stores') != -1:
-                url = u.split('stores')[0] + 'store' + u.split('stores')[1]
-                if str(s.get_attribute('href')).find(url) != -1:
-                    link=str(s.get_attribute('href'))[str(s.get_attribute('href')).find(url):]
-                    if link not in coming_soons:
-                       urls.append(link)
-    print(len(urls))
-    [res.append(x) for x in urls if x not in res]
-    print(len(res))
     for u in res:
         driver_url.get(u)
         print(u)
