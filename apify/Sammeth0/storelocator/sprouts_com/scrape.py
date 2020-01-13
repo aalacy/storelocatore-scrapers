@@ -59,17 +59,19 @@ def fetch_data():
     driver.get(location_url)
     res=[]
     all_states = driver.find_element_by_id("wpv-view-layout-4479").find_elements_by_tag_name("a")
-    print(len(all_states))    
+    #print(len(all_states))    
     for sta in all_states:
         driver_page.get(sta.get_attribute('href'))
-        sts= driver_page.find_element_by_class_name("grid-x grid-padding-x grid-margin-y").find_element_by_tag_name("div")
-        print(sta.get_attribute('href'),len(sts))
+        #print(sta.get_attribute('href'))
+        sts= driver_page.find_element_by_id("wpv-view-layout-4514").find_elements_by_tag_name("div")
+        del sts[0]
+        #print(len(sts))
         for st in sts:
-          if st.find_elements_by_class_name("opening-date red") !=[]:
-                   print(sts.find('a').text)
+          if "Coming Soon" in st.text:
+                   print(st.find_element_by_tag_name('a').text)
           else:
-               res.append(st.find('a').get_attribute('href'))
-
+               res.append(st.find_element_by_tag_name('a').get_attribute('href'))
+    print(len(res))
     for u in res:
         driver_url.get(u)
         print(u)
