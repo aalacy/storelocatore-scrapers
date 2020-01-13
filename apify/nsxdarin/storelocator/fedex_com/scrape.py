@@ -25,7 +25,8 @@ def fetch_data():
     locs = []
     url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    for raw_line in r.iter_lines():
+        line = str(raw_line)
         if 'LOC_ID' in line:
             items = line.split('{"LOC_ID":"')
             for item in items:
@@ -35,7 +36,8 @@ def fetch_data():
                         locs.append(lid)
     url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-120.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    for raw_line in r.iter_lines():
+        line = str(raw_line)
         if 'LOC_ID' in line:
             items = line.split('{"LOC_ID":"')
             for item in items:
@@ -45,7 +47,8 @@ def fetch_data():
                         locs.append(lid)
     url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-157.9859414%2C+20.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    for raw_line in r.iter_lines():
+        line = str(raw_line)
         if 'LOC_ID' in line:
             items = line.split('{"LOC_ID":"')
             for item in items:
@@ -55,7 +58,8 @@ def fetch_data():
                         locs.append(lid)
     url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-105.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    for raw_line in r.iter_lines():
+        line = str(raw_line)
         if 'LOC_ID' in line:
             items = line.split('{"LOC_ID":"')
             for item in items:
@@ -65,7 +69,8 @@ def fetch_data():
                         locs.append(lid)
     url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-157.9859414%2C+55.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
     r = session.get(url, headers=headers)
-    for line in r.iter_lines():
+    for raw_line in r.iter_lines():
+        line = str(raw_line)
         if 'LOC_ID' in line:
             items = line.split('{"LOC_ID":"')
             for item in items:
