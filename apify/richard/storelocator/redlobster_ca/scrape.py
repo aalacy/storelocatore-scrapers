@@ -100,7 +100,7 @@ class Scraper(Scrape):
             ])
 
             # Country
-            country = 'US'
+            country = 'CA'
 
             # Store data
             locations_ids.append(location_id)

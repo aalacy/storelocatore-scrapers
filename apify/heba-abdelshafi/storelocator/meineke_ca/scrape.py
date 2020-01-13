@@ -36,7 +36,7 @@ def fetch_data():
     for loc in city_urls:
         driver.get(loc)
         sleep(3)
-        locations.append([i.get_attribute('ng-click')[i.get_attribute('ng-click').find("(")+1:i.get_attribute('ng-click').find("rawSemCamPhone")].replace(' ','').replace('\'','').split(',') for i in driver.find_elements_by_xpath("//div[contains(@ng-click, 'vm.reloadMap')]")])
+        locations.append([i.get_attribute('ng-click')[i.get_attribute('ng-click').find("(")+1:i.get_attribute('ng-click').find("rawSemCamPhone")].replace('\'','').split(',') for i in driver.find_elements_by_xpath("//div[contains(@ng-click, 'vm.reloadMap')]")])
         data['hours_of_operation'].append([i.text.replace('Store Hours\n','') for i in driver.find_elements_by_xpath('//div[@class="segment-store"]')])
         data['page_url'].append([i.get_attribute('href') for i in driver.find_elements_by_xpath('//div[@class="segment-store-info"]/a')])
     locations=list(itertools.chain.from_iterable(locations))
@@ -48,9 +48,9 @@ def fetch_data():
         data['location_name'].append('Meineke')
         data['country_code'].append('CAN')
         data['location_type'].append('Car Care Center')
-        data['latitude'].append(i[0])
-        data['longitude'].append(i[1])
-        data['store_number'].append(i[2])
+        data['latitude'].append(i[0].strip())
+        data['longitude'].append(i[1].strip())
+        data['store_number'].append(i[2].strip())
         data['city'].append(i[3].split(':')[-1])
 
         if len(i)==13:

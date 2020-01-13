@@ -29,17 +29,17 @@ def fetch_data():
     cities_url=[i.get_attribute('href') for i in driver.find_elements_by_xpath('//div[@class="col-7"]/p[@class="store-title"]/a')]
             
     for store in cities_url:
-        driver.get(store)
-        sleep(5)
-            
-        store_location=driver.find_element_by_xpath('//div[@class="address"]').text
-        store_dir=driver.find_element_by_xpath('//a[@class="btn btn-info btn-sm"][2]').get_attribute('href')
-        
+        driver.get(store)                    
         try:
             driver.find_element_by_xpath('//span[@aria-hidden="true"]').click()
         except:
             pass
-
+        
+        
+        sleep(5)
+        store_location=driver.find_element_by_xpath('//div[@class="address"]').text
+        store_dir=driver.find_element_by_xpath('//a[@class="btn btn-info btn-sm"][2]').get_attribute('href')
+        
         data['hours_of_operation'].append(driver.find_element_by_xpath('//ul[@class="list list-space-sm"]').text)
         data['page_url'].append(store)
         data['locator_domain'].append('https://www.lowes.ca/stores')       
@@ -53,11 +53,6 @@ def fetch_data():
         data['location_type'].append('Store')        
         data['longitude'].append(store_dir.split('=')[-1].split(',')[1])
         data['latitude'].append(store_dir.split('=')[-1].split(',')[0])
-            
-        try:
-            driver.find_element_by_xpath('//span[@aria-hidden="true"]').click()
-        except:
-            continue
         
     driver.close()
     return data

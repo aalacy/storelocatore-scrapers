@@ -37,7 +37,6 @@ def fetch_data():
         country = ''
         typ = ''
         store = '<MISSING>'
-        print('Pulling Location %s...' % loc)
         website = 'chick-fil-a.com'
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
