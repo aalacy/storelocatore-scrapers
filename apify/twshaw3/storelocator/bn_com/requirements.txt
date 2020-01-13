@@ -6,3 +6,4 @@ zipcodes==1.0.5
 futures
 sgzip
 sgrequests
+tenacity
