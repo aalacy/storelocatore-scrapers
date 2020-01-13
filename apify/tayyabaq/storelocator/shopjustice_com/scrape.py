@@ -14,7 +14,9 @@ def write_output(data):
             ["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code",
              "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
 
-        writer.writerows(data)
+        for row in data:
+            writer.writerow(row)
+#         writer.writerows(data)
 
 
 data_list = []
@@ -73,7 +75,6 @@ def fetch_data():
                     add1 = soup1.find("span", class_="c-address-street-2")
                     addr1 = add1.text
                     street = addr + addr1
-                    print(street)
 
                 except Exception as e:
                     street = "<MISSING>"
