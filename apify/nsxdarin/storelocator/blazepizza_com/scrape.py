@@ -25,7 +25,7 @@ def fetch_data():
                 if '"coming_soon":false' in item:
                     website = 'blazepizza.com'
                     typ = 'Restaurant'
-                    hours = item.split('"hours":"')[1].split('"')[0]
+                    hours = item.split('"hours":"')[1].split('","')[0]
                     cleanr = re.compile('<.*?>')
                     hours = re.sub(cleanr, '', hours)
                     name = item.split('"title":"')[1].split('"')[0]
@@ -49,6 +49,11 @@ def fetch_data():
                         country = 'CA'
                     hours = hours.replace('\u2013','-').replace('&ndash;','-').replace('\\r','').replace('\\n','').replace('\\t','')
                     hours = hours.replace('\u00a0',' ').replace('am','am ').replace('pm','pm ').replace('  ',' ').strip()
+                    hours = hours.replace('&nbsp;',' ').strip().replace('  ',' ')
+                    if 'day' not in hours.lower():
+                        hours = 'Daily: ' + hours
+                    hours = hours.replace(' &am p; ',' & ')
+                    hours = hours.replace('&am p;','&').replace(' -','-').replace('- ','-')
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
