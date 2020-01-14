@@ -77,9 +77,9 @@ def fetch_data():
         driver.get(link)
         driver.implicitly_wait(10)
 
-        location_name = driver.find_element_by_xpath('//span[@itemprop="name"]').text
+        location_name = driver.find_element_by_css_selector('div.Hero-title').text
         street_address = driver.find_element_by_css_selector('span.c-address-street').text
-        city = driver.find_element_by_css_selector('span.c-address-city').text
+        city = driver.find_element_by_css_selector('span.c-address-city').text.replace(',', '').strip()
         state = driver.find_element_by_css_selector('abbr.c-address-state').text
         zip_code = driver.find_element_by_css_selector('span.c-address-postal-code').text
 

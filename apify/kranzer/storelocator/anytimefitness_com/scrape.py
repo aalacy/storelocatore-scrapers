@@ -24,7 +24,7 @@ class Scrape(base.Spider):
             js_ = sel.xpath('(//script[@type="application/ld+json"])[2]/text()')
             if js_:
                 json_body = json.loads(js_[0])
-                if not sel.xpath('//h2[contains(text(), "Coming")]'):
+                if not sel.xpath('//h2[contains(text(), "Coming")]') and 'coming' not in json_body['name'].strip().lower():
                     i.add_value('location_name', json_body['name'].strip())
                     i.add_value('phone', json_body['telephone'])
                     i.add_value('location_type', json_body['@type'])
@@ -37,6 +37,8 @@ class Scrape(base.Spider):
                     hours_ = ' '.join(sel.xpath('//p[@class="hours"]/text()'))+'; '
                     if hours:
                         hours_ += w3lib.html.remove_tags(lxml.html.tostring(hours[0]).decode('utf8').replace('</li><li>', ', ').replace('</li></ul><li>', '; '))
+                    if hours_[0] == ';':
+                        hours_ = hours_[:1]
                     i.add_value('hours_of_operation', hours_)
                     i.add_xpath('latitude', '//div[@class="marker"]/@data-lat', base.get_first)
                     i.add_xpath('longitude', '//div[@class="marker"]/@data-lng', base.get_first)

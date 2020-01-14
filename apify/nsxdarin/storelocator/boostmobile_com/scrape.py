@@ -1,12 +1,18 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import sgzip
 import json
 
-session = requests.Session()
+search = sgzip.ClosestNSearch()
+search.initialize()
+
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
+
+MAX_RESULTS = 20
+MAX_DISTANCE = 5.0
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,9 +23,12 @@ def write_output(data):
 
 def fetch_data():
     ids = []
-    for code in sgzip.for_radius(50):
-        print('Pulling Zip Code %s...' % code)
-        url = 'https://boostmobile.nearestoutlet.com/cgi-bin/jsonsearch-cs.pl?showCaseInd=false&brandId=bst&results=50&zipcode=' + code + '&page=1'
+    locations = []
+    coord = search.next_zip()
+    while coord:
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print('%s...' % coord)
+        url = 'https://boostmobile.nearestoutlet.com/cgi-bin/jsonsearch-cs.pl?showCaseInd=false&brandId=bst&results=50&zipcode=' + coord + '&page=1'
         r = session.get(url, headers=headers)
         array = json.loads(r.content)
         rc = 0
@@ -51,9 +60,15 @@ def fetch_data():
                 phone = '<MISSING>'
             if 'see store' in hours.lower():
                 hours = '<MISSING>'
-            if store not in ids and store != '':
+            if store not in ids and store != '' and 'Boost Mobile' in typ:
                 ids.append(store)
                 yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if len(array) <= MAX_RESULTS:
+            #print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_zip()
 
 def scrape():
     data = fetch_data()
