@@ -23,27 +23,28 @@ def fetch_data():
             items = line.split('"latitude":"')
             for item in items:
                 if '"country":"US"' in item or '"country":"CA"' in item:
-                    lat = item.split('"')[0]
-                    lng = item.split('"longitude":"')[1].split('"')[0]
-                    website = 'anytimefitness.com'
-                    hours = 'Open 24 Hours'
-                    name = item.split('"title":"')[1].split('"')[0]
-                    typ = '<MISSING>'
-                    loc = item.split('"url":"')[1].split('"')[0].replace('\\/','/')
-                    add = item.split('"address":"')[1].split('"')[0]
-                    if '"address2":"' in item:
-                        add = add + ' ' + item.split('"address2":"')[1].split('"')[0]
-                    city = item.split('"city":"')[1].split('"')[0]
-                    state = item.split('"state_abbr":"')[1].split('"')[0]
-                    country = item.split('"country":"')[1].split('"')[0]
-                    zc = item.split('"zip":"')[1].split('"')[0]
-                    try:
-                        phone = item.split('"phone":"')[1].split('"')[0]
-                    except:
-                        phone = '<MISSING>'
-                    store = item.split('"number":"')[1].split('"')[0]
-                    if country == 'US' or country == 'CA':
-                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    if '"status":3' in item:
+                        lat = item.split('"')[0]
+                        lng = item.split('"longitude":"')[1].split('"')[0]
+                        website = 'anytimefitness.com'
+                        hours = 'Open 24 Hours'
+                        name = item.split('"title":"')[1].split('"')[0]
+                        typ = '<MISSING>'
+                        loc = item.split('"url":"')[1].split('"')[0].replace('\\/','/')
+                        add = item.split('"address":"')[1].split('"')[0]
+                        if '"address2":"' in item:
+                            add = add + ' ' + item.split('"address2":"')[1].split('"')[0]
+                        city = item.split('"city":"')[1].split('"')[0]
+                        state = item.split('"state_abbr":"')[1].split('"')[0]
+                        country = item.split('"country":"')[1].split('"')[0]
+                        zc = item.split('"zip":"')[1].split('"')[0]
+                        try:
+                            phone = item.split('"phone":"')[1].split('"')[0]
+                        except:
+                            phone = '<MISSING>'
+                        store = item.split('"number":"')[1].split('"')[0]
+                        if country == 'US' or country == 'CA':
+                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
