@@ -40,7 +40,7 @@ class Scraper(Scrape):
             driver.get(f"https://stores.finishline.com/search.html?q={zip_search}")
             data = [loc.get_attribute('href') for loc in driver.find_elements_by_css_selector('a.location-card-link.location-card-link-page')]
             stores.extend(data)
-            print(f"{len(data)} locations scraped for {zip_search}")
+            print(f"{len(data)} locations scraped for {zip_search}: {sgzip.for_radius(50).index(zip_search)} / {len(sgzip.for_radius(50))}")
 
         for store in stores:
             if store not in self.seen:
