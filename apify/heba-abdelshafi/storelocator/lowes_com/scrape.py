@@ -3,6 +3,8 @@ from time import sleep
 import pandas as pd
 import itertools
 
+import json
+
 from selenium.webdriver.chrome.options import Options
 options = Options()
 options.add_argument('--headless')
@@ -46,10 +48,18 @@ def fetch_data():
         data['country_code'].append('US')
         data['store_number'].append(driver.find_element_by_xpath('//span[@aria-hidden="true"][contains(text(),"Store")]').text.split('#')[1])
         data['phone'].append(driver.find_element_by_xpath('//span[@itemprop="telephone"][contains(text(),"Main")]').text.split(':')[1])
-        data['location_type'].append(driver.find_element_by_xpath('//h3[@id="storeDescription"]').text.split()[0])
+        data['location_type'].append(driver.find_element_by_xpath('//h3[@id="storeDescription"]').text.split()[0])        
         data['hours_of_operation'].append(driver.find_element_by_xpath('//div[@aria-labelledby="storeHoursSection"]').text)
-        data['longitude'].append('<MISSING>')
-        data['latitude'].append('<MISSING>')
+        
+        page = driver.page_source
+        start = 'window.__PRELOADED_STATE__ = '
+        end   = '</script>'
+        j = page[page.find(start) + len(start):]
+        j = j[:j.find(end)]
+        j = json.loads(j)
+        
+        data['longitude'].append(j['storeDetails']['long'])
+        data['latitude'].append(j['storeDetails']['lat'])
         
         
     driver.close()

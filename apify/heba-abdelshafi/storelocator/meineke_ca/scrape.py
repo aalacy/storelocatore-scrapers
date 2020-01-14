@@ -56,7 +56,7 @@ def fetch_data():
         if len(i)==13:
             data['street_address'].append(i[4].split(':')[-1])
             data['state'].append(i[6].split(':')[-1])
-            if i[7].split(':')[-1]=='':
+            if i[7].split(':')[-1].strip()=='':
                 data['zip'].append('<MISSING>')
             else:
                 data['zip'].append(i[7].split(':')[-1])

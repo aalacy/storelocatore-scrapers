@@ -35,7 +35,7 @@ def fetch_data():
     for loc in city_urls:
         driver.get(loc)
         sleep(3)
-        locations.append([i.get_attribute('data-ng-click')[i.get_attribute('data-ng-click').find("(")+1:i.get_attribute('data-ng-click').find("rawSemCamPhone")].replace('\'','').split(',') for i in driver.find_elements_by_xpath("//div[contains(@data-ng-click, 'vm.reloadMap')]")])
+        locations.append([i.get_attribute('data-ng-click')[i.get_attribute('data-ng-click').find("(")+1:i.get_attribute('data-ng-click').find("rawSemCamPhone")].replace('\'','').replace('&#39;','`').split(',') for i in driver.find_elements_by_xpath("//div[contains(@data-ng-click, 'vm.reloadMap')]")])
         data['hours_of_operation'].append([i.text.replace('Store Hours\n','') for i in driver.find_elements_by_xpath('//div[@class="segment-store"]')])
         data['page_url'].append([i.get_attribute('href') for i in driver.find_elements_by_xpath('//div[@class="segment-store-info"]/a')]) 
         
