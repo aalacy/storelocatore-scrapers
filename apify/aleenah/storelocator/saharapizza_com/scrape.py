@@ -46,6 +46,8 @@ def fetch_data():
 
 
         addr= tds[1].text.replace("\t"," ").strip()
+        if "Catering" in tds[0].find('b').text.strip():
+            continue
         if addr=="":
             print("empty")
             cities.append("<MISSING>")
