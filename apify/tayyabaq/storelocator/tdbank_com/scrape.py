@@ -98,7 +98,10 @@ def fetch_data():
                 
             page_url = y[0]
             location_name = "<MISSING>"
-            loc_type = "<MISSING>"
+            if i['type']=="1":
+                loc_type = "ATM only"
+            else:
+                loc_type = "<MISSING>"
             country_code = "USA"
             locator_domain = "https://www.td.com"
 
