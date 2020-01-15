@@ -1,6 +1,7 @@
 from selenium import webdriver
 from time import sleep
 import pandas as pd
+import re
 
 from selenium.webdriver.chrome.options import Options
 options = Options()
@@ -40,7 +41,7 @@ def fetch_data():
         store_location=driver.find_element_by_xpath('//div[@class="address"]').text
         store_dir=driver.find_element_by_xpath('//a[@class="btn btn-info btn-sm"][2]').get_attribute('href')
         
-        data['hours_of_operation'].append(driver.find_element_by_xpath('//ul[@class="list list-space-sm"]').text)
+        data['hours_of_operation'].append(re.sub(r'([a-zA-Z]+)([1-9]+)',r'\1 \2',driver.find_element_by_xpath('//ul[@class="list list-space-sm"]').text))
         data['page_url'].append(store)
         data['locator_domain'].append('https://www.lowes.ca/stores')       
         data['street_address'].append(store_location.split('\n')[0])
