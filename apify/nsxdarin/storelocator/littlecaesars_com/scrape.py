@@ -27,9 +27,7 @@ def fetch_data():
     ids = []
     coord = search.next_zip()
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
         website = 'littlecaesars.com'
-        #print('%s...' % coord)
         url = 'https://api.cloud.littlecaesars.com/bff/api/stores?zip=' + coord
         r = session.get(url, headers=headers, verify=False)
         result_coords = []
@@ -57,7 +55,6 @@ def fetch_data():
                 ids.append(store)
                 yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         if len(array) <= MAX_RESULTS:
-            print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
