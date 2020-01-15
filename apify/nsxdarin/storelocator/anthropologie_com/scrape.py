@@ -25,7 +25,6 @@ def fetch_data():
             locs.append(lurl)
     for loc in locs:
         time.sleep(3)
-        print('Pulling Location %s...' % loc)
         website = 'anthropologie.com'
         typ = '<MISSING>'
         hours = ''
