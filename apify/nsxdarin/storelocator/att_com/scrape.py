@@ -24,7 +24,7 @@ def fetch_data():
             if count == 6:
                 locs.append(lurl)
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        #print('Pulling Location %s...' % loc)
         website = 'att.com'
         typ = 'Store'
         hours = ''
