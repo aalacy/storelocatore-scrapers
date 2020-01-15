@@ -35,7 +35,7 @@ def fetch_data():
                    'lat': str(x),
                    'lng': str(y)
                    }
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         website = 'claires.com'
         r = session.post(url, headers=headers, data=payload)
         if '"id":"' in r.content:
@@ -74,7 +74,7 @@ def fetch_data():
                 if store not in ids:
                     ids.append(store)
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        print("max distance update")
+        #print("max distance update")
         search.max_distance_update(MAX_DISTANCE)
         coord = search.next_coord()
 
