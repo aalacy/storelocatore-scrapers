@@ -1,11 +1,11 @@
 import json
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import gzip
 import os
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -47,7 +47,6 @@ def fetch_data():
                 PFound = False
                 r2 = session.get(loc, headers=headers)
                 website = 'bankofamerica.com'
-                print('Pulling Location %s...' % loc)
                 name = ''
                 add = ''
                 city = ''
