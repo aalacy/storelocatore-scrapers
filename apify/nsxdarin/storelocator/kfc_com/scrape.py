@@ -24,7 +24,6 @@ def fetch_data():
                 locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
-        print(loc)
         name = ''
         hours = ''
         add = ''
