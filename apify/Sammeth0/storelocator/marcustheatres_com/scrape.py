@@ -53,33 +53,22 @@ def fetch_data():
 	link=driver.find_elements_by_xpath('/html/body/div/div/section/section/div[1]/div[3]/section')
 	for i in link:
 		locs.append(i.text.split('\n')[1].split(',')[0])
-		print(locs)
 		streets.append(i.find_element_by_class_name('theatre-listing__info--address').text.split('\n')[0])
-		print(streets)
 		cities.append(i.find_element_by_class_name('theatre-listing__info--address').text.split('\n')[1].split(',')[0])
-		print(cities)
 		states.append(i.text.split(', ')[1].split(' ')[0])
-		print(states)
 		zips.append(i.text.split(', ')[1].split(' ')[1].split('\n')[0])
-		print(zips)
 		try:
 			phones.append(i.find_element_by_xpath('/html/body/div/div/section/section/div[1]/div[3]/section').text.split('\n')[5].split('\n')[0])
 		except:
 			phones.append("<MISSING>")
-		print(phones)
 		types.append(i.find_element_by_tag_name('p').text)
-		print(types)
 		loc_page=i.find_element_by_tag_name('a').get_attribute('href')
 		pages.append(loc_page)
-		print(loc_page)
 		driver_page.get(loc_page)
 		time.sleep(5)
 		lat_long_link=driver_page.find_element_by_xpath('/html/body/div/div/section/section/div[2]/div[1]/div/div[1]/a').get_attribute('href')
 		lats.append(lat_long_link.split('loc:')[1].split('+')[0])
-		print(lats)
-		longs.append(lat_long_link.split('+')[1])
-		print(longs)
-			
+		longs.append(lat_long_link.split('+')[1])			
 						
 	return_main_object = []	
 	for l in range(len(locs)):
