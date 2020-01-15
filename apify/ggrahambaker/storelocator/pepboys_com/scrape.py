@@ -32,7 +32,6 @@ def fetch_data():
         else:
             state_list.append(link)
 
-
     for state in state_list:
         page = requests.get(state)
         assert page.status_code == 200
@@ -61,7 +60,7 @@ def fetch_data():
 
     all_store_data = []
 
-    for i, link in enumerate(link_list[:10]):
+    for i, link in enumerate(link_list):
         if '..' in link:
             link = link.replace('../', to_scrape)
         page = requests.get(link)

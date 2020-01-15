@@ -42,7 +42,6 @@ def fetch_data():
         if len(link) > 38:
             
             if 'brooklyn.html' in link:
-                print('appended!!!!')
                 city_list.append(link)
             else:
                 link_list.append(link)
@@ -78,19 +77,14 @@ def fetch_data():
     all_store_data = []
     for link in link_list:
         driver.get(link)
-        print(link)
         driver.implicitly_wait(10)
         is_bed = False
         try:
             lat = driver.find_element_by_xpath('//meta[@itemprop="latitude"]').get_attribute('content')
         except NoSuchElementException:
             time.sleep(5)
-            print('splet....')
-            print(driver.current_url)
             if 'bedbathandbeyond' in driver.current_url:
-                print('yayayayayayay')
-                print()
-                print()
+       
                 is_bed = True
             else:
                 continue
@@ -99,7 +93,6 @@ def fetch_data():
             hours = driver.find_element_by_id('store-hours').text.replace('Store Hours', '').replace('/n', ' ')
             
             hours = ' '.join(hours.split())
-            print(hours)
             lat = '<MISSING>'
             longit = '<MISSING>'
 
