@@ -88,24 +88,33 @@ def fetch_data():
 
 
         for i, link in enumerate(link_list):
+            
             driver.get(link)
     
             driver.implicitly_wait(10)
             
-            main = driver.find_element_by_css_selector('div.details')
-            location_name = main.find_element_by_css_selector('h3').text
-            phone_number = main.find_element_by_css_selector('a.link_phonenumber').text.strip()
-            if phone_number == '':
-                phone_number = '<MISSING>'
-            
+            main = driver.find_element_by_css_selector('div.location')
+            try:
+                location_name = main.find_element_by_css_selector('h1').text
+                off = 0
+            except NoSuchElementException:
+                location_name = main.find_element_by_css_selector('h3').text
+                off = 1
 
-            if 'canada' in url:
+            conts = main.find_elements_by_css_selector('li')
+            phone_number = conts[0 + off].text
+
+            addy = conts[1 + off].text
+
+
+            if '/ca/' in url:
                 country_code = 'CA'
-                addy = driver.find_elements_by_css_selector('div.content-holder')[2].text.split('\n')
+                addy = addy.split('\n')
+                
                 street_address, city, state, zip_code = parse_can_addy(addy)
             else:
                 country_code = 'US'
-                addy = driver.find_elements_by_css_selector('div.content-holder')[2].text.replace('\n', ' ')
+                
 
                 if '1433 B (68 Place) Highway 68 North' in addy:
                     street_address = '1433 B (68 Place) Highway 68 North' 
@@ -117,6 +126,16 @@ def fetch_data():
                     city = 'Watchung'
                     state = 'NJ'
                     zip_code = '07069'
+                elif '10342 Dyno Dr, North Country Mall' in addy:
+                    street_address = '10342 Dyno Dr, North Country Mall'
+                    city = 'Hayward'
+                    state = 'WI'
+                    zip_code = '54843'
+                elif '107 Waterstradt Commerce Dr' in addy:
+                    street_address = '107 Waterstradt Commerce Dr, Unit A and B'
+                    city = 'Dundee'
+                    state = 'MI'
+                    zip_code = '48131'
 
                 else:
                     street_address, city, state, zip_code = parse_addy(addy)
