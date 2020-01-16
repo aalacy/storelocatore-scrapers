@@ -16,7 +16,7 @@ def write_output(data):
 def fetch_data():
     session = SgRequests()
 
-    data = {'Host': 'us.petvalu.com',
+    headers = {'Host': 'us.petvalu.com',
     'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0',
     'Accept': 'application/json, text/javascript, */*; q=0.01',
     'Accept-Language': 'en-US,en;q=0.5',
@@ -30,8 +30,9 @@ def fetch_data():
     'Connection': 'keep-alive',
     'Cookie': 'tk_ai=woo%3ApLgeTii%2Be43iIzeJv3ESzKfM'}
 
+    data = { 'lat': 41.0159555, 'lng': -76.4331698, 'action': 'get_stores', 'radius': 100, 'zip': '17815' }
 
-    r = session.post('https://us.petvalu.com/wp-admin/admin-ajax.php', data = data)
+    r = session.post('https://us.petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = data)
     
     print(r.content)
 
