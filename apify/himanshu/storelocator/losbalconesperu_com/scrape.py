@@ -32,8 +32,8 @@ def fetch_data():
             locator_domain = base_url
             hours = location.find("p", class_="font_8").find(
                 "span", style="font-family:avenir-lt-w01_35-light1475496,sans-serif;")
-            hours_of_operation = " ".join(list(hours.stripped_strings))
-
+            hours_of_operation = " ".join(list(hours.stripped_strings)).replace("|","").replace("â€“","")
+            # 
             address = list(location.find("a").stripped_strings)
             # print(address)
             if len(address) > 1:
