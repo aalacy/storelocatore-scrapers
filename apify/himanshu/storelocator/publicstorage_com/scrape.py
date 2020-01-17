@@ -37,6 +37,7 @@ def fetch_data():
         data = '{"location":"' + str(zip_code) + '"}'
         
         r = requests.post("https://www.publicstorage.com/api/sitecore/LocationSearch/RedoSearch",headers=headers,data=data).json()
+        # print(r)
         current_results_len = len(r["Result"]["Units"])
         for i in r["Result"]["Units"]:
             street_address = i['Street1']
