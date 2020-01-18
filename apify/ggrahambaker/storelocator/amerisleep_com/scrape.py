@@ -88,7 +88,7 @@ def fetch_data():
         street_address, city, state, zip_code = parse_address(addy)
         
 
-        hours = driver.find_element_by_css_selector('div.store-hours__row').text.replace('\n', ' ').strip()
+        hours = driver.find_element_by_css_selector('div.store-hours').text.replace('\n', ' ').strip()
         
         phone_numbers = driver.find_elements_by_xpath("//a[contains(@href, 'tel:')]")
         for num in phone_numbers:
