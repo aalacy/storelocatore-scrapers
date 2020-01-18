@@ -4,11 +4,12 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
-import platform
+# from selenium import webdriver
+# from selenium.webdriver.firefox.options import Options
+# import platform
 
-system = platform.system()
+# system = platform.system()
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,36 +23,21 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
-    else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def fetch_data():
-    browser = get_driver()
     base_url = "https://www.cslplasma.com"
     r = requests.get(base_url + "/locations/search-results-state")
     soup = BeautifulSoup(r.text, "lxml")
     # print(soup.prettify())
     return_main_object = []
     comming_soon = []
+
     for option in soup.find('select', {"name": "SelectedState"}).find_all("option"):
         if option['value'] == "":
             continue
         location_request = requests.get(base_url + option['value'])
         lcoation_soup = BeautifulSoup(location_request.text, 'lxml')
-        # section = soup_loc.find('section', class_='center-search-results')
-        # container = soup_loc.find('div', class_='center-search-item-container')
-
         for location in lcoation_soup.find_all("div", {"class": "center-search-item"}):
-            # print(location.prettify())
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             store = []
 
             location_address = list(location.find(
@@ -77,37 +63,33 @@ def fetch_data():
                     phone = location_hours[location_hours.index("Ph:") + 1]
                 else:
                     phone = "<MISSING>"
-                #print(phone)
+                # print(phone)
                 page_url = base_url + location.find_all("a")[-1]['href']
-                import warnings
-                warnings.filterwarnings('ignore')
-                browser.get(page_url)
-                iframe = browser.find_element_by_tag_name("iframe")
-                browser.switch_to.default_content()
-                browser.switch_to.frame(iframe)
-                # print(browser.current_url)
-                iframe_source = browser.page_source
-                soup = BeautifulSoup(iframe_source, 'lxml')
-                l1 = []
-                l2 = []
-                for script in soup.find_all("script"):
-                    if "initEmbed" in script.text:
-                        try:
-                            coords = json.loads(script.text.split(
-                                'initEmbed(')[1].split(');')[0])[5][-2][0][-1][1]
-                            res = [i for i in coords if i]
-                            lat = res[2][-2]
-                            lng = res[2][-1]
-                            l1.append(lat)
-                            l2.append(lng)
-                        except:
-                            # print(json.loads(script.text.split(
-                            #     'initEmbed(')[1]))
-                            # print(soup.prettify())
-                            lat = "<MISSING>"
-                            lng = "<MISSING>"
-                            l1.append(lat)
-                            l2.append(lng)
+                r_loc = requests.get(page_url)
+                soup_loc = BeautifulSoup(r_loc.text, "lxml")
+                iframe = soup_loc.find(
+                    "iframe", {"id": "centermap_frame"})['src']
+                cr = requests.get(iframe)
+                soup_cr = BeautifulSoup(cr.text, "lxml")
+                script = soup_cr.find("script", text=re.compile(
+                    "initEmbed")).text.split("initEmbed(")[1].split(");")[0].split(",")[55:60]
+                if "0]" in " ".join(script):
+                    script.remove("0]")
+                if "[null" in " ".join(script):
+                    script.remove("[null")
+                newlist = []
+                for i in script:
+                    if i not in newlist:
+                        newlist.append(i)
+                if "null" in " ".join(newlist):
+                    newlist.remove("null")
+
+                latitude = newlist[0]
+                longitude = newlist[-1].replace("]", "").strip()
+                if "[1]]" in latitude:
+                    latitude = "<MISSING>"
+                    longitude = "<MISSING>"
+                #print(latitude, longitude)
 
                 store = []
                 store.append("https://www.cslplasma.com")
@@ -120,15 +102,14 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append(phone if phone != "" else "<MISSING>")
                 store.append("<MISSING>")
-                store.append(l1.pop(0))
-                store.append(l2.pop(0))
+                store.append(latitude)
+                store.append(longitude)
                 store.append(location_hours[-1] if location_hours[-1] !=
                              "Contact Info" and location_hours[-1] != "Coming Soon" else "<MISSING>")
                 store.append(page_url)
                 #print("===" + str(store))
                 #print('~~~~~~~~~~~~~~~~~~~~`')
-                return_main_object.append(store)
-    return return_main_object
+                yield store
 
 
 def scrape():
