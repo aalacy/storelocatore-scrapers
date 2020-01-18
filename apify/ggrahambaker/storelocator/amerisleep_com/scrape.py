@@ -2,6 +2,7 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import usaddress
 
 
 def get_driver():
@@ -12,13 +13,30 @@ def get_driver():
     return webdriver.Chrome('chromedriver', options=options)
 
 
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
+
+def parse_address(addy_string):
+    parsed_add = usaddress.tag(addy_string)[0]
+
+    street_address = ''
+
+    if 'AddressNumber' in parsed_add:
+        street_address += parsed_add['AddressNumber'] + ' '
+    if 'StreetNamePreDirectional' in parsed_add:
+        street_address += parsed_add['StreetNamePreDirectional'] + ' '
+    if 'StreetName' in parsed_add:
+        street_address += parsed_add['StreetName'] + ' '
+    if 'StreetNamePostType' in parsed_add:
+        street_address += parsed_add['StreetNamePostType'] + ' '
+    if 'OccupancyType' in parsed_add:
+        street_address += parsed_add['OccupancyType'] + ' '
+    if 'OccupancyIdentifier' in parsed_add:
+        street_address += parsed_add['OccupancyIdentifier'] + ' '
+    city = parsed_add['PlaceName']
+    state = parsed_add['StateName']
+    zip_code = parsed_add['ZipCode']
+
+    return street_address, city, state, zip_code
+
 
 
 
@@ -56,6 +74,8 @@ def fetch_data():
 
     all_store_data = []
     for link in link_href:
+        if 'careers' in link:
+            continue
         driver.implicitly_wait(10)
         driver.get(link)
 
@@ -63,17 +83,12 @@ def fetch_data():
         location_name = driver.find_element_by_css_selector('.o-title--bemma').text
 
 
-        address = driver.find_element_by_css_selector('div.local-page__address').text.split('\n')
-
-        if len(address) == 3:
-            street_address = address[0] + ' ' + address[1]
-            city, state, zip_code = addy_ext(address[2])
-        else:
+        addy = driver.find_element_by_css_selector('div.local-page__address').text.replace('\n', ' ')
         
-            street_address = address[0]
-            city, state, zip_code = addy_ext(address[1])
+        street_address, city, state, zip_code = parse_address(addy)
+        
 
-        hours = driver.find_element_by_css_selector('div.o-local-grid__container').text.replace('\n', ' ').strip()
+        hours = driver.find_element_by_css_selector('div.store-hours__row').text.replace('\n', ' ').strip()
         
         phone_numbers = driver.find_elements_by_xpath("//a[contains(@href, 'tel:')]")
         for num in phone_numbers:
