@@ -118,6 +118,8 @@ def fetch_data():
             add = add.split('Â')[0].strip()
         cleanr = re.compile('<.*?>')
         hours = re.sub(cleanr, '', hours)
+        if hours == '':
+            hours = '<MISSING>'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
