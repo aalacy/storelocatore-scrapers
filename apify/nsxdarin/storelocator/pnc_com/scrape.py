@@ -91,6 +91,7 @@ def fetch_data():
         purl = 'https://apps.pnc.com/locator/#/result-details/' + loc
         if hours == '':
             hours = '<MISSING>'
+        purl = purl + '/' name.replace('#','').replace(' ','-').lower()
         yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             
 
