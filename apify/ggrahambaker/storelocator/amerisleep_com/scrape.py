@@ -66,8 +66,7 @@ def fetch_data():
                 continue
             elif '.html' in link.get_attribute('href'):
                 continue
-            elif 'baybrook-mall' in link.get_attribute('href'):
-                continue
+        
             else:
                 link_href.append(link.get_attribute('href'))
 
