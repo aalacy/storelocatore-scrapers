@@ -76,7 +76,7 @@ def fetch_data():
     del locationURLs[locationURLs.index("https://pepperpalace.com/pages/new-orleans-decatur-street")]
     for store in range(len(fullcontent)):        
         loc_name_splitter=re.search(r'\d+', fullcontent[store]).group()
-    
+        #print(locationURLs[store])
         location_name = fullcontent[store].split(loc_name_splitter)[0]
         location_name=location_name.strip()
         if(location_name==''):
@@ -87,6 +87,7 @@ def fetch_data():
         city = locationText[store].lower()
         if('(' in fullcontent[store]):
             phno='('+fullcontent[store].split('(')[1]
+            #print(phno)
             alphabet='abcdefghijklmnopqrstuvwxyz@.!â€‹Â'
             phno=phno.lower()
             for letter in alphabet:
@@ -97,9 +98,28 @@ def fetch_data():
                 phno=[v for v in phno if v in '1234567890- ()']
                 str1=""
                 phno=str1.join(phno)
+            #print(phno)
             raw_address = fullcontent[store].split('(')[0]
         else:
-            phno='<MISSING>'
+            driver.get(locationURLs[store])
+            inlines=driver.find_elements_by_tag_name("inline")
+            if inlines==[]:
+              phno='<MISSING>'
+            else:
+
+              phno='('+inlines[0].text.replace("\n"," ").split('(')[1]
+              #print(phno)
+              alphabet='abcdefghijklmnopqrstuvwxyz@.!â€‹Â'
+              phno=phno.lower()
+              for letter in alphabet:
+                phno = phno.replace(letter, '')
+                if('  ' in phno):
+                    phno=phno.strip()
+                    phno=phno.split("  ")[0]
+                phno=[v for v in phno if v in '1234567890- ()']
+                str1=""
+                phno=str1.join(phno).strip()
+              #print(phno)
             raw_address = fullcontent[store]
         if(location_name in raw_address):
             raw_address=raw_address.replace(location_name,"").replace("pepperpalacemallga@gmail.com","")
