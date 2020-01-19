@@ -6,7 +6,7 @@ from selenium import webdriver
 
 def get_driver():
     options = Options()
-    #options.add_argument('--headless')
+    options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
@@ -37,7 +37,7 @@ def fetch_data():
     for store in store_names:
         link = store.find_element_by_css_selector('a').get_attribute('href')
         link_list.append(link)
-        print(link)
+        
 
 
     driver.quit()
@@ -46,8 +46,6 @@ def fetch_data():
     all_store_data = []
     
     for link in link_list:
-        print(link)
-        print()
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
         location_name = soup.find('h2', {'itemprop': 'name'}).text
@@ -99,8 +97,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
         
-
-
 
 
     return all_store_data

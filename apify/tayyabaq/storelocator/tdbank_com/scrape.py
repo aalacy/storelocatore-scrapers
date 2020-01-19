@@ -25,11 +25,15 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+key_set =set()
 def fetch_data():
     try:    
         for i in l:
-            if i.get('address') in addresses:
+            key = i['address']+ i['branchN']+  i['type']       
+                     
+            if key in key_set:
                 continue
+            key_set.add(key)
             addresses.append(i.get('address'))
             lat = i.get('lat', "<MISSING>")
             lng = i.get('lng', "<MISSING>")

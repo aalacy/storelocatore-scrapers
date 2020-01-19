@@ -23,7 +23,7 @@ def fetch_data():
     lines = r.iter_lines()
     for line in lines:
         if '<p class="subtitle"><strong>' in line:
-            name = line.split('<p class="subtitle"><strong>')[1].split('<')[0]
+            name = line.split('<p class="subtitle"><strong>')[1].split('<')[0].replace('&apos;',"'")
             website = 'pompstire.com'
             loc = line.split("href='")[1].split("'")[0]
             hours = ''
@@ -45,6 +45,9 @@ def fetch_data():
             next(lines)
             g = next(lines)
             h = next(lines)
+            if '1' not in g and '.' not in g and '0' not in g and ' St' not in g and '9' not in g and '3' not in g and '4' not in g:
+                g = h
+                h = next(lines)
             add = g.split('<')[0].strip().replace('\t','')
             city = h.split(',')[0].strip().replace('\t','')
             state = h.split(',')[1].strip().split(' ')[0]

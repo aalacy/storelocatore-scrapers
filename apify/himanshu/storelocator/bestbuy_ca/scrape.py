@@ -22,10 +22,10 @@ def write_output(data):
 def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()    
-    search.initialize(country_codes=['CA'])
+    search.initialize(include_canadian_fsas = True)
     MAX_RESULTS = 50
     MAX_DISTANCE = 50
-    current_results_len = 0     # need to update with no of count.
+    current_results_len = 0
     zip_code = search.next_zip()
 
     headers = {
@@ -35,19 +35,17 @@ def fetch_data():
     base_url= "https://bestbuy.ca"
     while zip_code:
         result_coords = []
-        # print("postal_code === "+zip_code)
         headers = {   
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',        
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
             'accept': 'application/json'
-        }
-     
-        r = requests.get("https://stores.bestbuy.ca/en-ca/search?q="+str(zip_code), headers=headers).json()
-        
-           
+        }   
+        try:
+            r = requests.get("https://stores.bestbuy.ca/en-ca/search?q="+str(zip_code), headers=headers).json()
+        except :
+            pass
         current_results_len = len(r['locations'])
         for i in range(len(r['locations'])):
-
             street_address = r['locations'][i]['loc']['address1']+" "+r['locations'][i]['loc']['address2']
             if "3401 Dufferin St., Unit 303" in street_address:
                 continue
@@ -63,7 +61,6 @@ def fetch_data():
             r1 = requests.get(page_url, headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
             location_name = soup1.find("span",{"class":"LocationName"}).text.strip()
-
             hours = r['locations'][i]['loc']['hours']['days']
             drive_hours = ''
             for day in hours:
@@ -74,8 +71,6 @@ def fetch_data():
                     endtime= value_endtime.strftime("%I:%M %p")
                     drive_hours = drive_hours+" "+day['day'].capitalize() +" "+str(starttime)+"-"+str(endtime)
             hours_of_operation = drive_hours
-
-
             store = []
             result_coords.append((latitude, longitude))
             store.append(base_url)
@@ -92,19 +87,13 @@ def fetch_data():
             store.append(longitude if longitude else '<MISSING>')
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
             store.append(page_url if page_url else '<MISSING>')
-            
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
             # print("data =="+str(store))
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
-
        
-
-            
-            
-        # yield store
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)

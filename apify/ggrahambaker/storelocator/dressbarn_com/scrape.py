@@ -30,6 +30,7 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(url)
+    
 
     link_list = []
     state_list = []

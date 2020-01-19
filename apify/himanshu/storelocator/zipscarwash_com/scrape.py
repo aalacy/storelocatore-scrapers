@@ -70,8 +70,18 @@ def fetch_data():
                             'div', class_='views-field-field-location-hours').text.strip().replace('Hours: ', '').strip()
                     else:
                         hours_of_operation = "<MISSING>"
-                    direction = col.find(
-                        "div", text=re.compile("Directions")).a['href']
+                    if col.find('div', class_='home-page-direction') != None:
+                        direction = col.find('div', class_='home-page-direction').find('a')['href']
+                    
+
+                        # direction1=col.find(
+                        # "div", text=re.compile("Directions"))
+                        # print(direction1)    
+                        # exit()
+                   
+                        
+
+
                     latitude = direction.split(
                         '?')[-1].split('&')[0].split('=')[-1].strip()
                     longitude = direction.split(
