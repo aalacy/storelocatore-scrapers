@@ -128,6 +128,8 @@ def fetch_data():
     all = []
     for i in range(0, len(locs)):
         row = []
+        if locs[i]=="<MISSING>":
+            continue
         row.append("https://www.cellularsales.com/")
         row.append(locs[i])
         row.append(street[i])

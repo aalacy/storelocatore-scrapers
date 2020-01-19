@@ -3,7 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import sgzip
 import time
+from datetime import datetime
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -11,265 +13,128 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
-def request_wrapper(url,method,headers,data=None):
-   request_counter = 0
-   if method == "get":
-       while True:
-           try:
-               r = requests.get(url,headers=headers)
-               return r
-               break
-           except:
-               time.sleep(2)
-               request_counter = request_counter + 1
-               if request_counter > 10:
-                   return None
-                   break
-   elif method == "post":
-       while True:
-           try:
-               if data:
-                   r = requests.post(url,headers=headers,data=data)
-               else:
-                   r = requests.post(url,headers=headers)
-               return r
-               break
-           except:
-               time.sleep(2)
-               request_counter = request_counter + 1
-               if request_counter > 10:
-                   return None
-                   break
-   else:
-       return None
 
 def fetch_data():
-    base_url= "https://locator.chase.com/?locale=en_US"
-    r = requests.get(base_url)
-    soup= BeautifulSoup(r.text,"lxml")
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
-    result =[]
-    addresses=[]
-    k= soup.find_all("a",{"class":"Directory-listLink"})
+    addresses = []
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 50
+    MAX_DISTANCE = 50
+    current_results_len = 0     # need to update with no of count.
+    zip_code = search.next_zip()
 
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-    }
    
-    for index,i in enumerate(k):
-        # print(i.text)
+    base_url= "https://chase.com/"
+
+    
+    headers = {   
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',        
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
+        'accept': 'application/json'
+    }
+    offset = []
+    for data in range(553):
         
-        if i.text=="Washington, D.C.":
-            r = request_wrapper("https://locator.chase.com/"+i['href'],"get",headers=headers)
-            soup7= BeautifulSoup(r.text,"lxml")
-            link5 = soup7.find_all("a",{"class":"Teaser-titleLink Link--inverse Text--bold","data-ya-track":"businessname"})
+        
+        offset.append(data*10)
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~"+str(offset[data]))
+        location_url = "https://locator.chase.com/search?offset="+str(offset[data])
+    
+        r = requests.get(location_url, headers=headers).json()
+        current_results_len = len(r['response']['entities'])
 
-            for l in link5:
-                r = request_wrapper("https://locator.chase.com"+l['href'].replace("..",""),"get",headers=headers)
-                soup10= BeautifulSoup(r.text,"lxml")
-                name = (soup10.find("h1",{"class":"Core-title"}).text)
-                street_address = soup10.find("span",{"class":"c-address-street-1"}).text
-                street_address2 = soup10.find("span",{"class":"c-address-street-2"})
-                if street_address2 != None:
-                    street_address1 = street_address2.text
-                city = soup10.find("span",{"class":"c-address-city"}).text
-                state1 =  soup10.find("abbr",{"class":"c-address-state"})
-                if state1 != None:
-                    state = state1.text
-                else:
-                    state = "<MISSING>"
-                zip1 = soup10.find("span",{"class":"c-address-postal-code"}).text
-                phone = soup10.find("div",{"class":"Phone-display Phone-display--withLink"}).text
-                hours1 = soup10.find("table",{"class":"c-hours-details"})
-                time1 = soup10.find("div",{"class":"Core-hoursToday"})
-                hours =''
-                time=''
-                if time1 != None:
-                    time ="ATM" +' '+ (" ".join(list(time1.stripped_strings)).replace("Day of the Week Hours",""))
-                if hours1 != None:
-                    hours = (" ".join(list(hours1.stripped_strings)).replace("Day of the Week Hours",""))
-                latitude = (soup10.find("meta",{"itemprop":"latitude"}).attrs['content'])
-                longitude = (soup10.find("meta",{"itemprop":"longitude"}).attrs['content'])
-                store_name.append(name)
-                tem_var.append(street_address + ' ' + street_address1)
-                tem_var.append(city)
-                tem_var.append(state)
-                tem_var.append(zip1)
-                tem_var.append("US")
-                tem_var.append("<MISSING>")
-                tem_var.append(phone)
-                tem_var.append("<MISSING>")
-                tem_var.append(latitude)
-                tem_var.append(longitude)
-                tem_var.append(hours + ' '+time)
-                tem_var.append("https://locator.chase.com/"+i['href'])
-                store_detail.append(tem_var)
-        else:
-            r = request_wrapper("https://locator.chase.com/"+i['href'],"get",headers=headers)
-            soup1= BeautifulSoup(r.text,"lxml")
-            link = soup1.find_all("a",{"class":"Directory-listLink"})
-            if len(link) != 0:
-                for j in link:
-                    
-                    street_address1=''
-                    data_count = j.attrs['data-count'].replace("(","").replace(")","")
-                    if data_count == "1":
-                        tem_var =[]
-                        new_link =  "https://locator.chase.com/"+j['href'].replace("..","")
-                        r = request_wrapper(new_link,"get",headers=headers)
-                        soup2= BeautifulSoup(r.text,"lxml")
-                        latitude = (soup2.find("meta",{"itemprop":"latitude"}).attrs['content'])
-                        longitude = (soup2.find("meta",{"itemprop":"longitude"}).attrs['content'])
-                        name = (soup2.find("h1",{"class":"Core-title"}).text)
-                        street_address = soup2.find("span",{"class":"c-address-street-1"}).text
-                        street_address2 = soup2.find("span",{"class":"c-address-street-2"})
-                        if street_address2 != None:
-                            street_address1 = street_address2.text
-                        city = soup2.find("span",{"class":"c-address-city"}).text
-                        state1 =  soup2.find("abbr",{"class":"c-address-state"})
-                        if state1 != None:
-                            state = state1.text
-                        else:
-                            state = "<MISSING>"
-                        zip1 = soup2.find("span",{"class":"c-address-postal-code"}).text
-                        phone = soup2.find("div",{"class":"Phone-display Phone-display--withLink"}).text
-                        hours1 = soup2.find("table",{"class":"c-hours-details"})
-                        time1 = soup2.find("div",{"class":"Core-hoursToday"})
-                    
-                        hours =''
-                        time=''
-                        if time1 != None:
-                            time ="ATM" +' '+ (" ".join(list(time1.stripped_strings)).replace("Day of the Week Hours",""))
-                        if hours1 != None:
-                            hours = (" ".join(list(hours1.stripped_strings)).replace("Day of the Week Hours",""))
-            
-                        store_name.append(name )
-                        tem_var.append(street_address + ' ' + street_address1)
-                        tem_var.append(city)
-                        tem_var.append(state)
-                        tem_var.append(zip1)
-                        tem_var.append("US")
-                        tem_var.append("<MISSING>")
-                        tem_var.append(phone)
-                        tem_var.append("<MISSING>")
-                        tem_var.append(latitude)
-                        tem_var.append(longitude)
-                        tem_var.append(hours +' '+ time)
-                        tem_var.append("https://locator.chase.com/"+j['href'].replace("..",""))
-                        store_detail.append(tem_var)
-                        # print(tem_var)
-                    else:
-                        new_link =  "https://locator.chase.com/"+j['href'].replace("..","")
-                        r = request_wrapper(new_link,"get",headers=headers)
-                        soup4= BeautifulSoup(r.text,"lxml")
-                        link2 = soup4.find_all("a",{"class":"Teaser-titleLink"})
-                        for j in link2:
-                            tem_var=[]
-                            street_address1=''
-                            r = request_wrapper("https://locator.chase.com/"+j['href'].replace("..",""),"get",headers=headers)
-                            soup5= BeautifulSoup(r.text,"lxml")
-                            name = (soup5.find("h1",{"class":"Core-title"}).text)
-                            street_address = soup5.find("span",{"class":"c-address-street-1"}).text
-                            street_address2 = soup5.find("span",{"class":"c-address-street-2"})
-                            if street_address2 != None:
-                                street_address1 = street_address2.text
-                            city = soup5.find("span",{"class":"c-address-city"}).text
-                            state1 =  soup5.find("abbr",{"class":"c-address-state"})
-                            if state1 != None:
-                                state = state1.text
-                            else:
-                                state = "<MISSING>"
-                            zip1 = soup5.find("span",{"class":"c-address-postal-code"}).text
-                            phone = soup5.find("div",{"class":"Phone-display Phone-display--withLink"}).text
-                            hours1 = soup5.find("table",{"class":"c-hours-details"})
-                            hours =''
-                            time=''
-                            if time1 != None:
-                                time ="ATM" +' '+ (" ".join(list(time1.stripped_strings)).replace("Day of the Week Hours",""))
-                            if hours1 != None:
-                                hours = (" ".join(list(hours1.stripped_strings)).replace("Day of the Week Hours",""))
-
-                            latitude = (soup5.find("meta",{"itemprop":"latitude"}).attrs['content'])
-                            longitude = (soup5.find("meta",{"itemprop":"longitude"}).attrs['content'])
-                            store_name.append(name )
-                            tem_var.append(street_address + ' ' + street_address1)
-                            tem_var.append(city)
-                            tem_var.append(state)
-                            tem_var.append(zip1)
-                            tem_var.append("US")
-                            tem_var.append("<MISSING>")
-                            tem_var.append(phone)
-                            tem_var.append("<MISSING>")
-                            tem_var.append(latitude)
-                            tem_var.append(longitude)
-                            tem_var.append(hours + ' ' +time)
-                            tem_var.append("https://locator.chase.com/"+j['href'].replace("..",""))
-                            store_detail.append(tem_var)
-                            # print(tem_var)
+        for i in r['response']['entities']:
+            city = i['profile']['address']['city']
+            street_address = i['profile']['address']['line1']
+            state = i['profile']['address']['region']
+            zipp = i['profile']['address']['postalCode']
+            location_type = i['profile']['c_bankLocationType']
+            if "c_geomodifier" in i['profile']:
+                location_name = i['profile']['c_geomodifier']
             else:
-                tem_var=[]
-                street_address1=''
-                r = request_wrapper("https://locator.chase.com/"+i['href'],"get",headers=headers)
-                soup6= BeautifulSoup(r.text,"lxml")
-                name = (soup6.find("h1",{"class":"Core-title"}).text)
-                street_address = soup6.find("span",{"class":"c-address-street-1"}).text
-                street_address2 = soup6.find("span",{"class":"c-address-street-2"})
-                if street_address2 != None:
-                    street_address1 = street_address2.text
-                city = soup6.find("span",{"class":"c-address-city"}).text
-                state1 =  soup6.find("abbr",{"class":"c-address-state"})
-                if state1 != None:
-                    state = state1.text
-                else:
-                    state = "<MISSING>"
-                zip1 = soup6.find("span",{"class":"c-address-postal-code"}).text
-                phone = soup6.find("div",{"class":"Phone-display Phone-display--withLink"}).text
-                hours1 = soup6.find("table",{"class":"c-hours-details"})
-                time1 = soup2.find("div",{"class":"Core-hoursToday"})
-                hours =''
-                time=''
-                if time1 != None:
-                    time ="ATM" +' '+ (" ".join(list(time1.stripped_strings)).replace("Day of the Week Hours",""))
-                if hours1 != None:
-                    hours = (" ".join(list(hours1.stripped_strings)).replace("Day of the Week Hours",""))
-                latitude = (soup2.find("meta",{"itemprop":"latitude"}).attrs['content'])
-                longitude = (soup2.find("meta",{"itemprop":"longitude"}).attrs['content'])
-                store_name.append(name)
-                tem_var.append(street_address + ' ' + street_address1)
-                tem_var.append(city)
-                tem_var.append(state)
-                tem_var.append(zip1)
-                tem_var.append("US")
-                tem_var.append("<MISSING>")
-                tem_var.append(phone)
-                tem_var.append("<MISSING>")
-                tem_var.append(latitude)
-                tem_var.append(longitude)
-                tem_var.append(hours + ' '+time)
-                tem_var.append("https://locator.chase.com/"+i['href'])
-                store_detail.append(tem_var)
-                # print(tem_var)
+                location_name = "<MISSING>"
+            phone = i['profile']['mainPhone']['display']
+            country_code = i['profile']['mainPhone']['countryCode']
+            if "displayCoordinate" in i['profile']:
+                latitude = i['profile']['displayCoordinate']['lat']
+                longitude = i['profile']['displayCoordinate']['long']
+            else:
+                latitude = i['profile']['yextDisplayCoordinate']['lat']
+                longitude = i['profile']['yextDisplayCoordinate']['long']
+
+            page_url = i['profile']['c_pagesURL']
+            
+
+            if location_type == "Branch":
+                store_number = i['profile']['c_rawEntityId']
+                drive_hours = 'Drive-up Hours :'  
+                lobby_hours = 'Lobby :'
+
+                for drive in  i['profile']['c_driveupHours']['normalHours']: 
+                    
+                    if drive['isClosed'] == False:
+                        for interval in (drive['intervals']):
+                            value_starttime = datetime.strptime(str(interval['start']), "%H%M")
+                            starttime= value_starttime.strftime("%I:%M %p")
+                            value_endtime = datetime.strptime(str(interval['end']), "%H%M")
+                            endtime= value_endtime.strftime("%I:%M %p")
+                            drive_hours = drive_hours+" "+drive['day']+" "+str(starttime)+"-"+str(endtime)
+                    else:
+                        drive_hours = drive_hours+" "+drive['day']+" "+"closed"
+
+                for lobby in  i['profile']['c_lobbyHours']['normalHours']: 
+                    
+                    if lobby['isClosed'] == False:
+                        for interval in (lobby['intervals']):
+                            value_starttime = datetime.strptime(str(interval['start']), "%H%M")
+                            starttime= value_starttime.strftime("%I:%M %p")
+                            value_endtime = datetime.strptime(str(interval['end']), "%H%M")
+                            endtime= value_endtime.strftime("%I:%M %p")
+                            lobby_hours = lobby_hours+" "+lobby['day']+" "+str(starttime)+"-"+str(endtime)
+                    else:
+                        lobby_hours = lobby_hours+" "+lobby['day']+" "+"closed"
+
+                hours_of_operation = lobby_hours+" "+drive_hours
+    
+            else:
+                store_number = "<MISSING>"
+                hours_of_operation = "Open 24 Hours"
+
+
+            store = []
+            # result_coords.append((latitude, longitude))
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address if street_address else '<MISSING>')
+            store.append(city if city else '<MISSING>')
+            store.append(state if state else '<MISSING>')
+            store.append(zipp if zipp else '<MISSING>')
+            store.append(country_code if country_code else '<MISSING>')
+            store.append(store_number if store_number else '<MISSING>')
+            store.append(phone if phone else '<MISSING>')
+            store.append(location_type if location_type else '<MISSING>')
+            store.append(latitude if latitude else '<MISSING>')
+            store.append(longitude if longitude else '<MISSING>')
+            store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+            store.append(page_url if page_url else '<MISSING>')
+            
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
+            #print("data =="+str(store))
+            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            yield store
+
+       
+
+            
+            
         
-    # print("======================",len(store_name)) 
-    # print(len(store_detail))            
-    for i in range(len(store_name)):
-       store = list()
-       store.append("https://locator.chase.com")
-       store.append(store_name[i])
-       store.extend(store_detail[i])
-       if  store[2] in result:
-           continue
-       result.append(store[2])
-       return_main_object.append(store)
-      
-    return return_main_object
 
 
 def scrape():
@@ -278,5 +143,3 @@ def scrape():
 
 
 scrape()
-
-

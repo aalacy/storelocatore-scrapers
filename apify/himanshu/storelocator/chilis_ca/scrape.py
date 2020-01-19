@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 
-
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -48,11 +46,14 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
 
     for script in soup.find_all("a", {"class": re.compile("btn-map")}):
-        print("location_url === " + str(script["id"]))
+        # print("location_url === " + str(script["id"]))
         location_url = "http://www.chilis.ca/skins/chilis/js/" + script["id"].replace("link-", "") + ".js"
-        print("location_url === " + location_url)
+        
+        # print("location_url === " + location_url)
         r_location = requests.get(location_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
+
+        # print(soup_location)
 
         split_location = soup_location.text.split("var marker")
 
@@ -75,15 +76,24 @@ def fetch_data():
                 address_list.pop(index_reimage[0])
 
             if address_list[-1].strip():
-                print("full_address === " + str(address_list))
+                # print("full_address === " + str(address_list))
 
                 index_phone = [i for i, s in enumerate(address_list) if phone in s]
 
                 if index_phone:
                     hours_of_operation = address_list[index_phone[0]+1].replace(")","")
-                print("hours_of_operation == " + str(hours_of_operation))
-
+                # print("hours_of_operation == " + str(hours_of_operation))
+                # print("address_list====",address_list)
+                
                 location_name = address_list[0]
+                city = location_name
+                if "(403) 250-2072" in phone:
+                    location_name='Calgary'
+
+                if "(780) 890-7766" in phone:
+                    location_name='Edmonton'
+                    
+
 
                 if len(address_list) > 1:
                     street_address = address_list[1]
@@ -103,19 +113,20 @@ def fetch_data():
                         state = ""
 
                     country_code = "CA"
-                    city = location_name
 
+                # print("fffffffffffffffff",hours_of_operation.replace("Edmonton Airport Chili's  Gate 52Sun-Fri",'Sun-Fri').replace(".*Breakfast Served at ALL airport locations",'').replace("PM"," PM "))
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+                         store_number, phone, location_type, latitude, longitude, hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip().replace("Edmonton Airport Chili's  Gate 52Sun-Fri",'Sun-Fri').replace("*Breakfast Served at ALL airport locations",'').replace("PM"," PM ").replace("AM",' AM '), page_url]
 
                 if str(store[1]) + str(store[2]) not in addresses:
                     addresses.append(str(store[1]) + str(store[2]))
 
                     store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                    print("data = " + str(store))
-                    print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    yield store
+                    if "(780) 890-7766" in store or "(403) 760-8502" in store or "(403) 250-2072" in store:
+                        # print("data = " + str(store))
+                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        yield store
 
 
 def scrape():

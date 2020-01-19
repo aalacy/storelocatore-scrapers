@@ -92,7 +92,7 @@ Apify.main(async () => {
     maxRequestsPerCrawl: 1,
     maxConcurrency: 1,
     launchPuppeteerOptions: {
-      headless: false,
+      headless: true,
       stealth: true,
       useChrome: true,
       useApifyProxy: !!useProxy,

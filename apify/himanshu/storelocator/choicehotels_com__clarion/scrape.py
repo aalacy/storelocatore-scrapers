@@ -1,11 +1,13 @@
 import csv
-import requests
 from bs4 import BeautifulSoup
 import re
 import unicodedata
 import sgzip
 import datetime
 import time
+from sgrequests import SgRequests
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -44,7 +46,7 @@ def fetch_data():
         }
         data = "adults=1&checkInDate=" + str(today) + "&checkOutDate=" + str(tomorrow) + "&lat=" + str(x) + "&lon=" + str(y) + "&minors=0&optimizeResponse=image_url&platformType=DESKTOP&preferredLocaleCode=en-us&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100&siteName=us&siteOpRelevanceSortMethod=ALGORITHM_B"
         time.sleep(2)
-        r = requests.post("https://www.choicehotels.com/webapi/location/hotels",headers=headers,data=data)
+        r = session.post("https://www.choicehotels.com/webapi/location/hotels",headers=headers,data=data)
         if "hotels" not in r.json():
             search.max_distance_update(MAX_DISTANCE)
             coord = search.next_coord()

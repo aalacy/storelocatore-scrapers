@@ -41,12 +41,15 @@ class Scraper(Scrape):
         for zip_search in sgzip.for_radius(100):
             location_url = f'https://locations.michaelkors.com/search.html?q={zip_search}&radius=100'
             driver.get(location_url)
-            data = json.loads(driver.find_element_by_id('js-map-config-dir-map-desktop-map').get_attribute('textContent'))['locs']
+            try:
+                data = json.loads(driver.find_element_by_id('js-map-config-dir-map-desktop-map').get_attribute('textContent'))['locs']
+            except:
+                data = []
             stores.extend(data)
             print(f"{len(data)} locations received for zipcode: {zip_search}")
 
         for store in stores:
-            if store['url'] not in self.seen:
+            if store['url'] not in self.seen and store['url'].split('/')[0] in ['us', 'ca']:
                 url = "https://locations.michaelkors.com/" + store['url']
                 driver.get(url)
                 print(f"Getting data for {url}")
@@ -64,7 +67,10 @@ class Scraper(Scrape):
                 location_type = 'Retail'
 
                 # Street address
-                street_address = driver.find_element_by_css_selector('span.c-address-street-1').get_attribute('textContent') + ' ' + driver.find_element_by_css_selector('span.c-address-street-2').get_attribute('textContent')
+                try:
+                    street_address = driver.find_element_by_css_selector('span.c-address-street-1').get_attribute('textContent') + ' ' + driver.find_element_by_css_selector('span.c-address-street-2').get_attribute('textContent')
+                except:
+                    street_address = driver.find_element_by_css_selector('span.c-address-street-1').get_attribute('textContent')
 
                 # City
                 city = driver.find_element_by_css_selector('span.c-address-city').get_attribute('textContent')
@@ -76,7 +82,7 @@ class Scraper(Scrape):
                 zipcode = driver.find_element_by_css_selector('span.c-address-postal-code').get_attribute('textContent')
 
                 # Phone
-                phone = driver.find_element_by_css_selector('span.c-phone-number-span.c-phone-main-number-span')
+                phone = driver.find_element_by_css_selector('span.c-phone-number-span.c-phone-main-number-span').get_attribute('textContent')
 
                 # Country
                 country = 'US'
@@ -88,7 +94,10 @@ class Scraper(Scrape):
                 lon = store['longitude']
 
                 # Hour
-                hour = driver.find_element_by_css_selector('table.c-location-hours-details > tbody').get_attribute('textContent')
+                try:
+                    hour = driver.find_element_by_css_selector('table.c-location-hours-details > tbody').get_attribute('textContent')
+                except:
+                    hour = '<MISSING>'
 
                 # Store data
                 locations_ids.append(location_id)

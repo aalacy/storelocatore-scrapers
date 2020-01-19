@@ -92,7 +92,8 @@ def fetch_data():
                 phone_list =''
 
             try:
-                hours_of_operation = " ".join(list(soup_loc1.find("div",{"class":"location__hours"}).stripped_strings)).split("Special Hours")[0]
+                hours_of_operation = " ".join(list(soup_loc1.find("div",{"class":"location__hours"}).stripped_strings)).split("Special Hours")[0].split('Restaurant Hours')[1].strip()
+               
             except:
                 hours_of_operation =''
 

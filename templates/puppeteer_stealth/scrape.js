@@ -16,6 +16,7 @@ Apify.main(async () => {
 
 			const poi = {
 				locator_domain: 'safegraph.com',
+				page_url: '<MISSING>',
 				location_name: heading,
 				street_address: '1543 mission st',
 				city: 'san francisco',

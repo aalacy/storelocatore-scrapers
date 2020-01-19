@@ -40,8 +40,11 @@ def fetch_data():
     stores2 = driver.find_elements_by_css_selector('table > tbody > tr > td > div > table:nth-child(3) > tbody > tr > td:nth-child(2) > p')
     stores3 = driver.find_elements_by_css_selector('table > tbody > tr > td > div > table:nth-child(3) > tbody > tr > td:nth-child(3) > p')
     stores = stores1 + stores2 + stores3
+    print(len(stores))
     for store in stores:
         info = store.text
+        #if "Airway" in info:
+         #print(info)
         li = info.splitlines()
         if len(li) ==4:
             location_name = li[0]
@@ -67,25 +70,35 @@ def fetch_data():
             if location_name == '**NEW LOCATION**':
                 location_name = li[1]
                 street_addr = li[2]
-                state = li[3].split(',')[1]
+                state = li[3].split(',')[1].strip()
                 city = li[3].split(',')[0]
                 phone = '<MISSING>'
             else:
                 street_addr = li[1]
-                state = li[2].split(',')[1]
+                state = li[2].split(',')[1].strip()
                 city = li[2].split(',')[0]
                 phone = li[3]
         elif len(li) ==3:
-            location_name = '<MISSING>'
-            street_addr = li[0]
-            state = li[1].split(',')[1]
-            city = li[1].split(',')[0]
-            phone = li[2]
-            hours_of_op = '<MISSING>'
+            if "Airway" not in info:
+           
+             location_name = '<MISSING>'
+             street_addr = li[0]
+             state = li[1].split(',')[1].strip()
+             city = li[1].split(',')[0]
+             phone = li[2]
+             hours_of_op = '<MISSING>'
+            else:
+             location_name = li[0]
+             street_addr = li[1].split(',')[0].replace(li[0].strip(),"").strip()
+             state = li[1].split(',')[1].strip()
+             city = li[0]
+             phone = li[2]
+             hours_of_op = '<MISSING>'
         elif len(li) ==5:
+            
             location_name = li[0]
             street_addr = li[1]
-            state = li[2].split(',')[1]
+            state = li[2].split(',')[1].strip()
             city = li[2].split(',')[0]
             phone = li[3]
             hours_of_op = '<MISSING>'
@@ -102,7 +115,7 @@ def fetch_data():
                       '<MISSING>',
                       '<MISSING>',
                       '<MISSING>',
-                       hours_of_op
+                       hours_of_op.replace("\n"," ")
                  ])
 
     time.sleep(3)

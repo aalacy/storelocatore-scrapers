@@ -39,7 +39,7 @@ def fetch_data():
                 for day in days:
                     if 'interval' in day:
                         dname = day.split('"')[0]
-                        if 'isClosed":true' in day:
+                        if '[]' in day:
                             hrs = 'Closed'
                         else:
                             hrs = day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]

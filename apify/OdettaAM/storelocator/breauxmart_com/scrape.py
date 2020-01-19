@@ -28,8 +28,9 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data=[]
-    response = requests.get('https://api.freshop.com/1/stores?app_key=breaux_mart&has_address=true&limit=-1&token=f448f7cbfbefb4b7eb6f24bd81be0705')
-    time.sleep(5)
+    #response = requests.get('https://api.freshop.com/1/stores?app_key=breaux_mart&has_address=true&limit=-1&token=f448f7cbfbefb4b7eb6f24bd81be0705')
+    response = requests.get('https://api.freshop.com/1/stores?app_key=breaux_mart&has_address=true&limit=-1&token=40343be1840f5a5e915146d700a4f50b')
+    time.sleep(3)
     responseJson = json.loads(response.text)
     stores = responseJson.get("items")
     for i in range(len(stores)):

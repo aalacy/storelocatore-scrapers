@@ -3,6 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+requests.packages.urllib3.disable_warnings()
+
 
 
 def write_output(data):
@@ -19,9 +21,12 @@ def write_output(data):
 
 
 def fetch_data():
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+    }
 
     base_url = "http://lenwich.com/location/"
-    r = requests.get(base_url)
+    r = requests.get(base_url,headers=headers,verify=False)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     store_detail = []
@@ -97,7 +102,7 @@ def fetch_data():
 
     for i in range(len(store_name)):
         store = list()
-        store.append("http://lenwich.com/location/")
+        store.append("http://lenwich.com")
         store.append(store_name[i])
         store.extend(store_detail[i])
         return_main_object.append(store)

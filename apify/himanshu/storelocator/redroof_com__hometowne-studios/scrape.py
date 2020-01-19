@@ -20,6 +20,7 @@ def fetch_data():
     r = requests.get(base_url+'/hometowne-studios')
     soup=BeautifulSoup(r.text,'lxml')
     main=soup.find_all('a',href=re.compile("^/extendedstay/hometownestudios/property"))
+    # print(main)
     for dt in main:
         r1 = requests.get(base_url+dt['href'])
         soup1=BeautifulSoup(r1.text,'lxml')
@@ -61,15 +62,16 @@ def fetch_data():
         store.append(storeno if storeno else "<MISSING>")
         store.append(phone if phone else "<MISSING>")
         store.append("<MISSING>")
-        store.append(lat if lat else "<MISSING>")
-        store.append(lng if lng else "<MISSING>")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
         store.append(hour if hour.strip() else "<MISSING>")
         store.append(page_url if page_url else "<MISSING>")
 
         # print(store)
         # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        return_main_object.append(store)
-    return return_main_object
+        yield store
+        # return_main_object.append(store)
+    # return return_main_object
 
 def scrape():
     data = fetch_data()

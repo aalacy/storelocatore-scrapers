@@ -137,7 +137,7 @@ def fetch_data():
                     continue
                 addresses.append(tem_var[2])
                 yield tem_var
-                print("============================",tem_var)
+                #print("============================",tem_var)
                 # print(tem_var)
                 # exit()
 

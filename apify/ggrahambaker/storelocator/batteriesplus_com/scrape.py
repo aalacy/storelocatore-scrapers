@@ -73,13 +73,13 @@ def fetch_data():
         lat = loc_info['Latitude']
         longit = loc_info['Longitude']
         phone_number = loc_info['Phone']
-        if street_address not in dup_tracker:
-            dup_tracker.append(street_address)
+        if link not in dup_tracker:
+            dup_tracker.append(link)
         else:
             continue
         
         if loc_info['IsOpeningSoon']:
-            print('coming soon')
+
             continue
 
         country_code = 'US'

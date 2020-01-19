@@ -103,7 +103,7 @@ class Scraper(Scrape):
                 # Hour
                 hour = ' '.join([
                     f"{day} {hour}" for day, hour in store['openings'].items()
-                ])
+                ]) if 'openings' in store.keys() else '<MISSING>'
 
                 # Country
                 country = 'US'

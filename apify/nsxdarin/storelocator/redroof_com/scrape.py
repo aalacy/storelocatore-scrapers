@@ -5,35 +5,10 @@ import os
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from requests.exceptions import ConnectionError
+from sgrequests import SgRequests
+import collections 
 
-requests.packages.urllib3.disable_warnings()
-
-def requests_retry_session(
-    retries=3,
-    backoff_factor=0.3,
-    status_forcelist=(500, 502, 504)
-):
-    session = requests.Session()
-    proxy_password = os.environ["PROXY_PASSWORD"]
-    proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
-    proxies = {
-        'http': proxy_url,
-        'https': proxy_url
-    }
-    session.proxies = proxies
-    retry = Retry(
-        total=retries,
-        read=retries,
-        connect=retries,
-        backoff_factor=backoff_factor,
-        status_forcelist=status_forcelist,
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
-    return session
-
-session = requests_retry_session()
+session = SgRequests()
 
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -49,13 +24,16 @@ def write_output(data):
 def fetch_data():
     url = 'https://www.redroof.com/sitemap.xml'
     locs = []
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if 'https://www.redroof.com/property/' in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
-    for loc in locs:
+    q = collections.deque(locs)
+    attempts = {}
+    while q:
+        loc = q.popleft()
         if '-CA/' in loc:
             country = 'CA'
         else:
@@ -74,8 +52,15 @@ def fetch_data():
         store = loc.rsplit('/',1)[1]
         r2 = None
         try:
-            r2 = session.get(loc, headers=headers, verify=False)
+            r2 = session.get(loc, headers=headers)
         except ConnectionError:
+            print('Failed to connect to ' + loc)
+            if attempts.get(loc, 0) >= 3:
+                print('giving up on ' + loc)
+            else:
+                q.append(loc)
+                attempts[loc] = attempts.get(loc, 0) + 1
+                print('attempts: ' + str(attempts[loc]))
             continue
         for line2 in r2.iter_lines():
             if 'name="og:title" content="' in line2:

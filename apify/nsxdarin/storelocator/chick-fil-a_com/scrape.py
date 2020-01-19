@@ -1,8 +1,8 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -35,45 +35,47 @@ def fetch_data():
         lng = ''
         hours = ''
         country = ''
-        typ = ''
+        typ = 'Restaurant'
         store = '<MISSING>'
-        print('Pulling Location %s...' % loc)
         website = 'chick-fil-a.com'
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            if ',"telephone":"' in line2:
-                name = line2.split('"name":"')[1].split('"')[0]
-                phone = line2.split(',"telephone":"')[1].split('"')[0]
-                typ = line2.split('"@type":"')[1].split('"')[0]
-                country = line2.split('"addressCountry":"')[1].split('"')[0]
-                add = line2.split(',"streetAddress":"')[1].split('"')[0]
-                city = line2.split(',"addressLocality":"')[1].split('"')[0]
-                state = line2.split(',"addressRegion":"')[1].split('"')[0]
-                zc = line2.split(',"postalCode":"')[1].split('"')[0]
-                add = line2.split(',"streetAddress":"')[1].split('"')[0]
-                days = line2.split('"dayOfWeek":["')
-                for day in days:
-                    if '"closes":"' in day:
-                        dopen = day.split('"opens":"')[1].split('"')[0]
-                        dclose = day.split('"closes":"')[1].split('"')[0]
-                        dopen = dopen.replace(':00:00',':00').replace(':30:00',':30')
-                        dclose = dclose.replace(':00:00',':00').replace(':30:00',':30')
-                        if 'Closed' in dopen:
-                            dstring = 'Closed'
-                        else:
-                            dstring = dopen + '-' + dclose
-                        if hours == '':
-                            hours = day.split('"')[0] + ': ' + dstring
-                        else:
-                            hours = hours + '; ' + day.split('"')[0] + ': ' + dstring
-            if 'data-distance-type="mi"' in line2 and 'data-lat' in line2:
-                lat = line2.split('data-lat="')[1].split('"')[0]
-                lng = line2.split('data-long="')[1].split('"')[0]
+        lines = r2.iter_lines()
+        HFound = False
+        for line2 in lines:
+            if '<title>' in line2:
+                name = line2.split('<title>')[1].split(' Location')[0]
+            if '<p class="address">' in line2:
+                g = next(lines)
+                try:
+                    add = g.split(',')[0].strip().replace('\t','')
+                    city = g.split(',')[1].strip()
+                    state = g.split(',')[2].strip().split(' ')[0]
+                    zc = g.replace('\t','').replace('\r','').replace('\n','').strip().rsplit(' ',1)[1]
+                    country = 'US'
+                except:
+                    country = 'NF'
+            if '<a href="https://www.google.com/maps/dir/Current+Location/' in line2:
+                lat = line2.split('<a href="https://www.google.com/maps/dir/Current+Location/')[1].split(',')[0]
+                lng = line2.split('<a href="https://www.google.com/maps/dir/Current+Location/')[1].split(',')[1].split('"')[0]
+            if '<a href="tel:' in line2:
+                phone = line2.split('">')[1].split('<')[0]
+            if '<h3>Hours</h3>' in line2:
+                HFound = True
+            if HFound and '<div class="module amenities">' in line2:
+                HFound = False
+            if HFound and '<div class="flex">' in line2:
+                g = next(lines)
+                h = next(lines)
+                hrs = g.split('>')[1].split('<')[0] + ': ' + h.split('>')[1].split('<')[0]
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
         if phone == '':
             phone = '<MISSING>'
         if hours == '' or '-;' in hours:
             hours = '<MISSING>'
-        if add != '':
+        if add != '' and country == 'US':
             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

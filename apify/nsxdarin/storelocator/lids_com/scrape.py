@@ -1,8 +1,8 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -27,6 +27,8 @@ def fetch_data():
         hours = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            if '"storeBrand":"' in line2:
+                typ = line2.split('"storeBrand":"')[1].split('"')[0]
             if '"storeId":"' in line2:
                 store = line2.split('"storeId":"')[1].split('"')[0]
                 name = line2.split('"storeId":"')[1].split('"name":"')[1].split('"')[0]
@@ -56,6 +58,10 @@ def fetch_data():
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
+        if "Macy's Locker" in add:
+            add = add.split(" Macy's Locker")[0].strip()
+        if 'Fanzz' in add:
+            add = add.split('Fanzz')[0].strip()
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

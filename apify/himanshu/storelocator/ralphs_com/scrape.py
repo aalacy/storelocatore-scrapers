@@ -3,8 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+from sgrequests import SgRequests
 
-
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -17,7 +18,6 @@ def write_output(data):
         for i in data or []:
             writer.writerow(i)
 
-
 def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
@@ -27,31 +27,27 @@ def fetch_data():
     return_main_object = []
     address1 = []
     location_name =[]    
-    r = requests.get("https://www.ralphs.com/storelocator-sitemap.xml", headers=headers)    
+    r = session.get("https://www.ralphs.com/storelocator-sitemap.xml", headers=headers)    
     soup = BeautifulSoup(r.text, "lxml")
     link1 = soup.find_all('loc')[:-1]
     for i in link1:
         link = i.text
-        r1= requests.get(link, headers=headers)
+        print(link)
+        r1= session.get(link, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         main1=soup1.find('div', {'class': 'StoreAddress-storeAddressGuts'})
-        if main1 != None:
-            address_tmp1 =soup1.find('div', {'class': 'StoreAddress-storeAddressGuts'})
-            address_tmp = list(address_tmp1.stripped_strings)
-            address = address_tmp[0]
-            city = address_tmp[1]
-            state = address_tmp[3]
-            zip = address_tmp[4]
-            phone = soup1.find('span', {'class': 'PhoneNumber-phone'}).text
-            hour = soup1.find('div', {'class': 'StoreInformation-storeHours'}).text
-            location_name = soup1.find('h1', {'class': 'StoreDetails-header'}).text
-
-  
-   
-    
-  
-
-
+        if main1 == None:
+            print('skipping bad link')
+            continue
+        address_tmp1 =soup1.find('div', {'class': 'StoreAddress-storeAddressGuts'})
+        address_tmp = list(address_tmp1.stripped_strings)
+        address = address_tmp[0]
+        city = address_tmp[1]
+        state = address_tmp[3]
+        zip = address_tmp[4]
+        phone = soup1.find('span', {'class': 'PhoneNumber-phone'}).text
+        hour = soup1.find('div', {'class': 'StoreInformation-storeHours'}).text
+        location_name = soup1.find('h1', {'class': 'StoreDetails-header'}).text
         tem_var=[]           
         tem_var.append('https://www.ralphs.com/')
         tem_var.append(location_name)
@@ -67,21 +63,22 @@ def fetch_data():
         tem_var.append("<MISSING>")
         tem_var.append(hour)
         tem_var.append(link)
-       
+
+        print(address)
+
         if tem_var[2] in address1:
+            print()
+            print('skipping location! ' + location_name)
+            print(link)
+            print(tem_var[2])
+            print()
             continue
         address1.append(tem_var[2])
-        return_main_object.append(tem_var)
-
-
-                   
- 
+        return_main_object.append(tem_var) 
     return return_main_object
-
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

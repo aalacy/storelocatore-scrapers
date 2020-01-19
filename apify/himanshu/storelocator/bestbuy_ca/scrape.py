@@ -3,7 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import sgzip
+import time
+from datetime import datetime
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -11,152 +13,96 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    base_url= "https://stores.bestbuy.ca/en-ca/index.html"
-    r = requests.get(base_url)
-    soup= BeautifulSoup(r.text,"lxml")
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
+    addresses = []
+    search = sgzip.ClosestNSearch()    
+    search.initialize(include_canadian_fsas = True)
+    MAX_RESULTS = 50
+    MAX_DISTANCE = 50
+    current_results_len = 0
+    zip_code = search.next_zip()
 
-    k= soup.find_all("li",{"class":"Directory-listItem"})
-    
-    for i in k:
-        link = i.find("a")['data-count'].replace("(",'')
-        if link != "1)":
-            city_link = "https://stores.bestbuy.ca"+i.find("a")['href'].replace("..","")
-            # print(city_link)
-    
-            r1 = requests.get(city_link)
-            soup1= BeautifulSoup(r1.text,"lxml")
-            citylink= soup1.find_all("li",{"class":"Directory-listItem"})
-            
-            for c in citylink:
-                link1 = c.find("a")['data-count'].replace("(",'')
-                if link1 != "1)":
-                    sublink = "https://stores.bestbuy.ca"+c.find("a")['href'].replace("..","")
-                    r2 = requests.get(sublink)
-                    soup2= BeautifulSoup(r2.text,"lxml")
-                    store_link = soup2.find_all("a",class_="Teaser-titleLink")
-                 
-                    for st in store_link:
-                        # print("https://stores.bestbuy.ca"+st['href'].replace("../..",""))
-                        r3 = requests.get("https://stores.bestbuy.ca"+st['href'].replace("../..",""))
-                        page_url ="https://stores.bestbuy.ca"+st['href'].replace("../..","")
-                        soup3= BeautifulSoup(r3.text,"lxml")
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+    }
 
-                        streetAddress = soup3.find("span",{"class":"c-address-street-1"}).text.strip()
-                        state = soup3.find("abbr",{"itemprop":"addressRegion"}).text
-                        zip1 = soup3.find("span",{"itemprop":"postalCode"}).text
-                        city = soup3.find("span",{"class":"c-address-city"}).text
-                        name = " ".join(list(soup3.find("h1",{"itemprop":"name"}).stripped_strings))
-                        phone = soup3.find("span",{"itemprop":"telephone"}).text
-                        hours = " ".join(list(soup3.find("table",{"class":"c-location-hours-details"}).find("tbody").stripped_strings))
-                        latitude = soup3.find("meta",{"itemprop":"latitude"})['content']
-                        longitude = soup3.find("meta",{"itemprop":"longitude"})['content']
-                        
-                        tem_var =[]
-                        tem_var.append("https://www.bestbuy.ca/")
-                        tem_var.append(name)
-                        tem_var.append(streetAddress)
-                        tem_var.append(city)
-                        tem_var.append(state)
-                        tem_var.append(zip1)
-                        tem_var.append("CA")
-                        tem_var.append("<MISSING>")
-                        tem_var.append(phone)
-                        tem_var.append("<MISSING>")
-                        tem_var.append(latitude)
-                        tem_var.append(longitude)
-                        tem_var.append(hours)
-                        tem_var.append(page_url)
-                        yield tem_var
-                        # print("========================================",tem_var)
-
-                else:
-                    # print(c.find("a")['href'])
-                    # print(c.find("a")['href'])
-                    # print("https://stores.bestbuy.ca"+c.find("a")['href'].replace("..",""))
-                    # print('-------------------------')
-                    one_link="https://stores.bestbuy.ca"+c.find("a")['href'].replace("..","")
-                    page_url = one_link
-                    r4 = requests.get(one_link)
-                    soup4= BeautifulSoup(r4.text,"lxml")
-
-                    streetAddress = soup4.find("span",{"class":"c-address-street-1"}).text.strip()
-                    state = soup4.find("abbr",{"itemprop":"addressRegion"}).text
-                    zip1 = soup4.find("span",{"itemprop":"postalCode"}).text
-                    city = soup4.find("span",{"class":"c-address-city"}).text
-                    name = " ".join(list(soup4.find("h1",{"itemprop":"name"}).stripped_strings))
-                    phone = soup4.find("span",{"itemprop":"telephone"}).text
-                    hours = " ".join(list(soup4.find("table",{"class":"c-location-hours-details"}).find("tbody").stripped_strings))
-                  
-                    latitude = soup4.find("meta",{"itemprop":"latitude"})['content']
-                    longitude = soup4.find("meta",{"itemprop":"longitude"})['content']
-
-                    tem_var =[]
-                    tem_var.append("https://www.bestbuy.ca/en-ca")
-                    tem_var.append(name)
-                    tem_var.append(streetAddress)
-                    tem_var.append(city)
-                    tem_var.append(state)
-                    tem_var.append(zip1)
-                    tem_var.append("CA")
-                    tem_var.append("<MISSING>")
-                    tem_var.append(phone)
-                    tem_var.append("<MISSING>")
-                    tem_var.append(latitude)
-                    tem_var.append(longitude)
-                    tem_var.append(hours)
-                    tem_var.append(page_url)
-                    yield tem_var
-                    # print("========================================",tem_var)
+    base_url= "https://bestbuy.ca"
+    while zip_code:
+        result_coords = []
+        headers = {   
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',        
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
+            'accept': 'application/json'
+        }   
+        try:
+            r = requests.get("https://stores.bestbuy.ca/en-ca/search?q="+str(zip_code), headers=headers).json()
+        except :
+            pass
+        current_results_len = len(r['locations'])
+        for i in range(len(r['locations'])):
+            street_address = r['locations'][i]['loc']['address1']+" "+r['locations'][i]['loc']['address2']
+            if "3401 Dufferin St., Unit 303" in street_address:
+                continue
+            city =  r['locations'][i]['loc']['city']  
+            state = r['locations'][i]['loc']['state']
+            zipp = r['locations'][i]['loc']['postalCode']
+            store_number = r['locations'][i]['loc']['corporateCode']
+            phone = r['locations'][i]['loc']['phone']
+            country_code = r['locations'][i]['loc']['country']
+            latitude = r['locations'][i]['loc']['latitude']
+            longitude = r['locations'][i]['loc']['longitude']
+            page_url = "https://stores.bestbuy.ca/"+r['locations'][i]['url']
+            r1 = requests.get(page_url, headers=headers)
+            soup1 = BeautifulSoup(r1.text, "lxml")
+            location_name = soup1.find("span",{"class":"LocationName"}).text.strip()
+            hours = r['locations'][i]['loc']['hours']['days']
+            drive_hours = ''
+            for day in hours:
+                for interval in day['intervals']:           
+                    value_starttime = datetime.strptime(str(interval['start']), "%H%M")
+                    starttime= value_starttime.strftime("%I:%M %p")
+                    value_endtime = datetime.strptime(str(interval['end']), "%H%M")
+                    endtime= value_endtime.strftime("%I:%M %p")
+                    drive_hours = drive_hours+" "+day['day'].capitalize() +" "+str(starttime)+"-"+str(endtime)
+            hours_of_operation = drive_hours
+            store = []
+            result_coords.append((latitude, longitude))
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address if street_address else '<MISSING>')
+            store.append(city if city else '<MISSING>')
+            store.append(state if state else '<MISSING>')
+            store.append(zipp if zipp else '<MISSING>')
+            store.append(country_code if country_code else '<MISSING>')
+            store.append(store_number if store_number else '<MISSING>')
+            store.append(phone if phone else '<MISSING>')
+            store.append('<MISSING>')
+            store.append(latitude if latitude else '<MISSING>')
+            store.append(longitude if longitude else '<MISSING>')
+            store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+            store.append(page_url if page_url else '<MISSING>')
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
+            # print("data =="+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            yield store
+       
+        if current_results_len < MAX_RESULTS:
+            # print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            # print("max count update")
+            search.max_count_update(result_coords)
         else:
-            # print("--------------------------------------------",link)
-            # print(i.find("a")['href'].replace("..",""))
-            # print("https://stores.bestbuy.ca"+i.find("a")['href'].replace("..",""))
-            one_link1 = "https://stores.bestbuy.ca"+i.find("a")['href'].replace("..","")
-            page_url = one_link1
-            r5 = requests.get(one_link1)
-            soup5= BeautifulSoup(r5.text,"lxml")
-            streetAddress = soup5.find("span",{"class":"c-address-street-1"}).text.strip()
-            # streetAddress = soup5.find("span",{"itemprop":"streetAddress"}).text.strip()
-
-
-            streetAddress = soup5.find("span",{"class":"c-address-street-1"}).text.strip()
-            state = soup5.find("abbr",{"itemprop":"addressRegion"}).text
-            zip1 = soup5.find("span",{"itemprop":"postalCode"}).text
-            city = soup5.find("span",{"class":"c-address-city"}).text
-            name = " ".join(list(soup5.find("h1",{"itemprop":"name"}).stripped_strings))
-            phone = soup5.find("span",{"itemprop":"telephone"}).text
-            hours = " ".join(list(soup5.find("table",{"class":"c-location-hours-details"}).find("tbody").stripped_strings))
-            latitude = soup5.find("meta",{"itemprop":"latitude"})['content']
-            longitude = soup5.find("meta",{"itemprop":"longitude"})['content']
-        
-            tem_var =[]
-            tem_var.append("https://www.bestbuy.ca/en-ca")
-            tem_var.append(name)
-            tem_var.append(streetAddress)
-            tem_var.append(city)
-            tem_var.append(state)
-            tem_var.append(zip1)
-            tem_var.append("CA")
-            tem_var.append("<MISSING>")
-            tem_var.append(phone)
-            tem_var.append("<MISSING>")
-            tem_var.append(latitude)
-            tem_var.append(longitude)
-            tem_var.append(hours)
-            tem_var.append(page_url)
-            yield tem_var
-            # print("========================================",tem_var)
-         
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        zip_code = search.next_zip()
 
 
 def scrape():
@@ -165,5 +111,3 @@ def scrape():
 
 
 scrape()
-
-

@@ -24,14 +24,14 @@ def fetch_data():
     search.initialize()
     MAX_RESULTS = 100
     MAX_DISTANCE = 10
-    current_results_len = 0     # need to update with no of count.
+    current_results_len = 0    
     zip_code = search.next_zip()
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
 
-    base_url = "http://www2.dollargeneral.com"
+    base_url = "http://dollargeneral.com"
 
     while zip_code:
         result_coords = []
@@ -42,15 +42,11 @@ def fetch_data():
         
         location_url = "http://hosted.where2getit.com/dollargeneral/rest/locatorsearch?like=0.9394142712975708"
         try:
+
             loc = requests.post(location_url,headers=headers,data=data).json()
         except:
-            continue
-        # soup1 = BeautifulSoup(loc.text, "html.parser")
-        
- 
-        # soup = BeautifulSoup.BeautifulSoup(r.text, "lxml")
-
-               # it always need to set total len of record.
+            pass
+      
 
         locator_domain = base_url
         location_name = ""
@@ -68,17 +64,14 @@ def fetch_data():
         hours_of_operation = ""
 
         hours_of_operation =''
-        # print("location_url ==== ",loc['collection'])
+       
         if "collection" in loc['response']:
             current_results_len = len(loc['response']['collection']) 
             for data in loc['response']['collection']:
                 store_number = data['name'].split("#")[-1]
-                # print(data['name'].split("#"))
+                
                 hours_of_operation =' Monday '+ data['opening_time_mon']+ ' ' +data['closing_time_mon']+' Tuesday ' +data['opening_time_tue'] + ' ' +data['closing_time_tue'] + ' Wednesday ' + data['opening_time_wed'] + ' ' +data['closing_time_wed'] + ' Thursday ' + data['opening_time_thu'] + ' ' +data['closing_time_thu']+ ' Friday ' + data['opening_time_fri'] + ' ' +data['closing_time_fri']+ ' Saturday ' + data['opening_time_sat'] + ' ' +data['closing_time_sat']+ ' Sunday ' + data['opening_time_sun'] + ' ' +data['closing_time_sun']
-                # ' ' +data['closing_time_fri']+' '+' '+ data['opening_time_mon']+ ' Tuesday ' + data['opening_time_tue'] + ' Wednesday ' + data['opening_time_wed'] + ' Thursday ' + data['opening_time_thu'] + ' Friday ' + data['opening_time_fri'] + ' Saturday ' + data['opening_time_sat'] + ' Sunday ' + data['opening_time_sun']
-                # print(hours_of_operation)
-
-                # do your logic.
+                
                 page_url = "<MISSING>"
                 result_coords.append((latitude, longitude))
                 store = [locator_domain, data['name'], data['address1'], data['city'], data['state'], data['postalcode'], country_code,
@@ -94,9 +87,9 @@ def fetch_data():
                 #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 yield store
-            # return_main_object.append(store)
+          
 
-        # yield store
+       
         if current_results_len < MAX_RESULTS:
             #print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
@@ -106,7 +99,7 @@ def fetch_data():
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
-        # break
+        
 
 
 def scrape():

@@ -45,7 +45,6 @@ def fetch_data():
         phone = ''
         lat = ''
         lng = ''
-        print('Pulling Location %s...' % loc)
         r = session.get(loc, headers=headers)
         lines = r.iter_lines()
         AFound = False

@@ -18,33 +18,36 @@ def fetch_data():
     url = 'https://www.texasroadhouse.com/locations/'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if 'window.__locations__ =' in line:
-            items = line.split('{"Address1":"')
+        if 'window.__locations__' in line:
+            items = line.split('{"address1":"')
             for item in items:
-                if '"Address2"' in item:
+                if '"address2"' in item:
                     add = item.split('"')[0]
-                    if ',"Address2":[]' not in item:
-                        add = add + ' ' + item.split('"Address2":"')[1].split('"')[0]
+                    if ',"address2":[]' not in item:
+                        add = add + ' ' + item.split('"address2":"')[1].split('"')[0]
                     try:
-                        city = item.split(',"City":"')[1].split('"')[0]
+                        city = item.split(',"city":"')[1].split('"')[0]
                     except:
                         city = '<MISSING>'
                     try:
-                        state = item.split('"State":"')[1].split('"')[0]
+                        state = item.split('"state":"')[1].split('"')[0]
                     except:
                         state = '<MISSING>'
-                    country = item.split('"Country":"')[1].split('"')[0]
+                    country = item.split('"country":"')[1].split('"')[0]
                     try:
-                        phone = item.split('"Phone":"')[1].split('"')[0]
+                        phone = item.split('"phone":"')[1].split('"')[0]
                     except:
                         phone = '<MISSING>'
-                    lat = item.split('"GPSLat":')[1].split(',')[0]
-                    lng = item.split('"GPSLon":')[1].split(',')[0]
+                    lat = item.split('"gps_lat":')[1].split(',')[0]
+                    lng = item.split('"gps_lon":')[1].split(',')[0]
                     typ = 'Restaurant'
-                    name = item.split(',"Name":"')[1].split('"')[0]
-                    store = item.split('"StoreID":"')[1].split('"')[0]
+                    name = item.split(',"name":"')[1].split('"')[0]
+                    if 'selectsite=' in item.lower():
+                        store = item.lower().split('selectsite=')[1].split('"')[0]
+                    else:
+                        store = '<MISSING>'
                     try:
-                        zc = item.split('"Zip":"')[1].split('"')[0]
+                        zc = item.split('"zip":"')[1].split('"')[0]
                     except:
                         zc = '<MISSING>'
                     website = 'texasroadhouse.com'
@@ -53,7 +56,7 @@ def fetch_data():
                     if lat == '0':
                         lat = '<MISSING>'
                         lng = '<MISSING>'
-                    if '"Schedule":[]' in item:
+                    if '"schedule":[]' in item:
                         hours = '<MISSING>'
                     else:
                         hours = 'Mon: ' + item.split('"day":"Monday","hours":')[1].split('"open":"')[1].split('"')[0] + '-' + item.split('"day":"Monday","hours":')[1].split('"close":"')[1].split('"')[0]
@@ -63,11 +66,13 @@ def fetch_data():
                         hours = hours + '; Fri: ' + item.split('"day":"Friday","hours":')[1].split('"open":"')[1].split('"')[0] + '-' + item.split('"day":"Friday","hours":')[1].split('"close":"')[1].split('"')[0]
                         hours = hours + '; Sat: ' + item.split('"day":"Saturday","hours":')[1].split('"open":"')[1].split('"')[0] + '-' + item.split('"day":"Saturday","hours":')[1].split('"close":"')[1].split('"')[0]
                         hours = hours + '; Sun: ' + item.split('"day":"Sunday","hours":')[1].split('"open":"')[1].split('"')[0] + '-' + item.split('"day":"Sunday","hours":')[1].split('"close":"')[1].split('"')[0]
-                    purl = 'https://www.texasroadhouse.com' + item.split(',"Url":"')[1].split('"')[0].replace('\\','')
+                    purl = 'https://www.texasroadhouse.com' + item.split(',"url":"')[1].split('"')[0].replace('\\','')
                     if country == 'USA':
                         country = 'US'
                     if country == 'CAN':
                         country = 'CA'
+                    if store == '':
+                        store = '<MISSING>'
                     if country == 'US' or country == 'CA' and ',"Opened":false' not in item:
                         yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 

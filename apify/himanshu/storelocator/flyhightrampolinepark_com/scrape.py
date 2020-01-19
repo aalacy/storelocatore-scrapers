@@ -1,107 +1,94 @@
-# -*- coding: utf-8 -*-
 import csv
 import requests
 from bs4 import BeautifulSoup
 import re
-
-
+import json
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
-  
-    data = [];
-    base_url = 'https://flyhightrampolinepark.com'
-    r = requests.get(base_url)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+    }
+    addresses = []
+    base_url = "https://flyhightrampolinepark.com/"
+    locator_domain = base_url
+    location_name2 = ""
+    street_address = ""
+    city = ""
+    state = ""
+    zipp = ""
+    country_code = "US"
+    store_number = "<MISSING>"
+    phone = ""
+    location_type = "<MISSING>"
+    latitude = ""
+    longitude = ""
+    hours_of_operation1 = ""
+    page_url = ""
+
+    r = requests.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    links = soup.find_all("a", {"class":"btn btnc"})
-
-    for url in links:
-      r = requests.get(url["href"])
-      soup = BeautifulSoup(r.text, "lxml")
-      row = []
-      #locator_domain
-      row.append(url["href"])
-      title = (soup.find("h1", {"class": "title"})).text
-      #location_name
-      row.append(title.strip())
-      address = soup.findAll("address")
-    
-      logoAltText = soup.find("img", {"class": "logoimg tpf-logo"})['alt']
-      if address[1].text.strip() != '':
-        addressText = address[1].text.strip()
-        #street Address
-        row.append(addressText.split(',')[0].strip().split('-')[0])
-        #city
-        row.append(logoAltText.replace('Fly High', '').strip())
-        #state
-        row.append((addressText.split(',')[1]).strip().split(' ')[0].strip())
-        #zip
-        row.append((addressText.split(',')[1]).strip().split(' ')[1].strip())
-      else:
-        #street Address
-        row.append('<MISSING>')
-        #city
-        row.append('<MISSING>')
-        #state
-        row.append('<MISSING>')
-        #zip
-        row.append('<MISSING>')
-      
-      #country_code
-      row.append('US')
-      
-      #store number
-      row.append('<MISSING>')
-      
-      #phone number
-      phoneNumber = (soup.find("div", {"class": "phone"})).text
-      row.append(phoneNumber.strip())
-    
-      #location_type
-      row.append('Fly High Trampoline Park')
-      
-      #longitute
-      row.append('<INACCESSIBLE>')
-      
-      #latitude
-      row.append('<INACCESSIBLE>')
-      
-      #hours_of_operation
-      
-      timeDiv = soup.find("div", {"class": "time"})
-      
-      if timeDiv != None:
-        hourLink = timeDiv.findChildren("a")[0]
-        
-        hours = []
-        hour_r = requests.get(hourLink["href"])
-        hour_soup = BeautifulSoup(hour_r.text, "lxml")
-        reg_hours = hour_soup.find('strong', string=re.compile(r'^Regular'))
-        ul = reg_hours.findNext('ul')
-        for hour in ul.findChildren('li'):
-          hours.append(hour.text)
-        row.append(','.join(hours))
-      else:
-        row.append('<MISSING>')
-        
-      data.append(row)
-        
-    return data
-
+    a = soup.find_all('a',{'class', 'btn btnc'})
+    for i in a:
+        page_url = (i['href'])
+        r1 = requests.get(page_url, headers=headers)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        b = soup1.find_all('div',{'class','text-block'})
+        for j in b:
+            street_address = (list(j.stripped_strings)[1].replace("Fort Collins","218 Smokey Street"))
+            location_name2 = (list(j.stripped_strings)[0])
+            if "Fly High At Reno" in location_name2 :
+                location_name2 = location_name2 
+            elif "Fly High At Boise" in location_name2 :
+                location_name2 = location_name2 
+            elif "Fly High At Ogden" in location_name2 :
+                location_name2 = location_name2 
+            elif "Fly High At Farmington" in location_name2 :
+                location_name2 = location_name2 
+            else:
+                location_name2 = "Fly High At Fort Collins"
+            city = (list(j.stripped_strings)[2].replace("218 Smokey Street –","Fort Collins").split(",")[0])
+            state = (list(j.stripped_strings)[2].split(",")[-1].strip().replace("218 Smokey Street –","CO").split(" ")[0])
+            zipp = (list(j.stripped_strings)[2].split(",")[-1].strip().replace("218 Smokey Street –","80525").split(" ")[-1]) 
+            phone = (list(j.stripped_strings)[3].replace("Fort Collins, CO 80525","(970) 305-5300"))
+            q = location_name2.replace(" ","-")
+            location_url = str(page_url)+'/'+str(q)+"/hours/"
+            r2 = requests.get(location_url, headers=headers)
+            soup2 = BeautifulSoup(r2.text, "lxml")
+            z = soup2.find_all('div',{'class','col-xs-12 col-md-8'})
+            hours_of_operation1 = ''
+            for h in z:
+                if h != []:
+                    hours_of_operation1 = hours_of_operation1+ ' '+"".join(list(h.stripped_strings)).replace("Winter Break:We will be open at 10 am during Winter Break from Dec 20, 2019 through Jan 5, 2020. Whoa 2020!","") 
+                else:
+                    hours_of_operation1 ="<MISSING>"
+            store = []
+            store.append("https://flyhightrampolinepark.com")
+            store.append(location_name2)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
+            store.append("US")
+            store.append("<MISSING>")
+            store.append(phone)
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            store.append(hours_of_operation1)
+            store.append(page_url)
+            yield store
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

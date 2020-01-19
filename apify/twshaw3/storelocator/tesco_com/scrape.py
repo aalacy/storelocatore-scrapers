@@ -1,6 +1,6 @@
 import csv
 import os
-import requests
+from sgrequests import SgRequests
 import sgzip
 
 def write_output(data):
@@ -20,14 +20,7 @@ search.initialize(country_codes = ['gb'])
 
 MAX_RESULTS = 100
 
-session = requests.Session()
-proxy_password = os.environ["PROXY_PASSWORD"]
-proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
-proxies = {
-    'http': proxy_url,
-    'https': proxy_url
-}
-session.proxies = proxies
+session = SgRequests()
 
 HEADERS = {
     'Accept': '*/*',

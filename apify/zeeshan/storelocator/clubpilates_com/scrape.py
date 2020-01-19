@@ -1,55 +1,48 @@
-import os
-import re 
-import base
+import csv
 import requests
 
-from lxml import (html, etree,)
+def handle_missing(field):
+    if field == None or (type(field) == type('x') and len(field.strip()) == 0):
+        return '<MISSING>'
+    return field
 
-from pdb import set_trace as bp
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-xpath = base.xpath
+        # Header
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Body
+        for row in data:
+            writer.writerow(row)
 
-class ClubPilates(base.Base):
+URL = 'https://members.clubpilates.com/api/brands/clubpilates/locations?geoip=&limit=100000'
 
-    csv_filename = 'data.csv'
-    domain_name = 'clubpilates.com'
-    url = 'https://www.clubpilates.com/wp-content/themes/clubpilates_v02_1/actions/preOpen_get_locations.php'
-    seen = set()
+def fetch_data():
+    locations = []
+    response = requests.get(URL)
+    stores = response.json()['locations']
+    for store in stores:
+        if store['coming_soon'] != 'false':
+            locator_domain = 'clubpilates.com'
+            page_url = handle_missing(store['site_url'])
+            location_name = handle_missing(store['name'])
+            street_address = handle_missing(store['address'])
+            city = handle_missing(store['city'])
+            state = handle_missing(store['state'])
+            zip_code = handle_missing(store['zip'])
+            country_code = handle_missing(store['country_code'])
+            store_number = handle_missing(store['seq'])
+            phone = handle_missing(store['phone'])
+            location_type = '<MISSING>'
+            latitude = handle_missing(store['lat'])
+            longitude = handle_missing(store['lng'])
+            hours_of_operation = '<MISSING>'
+            locations.append([locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+    return locations 
 
-    def map_data(self, row):
-        zipcode = row.get('zip').strip()
-        if len(zipcode) == 6:
-            zipcode = zipcode[:3] + ' ' + zipcode[3:]
-        return {
-            'locator_domain': self.domain_name
-            ,'location_name': row.get('title')
-            ,'street_address': row.get('address')
-            ,'city': row.get('city')
-            ,'state': row.get('state')
-            ,'zip': zipcode
-            ,'country_code': row.get('country')
-            ,'store_number': row.get('ID')
-            ,'phone': row.get('phone') if len(row.get('phone')) >= 10 else None
-            ,'location_type': row.get('type')
-            ,'naics_code': '<MISSING>'
-            ,'latitude': row.get('lat')
-            ,'longitude': row.get('lng')
-            ,'hours_of_operation': '<MISSING>'
-        }
+def scrape():
+    data = fetch_data()
+    write_output(data)
 
-    def crawl(self):
-        ret = os.system('curl -XGET %s > data.json' % self.url)
-        if ret == 0:
-            with open('data.json', 'rb') as fp:
-                data = fp.readlines()
-                rows = eval(data[0]) if data else data
-                for row in rows:
-                    store_number = row.get('ID')
-                    if store_number in self.seen: continue
-                    else: self.seen.add(store_number)
-                    yield row
-
-
-if __name__ == '__main__':
-    cp = ClubPilates()
-    cp.run()
+scrape()

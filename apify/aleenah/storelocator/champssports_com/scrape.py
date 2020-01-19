@@ -34,12 +34,13 @@ def fetch_data():
     res=requests.get("https://stores.champssports.com/")
     soup = BeautifulSoup(res.text, 'html.parser')
     uls = soup.find('div', {'class': 'Directory-content'}).find_all("ul")
-    usa = uls[0].find_all('a')
+    usa = uls[0].find_all('a')+uls[2].find_all('a')+uls[3].find_all('a')
     can=uls[1].find_all('a')
 
     for a in usa:
         #print("usa")
         if a.get('data-count') == "(1)":
+            #print(url)
             page_url.append("https://stores.champssports.com/"+a.get('href').replace("../",""))
             countries.append('US')
         else:
@@ -70,7 +71,7 @@ def fetch_data():
         if a.get('data-count') == "(1)":
             page_url.append("https://stores.champssports.com/"+a.get('href').replace("../",""))
             countries.append('CA')
-
+            #print(url)
         else:
 
             url = "https://stores.champssports.com/"+a.get('href')
@@ -109,7 +110,11 @@ def fetch_data():
         div = soup.find('div', {'class': 'Core-row l-row'})
 
         c=div.find('span', {'class': 'c-address-city'}).text
-        s=div.find('abbr',{'class':'c-address-state'}).text
+        s=div.find_all('abbr',{'class':'c-address-state'})
+        if s != []:
+             s=s[0].text
+        else:
+             s= "<MISSING>"
         st=div.find('span', {'class': 'c-address-street-1'}).text
         z=div.find('span', {'class': 'c-address-postal-code'}).text
         if s+c+z+st in key_set:

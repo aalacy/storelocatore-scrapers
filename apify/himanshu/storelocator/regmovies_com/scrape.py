@@ -3,9 +3,11 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+# import http as http_
+
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -15,40 +17,57 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+    }
     base_url = "https://www.regmovies.com"
-    r = requests.get(base_url+'/static/en/us/theatre-list')
-    soup=BeautifulSoup(r.text,'lxml')
+    r = requests.get("https://www.regmovies.com/static/en/us/theatre-list",headers=headers)
+    soup = BeautifulSoup(r.text,"lxml")
+    addressess = []
     return_main_object = []
-    main=soup.find('div',{"class":'cinema-list'}).find_all('a',{"class":"btn-link"})
-    for atag in main:
-        #print(atag['href'])
-        r1 = requests.get(base_url+atag['href'])
-        soup1=BeautifulSoup(r1.text,'lxml')
-        name=soup1.find('cinema-structured-data')['data-name'].strip()
-        address=soup1.find('cinema-structured-data')['data-address'].strip('[]')
-        city=soup1.find('cinema-structured-data')['data-city'].strip()
-        state=soup1.find('cinema-structured-data')['data-province'].strip()
-        zip=soup1.find('cinema-structured-data')['data-postalcode'].strip()
-        phone=soup1.find('cinema-structured-data')['data-telephone'].strip()
-        lat=soup1.find('cinema-structured-data')['data-lat'].strip()
-        lng=soup1.find('cinema-structured-data')['data-lon'].strip()
-        storeno=r1.url.split('/')[-1].strip()
-        store=[]
-        store.append(base_url)
-        store.append(name)
+    for href in soup.find_all("a",{"class":"btn-link"}):
+        try:
+            r1 = requests.get("https://www.regmovies.com/"+href['href'],headers=headers)
+        except:
+            pass
+        # print("https://www.regmovies.com/"+href['href'])
+        soup1 = BeautifulSoup(r1.text,"lxml")
+        store_data = soup1.find(lambda tag: tag.name == "cinema-structured-data")
+        address = store_data['data-address'].replace("["," ").replace("]"," ")
+        # print(store_data['data-telephone'])
+        # location_list = json.loads(script.text.split("apiSitesList = ")[1].split("}}]")[0] + "}}]")
+        # phone_request = requests.get("https://www.regmovies.com" + location_list[0]["uri"],headers=headers)
+        # phone_soup = BeautifulSoup(phone_request.text,"lxml")
+        # phone = phone_soup.find("cinema-structured-data")["data-telephone"]
+        # for store_data in location_list:
+        #     address = store_data["address"]["address1"]
+        #     if store_data["address"]["address2"] != None:
+        #         address = address + " " + store_data["address"]["address2"]
+        #     if store_data["address"]["address3"] != None:
+        #         address = address + " " + store_data["address"]["address3"]
+        #     if store_data["address"]["address4"] != None:
+        #         address = address + " " + store_data["address"]["address4"]
+        store = []
+        store.append("https://www.regmovies.com")
+        store.append(store_data['data-name'])
         store.append(address)
-        store.append(city)
-        store.append(state)
-        store.append(zip)
+        store.append(store_data['data-city'])
+        store.append(store_data['data-province'])
+        store.append(store_data['data-postalcode'])
         store.append("US")
-        store.append(storeno)
-        store.append(phone)
         store.append("<MISSING>")
-        store.append(lat)
-        store.append(lng)
+        store.append(store_data['data-telephone'])
         store.append("<MISSING>")
-        store.append(r1.url)
+        store.append(store_data["data-lat"])
+        store.append(store_data["data-lon"])
+        store.append("<MISSING>")
+        store.append("https://www.regmovies.com/"+href['href'])
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        # print(store)
         yield store
+       
 
 def scrape():
     data = fetch_data()

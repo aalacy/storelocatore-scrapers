@@ -15,22 +15,12 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://www.journeys.com/stores'
-    states = []
+    url = 'https://www.journeys.com/stores_all'
     locs = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if '<option value="' in line and '<option value=""' not in line and 'miles' not in line:
-            states.append(line.split('<option value="')[1].split('"')[0])
-    for state in states:
-        print('Pulling State %s...' % state)
-        findurl = 'https://www.journeys.com/stores?StateOrProvince=' + state + '&PostalCode=&MileRadius=&Latitude=&Longitude=&Mode=search'
-        r2 = session.get(findurl, headers=headers)
-        for line2 in r2.iter_lines():
-            if 'class="store-name">' in line2:
-                surl = 'https://www.journeys.com' + line2.split('href="')[1].split('"')[0]
-                if surl not in locs:
-                    locs.append(surl)
+        if 'class="link-store-info btn-action">' in line:
+            locs.append('https://www.journeys.com' + line.split('href="')[1].split('"')[0])
     for loc in locs:
         print('Pulling Location %s...' % loc)
         r2 = session.get(loc, headers=headers)
@@ -48,7 +38,7 @@ def fetch_data():
                 city = line2.split('span itemprop="addressLocality">')[1].split('<')[0]
                 state = line2.split('<span itemprop="addressRegion">')[1].split('<')[0]
                 zc = line2.split('"postalCode">')[1].split('<')[0]
-                country = 'CA'
+                country = 'US'
             if AFound and '<p item' not in line2 and '</p>' in line2 and '<p>' in line2:
                 add = add + ' ' + line2.split('<p>')[1].split('<')[0]
             if '<h2 itemprop="name">' in line2:

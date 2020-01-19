@@ -83,14 +83,19 @@ def fetch_data():
                 continue
 
         info = res.json()[0]['store_info']
-        locs.append(info['name'])
+        locs.append([x['data'] for x in res.json()[0]['custom_fields'] if x['name'] == 'store_name'][0])
+        #print([x['data'] for x in res.json()[0]['custom_fields'] if x['name'] == 'store_name'][0])
         ids.append(info['corporate_id'])
         ph=info['phone']
         if ph=="":
             phones.append("<MISSING>")
         else:
             phones.append(ph)
-        tim=info['store_hours'].replace("1,","Monday:").replace(";2,",";Tuesday:").replace(";3,",";Wednesday:").replace(";4,",";Thusrday:").replace(";5,",";Friday:").replace(";6,",";Saturday:").replace(";7,",";Sunday:")
+        tim=info['store_hours'].replace("1,","Monday: ").replace(";2,"," Tuesday: " ).replace(";3,"," Wednesday: ").replace(";4,"," Thusrday: ").replace(";5,"," Friday: ").replace(";6,"," Saturday: ").replace(";7,"," Sunday: ").replace(";","").replace(",","-")
+        tim=re.sub(r'([0-9]{2})([0-9]{2})',r'\1:\2',tim)
+        print(tim)
+        
+        
         if tim=="":
             timing.append("<MISSING>")
         else:

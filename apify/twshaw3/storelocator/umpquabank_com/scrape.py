@@ -1,4 +1,4 @@
-import requests
+from sgrequests import SgRequests
 import csv
 import datetime
 import sgzip
@@ -36,7 +36,7 @@ class UmpquaBank:
         }
 
     def crawl(self):
-        session = requests.Session()
+        session = SgRequests()
         session.headers.update({
             'content-type': 'application/json'
             ,'cache-control': 'max-age=0'

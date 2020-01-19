@@ -134,7 +134,6 @@ def fetch_data():
             store_number = '<MISSING>'
             phone_number = '<MISSING>'
 
-
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                             store_number, phone_number, location_type, lat, longit, hours, page_url]
             all_store_data.append(store_data)

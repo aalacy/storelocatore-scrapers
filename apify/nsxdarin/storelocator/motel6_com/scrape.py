@@ -16,6 +16,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    ids = []
     url = 'https://www.motel6.com/var/g6/hotel-rates.infinity.1.json'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
@@ -28,7 +29,7 @@ def fetch_data():
         print('Pulling Location %s...' % loc)
         website = 'motel6.com'
         purl = 'https://www.motel6.com/en/motels.' + loc + '.html?ncr=true'
-        typ = '<MISSING>'
+        typ = ''
         hours = '<MISSING>'
         lurl = 'https://www.motel6.com/var/g6/hotel-information/en/' + loc + '.json'
         r2 = session.get(lurl, headers=headers)
@@ -36,6 +37,7 @@ def fetch_data():
             array = json.loads(r2.content)
             lat = array['latitude']
             lng = array['longitude']
+            typ = array['brand_id']
             add = array['address'].encode('utf-8')
             zc = array['zip']
             city = array['city'].encode('utf-8')
@@ -44,7 +46,10 @@ def fetch_data():
             country = array['country']
             phone = array['phone']
             store = array['property_id']
-            yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            addinfo = add + city + state
+            if addinfo not in ids:
+                ids.append(addinfo)
+                yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         except:
             pass
 

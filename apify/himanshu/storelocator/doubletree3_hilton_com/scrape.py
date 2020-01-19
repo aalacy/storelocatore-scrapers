@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -15,47 +15,18 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def request_wrapper(url,method,headers,data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = requests.get(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:
-                if data:
-                    r = requests.post(url,headers=headers,data=data)
-                else:
-                    r = requests.post(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None
+session = SgRequests()
 
 def fetch_data():
     headers = {
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "https://www.hilton.com"
-    r = requests.get("https://www.hilton.com/en/locations/doubletree/",headers=headers)
+    r = session.get("https://www.hilton.com/en/locations/doubletree/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     addresses = []
+    location_list = []
     for script in soup.find_all("script"):
         if "__NEXT_DATA__ = " in script.text:
             location_list = json.loads(script.text.split("__NEXT_DATA__ = ")[1].split("module={}")[0])["props"]['pageProps']["serverState"]["apollo"]["data"]
@@ -71,7 +42,7 @@ def fetch_data():
                 "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36",
                 "content-type": "application/json"
             }
-            location_json_request = request_wrapper("https://www.hilton.com/graphql/customer?pod=brands&operationName=hotel",'post',data=request_data,headers=request_header)
+            location_json_request = session.post("https://www.hilton.com/graphql/customer?pod=brands&operationName=hotel", data=request_data, headers=request_header)
             if location_json_request == None:
                 continue
             if  location_json_request.json()["data"] == None:
@@ -79,7 +50,7 @@ def fetch_data():
             if location_json_request.json()["data"]["hotel"] == None:
                 continue
             location_url = location_json_request.json()["data"]["hotel"]["homepageUrl"]
-            location_request = request_wrapper(location_url,'get',headers=headers)
+            location_request = session.get(location_url, headers=headers)
             if location_request == None:
                 continue
             location_soup = BeautifulSoup(location_request.text,"lxml")

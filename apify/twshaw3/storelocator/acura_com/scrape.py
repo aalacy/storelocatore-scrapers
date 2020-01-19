@@ -1,5 +1,5 @@
 import re 
-import requests
+from sgrequests import SgRequests
 import csv
 import sgzip
 
@@ -42,7 +42,7 @@ class Acura:
         }
 
     def crawl(self):
-        session = requests.Session()
+        session = SgRequests()
         session.headers.update({
             'authority': 'www.acura.com'
             ,'method': 'GET'

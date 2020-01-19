@@ -45,29 +45,49 @@ def fetch_data():
     data=[]
     locationelements_1=driver.find_elements_by_xpath("//h4//a")
     locationele=list(filter(lambda x: (not(x.text == '')) , locationelements_1))
-    locationURLs=[i.get_attribute('href') for i in locationele]
+    locationURLs=list(set([i.get_attribute('href') for i in locationele]))
     locationText=[i.text  for i in locationele]
-    canadaElements=len(driver.find_elements_by_xpath("//h4[preceding-sibling::p]//a"))
+    
+    canadaElements=driver.find_elements_by_xpath("//h4[preceding-sibling::p]//a")
+    canadas=[]
+    for ce in canadaElements:
+        canadas.append(ce.get_attribute('href'))
     count=0
     fullcontent=[]
     for i in locationURLs:
+        if i == "https://pepperpalace.com/pages/new-orleans-decatur-street":
+            print("coming soon!")
+            continue
+        if i == "https://pepperpalace.com/pages/new-orleans-chartres":
+            print("new-orleans-chartres")
+            driver.get(i)   
+            text=driver.find_element_by_class_name("rte").text.replace('\u200b',' ').replace('\u00A0',' ')
+            fullcontent.append(text)
+            count=count+1
+            print(count)
+            #print(text)
+            continue
         driver.get(i)   
-        text=driver.find_element_by_xpath("//meta[@name='description']").get_attribute('content') 
+        text=driver.find_element_by_xpath("//meta[@name='description']").get_attribute('content').replace('\u200b',' ').replace('\u00A0',' ')
         fullcontent.append(text)
         count=count+1
         print(count)
+ 
+    del locationURLs[locationURLs.index("https://pepperpalace.com/pages/new-orleans-decatur-street")]
     for store in range(len(fullcontent)):        
         loc_name_splitter=re.search(r'\d+', fullcontent[store]).group()
-    
+        #print(locationURLs[store])
         location_name = fullcontent[store].split(loc_name_splitter)[0]
         location_name=location_name.strip()
         if(location_name==''):
             location_name=locationText[store]
         if('Â' in location_name):
             location_name=location_name.replace('Â','')
+        
         city = locationText[store].lower()
         if('(' in fullcontent[store]):
             phno='('+fullcontent[store].split('(')[1]
+            #print(phno)
             alphabet='abcdefghijklmnopqrstuvwxyz@.!â€‹Â'
             phno=phno.lower()
             for letter in alphabet:
@@ -78,18 +98,38 @@ def fetch_data():
                 phno=[v for v in phno if v in '1234567890- ()']
                 str1=""
                 phno=str1.join(phno)
+            #print(phno)
             raw_address = fullcontent[store].split('(')[0]
         else:
-            phno='<MISSING>'
+            driver.get(locationURLs[store])
+            inlines=driver.find_elements_by_tag_name("inline")
+            if inlines==[]:
+              phno='<MISSING>'
+            else:
+
+              phno='('+inlines[0].text.replace("\n"," ").split('(')[1]
+              #print(phno)
+              alphabet='abcdefghijklmnopqrstuvwxyz@.!â€‹Â'
+              phno=phno.lower()
+              for letter in alphabet:
+                phno = phno.replace(letter, '')
+                if('  ' in phno):
+                    phno=phno.strip()
+                    phno=phno.split("  ")[0]
+                phno=[v for v in phno if v in '1234567890- ()']
+                str1=""
+                phno=str1.join(phno).strip()
+              #print(phno)
             raw_address = fullcontent[store]
         if(location_name in raw_address):
-            raw_address=raw_address.replace(location_name,"")
-        
-        if store>=len(fullcontent)-canadaElements:
+            raw_address=raw_address.replace(location_name,"").replace("pepperpalacemallga@gmail.com","")
+        #print( fullcontent[store])
+    
+        if locationURLs[store] in  canadas:
             country='CA'
         else:
             country='US'
-        try:
+        """try:
             tagged = usaddress.tag(raw_address)[0]
         except:
             pass
@@ -146,7 +186,27 @@ def fetch_data():
         if('pepper' in state):
             state=state.split('pepper')[0]
         if "Pepper Palace Niagara Falls" in location_name:
-            zipcode = 'L2G 3W6'
+            zipcode = 'L2G 3W6'"""
+        #raw_address=raw_address.decode('utf-8').replace(u"​\u200b","").encode('utf-8')
+        addr=raw_address.replace(u"​\u2022","").strip().split(",")
+        sz=addr[-1].strip()
+        state=sz.split(" ")[0]
+        zipcode = sz.replace(state,"").strip()
+        if zipcode == "":
+                zipcode="<MISSING>"
+        addr=raw_address.replace(sz,"").strip()
+        cit=re.findall(r'[0-9A-Za-z\.]([A-Z][a-z]+)',addr)
+        if cit != []:
+          city=cit[-1]+addr.split(cit[-1])[-1].replace(",","")
+          #print(cit)
+        else:
+          city=addr.split(" ")[-1].replace(",","")
+          #print("!!!!!!!!!!!!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        street_addr=addr.replace(city,"").replace("\n","").strip().strip(",").strip()
+        if locationURLs[store] =="https://pepperpalace.com/pages/new-orleans-chartres":
+            #uff = street_addr.split(" ")[-1]
+            street_addr=street_addr.replace("New","")
+            city= "New "+city.strip()
         data.append([
              'https://pepperpalace.com/',
              locationURLs[store],

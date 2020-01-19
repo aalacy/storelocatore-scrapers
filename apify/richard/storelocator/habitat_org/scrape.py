@@ -40,11 +40,8 @@ class Scraper(Scrape):
                     stores  = json.loads(data.text)['gMaps'][0]['markers'] if 'gMaps' in json.loads(data.text).keys() else []
                     break
                 except:
-                    print(f"Retrying for {zipcode}: {counter} times")
                     counter += 1
                     pass
-
-            print(f"Scraped {len(stores)} locations for zipcode {zipcode}")
 
             for store in stores:
                 if store['title'] not in self.seen:

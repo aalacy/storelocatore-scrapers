@@ -1,6 +1,7 @@
 import csv
 import urllib2
 import requests
+import re
 
 requests.packages.urllib3.disable_warnings()
 
@@ -39,6 +40,7 @@ def fetch_data():
         typ = 'Restaurant'
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
+        Found = False
         for line2 in lines:
             if '<a href="tel:' in line2 and 'day' not in line2 and 'Hours' not in line2:
                 phone = line2.split('<a href="tel:')[1].split('>')[1].split('<')[0]
@@ -56,11 +58,24 @@ def fetch_data():
                     city = '<MISSING>'
                     state = '<MISSING>'
                     zc = '<MISSING>'
-            if '<span class="" style="display:block;clear:both;height' in line2 and 'Store Hours' not in line2:
+            if 'Store Hours:' in line2 and '<strong>' in line2:
+                Found = True
+            if Found and '<span' in line2:
+                Found = False
+            if Found and '</div>' in line2:
+                Found = False
+            if Found and '</p>' in line2 and '<strong>' not in line2:
+                hrs = line2.split('</p>')[0].replace('<p>','').replace('<p class="p1">','').replace('&#8211;','-').replace('&amp;','&')
                 if hours == '':
-                    hours = line2.split('<')[0].replace('&#8211;','-')
+                    hours = hrs
                 else:
-                    hours = hours + '; ' + line2.split('<')[0].replace('&#8211;','-')
+                    hours = hours + '; ' + hrs
+            if Found and '<br' in line2 and '<strong>' not in line2:
+                hrs = line2.split('<br')[0].replace('<p>','').replace('<p class="p1">','').replace('&#8211;','-').replace('&amp;','&')
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
         country = 'US'
         store = '<MISSING>'
         lat = '<MISSING>'
@@ -70,6 +85,8 @@ def fetch_data():
             phone = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
+        cleanr = re.compile('<.*?>')
+        hours = re.sub(cleanr, '', hours)
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

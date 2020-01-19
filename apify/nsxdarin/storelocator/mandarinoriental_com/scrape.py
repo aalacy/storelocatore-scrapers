@@ -21,17 +21,17 @@ def fetch_data():
     array = json.loads(r.content)
     for item in array['data']['record']:
         hurl = 'https://www.mandarinoriental.com/' + item['homepage'].replace('\\/','/')
-        name = item['name']
+        name = item['name'].encode('utf-8')
         website = 'mandarinoriental.com'
         add = '<MISSING>'
         lat = item['latitude']
         lng = item['longitude']
         typ = 'Hotel'
         hours = '<MISSING>'
-        city = item['city']
+        city = item['city'].encode('utf-8')
         state = '<MISSING>'
         zc = '<MISSING>'
-        country = item['country']
+        country = item['country'].encode('utf-8')
         store = item['properties_id']
         phone = item['phone']
         r2 = session.get(hurl, headers=headers)
@@ -43,8 +43,6 @@ def fetch_data():
                 add = line.split('itemprop="streetAddress">')[1].split('<')[0]
             if '"postalCode">' in line:
                 zc = line.split('"postalCode">')[1].split('<')[0]
-                if not zc.strip():
-                    zc = '<MISSING>'
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

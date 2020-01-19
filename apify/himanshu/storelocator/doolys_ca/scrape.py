@@ -53,17 +53,26 @@ def fetch_data():
                 locations = state[4]
                 for location in locations:
                     geo_location[location[5][0][0].replace(
-                        " u0027s", "'s")] = location[4][0][1]
+                        " u0027s", "'s").strip().lstrip()] = location[4][0][1]
     driver = get_driver()
     addresses = []
     driver.get(iframe_link)
     time.sleep(3)
     driver.find_element_by_xpath(
         "//div[@class='i4ewOd-pzNkMb-ornU0b-b0t70b-Bz112c']").click()
-    for button in driver.find_elements_by_xpath("//*[contains(text(), '...')]"):
-        time.sleep(3)
-        button.click()
+        # for button in
+    try:
+        for button in driver.find_elements_by_xpath("//div[@class='uVccjd HzV7m-pbTTYe-KoToPc-ornU0b-hFsbo HzV7m-KoToPc-hFsbo-ornU0b']"):
+            #print(j.click())
+
+            time.sleep(3)
+            button.click()
+    except:
+        pass
+    # fO2voc-jRmmHf-MZArnb-Q7Zjwb
+    # fO2voc-jRmmHf-MZArnb-Q7Zjwb
     for button in driver.find_elements_by_xpath("//div[contains(@index, '')]"):
+        # print("======================== ",button.get_attribute("index"))
         try:
             try:
                 driver.find_element_by_xpath(
@@ -88,7 +97,7 @@ def fetch_data():
                 store_zip = store_zip_split[-1]
             else:
                 store_zip = "<MISSING>"
-            #print(store_zip)
+            # print(store_zip)
             state_split = re.findall("([A-Z]{2})", address)
             if state_split:
                 state = state_split[-1]
@@ -121,15 +130,16 @@ def fetch_data():
             store.append('https://www.doolys.ca/locations-1')
             store = [x.encode('ascii', 'ignore').decode(
                 'ascii').strip() if type(x) == str else x for x in store]
-            #print('data == ' + str(store))
-            #print('~~~~~~~~~~`````````````')
+            # print('data == ' + str(store))
+            # print('~~~~~~~~~~`````````````')
             yield store
             time.sleep(5)
             driver.find_element_by_xpath(
                 "//div[@class='U26fgb mUbCce p9Nwte HzV7m-tJHJj-LgbsSe qqvbed-a4fUwd-LgbsSe']").click()
         except Exception as e:
-            # print(e)
+            # print(",",e)
             time.sleep(3)
+            pass
 
 
 def scrape():

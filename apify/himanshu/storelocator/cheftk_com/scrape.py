@@ -12,8 +12,79 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 def fetch_data():
+    base_url ="http://www.cheftk.com/"
+    return_main_object=[]
+    output=[]
+    r=requests.get(base_url+"/home.html")
+    soup=BeautifulSoup(r.text,'lxml')
+    a = soup.find_all('li',{'style':'width: auto'})
+    for i in a:
+        location_name=""
+        street_address=""
+        city=""
+        state=""
+        zipp =""
+        country ="US"
+        storeno =""
+        phone=""
+        lat=""
+        lng=""
+        hours_of_operation=""
+        page_url=""
+        if "chef-tk-catering-kona.html" in  i.find('a')['href'] :
+            r1=requests.get(base_url+"/chef-tk-catering-kona.html")
+            soup1=BeautifulSoup(r1.text,'lxml')
+            b = soup1.find_all('div',{'class':'editor_color_green'})
+            location_name = b[0].text
+            street_address = " ".join(b[1].text.encode('ascii', 'ignore').decode('ascii').split(" ")[0:6])
+            city = " ".join(b[1].text.encode('ascii', 'ignore').decode('ascii').strip().split(" ")[6:8])
+            state = (b[1].text.encode('ascii', 'ignore').decode('ascii').strip().split(" ")[8])
+            zipp = (b[1].text.encode('ascii', 'ignore').decode('ascii').strip().split(" ")[9])
+            phone = (b[2].text.encode('ascii', 'ignore').decode('ascii').strip().split(":")[1])
+            hours_of_operation = (b[3].text.encode('ascii', 'ignore').decode('ascii').strip().split(":")[1])
+            page_url = base_url+"/chef-tk-catering-kona.html"
+        if "snow-factory-tk-kona.html" in  i.find('a')['href']:
+            r2 = requests.get(base_url+"/snow-factory-tk-kona.html")
+            soup2=BeautifulSoup(r2.text,'lxml')
+            c = soup2.find_all('div',{'id':'wsb-element-a976612f-12fc-4516-b514-9f303f2c12d3'})
+            street_address = " ".join(c[0].text.encode('ascii', 'ignore').decode('ascii').strip().split(" ")[0:3])
+            city = (c[0].text.split( )[3])
+            state = (c[0].text.split( )[4])
+            zipp = (c[0].text.split( )[5].replace("96740(808)","96740"))
+            phone = (c[0].text.split( )[6].replace("327-0070","(808)327-0070"))
+            page_url = base_url+"/snow-factory-tk-kona.html"
+        if "tk-noodle-house-kainaliu.html" in  i.find('a')['href'] :
+            r3=requests.get(base_url+"/tk-noodle-house-kainaliu.html")
+            soup3=BeautifulSoup(r3.text,'lxml')
+            d = soup3.find_all('span',{'style':'font-family:jacques francois shadow;'})
+            location_name =(d[0].text)
+            street_address = (d[1].text)+" "+(d[2].text)
+            city = (d[3].text).split( )[0]
+            state = (d[3].text).split( )[1]
+            zipp = (d[3].text).split( )[2]
+            phone = (d[4].text)
+            page_url = base_url+"/tk-noodle-house-kainaliu.html"
+        store=[]
+        store.append(base_url)
+        store.append(location_name if location_name else "<MISSING>")
+        store.append(street_address if street_address else "<MISSING>")
+        store.append(city if city else "<MISSING>")
+        store.append(state if state else "<MISSING>")
+        store.append(zipp if zipp else "<MISSING>")
+        store.append(country if country else "<MISSING>")
+        store.append(storeno if storeno else "<MISSING>")
+        store.append(phone if phone else "<MISSING>")
+        store.append("<MISSING>")
+        store.append(lat if lat else "<MISSING>")
+        store.append(lng if lng else "<MISSING>")
+        store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+        store.append(page_url if page_url else "<MISSING>")
+        if "<MISSING>" in store[3]:
+            pass
+        else:
+             yield store
+
     base_url ="http://www.cheftk.com"
     return_main_object=[]
     output=[]
@@ -30,7 +101,7 @@ def fetch_data():
     for dt in main:
         if dt.find('div',{"class":"txt"})!=None and dt.find('span',{'class':"editor_color_white"})!=None:
             arr=list(dt.stripped_strings)
-            # arr = arr[arr == "\\u200b\\u200b"]
+            
             detail=[]
             for mt in arr:
                 if mt != '\u200b' and mt != '\u200b\u200b':
@@ -91,7 +162,6 @@ def fetch_data():
                 output.append(adrr)
                 yield store
             i+=1
-
 def scrape():
     data = fetch_data()
     write_output(data)

@@ -20,6 +20,7 @@ const requestPromise = require('request-promise');
 
 			const poi = {
 				locator_domain: safegraphUrl,
+				page_url: '<MISSING>',
 				location_name: 'safegraph',
 				street_address: '1543 mission st',
 				city: 'san francisco',

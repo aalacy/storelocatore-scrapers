@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 import sgzip
 import os
 
@@ -24,14 +24,7 @@ URL_TEMPLATE = "https://storelocator.sprint.com/locator/GetData.ashx?loc={}&r=50
 search = sgzip.ClosestNSearch()
 search.initialize()
 
-session = requests.Session()
-proxy_password = os.environ["PROXY_PASSWORD"]
-proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
-proxies = {
-    'http': proxy_url,
-    'https': proxy_url
-}
-session.proxies = proxies
+session = SgRequests()
 
 MAX_RESULTS = 99
 MAX_DISTANCE = 500.0

@@ -2,6 +2,7 @@
 import csv
 import urllib2
 import requests
+import re
 
 requests.packages.urllib3.disable_warnings()
 
@@ -49,7 +50,8 @@ def fetch_data():
         website = 'dickswingsandgrill.com'
         typ = 'Restaurant'
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        lines = r2.iter_lines()
+        for line2 in lines:
             if '<title>' in line2:
                 name = line2.split('<title>')[1].split(' |')[0]
             if '<h2>' in line2 and '<h2><' not in line2 and 'Weekly' not in line2:
@@ -58,15 +60,34 @@ def fetch_data():
             if '!2d-' in line2:
                 lng = line2.split('!2d')[1].split('!')[0]
                 lat = line2.split('!2d-')[1].split('!3d')[1].split('!')[0]
-                city = line2.split('%2C+')[1].replace('+',' ')
-                state = line2.split('%2C+')[2].split('+')[0]
-                zc = line2.split('%2C+')[2].split('+')[1].split('!')[0]
+                try:
+                    city = line2.split('%2C+')[1].replace('+',' ')
+                    state = line2.split('%2C+')[2].split('+')[0]
+                    zc = line2.split('%2C+')[2].split('+')[1].split('!')[0]
+                except:
+                    city = line2.split('%2C%20')[1].replace('+',' ')
+                    state = line2.split('%2C%20')[2].split('%')[0]
+                    zc = line2.split('%2C%20')[2].split('%20')[1].split('!')[0]
             if '&#8211;' in line2 and '</span>' not in line2:
                 hrs = line2.replace('\r','').replace('\n','').replace('\t','').replace('<strong>','').replace('</strong>','').replace('&#8211;','-').replace('<p style="text-align: right;">','').strip()
                 if hours == '':
                     hours = hrs
                 else:
                     hours = hours + '; ' + hrs
+            if 'pm<' in line2 and 'wrapper' not in line2:
+                hrs = line2.replace('\r','').replace('\n','').replace('\t','').replace('<strong>','').replace('</strong>','').replace('&#8211;','-').replace('<p style="text-align: right;">','').strip()
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
+            if 'CLOSED<' in line2:
+                hrs = line2.replace('\r','').replace('\n','').replace('\t','').replace('<strong>','').replace('</strong>','').replace('&#8211;','-').replace('<p style="text-align: right;">','').strip()
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
+            if '<p><strong>MON-SUN:<br />' in line2:
+                hours = 'MON-SUN: ' + next(lines).split('strong>')[1].split('<')[0].replace('&#8211;','-')                    
         if '•' in add:
             add = add.split('•')[0].strip()
         if phone == '':
@@ -86,7 +107,7 @@ def fetch_data():
         if state == '':
             state = 'FL'
         hours = hours.replace('<br />','').replace('</p>','')
-        if 'pm' not in hours:
+        if 'pm' not in hours.lower():
             hours = '<MISSING>'
         if '(' in add:
             add = add.split('(')[0].strip()
@@ -95,6 +116,10 @@ def fetch_data():
         add = add.replace('Â â€¢Â','').replace('Â â€¢','').strip()
         if 'Â' in add:
             add = add.split('Â')[0].strip()
+        cleanr = re.compile('<.*?>')
+        hours = re.sub(cleanr, '', hours)
+        if hours == '':
+            hours = '<MISSING>'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

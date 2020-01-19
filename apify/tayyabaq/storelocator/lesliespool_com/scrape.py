@@ -6,15 +6,13 @@ import csv
 import requests
 import time
 
-
 def parse_geo(url):
     lon = re.findall(r'\,(--?[\d\.]*)', url)[0]
     lat = re.findall(r'\@(-?[\d\.]*)', url)[0]
     return lat, lon
 
-
 def write_output(data):
-    with open('leslies.csv', mode='w',newline='') as output_file:
+    with open('data.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -29,7 +27,7 @@ def get_driver():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    driver = webdriver.Chrome("chromedriver", options=options)
+    return webdriver.Chrome("chromedriver", chrome_options=options)
 
 driver1 = get_driver()
 
@@ -129,7 +127,7 @@ def fetch_data():
                             hoo = pat1 + ' ' + pat + ' '
                             h.append(hoo)
 
-                        hour = '| '.join(h)
+                        hour = ' '.join(h)
                     if len(hour) < 3:
                         hour = "<MISSING>"
 
@@ -170,7 +168,6 @@ def fetch_data():
 
                 n_list = [locator_domain, page_url, location_name, street, city, state, zip_code, country_code,
                             store_numbr, phn, location_type, lat, lon, hour]
-                print(n_list)
                 data_list.append(n_list)
         time.sleep(2)
         driver1.quit()

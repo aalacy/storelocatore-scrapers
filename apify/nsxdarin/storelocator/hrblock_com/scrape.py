@@ -23,7 +23,7 @@ def fetch_data():
             lurl = 'https://hrblock.com' + line.split('href="')[1].split('"')[0]
             states.append(lurl)
     for state in states:
-        print('Pulling State %s...' % state)
+        #print('Pulling State %s...' % state)
         cities = []
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
@@ -32,7 +32,7 @@ def fetch_data():
                 cities.append(lurl)
         for city in cities:
             locs = []
-            print('Pulling City %s...' % city)
+            #print('Pulling City %s...' % city)
             r3 = session.get(city, headers=headers)
             for line3 in r3.iter_lines():
                 if 'View Office Info' in line3:

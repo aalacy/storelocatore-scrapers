@@ -59,9 +59,9 @@ class Scraper(Scrape):
                 ('search', zip_search),
             )
             data = requests.get('https://maps.locations.vitaminshoppe.com/api/getAsyncLocations', headers=headers, params=params).json()['markers']
-            stores.extend(data)
-
-            print(f"{len(data)} locations scraped for {zip_search}")
+            if data:
+                stores.extend(data)
+                print(f"{len(data)} locations scraped for {zip_search}")
 
         for store in stores:
             store = json.loads(store['info'].replace('<div class="tlsmap_popup">', '').replace('</div>', ''))

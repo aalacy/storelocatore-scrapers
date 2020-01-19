@@ -1,6 +1,6 @@
 import csv
 import os
-import requests
+from sgrequests import SgRequests
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -14,14 +14,7 @@ def write_output(data):
 
 URL = 'https://api.greggs.co.uk/1.0/stores/51.50183269999999/-0.09095100000001821/4000'
 
-session = requests.Session()
-proxy_password = os.environ["PROXY_PASSWORD"]
-proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
-proxies = {
-    'http': proxy_url,
-    'https': proxy_url
-}
-session.proxies = proxies
+session = SgRequests()
 
 HEADERS = {
     'Host': 'api.greggs.co.uk',

@@ -1,8 +1,10 @@
 import csv
 import urllib2
+from sgrequests import SgRequests
+import collections
 import requests
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -13,18 +15,54 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def fetch_data():
+def broken_page(loc):
+    response = requests.get(loc, headers=headers)
+    return 'something went wrong' in response.content.lower()
+
+def fetch_store_urls():
+    states = []
     locs = []
-    url = 'https://www.7-eleven.com/sitemap.xml'
+    url = 'https://www.7-eleven.com/locations'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if '<loc>https://www.7-eleven.com/locations/' in line:
-            lurl = line.split('>')[1].split('<')[0]
-            count = lurl.count('/')
-            if count == 6:
-                locs.append(lurl)
-    for loc in locs:
-        print('Pulling Location %s...' % loc)
+        if '<li><a href="/locations/' in line:
+            items = line.split('<li><a href="/locations/')
+            for item in items:
+                if 'All Stores' not in item:
+                    states.append('https://www.7-eleven.com/locations/' + item.split('"')[0])
+    for state in reversed(states):
+        cities = []
+        r2 = session.get(state, headers=headers)
+        for line2 in r2.iter_lines():
+            if '<li><a href="/locations/' in line:
+                items = line2.split('<li><a href="/locations/')
+                for item in items:
+                    if 'class="locations-list">' not in item:
+                        cities.append('https://www.7-eleven.com/locations/' + item.split('"')[0])
+        for city in cities:
+            try:
+                r3 = session.get(city, headers=headers)
+            except:
+                if broken_page(city):
+                    print('broken page')
+                    continue
+                else:
+                    raise
+            for line3 in r3.iter_lines():
+                if 'class="se-amenities se-local-store" href="/locations/' in line3:
+                    items = line3.split('class="se-amenities se-local-store" href="/locations/')
+                    for item in items:
+                        if '<!DOCTYPE html>' not in item:
+                            locs.append('https://www.7-eleven.com/locations/' + item.split('"')[0])
+    return locs
+
+
+def fetch_data():
+    locs = fetch_store_urls()
+    q = collections.deque(locs)
+    attempts = {}
+    while q:
+        loc = q.popleft()
         website = '7-eleven.com'
         typ = ''
         name = '7-Eleven'
@@ -38,7 +76,18 @@ def fetch_data():
         lat = ''
         lng = ''
         country = 'US'
-        r2 = session.get(loc, headers=headers)
+        r2 = None
+        try :
+            r2 = session.get(loc, headers=headers)
+        except requests.exceptions.ConnectionError:
+            print('Failed to connect to ' + loc)
+            if attempts.get(loc, 0) >= 3:
+                print('giving up on ' + loc)
+            else:
+                q.append(loc)
+                attempts[loc] = attempts.get(loc, 0) + 1
+                print('attempts: ' + str(attempts[loc]))
+            continue
         for line2 in r2.iter_lines():
             if '"hours":{"message":"' in line2:
                 hours = line2.split('"hours":{"message":"')[1].split('"')[0]

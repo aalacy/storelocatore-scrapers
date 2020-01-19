@@ -5,36 +5,9 @@ import re
 import unicodedata
 import sgzip
 import datetime
-import os
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from sgrequests import SgRequests
 
-requests.packages.urllib3.disable_warnings()
-
-def requests_retry_session(
-    retries=3,
-    backoff_factor=0.3,
-    status_forcelist=(500, 502, 504)
-):
-    session = requests.Session()
-    proxy_password = os.environ["PROXY_PASSWORD"]
-    proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
-    proxies = {
-        'http': proxy_url,
-        'https': proxy_url
-    }
-    session.proxies = proxies
-    retry = Retry(
-        total=retries,
-        read=retries,
-        connect=retries,
-        backoff_factor=backoff_factor,
-        status_forcelist=status_forcelist,
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
-    return session
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -45,8 +18,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-session = requests_retry_session()
 
 def fetch_data():
     main_url = "https://choicehotels.com/ascend"
@@ -63,7 +34,7 @@ def fetch_data():
     coord = search.next_coord()
     while coord:
         result_coords = []
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
         #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
@@ -75,48 +46,51 @@ def fetch_data():
         }
         data = "adults=1&checkInDate=" + str(today) + "&checkOutDate=" + str(tomorrow) + "&lat=" + str(x) + "&lon=" + str(y) + "&minors=0&optimizeResponse=image_url&platformType=DESKTOP&preferredLocaleCode=en-us&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100&siteName=us&siteOpRelevanceSortMethod=ALGORITHM_B"
         r = session.post("https://www.choicehotels.com/webapi/location/hotels",headers=headers,data=data)
-        if "hotels" not in r.json():
+        try:
+            if "hotels" not in r.json():
+                search.max_distance_update(MAX_DISTANCE)
+                coord = search.next_coord()
+                continue
+            data = r.json()["hotels"]
+            for store_data in data:
+                result_coords.append((store_data["lat"], store_data["lon"]))
+                if store_data["address"]["country"] != "US" and store_data["address"]["country"] != "CA":
+                    continue
+                if store_data["brandCode"] != brand_id:
+                    continue
+                store = []
+                store.append(main_url)
+                store.append(store_data["name"])
+                address = ""
+                if "line1" in store_data["address"]:
+                    address = address + store_data["address"]["line1"]
+                if "line2" in store_data["address"]:
+                    address = address + store_data["address"]["line2"]
+                if "line3" in store_data["address"]:
+                    address = address + store_data["address"]["line3"]
+                store.append(address)
+                if store[-1] in addresses:
+                    continue
+                addresses.append(store[-1])
+                store.append(store_data["address"]["city"] if store_data["address"]["city"] else "<MISSING>")
+                store.append(store_data["address"]["subdivision"] if store_data["address"]["subdivision"] else "<MISSING>")
+                store.append(store_data["address"]["postalCode"] if store_data["address"]["postalCode"] else "<MISSING>")
+                if len(store[-1]) == 10:
+                    store[-1] = store[-1][:5] + "-" + store[-1][6:]
+                store.append(store_data["address"]["country"])
+                store.append("<MISSING>")
+                store.append(store_data["phone"] if store_data["phone"] else "<MISSING>")
+                store.append("<MISSING>")
+                store.append(store_data["lat"])
+                store.append(store_data["lon"])
+                store.append("<MISSING>")
+                store.append("https://www.choicehotels.com/" + str(store_data["id"]))
+                yield store
+            #print(len(data))
             search.max_distance_update(MAX_DISTANCE)
             coord = search.next_coord()
-            continue
-        data = r.json()["hotels"]
-        for store_data in data:
-            result_coords.append((store_data["lat"], store_data["lon"]))
-            if store_data["address"]["country"] != "US" and store_data["address"]["country"] != "CA":
-                continue
-            if store_data["brandCode"] != brand_id:
-                continue
-            store = []
-            store.append(main_url)
-            store.append(store_data["name"])
-            address = ""
-            if "line1" in store_data["address"]:
-                address = address + store_data["address"]["line1"]
-            if "line2" in store_data["address"]:
-                address = address + store_data["address"]["line2"]
-            if "line3" in store_data["address"]:
-                address = address + store_data["address"]["line3"]
-            store.append(address)
-            if store[-1] in addresses:
-                continue
-            addresses.append(store[-1])
-            store.append(store_data["address"]["city"] if store_data["address"]["city"] else "<MISSING>")
-            store.append(store_data["address"]["subdivision"] if store_data["address"]["subdivision"] else "<MISSING>")
-            store.append(store_data["address"]["postalCode"] if store_data["address"]["postalCode"] else "<MISSING>")
-            if len(store[-1]) == 10:
-                store[-1] = store[-1][:5] + "-" + store[-1][6:]
-            store.append(store_data["address"]["country"])
-            store.append("<MISSING>")
-            store.append(store_data["phone"] if store_data["phone"] else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(store_data["lat"])
-            store.append(store_data["lon"])
-            store.append("<MISSING>")
-            store.append("https://www.choicehotels.com/" + str(store_data["id"]))
-            yield store
-        #print(len(data))
-        search.max_distance_update(MAX_DISTANCE)
-        coord = search.next_coord()
+        except:
+            print(r.content)
 
 def scrape():
     data = fetch_data()

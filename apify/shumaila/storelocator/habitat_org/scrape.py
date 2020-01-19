@@ -1,10 +1,9 @@
 # Import libraries
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,24 +15,23 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+session = SgRequests()
 
 def fetch_data():
     # Your scraper here
     data = []
     p = 1
     url = 'https://www.habitat.org/volunteer/near-you/find-your-local-habitat'
-    page = requests.get(url,verify=False)
+    page = session.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
     maindiv = soup.find('select', {'class': 'form-select--white form-select chosen-disable form-item__text'})
     repo_list = maindiv.findAll('option')
     cleanr = re.compile('<.*?>')
     pattern = re.compile(r'\s\s+')
-    #print(len(repo_list))
     for n in range(1,len(repo_list)):
         repo = repo_list[n]
         link = "https://www.habitat.org" + repo['value']
-        #print(link)
-        page = requests.get(link, verify=False)
+        page = session.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
         maindiv = soup.findAll('article', {'class': 'listing'})
         for card in maindiv:
@@ -41,7 +39,6 @@ def fetch_data():
             detail = re.sub(pattern, "|", detail)
             detail = detail.replace("\n", "|")
             detail = detail[1:len(detail)]
-            #print(detail)
             start = detail.find("(")
             if start != -1:
                 end = detail.find("|", start)
@@ -52,7 +49,6 @@ def fetch_data():
                 ccode = 'US'
                 maplink = card.find('a')
                 maplink = "https://www.habitat.org" + maplink['href']
-                #print(maplink)
 
                 start = 0
                 end = detail.find("|", start)
@@ -113,8 +109,6 @@ def fetch_data():
                         end = detail.find("|", start)
                         state = detail[start:end]
 
-
-
                     start = state.find(",")
                     city = state[0:start]
                     start = start + 2
@@ -128,7 +122,7 @@ def fetch_data():
                     pcode = state[start:len(state)]
                     state = temp
                 street = street.replace(",", "")
-                page = requests.get(maplink,verify=False)
+                page = session.get(maplink)
                 soup = BeautifulSoup(page.text, "html.parser")
                 script = soup.find('script', {'type': 'application/json'})
                 script = str(script)
@@ -191,10 +185,8 @@ def fetch_data():
                     start = end + 1
                     end = detail.find("|", start)
                     temp = detail[start:end]
-                    #print(temp)
                     start = temp.find(" ")
                     city = temp[0:start]
-                    #print(city)
                     start = start + 1
                     end = temp.find(" ", start)
                     state = temp[start:end]
@@ -215,13 +207,8 @@ def fetch_data():
                     end = len(temp)
                     pcode = temp[start:end]
 
-
-
                 lat = "<MISSING>"
                 longt = "<MISSING>"
-
-
-
 
             title = title.replace(",", "")
             street = street.replace(",", "")
@@ -244,11 +231,10 @@ def fetch_data():
             if len(longt) > 12 or longt.find("<") > -1:
                 longt = "<MISSING>"
 
-          
             p += 1
             data.append([
                 'https://www.habitat.org',
-                link,
+                maplink,
                 title,
                 street,
                 city,
@@ -265,11 +251,8 @@ def fetch_data():
 
     return data
 
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

@@ -11,8 +11,7 @@ import re
 location_url = 'https://thaiexpress.ca/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang=en&t=1564582064002'
 
 # output path of CSV
-#output_path = os.path.dirname(os.path.realpath(__file__))
-output_path = r'C:\Users\spiscatelli\PycharmProjects\Code\Free Lance\SafeWork Scraping\Final\crawl-service\apify\steven\storelocator\thaiexpress_ca'
+output_path = os.path.dirname(os.path.realpath(__file__))
 
 # file name of CSV output
 file_name = 'data.csv'
