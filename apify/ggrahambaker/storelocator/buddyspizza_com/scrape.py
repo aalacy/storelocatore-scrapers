@@ -38,6 +38,9 @@ def fetch_data():
     link_list = []
     for loc in locs:
         link = loc.find('a')['href']
+
+        if '#' in link:
+            continue
         if 'http' in link:
             link_list.append(link)
         else:
@@ -45,23 +48,19 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        print(link)
         response = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(response.content, 'html.parser')
         main = soup.find('div', {'id': 'content'})
         conts = main.find_all('div', {'class': 'sqs-block-content'})
         location_name = conts[0].text
-        print(location_name)
-        print(len(conts))
+        
         for cont in conts:
             if 'Address' in cont.text:
-                #print('address: ')
                 addy = str(cont.find('p'))
                 addy = addy.split('<br/>')
 
                 street_address = addy[1]
                 city, state, zip_code = addy_ext(addy[2])
-                #print(city, state, zip_code)
                 
             if 'Phone' in cont.text:
                 if 'downtown detroit' in location_name:
@@ -72,14 +71,12 @@ def fetch_data():
                 
                 
             if 'Hours' in cont.text:
-                #print('hours: ' + str(cont.find('p')).split('</strong>')[1].replace('<br/>', ' ').replace('</p>', ''))
                 hours = str(cont.find('p')).split('</strong>')[1].replace('<br/>', ' ').replace('</p>', '')
             
             
             
             
         map_div = json.loads(soup.find('div', {'class': 'map-block'})['data-block-json'])
-        print()
         lat = map_div['location']['markerLat']
         longit = map_div['location']['markerLng']    
         

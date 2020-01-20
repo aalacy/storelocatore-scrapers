@@ -74,15 +74,16 @@ def fetch_data():
         hours_json = json.loads(soup.find('div', {'class': 'js-location-hours'})['data-days'])
         hours = ''
         for h in hours_json:
+            
             day_of_week = h['day']
             opening = str(h['intervals'][0]['start'])[:-2] + ':' + str(h['intervals'][0]['start'])[-2:]
-
-            closing = str(h['intervals'][0]['end'])[:-2] + ':' + str(h['intervals'][0]['end'])[-2:]
-            hours += day_of_week + ' ' + opening + ' : ' + closing + ' '
+            if h['intervals'][0]['end'] == 0:
+                closing = 'Midnight'
+            else:
+                closing = str(h['intervals'][0]['end'])[:-2] + ':' + str(h['intervals'][0]['end'])[-2:]
+            hours += day_of_week + ' ' + opening + ' - ' + closing + ' '
         
         hours = hours.strip()
-        
-
         
         country_code = 'US'
         location_type = '<MISSING>'
