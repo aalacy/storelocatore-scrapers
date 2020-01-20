@@ -1,8 +1,6 @@
 import csv
-import requests
+from sgrequests import SgRequests
 import sgzip
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -14,10 +12,9 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+session = SgRequests()
 
 def fetch_data():
-
-
     # Your scraper here
     locs = []
     street = []
@@ -51,7 +48,7 @@ def fetch_data():
     for zip in zip_codes:
         print(zip)
         url="https://api.famousfootwear.com/api/store/v1/storesByZip?webStoreId=20000&radius=50&zipCode="+str(zip)+"&json=true"
-        res=requests.get(url,headers=headers)
+        res=session.get(url,headers=headers)
         if 'Stores' in res.json():
             stores=res.json()['Stores']
         else:

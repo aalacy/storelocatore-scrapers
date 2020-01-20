@@ -159,8 +159,12 @@ def fetch_data():
                 # print(zipp+" | "+country_code+" | "+street_address+" | "+city+" | "+state)
             elif len(st_address) == 2:
                 state_list = re.findall(r' ([A-Z]{2}) ', str( " ".join(addr)))
-                # print(state_list)
-                state = state_list[-1].strip()
+                if state_list:
+
+                    state = state_list[-1].strip()
+                else:
+                    state = addr[-2].replace(",","").strip()
+                #print(state)
                 if "CA" != addr[-2] and "TN" !=addr[-2] and "AZ" != addr[-2]:
                     city = addr[-2].strip().replace(',','').strip()
 
@@ -235,7 +239,7 @@ def fetch_data():
             addresses.append(str(store[2]))
 
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
+            # print(store[3])
             # print("data = " + str(store))
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store

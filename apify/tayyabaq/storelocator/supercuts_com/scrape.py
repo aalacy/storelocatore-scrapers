@@ -35,9 +35,12 @@ def fetch_data():
             if str(sr).startswith("/locations/"):
                   store_links.append(sr)
     mylist = list(dict.fromkeys(store_links))
+    #print(len(mylist))
+    #count=1
     for u in mylist:
         ul='https://www.supercuts.com/'+u
-        
+        #print(count)
+        #count+=1
         try:
             pg=requests.get(ul)
         except:
@@ -79,19 +82,19 @@ def fetch_data():
         if cnt == False:
             data.append([
                             'https://www.supercuts.com/',
-                             ul,
-                             loc,
-                             street,
-                             cty,
-                             sts,
-                             zcode,
-                             ctry,
-                             num,
-                             ph,
+                             ul.replace(u'\xa0',''),
+                             loc.replace(u'\xa0',''),
+                             street.replace(u'\xa0',''),
+                             cty.replace(u'\xa0',''),
+                             sts.replace(u'\xa0',''),
+                             zcode.replace(u'\xa0',''),
+                             ctry.replace(u'\xa0',''),
+                             num.replace(u'\xa0',''),
+                             ph.replace(u'\xa0',''),
                              "<MISSING>",
-                             lat,
-                             long,
-                             hours
+                             lat.replace(u'\xa0',''),
+                             long.replace(u'\xa0',''),
+                             hours.replace(u'\xa0','')
                              ])
     return data
     

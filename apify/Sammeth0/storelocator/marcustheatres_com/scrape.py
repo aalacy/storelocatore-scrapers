@@ -51,11 +51,10 @@ def fetch_data():
 	time.sleep(3)
 	#link=driver.find_elements_by_class_name('theatre-listing__info')
 	link=driver.find_elements_by_xpath('/html/body/div/div/section/section/div[1]/div[3]/section')
-	
 	for i in link:
-		locs.append(i.find_element_by_tag_name("a").text)
-		streets.append(i.text.split('\n')[0])
-		cities.append(i.text.split('\n')[1].split(',')[0])
+		locs.append(i.text.split('\n')[1].split(',')[0])
+		streets.append(i.find_element_by_class_name('theatre-listing__info--address').text.split('\n')[0])
+		cities.append(i.find_element_by_class_name('theatre-listing__info--address').text.split('\n')[1].split(',')[0])
 		states.append(i.text.split(', ')[1].split(' ')[0])
 		zips.append(i.text.split(', ')[1].split(' ')[1].split('\n')[0])
 		try:
@@ -69,8 +68,7 @@ def fetch_data():
 		time.sleep(5)
 		lat_long_link=driver_page.find_element_by_xpath('/html/body/div/div/section/section/div[2]/div[1]/div/div[1]/a').get_attribute('href')
 		lats.append(lat_long_link.split('loc:')[1].split('+')[0])
-		longs.append(lat_long_link.split('+')[1])
-			
+		longs.append(lat_long_link.split('+')[1])			
 						
 	return_main_object = []	
 	for l in range(len(locs)):

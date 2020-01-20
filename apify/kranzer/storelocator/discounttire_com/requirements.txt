@@ -1,0 +1,7 @@
+bs4==0.0.1
+aiohttp
+w3lib
+sgvalidator==0.0.19
+lxml==4.3.4
+sgrequests
+aiohttp

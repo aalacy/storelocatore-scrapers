@@ -1,8 +1,8 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -46,11 +46,14 @@ def fetch_data():
                 name = line2.split('<title>')[1].split(' Location')[0]
             if '<p class="address">' in line2:
                 g = next(lines)
-                add = g.split(',')[0].strip().replace('\t','')
-                city = g.split(',')[1].strip()
-                state = g.split(',')[2].strip().split(' ')[0]
-                zc = g.replace('\t','').replace('\r','').replace('\n','').strip().rsplit(' ',1)[1]
-                country = 'US'
+                try:
+                    add = g.split(',')[0].strip().replace('\t','')
+                    city = g.split(',')[1].strip()
+                    state = g.split(',')[2].strip().split(' ')[0]
+                    zc = g.replace('\t','').replace('\r','').replace('\n','').strip().rsplit(' ',1)[1]
+                    country = 'US'
+                except:
+                    country = 'NF'
             if '<a href="https://www.google.com/maps/dir/Current+Location/' in line2:
                 lat = line2.split('<a href="https://www.google.com/maps/dir/Current+Location/')[1].split(',')[0]
                 lng = line2.split('<a href="https://www.google.com/maps/dir/Current+Location/')[1].split(',')[1].split('"')[0]
@@ -72,7 +75,7 @@ def fetch_data():
             phone = '<MISSING>'
         if hours == '' or '-;' in hours:
             hours = '<MISSING>'
-        if add != '':
+        if add != '' and country == 'US':
             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
