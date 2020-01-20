@@ -35,7 +35,10 @@ def fetch_data():
         
         if "/shop/wd/clothing-stores/CA/" in link.find("a")['href'] or "/shop/wd/clothing-stores/US/"in link.find("a")['href']:
             page_url = base_url+link.find("a")['href']
-            r = requests.get(page_url, headers=headers)
+            try:
+                r = requests.get(page_url, headers=headers)
+            except:
+                pass
             soup = BeautifulSoup(r.text, "lxml")
             if soup.find(lambda tag: (tag.name == "script") and "geoNodeUniqueId" in tag.text) == None:
                 continue

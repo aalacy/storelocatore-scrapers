@@ -35,7 +35,7 @@ def fetch_data():
         state = (m.split("store.STATE ='")[i].split("store.COUNTRY_CODE =")[0].replace("';","").strip())
         city = (m.split("store.CITY = '")[i].split("store.STATE ='")[0].replace("';","").strip())
         location_name = (m.split("store.STORE_NAME = '")[i].split("store.STORE_NUMBER = '")[0].replace("';","").strip())
-        # hours_of_operation = (m.split("store.STORE_STATUS = '")[i].split("';")[0].strip())
+        hours_of_operation = (m.split("store.STORE_STATUS = '")[i].split("';")[0].strip())
         STORE_ID = (m.split("store.STORE_ID = '")[i].split("store.STORE_NAME = '")[0].replace("';","").strip())
         # print(STORE_ID)
         page_url = "https://www.spencersonline.com/store/"+str(location_name.strip().lstrip())+"/"+str(STORE_ID.strip().lstrip())+".uts"
@@ -60,7 +60,7 @@ def fetch_data():
         store.append(country_code)
         store.append(store_number if store_number else "<MISSING>") 
         store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
+        store.append("Store")
         store.append(latitude if latitude else "<MISSING>")
         store.append(longitude if longitude else "<MISSING>")
         store.append(hours_of_operation if hours_of_operation else "<MISSING>")

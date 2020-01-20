@@ -2,10 +2,9 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
-# import http.client
 import sgzip
 import json
-# import  pprint
+
 
 
 def write_output(data1, data2):
@@ -83,13 +82,13 @@ def fetch_data1():
                 "<b>", "").replace("</b>", "").strip().split(",")[1].split()[0]
             zip1 = add2[i].text.replace("<br>", ",").replace(
                 "<b>", "").replace("</b>", "").strip().split(",")[1].split()[1]
-            phone = add2[i].text.replace("<br>", ",").replace(
-                "<b>", "").replace("</b>", "").strip().split(",")[2]
+            phone1 = add2[i].text.replace("<br>", ",").replace(
+                "<b>", "").replace("</b>", "").strip()
+
+            phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone1))
+            if phone_list:
+                phone =  phone_list[-1]
             location_name = name[i].text.split(">")[1].replace("</a", "")
-            #print(zip1)
-            # print(loc[i].attrs['lat'])
-            # lat = lat1[i]
-            # lng = lng1[i]
             if "Monday:" in hours[i].text:
                 soup_hour = BeautifulSoup(hours[i].text, 'lxml')
                 h = []
@@ -116,11 +115,7 @@ def fetch_data1():
 
             latitude = loc[i].attrs['lat']
             longitude = loc[i].attrs['lng']
-
             result_coords.append((latitude, longitude))
-            # if street_address in addresses1:
-            #     continue
-            # addresses1.append(street_address)
             store = []
             store.append(locator_domain if locator_domain else '<MISSING>')
             store.append(location_name if location_name else '<MISSING>')
@@ -144,10 +139,9 @@ def fetch_data1():
             addresses1.append(store[2])
 
             yield store
-            # return_main_object.append(store)
-            # print("data = " + str(store))
-            # print(
-            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+           # print("data = " + str(store))
+           # print(
+                # '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         if len(loc) < MAX_RESULTS:
             # print("max distance update")
@@ -158,17 +152,13 @@ def fetch_data1():
         else:
             raise Exception("expected at most " +
                             str(MAX_RESULTS) + " results")
-        # except:
-        #     continue
         coords = search.next_coord()
-    return return_main_object
 
 
 ##### ATMS  #########
 
 def fetch_data2():
     base_url = "https://www.midlandsb.com/homestar-and-midland"
-    # conn = http.client.HTTPSConnection("guess.radius8.com")
     return_main_object = []
     addresses2 = []
     search = sgzip.ClosestNSearch()
@@ -181,10 +171,7 @@ def fetch_data2():
               # "Referer": "https://bylinebank.locatorsearch.com/index.aspx?s=FCS"
               }
     while coords:
-        # try:
         result_coords = []
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
-        #print(coords[0], coords[1])
         try:
             url = 'https://midlandsb.locatorsearch.com/GetItems.aspx'
             data = "lat=" + str(coords[0]) + "&lng=" + str(coords[1]) + \
@@ -210,14 +197,12 @@ def fetch_data2():
             location_type = "ATM"
             loc_name = x.find('title').text.strip().replace('<br>', '')
             if "</a>" in loc_name:
-                # print(loc_name)
                 location_name = loc_name.split(
                     '>')[1].replace('</a', '').strip().replace('<br>', '')
                 # lname = BeautifulSoup(location_name, 'lxml')
                 # location_name = lname.find('a').text.strip()
             else:
                 location_name = loc_name.replace('<br>', '')
-            # print(location_name)
 
             street_address = x.find('add1').text.strip()
             city = x.find('add2').text.split(',')[0].strip()
@@ -278,10 +263,9 @@ def fetch_data2():
             addresses2.append(store[2])
             yield store
             # return_main_object.append(store)
-            # print("data = " + str(store))
-            # print(
-            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            # yield store
+            #print("data = " + str(store))
+            #print(
+                # '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
         if len(loc) < MAX_RESULTS:
             # print("max distance update")
@@ -292,8 +276,6 @@ def fetch_data2():
         else:
             raise Exception("expected at most " +
                             str(MAX_RESULTS) + " results")
-        # except:
-        #     continue
         coords = search.next_coord()
         # break
     return return_main_object

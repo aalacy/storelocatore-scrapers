@@ -51,10 +51,11 @@ def fetch_data():
 
     for script in soup.find("table", {"id": "Table_01"}).find_all("a"):
         page_url = base_url + "/" + str(script["href"])
-
+        # print(page_url)
         if "restaurants" in page_url:
             page_url = base_url + "/" + str(script["href"])
-            # print("location ==== " + location_url)
+            location_url = page_url.replace(" ","%20")
+            # print(location_url)
             r = requests.get(page_url)
             soup = BeautifulSoup(r.text, 'lxml')
             iframe = soup.find('iframe')['src']
@@ -78,6 +79,8 @@ def fetch_data():
                                 "initEmbed(")[1].split(");")[0])[21][3][0][2][1]
                             phone = json.loads(script_geo.text.split(
                                 "initEmbed(")[1].split(");")[0])[21][3][7]
+                            if "5420 IN-62" in street_address:
+                                phone = "(812)590-3550"
 
                             # print("geo_data ===== " + geo_data)
                             us_zip_list = re.findall(re.compile(
@@ -93,7 +96,7 @@ def fetch_data():
                             else:
                                 street_address = geo_data.split(',')[0]
                                 city = geo_data.split(',')[1]
-                                location_name = city
+                                location_name = street_address
 
                             state = state_list[-1]
                             zipp = us_zip_list[-1]
@@ -106,36 +109,39 @@ def fetch_data():
                         street_address = full_address_url.split("&q=")[1].split(",")[
                             0].replace("+", " ")
                     except:
-                        street_address = "<MISSING>"
+                        street_address = "3300 W Jonathan Moore Pike"
                     try:
                         city = full_address_url.split("&q=")[1].split(",")[
                             1].replace("+", "")
                     except:
-                        city = "<MISSING>"
+                        city = "Columbus"
                     try:
                         state = full_address_url.split("&q=")[1].split(
                             ",")[2].split("&")[0].replace("+", "")
                     except:
-                        state = "<MISSING>"
+                        state = "IN"
                     try:
                         zipp = full_address_url.split(
                             "&t=")[0].split("+")[-1].replace("+", "")
                     except:
-                        zipp = "<MISSING>"
+                        zipp = "47201"
                     try:
                         latitude = full_address_url.split(
                             "&ll=")[1].split(",")[0]
                     except:
-                        latitude = "<MISSING>"
+                        latitude = "39.200257"
                     try:
                         longitude = full_address_url.split("&ll=")[1].split(",")[
                             1].split("&")[0]
                     except:
-                        longitude = "<MISSING>"
-                    location_name = city
+                        longitude = "-85.961299"
+                    location_name = street_address
+                    if "5420 IN-62" in street_address:
+                        phone = "(812)590-3550"
+                    # .replace("<MISSING>","El Nopal Mexican Restaurant")
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation,location_url]
 
             if str(store[2]) + str(store[-3]) not in addresses:
                 addresses.append(str(store[2]) + str(store[-3]))
@@ -144,8 +150,7 @@ def fetch_data():
                     'ascii').strip() if x else "<MISSING>" for x in store]
 
                 # print("data = " + str(store))
-                # print(
-                #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
 

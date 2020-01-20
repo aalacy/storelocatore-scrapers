@@ -28,7 +28,7 @@ def get_driver():
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
     if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
     else:
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
@@ -43,7 +43,7 @@ def fetch_data():
     driver.get("https://www.marriott.com/search/submitSearch.mi?showMore=true&marriottBrands=" + str(brand_id) + "&destinationAddress.country=US")
     while True:
         element = WebDriverWait(driver, 100).until(lambda x: x.find_element_by_xpath("//div[text()='Destination']"))
-        time.sleep(3)
+        time.sleep(5)
         soup = BeautifulSoup(driver.page_source,"lxml")
         for location in soup.find('div',{'class':'js-property-list-container'}).find_all("div",{"data-brand":str(brand_id)},recursive=False):
             if location["data-brand"] != brand_id:

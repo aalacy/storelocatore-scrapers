@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -21,7 +19,7 @@ def write_output(data):
 def fetch_data():
     return_main_object = []
     addresses = []
-   
+  
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
         'Connection': 'keep-alive',
@@ -42,6 +40,7 @@ def fetch_data():
             if b != [] and b != None:
                 h  = json.loads(b.text)  
                 location_name = (h['name'])
+                # print(location_name)
                 street_address = h['address']["streetAddress"]              
                 latitude = h['geo']["latitude"]      
                 longitude = h['geo']["longitude"]                 
@@ -80,8 +79,10 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
                 yield store
-    a1 = soup.find("div",{"class":"aem-rendered-content"}).find_all("div",{"class":"state-container"})[51:62]
+    a1 = soup.find("div",{"class":"aem-rendered-content"}).find_all("div",{"class":"state-container"})[51:72]
+    # print(a1)
     for y1 in a1:
+        # print(y1)
         e1 = (y1.find_all("li",{"class":"property"}))
         for b1 in e1:
             k1 = (b1.find('a')['href'])
@@ -90,8 +91,9 @@ def fetch_data():
             soup1= BeautifulSoup(r2.text,"lxml")
             b1 = soup1.find("script",{"type":"application/ld+json"})
             if b1 != [] and b1 != None:
-                h1  = json.loads(b.text)  
+                h1  = json.loads(b1.text)  
                 location_name = (h1['name'])
+                # print(location_name)
                 street_address = h1['address']["streetAddress"]              
                 latitude = h1['geo']["latitude"]      
                 longitude = h1['geo']["longitude"]                 
