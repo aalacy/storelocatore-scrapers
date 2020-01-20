@@ -66,7 +66,7 @@ def fetch_data():
             title = "Outback Steakhouse " + title
             data.append([
                 'http://outbacksteakhouseniagarafalls.com/',
-                'http://outbacksteakhouseniagarafalls.com/',
+                'http://outbacksteakhouseniagarafalls.com/index.php#location-and-hours',
                 title,
                 street,
                 'Niagara Falls',
