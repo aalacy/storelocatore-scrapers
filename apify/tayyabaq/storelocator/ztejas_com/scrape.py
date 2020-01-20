@@ -1,11 +1,9 @@
 import csv
-import os
-import re, time
+import re
 import requests
 from bs4 import BeautifulSoup
 import usaddress
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
