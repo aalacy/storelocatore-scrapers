@@ -61,6 +61,12 @@ def fetch_data():
                 hours = hours.replace('},&quot;','; ').replace('&quot;',' ').strip().replace('  ',' ')
                 hours = hours.replace(' , close : ','-').replace('{ open : ',' ')
                 hours = hours.replace(' :',':').replace(' ;',';').replace(', sunday','; sunday')
+        if 'smithfield' in city.lower():
+            lat = '36.9579509'
+            lng = '-76.6052515'
+        if 'chambersburg' in city.lower():
+            lat = '39.9284938'
+            lng = '-77.6305067'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
