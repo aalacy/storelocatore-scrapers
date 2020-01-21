@@ -39,7 +39,7 @@ def fetch_data():
         if len(store_zip) == 4:
             store_zip = "0" + store_zip
         phone = store_data['phone']
-        store_number = store_data['_id']
+        store_number = "<MISSING>"
         page_url = store_data["website"]
         if(location_name == '' or location_name is None):
             location_name = "<MISSING>"
@@ -81,7 +81,7 @@ def fetch_data():
         return_object.append(state)
         return_object.append(store_zip)
         return_object.append("US")
-        return_object.append("<MISSING>")
+        return_object.append(store_number)
         return_object.append(phone)
         return_object.append("<MISSING>")
         return_object.append(store_data["geo"][1])

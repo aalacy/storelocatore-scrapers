@@ -11,7 +11,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -31,6 +31,7 @@ def fetch_data():
     for zip_code in zips:
         base_url = "https://www.target.com"
         r = requests.get("https://redsky.target.com/v3/stores/nearby/"+ str(zip_code) + "?key=" + app_key + "&limit=100000&within=100&unit=mile",headers=headers)
+        page_url="https://redsky.target.com/v3/stores/nearby/"+ str(zip_code) + "?key=" + app_key + "&limit=100000&within=100&unit=mile"
         for store_data in r.json()[0]["locations"]:
             store = []
             store.append("https://www.target.com")
@@ -45,9 +46,10 @@ def fetch_data():
             store.append("US")
             store.append(store_data["location_id"])
             store.append(store_data["contact_information"]["telephone_number"])
-            store.append("target")
+            store.append("<MISSING>")
             store.append(store_data["geographic_specifications"]["latitude"])
             store.append(store_data["geographic_specifications"]["longitude"])
+            store.append(page_url)
            
             while True:
                 try:
@@ -61,6 +63,7 @@ def fetch_data():
                         else:
                             hours = hours + " " + store_hours[i]["day_name"] + " Closed"
                     store.append(hours if hours != "" else "<MISSING>")
+                    #print(store)
                     return_main_object.append(store)
                     break
                 except:

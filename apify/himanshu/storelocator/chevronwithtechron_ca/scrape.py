@@ -46,24 +46,33 @@ def fetch_data():
         # print("remaining zipcodes: " + str(len(search.zipcodes)))
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
-        location_url = "https://www.chevronwithtechron.com/webservices/ws_getChevronTexacoNearMe_r2.aspx?lat="+str(lat)+"&lng="+str(lng)+"&oLat="+str(lat)+"&oLng="+str(lng)+"&brand=chevronTexaco&radius=35"
+        location_url = "https://www.chevronwithtechron.com/webservices/ws_getChevronTexacoNearMe_r2.aspx?lat="+str(lat)+"&lng="+str(lng)
+    
         try:
             r = requests.get(location_url, headers=headers)
         except:
-            continue
+            print(location_url)
         json_data = r.json()
         current_results_len = len(json_data['stations'])
         for i in json_data['stations']:
             location_name = i['name']
             street_address = i['address']
-            city = i['city']
+            city = i['city'].replace("D&#39","d'")
             state = i['state']
             zipp = i['zip']
             store_number = i['id']
             phone = i['phone'].replace('.','')
             latitude = i['lat']
             longitude = i['lng']
-            href = "https://www.chevronwithtechron.com/station/"+str(street_address.replace(' ','-').replace('.',''))+"-"+str(city.replace(' ','-'))+"-"+str(state)+"-"+str(zipp)+"-id"+str(store_number)
+            page_url = "https://www.chevronwithtechron.com/station/"+str(street_address.replace(' ','-').replace('.','').replace("/",""))+"-"+str(city.replace(' ','-'))+"-"+str(state)+"-"+str(zipp)+"-id"+str(store_number)
+            #print(page_url)
+            
+            r1 = requests.get(page_url, headers=headers)
+            soup1 = BeautifulSoup(r1.text, "lxml")
+            if soup1.find("span",{"class":"section__station-details-status"}):
+                hours = soup1.find("span",{"class":"section__station-details-status"}).text
+            else:
+                hours = "<MISSING>"
         
             store = []
             result_coords.append((latitude, longitude))
@@ -76,14 +85,17 @@ def fetch_data():
             store.append("US")
             store.append(store_number)
             store.append(phone if phone else "<MISSING>")
-            store.append("<MISSING>")
+            store.append("GasStation")
             store.append(latitude if latitude else "<MISSING>")
             store.append(longitude if longitude else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(href)
+            store.append(hours)
+            store.append(page_url)
             if store[2] in addresses:
                 continue     
             addresses.append(store[2])
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            #print("data==="+str(store))
+            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
         
 

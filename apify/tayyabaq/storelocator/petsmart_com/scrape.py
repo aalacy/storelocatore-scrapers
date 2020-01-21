@@ -13,7 +13,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
-            writer.writerow(row)
+            writer.writerow(row.replace(u'\u2019',''))
 
 
 def fetch_data():

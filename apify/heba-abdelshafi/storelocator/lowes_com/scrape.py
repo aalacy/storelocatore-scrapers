@@ -13,7 +13,7 @@ options.add_argument('--disable-dev-shm-usage')
 options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
 driver = webdriver.Chrome("chromedriver", options=options)
 
-#driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe', options=options)
+#driver=webdriver.Chrome('C:\webdrivers\chromedriver.exe')#, options=options)
 
 
 def write_output(data):
@@ -25,7 +25,7 @@ def fetch_data():
 
     data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[],'page_url':[]}
     driver.get('https://www.lowes.com/Lowes-Stores')
-    states_url=[i.get_attribute('href') for i in driver.find_elements_by_xpath('//div[@class="grid-container grid-parent"]//li[@role="listitem"]/a')]
+    states_url=[i.get_attribute('href') for i in driver.find_elements_by_xpath('//div[@class="primaryheading"]/following-sibling::div//li[@role="listitem"]/a')]
     
     cities_url=[]
     for url in states_url:
@@ -50,7 +50,7 @@ def fetch_data():
         data['phone'].append(driver.find_element_by_xpath('//span[@itemprop="telephone"][contains(text(),"Main")]').text.split(':')[1])
         data['location_type'].append(driver.find_element_by_xpath('//h3[@id="storeDescription"]').text.split()[0])        
         data['hours_of_operation'].append(driver.find_element_by_xpath('//div[@aria-labelledby="storeHoursSection"]').text)
-        
+
         page = driver.page_source
         start = 'window.__PRELOADED_STATE__ = '
         end   = '</script>'
@@ -60,6 +60,7 @@ def fetch_data():
         
         data['longitude'].append(j['storeDetails']['long'])
         data['latitude'].append(j['storeDetails']['lat'])
+        
         
         
     driver.close()

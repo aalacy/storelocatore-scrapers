@@ -39,10 +39,11 @@ def fetch_data():
             address = address[0:start]
 
         address = address.replace("'",'')
-       
+        #print(address)
+        
         if address.find('food truck') == -1:
             address = usaddress.parse(address)
-            print(address)
+            #print(address)
             m = 0
             street = ""
             city = ""
@@ -121,10 +122,12 @@ def fetch_data():
               longitude,
               hours_of_op
             ])
+
+        #print(data[i])
         
         i+=1
 
-    time.sleep(3)
+    #time.sleep(3)
     driver.quit()
     return data
 

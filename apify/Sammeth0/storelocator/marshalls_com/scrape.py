@@ -64,7 +64,7 @@ def fetch_data():
 		except:
 			cities.append("<MISSING>")
 		states.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[1]/h1').text.split(', ')[1])
-		zips.append(driver_page.find_element_by_xpath('/html/head/meta[13]').get_attribute('content').split('/')[-3].split('-')[-1])
+		zips.append(p.split('/')[-3].split('-')[-1].replace('%20',''))
 		ids.append(driver_page.find_element_by_xpath('/html/head/meta[13]').get_attribute('content').split('/')[-2])
 		try:
 			phones.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[4]').text)

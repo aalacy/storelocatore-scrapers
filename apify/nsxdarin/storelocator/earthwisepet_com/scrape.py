@@ -41,22 +41,25 @@ def fetch_data():
         print('Pulling Location %s...' % loc)
         website = 'earthwisepet.com'
         typ = 'Store'
+        acount = 0
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             if '<h3 tabindex="0" class="desc-store">' in line2:
                 name = line2.split('<h3 tabindex="0" class="desc-store">')[1].split('<')[0]
             if '<a tabindex="0" href="https://maps.google.com/?q=' in line2:
-                addinfo = line2.split('<a tabindex="0" href="https://maps.google.com/?q=')[1].split('"')[0].strip()
-                if addinfo.count(',') == 3:
-                    add = addinfo.split(',')[0].strip()
-                    city = addinfo.split(',')[1].strip()
-                    state = addinfo.split(',')[2].strip()
-                    zc = addinfo.split(',')[3].strip()
-                else:
-                    add = addinfo.split(',')[0].strip() + ' ' + addinfo.split(',')[1].strip()
-                    city = addinfo.split(',')[2].strip()
-                    state = addinfo.split(',')[3].strip()
-                    zc = addinfo.split(',')[4].strip()
+                acount = acount + 1
+                if acount == 2:
+                    addinfo = line2.split('<a tabindex="0" href="https://maps.google.com/?q=')[1].split('"')[0].strip()
+                    if addinfo.count(',') == 3:
+                        add = addinfo.split(',')[0].strip()
+                        city = addinfo.split(',')[1].strip()
+                        state = addinfo.split(',')[2].strip()
+                        zc = addinfo.split(',')[3].strip()
+                    else:
+                        add = addinfo.split(',')[0].strip() + ' ' + addinfo.split(',')[1].strip()
+                        city = addinfo.split(',')[2].strip()
+                        state = addinfo.split(',')[3].strip()
+                        zc = addinfo.split(',')[4].strip()
             if 'href="tel:' in line2:
                 phone = line2.split('href="tel:')[1].split('"')[0].strip()
             if 'google-map" data-lng=' in line2:
