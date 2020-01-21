@@ -38,20 +38,9 @@ def fetch_data():
                     hours = ''
                     phone = ''
                     r2 = session.get(lurl, headers=headers)
-                    HFound = False
                     print('Pulling Location %s...' % lurl)
                     lines = r2.iter_lines()
                     for line2 in lines:
-                        if 'Hours: </strong>' in line2:
-                            HFound = True
-                        if HFound and '>Book' in line2:
-                            HFound = False
-                        if HFound and 'day' in line2:
-                            hrs = line2.split('<p>')[1].split('<')[0].replace('&#8211;','-')
-                            if hours == '':
-                                hours = hrs
-                            else:
-                                hours = hours + '; ' + hrs
                         if '<a href="tel:' in line2:
                             phone = line2.split('<a href="tel:')[1].split('"')[0]
                         if '<li class="col-5">' in line2:
@@ -68,6 +57,8 @@ def fetch_data():
                         phone = '<MISSING>'
                     if hours == '':
                         hours = '<MISSING>'
+                    if 'calgary-entrepreneur-centre' in lurl:
+                        hours = 'Mon-Fri: 9:30AM-5PM; Sat: 9:30AM-4PM; Sun: Closed'
                     yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
