@@ -25,15 +25,10 @@ def fetch_data():
 
     addresses = []
     base_url = "http://www.elnopalmex.com"
-
-    # print("Start ")
  
     r = requests.post("http://elnopalmex.com/locations.html", headers=headers)
    
     soup = BeautifulSoup(r.text, "lxml")
-
-    # print("second ")
-
     locator_domain = base_url
     location_name = ""
     street_address = ""
@@ -51,11 +46,9 @@ def fetch_data():
 
     for script in soup.find("table", {"id": "Table_01"}).find_all("a"):
         page_url = base_url + "/" + str(script["href"])
-        # print(page_url)
         if "restaurants" in page_url:
             page_url = base_url + "/" + str(script["href"])
             location_url = page_url.replace(" ","%20")
-            # print(location_url)
             r = requests.get(page_url)
             soup = BeautifulSoup(r.text, 'lxml')
             iframe = soup.find('iframe')['src']
@@ -64,10 +57,7 @@ def fetch_data():
                 geo_soup = BeautifulSoup(geo_request.text, "lxml")
             except Exception as e:
                 continue
-                #print("Error === " + str(e))
             for script_geo in geo_soup.find_all("script"):
-                # print(script_geo)
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
                 try:
                     for script_geo in geo_soup.find_all("script"):
                         if "initEmbed" in script_geo.text:
@@ -81,14 +71,10 @@ def fetch_data():
                                 "initEmbed(")[1].split(");")[0])[21][3][7]
                             if "5420 IN-62" in street_address:
                                 phone = "(812)590-3550"
-
-                            # print("geo_data ===== " + geo_data)
                             us_zip_list = re.findall(re.compile(
                                 r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(geo_data))
                             state_list = re.findall(
                                 r' ([A-Z]{2}) ', str(geo_data))
-                            # print(us_zip_list)
-                            # print(state_list)
                             if len(geo_data.split(",")) > 3:
                                 location_name = geo_data.split(',')[0]
                                 street_address = geo_data.split(',')[1]
@@ -97,14 +83,24 @@ def fetch_data():
                                 street_address = geo_data.split(',')[0]
                                 city = geo_data.split(',')[1]
                                 location_name = street_address
-
                             state = state_list[-1]
                             zipp = us_zip_list[-1]
+                            if "40031" in zipp:
+                                city = "La Grange"
+                                street_address = location_name
+                            elif "40220" in zipp:
+                                city = "Louisville"
+                                street_address = location_name
+                            elif "40217" in zipp:
+                                city = "Louisville"
+                                street_address = location_name
+                            elif "470 New Albany Plaza" in location_name:
+                                street_address = location_name
+                                city = "New Albany" 
                             latitude = str(lat)
                             longitude = str(lng)
 
                 except Exception as e:
-                    # print("Error === "+ str(e))
                     try:
                         street_address = full_address_url.split("&q=")[1].split(",")[
                             0].replace("+", " ")
@@ -123,6 +119,7 @@ def fetch_data():
                     try:
                         zipp = full_address_url.split(
                             "&t=")[0].split("+")[-1].replace("+", "")
+                        
                     except:
                         zipp = "47201"
                     try:
@@ -138,7 +135,7 @@ def fetch_data():
                     location_name = street_address
                     if "5420 IN-62" in street_address:
                         phone = "(812)590-3550"
-                    # .replace("<MISSING>","El Nopal Mexican Restaurant")
+                    
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation,location_url]
@@ -148,15 +145,8 @@ def fetch_data():
 
                 store = [x.encode('ascii', 'ignore').decode(
                     'ascii').strip() if x else "<MISSING>" for x in store]
-
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
-
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()

@@ -15,6 +15,38 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def request_wrapper(url,method,headers,data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url,headers=headers,data=data)
+                else:
+                    r = requests.post(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
+
 
 def fetch_data():
     return_main_object = []
@@ -26,7 +58,11 @@ def fetch_data():
     }
     base_url = "https://www.wyndhamhotels.com"
     location_url1 = "https://www.wyndhamhotels.com/en-ca/days-inn/locations"
-    r = requests.get(location_url1, headers=headers,  allow_redirects=False)
+    try:
+        r = requests.get(location_url1, headers=headers,  allow_redirects=False)
+    except Exception as e :
+        # print(e)
+        pass
     soup= BeautifulSoup(r.text,"lxml")
     a = soup.find("div",{"class":"aem-rendered-content"}).find_all("div",{"class":"state-container"})[0:51]
     for y in a:
@@ -34,7 +70,11 @@ def fetch_data():
         for b in e:
             k = (b.find('a')['href'])
             location_url = base_url+k
-            r1 = requests.get(location_url, headers=headers,  allow_redirects=False)
+            try:
+                r1 = requests.get(location_url, headers=headers,  allow_redirects=False)
+            except Exception as e:
+                # print(e)
+                pass
             soup1= BeautifulSoup(r1.text,"lxml")
             b = soup1.find("script",{"type":"application/ld+json"})
             if b != [] and b != None:
@@ -58,7 +98,10 @@ def fetch_data():
                     country_code = "CA"
                 else:
                     country_code = "US"
-                state = h['address']["addressRegion"]  
+                if  "addressRegion" in h['address']:
+                    state = h['address']["addressRegion"]
+                else:
+                    state = "<MISSING>"
                 phone = h['telephone']              
                 store = []
                 store.append("https://www.daysinn.com")
@@ -79,7 +122,7 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
                 yield store
-    a1 = soup.find("div",{"class":"aem-rendered-content"}).find_all("div",{"class":"state-container"})[51:72]
+    a1 = soup.find("div",{"class":"aem-rendered-content"}).find_all("div",{"class":"state-container"})[51:61]
     # print(a1)
     for y1 in a1:
         # print(y1)
@@ -87,7 +130,11 @@ def fetch_data():
         for b1 in e1:
             k1 = (b1.find('a')['href'])
             location_url = base_url+k1
-            r2 = requests.get(location_url, headers=headers,  allow_redirects=False)
+            try:
+                r2 = requests.get(location_url, headers=headers,  allow_redirects=False)
+            except Exception as e:
+                pass
+                # print(e)
             soup1= BeautifulSoup(r2.text,"lxml")
             b1 = soup1.find("script",{"type":"application/ld+json"})
             if b1 != [] and b1 != None:
@@ -110,8 +157,11 @@ def fetch_data():
                 if len(zipp)==6 or len(zipp)==7:
                     country_code = "CA"
                 else:
-                    country_code = "US" 
-                state = h1['address']["addressRegion"]  
+                    country_code = "US"
+                if  "addressRegion" in  h1['address']:
+                    state = h1['address']["addressRegion"]
+                else:
+                    state = "<MISSING>"
                 phone = h1['telephone']              
                 store = []
                 store.append("https://www.daysinn.com")
