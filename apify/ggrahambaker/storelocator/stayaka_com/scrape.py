@@ -48,6 +48,8 @@ def fetch_data():
         page_url = cont['url']
         if 'Tribeca' in location_name:
             phone_number = '212.587.7000'
+        elif 'West Hollywood' in location_name:
+            phone_number = '310.626.0888'
         else:
             phone_number = cont['telephone']
         addy = cont['address']
@@ -64,6 +66,10 @@ def fetch_data():
             street_address = '1710 H Street NW.'
         elif 'Marylebone' in location_name:
             break 
+        elif 'West Hollywood' in location_name:
+            street_address = '8500 West Sunset Boulevard'
+        elif 'Rittenhouse' in location_name:
+            street_address = '135 South 18th St'
         else:
             street_address = addy['streetAddress']
         

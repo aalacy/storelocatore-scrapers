@@ -18,7 +18,6 @@ def fetch_data():
 
     locator_domain = 'https://petvalu.com/'
     session = SgRequests()
-
     headers = {'Host': 'us.petvalu.com',
     'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0',
     'Accept': 'application/json, text/javascript, */*; q=0.01',
