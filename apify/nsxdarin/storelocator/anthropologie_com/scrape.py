@@ -18,8 +18,11 @@ def fetch_data():
     locs = []
     url = 'https://www.anthropologie.com/stores'
     r = session.get(url, headers=headers)
+    Found = True
     for line in r.iter_lines():
-        if 'itemprop="url" content="https://www.anthropologie.com/stores">' in line:
+        if 'Scotland' in line:
+            Found = False
+        if 'itemprop="url" content="https://www.anthropologie.com/stores">' in line and Found:
             lurl = 'https://www.anthropologie.com' + line.split('href="')[1].split('"')[0]
             locs.append(lurl)
     for loc in locs:
