@@ -43,8 +43,8 @@ def fetch_data():
         r2 = session.get(loc, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            if '<h2 class="section-title">' in line2 and name == '':
-                name = line2.split('<h2 class="section-title">')[1].split('<')[0]
+            if '<h2 class="section-title" style="padding-left:0px !important;">' in line2:
+                name = line2.split('<h2 class="section-title" style="padding-left:0px !important;">')[1].split('<')[0]
             if '<h4>Address & Phone</h4>' in line2:
                 g = next(lines)
                 h = next(lines)
@@ -61,11 +61,15 @@ def fetch_data():
                 lng = line2.split('var longitude = ')[1].split(';')[0]
             if 'Store Hours</h4>' in line2:
                 g = next(lines)
-                hours = g.split('">')[2].split('</strong>')[0]
-                hours = hours.replace('<span>','').replace('</br>','').replace('</span>','').replace('  ',' ')
+                h = next(lines)
+                if '<p class="mb-0" >' in g:
+                    hours = g.split('<p class="mb-0" >')[1].split('</p>')[0].replace('</span>','').replace('</br>',';').replace('  ',' ')
+                if '<p class="mb-0" >' in h:
+                    hours = hours + '; ' + h.split('<p class="mb-0" >')[1].split('</p>')[0].replace('</span>','').replace('</br>',';').replace('  ',' ')                
         if 'Soon' not in hours:
             if phone == '':
                 phone = '<MISSING>'
+            hours = hours.replace('<span>','').replace('  ',' ')
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
