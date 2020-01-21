@@ -116,7 +116,6 @@ def fetch_data():
 
     
     for link in link_list:
-        print(link)
         r = session.get(link[0], headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
         location_name = soup.find('h2', {'itemprop': 'name'}).text
