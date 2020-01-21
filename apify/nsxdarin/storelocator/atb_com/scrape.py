@@ -1,8 +1,8 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -38,9 +38,20 @@ def fetch_data():
                     hours = ''
                     phone = ''
                     r2 = session.get(lurl, headers=headers)
+                    HFound = False
                     print('Pulling Location %s...' % lurl)
                     lines = r2.iter_lines()
                     for line2 in lines:
+                        if 'Hours: </strong>' in line2:
+                            HFound = True
+                        if HFound and '>Book' in line2:
+                            HFound = False
+                        if HFound and 'day' in line2:
+                            hrs = line2.split('<p>')[1].split('<')[0].replace('&#8211;','-')
+                            if hours == '':
+                                hours = hrs
+                            else:
+                                hours = hours + '; ' + hrs
                         if '<a href="tel:' in line2:
                             phone = line2.split('<a href="tel:')[1].split('"')[0]
                         if '<li class="col-5">' in line2:
