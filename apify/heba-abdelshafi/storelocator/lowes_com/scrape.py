@@ -50,7 +50,6 @@ def fetch_data():
         data['phone'].append(driver.find_element_by_xpath('//span[@itemprop="telephone"][contains(text(),"Main")]').text.split(':')[1])
         data['location_type'].append(driver.find_element_by_xpath('//h3[@id="storeDescription"]').text.split()[0])        
         data['hours_of_operation'].append(driver.find_element_by_xpath('//div[@aria-labelledby="storeHoursSection"]').text)
-        print(store)
 
         page = driver.page_source
         start = 'window.__PRELOADED_STATE__ = '
@@ -61,6 +60,7 @@ def fetch_data():
         
         data['longitude'].append(j['storeDetails']['long'])
         data['latitude'].append(j['storeDetails']['lat'])
+        
         
         
     driver.close()
