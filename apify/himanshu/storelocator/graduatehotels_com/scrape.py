@@ -73,46 +73,51 @@ def fetch_data():
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         except:
             pass
-            main = soup_loc.find("main", {"id": "main-container"})
-            # print(main.prettify())
-            # print("~~~~~~~~~~~~~~~~~~~~~~")
-            list_main = " ".join(list(main.stripped_strings))
-            phone_list = re.findall(re.compile(
-                ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_main))
-            if phone_list:
-                phone = phone_list[0].strip()
-            else:
-                phone = "<MISSING>"
-            location_name = main.h1.text.strip()
-            address = list(main.h2.find_next("p").stripped_strings)
-            if "United Kingdom" in address[-1]:
-                continue
-            street_address = address[0].strip()
-            city = address[1].split(',')[0].strip()
-            state = " ".join(address[1].split(',')[1].split()[:-1]) .strip()
-            us_zip_list = re.findall(re.compile(
-                r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(address[1]))
-            if us_zip_list:
-                zipp = us_zip_list[0].strip()
-            else:
-                zipp = "<MISSING>"
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
+        #     main = soup_loc.find("main", {"id": "main-container"})
+        #     # print(main.prettify())
+        #     # print("~~~~~~~~~~~~~~~~~~~~~~")
+        #     list_main = " ".join(list(main.stripped_strings))
+        #     phone_list = re.findall(re.compile(
+        #         ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_main))
+        #     if phone_list:
+        #         phone = phone_list[0].strip()
+        #     else:
+        #         phone = "<MISSING>"
+        #     location_name = main.h1.text.strip()
+        #     address = list(main.h2.find_next("p").stripped_strings)
+        #     if "United Kingdom" in address[-1]:
+        #         continue
+        #     street_address = address[0].strip()
+        #     # city = address[1].split(',')[0].strip()
+        #     print("~~~~~~~~~~~~~~~~~~  ",address)
+            # state = " ".join(address[1].split(',')[1].split()[:-1]) .strip()
+            # us_zip_list = re.findall(re.compile(
+            #     r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(address[1]))
+            # if us_zip_list:
+            #     zipp = us_zip_list[0].strip()
+            # else:
+            #     zipp = "<MISSING>"
+            # latitude = "<MISSING>"
+            # longitude = "<MISSING>"
 
             # print(page_url)
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+        
+        # if "1625 Hinman Ave" in store or "930 E 2nd St" in store or "1625 Hinman Ave" in store or "22 North Loop Road" in store or "130 W. Grand River Avenue" in store or "488 University Avenue" in store or "6101 Hillcrest Avenue" in store:
+        #     pass
+
         store = ["<MISSING>" if x == "" else x for x in store]
         store = [str(x).encode('ascii', 'ignore').decode(
             'ascii').strip() if x else "<MISSING>" for x in store]
 
-        if store[1] + " " + store[2] in addresses:
+        if store[2]  in addresses:
             continue
-        addresses.append(store[1] + " " + store[2])
-        # print("data = " + str(store))
-        # print(
-        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        addresses.append(store[2])
+        #print("data = " + str(store))
+        #print(
+            #'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         yield store
 
 
