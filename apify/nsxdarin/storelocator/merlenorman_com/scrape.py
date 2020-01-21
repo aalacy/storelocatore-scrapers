@@ -19,6 +19,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    ids = []
     url = 'https://hosted.where2getit.com/merlenorman/rest/locatorsearch?like=0.5255049170991888'
     payload = {"request":{"appkey":"3FC04602-C261-11DD-B20A-854637ABAA09",
                           "formdata":{"geoip":"false","dataview":"store_default","limit":2500,
@@ -64,7 +65,103 @@ def fetch_data():
             store = '<MISSING>'
         if state is None:
             state = prov
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if store not in ids:
+            ids.append(store)
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    payload = {"request":{"appkey":"3FC04602-C261-11DD-B20A-854637ABAA09",
+                          "formdata":{"geoip":"false","dataview":"store_default","limit":2500,
+                                      "geolocs":{"geoloc":[{"addressline":"New York, NY","country":"","latitude":"","longitude":""}]},
+                                      "order":"rank, _distance","searchradius":"5000",
+                                      "where":{"or":{"retail":{"eq":""},"outlet":{"eq":""},"factory":{"eq":""},"promo":{"eq":""}}},"false":"0"}}}
+    r = session.post(url, headers=headers, data=json.dumps(payload))
+    for item in json.loads(r.content)['response']['collection']:
+        website = 'merlenorman.com'
+        typ = '<MISSING>'
+        state = item['state']
+        prov = item['province']
+        name = item['name']
+        country = item['country']
+        lng = item['longitude']
+        lat = item['latitude']
+        try:
+            loc = item['url'].replace(' target=_new','')
+        except:
+            loc = '<MISSING>'
+        store = item['clientkey']
+        add = item['address1']
+        try:
+            add = add + ' ' + item['address2']
+        except:
+            pass
+        city = item['city']
+        zc = item['postalcode']
+        phone = item['phone']
+        try:
+            hours = 'Mon: ' + item['monday']
+            hours = hours + '; Tue:' + item['tuesday']
+            hours = hours + '; Wed:' + item['wednesday']
+            hours = hours + '; Thu:' + item['thursday']
+            hours = hours + '; Fri:' + item['friday']
+            hours = hours + '; Sat:' + item['saturday']
+            hours = hours + '; Sun:' + item['sunday']
+        except:
+            hours = '<MISSING>'
+        if phone == '':
+            phone = '<MISSING>'
+        if store == '':
+            store = '<MISSING>'
+        if state is None:
+            state = prov
+        if store not in ids:
+            ids.append(store)
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    payload = {"request":{"appkey":"3FC04602-C261-11DD-B20A-854637ABAA09",
+                          "formdata":{"geoip":"false","dataview":"store_default","limit":2500,
+                                      "geolocs":{"geoloc":[{"addressline":"Seattle, WA","country":"","latitude":"","longitude":""}]},
+                                      "order":"rank, _distance","searchradius":"5000",
+                                      "where":{"or":{"retail":{"eq":""},"outlet":{"eq":""},"factory":{"eq":""},"promo":{"eq":""}}},"false":"0"}}}
+    r = session.post(url, headers=headers, data=json.dumps(payload))
+    for item in json.loads(r.content)['response']['collection']:
+        website = 'merlenorman.com'
+        typ = '<MISSING>'
+        state = item['state']
+        prov = item['province']
+        name = item['name']
+        country = item['country']
+        lng = item['longitude']
+        lat = item['latitude']
+        try:
+            loc = item['url'].replace(' target=_new','')
+        except:
+            loc = '<MISSING>'
+        store = item['clientkey']
+        add = item['address1']
+        try:
+            add = add + ' ' + item['address2']
+        except:
+            pass
+        city = item['city']
+        zc = item['postalcode']
+        phone = item['phone']
+        try:
+            hours = 'Mon: ' + item['monday']
+            hours = hours + '; Tue:' + item['tuesday']
+            hours = hours + '; Wed:' + item['wednesday']
+            hours = hours + '; Thu:' + item['thursday']
+            hours = hours + '; Fri:' + item['friday']
+            hours = hours + '; Sat:' + item['saturday']
+            hours = hours + '; Sun:' + item['sunday']
+        except:
+            hours = '<MISSING>'
+        if phone == '':
+            phone = '<MISSING>'
+        if store == '':
+            store = '<MISSING>'
+        if state is None:
+            state = prov
+        if store not in ids:
+            ids.append(store)
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
