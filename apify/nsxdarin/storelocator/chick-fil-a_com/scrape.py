@@ -55,8 +55,12 @@ def fetch_data():
                 except:
                     country = 'NF'
             if '<a href="https://www.google.com/maps/dir/Current+Location/' in line2:
-                lat = line2.split('<a href="https://www.google.com/maps/dir/Current+Location/')[1].split(',')[0]
-                lng = line2.split('<a href="https://www.google.com/maps/dir/Current+Location/')[1].split(',')[1].split('"')[0]
+                try:
+                    lat = line2.split('<a href="https://www.google.com/maps/dir/Current+Location/')[1].split(',')[0]
+                    lng = line2.split('<a href="https://www.google.com/maps/dir/Current+Location/')[1].split(',')[1].split('"')[0]
+                except:
+                    lat = '<MISSING>'
+                    lng = '<MISSING>'
             if '<a href="tel:' in line2:
                 phone = line2.split('">')[1].split('<')[0]
             if '<h3>Hours</h3>' in line2:
