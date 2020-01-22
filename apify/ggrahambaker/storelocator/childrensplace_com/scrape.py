@@ -82,28 +82,28 @@ def fetch_data():
         base_url = 'https://www.childrensplace.com/us/store/'
        
         for loc in json_data['PhysicalStore']:
+
             
             loc_name = loc['Description'][0]['displayStoreName'].replace(' ', '').strip()
 
-            street_address_list = loc['addressLine']
-            street_address = ''
-            for addy in street_address_list[:-1]:
-                street_address += addy + ' '
-
+            street_address = loc['addressLine'][0]
+ 
             street_address = street_address.strip()
             city = loc['city'].strip()
             state = loc['stateOrProvinceName'].strip()
             zip_code = loc['postalCode'].strip()
             country_code = loc['country'].strip()
             phone_number = loc['telephone1'].strip()
-            location_type = street_address_list[-1]
+            location_type = loc['addressLine'][-1]
+            
             if 'PLACE' in location_type:
                 location_type = 'Retail'
             elif 'OUTLET' in location_type:
                 location_type = 'Outlet'
             else:
                 location_type = location_type
-                
+
+         
             store_number = loc['uniqueID'].strip()
             link = base_url + loc_name + '-' + loc['stateOrProvinceName'].lower() + '-' + loc['city'] + '-' + loc['postalCode'].strip() + '-' + loc['uniqueID'].strip()
             link_list.append([link, [street_address, city, state, zip_code, country_code, phone_number, location_type, store_number]])
@@ -152,7 +152,8 @@ def fetch_data():
         longit = '<MISSING>'
 
         location_type = '<MISSING>'
-        page_url = link
+        page_url = link[0]
+        print(page_url)
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
