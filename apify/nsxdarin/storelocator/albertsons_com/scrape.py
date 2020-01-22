@@ -55,7 +55,7 @@ def fetch_data():
                         lurl = 'https://local.albertsons.com/' + item.split('"')[0]
                         locs.append(lurl)
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        #print('Pulling Location %s...' % loc)
         website = 'albertsons.com'
         typ = '<MISSING>'
         hours = ''
