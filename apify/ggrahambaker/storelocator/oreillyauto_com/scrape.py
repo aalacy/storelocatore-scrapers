@@ -1,11 +1,10 @@
 import csv
 from sgrequests import SgRequests
-#from urllib3.exceptions import MaxRetryError
 from bs4 import BeautifulSoup
 import sgzip 
 import json
 import time
-#from tenacity import *
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,17 +16,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-# @retry(wait=wait_random_exponential(multiplier=1, max=60))
-def get_wrapper(session, header, url):
-    try:
-        r = session.get(url, headers=header)
-        return r
-    except MaxRetryError:
-        print('retry errrrrooor!!!\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
-        raise MaxRetryException('Oh noooo')
-
-class MaxRetryException(Exception):
-        pass
 
 def fetch_data():
     session = SgRequests()
@@ -53,10 +41,10 @@ def fetch_data():
         try:
             r = session.get(url, headers=HEADERS)
         except:
-            print('sleeeeeping \n\n\n\n\n\n\n')
+            #print('sleeeeeping \n\n\n\n\n\n\n')
             time.sleep(15)
             r = session.get(url, headers=HEADERS)
-            print(':)')
+            #print(':)')
         soup = BeautifulSoup(r.content, 'html.parser')
  
         hrefs = soup.find_all('a', {'class': 'js-fas-details-link'})
