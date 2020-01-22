@@ -68,7 +68,7 @@ def fetch_data():
                 continue
             if page.status_code == 200:
                 soup1 = BeautifulSoup(page.text, "html.parser")
-                page.close()
+#                 page.close()
                 try:
                     add = soup1.find("div", class_="c-AddressRow")
                     addr = add.text
