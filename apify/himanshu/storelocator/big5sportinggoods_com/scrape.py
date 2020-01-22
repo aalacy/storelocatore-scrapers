@@ -22,7 +22,7 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 100
+    MAX_RESULTS = 1000
     MAX_DISTANCE = 50
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
@@ -36,14 +36,15 @@ def fetch_data():
         lng = coord[1]
         # print(search.current_zip)
 
-        # print("zip_code === "+zip_code)
+        # print("zip_code === ",lat)
         base_url= "http://big5sportinggoods.com/store/integration/find_a_store.jsp?storeLocatorAddressField="+str(search.current_zip)+"&miles=100&lat="+str(lat)+"&lng="+str(lng)+"&showmap=yes"
         try:
             r = requests.get(base_url)
         except:
-            continue
+            pass
         soup= BeautifulSoup(r.text,"lxml")
         a = (soup.find_all("div",{"class":"store-address"}))
+        # print(a)
         current_results_len = len(a)
         c = (soup.find_all("input",{"name":"lngHidden"}))
         b = (soup.find_all("input",{"name":"latHidden"}))
@@ -79,7 +80,7 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             yield store  
-            #print("--------------------",store) 
+            # print("--------------------",store) 
        
         if current_results_len < MAX_RESULTS:
             # print("max distance update")

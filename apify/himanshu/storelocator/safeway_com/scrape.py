@@ -29,7 +29,10 @@ def fetch_data():
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
     
     }
-    r = requests.get("https://local.safeway.com/index.html", headers=headers)
+    try:
+        r = requests.get("https://local.safeway.com/index.html", headers=headers)
+    except:
+        pass
     soup = BeautifulSoup(r.text, "lxml")
 
     content = soup.find_all("a",{"class":"Directory-listLink"})
@@ -99,8 +102,8 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            #print("data =="+str(store))
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # print("data =="+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
 
     url = "https://local.safeway.com/"+content[1]['href']
@@ -139,8 +142,8 @@ def fetch_data():
         store.append(longitude)
         store.append(hours)
         store.append(page_url)
-        #print("data =="+str(store))
-        #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print("data =="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         yield store
         
        

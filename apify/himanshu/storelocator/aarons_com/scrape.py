@@ -71,13 +71,13 @@ def fetch_data():
         hours_of_operation = ""
 
         for location in json_data["records"]:
-            hours_of_operation =''
-            for h in location['hoursOfOperation']:
-                if location['hoursOfOperation'][h] != []:
-                    hours_of_operation = hours_of_operation + ' ' + h + ' ' + location['hoursOfOperation'][h][-1][0] + ' ' +location['hoursOfOperation'][h][-1][1]
+            # hours_of_operation =''
+            # for h in location['hoursOfOperation']:
+            #     if location['hoursOfOperation'][h] != []:
+            #         hours_of_operation = hours_of_operation + ' ' + h + ' ' + location['hoursOfOperation'][h][-1][0] + ' ' +location['hoursOfOperation'][h][-1][1]
 
             # print(hours_of_operation)
-    
+
             # print("location ==== " + str(location))
             us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(location['postalCode']))
 
@@ -94,10 +94,21 @@ def fetch_data():
             latitude = str(location['geo'][0])
             # print("latitude ",latitude)
             longitude = str(location['geo'][1])
+            page_url = location['website']
+            m =(page_url.replace("https://locations.aarons.com/us-il-pekin-2113-court-st-store","https://locations.aarons.com/us-il-pekin-3010-court-st-store")\
+            .replace("https://locations.aarons.com/us-il-sterling-4311-e-lincolnway-ste-l-store","https://locations.aarons.com/us-il-sterling-2214-e-4th-st-store")\
+            .replace("https://locations.aarons.com/us-il-benton-9-n-rend-lake-plz-store","https://locations.aarons.com/us-il-benton-9-n-rend-lake-plz-store-1")    )
+            #print(m)
+            r = requests.get(m, headers=headers,  allow_redirects=False)
+            soup= BeautifulSoup(r.text,"lxml")
+            a = soup.find("div",{"class":"sl-hours"}).text
+            hours_of_operation = a.replace("PM","PM ").replace("day","day ")
+            #print(hours_of_operation)
+            # for y in a:.find_all("div",{"class":"state-container"})[0:51]
 
             result_coords.append((latitude, longitude))
             store = [locator_domain, location['name'].capitalize(), location['address'].capitalize(), location['city'].capitalize(), location['province'], zipp, country_code,
-                     store_number, location['phone'], location_type, location['geo'][1], location['geo'][0], hours_of_operation,location['website']]
+                     store_number, location['phone'], location_type, location['geo'][1], location['geo'][0], hours_of_operation,m]
 
             if str(store[2]) + str(store[-3]) not in addresses:
                 addresses.append(str(store[2]) + str(store[-3]))
