@@ -58,7 +58,7 @@ def fetch_data():
 
     for store_url in list_store_url:
         if "nevada" not in store_url:
-
+            # print(store_url)
             r_store = requests.get(store_url, headers=headers)
             soup_store = BeautifulSoup(r_store.text, "lxml")
             table = soup_store.find('table')
@@ -80,24 +80,46 @@ def fetch_data():
                     city = "<MISSING>"
                     state = "<MISSING>"
                     zipp = "<MISSING>"
+                elif len(address) == 2:
+                    street_address = address[0].strip()
+                    location_name = address[1].replace(
+                        "Located in the", "").strip()
+                    city = "<MISSING>"
+                    state = "<MISSING>"
+                    zipp = "<MISSING>"
+
                 else:
                     location_name = address[0].strip()
                     street_address = " ".join(address[1:-1]).strip()
                     city = address[-1].split(',')[0].strip()
                     state = address[-1].split(',')[-1].split()[0].strip()
                     zipp = address[-1].split(',')[-1].split()[-1].strip()
+
                 hours_of_operation = " ".join(
                     list(tr.find_all('td')[1].stripped_strings)).strip().replace("Follows Airport Hours", "").replace("Follows Mall Hours ", "").replace("May vary", "").strip()
-                phone = list(tr.find_all('td')[2].stripped_strings)[0].strip()
-                coord = tr.find_all('td')[3].a['href']
-                if "&sll" in coord:
-                    latitude = coord.split("&sll=")[1].split(',')[0]
-                    longitude = coord.split("&sll=")[1].split(',')[
-                        1].split('&')[0]
+                phone_list = list(tr.find_all('td')[2].stripped_strings)
+                if "Store Website" in " ".join(phone_list):
+                    phone_list.remove("Store Website")
+                if phone_list:
+                    phone = phone_list[0]
                 else:
+                    phone = "<MISSING>"
 
+                try:
+                    coord = tr.find_all('td')[3].a['href']
+
+                    if "&sll" in coord:
+                        latitude = coord.split("&sll=")[1].split(',')[0]
+                        longitude = coord.split("&sll=")[1].split(',')[
+                            1].split('&')[0]
+                    else:
+
+                        latitude = "<MISSING>"
+                        longitude = "<MISSING>"
+                except:
                     latitude = "<MISSING>"
                     longitude = "<MISSING>"
+
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                 store = ["<MISSING>" if x == "" else x for x in store]

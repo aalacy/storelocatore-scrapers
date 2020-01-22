@@ -58,7 +58,7 @@ def fetch_data():
                     phone = ''
                 else:
                     phone = vj['phonenumber'].strip()
-                location_type = 'dunkindonuts'
+                location_type = '<MISSING>'
                 latitude = vj['lat']
                 longitude = vj['lng']
 

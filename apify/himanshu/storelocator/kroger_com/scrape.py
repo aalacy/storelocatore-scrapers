@@ -1,10 +1,11 @@
 import csv
+import requests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import time
-from sgrequests import SgRequests
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -18,19 +19,53 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-session = SgRequests()
+
+def request_wrapper(url, method, headers, data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url, headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url, headers=headers, data=data)
+                else:
+                    r = requests.post(url, headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
+
 
 def fetch_data():
     return_main_object = []
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
+    # search.initialize(include_canadian_fsas = True)   # with canada zip
     MAX_RESULTS = 50
     MAX_DISTANCE = 200
     current_results_len = 0  # need to update with no of count.
     zip_code = search.next_zip()
 
     headers = {
+        # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
         'User-Agent': "PostmanRuntime/7.19.0",
         "content-type": "application/json;charset=UTF-8",
     }
@@ -38,10 +73,21 @@ def fetch_data():
     base_url = "https://www.kroger.com"
 
     while zip_code:
+       # print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
+
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("zip_code === " + zip_code)
+
+        # zip_code = "11576"
+
         data = "{\"query\":\"\\n      query storeSearch($searchText: String!, $filters: [String]!) {\\n        storeSearch(searchText: $searchText, filters: $filters) {\\n          stores {\\n            ...storeSearchResult\\n          }\\n          fuel {\\n            ...storeSearchResult\\n          }\\n          shouldShowFuelMessage\\n        }\\n      }\\n      \\n  fragment storeSearchResult on Store {\\n    banner\\n    vanityName\\n    divisionNumber\\n    storeNumber\\n    phoneNumber\\n    showWeeklyAd\\n    showShopThisStoreAndPreferredStoreButtons\\n    storeType\\n    distance\\n    latitude\\n    longitude\\n    tz\\n    ungroupedFormattedHours {\\n      displayName\\n      displayHours\\n      isToday\\n    }\\n    address {\\n      addressLine1\\n      addressLine2\\n      city\\n      countryCode\\n      stateCode\\n      zip\\n    }\\n    pharmacy {\\n      phoneNumber\\n    }\\n    departments {\\n      code\\n    }\\n    fulfillmentMethods{\\n      hasPickup\\n      hasDelivery\\n    }\\n  }\\n\",\"variables\":{\"searchText\":\"" + str(zip_code) + "\",\"filters\":[]},\"operationName\":\"storeSearch\"}"
         locations_url = "https://www.kroger.com/stores/api/graphql"
-        r_locations = session.post(locations_url, headers=headers, data=data)
+        r_locations = request_wrapper(
+            locations_url, "post", headers=headers, data=data)
+
+        # print("r_locations.text ==== " + r_locations.text)
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
         locations_json = r_locations.json()
 
@@ -49,6 +95,8 @@ def fetch_data():
         try:
             current_results_len = len(
                 locations_json["data"]["storeSearch"]["stores"])
+
+        # print("current_results_len === " + str(current_results_len))
 
             for script in locations_json["data"]["storeSearch"]["stores"]:
 
@@ -69,6 +117,7 @@ def fetch_data():
                 hours_of_operation = ""
 
                 # do your logic here
+                # print('script["address"] === '+ str(script["address"]))
 
                 street_address = script["address"]["addressLine1"]
                 if "addressLine2" in script["address"] and script["address"]["addressLine2"]:
@@ -86,16 +135,25 @@ def fetch_data():
                     location_type = "kroger"
                 else:
                     location_type = "Ralph's"
+                    # print(location_type)
 
+                # print(location_type)
                 location_name = script["vanityName"]
                 page_url = "https://www.kroger.com/stores/details/" + \
                     str(script["divisionNumber"]) + \
                     "/" + str(script["storeNumber"])
+                r_loc = requests.get(page_url, headers=headers)
+                soup_loc = BeautifulSoup(r_loc.text, "lxml")
+                location_type = soup_loc.find("div", class_="logo").a["title"]
+                # print(location_type)
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
                 hours_of_operation = ""
                 for day_hours in script["ungroupedFormattedHours"]:
                     hours_of_operation += day_hours["displayName"] + \
                         " = " + day_hours["displayHours"] + "  "
+
+                # print("hours_of_operation == "+ hours_of_operation)
 
                 result_coords.append((latitude, longitude))
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
@@ -107,12 +165,18 @@ def fetch_data():
                     store = [str(x).encode('ascii', 'ignore').decode(
                         'ascii').strip() if x else "<MISSING>" for x in store]
 
+                    # print("data = " + str(store))
+                    # print(
+                    #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     yield store
-        except:
+        except Exception as e:
+            # print(e)
             pass
         if current_results_len < MAX_RESULTS:
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " +

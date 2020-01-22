@@ -18,7 +18,6 @@ def fetch_data():
 
     locator_domain = 'https://petvalu.com/'
     session = SgRequests()
-
     headers = {'Host': 'us.petvalu.com',
     'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0',
     'Accept': 'application/json, text/javascript, */*; q=0.01',
@@ -43,11 +42,11 @@ def fetch_data():
     coord = search.next_coord()
     all_store_data = []
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        print()
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #print()
         data = { 'lat': str(x), 'lng': str(y), 'action': 'get_stores', 'radius': 100 }
 
         r = session.post('https://us.petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = data)
@@ -124,12 +123,12 @@ def fetch_data():
   
     
     while coord:
-        print('can')
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print('can')
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        print()
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #print()
         c_data = { 'lat': str(x), 'lng': str(y), 'action': 'get_stores', 'radius': 100 }
         
         r = session.post('https://petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = c_data)

@@ -1,17 +1,7 @@
 import csv
-import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import json
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,60 +14,72 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    locator_domain = 'https://local.vons.com/'
+    session = SgRequests()
+    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
+
+    locator_domain = 'https://www.vons.com/'
+    base_url = 'https://local.vons.com/'
     ext = 'index.html'
+    r = session.get(base_url + ext, headers = HEADERS)
+    soup = BeautifulSoup(r.content, 'html.parser')
 
-    driver = get_driver()
-    driver.get(locator_domain + ext)
 
-    links = driver.find_elements_by_css_selector('a.c-directory-list-content-item-link')
+    links = soup.find_all('a', {'class': 'Directory-listLink'})
 
     state_list = []
     for li in links:
-        state_list.append(li.get_attribute('href'))
+        state_list.append(base_url + li['href'])
+
+
 
     store_list = []
     more_stores = []
     for state in state_list:
-        driver.get(state)
-        driver.implicitly_wait(10)
+        r = session.get(state, headers = HEADERS)
+        soup = BeautifulSoup(r.content, 'html.parser')
 
-        list_items = driver.find_elements_by_css_selector('li.c-directory-list-content-item')
+        list_items = soup.find_all('li', {'class': 'Directory-listItem'})
         for li in list_items:
-            num_stores = int(li.find_element_by_css_selector('span').text[1:-1])
+            link = base_url + li.find('a')['href']
 
-            if num_stores > 1:
-                more_stores.append(li.find_element_by_css_selector('a').get_attribute('href'))
+            if len(link.split('/')) == 5:
+                more_stores.append(link)
             else:
-                store_list.append(li.find_element_by_css_selector('a').get_attribute('href'))
+                store_list.append(link)
+
+
 
     for more in more_stores:
-        driver.get(more)
-        driver.implicitly_wait(10)
-        links = driver.find_elements_by_css_selector('a.Teaser-nameLink')
+        r = session.get(more, headers = HEADERS)
+        soup = BeautifulSoup(r.content, 'html.parser')
+        links = soup.find_all('a', {'class': 'Teaser-titleLink'})
+        
         for li in links:
-            store_list.append(li.get_attribute('href'))
+            link = base_url + li['href'].replace('../', '')
+            store_list.append(link)
 
     all_store_data = []
     for link in store_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
+        r = session.get(link, headers = HEADERS)
+        soup = BeautifulSoup(r.content, 'html.parser')
+        
+        
+        print(link)
 
-        lat = driver.find_element_by_xpath('//meta[@itemprop="latitude"]').get_attribute('content')
-        longit = driver.find_element_by_xpath('//meta[@itemprop="longitude"]').get_attribute('content')
-        location_name = driver.find_element_by_css_selector('span.LocationName-geo').text
+        lat = soup.find('meta', {'itemprop': 'latitude'})['content']
+        longit = soup.find('meta', {'itemprop': 'longitude'})['content']
+        location_name = soup.find('span', {'class': 'LocationName-geo'}).text
+        city = soup.find('meta', {'itemprop': 'addressLocality'})['content']
+        street_address = soup.find('meta', {'itemprop': 'streetAddress'})['content']
+        
+        state = soup.find('abbr', {'itemprop': 'addressRegion'}).text
+        
+        zip_code = soup.find('span', {'itemprop': 'postalCode'}).text
+        
+        phone_number = soup.find('div', {'id': 'phone-main'}).text
+        
+        data_days = soup.find('div', {'class': 'c-hours-details-wrapper'})['data-days']
 
-        city = driver.find_element_by_xpath('//meta[@itemprop="addressLocality"]').get_attribute('content')
-        street_address = driver.find_element_by_xpath('//meta[@itemprop="streetAddress"]').get_attribute('content')
-
-        state = driver.find_element_by_xpath('//abbr[@itemprop="addressRegion"]').text
-
-        zip_code = driver.find_element_by_xpath('//span[@itemprop="postalCode"]').text
-
-        phone_number = driver.find_element_by_css_selector('span#telephone').text
-
-        data_days = driver.find_element_by_css_selector(
-            'div.c-location-hours-details-wrapper.js-location-hours').get_attribute('data-days')
         hours_json = json.loads(data_days)
 
         hours = ''
@@ -104,13 +106,13 @@ def fetch_data():
         location_type = '<MISSING>'
 
         page_url = link
-
+        
+        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours, page_url]
+                    store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
+        
 
-
-    driver.quit()
     return all_store_data
 
 def scrape():

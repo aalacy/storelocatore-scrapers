@@ -56,6 +56,8 @@ def fetch_data():
                 typ = line2.split('<h5>')[1].split('</h5>')[0].replace('<i>','').replace('</i>','')
             if '"openingHours":"' in line2:
                 hours = line2.split('"openingHours":"')[1].split('"')[0]
+        if 'broadway' in loc:
+            hours = 'Mo, Tu, We, Th, Fr, Sa, Su, 10:00-19:00'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

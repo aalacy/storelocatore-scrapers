@@ -1,11 +1,9 @@
 import csv
-import os
-import re, time
+import re
 import requests
 from bs4 import BeautifulSoup
 import usaddress
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +26,7 @@ def fetch_data():
     for repo in mainlist:        
         link = 'https://ztejas.com/locations/' + repo['href']+'/contact/'
         title = repo.text
-        print(link)
+        #print(link)
         page1 = requests.get(link)        
         #driver.get(link)
         #time.sleep(5)
@@ -72,21 +70,29 @@ def fetch_data():
         pcode = pcode.lstrip()
         
         start = contact.find('Dining Hours')
-        end = contact.find('PURCHASE GIFT CARD')
+        end = contact.find('Happy Hours')
         hours = contact[start:end]
          
         if len(hours) < 1:
             contact = str(soup1)
             start = contact.find('Dining Hours')
-            end = contact.find('PURCHASE GIFT CARD')
+            end = contact.find('Happy Hours')
             hours = contact[start:end]
             cleanr = re.compile('<.*?>')
             hours = re.sub(cleanr, '', hours)
             #print(hours)
         hours = hours.replace('\n', ' ')
-        hours = hours.replace('Hours', 'Hours ')
-        hours = hours.replace('Happy Hour', '')
-        hours = hours.replace('Brunch','Brunch ')
+        hours = hours.replace('Hours', 'Hours ')        
+        hours = hours.replace('Dining Hours','')
+        phone = phone.lstrip()
+        city = city.replace(',','')
+        if street.find('(') > -1 and street.find("Z’Tejas") > -1:
+            temp = street
+            street = street[0:street.find('(')]
+            phone = temp[temp.find('('):temp.find('Z')]
+            
+        street = street.rstrip()
+        phone = phone.rstrip()
         
         data.append([
              'https://ztejas.com/',
@@ -105,7 +111,7 @@ def fetch_data():
               hours
             ])
         #print(data[p])
-        p += 1
+        #p += 1
         
     return data
 

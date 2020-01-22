@@ -50,8 +50,13 @@ def fetch_data():
             state = address[2].split()[0].strip()
             zipp = address[2].split()[-1].strip()
         hours = " ".join(list(location_soup.find(
-            "div", {'class': "hours"}).stripped_strings)).split('Happy Hour Menu')[0]
-        phone = location_soup.find("p", {'class': "phone"}).text.strip()
+            "div", {'class': "hours"}).stripped_strings)).split('Happy Hour Menu')[0].replace("Restaurant Hours", "").strip()
+        try:
+            phone = location_soup.find("p", {'class': "phone"}).text.strip()
+            # print(phone)
+        except:
+            # coming soon location
+            continue
         store = []
         store.append("https://slaters5050.com")
         store.append(name)
@@ -71,12 +76,10 @@ def fetch_data():
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-        return_main_object.append(store)
+        yield store
         # print("data = " + str(store))
         # print(
         #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-    return return_main_object
 
 
 def scrape():

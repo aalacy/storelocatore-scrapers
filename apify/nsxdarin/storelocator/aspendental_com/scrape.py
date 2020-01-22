@@ -16,6 +16,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     alllocs = []
+    ids = []
     cities = []
     Found = False
     url = 'https://www.aspendental.com/find-an-office'
@@ -26,7 +27,9 @@ def fetch_data():
         if Found and '<li><a href="/dentist/' in line:
             lurl = 'https://www.aspendental.com' + line.split('<a href="')[1].split('"')[0]
             cities.append(lurl)
+    print('Found %s Cities...' % str(len(cities)))
     for city in cities:
+        print('Pulling City %s...' % city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
             if '<li><a href="/dentist/' in line2:
@@ -74,10 +77,11 @@ def fetch_data():
                 if 'href="https://www.google.com/maps/dir/' in line2 and lat == '':
                     lat = line2.split('href="https://www.google.com/maps/dir/')[1].split(',')[0]
                     lng = line2.split('href="https://www.google.com/maps/dir/')[1].split(',')[1].split('/')[0]
-                
             if hours == '':
                 hours = '<MISSING>'
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            if store not in ids:
+                ids.append(store)
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

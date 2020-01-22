@@ -1,148 +1,118 @@
 import csv
-import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException
-import usaddress
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
+import json
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
-
-def parse_addy(addy):
-    if 'Old Bridge' in addy:
-        street_address = '3500 Route 9'
-        city = 'Old Bridge'
-        state = 'NJ'
-        zip_code = '08857'
-
-    else:
-        parsed_add = usaddress.tag(addy)[0]
-        street_address = ''
-
-        if 'AddressNumber' in parsed_add:
-            street_address += parsed_add['AddressNumber'] + ' '
-        if 'StreetNamePreDirectional' in parsed_add:
-            street_address += parsed_add['StreetNamePreDirectional'] + ' '
-        if 'StreetNamePreType' in parsed_add:
-            street_address += parsed_add['StreetNamePreType'] + ' '
-        if 'StreetName' in parsed_add:
-            street_address += parsed_add['StreetName'] + ' '
-        if 'StreetNamePostType' in parsed_add:
-            street_address += parsed_add['StreetNamePostType'] + ' '
-        if 'OccupancyType' in parsed_add:
-            street_address += parsed_add['OccupancyType'] + ' '
-        if 'OccupancyIdentifier' in parsed_add:
-            street_address += parsed_add['OccupancyIdentifier'] + ' '
-
-        city = parsed_add['PlaceName']
-        state = parsed_add['StateName']
-        zip_code = parsed_add['ZipCode']
-
-    return street_address.strip(), city, state, zip_code
-
-
-def format_hours(hours_arr):
-    hours = ''
-    for element in hours_arr:
-        if 'Day of the Week' in element:
-            continue
-        if 'Today' in element:
-            continue
-
-        space_split = element.split(' ')
-        if 'Open 24 hours' in element:
-            hours += element + ' '
-        elif len(space_split) == 3:
-            # this means day
-            hours += space_split[0] + ' '
-        else:
-            hours += element + ' '
-
-    return hours.strip()
-
-
-
 def fetch_data():
-    locator_domain = 'https://local.acmemarkets.com/'
+    session = SgRequests()
+    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
+
+    locator_domain = 'https://www.acmemarkets.com/'
+    base_url = 'https://local.acmemarkets.com/'
     ext = 'index.html'
+    r = session.get(base_url + ext, headers = HEADERS)
+    soup = BeautifulSoup(r.content, 'html.parser')
 
-    driver = get_driver()
-    driver.get(locator_domain + ext)
 
-    states = driver.find_elements_by_css_selector('a.c-directory-list-content-item-link')
+    links = soup.find_all('a', {'class': 'Directory-listLink'})
+
     state_list = []
-    for state in states:
-        state_list.append(state.get_attribute('href'))
+    for li in links:
+        state_list.append(base_url + li['href'])
 
-    city_list = []
+
+
+    store_list = []
+    more_stores = []
     for state in state_list:
-        driver.get(state)
-        driver.implicitly_wait(10)
-        cities = driver.find_elements_by_css_selector('a.c-directory-list-content-item-link')
+        r = session.get(state, headers = HEADERS)
+        soup = BeautifulSoup(r.content, 'html.parser')
 
-        for city in cities:
-            city_list.append(city.get_attribute('href'))
+        list_items = soup.find_all('li', {'class': 'Directory-listItem'})
+        for li in list_items:
+            link = base_url + li.find('a')['href']
+
+            if len(link.split('/')) == 5:
+                more_stores.append(link)
+            else:
+                store_list.append(link)
+
+
+
+    for more in more_stores:
+        r = session.get(more, headers = HEADERS)
+        soup = BeautifulSoup(r.content, 'html.parser')
+        links = soup.find_all('a', {'class': 'Teaser-titleLink'})
+        
+        for li in links:
+            link = base_url + li['href'].replace('../', '')
+            store_list.append(link)
 
     all_store_data = []
-    for i, city in enumerate(city_list):
-        driver.get(city)
-        driver.implicitly_wait(10)
+    for link in store_list:
+        r = session.get(link, headers = HEADERS)
+        soup = BeautifulSoup(r.content, 'html.parser')
+        
+        
+        print(link)
 
-        try:
-            lat = driver.find_element_by_xpath('//meta[@itemprop="latitude"]').get_attribute('content')
-            longit = driver.find_element_by_xpath('//meta[@itemprop="longitude"]').get_attribute('content')
-        except NoSuchElementException:
-            more_links = driver.find_elements_by_css_selector('a.Teaser-nameLink')
-            for link in more_links:
-                city_list.append(link.get_attribute('href'))
-            continue
+        lat = soup.find('meta', {'itemprop': 'latitude'})['content']
+        longit = soup.find('meta', {'itemprop': 'longitude'})['content']
+        location_name = soup.find('span', {'class': 'LocationName-geo'}).text
+        city = soup.find('meta', {'itemprop': 'addressLocality'})['content']
+        street_address = soup.find('meta', {'itemprop': 'streetAddress'})['content']
+        
+        state = soup.find('abbr', {'itemprop': 'addressRegion'}).text
+        
+        zip_code = soup.find('span', {'itemprop': 'postalCode'}).text
+        
+        phone_number = soup.find('div', {'id': 'phone-main'}).text
+        
+        data_days = soup.find('div', {'class': 'c-hours-details-wrapper'})['data-days']
 
+        hours_json = json.loads(data_days)
 
-        addy = driver.find_element_by_css_selector('address').text.replace('\n', ' ')
+        hours = ''
+        for day in hours_json:
+            hours += day['day'] + ' '
+            interval = day['intervals'][0]
 
-        street_address, city, state, zip_code = parse_addy(addy)
+            start = str(interval['start'])
+            end = str(interval['end'])
+            if start == '0' and end == '0':
+                hours += 'Open 24 Hours '
+            else:
+                start_time = start[:1] + ':' + start[-2:] + 'am'
 
-        phone_number = driver.find_element_by_css_selector('span#telephone').text
+                if end == '0':
+                    end_time = '12:00 am'
+                else:
+                    end_time = end[:1] + ':' + end[-2:] + 'am'
 
+                hours += start_time + ' - ' + end_time + ' '
 
-        hours_table = driver.find_element_by_css_selector('table.c-location-hours-details').text.split('\n')
-
-        hours = format_hours(hours_table)
-
-        pharm = driver.find_elements_by_css_selector('a.LocationInfo-pharmacyLink')
-        if len(pharm) == 0:
-            location_type = 'Store'
-        else:
-            location_type = 'Store and Pharmacy'
-
-        store_number = '<MISSING>'
         country_code = 'US'
+        store_number = '<MISSING>'
+        location_type = '<MISSING>'
 
-        location_name = driver.find_element_by_css_selector('span.LocationName-geo').text
-
+        page_url = link
+        
+        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
-
+                    store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
+        
 
-    driver.quit()
     return all_store_data
 
 def scrape():

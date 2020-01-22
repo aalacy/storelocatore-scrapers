@@ -47,7 +47,11 @@ def fetch_data():
     locationele=list(filter(lambda x: (not(x.text == '')) , locationelements_1))
     locationURLs=list(set([i.get_attribute('href') for i in locationele]))
     locationText=[i.text  for i in locationele]
-    canadaElements=len(driver.find_elements_by_xpath("//h4[preceding-sibling::p]//a"))
+    
+    canadaElements=driver.find_elements_by_xpath("//h4[preceding-sibling::p]//a")
+    canadas=[]
+    for ce in canadaElements:
+        canadas.append(ce.get_attribute('href'))
     count=0
     fullcontent=[]
     for i in locationURLs:
@@ -70,13 +74,9 @@ def fetch_data():
         print(count)
  
     del locationURLs[locationURLs.index("https://pepperpalace.com/pages/new-orleans-decatur-street")]
-
-    if "https://pepperpalace.com/pages/new-orleans-decatur-street" in  locationURLs:
-        print("something's wrong!!!!!!!!!1111")
-    print(len(locationURLs))
     for store in range(len(fullcontent)):        
         loc_name_splitter=re.search(r'\d+', fullcontent[store]).group()
-    
+        #print(locationURLs[store])
         location_name = fullcontent[store].split(loc_name_splitter)[0]
         location_name=location_name.strip()
         if(location_name==''):
@@ -87,6 +87,7 @@ def fetch_data():
         city = locationText[store].lower()
         if('(' in fullcontent[store]):
             phno='('+fullcontent[store].split('(')[1]
+            #print(phno)
             alphabet='abcdefghijklmnopqrstuvwxyz@.!â€‹Â'
             phno=phno.lower()
             for letter in alphabet:
@@ -97,14 +98,34 @@ def fetch_data():
                 phno=[v for v in phno if v in '1234567890- ()']
                 str1=""
                 phno=str1.join(phno)
+            #print(phno)
             raw_address = fullcontent[store].split('(')[0]
         else:
-            phno='<MISSING>'
+            driver.get(locationURLs[store])
+            inlines=driver.find_elements_by_tag_name("inline")
+            if inlines==[]:
+              phno='<MISSING>'
+            else:
+
+              phno='('+inlines[0].text.replace("\n"," ").split('(')[1]
+              #print(phno)
+              alphabet='abcdefghijklmnopqrstuvwxyz@.!â€‹Â'
+              phno=phno.lower()
+              for letter in alphabet:
+                phno = phno.replace(letter, '')
+                if('  ' in phno):
+                    phno=phno.strip()
+                    phno=phno.split("  ")[0]
+                phno=[v for v in phno if v in '1234567890- ()']
+                str1=""
+                phno=str1.join(phno).strip()
+              #print(phno)
             raw_address = fullcontent[store]
         if(location_name in raw_address):
             raw_address=raw_address.replace(location_name,"").replace("pepperpalacemallga@gmail.com","")
-        #print(raw_address)
-        if store>=len(fullcontent)-canadaElements:
+        #print( fullcontent[store])
+    
+        if locationURLs[store] in  canadas:
             country='CA'
         else:
             country='US'
@@ -181,7 +202,7 @@ def fetch_data():
         else:
           city=addr.split(" ")[-1].replace(",","")
           #print("!!!!!!!!!!!!!!!!!!!!!!!1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        street_addr=addr.replace(city,"").strip().strip(",").strip()
+        street_addr=addr.replace(city,"").replace("\n","").strip().strip(",").strip()
         if locationURLs[store] =="https://pepperpalace.com/pages/new-orleans-chartres":
             #uff = street_addr.split(" ")[-1]
             street_addr=street_addr.replace("New","")

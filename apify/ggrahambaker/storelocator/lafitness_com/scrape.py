@@ -78,12 +78,10 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        print('--------------')
-        print(link)
+        
         driver.get(link)
         location_name = driver.find_element_by_css_selector('h1.MainTitle').text
         
-        print(location_name)
         if 'Premier Plus' in location_name:
             location_type = 'Premier Pluse'
         elif 'Presale' in location_name:
@@ -138,9 +136,7 @@ def fetch_data():
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
-        print()
-        print()
-        print(store_data)
+        
         all_store_data.append(store_data)
         
         
