@@ -34,7 +34,10 @@ def fetch_data():
                         lat = item.split('"latitude":')[1].split(',')[0]
                         lng = item.split('"longitude":')[1].split(',')[0]
                         typ = '<MISSING>'
-                        phone = item.split('"phoneNumber":"')[1].split('"')[0]
+                        try:
+                            phone = item.split('"phoneNumber":"')[1].split('"')[0]
+                        except:
+                            phone = '<MISSING>'
                         days = item.split(',{"openTime":')
                         for day in days:
                             if '"tenantId":"' not in day:
