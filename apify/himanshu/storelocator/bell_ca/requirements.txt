@@ -2,3 +2,4 @@ requests==2.7.0
 sgzip
 beautifulsoup4==4.7.1
 lxml
+html5lib
