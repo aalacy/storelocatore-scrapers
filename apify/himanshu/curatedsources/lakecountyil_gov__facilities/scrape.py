@@ -39,10 +39,15 @@ def fetch_data():
         address = location_soup.find("div",{"class":"sidebar"}).find("span",{"class":"street-address"}).text
         locality = location_soup.find("div",{"class":"sidebar"}).find("span",{"class":"locality"}).text
         store_zip = location_soup.find("div",{"class":"sidebar"}).find("span",{"class":"postal-code"}).text
-        if location_soup.find("div",{'class':"section hours"}) == None:
-            hours = "<MISSING>"
-        else:
+        if location_soup.find("div",{'class':"section hours"}) != None:
             hours = " ".join(list(location_soup.find("div",{'class':"section hours"}).stripped_strings))
+
+        elif location_soup.find("div",{"class":"editorContent"}) != None:
+            hours = ''.join(list(location_soup.find("div",{"class":"editorContent"}).stripped_strings)[3:5])
+        
+        else:
+            hours = "<MISSING>"
+
         if location_soup.find("div",{"class":"sidebar"}).find("h4",text="Contact") == None:
             phone = "<MISSING>"
         else:
@@ -61,10 +66,10 @@ def fetch_data():
         store.append("lake county")
         store.append(store_data["Latitude"])
         store.append(store_data["Longitude"])
-        store.append(hours.replace("Hours",""))
+        store.append(hours.replace("Hours","").replace("Fax: 847.984.5888",'').replace("Parking available on site.","<MISSING>"))
         store.append(base_url + location["href"])
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        # print(store)
+        #print(store)
         yield store
     
 

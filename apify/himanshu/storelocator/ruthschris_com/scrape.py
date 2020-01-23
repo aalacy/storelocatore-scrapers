@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import time
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -13,40 +12,6 @@ def write_output(data):
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         for row in data:
             writer.writerow(row)
-
-
-def request_wrapper(url,method,headers,data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = requests.get(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(5)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:
-                if data:
-                    r = requests.post(url,headers=headers,data=data)
-                else:
-                    r = requests.post(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None
-
 def fetch_data():
     return_main_object = []
     addresses = []
@@ -55,9 +20,10 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url = "https://www.ruthschris.com/restaurant-locations/"
-   
-    r = request_wrapper(base_url, "get",headers=headers)
-    
+    try:
+        r = requests.get(base_url)
+    except:
+        pass
     soup= BeautifulSoup(r.text,"lxml")
     a = soup.find_all("script")
     for i in a :
@@ -66,12 +32,10 @@ def fetch_data():
             for k in json_data:
                 location_name = k['Name']
                 street_address = k['Address1']+" "+k['Address2']
-                city = k['City'].replace("Toronto, ON","Toronto").replace("Markham, ON","Markham").replace("Washington D.C.","Washington")
+                city = k['City'].replace("Toronto, ON","Toronto").replace("Markham, ON","Markham").replace("Washington D.C.","Washington").replace("Ontario","<MISSING>")
                 state = k['State']
                 if "970 Dixon Road " in street_address:
                    state = "ON" 
-                if "170 Enterprise Blvd " in street_address:
-                    state = "ON"
                 if "9990 Jasper Ave" in street_address:
                     state = "AB"
                 if "Value" in k['CountryCode']:
@@ -92,6 +56,10 @@ def fetch_data():
                     zipp = "T2G OP5"
                 if "T2G OP5" in zipp:
                     country_code = "CA"
+                if "L6G 0E6" in zipp :
+                    state = "ON" 
+                if "L2G 3V9" in zipp :
+                    state = "ON"
                 phone =k['Phone'].replace("\t","")
                 latitude  = k['Latitude']
                 longitude = k['Longitude']

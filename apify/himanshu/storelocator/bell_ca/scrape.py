@@ -9,8 +9,7 @@ import html5lib
 import pprint
 from random import randrange
 from random import choice
-
-
+import unicodedata
 
 
 def write_output(data):
@@ -104,13 +103,15 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-
-            
-            yield store
+            # for i in range(len(store)):
+            #     if type(store[i]) == str:
+            #         store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            yield store
+           
             # print("data == " + str(store))
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-            yield store
+            # yield store
         if len(data) < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)

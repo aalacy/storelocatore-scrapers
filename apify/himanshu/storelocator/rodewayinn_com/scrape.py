@@ -20,8 +20,8 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    main_url = "https://choicehotels.com/cambria"
-    brand_id = "BR"
+    main_url = "https://www.rodewayinn.com"
+    brand_id = "RW"
 
     today = datetime.date.today().strftime("%Y-%m-%d")
     tomorrow = (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
@@ -47,8 +47,8 @@ def fetch_data():
         }
 
         # data = "adults=1&checkInDate=" + str(today) + "&checkOutDate=" + str(tomorrow) + "&lat=" + str(x) + "&lon=" + str(y) + "&minors=0&optimizeResponse=image_url&platformType=DESKTOP&preferredLocaleCode=en-us&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100&siteName=us&siteOpRelevanceSortMethod=ALGORITHM_B"
-
-        data = "adults=1&checkInDate=" + str(today) +"&checkOutDate="+ str(tomorrow) +"&hotelSortOrder=RELEVANCE&include=amenity_groups%2C%20amenity_totals%2C%20rating%2C%20relative_media&minors=0&optimizeResponse=image_url&placeName="+str(search.current_zip)+"&platformType=DESKTOP&preferredLocaleCode=en-gb&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100&siteName=uk&siteOpRelevanceSortMethod=ALGORITHM_B"
+        data = "adults=1&checkInDate=" + str(today) +"&checkOutDate="+ str(tomorrow) +"&hotelSortOrder=RELEVANCE&include=amenity_groups%2C%20amenity_totals%2C%20rating%2C%20relative_media&lat="+str( x )+"&lon="+str(y)+"&minors=0&optimizeResponse=image_url&placeId=pus"+str(search.current_zip)+"&placeName=Phoenix%20AZ%2085029%20US&placeType=PostalArea&platformType=DESKTOP&preferredLocaleCode=en-gb&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=25&siteName=uk&siteOpRelevanceSortMethod=ALGORITHM_B"
+        # data = "adults=1&checkInDate=" + str(today) +"&checkOutDate="+ str(tomorrow) +"&hotelSortOrder=RELEVANCE&include=amenity_groups%2C%20amenity_totals%2C%20rating%2C%20relative_media&minors=0&optimizeResponse=image_url&placeName="+str(search.current_zip)+"&platformType=DESKTOP&preferredLocaleCode=en-gb&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100&siteName=uk&siteOpRelevanceSortMethod=ALGORITHM_B"
         # data = "adults=1&checkInDate=" + str(today) + "&checkOutDate=" + str(tomorrow) + "&lat=" + str(x) + "&lon=" + str(y) + "&minors=0&optimizeResponse=image_url&platformType=DESKTOP&preferredLocaleCode=en-us&ratePlanCode=RACK&ratePlans=RACK%2CPREPD%2CPROMO%2CFENCD&rateType=LOW_ALL&rooms=1&searchRadius=100&siteName=us&siteOpRelevanceSortMethod=ALGORITHM_B"
         
         r = session.post("https://www.choicehotels.com/webapi/location/hotels",headers=headers,data=data)
@@ -63,10 +63,10 @@ def fetch_data():
             result_coords.append((store_data["lat"], store_data["lon"]))
             if store_data["address"]["country"] != "US" and store_data["address"]["country"] != "CA":
                 continue
-        #     if store_data["brandCode"] != brand_id:
-        #         continue
+            if store_data["brandCode"] != brand_id:
+                continue
             store = []
-            store.append('https://rodewayinn.com/')
+            store.append(main_url)
             store.append(store_data["name"])
             address = ""
             if "line1" in store_data["address"]:
