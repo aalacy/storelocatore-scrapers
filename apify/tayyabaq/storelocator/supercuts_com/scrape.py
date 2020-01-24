@@ -1,6 +1,6 @@
 import csv
 import os
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re, time
 import usaddress
@@ -14,20 +14,22 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-            
+
+session = SgRequests()
+
 def fetch_data():
     data = []
     store_links =[]
     st=[]
     #getting the state urls
     url = 'https://www.supercuts.com/salon-directory.html'
-    page = requests.get(url)
+    page = session.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
     store=soup.find_all('a',class_='btn btn-primary')
     for link in store:
         st.append(link['href'])
     for ln in st:
-        page = requests.get(ln)
+        page = session.get(ln)
         soup = BeautifulSoup(page.content, "html.parser")
         sto=soup.find_all("a")
         for li in sto:
@@ -42,7 +44,7 @@ def fetch_data():
         #print(count)
         #count+=1
         try:
-            pg=requests.get(ul)
+            pg=session.get(ul)
         except:
             print("")
         else:

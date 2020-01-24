@@ -23,12 +23,12 @@ def write_output(data):
 def fetch_data():
     return_main_object = []
     addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize(include_canadian_fsas = True)
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 10
-    current_results_len = 0     # need to update with no of count.
-    zip_code = search.next_zip()
+    # search = sgzip.ClosestNSearch()
+    # search.initialize(include_canadian_fsas = True)
+    # MAX_RESULTS = 50
+    # MAX_DISTANCE = 10
+    # current_results_len = 0     # need to update with no of count.
+    # zip_code = search.next_zip()
 
 
     headers = {

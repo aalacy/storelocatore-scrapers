@@ -67,6 +67,10 @@ def fetch_data():
         store = [str(x).encode('ascii', 'ignore').decode(
             'ascii').lstrip().strip() if x else "<MISSING>" for x in store]
 
+        if store[2] in addresses:
+                continue
+        addresses.append(store[2])
+
         if store_number in addresses:
             continue
         addresses.append(store_number)

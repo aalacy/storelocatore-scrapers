@@ -3,6 +3,8 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import sgzip 
 import json
+import time
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -13,6 +15,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
 
 def fetch_data():
     session = SgRequests()
@@ -35,7 +38,13 @@ def fetch_data():
         print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://www.oreillyauto.com/stores/list?lat=' + str(x) + '&lng=' + str(y)
         print(url)
-        r = session.get(url, headers=HEADERS)
+        try:
+            r = session.get(url, headers=HEADERS)
+        except:
+            #print('sleeeeeping \n\n\n\n\n\n\n')
+            time.sleep(15)
+            r = session.get(url, headers=HEADERS)
+            #print(':)')
         soup = BeautifulSoup(r.content, 'html.parser')
  
         hrefs = soup.find_all('a', {'class': 'js-fas-details-link'})
@@ -45,9 +54,7 @@ def fetch_data():
             if link not in link_list:
                 
                 link_list.append(link)
-                print('----')
-                print(link)
-                print(len(link_list))
+                
                 r = session.get(link, headers=HEADERS)
                 soup = BeautifulSoup(r.content, 'html.parser')
                 page_url = link
@@ -79,9 +86,9 @@ def fetch_data():
                 store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                             store_number, phone_number, location_type, lat, longit, hours, page_url]
                 all_store_data.append(store_data)
-            else:
-                print('found a duplicate!!!!')
-                print(link)
+            
+            
+                
 
         
         

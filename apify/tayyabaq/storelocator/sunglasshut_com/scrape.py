@@ -12,7 +12,7 @@ def write_output(data):
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
-            writer.writerow(row.replace(u'\u2019',''))
+            writer.writerow(row)
 
 
 def fetch_data():
@@ -109,19 +109,19 @@ def fetch_data():
         hours=hours.replace("Su","SUN")
         data.append([
              'https://www.sunglasshut.com/',
-              u,
-             loc,
-             street,
-             cty,
-             sts,
-             zcode,
-             ctry,
+              u.replace(u'\u2019',''),
+             loc.replace(u'\u2019',''),
+             street.replace(u'\u2019',''),
+             cty.replace(u'\u2019',''),
+             sts.replace(u'\u2019',''),
+             zcode.replace(u'\u2019',''),
+             ctry.replace(u'\u2019',''),
              '<MISSING>',
-             ph,
+             ph.replace(u'\u2019',''),
              '<MISSING>',
-             lat,
-             lng,
-             hours
+             lat.replace(u'\u2019',''),
+             lng.replace(u'\u2019',''),
+             hours.replace(u'\u2019','')
              ])
     return data
     

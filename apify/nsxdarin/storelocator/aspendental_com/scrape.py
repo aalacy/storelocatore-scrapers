@@ -15,7 +15,6 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    alllocs = []
     ids = []
     cities = []
     Found = False
@@ -29,59 +28,66 @@ def fetch_data():
             cities.append(lurl)
     print('Found %s Cities...' % str(len(cities)))
     for city in cities:
-        print('Pulling City %s...' % city)
+        #print('Pulling City %s...' % city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
             if '<li><a href="/dentist/' in line2:
                 locurl = 'https://www.aspendental.com' + line2.split('<a href="')[1].split('"')[0]
-                if locurl not in alllocs:
-                    alllocs.append(locurl)
+                if locurl not in locs:
                     locs.append(locurl)
-        for loc in locs:
-            website = 'aspendental.com'
-            typ = 'Office'
-            hours = ''
-            name = ''
-            add = ''
-            city = ''
-            country = 'US'
-            state = ''
-            zc = ''
-            phone = ''
-            store = ''
-            lat = ''
-            lng = ''
-            HFound = False
-            r2 = session.get(loc, headers=headers)
-            for line2 in r2.iter_lines():
-                if '<div class="ssa-office-hours" style="background: #eeeeee;z-index:999999">' in line2:
-                    HFound = True
-                if HFound and '<div class="col-sm-8">' in line2:
-                    HFound = False
-                if HFound and '<p class="ssa-date">' in line2:
-                    hrs = line2.split('<p class="ssa-date">')[1].split('<')[0]
-                if HFound and '<p class="ssa-time">' in line2:
-                    hrs = hrs + ': ' + line2.split('<p class="ssa-time">')[1].split('<')[0]
-                    if hours == '':
-                        hours = hrs
-                    else:
-                        hours = hours + '; ' + hrs
-                if "'officeName':'" in line2:
-                    name = line2.split("'officeName':'")[1].split("'")[0]
-                    store = line2.split("'facilityNumber':'")[1].split("'")[0]
-                    city = line2.split("'addressLocality':'")[1].split("'")[0]
-                    state = line2.split(",'addressRegion':'")[1].split("'")[0]
-                    zc = line2.split("'postalCode':'")[1].split("'")[0]
-                    add = line2.split(",'streetAddress':'")[1].split("'")[0]
-                    phone = line2.split("'telephone':'")[1].split("'")[0]
-                if 'href="https://www.google.com/maps/dir/' in line2 and lat == '':
-                    lat = line2.split('href="https://www.google.com/maps/dir/')[1].split(',')[0]
-                    lng = line2.split('href="https://www.google.com/maps/dir/')[1].split(',')[1].split('/')[0]
-            if hours == '':
-                hours = '<MISSING>'
-            if store not in ids:
-                ids.append(store)
-                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    print('Found %s Locations...' % str(len(locs)))
+    for loc in locs:
+        #print('Pulling Location %s...' % loc)
+        website = 'aspendental.com'
+        typ = 'Office'
+        hours = ''
+        name = ''
+        add = ''
+        city = ''
+        country = 'US'
+        state = ''
+        zc = ''
+        phone = ''
+        store = ''
+        lat = ''
+        lng = ''
+        HFound = False
+        LocFound = True
+        while LocFound:
+            try:
+                LocFound = False
+                r2 = session.get(loc, headers=headers, timeout=5)
+                for line2 in r2.iter_lines():
+                    if '<div class="ssa-office-hours" style="background: #eeeeee;z-index:999999">' in line2:
+                        HFound = True
+                    if HFound and '<div class="col-sm-8">' in line2:
+                        HFound = False
+                    if HFound and '<p class="ssa-date">' in line2:
+                        hrs = line2.split('<p class="ssa-date">')[1].split('<')[0]
+                    if HFound and '<p class="ssa-time">' in line2:
+                        hrs = hrs + ': ' + line2.split('<p class="ssa-time">')[1].split('<')[0]
+                        if hours == '':
+                            hours = hrs
+                        else:
+                            hours = hours + '; ' + hrs
+                    if "'officeName':'" in line2:
+                        name = line2.split("'officeName':'")[1].split("'")[0]
+                        store = line2.split("'facilityNumber':'")[1].split("'")[0]
+                        city = line2.split("'addressLocality':'")[1].split("'")[0]
+                        state = line2.split(",'addressRegion':'")[1].split("'")[0]
+                        zc = line2.split("'postalCode':'")[1].split("'")[0]
+                        add = line2.split(",'streetAddress':'")[1].split("'")[0]
+                        phone = line2.split("'telephone':'")[1].split("'")[0]
+                    if 'href="https://www.google.com/maps/dir/' in line2 and lat == '':
+                        lat = line2.split('href="https://www.google.com/maps/dir/')[1].split(',')[0]
+                        lng = line2.split('href="https://www.google.com/maps/dir/')[1].split(',')[1].split('/')[0]
+                if hours == '':
+                    hours = '<MISSING>'
+                if store not in ids:
+                    ids.append(store)
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            except:
+                LocFound = True
 
 def scrape():
     data = fetch_data()

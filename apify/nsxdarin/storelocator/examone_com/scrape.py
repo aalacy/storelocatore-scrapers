@@ -44,8 +44,12 @@ def fetch_data():
                         lng = item.split('"qsl_longitude\\":\\"')[1].split('\\')[0]
                         hours = '<MISSING>'
                         if '(' in add:
-                            typ = add.split('(')[1].split(')')[0]
-                            add = add.split('(')[0].strip()
+                            if add.count('(') == 1:
+                                typ = add.split('(')[1].split(')')[0]
+                                add = add.split('(')[0].strip()
+                            else:
+                                typ = add.split('(')[2].split(')')[0]
+                                add = add.split('(')[0].strip()
                         if store not in stores:
                             stores.append(store)
                             if phone == '':

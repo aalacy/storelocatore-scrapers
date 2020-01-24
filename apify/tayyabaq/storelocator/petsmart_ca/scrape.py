@@ -1,6 +1,6 @@
 import csv
 import os
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re, time
 import datetime
@@ -15,6 +15,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+session = SgRequests()
 
 def fetch_data():
     data = []
@@ -23,18 +24,18 @@ def fetch_data():
     #CA stores
     url = 'https://www.petsmart.ca/store-locator/all/'
     u='https://www.petsmart.ca/'
-    page = requests.get(url)
+    page = session.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
     store=soup.find('div',class_='all-states-list container')
     str=store.find_all("a")
     for i in str:
         newurl=i['href']
-        page = requests.get(newurl)
+        page = session.get(newurl)
         soup = BeautifulSoup(page.content, "html.parser")
         store=soup.find_all('a', class_='store-details-link')
         for j in store:
             ul=u+j['href']
-            page = requests.get(ul)
+            page = session.get(ul)
             soup = BeautifulSoup(page.content, "html.parser")
             loc=soup.find('h1', class_ ='store-name').text
             try:

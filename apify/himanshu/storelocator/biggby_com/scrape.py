@@ -2,10 +2,10 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
-import http.client
 import json
-import  pprint
-import phonenumbers 
+import time
+from datetime import datetime
+import phonenumbers
 
 
 def write_output(data):
@@ -22,64 +22,137 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.biggby.com/"
-    conn = http.client.HTTPSConnection("guess.radius8.com")
+    addresess = []
 
-    addresses = []
- 
-    header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5',
-              'Content-type': 'application/x-www-form-urlencoded'}
+    headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
+    'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+    }
 
-
-
-
-
-
-    data = "https://www.biggby.com/locations/"
-    r = requests.get(data, headers=header)
+    r = requests.get("https://www.biggby.com/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    for val in soup.find('div',{'id':'loc-list'}).find_all('marker'):
-        phone =''
-        data ="action=biggby_get_location_data&security=5ebc69a720&post_id="+val['pid']
-        loc = requests.post("https://biggby.com/wp-admin/admin-ajax.php", headers=header,data=data).json()
-        if loc['phone-number'] != None:
-            phone1 = loc['phone-number'].replace("not available",'').replace("unavailable",'').replace("TBD","")
-        
-        if phone1:
-            phone = phonenumbers.format_number(phonenumbers.parse(str(phone1).replace("-",''), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
-            # print(phone)
-
-        locator_domain = base_url
-        location_name =  val['name']
-        street_address = val['address-one'] +" "+val['address-two']
-        city = val['city']
-        state =  val['state']
-        zip =  val['zip']
-        country_code = val['country']
-        store_number = val['id']
-        location_type = 'biggby'
-        latitude = val['lat']
-        longitude = val['lng']
-        hours_of_operation = ' mon-thurs-open-hour ' + val['mon-thurs-open-hour']+" mon-thurs-close-hour "+val['mon-thurs-close-hour']+" fri-open-hour "+val['fri-open-hour']+" fri-close-hour "+val['fri-close-hour']+" sat-open-hour "+val['sat-open-hour']+" sat-close-hour "+val['sat-close-hour']+" sun-open-hour "+val['sun-open-hour']+" sun-close-hour "+val['sun-close-hour']
-        page_url = 'https://www.biggby.com/locations/'
-        if street_address in addresses:
+    data = soup.find_all("marker")
+    for i in data:
+        if i['coming-soon'] == "yes" :
             continue
-        addresses.append(street_address)
+        location_name = i['name']
+        street_address = i['address-one'] +" "+ i['address-two']
+        city = i['city']
+        state = i['state']
+        zipp = i['zip']
+        store_number = i['id']
+        latitude = i['lat']
+        longitude = i['lng']
+        country_code = i['country']
+        hours = ''
+        if i['mon-thurs-open-hour']:
+            try:
+                mon_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                mon_open=mon_o.strftime("%I:%M %p")       
+            except:
+                mon_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                mon_open=mon_o.strftime("%I:%M %p")   
+        else:
+            mon_open = "close"
+
+        if i['mon-thurs-close-hour']:
+            try:
+                mon_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                mon_close=mon_c.strftime("%I:%M %p")       
+            except:
+                mon_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                mon_close=mon_c.strftime("%I:%M %p")
+        else:
+            mon_close = "close"
+
+        if i['fri-open-hour']:
+            try:
+                fir_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                fri_open=fir_o.strftime("%I:%M %p")       
+            except:
+                fir_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                fri_open=fir_o.strftime("%I:%M %p")
+        else:
+            fri_open = "close"
+
+        if i['fri-close-hour']:
+            try:
+                fri_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                fri_close=fri_c.strftime("%I:%M %p")       
+            except:
+                mon_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                fri_close=fri_c.strftime("%I:%M %p")
+        else:
+            fri_close = "close"
+
+        if i['sat-open-hour']:
+            try:
+                sat_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                sat_open=sat_o.strftime("%I:%M %p")       
+            except:
+                sat_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                sat_open=sat_o.strftime("%I:%M %p")
+        else:
+            sat_open = "close"
+
+        if i['sat-close-hour']:
+            try:
+                sat_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                sat_close=sat_c.strftime("%I:%M %p")       
+            except:
+                sat_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                sat_close=sat_c.strftime("%I:%M %p")
+        else:
+            sat_close = "close"
+
+        if i['sun-open-hour']:
+            try:
+                sun_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                sun_open=sun_o.strftime("%I:%M %p")       
+            except:
+                sun_o = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                sun_open=sun_o.strftime("%I:%M %p")
+        else:
+            sun_open = "close"
+
+        if i['sun-close-hour']:
+            try:
+                sun_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H:%M")
+                sun_close=sun_c.strftime("%I:%M %p")       
+            except:
+                sun_c = datetime.strptime(str(i['mon-thurs-open-hour']), "%H")
+                sun_close=sun_c.strftime("%I:%M %p")
+        else:
+            sun_close = "close"
+        hours = "mon thurs open hour"+"-"+str(mon_open)+" "+"mon thurs close hour"+"-"+str(mon_close)+" "+"fri open hour"+"-"+str(fri_open)+" "+"fri close hour"+"-"+str(fri_close)+" "+"sat open hour"+"-"+str(sat_open)+" "+"sat close hour"+"-"+str(sat_close)+" "+"sun open hour"+"-"+str(sun_open)+" "+"sun close hour"+"-"+str(sun_close)
+
+        r1 = requests.post("https://www.biggby.com/wp-admin/admin-ajax.php", headers=headers, data="action=biggby_get_location_data&security=42e14be750&post_id="+str(i['pid'])).json()
+        number = r1['phone-number'].replace("not available",'').replace("unavailable",'').replace("TBD","")
+        if number:
+            phone = phonenumbers.format_number(phonenumbers.parse(str(number), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
+            
+        else:
+            phone = "<MISSING>"
+           
+
         store = []
-        store.append(locator_domain if locator_domain else '<MISSING>')
+        store.append(base_url)
         store.append(location_name if location_name else '<MISSING>')
         store.append(street_address if street_address else '<MISSING>')
         store.append(city if city else '<MISSING>')
         store.append(state if state else '<MISSING>')
-        store.append(zip if zip else '<MISSING>')
+        store.append(zipp if zipp else '<MISSING>')
         store.append(country_code if country_code else '<MISSING>')
         store.append(store_number if store_number else '<MISSING>')
-        store.append(phone if phone else '<MISSING>')
+        store.append(phone)
         store.append('<MISSING>')
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
-        store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-        store.append(page_url if page_url else '<MISSING>')
-        # print("===", str(store))
+        store.append(hours if hours else '<MISSING>')
+        store.append('<MISSING>')
+        if store[2] in addresess:
+            continue
+        addresess.append(store[2])
+        #print("===", str(store))
         yield  store
 
 
@@ -88,3 +161,4 @@ def scrape():
     write_output(data)
 
 scrape()    
+# (440) 385-7778

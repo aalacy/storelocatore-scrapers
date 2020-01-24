@@ -35,133 +35,135 @@ def fetch_data():
         state = state.lower()
         state = state.replace(" ","-")
         slink = "https://www.lifestorage.com/storage-units/" + state +"/"
+        print(slink)
         page = requests.get(slink)
         soup = BeautifulSoup(page.text, "html.parser")
-        mainul = soup.find('ul', {'class': 'nearbyCities'})
-        try:
-            li_list = mainul.findAll('li')
-            for li in li_list:
-                blink = li.find('a')
-                blink = blink['href']
-                check = True
-                pagenum = 1
-                while check:
+        mainul = soup.find_all('ul', {'class': 'noList storeRows cityList'})
+        if mainul ==[]:
+           continue
+        else:
+           mainul=mainul[0]
+        li_list = mainul.findAll('li')
+        del li_list[0]
+        print('li_list',len(li_list))
+
+        for li in li_list:
+            blink = li.find('a')
+            blink = blink['href']
+            print(blink)
+            check = True
+            pagenum = 1
+            while check:
+                
+                clink = "https://www.lifestorage.com" +  blink + "?pagenum=" + str(pagenum)
+                pagem = requests.get(clink)
+                soupm = BeautifulSoup(pagem.text, "html.parser")
+                mainb = soupm.findAll('a', {'class': 'btn store'})
+                if len(mainb) == 0:
+                    break
+                else:
                     try:
-                        clink = "https://www.lifestorage.com" +  blink + "?pagenum=" + str(pagenum)
-                        pagem = requests.get(clink)
-                        soupm = BeautifulSoup(pagem.text, "html.parser")
-                        mainb = soupm.findAll('a', {'class': 'btn store'})
-                        if len(mainb) == 0:
-                            break
-                        else:
-                            try:
-                                nex = soupm.find('li', {'class': 'next'})
-                                nex = nex.find('a').text
-                                pagenum += 1
-                            except:
-                                check = False
-
-                        for branch in mainb:
-                            link = "https://www.lifestorage.com" + branch['href']
-                            try:
-                                page2 = requests.get(link)
-                                soup2 = BeautifulSoup(page2.text, "html.parser")
-                                detail = str(soup2)
-                                start = detail.find("alternateName")
-                                start = detail.find(":", start)
-                                start = detail.find('"', start) + 1
-                                end = detail.find('"', start)
-                                title = detail[start:end]
-                                start = detail.find("branchCode")
-                                start = detail.find(":", start)
-                                start = detail.find('"', start) + 1
-                                end = detail.find('"', start)
-                                store = detail[start:end]
-                                start = detail.find("streetAddress")
-                                start = detail.find(":", start)
-                                start = detail.find('"', start) + 1
-                                end = detail.find('"', start)
-                                street = detail[start:end]
-                                start = detail.find("addressLocality")
-                                start = detail.find(":", start)
-                                start = detail.find('"', start) + 1
-                                end = detail.find('"', start)
-                                city = detail[start:end]
-                                start = detail.find("addressRegion")
-                                start = detail.find(":", start)
-                                start = detail.find('"', start) + 1
-                                end = detail.find('"', start)
-                                state = detail[start:end]
-                                start = detail.find("postalCode")
-                                start = detail.find(":", start)
-                                start = detail.find('"', start) + 1
-                                end = detail.find('"', start)
-                                pcode = detail[start:end]
-                                start = detail.find("addressCountry")
-                                start = detail.find(":", start)
-                                start = detail.find('"', start) + 1
-                                end = detail.find('"', start)
-                                ccode = detail[start:end]
-                                start = detail.find("latitude")
-                                start = detail.find(":", start) + 2
-                                end = detail.find(',', start)
-                                lat = detail[start:end]
-                                start = detail.find("longitude")
-                                start = detail.find(":", start) + 2
-                                end = detail.find('}', start)
-                                longt = detail[start:end]
-                                start = detail.find('"telephone"')
-                                start = detail.find(":", start)
-                                start = detail.find('"', start) + 1
-                                end = detail.find('"', start)
-                                phone = detail[start:end]
-                                maind = soup2.find('div', {'id': 'hours'})
-                                hdetail = maind.find("ul", {'class': 'noList'})
-                                hdetail = hdetail.findAll('li')
-                                hours = ""
-                                for li in hdetail:
-                                    hours = hours + li.text + " "
-                                hours = re.sub(pattern, " ", hours)
-                                hours = hours.replace("\n", "")
-                                if len(hours) < 3:
-                                    hours = "<MISSING>"
-                                if len(phone) < 5:
-                                    phone = "<MISSING>"
-
-                                p += 1
-                                flag = True
-                                i = 0
-                                while i < len(data) and flag:
-                                    if store == data[i][8] and street == data[i][3]:
-                                        flag = False
-                                        break
-                                    else:
-                                        i += 1
-
-                                if flag:
-                                    data.append([
-                                        'https://www.lifestorage.com/',
-                                        link,
-                                        title,
-                                        street,
-                                        city,
-                                        state,
-                                        pcode,
-                                        ccode,
-                                        store,
-                                        phone,
-                                        "<MISSING>",
-                                        lat,
-                                        longt,
-                                        hours
-                                    ])
-                            except:
-                                pass
+                        nex = soupm.find('li', {'class': 'next'})
+                        nex = nex.find('a').text
+                        pagenum += 1
                     except:
-                        break
+                        check = Fa
+                for branch in mainb:
+                    link = "https://www.lifestorage.com" + branch['href']
+                    try:
+                        page2 = requests.get(link)
+                        soup2 = BeautifulSoup(page2.text, "html.parser")
+                        detail = str(soup2)
+                        start = detail.find("alternateName")
+                        start = detail.find(":", start)
+                        start = detail.find('"', start) + 1
+                        end = detail.find('"', start)
+                        title = detail[start:end]
+                        start = detail.find("branchCode")
+                        start = detail.find(":", start)
+                        start = detail.find('"', start) + 1
+                        end = detail.find('"', start)
+                        store = detail[start:end]
+                        start = detail.find("streetAddress")
+                        start = detail.find(":", start)
+                        start = detail.find('"', start) + 1
+                        end = detail.find('"', start)
+                        street = detail[start:end]
+                        start = detail.find("addressLocality")
+                        start = detail.find(":", start)
+                        start = detail.find('"', start) + 1
+                        end = detail.find('"', start)
+                        city = detail[start:end]
+                        start = detail.find("addressRegion")
+                        start = detail.find(":", start)
+                        start = detail.find('"', start) + 1
+                        end = detail.find('"', start)
+                        state = detail[start:end]
+                        start = detail.find("postalCode")
+                        start = detail.find(":", start)
+                        start = detail.find('"', start) + 1
+                        end = detail.find('"', start)
+                        pcode = detail[start:end]
+                        start = detail.find("addressCountry")
+                        start = detail.find(":", start)
+                        start = detail.find('"', start) + 1
+                        end = detail.find('"', start)
+                        ccode = detail[start:end]
+                        start = detail.find("latitude")
+                        start = detail.find(":", start) + 2
+                        end = detail.find(',', start)
+                        lat = detail[start:end]
+                        start = detail.find("longitude")
+                        start = detail.find(":", start) + 2
+                        end = detail.find('}', start)
+                        longt = detail[start:end]
+                        start = detail.find('"telephone"')
+                        start = detail.find(":", start)
+                        start = detail.find('"', start) + 1
+                        end = detail.find('"', start)
+                        phone = detail[start:end]
+                        maind = soup2.find('div', {'id': 'hours'})
+                        hdetail = maind.find("ul", {'class': 'noList'})
+                        hdetail = hdetail.findAll('li')
+                        hours = ""
+                        for li in hdetail:
+                            hours = hours + li.text + " "
+                        hours = re.sub(pattern, " ", hours)
+                        hours = hours.replace("\n", "")
+                        if len(hours) < 3:
+                            hours = "<MISSING>"
+                        if len(phone) < 5:
+                            phone = "<MISSING>"
+                        p += 1
+                        flag = True
+                        i = 0
+                        while i < len(data) and flag:
+                            if store == data[i][8] and street == data[i][3]:
+                                flag = False
+                                break
+                            else:
+                                i +=1
+                        if flag:
+                            data.append([
+                                'https://www.lifestorage.com/',
+                                link,
+                                title,
+                                street,
+                                city,
+                                state,
+                                pcode,
+                                ccode,
+                                store,
+                                phone,
+                                "<MISSING>",
+                                lat,
+                                longt,
+                                hours
+                            ])
+                    except:
                         pass
-        except:
-            pass
+                
+
 
     return data
 
