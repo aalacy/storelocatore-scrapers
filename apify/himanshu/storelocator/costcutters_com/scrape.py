@@ -17,12 +17,13 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
-    base_url = "https://www.signaturestyle.com"
+    base_url = "http://www.costcutters.com"
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes= ["US","CA"])
     MAX_RESULTS = 100
     MAX_DISTANCE = 100
     coord = search.next_coord()
+    country_code = "US"
     headers = {
         'Accept': 'application/json, text/javascript, */*; q=0.01',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
@@ -31,21 +32,43 @@ def fetch_data():
         result_coords = []
         x = coord[0]
         y = coord[1]
-    
-    
-        r = requests.get("https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/"+str(x)+"/"+str(y)+"/0.5/0.5/true", headers=headers).json()
+        #print(coord)
+        # url="https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/33.5973469/-112.10725279999997/0.8/0.8/true"
+        r = requests.get("https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/"+str(x)+"/"+str(y)+"/0.8/0.8/true", headers=headers).json()
         # print()
         for i in r['stores']:
             location_name = i['title']
             street_address = i['subtitle'].split(',')[0]
+            # print("----------------------  ",i['subtitle'])
             city = i['subtitle'].split(',')[1].strip()
-            state = i['subtitle'].split(',')[-1].split(" ")[1]
-            zipp = i['subtitle'].split(',')[-1].split(" ")[2]
-            if len(zipp)==5:
-                country_code="US"
-            else:
-                country_code="CA"
+            # print("~~~~~~~~~~ ",city)
+            # state = i['subtitle'].split(',')[-1].split(" ")[1]
+            # zipp = i['subtitle'].split(',')[-1].split(" ")[2]
+
+            ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(i['subtitle']))
+            # print(ca_zip_list)
+            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(i['subtitle']))
+            state_list = re.findall(r' ([A-Z]{2})', str(i['subtitle']))
+
+            if ca_zip_list:
+                zipp = ca_zip_list[-1]
+                country_code = "CA"
+
+            if us_zip_list:
+                zipp = us_zip_list[-1]
+                country_code = "US"
+
+            if state_list:
+                state = state_list[-1]
+
+            # print("~~~~~~~~~~~",state)
+
+            # if len(zipp)==5:
+            #     country_code="US"
+            # else:
+            #     country_code="CA"
             store_number = i['storeID']
+            #print(store_number)
             latitude = i['latitude']
             longitude = i['longitude']
             phone = i['phonenumber']
@@ -59,18 +82,18 @@ def fetch_data():
             result_coords.append((latitude,longitude))
             store=[]
             store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
+            store.append(location_name if location_name else "<MISSING>")
+            store.append(street_address.strip() if street_address else "<MISSING>")
+            store.append(city.strip() if city else "<MISSING>")
+            store.append(state.strip() if state else "<MISSING>")
+            store.append(zipp.strip() if zipp else "<MISSING>")
             store.append(country_code)
-            store.append(store_number)
-            store.append(phone)
+            store.append(store_number if store_number else "<MISSING>")
+            store.append(str(phone).strip() if phone else "<MISSING>")
             store.append("<MISSING>")
-            store.append(latitude)
+            store.append(latitude )
             store.append(longitude)
-            store.append(hours)
+            store.append(hours.strip() if hours else "<MISSING>")
             store.append(page_url)
             if store[2] in addresses:
                 continue

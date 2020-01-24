@@ -37,7 +37,8 @@ def fetch_data():
     for key,value in json_data['stores'].items():
         # print(value.keys())
         store_number = value['storeid']
-        location_name = value['brand']
+        print(value)
+        location_name = value['mallName']
         street_address = value['address1']+" "+value['address2']
         city = value['city']
         zipp  = value['postalCode']

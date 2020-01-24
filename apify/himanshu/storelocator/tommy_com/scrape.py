@@ -69,11 +69,11 @@ def fetch_data():
             store.append(" ".join(address.split(",")[:-4]).strip())
             if "  " in store[2]:
                 store[2] = " ".join(
-                    " ".join(address.split(",")[:-4]).split("  ")[0:]).strip()
+                    " ".join(address.split(",")[:-4]).split("  ")[1:]).strip()
 
             if ";" in store[2]:
                 store[2] = " ".join(" ".join(address.split(
-                    ",")[:-4]).split("  ")[-1].split(';')[0:]).strip()
+                    ",")[:-4]).split("  ")[-1].split(';')[1:]).strip()
             store[2] = store[2].replace("Outlets of Little Rock", "").replace("The Outlet Collection l", "").replace(
                 "Outlet Marketplace", "").replace("Carolina Premium Outlets", "").replace("The Outlets of Maui", "").replace("BURNSIDE VILLAGE SHOPPING CENTRE", "").strip()
             if "28" == store[2]:
