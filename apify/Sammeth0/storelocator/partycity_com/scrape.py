@@ -30,7 +30,7 @@ def fetch_data():
 # Begin scraper
 
 	base_url="https://www.partycity.com"
-	location_url ="https://stores.partycity.com/"
+	location_url ="https://stores.partycity.com"
 	locs = []
 	streets = []
 	states=[]
@@ -50,19 +50,19 @@ def fetch_data():
 	driver = get_driver()
 	driver_page = get_driver()
 	driver_loc = get_driver()
-	country_codes=['us','ca']
+	#country_codes=['us']
 	
-	for i in country_codes:
-		location_name="https://stores.partycity.com/"
-		driver.get(location_url+i)
-		time.sleep(5)
-		links=driver.find_elements_by_xpath('/html/body/div[1]/div[5]/div[3]/div/div/div')
-		for ls in links:	
-			country_code.append(i)
-			print(country_code)
-			link=ls.find_element_by_tag_name('a').get_attribute('href')
-			print(link)
-			pages_links.append(link)	
+	#for i in country_codes:
+	location_name="http://stores.partycity.com/us/"
+	driver.get(location_name)
+	time.sleep(5)
+	links=driver.find_elements_by_xpath('/html/body/div[1]/div[5]/div[3]/div/div/div')
+	for ls in links:	
+		country_code.append("us")
+		print(country_code)
+		link=ls.find_element_by_tag_name('a').get_attribute('href')
+		print(link)
+		pages_links.append(link)	
 	print(pages_links)
 	print(len(pages_links))
 	
@@ -79,7 +79,7 @@ def fetch_data():
 	
 	for lp in pages_locs:
 		driver_loc.get(lp)
-		time.sleep(4)
+		time.sleep(5)
 		try:
 			page_loc=driver_loc.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div[1]/div/div[2]/div[3]/div/div').find_element_by_tag_name('a').get_attribute('href')
 			pages.append(page_loc)
@@ -92,34 +92,58 @@ def fetch_data():
 	
 	for p in pages:
 		driver.get(p)
-		time.sleep(4)
+		time.sleep(7)
 		locs.append(driver.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/span').text)
 		print(locs)
 		print(len(locs))
-		streets.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/span').text)
+		try:
+			streets.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/span').text)
+		except:
+			streets.append("<MISSING>")
+		
 		print(streets)
-		cities.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[2]').text.split(',')[0])
+		try:
+			cities.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[2]').text.split(',')[0])
+		except:
+			cities.append("<MISSING>")
 		print(cities)
-		states.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[2]').text.split(',')[1].split(' ')[-2])
+		try:
+			states.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[2]').text.split(',')[1].split(' ')[-2])
+		except:
+			states.append("<MISSING>")		
 		print(states)
-		zips.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[2]').text.split(',')[1].split(' ')[-1])
+		try:
+			zips.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[2]').text.split(',')[1].split(' ')[-1])
+		except:
+			zips.append("<MISSING>")		
 		print(zips)
-		ids.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[3]').text.split('# ')[1])
+		try:
+			ids.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[3]').text.split('# ')[1])
+		except:
+			ids.append("<MISSING>")		
 		print(ids)
 		try:
 			phones.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[3]/a').text)
 		except:
 			phones.append("<MISSING>")
 		print(phones)
-		timing.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[2]/div/div[2]').text.replace('\n',' '))
+		try:
+			timing.append(driver_page.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[2]/div/div[2]').text.replace('\n',' '))
+		except:
+			timing.append("<MISSING>")
 		print(timing)
 		types.append("<MISSING>")
-		lats.append(driver_page.find_element_by_xpath('/html/body/div[1]/script[13]'))
+		try:
+			lats.append(driver_page.find_element_by_xpath('/html/body/div[1]/script[13]').text.split('"longitude": "')[1].split('"')[0])
+		except:
+			lats.append("<MISSING>")		
 		print(lats)
-		longs.append(driver_page.find_element_by_xpath('/html/body/div[1]/script[13]'))
+		try:
+			longs.append(driver_page.find_element_by_xpath('/html/body/div[1]/script[13]').text.split('"longitude": "')[1].split('"')[0])
+		except:
+			longs.append("<MISSING>")	
 		print(longs)
-
-			
+	
 						
 	return_main_object = []	
 	for l in range(len(locs)):
