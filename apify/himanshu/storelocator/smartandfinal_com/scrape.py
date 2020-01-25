@@ -24,11 +24,6 @@ def write_output(data):
 
 
 
-# def ffoo(mydict):
-#     weekday = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
-#     return dict((weekday[index],f(v) if hasattr(v,'keys') else v) for index,k,v in enumerate(mydict.items()))
-
-
 def get_driver():
     options = Options()
     options.add_argument('--headless')
@@ -44,9 +39,9 @@ def get_driver():
 def fetch_data():
     driver = get_driver()
     addresses =[]
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
+    # store_name=[]
+    # store_detail=[]
+    # return_main_object=[]
     # "72fDQ9LH3Y3c9qx7w5uiDCxv75AOxMOxWQ"
     # "72fDQ9LH3Y3c9qx7w5uiDCxv75AOxMOxWQ-EWmzvkog"
     # headers = {
@@ -93,7 +88,7 @@ def fetch_data():
     for loc in data['stores']:
         store_number =loc['store_number']
         location_type =''
-        country_code =''
+        country_code ='US'
         hours_of_operation =''
         locator_domain ='https://www.smartandfinal.com/'
         phone =''
@@ -108,10 +103,12 @@ def fetch_data():
         
         if loc['phone_number_data'] != []:
             phone = loc['phone_number_data'][-1]["phone_number"]
+        name = loc['storeName'].replace("-","").replace(".","")
+        page_url = "https://www.smartandfinal.com/stores/"+str(name)+"-"+str(store_number)+"/"+str(loc['locationID'])
 
 
         store = [locator_domain, loc['storeName'].capitalize(), loc['address'].capitalize(), loc['city'].capitalize(), loc['state'].capitalize(), loc['zip'], country_code,
-                     store_number, phone, location_type, loc['latitude'], loc['longitude'], hours_of_operation,"<MISSING>"]
+                     store_number, phone, location_type, loc['latitude'], loc['longitude'], hours_of_operation, page_url]
 
         if str(store[2]) + str(store[-3]) not in addresses:
             addresses.append(str(store[2]) + str(store[-3]))

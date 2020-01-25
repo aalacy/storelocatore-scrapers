@@ -8,4 +8,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-Zip is invalid on the site,same store number, and lat & lng length short this website
+address with no number,zipcode not in state and i checked all data is true this website

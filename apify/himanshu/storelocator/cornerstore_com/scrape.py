@@ -65,6 +65,8 @@ def store_handler(store_data,key):
     if store_data["op_status"] != "Open":
         return
     #print("https://www.circlek.com" + store_data["url"])
+    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~  ",store_data)
+    # exit()
     location_request = requests.get("https://www.circlek.com" + store_data["url"],headers=headers)
     location_soup = BeautifulSoup(location_request.text,"lxml")
     if location_soup.find("a",{'href':re.compile("tel:")}):
@@ -114,7 +116,7 @@ def store_handler(store_data,key):
             store[4] = "<MISSING>"
     store.append(key)
     store.append(phone.replace('(','') if phone.replace('(','') else "<MISSING>")
-    store.append("<MISSING>")
+    store.append("Corner Store")
     store.append(store_data["latitude"] if store_data["latitude"] else "<MISSING>")
     store.append(store_data["longitude"] if store_data["longitude"] else "<MISSING>")
     if location_soup.find("div",{"class":"hours-wrapper"}):
@@ -140,6 +142,7 @@ def fetch_data():
     wait(fs)
     executor.shutdown(wait=False)
     for store in return_main_object:
+        # print("~~~~~~~~~~~~~~~~~ ",store)
         yield store
 
 def scrape():

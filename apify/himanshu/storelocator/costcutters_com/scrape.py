@@ -34,20 +34,28 @@ def fetch_data():
         y = coord[1]
         #print(coord)
         # url="https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/33.5973469/-112.10725279999997/0.8/0.8/true"
-        r = requests.get("https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/"+str(x)+"/"+str(y)+"/0.8/0.8/true", headers=headers).json()
+        try:
+            r = requests.get("https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/"+str(x)+"/"+str(y)+"/0.8/0.8/true", headers=headers).json()
+        except:
+            pass       
         # print()
         for i in r['stores']:
             location_name = i['title']
             street_address = i['subtitle'].split(',')[0]
+            try:
+                zip1= " ".join(i['subtitle'].split(",")[-1].split( )[1:])
+            except:
+                zip1 = ""
+
             # print("----------------------  ",i['subtitle'])
             city = i['subtitle'].split(',')[1].strip()
             # print("~~~~~~~~~~ ",city)
             # state = i['subtitle'].split(',')[-1].split(" ")[1]
             # zipp = i['subtitle'].split(',')[-1].split(" ")[2]
 
-            ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(i['subtitle']))
+            ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zip1))
             # print(ca_zip_list)
-            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(i['subtitle']))
+            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zip1))
             state_list = re.findall(r' ([A-Z]{2})', str(i['subtitle']))
 
             if ca_zip_list:
@@ -57,7 +65,7 @@ def fetch_data():
             if us_zip_list:
                 zipp = us_zip_list[-1]
                 country_code = "US"
-
+            # print(zipp)
             if state_list:
                 state = state_list[-1]
 
@@ -81,6 +89,10 @@ def fetch_data():
 
             result_coords.append((latitude,longitude))
             store=[]
+            if "(0) 0-0" in phone:
+                phone1 = "<MISSING>"
+            else:
+                phone1 = phone 
             store.append(base_url)
             store.append(location_name if location_name else "<MISSING>")
             store.append(street_address.strip() if street_address else "<MISSING>")
@@ -89,7 +101,7 @@ def fetch_data():
             store.append(zipp.strip() if zipp else "<MISSING>")
             store.append(country_code)
             store.append(store_number if store_number else "<MISSING>")
-            store.append(str(phone).strip() if phone else "<MISSING>")
+            store.append(str(phone1).strip() if phone1 else "<MISSING>")
             store.append("<MISSING>")
             store.append(latitude )
             store.append(longitude)
