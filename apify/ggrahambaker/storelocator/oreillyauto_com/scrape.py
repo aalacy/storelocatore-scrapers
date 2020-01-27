@@ -35,17 +35,19 @@ def fetch_data():
         print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
+
         print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://www.oreillyauto.com/stores/list?lat=' + str(x) + '&lng=' + str(y)
         print(url)
         try:
             r = session.get(url, headers=HEADERS)
         except:
-            #print('sleeeeeping \n\n\n\n\n\n\n')
+            print('sleeeeeping \n\n\n\n\n\n\n')
             time.sleep(15)
             r = session.get(url, headers=HEADERS)
-            #print(':)')
+            print(':)')
         soup = BeautifulSoup(r.content, 'html.parser')
+        coords.append((x, y))
  
         hrefs = soup.find_all('a', {'class': 'js-fas-details-link'})
         
@@ -63,6 +65,7 @@ def fetch_data():
                 
                 if len(loc_jsons) > 1:
                     continue
+                print(loc_jsons)
                 loc_info = json.loads(loc_jsons[0].text)[0]
 
 
