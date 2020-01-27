@@ -6,9 +6,6 @@ import json
 import sgzip
 import time
 import time
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -70,6 +67,7 @@ def fetch_data():
         if result != None:
             current_results_len = len(result.find_all('li',class_='aResult'))
             for li in result.find_all('li',class_='aResult'):
+                #print(li)
                 try:
                     left_data = li.find('div',class_='vcard')
                     adr = left_data.find('address',class_='adr')
@@ -104,8 +102,6 @@ def fetch_data():
                         hours_of_operation = 'ATMs'+' '.join(list_hours).split('ATMs')[1].replace('&','and').strip()
                     else:
                         hours_of_operation = " ".join(list_hours).strip().replace('&','and').strip()
-                    # print(hours_of_operation)
-                    # print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
                     page_url = 'https://www.wellsfargo.com/locator/search/?searchTxt='+str(zip_code)+'&mlflg=N&sgindex=99&chflg=N&_bo=on&_wl=on&_os=on&_bdu=on&_adu=on&_ah=on&_sdb=on&_aa=on&_nt=on&_fe=on'
                 except:
                     pass

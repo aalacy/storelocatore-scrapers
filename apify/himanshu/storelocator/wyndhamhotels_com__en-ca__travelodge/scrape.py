@@ -22,13 +22,19 @@ def fetch_data():
     main=soup.find_all('li',{'class':"property"})
     for li in main:
         link=li.find('a')['href']
-        print(link)
-        r1 = requests.get("https://www.wyndhamhotels.com"+link)
+        # print(link)
+        try:
+            r1 = requests.get("https://www.wyndhamhotels.com"+link)
+        except:
+            pass
         soup1 = BeautifulSoup(r1.text,"lxml")
         script=soup1.find_all('script')
         for scr in script:
             if "var overview_lat" in scr.text:
-                link1="https://www.wyndhamhotels.com/BWSServices/services/search/property/search?propertyId="+scr.text.split('"')[1]+"&isOverviewNeeded=true&isAmenitiesNeeded=true&channelId=tab&language=en-ca"
+                try:
+                    link1="https://www.wyndhamhotels.com/BWSServices/services/search/property/search?propertyId="+scr.text.split('"')[1]+"&isOverviewNeeded=true&isAmenitiesNeeded=true&channelId=tab&language=en-ca"
+                except:
+                    pass
                 r1 = requests.get(link1).json()
                 if "properties" in r1:
                     for d in r1['properties']:
