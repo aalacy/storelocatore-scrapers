@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 import json
 import sgzip 
 import time
+import re
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -171,6 +172,8 @@ def fetch_data():
             country_code = loc['co'].strip()
             state = loc['rg']
             phone_number = loc['te'].strip()
+            phone_number = re.sub("[^0-9]", "", phone_number)
+
             if phone_number == '':
                 phone_number = '<MISSING>'
 
