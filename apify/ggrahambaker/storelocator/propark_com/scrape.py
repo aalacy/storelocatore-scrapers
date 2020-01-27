@@ -25,6 +25,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+
     locator_domain = 'https://www.propark.com/' 
     ext = 'locations/'
     driver = get_driver()
@@ -41,6 +42,7 @@ def fetch_data():
 
     pop_up_tracker = []
     all_store_data = []
+    dup_tracker = []
     for loc in locs:
 
         addy = loc.find('h4').text
@@ -176,6 +178,11 @@ def fetch_data():
                 off = 0
 
             city = addy[1 + off].strip()
+
+            if street_address not in dup_tracker:
+                dup_tracker.append(street_address)
+            else:
+                continue
             
             state_zip = ' '.join(addy[2 + off].strip().split()).split(' ')
             if len(state_zip) == 1:
@@ -196,7 +203,7 @@ def fetch_data():
         if len(zip_code) == 4:
             zip_code = '<MISSING>'
 
-       location_name = street_address
+        location_name = street_address
         country_code = 'US'
         page_url = '<MISSING>'
         lat = coords[0]
