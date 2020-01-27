@@ -172,10 +172,12 @@ def fetch_data():
             country_code = loc['co'].strip()
             state = loc['rg']
             phone_number = loc['te'].strip()
-            phone_number = re.sub("[^0-9]", "", phone_number)
+            
 
             if phone_number == '':
                 phone_number = '<MISSING>'
+            else:
+                phone_number = re.sub("[^0-9]", "", phone_number)
 
 
             store_number = '<MISSING>'
