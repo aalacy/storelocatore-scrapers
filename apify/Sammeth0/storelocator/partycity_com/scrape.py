@@ -102,11 +102,11 @@ def fetch_data():
 			timing.append("<MISSING>")
 		types.append("<MISSING>")
 		try:
-			lats.append(driver.find_element_by_xpath('/html/body/div[1]/script[13]').get_attribute('innerHTML').split('"latitude": "')[1].split('"')[0])
+			lats.append(driver_store.find_element_by_xpath('/html/body/div[1]/script[13]').get_attribute('innerHTML').split('"latitude": "')[1].split('"')[0])
 		except:
 			lats.append("<MISSING>")		
 		try:
-			longs.append(driver.find_element_by_xpath('/html/body/div[1]/script[13]').get_attribute('innerHTML').split('"longitude": "')[1].split('"')[0])
+			longs.append(driver_store.find_element_by_xpath('/html/body/div[1]/script[13]').get_attribute('innerHTML').split('"longitude": "')[1].split('"')[0])
 		except:
 			longs.append("<MISSING>")	
 	
