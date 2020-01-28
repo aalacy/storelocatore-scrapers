@@ -1,0 +1,126 @@
+import requests
+from selenium.webdriver.chrome.options import Options
+from selenium import webdriver
+from selenium.webdriver.support.ui import Select
+import csv
+import time 
+import re 
+
+def get_driver():
+	options = Options()
+	options.add_argument('--headless')
+	options.add_argument('--no-sandbox')
+	options.add_argument('--disable-dev-shm-usage')
+	options.add_argument('--window-size=1920,1080')
+	options.add_argument("user-agent= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'")
+	return webdriver.Chrome('chromedriver', options=options)
+
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
+        # Header
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        # Body
+        for row in data:
+            writer.writerow(row)
+
+def fetch_data():
+
+# Begin scraper
+
+	base_url="https://ashleyhomestore.ca"
+	location_url ="https://ashleyhomestore.ca/apps/store-locator"
+	locs = []
+	streets = []
+	states=[]
+	cities = []
+	types=[]
+	phones = []
+	zips = []
+	longs = []
+	lats = []
+	timing = []
+	ids=[]
+	pages=[]
+	
+	driver = get_driver()
+	driver_page = get_driver()
+	driver.get(location_url)
+	time.sleep(5)
+	links=driver.find_elements_by_xpath('/html/body/div[1]/div/div[2]/div/div/div[1]/div[4]/ul/li[1]/div[2]')
+										
+	for ls in links:	
+		link=ls.find_elements_by_tag_name('a')
+		for l in link:
+			print(l.get_attribute('href'))
+			pages.append(l.get_attribute('href'))	
+	print(pages)
+	print(len(pages))
+	
+	
+	locations=driver.find_elements_by_xpath('/html/body/div[1]/div/div[2]/div/div/div[1]/div[4]/ul/li')
+	for l in locations:
+		locs.append(l.find_element_by_xpath('./a/span[1]').text)
+		print(locs)
+		print(len(locs))
+		streets.append(l.find_element_by_xpath('./a/span[2]').text)
+		print(streets)
+		try:
+			cities.append(l.find_element_by_xpath('./a/span[3]').text)
+		except:
+			cities.append("<MISSING>")
+		print(cities)
+		states.append(l.find_element_by_xpath('./a/span[4]').text)
+		print(states)
+		zips.append(l.find_element_by_xpath('./a/span[5]').text)
+		print(zips)
+		ids.append(l.find_element_by_xpath('./a/span[1]').text)
+		print(ids)
+		try:
+			phones.append(l.find_element_by_xpath('./a/span[7]').text)
+		except:
+			phones.append("<MISSING>")
+		print(phones)
+		#page_link=l.find_element_by_xpath('/html/body/div[1]/div/div[2]/div/div/div[1]/div[4]/ul/li')
+		#print(page_link.text)
+		#if page_link.find_element_by_xpath('./a')!=None:
+		#	driver_page.get(page_link)
+		#	time.sleep(5)
+		#	timing.append(driver_page.find_element_by_xpath('/html/body/div[1]/div/div[2]/div/div/div[1]/div/div[1]/div[1]/div[4]/div/ul').text)
+		#else:
+		#	timing.append("<MISSING>")
+		#print(timing)
+
+
+			
+						
+	return_main_object = []	
+	for l in range(len(locs)):
+		row = []
+		row.append(base_url)
+		row.append(locs[l])
+		row.append(streets[l])
+		row.append(cities[l])
+		row.append(states[l])
+		row.append(zips[l])
+		row.append("CA")
+		row.append(ids[l])
+		row.append(phones[l])
+		row.append("<MISSING>")
+		row.append("<MISSING>")
+		row.append("<MISSING>")
+		row.append("<MISSING>") 
+		row.append(location_url)
+		
+		return_main_object.append(row)
+	
+    # End scraper
+	driver.quit()
+	return return_main_object
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()
