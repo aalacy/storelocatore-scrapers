@@ -75,7 +75,7 @@ def fetch_data():
     for u in res:
         driver_url.get(u)
         print(u)
-        locs.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/h1').text)
+        locs.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/h1').text.replace('â€“',''))
         addr=driver_url.find_element_by_class_name("store-address").find_element_by_tag_name('a').text
         streets.append(
             addr.split(
