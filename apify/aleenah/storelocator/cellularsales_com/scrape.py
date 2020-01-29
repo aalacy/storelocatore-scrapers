@@ -48,18 +48,18 @@ def fetch_data():
         longi = coord[1]
         url = "https://www.cellularsales.com/wp-admin/admin-ajax.php?action=store_search&lat=" + str(
             lati) + "&lng=" + str(longi) + "&max_results=25&search_radius=500"
-        print(url)
+        #print(url)
         r = session.get(url)
         allocs = r.json()
         result_coords = []
         for al in allocs:
-            s = al['address']
+            s = al['address']+" "+al['address2'].strip()
             c = al["city"]
             st = al["state"]
             z = al["zip"].split("-")[0].strip()
             if len(z) == 4:
                 z="0"+z
-            
+
             key = s + c + st + z
             if key in key_set:
                 continue
@@ -76,7 +76,8 @@ def fetch_data():
             long.append(al["lng"])
             phones.append(al["phone"])
             tim = al["hours"].split('class="wpsl-opening-hours">')[1].replace("</time></td></tr>", " ").replace(
-                "</td><td><time>", " ").replace("</table>", "").replace("<tr><td>", " ").strip()
+                "</td><td><time>", " ").replace("</table>", "").replace("<tr><td>", " ").replace("</td></tr>", " ").replace(
+                "</td><td>", " ").strip()
             timing.append(tim)
             result_coords.append((al["lat"], al["lng"]))
         if len(allocs) < MAX_RESULTS:
