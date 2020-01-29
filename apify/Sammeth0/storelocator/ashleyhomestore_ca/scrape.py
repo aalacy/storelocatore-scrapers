@@ -54,37 +54,28 @@ def fetch_data():
 			locs.append(l.find_element_by_xpath('./a/span[1]').text.split(' (')[0])
 		except:
 			locs.append(l.find_element_by_xpath('./a/span[1]').text)
-		print(locs)
-		print(len(locs))
 		streets.append(l.find_element_by_class_name('address').text)
-		print(streets)
 		try:
 			cities.append(l.find_element_by_class_name('city').text)
 		except:
 			cities.append("<MISSING>")
-		print(cities)
 		states.append(l.find_element_by_class_name('prov_state').text)
-		print(states)
 		zips.append(l.find_element_by_class_name('postal_zip').text)
-		print(zips)
 		try:
 			ids.append(l.find_element_by_xpath('./a/span[1]').text.split(' (')[1].replace(')',''))
 		except:
 			ids.append("<MISSING>")
 
-		print(ids)
 		try:
 			phones.append(l.find_element_by_class_name('phone').text)
 		except:
 			phones.append("<MISSING>")
-		print(phones)
 		l.find_element_by_xpath('./a').click()
 		time.sleep(2)
 		try:
 			timing.append(l.find_element_by_xpath('/html/body/div[1]/div/div[2]/div/div/div[1]/div[3]/div/div/div[1]/div[3]/div/div[4]/div/div/div/div/div/div/div/span[7]').text.replace('\n',' '))
 		except:
 			timing.append("<MISSING>")
-		print(timing)
 
 
 			
