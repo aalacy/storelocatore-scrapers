@@ -43,25 +43,17 @@ def fetch_data():
 	timing = []
 	ids=[]
 	pages=[]
-	
 	driver = get_driver()
 	driver_page = get_driver()
 	driver.get(location_url)
-	time.sleep(5)
-	links=driver.find_elements_by_xpath('/html/body/div[1]/div/div[2]/div/div/div[1]/div[4]/ul/li[1]/div[2]')
-										
-	for ls in links:	
-		link=ls.find_elements_by_tag_name('a')
-		for l in link:
-			print(l.get_attribute('href'))
-			pages.append(l.get_attribute('href'))	
-	print(pages)
-	print(len(pages))
-	
+	time.sleep(5)	
 	
 	locations=driver.find_elements_by_xpath('/html/body/div[1]/div/div[2]/div/div/div[1]/div[4]/ul/li')
 	for l in locations:
-		locs.append(l.find_element_by_xpath('./a/span[1]').text)
+		try:
+			locs.append(l.find_element_by_xpath('./a/span[1]').text.split(' (')[0])
+		except:
+			locs.append(l.find_element_by_xpath('./a/span[1]').text)
 		print(locs)
 		print(len(locs))
 		streets.append(l.find_element_by_xpath('./a/span[2]').text)
@@ -75,22 +67,24 @@ def fetch_data():
 		print(states)
 		zips.append(l.find_element_by_xpath('./a/span[5]').text)
 		print(zips)
-		ids.append(l.find_element_by_xpath('./a/span[1]').text)
+		try:
+			ids.append(l.find_element_by_xpath('./a/span[1]').text.split(' (')[1].replace(')',''))
+		except:
+			ids.append("<MISSING>")
+
 		print(ids)
 		try:
 			phones.append(l.find_element_by_xpath('./a/span[7]').text)
 		except:
 			phones.append("<MISSING>")
 		print(phones)
-		#page_link=l.find_element_by_xpath('/html/body/div[1]/div/div[2]/div/div/div[1]/div[4]/ul/li')
-		#print(page_link.text)
-		#if page_link.find_element_by_xpath('./a')!=None:
-		#	driver_page.get(page_link)
-		#	time.sleep(5)
-		#	timing.append(driver_page.find_element_by_xpath('/html/body/div[1]/div/div[2]/div/div/div[1]/div/div[1]/div[1]/div[4]/div/ul').text)
-		#else:
-		#	timing.append("<MISSING>")
-		#print(timing)
+		l.find_element_by_xpath('./a').click()
+		time.sleep(2)
+		try:
+			timing.append(l.find_element_by_xpath('/html/body/div[1]/div/div[2]/div/div/div[1]/div[3]/div/div/div[1]/div[3]/div/div[4]/div/div/div/div/div/div/div/span[7]').text.replace('\n',' '))
+		except:
+			timing.append("<MISSING>")
+		print(timing)
 
 
 			
@@ -110,7 +104,7 @@ def fetch_data():
 		row.append("<MISSING>")
 		row.append("<MISSING>")
 		row.append("<MISSING>")
-		row.append("<MISSING>") 
+		row.append(timing[l]) 
 		row.append(location_url)
 		
 		return_main_object.append(row)
