@@ -64,8 +64,7 @@ def fetch_data():
 			pages.append(u)
 			locs.append(s.find_element_by_xpath('.//div[1]/div/div/div[1]/span[1]').text)
 			streets.append(s.find_element_by_xpath('.//div[1]/div/div/div[1]/div[1]').text)
-			city=s.find_element_by_xpath('.//div[1]/div/div/div[1]/span[1]').text
-			cities.append(s.find_element_by_xpath('.//div[1]/div/div/div[1]/span[1]').text)
+			cities.append(s.find_element_by_class_name('locality').text)
 			states.append(s.find_element_by_xpath('.//div[1]/div/div/div[1]/span[2]').text)
 			zips.append(s.find_element_by_xpath('.//div[1]/div/div/div[1]/span[3]').text[:5])
 			try:
