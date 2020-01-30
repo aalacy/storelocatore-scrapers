@@ -68,7 +68,6 @@ def fetch_data():
     location_type = ""
     latitude = ""
     longitude = ""
-    raw_address = ""
     hours_of_operation = ""
     page_url = ""
 
@@ -96,6 +95,7 @@ def fetch_data():
         else:
             phone = "<MISSING>"
         adr = address.find('div',class_='show-in-map').text.strip().split('\n')
+        
         adr = [i.strip() for i in adr]
         addr = []
         for element in adr:
@@ -159,12 +159,11 @@ def fetch_data():
                 # print(zipp+" | "+country_code+" | "+street_address+" | "+city+" | "+state)
             elif len(st_address) == 2:
                 state_list = re.findall(r' ([A-Z]{2}) ', str( " ".join(addr)))
-                if state_list:
-
+                # print(state_list)
+                try:
                     state = state_list[-1].strip()
-                else:
-                    state = addr[-2].replace(",","").strip()
-                #print(state)
+                except:
+                    state = "<MISSING>"
                 if "CA" != addr[-2] and "TN" !=addr[-2] and "AZ" != addr[-2]:
                     city = addr[-2].strip().replace(',','').strip()
 
@@ -232,6 +231,8 @@ def fetch_data():
         if "Vancouver" in state:
             state = addr[-3].strip()
 
+        state = state.replace(",","").replace("2043","MA").replace("2840","RI").replace("6107","CT").replace("6901","CT").replace("Washington DC","DC").strip()
+        zipp = zipp.replace("10250","<MISSING>").replace("40772","<MISSING>").replace("20530","<MISSING>").replace("26300","<MISSING>").replace("23161","<MISSING>").replace("11960","<MISSING>").replace("23501","<MISSING>").replace("17101","<MISSING>").replace("12669","<MISSING>").replace("11800","<MISSING>").replace("13350","<MISSING>").replace("13915","<MISSING>").replace("11240","<MISSING>").replace("17410","<MISSING>").replace("24201","<MISSING>").replace("15900","<MISSING>").replace("11731","<MISSING>").replace("21500","<MISSING>").replace("12000","<MISSING>").replace("27484","<MISSING>").replace("11252","<MISSING>").replace("14006","<MISSING>").replace("16535","<MISSING>").replace("19507","<MISSING>").replace("73505","<MISSING>").replace("15169","<MISSING>").replace("21725","<MISSING>").replace("12522","<MISSING>").replace("10300","<MISSING>").replace("19575","<MISSING>").replace("07520","<MISSING>")
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
@@ -239,7 +240,7 @@ def fetch_data():
             addresses.append(str(store[2]))
 
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # print(store[3])
+
             # print("data = " + str(store))
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store

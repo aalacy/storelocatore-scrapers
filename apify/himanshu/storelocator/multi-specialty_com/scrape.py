@@ -1,11 +1,9 @@
 import csv
 import time
-
 import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
 
 
 def write_output(data):
@@ -28,91 +26,76 @@ def fetch_data():
     base_url = "http://www.multi-specialty.com"
     addresses = []
 
-    r = requests.get("http://www.multi-specialty.com/all_locations/", headers=headers)
+    r = requests.get("http://www.multi-specialty.com/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     # print("soup === "+ str(soup.text))
-    for locations in soup.find("div", {"class": "content_box"}).find_all("div")[1:-1]:
-
-        locations_list = str(locations).split("<strong")
-
-        for loc in locations_list:
-
-            tags_address = BeautifulSoup("<strong" + loc, "lxml")
-            list_address = list(tags_address.stripped_strings)
-
-            if len(list_address) < 3:
-                continue
-
-            locator_domain = base_url
-            location_name = ""
-            street_address = ""
-            city = ""
-            state = ""
-            zipp = ""
-            country_code = "US"
-            store_number = ""
-            phone = ""
-            location_type = ""
-            latitude = ""
-            longitude = ""
-            raw_address = ""
-            hours_of_operation = ""
-            page_url = ""
-
-            # do your logic here.
-            # print("loc ==~~~~~~~~~~~~~~~~~= " + str(list_address))
-
-            location_name = list_address[0]
-
-            raw_address = str(list_address).replace(r"\t", " ")
-            # print("raw_address == " + raw_address)
-            phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), raw_address)
-            ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', raw_address)
-            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), raw_address)
-            state_list = re.findall(r' ([A-Z]{2}) ', raw_address)
-
-            if ca_zip_list:
-                zipp = ca_zip_list[-1]
-                country_code = "CA"
-
+    for i in soup.find_all("area"):
+        page_url = base_url+i['href']
+        r1 = requests.get(page_url, headers=headers)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        for j in soup1.find_all("div",{"class":"map_info"}):
+            page_url = page_url
+            if "baltimore-city" in page_url:
+                hours_of_operation = "Saturday : From 9AM-12PM for New Patients"
+            else:
+                hours_of_operation = "<MISSING>"
+            location_name = j.find("h6").text.strip()
+            data = " ".join(list(j.find_all("p")[1].stripped_strings))
+            phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), data)
+            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}\b"), data)
+            state_list = re.findall(r', ([A-Z]{2})', data)
+            state = state_list[-1]
+            phone = phone_list[-1]
             if us_zip_list:
                 zipp = us_zip_list[-1]
                 country_code = "US"
 
             if state_list:
                 state = state_list[-1]
+            info = (list(j.find_all("p")[1].stripped_strings))
+            if len(info)> 4 and "Fax:" in info[4] :
+                del info[4:]
+            if "-" in info[-1] and len(info)>1:
+                del info[-1]
+            if "-" in info[-1] and len(info)>1:
+                del info[-1]
+            if   len(info)>1 and "Fax(Suite 200)" in info[1]:
+                del info[1]
+            if len(info)>2 and "-" in info[1]:
+                del info[1:]
+            if len(info)>6 and "-" in info[2]:
+                del info[2:]
+            if len(info)>1 and "(Sat. Hrs. 9-12)" in info[0]:
+                del info[0]
+    
+            if len(info) == 1:
+                street_address = " ".join(info[-1].split(",")[0].split(" ")[:-1])
+                city = info[-1].split(",")[0].split(" ")[-1]
+            else:
+                street_address = " ".join(info[:-1])
+                city = info[-1].split(",")[0]
 
-            zipp_index = [i for i, s in enumerate(list_address) if zipp in s]
-            street_address = " ".join(list_address[1:zipp_index[0]])
-            street_address = street_address.replace("\t", " ")
-            city = list_address[zipp_index[0]].split(",")[0]
-            phone = phone_list[0]
-
-            # print("state ===  "+ str(state))
-            geo_url = tags_address.find("a",{"href":re.compile(".google.com")})
-
-            if geo_url:
-                geo_url = geo_url["href"]
-
-                if "sll=" in geo_url:
-                    latitude = geo_url.split("sll=")[1].split("&")[0].split(",")[0]
-                    longitude = geo_url.split("sll=")[1].split("&")[0].split(",")[1]
-                if "/@" in geo_url:
-                    latitude = geo_url.split("/@")[1].split(",")[0]
-                    longitude = geo_url.split("/@")[1].split(",")[1]
-
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-            if str(store[2] +" "+store[1]) not in addresses and country_code:
-                addresses.append(str(store[2] +" "+store[1]))
-
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
+            
+            store = []
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
+            store.append(country_code)
+            store.append("<MISSING>") 
+            store.append(phone)
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            store.append(hours_of_operation)
+            store.append(page_url)
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            #print("data = " + str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            yield store
 
 
 def scrape():

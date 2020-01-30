@@ -33,11 +33,9 @@ def get_driver():
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
     if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
-
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
     else:
-        # return webdriver.Firefox(executable_path='/usr/local/Cellar/geckodriver/0.26.0/bin/geckodriver', options=options)
-        return webdriver.Firefox(executable_path='geckodriver', options=options)
+        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 
 def fetch_data():
@@ -50,39 +48,38 @@ def fetch_data():
     city_tag = []
     st = []
     n = []
-    k = (soup.find('table'))
+    k = soup.find('table').find_all("div",{"align":"center"})[1]
     for i in k.find_all('tr'):
         data = (list(i.stripped_strings))
+        # print(data)
         if len(data) == 4:
             n.append(data[1])
             st.append(data[2])
             phone_tag.append(data[3])
             city_tag.append(data[0])
     for i in range(len(n)):
-        if "816 Bayshore Drive" in st[i]:
-            locator_domain = "http://www.wagner-oil.com/"
-            street_address = st[i]
-            name = n[i]
-            city = city_tag[i]
-            state = "<MISSING>"
-            store_zip = "<MISSING>"
-            phone = phone_tag[i]
-            latitude = "<MISSING>"
-            longitude = "<MISSING>"
-            country_code = "US"
-            location_type = "<MISSING>"
-            store_number = "<MISSING>"
-            hours_of_operation = "<MISSING>"
-            page_url = "http://www.wagner-oil.com/store-locator/"
-            store = [locator_domain, name, street_address, city, state, store_zip, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-            store = ["<MISSING>" if x == "" or x == None else x for x in store]
-            store = [str(x).encode('ascii', 'ignore').decode(
-                'ascii').strip() if x else "<MISSING>" for x in store]
-            # print("data == " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
-
-            yield store
+        locator_domain = "http://www.wagner-oil.com/"
+        street_address = st[i]
+        name = n[i]
+        city = city_tag[i]
+        state = "<MISSING>"
+        store_zip = "<MISSING>"
+        phone = phone_tag[i]
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        country_code = "US"
+        location_type = "<MISSING>"
+        store_number = "<MISSING>"
+        hours_of_operation = "<MISSING>"
+        page_url = "http://www.wagner-oil.com/store-locator/"
+        store = [locator_domain, name, street_address, city, state, store_zip, country_code,
+                    store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+        store = ["<MISSING>" if x == "" or x == None else x for x in store]
+        store = [str(x).encode('ascii', 'ignore').decode(
+            'ascii').strip() if x else "<MISSING>" for x in store]
+        # print("data == " + str(store))
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        yield store
 
     iframe_link = soup.find("iframe")["src"]
     r = requests.get(iframe_link)
@@ -175,7 +172,7 @@ def fetch_data():
         except Exception as e:
             # print(e)
             time.sleep(3)
-
+    driver.quit()
 
 def scrape():
     data = fetch_data()

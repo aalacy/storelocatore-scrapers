@@ -124,11 +124,12 @@ def fetch_data():
                 address = contact_url_soup.find('h3').get_text().split(',')
                 location_name = "FacelogicBCS"
                 street_address = ' '.join(address[:-1])
+                # print(contact_url_soup.find("span",{"class":"site-phone"}).text)
                 #print(street_address)
                 city = links.get_text()
                 state = address[-1].split(' ')[1]
                 zip = address[-1].split(' ')[-1][1:]
-                phone = "<MISSING>"
+                phone = contact_url_soup.find("span",{"class":"site-phone"}).text
                 hours_of_operation = "<MISSING>"
             elif "facelogichighlandpark" in links.get('href'):
                 # print("~~~~~~~done....~~~~~~~~~~ ",links.get('href'))

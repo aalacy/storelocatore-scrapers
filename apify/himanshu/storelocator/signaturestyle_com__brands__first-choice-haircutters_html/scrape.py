@@ -3,97 +3,78 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import time
+
+
+
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    base_url = "https://www.signaturestyle.com/brands/first-choice-haircutters.html"
-    r = requests.get("https://www.signaturestyle.com/salon-directory.html",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
-    addresses = []
-    divs = soup.find("div",{'class':"content parsys"}).find_all("div",recursive=False)[1:]
-    for i in range(0,len(divs),2):
-        country = ""
-        if "U.S." in list(divs[i].stripped_strings)[0] or "Canada" in list(divs[i].stripped_strings)[0]:
-            if "U.S." in list(divs[i].stripped_strings)[0]:
-                country = "US"
-            else:
-                country = "CA"
-            for state in divs[i+1].find_all("a",{"class":"btn btn-primary"}):
-                state_count = 0
-                while True:
-                    try:
-                        state_request = requests.get("https://www.signaturestyle.com" + state["href"],headers=headers)
-                        state_soup = BeautifulSoup(state_request.text,"lxml")
-                        break
-                    except:
-                        state_count = state_count + 1
-                        if state_count > 10:
-                            print("stopping request for " + str("https://www.signaturestyle.com" + state["href"]))
-                            break
-                        time.sleep(2)
-                        continue
-                for table in state_soup.find_all("table"):
-                    for location in table.find_all("a"):
-                        location_count = 0
-                        while True:
-                            try:
-                                location_request = requests.get("https://www.signaturestyle.com" + location["href"],headers=headers)
-                                location_soup = BeautifulSoup(location_request.text,"lxml")
-                                break
-                            except:
-                                location_count = location_count + 1
-                                if location_count > 10:
-                                    print("stopping request for " + str("https://www.signaturestyle.com" + location["href"]))
-                                    break
-                                time.sleep(2)
-                                continue
-                        if location_soup.find("div",{'class':"h2 h3"}) == None:
-                            continue
-                        name = " ".join(list(location_soup.find("div",{'class':"h2 h3"}).stripped_strings))
-                        street_address = " ".join(list(location_soup.find("span",{'itemprop':"streetAddress"}).stripped_strings))
-                        city = location_soup.find("span",{'itemprop':"addressLocality"}).text
-                        state = location_soup.find("span",{'itemprop':"addressRegion"}).text
-                        store_zip = location_soup.find("span",{'itemprop':"postalCode"}).text
-                        phone = location_soup.find("span",{'itemprop':"telephone"}).text
-                        hours = " ".join(list(location_soup.find("div",{'class':"salon-timings"}).stripped_strings))
-                        lat = location_soup.find("meta",{'itemprop':"latitude"})["content"]
-                        lng = location_soup.find("meta",{'itemprop':"longitude"})["content"]
-                        store = []
-                        store.append("https://www.signaturestyle.com")
-                        store.append(name.replace("\xa0"," "))
-                        store.append(street_address)
-                        if store[-1] in addresses:
-                            continue
-                        addresses.append(store[-1])
-                        store.append(city)
-                        store.append(state)
-                        store.append(store_zip)
-                        store.append(country)
-                        store.append("<MISSING>")
-                        store.append(phone if phone != "" else "<MISSING>")
-                        store.append("<MISSING>")
-                        store.append(lat)
-                        store.append(lng)
-                        store.append(hours if hours != "" else "<MISSING>")
-                        store.append("https://www.signaturestyle.com" + location["href"])
-                        yield store
+    base_url= "https://www.signaturestyle.com/salon-directory.html"
+    r = requests.get(base_url)
+    soup= BeautifulSoup(r.text,"lxml")
+    for d in soup.find_all("div",{"class":"acs-commons-resp-colctrl-row section"}):
+        for k in d.find_all("a",{"class":"btn btn-primary"}):
+            # base_url= 
+            r1 = requests.get("https://www.signaturestyle.com"+k['href'])
+            soup1= BeautifulSoup(r1.text,"lxml")
+            for herf in soup1.find_all("div",{"class":"salon-group col-md-10 col-xs-12"}):
+                for href1 in herf.find_all("a"):
+                    r2 = requests.get("https://info3.regiscorp.com/salonservices/siteid/100/salon/"+href1['href'].split("-")[-1].replace(".html",'')).json()
+                    tem_var =[]
+                    for h in r2['store_hours']:
+                        hours = (h['days']+ ' '+ h['hours']['open'] + ' '+h['hours']['close'])
+                    tem_var.append("https://www.signaturestyle.com/brands/first-choice-haircutters.html")
+                    tem_var.append(r2['name'])
+                    tem_var.append(r2['address'])
+                    tem_var.append(r2['city'])
+                    tem_var.append(r2['state'])
+                    tem_var.append(r2['zip'])
+                    tem_var.append("US")
+                    tem_var.append("<MISSING>")
+                    tem_var.append(r2['phonenumber'])
+                    tem_var.append("<MISSING>")
+                    tem_var.append(r2['longitude'])
+                    tem_var.append(r2['latitude'])
+                    tem_var.append(hours)
+                    tem_var.append("https://www.signaturestyle.com/"+href1['href'])
+                    #print("~~~~~~~~~~~~~~`",tem_var)
+                    yield tem_var
+                 
+
+    #         tem_var.append("https://www.cfcu.org")
+    #         tem_var.append(name)
+    #         tem_var.append(st)
+    #         tem_var.append(city)
+    #         tem_var.append(state)
+    #         tem_var.append(zip1)
+    #         tem_var.append("US")
+    #         tem_var.append("<MISSING>")
+    #         tem_var.append(phone)
+    #         tem_var.append("cfcu")
+    #         tem_var.append("<MISSING>")
+    #         tem_var.append("<MISSING>")
+    #         tem_var.append(hours)
+    #         print(tem_var)
+    #         return_main_object.append(tem_var)
+        
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
+
 scrape()
+
+

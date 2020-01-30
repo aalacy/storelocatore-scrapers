@@ -43,7 +43,7 @@ def fetch_data():
         store.append(store_data["GeoCode"]["Latitude"])
         store.append(store_data["GeoCode"]["Longitude"])
         store.append("<MISSING>")
-        store.append("<MISSING>")
+        store.append(store_data["Url"] if store_data["Url"] else "<MISSING>")
         for i in range(len(store)):
             if type(store[i]) == str:
                 store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))

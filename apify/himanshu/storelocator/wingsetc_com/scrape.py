@@ -24,6 +24,7 @@ def fetch_data():
         'https://www.wingsetc.com/locations/?CallAjax=GetLocations')
     data = r.json()
     addresses = []
+    hours_of_operation = "<MISSING>"
     for i in data:
         locator_domain = base_url
         location_name = i['FranchiseLocationName']
@@ -38,30 +39,39 @@ def fetch_data():
         country_code = "US"
         location_type = "<MISSING>"
         page_url = base_url + i['Path']
-        hour = i['LocationHours']
-        if hour != None:
-            hours = i['LocationHours'].split('[')
-            hr = []
-            for h in hours:
-                if "" != h:
-                    # print(h)
-                    # print('~~~~~~~~~~~~```````~~~~~')
+        r1 = requests.get(page_url)
+        soup1 = BeautifulSoup(r1.text,"lxml")
+        #print(page_url)
+        try:
+            hours_of_operation = " ".join(list(soup1.find("div",{"class":"local-hours ui-repeater"}).stripped_strings)[1:])
+        except:
+            hours_of_operation  ="<MISSING>"
+        # print(" ".join(list(soup1.find("div",{"class":"local-hours ui-repeater"}).stripped_strings)[1:]))
+        # # exit()
+        # hour = i['LocationHours']
+        # if hour != None:
+        #     hours = i['LocationHours'].split('[')
+        #     hr = []
+        #     for h in hours:
+        #         if "" != h:
+        #             # print(h)
+        #             # print('~~~~~~~~~~~~```````~~~~~')
 
-                    hour_list = "[" + h
-                    hours1 = " ".join(hour_list.split(':')[
-                        1:-2]).replace(',"OpenTime"', '').replace(',"CloseTime"', '').replace(',"Closed"', '').replace('"', "").split()
+        #             hour_list = "[" + h
+        #             hours1 = " ".join(hour_list.split(':')[
+        #                 1:-2]).replace(',"OpenTime"', '').replace(',"CloseTime"', '').replace(',"Closed"', '').replace('"', "").split()
 
-                    hours1.insert(-3, ' - ')
-                    h1 = ":".join(
-                        hours1).replace(': - :', ' - ').strip()
-                    hr.append(h1)
-            if hr == []:
-                hours_of_operation = "<MISSING>"
-            else:
-                hours_of_operation = " , ".join(hr)
+        #             hours1.insert(-3, ' - ')
+        #             h1 = ":".join(
+        #                 hours1).replace(': - :', ' - ').strip()
+        #             hr.append(h1)
+        #     if hr == []:
+        #         hours_of_operation = "<MISSING>"
+        #     else:
+        #         hours_of_operation = " , ".join(hr)
 
-        else:
-            hours_of_operation = "<MISSING>"
+        # else:
+        #     hours_of_operation = "<MISSING>"
         # print(hours_of_operation)
         # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 

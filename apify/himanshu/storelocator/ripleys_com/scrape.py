@@ -1,11 +1,9 @@
 import csv
 import time
-
 import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
 
 
 def write_output(data):
@@ -84,7 +82,6 @@ def fetch_data():
         location_type = ""
         latitude = ""
         longitude = ""
-        raw_address = ""
         hours_of_operation = ""
         page_url = location_tag["href"]
         # page_url = "http://www.ripleysdells.com/"
@@ -271,10 +268,29 @@ def fetch_data():
                 else:
                     street_address = full_address_list[0].replace("\n", ",").replace("\r", "")
                     street_address = street_address.split(",")[0]
+        
+
 
         # print(str(street_address.strip()) + " ====== is num ========== "+ str(street_address.isnumeric()))
         if street_address.strip().isnumeric():
             street_address = street_address + " " + city
+        if "329  Alamo Plaza" in street_address:
+            city = "San Antonio"
+            street_address = "329 Alamo Plaza"
+        if "329 Alamo Plaza" in street_address:
+            r5 = request_wrapper("https://www.ripleys.com/phillips/", "get", headers=headers)
+            soup = BeautifulSoup(r5.text, "lxml")
+            k2 = "".join(list(soup.find("div", {"class": "g1-block"}).stripped_strings))
+            hours_of_operation = (k2.replace("pm","pm "))
+            
+        if "800 Parkway" in street_address:
+            r6 = request_wrapper("https://www.ripleys.com/gatlinburg/", "get", headers=headers)
+            soup6 = BeautifulSoup(r6.text, "lxml")
+            hours_of_operation = (" ".join(list(soup6.find_all("li",{"class": "g1-column g1-one-half g1-valign-top"})[-2].stripped_strings)).split("*Weather")[0].replace("** ALL ATTRACTIONS WILL BE CLOSING EARLY AT 4PM ON WEDNESDAY, DECEMBER 4, 2019 FOR A CHRISTMAS PARTY** Believe It or Not!",""))
+                # for j1 in k1:
+                #     print(j1)
+            # print(hours_of_operation.text)
+
 
         if "THAILAND" in location_name or "ENGLAND" in location_name or "AUSTRALIA" in location_name or "NETHERLANDS" in location_name or "DENMARK" in location_name:
             country_code = ""
