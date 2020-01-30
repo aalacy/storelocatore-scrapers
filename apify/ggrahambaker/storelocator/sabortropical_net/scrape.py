@@ -87,11 +87,10 @@ def fetch_data():
     locs = main.find_elements_by_css_selector('div.col-xl-4.col-sm-6.col-md-4.aligncenter')
     for loc in locs:
         cont = loc.text.split('\n')
-    
+         
         location_name = cont[0]
         if 'MANAGEMENT OFFICE' in location_name:
-            location_type = 'MANAGEMENT OFFICE'
-            store_number = '<MISSING>'
+            continue
         else:
             location_type = 'STORE'
             store_number = location_name.split('#')[1]

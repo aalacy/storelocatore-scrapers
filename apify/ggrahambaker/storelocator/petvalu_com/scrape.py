@@ -63,6 +63,9 @@ def fetch_data():
         result_coords = []
         
         for k, loc in res_json.items():
+            print(loc)
+            print()
+            print()
 
             location_name = loc['na']
             page_url = loc['gu']
