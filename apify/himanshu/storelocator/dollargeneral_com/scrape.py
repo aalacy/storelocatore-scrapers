@@ -22,8 +22,8 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 100
-    MAX_DISTANCE = 10
+    MAX_RESULTS = 1000
+    MAX_DISTANCE = 100
     current_results_len = 0    
     zip_code = search.next_zip()
 
@@ -36,7 +36,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        #print("zip_code === "+zip_code)
+        print("zip_code === "+zip_code)
         data = '{"request":{"appkey":"9E9DE426-8151-11E4-AEAC-765055A65BB0","formdata":{"geoip":false,"dataview":"store_default","geolocs":{"geoloc":[{"addressline":"'+str(zip_code)+'","country":"US","latitude":"","longitude":""}]},"searchradius":"10|20|50|100","where":{"nci":{"eq":""},"and":{"PROPANE":{"eq":""},"REDBOX":{"eq":""},"RUGDR":{"eq":""},"MULTICULTURAL_HAIR":{"eq":""},"TYPE_ID":{"eq":""},"DGGOCHECKOUT":{"eq":""},"FEDEX":{"eq":""},"DGGOCART":{"eq":""}}},"false":"0"}}}'
         
         

@@ -4,9 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -20,6 +17,7 @@ def write_output(data):
 
 
 def fetch_data():
+    addressess = []
     base_url= "https://www.signaturestyle.com/salon-directory.html"
     r = requests.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
@@ -35,39 +33,28 @@ def fetch_data():
                     for h in r2['store_hours']:
                         hours = (h['days']+ ' '+ h['hours']['open'] + ' '+h['hours']['close'])
                     tem_var.append("https://www.signaturestyle.com/brands/first-choice-haircutters.html")
-                    tem_var.append(r2['name'])
-                    tem_var.append(r2['address'])
-                    tem_var.append(r2['city'])
-                    tem_var.append(r2['state'])
-                    tem_var.append(r2['zip'])
+                    tem_var.append(str(r2['name']).strip() if r2['name']  else  "<MISSING>")
+                    tem_var.append(r2['address'].strip() if r2['address']  else  "<MISSING>")
+                    tem_var.append(r2['city'].strip() if r2['city']  else  "<MISSING>")
+                    tem_var.append(r2['state'].strip() if r2['state']  else  "<MISSING>")
+                    tem_var.append(str(r2['zip']).strip() if r2['zip']  else  "<MISSING>")
                     tem_var.append("US")
                     tem_var.append("<MISSING>")
-                    tem_var.append(r2['phonenumber'])
+                    tem_var.append(r2['phonenumber'] if r2['phonenumber']  else  "<MISSING>")
                     tem_var.append("<MISSING>")
-                    tem_var.append(r2['longitude'])
-                    tem_var.append(r2['latitude'])
-                    tem_var.append(hours)
-                    tem_var.append("https://www.signaturestyle.com/"+href1['href'])
-                    #print("~~~~~~~~~~~~~~`",tem_var)
+                    tem_var.append(str(r2['longitude']).strip() if r2['longitude']  else  "<MISSING>")
+                    tem_var.append(str(r2['latitude']).strip() if r2['latitude']  else  "<MISSING>")
+                    tem_var.append(hours.strip())
+                    tem_var.append("https://www.signaturestyle.com"+href1['href'])
+                    # print("https://www.signaturestyle.com/"+href1['href'])
+                    if tem_var[2] in addressess:
+                        continue
+                    addressess.append(tem_var[2])
+                    # print(tem_var)
                     yield tem_var
                  
 
-    #         tem_var.append("https://www.cfcu.org")
-    #         tem_var.append(name)
-    #         tem_var.append(st)
-    #         tem_var.append(city)
-    #         tem_var.append(state)
-    #         tem_var.append(zip1)
-    #         tem_var.append("US")
-    #         tem_var.append("<MISSING>")
-    #         tem_var.append(phone)
-    #         tem_var.append("cfcu")
-    #         tem_var.append("<MISSING>")
-    #         tem_var.append("<MISSING>")
-    #         tem_var.append(hours)
-    #         print(tem_var)
-    #         return_main_object.append(tem_var)
-        
+   
 
 
 def scrape():

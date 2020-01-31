@@ -62,11 +62,15 @@ with open("data.csv",mode="w") as file:
                     state="<MISSING>"
                 urll = loc["href"]
             urll = main_url + urll
+            # print(url1)
             adrs = record.find(name="p",attrs={"class":"addr"})
             page_url = "https://mysprintfs.com"+record.find("h5").find("a")['href']
             # print(page_url)
+
             html1 = requests.get(page_url)
             soup1 = BeautifulSoup(html1.text,"html.parser")
+            data = soup1.find(name="div", attrs={"class":"location-text"})
+            location_name1 = (data.find("h1").text)
             script = soup1.find(lambda tag: (tag.name == "script") and "center" in tag.text).text.split(".maps.LatLng")[-1].split(");")[0]
             latitude = script.replace("( ",'').split(",")[0]
             longitude = script.replace("( ",'').split(",")[-1]
@@ -95,10 +99,12 @@ with open("data.csv",mode="w") as file:
                 zipp = us_zip_list[-1]
                 country_code = "US"
 
+            
+
 
             street_address1 = street_address.replace(zipp,'').replace("'",'')
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~ ",street_address)
-            data=[locator_domain,"<MISSING>",street_address1,city,state,zip_code,"US",store_number.replace("Store #",""),contact_number,"<MISSING>",
+            data=[locator_domain,location_name1,street_address1,city,state,zip_code,"US",store_number.replace("Store #",""),contact_number,"<MISSING>",
                   latitude,longitude,"<MISSING>",page_url]
             # print(data)
             fl_writer.writerow(data)
