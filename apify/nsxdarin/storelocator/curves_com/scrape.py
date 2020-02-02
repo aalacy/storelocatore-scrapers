@@ -32,7 +32,6 @@ def fetch_data():
                 if purl not in ids:
                     ids.append(purl)
                     r2 = session.get(purl, headers=headers)
-                    print('Pulling Location %s...' % purl)
                     name = ''
                     website = 'curves.com'
                     typ = 'Fitness Studio'
