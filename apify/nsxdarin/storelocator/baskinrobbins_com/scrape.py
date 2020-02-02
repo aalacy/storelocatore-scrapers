@@ -16,12 +16,12 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    urls = ['https://order.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?attributes=&radius=1000&disposition=DELIVERY&latitude=34.0661071&longitude=-110.38417770000001&maxResults=1000&tenant=br-us',
-            'https://order.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?attributes=&radius=1000&disposition=DELIVERY&latitude=44.0661071&longitude=-95.38417770000001&maxResults=1000&tenant=br-us',
-            'https://order.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?attributes=&radius=1000&disposition=DELIVERY&latitude=34.0661071&longitude=-85.38417770000001&maxResults=1000&tenant=br-us',
-            'https://order.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?attributes=&radius=1000&disposition=DELIVERY&latitude=44.0661071&longitude=-75.38417770000001&maxResults=1000&tenant=br-us',
-            'https://order.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?attributes=&radius=1000&disposition=DELIVERY&latitude=21.0661071&longitude=-155.38417770000001&maxResults=1000&tenant=br-us',
-            'https://order.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?attributes=&radius=1000&disposition=DELIVERY&latitude=60.0661071&longitude=-150.38417770000001&maxResults=1000&tenant=br-us'
+    urls = ['https://order.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?attributes=&radius=1500&disposition=DELIVERY&latitude=34.0661071&longitude=-110.38417770000001&maxResults=1000&tenant=br-us',
+            'https://order.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?attributes=&radius=1500&disposition=DELIVERY&latitude=44.0661071&longitude=-95.38417770000001&maxResults=1000&tenant=br-us',
+            'https://order.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?attributes=&radius=1500&disposition=DELIVERY&latitude=34.0661071&longitude=-85.38417770000001&maxResults=1000&tenant=br-us',
+            'https://order.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?attributes=&radius=1500&disposition=DELIVERY&latitude=44.0661071&longitude=-75.38417770000001&maxResults=1000&tenant=br-us',
+            'https://order.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?attributes=&radius=1500&disposition=DELIVERY&latitude=21.0661071&longitude=-155.38417770000001&maxResults=1000&tenant=br-us',
+            'https://order.baskinrobbins.com/mobilem8-web-service/rest/storeinfo/distance?attributes=&radius=1500&disposition=DELIVERY&latitude=60.0661071&longitude=-150.38417770000001&maxResults=1000&tenant=br-us'
             ]
     for url in urls:
         print(url)
