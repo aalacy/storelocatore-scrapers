@@ -1,9 +1,9 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import json
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
            'content-type': 'application/json',
            'X-Requested-With': 'XMLHttpRequest'
@@ -19,7 +19,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     url = 'https://www.whitecastle.com/sitemap.xml'
-    r = session.get(url, verify=False, headers=headers)
+    r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if '<loc>https://www.whitecastle.com/locations/' in line:
             locs.append(line.split('locations/')[1].split('<')[0])
