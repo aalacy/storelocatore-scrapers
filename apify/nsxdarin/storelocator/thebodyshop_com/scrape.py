@@ -1,9 +1,9 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import json
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -65,7 +65,12 @@ def fetch_data():
             add = add + ' ' + item['address2'].encode('utf-8')
         city = item['zip']
         state = item['city'].strip().encode('utf-8').split(' ')[0]
-        zc = item['city'].strip().encode('utf-8').split(' ')[1]
+        try:
+            zc = item['city'].strip().encode('utf-8').split(' ')[1]
+        except:
+            zc = item['zip']
+            city = item['city']
+            state = item['state']
         country = item['country']['isocode'].encode('utf-8')
         lurl = '<MISSING>'
         lat = item['latlong'][0]
@@ -81,7 +86,10 @@ def fetch_data():
             hours = hours + ';Sun: ' + item['open']['su'][0] + '-' + item['open']['su'][1]
         except:
             hours = '<MISSING>'
-        state = state.replace(',','').strip()
+        try:
+            state = state.replace(',','').strip()
+        except:
+            state = '<MISSING>'
         yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 def scrape():
     data = fetch_data()
