@@ -26,10 +26,7 @@ def fetch_data():
         soup1 = BeautifulSoup(r1.text,"lxml")
         b =soup1.find_all("a",{"class":"citylist"})
         for j in b :
-            try:
-              r2 = requests.get(j['href'])
-            except:
-                pass           
+            r2 = requests.get(j['href'])
             soup2 = BeautifulSoup(r2.text,"lxml")
             c =soup2.find_all("span",{"class":"location-title"})
             if c != [] and c != None:

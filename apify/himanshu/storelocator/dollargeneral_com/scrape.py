@@ -22,25 +22,28 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 1000
-    MAX_DISTANCE = 100
+    MAX_RESULTS = 4000
+    MAX_DISTANCE = 200
     current_results_len = 0    
-    zip_code = search.next_zip()
+    # zip_code = search.next_zip()
+    coord = search.next_coord()
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
 
-    base_url = "http://dollargeneral.com"
+    base_url = "dollargeneral.com"
 
-    while zip_code:
+    while coord:
+        lat = coord[0]
+        lng = coord[1]
         result_coords = []
-
-        print("zip_code === "+zip_code)
-        data = '{"request":{"appkey":"9E9DE426-8151-11E4-AEAC-765055A65BB0","formdata":{"geoip":false,"dataview":"store_default","geolocs":{"geoloc":[{"addressline":"'+str(zip_code)+'","country":"US","latitude":"","longitude":""}]},"searchradius":"10|20|50|100","where":{"nci":{"eq":""},"and":{"PROPANE":{"eq":""},"REDBOX":{"eq":""},"RUGDR":{"eq":""},"MULTICULTURAL_HAIR":{"eq":""},"TYPE_ID":{"eq":""},"DGGOCHECKOUT":{"eq":""},"FEDEX":{"eq":""},"DGGOCART":{"eq":""}}},"false":"0"}}}'
-        
-        
-        location_url = "http://hosted.where2getit.com/dollargeneral/rest/locatorsearch?like=0.9394142712975708"
+        # data ='{"request":{"appkey":"9E9DE426-8151-11E4-AEAC-765055A65BB0","formdata":{"geoip":"start","dataview":"store_default","geolocs":{"geoloc":[{"addressline":"","country":"","latitude":"","longitude":""}]},"searchradius":"10|20|50|100","where":{"nci":{"eq":""},"and":{"PROPANE":{"eq":""},"REDBOX":{"eq":""},"RUGDR":{"eq":""},"MULTICULTURAL_HAIR":{"eq":""},"TYPE_ID":{"eq":""},"DGGOCHECKOUT":{"eq":""},"FEDEX":{"eq":""},"DGGOCART":{"eq":""},"DGPICKUP":{"eq":""},"NCI":{"eq":""}}}},"geoip":1}}'
+        # print("zip_code === "+zip_code)
+        # print(search.current_zip)
+        data= '{"request":{"appkey":"9E9DE426-8151-11E4-AEAC-765055A65BB0","formdata":{"geoip":"start","dataview":"store_default","geolocs":{"geoloc":[{"addressline":"'+str(search.current_zip)+'","country":"","latitude":"'+str(lat)+'","longitude":"'+str(lng)+'"}]},"searchradius":"'+str(MAX_DISTANCE)+'","where":{"nci":{"eq":""},"and":{"PROPANE":{"eq":""},"REDBOX":{"eq":""},"RUGDR":{"eq":""},"MULTICULTURAL_HAIR":{"eq":""},"TYPE_ID":{"eq":""},"DGGOCHECKOUT":{"eq":""},"FEDEX":{"eq":""},"DGGOCART":{"eq":""},"DGPICKUP":{"eq":""},"NCI":{"eq":""}}}},"geoip":1}}'
+        # data = '{"request":{"appkey":"9E9DE426-8151-11E4-AEAC-765055A65BB0","formdata":{"geoip":false,"dataview":"store_default","geolocs":{"geoloc":[{"addressline":"'+str(zip_code)+'","country":"US","latitude":"","longitude":""}]},"searchradius":"10|20|50|200","where":{"nci":{"eq":""},"and":{"PROPANE":{"eq":""},"REDBOX":{"eq":""},"RUGDR":{"eq":""},"MULTICULTURAL_HAIR":{"eq":""},"TYPE_ID":{"eq":""},"DGGOCHECKOUT":{"eq":""},"FEDEX":{"eq":""},"DGGOCART":{"eq":""}}},"false":"0"}}}'
+        location_url = "http://hosted.where2getit.com/dollargeneral/rest/locatorsearch"
         try:
 
             loc = requests.post(location_url,headers=headers,data=data).json()
@@ -62,7 +65,6 @@ def fetch_data():
         longitude = ""
         raw_address = ""
         hours_of_operation = ""
-
         hours_of_operation =''
        
         if "collection" in loc['response']:
@@ -77,14 +79,14 @@ def fetch_data():
                 store = [locator_domain, data['name'], data['address1'], data['city'], data['state'], data['postalcode'], country_code,
                         store_number, data['phone'], location_type, data['latitude'], data['longitude'], hours_of_operation,page_url]
 
-                if store[2] + store[-3] in addresses:
+                if store[2]  in addresses:
                     continue
 
-                addresses.append(store[2] + store[-3])
+                addresses.append(store[2] )
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                #print("data = " + str(store))
-                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 yield store
           
@@ -98,7 +100,8 @@ def fetch_data():
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
+        # zip_code = search.next_zip()
+        coord = search.next_coord()
         
 
 

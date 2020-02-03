@@ -24,12 +24,11 @@ def fetch_data():
     }
 
     base_url = "http://www.multi-specialty.com"
-    addresses = []
+    # addresses = []
 
     r = requests.get("http://www.multi-specialty.com/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
-    # print("soup === "+ str(soup.text))
     for i in soup.find_all("area"):
         page_url = base_url+i['href']
         r1 = requests.get(page_url, headers=headers)
@@ -93,9 +92,41 @@ def fetch_data():
             store.append(hours_of_operation)
             store.append(page_url)
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            #print("data = " + str(store))
-            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
+
+
+    r1 = requests.get("http://www.multi-specialty.com/locations/", headers=headers)
+    soup1 = BeautifulSoup(r1.text, "lxml")
+    location_name = soup1.find_all("div",{"class":"title"})[1].text
+    raw_address = list(soup1.find("div",{"class":"addr"}).stripped_strings)
+    street_address = " ".join(raw_address[:2])
+    city = raw_address[2].split(",")[0]
+    state = raw_address[2].split(",")[1].split(" ")[1]
+    zipp = raw_address[2].split(",")[1].split(" ")[2]
+    phone = raw_address[3]
+
+    store = []
+    store.append(base_url)
+    store.append(location_name)
+    store.append(street_address)
+    store.append(city)
+    store.append(state)
+    store.append(zipp)
+    store.append("US")
+    store.append("<MISSING>") 
+    store.append(phone)
+    store.append("<MISSING>")
+    store.append("<MISSING>")
+    store.append("<MISSING>")
+    store.append("<MISSING>")
+    store.append("http://www.multi-specialty.com/locations/")
+    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+    # print("data = " + str(store))
+    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+    yield store
+
 
 
 def scrape():

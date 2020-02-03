@@ -51,7 +51,7 @@ def fetch_data():
         store.append(latitude if latitude else '<MISSING>')
         store.append(longitude if longitude else '<MISSING>')
         store.append('<MISSING>' )
-        store.append("http://www.ntw.com/")
+        store.append("<MISSING>")
         yield store
 
 def scrape():

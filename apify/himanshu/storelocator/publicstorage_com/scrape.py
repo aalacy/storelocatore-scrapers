@@ -4,61 +4,61 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-import sgzip
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
+                         "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
+
 def fetch_data():
     addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 30
-    zip_code = search.next_zip()
-    current_results_len = 0
-    headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-            "content-type": "application/json;charset=UTF-8",
-            "Accept": "application/json, text/plain, */*"
-        }
-    base_url = "https://www.publicstorage.com"
-    while zip_code:
-        result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
-        #print('Pulling Lat-Long %s...' % (str(zip)))
-        data = '{"location":"' + str(zip_code) + '"}'
-        
-        r = requests.post("https://www.publicstorage.com/api/sitecore/LocationSearch/RedoSearch",headers=headers,data=data).json()
-        # print(r)
-        current_results_len = len(r["Result"]["Units"])
-        for i in r["Result"]["Units"]:
-            street_address = i['Street1']
-            city = i['City']
-            state = i['StateCode']
-            zipp = i['PostalCode']
-            store_number = i['SiteID']
-            phone = i['PhoneNumber']
-            latitude = i['Latitude']
-            longitude = i['Longitude']
-            page_url = base_url + i['PLPUrl']
-            try:
-                r1 = requests.get(page_url, headers=headers)
-            except:
-                pass
-            soup1 = BeautifulSoup(r1.text, "lxml")
-            location_name = soup1.find("h1",{"class":"ps-properties-property-header__header"}).text
+    headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+    }
 
-            hours_of_operation = str(''.join(list(soup1.find_all("div",{"class":'ps-properties-property__info__hours__section'})[0].text))) + " " + str(''.join(list(soup1.find_all("div",{"class":'ps-properties-property__info__hours__section'})[1].text)))
-        
-            result_coords.append((latitude, longitude))
+    base_url = "https://www.publicstorage.com"
+    r =  requests.get("https://www.publicstorage.com/site-map-states", headers=headers)
+    soup = BeautifulSoup(r.text, "lxml")    
+    data = soup.find("div",{"class":"ps-sitemap-states__states"})
+    for i in data.find_all("a"):
+        r1 = requests.get(base_url+i['href'], headers=headers)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        links = soup1.find_all("a", {"class":"base-link"})
+        for link in links:
+            page_url = base_url+link['href']
+            r3 = requests.get(page_url, headers=headers)
+            soup3 = BeautifulSoup(r3.text, "lxml")
+
+            if soup3.find("h1", {"class": "ps-properties-property-header__header"}):
+                location_name = soup3.find("h1", {"class": "ps-properties-property-header__header"}).text.strip()
+            else:
+                location_name = "<MISSING>"
+                
+            
+            json_data = json.loads(soup3.find(lambda tag: (tag.name == "script") and "addressCountry" in tag.text).text)['@graph']
+            
+            street_address = json_data[0]['address']['streetAddress']
+            city = json_data[0]['address']['addressLocality']
+            state = json_data[0]['address']['addressRegion']
+            zipp = json_data[0]['address']['postalCode']
+
+            store_number = page_url.split("/")[-1]
+            
+            phone = json_data[0]['telephone']
+            latitude = json_data[0]['geo']['latitude']
+            longitude = json_data[0]['geo']['longitude']
+            country_code = "US"
+
+            hours_of_operation = "".join(list(soup3.find_all("div", {"class":"ps-properties-property__info__hours__section col-md-12 col-lg-6"})[0].stripped_strings)) +" "+ "".join(list(soup3.find_all("div", {"class":"ps-properties-property__info__hours__section col-md-12 col-lg-6"})[1].stripped_strings))
+            
             store = []
             store.append(base_url)
             store.append(location_name)
@@ -66,33 +66,26 @@ def fetch_data():
             store.append(city)
             store.append(state)
             store.append(zipp)
-            store.append("US")
-            store.append(store_number) 
-            store.append(phone if "PhoneNumber" in i and i["PhoneNumber"] else "<MISSING>")
+            store.append(country_code)
+            store.append(store_number)
+            store.append(phone )
             store.append("<MISSING>")
             store.append(latitude)
             store.append(longitude)
-            store.append(hours_of_operation if hours_of_operation != "" else "<MISSING>")
+            store.append(hours_of_operation)
             store.append(page_url)
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # print(store)
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            #print("data===="+str(store))
+            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
             yield store
 
-
-        if current_results_len < MAX_RESULTS:
-            # print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
