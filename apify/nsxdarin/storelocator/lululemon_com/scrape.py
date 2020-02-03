@@ -1,9 +1,10 @@
 import csv
 import urllib2
-from sgrequests import SgRequests
+import requests
 
-session = SgRequests()
+requests.packages.urllib3.disable_warnings()
 
+session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -15,23 +16,22 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://info.lululemon.com/stores?mnid=ftr;en-US;store-locator'
+    url = 'https://shop.lululemon.com/stores/all-lululemon-stores'
     locs = []
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
-        if "type: '" in line:
-            stype = line.split("type: '")[1].split("'")[0]
-        if '<h1><a href="https://shop.lululemon.com/stores/ca/' in line or '<h1><a href="https://shop.lululemon.com/stores/us/' in line:
+        if '"" href="https://shop.lululemon.com/stores/' in line:
             lurl = line.split('href="')[1].split('"')[0]
-            locs.append(lurl + '|' + stype)
+            locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
+        print('Pulling Location %s...' % loc)
         website = 'lululemon.com'
-        typ = loc.split('|')[1]
+        typ = '<MISSING>'
         hours = ''
         store = '<MISSING>'
         locurl = loc.split('|')[0]
-        r2 = session.get(locurl, headers=headers)
+        r2 = session.get(locurl, headers=headers, verify=False)
         for line2 in r2.iter_lines():
             if ',"streetAddress":"' in line2:
                 add = line2.split(',"streetAddress":"')[1].split('"')[0]
