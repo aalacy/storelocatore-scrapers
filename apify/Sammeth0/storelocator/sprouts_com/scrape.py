@@ -58,7 +58,6 @@ def fetch_data():
 	for a in range(57,80):
 		pages_url.append(locations[a].get_attribute('href'))
 	
-	print(pages_url)
 	for u in pages_url:
 		driver_page.get(u)
 		time.sleep(5)
@@ -71,8 +70,6 @@ def fetch_data():
 					
 		
 	[res.append(x) for x in urls if x not in res]
-	print(res)
-	print(len(res))
 	for u in res:
 		driver_url.get(u)
 		time.sleep(4)
@@ -89,7 +86,6 @@ def fetch_data():
 			phones.append(driver_url.find_element_by_class_name("store-phone").text)
 		except:
 			phones.append("<MISSING>")
-		print(phones)
 		types.append(driver_url.find_element_by_xpath("/html/body/main/article/div/section[1]/div/div/div[1]/ul").text.replace('\n',' '))
 		lats.append(driver_url.find_element_by_xpath("/html/body/main/article/div/div/div[1]").get_attribute('lat'))	
 		longs.append(driver_url.find_element_by_xpath("/html/body/main/article/div/div/div[1]").get_attribute('lon'))
@@ -97,7 +93,6 @@ def fetch_data():
 			timing.append(driver_url.find_element_by_class_name("store-hours").text)
 		except:
 			timing.append("<MISSING>")
-		print(timing)
 		
 	return_main_object = []	
 	for l in range(len(locs)):
