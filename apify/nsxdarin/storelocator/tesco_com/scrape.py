@@ -14,7 +14,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    for x in range(2000, 8000):
+    for x in range(0, 8000):
         url = 'https://www.tesco.com/store-locator/uk/?bid=' + str(x)
         r = session.get(url, headers=headers)
         Found = True
@@ -33,10 +33,11 @@ def fetch_data():
         lng = ''
         hours = ''
         for line in r.iter_lines():
+            if '<h1 class="store-name"' in line:
+                name = line.split('<h1 class="store-name"')[1].split('aria-label="')[1].split('"')[0]
             if 'find any stores that match your search.' in line:
                 Found = False
             if '"storeDetails":' in line:
-                name = line.split('"name":"')[1].split('"')[0]
                 addinfo = line.split('"address":"')[1].split('"')[0]
                 if addinfo.count(',') == 3:
                     add = addinfo.split(',')[0].strip()
@@ -46,9 +47,16 @@ def fetch_data():
                     add = addinfo.split(',')[0].strip()
                     city = addinfo.split(',')[1].strip()
                     zc = addinfo.split(',')[2].strip()
-                phone = line.split('"tel":"')[1].split('"')[0]
-                lat = line.split('"lat":')[1].split(',')[0]
-                lng = line.split('"lng":')[1].split(',')[0]
+                try:
+                    phone = line.split('"tel":"')[1].split('"')[0]
+                except:
+                    phone = '<MISSING>'
+                try:
+                    lat = line.split('"lat":')[1].split(',')[0]
+                    lng = line.split('"lng":')[1].split(',')[0]
+                except:
+                    lat = '<MISSING>'
+                    lng = '<MISSING>'
                 days = line.split('"openingHours":[')[1].split('}],"exceptions":')[0].split('"timing":"')
                 for day in days:
                     if '"day":"' in day:
