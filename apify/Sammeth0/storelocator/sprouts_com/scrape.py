@@ -78,9 +78,18 @@ def fetch_data():
 			streets.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[2]/a').text.split('\n')[0])
 		except:
 			streets.append("<MISSING>")
-		cities.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[2]/a').text.split('\n')[1].split(',')[0])
-		states.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[2]/a').text.split(',')[-1].split(' ')[1])
-		zips.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[2]/a').text.split(',')[-1].split(' ')[2])
+		try:
+			cities.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[2]/a').text.split('\n')[1].split(',')[0])
+		except:
+			cities.append("<MISSING>")
+		try:
+			states.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[2]/a').text.split(',')[-1].split(' ')[1])
+		except:
+			states.append("<MISSING>")
+		try:
+			zips.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[2]/a').text.split(',')[-1].split(' ')[2])
+		except:
+			zips.append("<MISSING>")
 		try:
 			ids.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[1]').text.split('#')[1])
 		except:
