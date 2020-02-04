@@ -17,7 +17,7 @@ def get_driver():
 	return webdriver.Chrome('chromedriver', options=options)
 
 def write_output(data):
-    with open('data2.csv', mode='w') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
