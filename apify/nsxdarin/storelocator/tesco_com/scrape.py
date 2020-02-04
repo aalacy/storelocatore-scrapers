@@ -15,7 +15,6 @@ def write_output(data):
 
 def fetch_data():
     for x in range(2000, 8000):
-        print(x)
         url = 'https://www.tesco.com/store-locator/uk/?bid=' + str(x)
         r = session.get(url, headers=headers)
         Found = True
