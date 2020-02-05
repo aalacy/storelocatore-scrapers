@@ -66,8 +66,14 @@ def fetch_data():
                 zip = address[-1].strip().split(' ')[1]
                 phone = contact_url_soup.select(
                     '.row-1')[0].findAll('p')[-3].get_text()[7:]
-                hours_of_operation = contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').get_text() + ", " + contact_url_soup.select('.content')[1].find('h2').find_next(
-                    'p').find_next('p').find_next('p').get_text() + ", " + contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').get_text()
+                hours_of_operation = contact_url_soup.select('.content')[1].find('h2').find_next('p').get_text()+" , "+contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').get_text()+" , "+ contact_url_soup.select('.content')[1] \
+                .find('h2').find_next('p').find_next('p').find_next('p').get_text()+" , "+contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').get_text() \
+                +" , "+contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text()   \
+                +" , "+contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text() \
+                +" , "+contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text()
+                print(hours_of_operation)
+                # .find_next('p').find_next('p').get_text() + ", " + contact_url_soup.select('.content')[1].find('h2').find_next(
+                #     'p').find_next('p').find_next('p').get_text() + ", " + contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').get_text()
             
             elif "facelogicsc" in links.get('href'):
                 
