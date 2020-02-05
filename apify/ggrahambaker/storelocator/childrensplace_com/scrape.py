@@ -115,8 +115,15 @@ def fetch_data():
     all_store_data = []
 
     
-    for link in link_list:
-        r = session.get(link[0], headers = HEADERS)
+    for i, link in enumerate(link_list):
+
+        try:
+            r = session.get(link[0], headers = HEADERS)
+        except:
+            time.sleep(10)
+            r = session.get(link[0], headers = HEADERS)
+
+
         soup = BeautifulSoup(r.content, 'html.parser')
         location_name = soup.find('h2', {'itemprop': 'name'}).text
         
@@ -153,8 +160,7 @@ def fetch_data():
 
         location_type = '<MISSING>'
         page_url = link[0]
-        print(page_url)
-        
+      
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)

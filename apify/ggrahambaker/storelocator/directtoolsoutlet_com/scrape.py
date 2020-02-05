@@ -21,6 +21,7 @@ def fetch_data():
     all_store_data = []
     for i in range(0, 10):
         url = locator_domain + ext + str(i) + ext2
+     
 
         page = requests.get(url)
         assert page.status_code == 200
@@ -28,6 +29,8 @@ def fetch_data():
         if '</html>' in str(page.content):
             break
         locs = json.loads(page.content)['data']
+  
+        
         
         for loc in locs:
             location_name = loc['displayName']
@@ -36,15 +39,29 @@ def fetch_data():
             if loc['line2'] is not None:
                 street_address += ' ' + loc['line2']
             
-            city = loc['town']
+            city = loc['town'].split(',')[0]
+            if 'KY' in loc['town']:
+                state = 'KY'
+            else:
+                state = loc['region']
+
+
+                state = 'KY'
             zip_code = loc['postalCode']
             lat = loc['latitude']
             longit = loc['longitude']
-            state = loc['region']
             
-            hours = '<MISSING>'
+            
+            hours = ''
 
-            
+            store_hours = loc['openings']
+            for day, hours in store_hours.items():
+        
+                hours += day + ' ' + hours + ' '
+
+            if hours == '':
+                hours = '<MISSING>'
+            hours = hours.strip()
             country_code = 'US'
 
             location_type = '<MISSING>'
@@ -54,6 +71,7 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                             store_number, phone_number, location_type, lat, longit, hours, page_url]
             all_store_data.append(store_data)
+        
 
 
 
