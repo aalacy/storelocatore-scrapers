@@ -45,7 +45,7 @@ def fetch_data():
             us_zip_list = re.findall(re.compile(r"\b[0-9]{5}\b"), data)
             state_list = re.findall(r', ([A-Z]{2})', data)
             state = state_list[-1]
-            phone = phone_list[-1]
+            phone = phone_list[0]
             if us_zip_list:
                 zipp = us_zip_list[-1]
                 country_code = "US"

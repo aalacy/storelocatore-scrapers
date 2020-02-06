@@ -39,14 +39,12 @@ def fetch_data():
             hours_of_operation = (" ".join(list(link3.stripped_strings)).replace("Christmas Opening Hours",""))
             link4 = soup2.find("h3",{"class":"t-heading-delta"})
             location_name = ("".join(list(link4.stripped_strings)))
-            link5 = soup2.find("h4",{"class":"t-heading-epsilon"}).find_next_siblings('span')[-1]
-            phone = (link5.text.strip())
-            if soup2.find("iframe") != None:
-                longitude = (soup2.find("iframe")["src"].split('!2d')[1].split('!3d')[0])
-                latitude = (soup2.find("iframe")["src"].split('!3d')[1]).split('!2m3!')[0].replace("!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487604ad58629689%3A0x3ba11f99a698ecc2!2sCoco+di+Mama+-+Italian+to+Go+-+Fleet+St!5e0!3m2!1sen!2suk!4v1544788455150","")
-            else:
-                longitude = ("<MISSING>")
-                latitude = ("<MISSING>")
+            # link5 = soup2.find("h4",{"class":"t-heading-epsilon"}).find_next_siblings('span')[-1]
+            try:
+                link5 = soup2.find("h4",{"class":"t-heading-epsilon"}).find_next_siblings('span')[-1]
+                phone = (link5.text.strip())
+            except:
+                phone = "<MISSING>"
             store = []
             store.append("https://www.cocodimama.co.uk/")
             store.append(location_name)
@@ -58,8 +56,8 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(phone)
             store.append("<MISSING>")
-            store.append(latitude)
-            store.append(longitude)
+            store.append("<MISSING>")
+            store.append("<MISSING>")
             store.append(hours_of_operation)
             store.append(k)  
             yield store
