@@ -1,6 +1,7 @@
 import csv
 import urllib2
 import requests
+import time
 
 requests.packages.urllib3.disable_warnings()
 
@@ -25,7 +26,7 @@ def fetch_data():
             locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        time.sleep(2)
         website = 'lululemon.com'
         typ = '<MISSING>'
         hours = ''
