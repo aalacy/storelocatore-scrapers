@@ -47,31 +47,35 @@ def fetch_data():
         lng = ''
         r2 = session.get(lurl, headers=headers)
         for line2 in r2.iter_lines():
-            store = line2.split('"id":"')[1].split('"')[0]
-            name = line2.split(',"name":"')[1].split('"')[0]
-            typ = line2.split('"type":"')[1].split('"')[0]
-            phone = line2.split('"telephone":"')[1].split('"')[0]
-            loc = line2.split('"url":"')[1].split('"')[0]
-            state = line2.split('"addressRegion":"')[1].split('"')[0]
-            zc = line2.split('"postalCode":"')[1].split('"')[0]
-            add = line2.split('"streetAddress":"')[1].split('"')[0]
-            city = line2.split('"addressLocality":"')[1].split('"')[0]
-            lat = line2.split('"latitude":')[1].split(',')[0]
-            lng = line2.split('"longitude":')[1].split(',')[0]
-            country = 'US'
-            hours = 'Mon: ' + line2.split('"day":"Monday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Monday","')[1].split('"closes":"')[1].split('"')[0]
-            hours = hours + '; ' + 'Tue: ' + line2.split('"day":"Tuesday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Tuesday","')[1].split('"closes":"')[1].split('"')[0]
-            hours = hours + '; ' + 'Wed: ' + line2.split('"day":"Wednesday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Wednesday","')[1].split('"closes":"')[1].split('"')[0]
-            hours = hours + '; ' + 'Thu: ' + line2.split('"day":"Thursday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Thursday","')[1].split('"closes":"')[1].split('"')[0]
-            hours = hours + '; ' + 'Fri: ' + line2.split('"day":"Friday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Friday","')[1].split('"closes":"')[1].split('"')[0]
-            hours = hours + '; ' + 'Sat: ' + line2.split('"day":"Saturday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Saturday","')[1].split('"closes":"')[1].split('"')[0]
             try:
-                hours = hours + '; ' + 'Sun: ' + line2.split('"day":"Sunday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Sunday","')[1].split('"closes":"')[1].split('"')[0]
+                store = line2.split('"id":"')[1].split('"')[0]
+                name = line2.split(',"name":"')[1].split('"')[0]
+                typ = line2.split('"type":"')[1].split('"')[0]
+                phone = line2.split('"telephone":"')[1].split('"')[0]
+                loc = line2.split('"url":"')[1].split('"')[0]
+                state = line2.split('"addressRegion":"')[1].split('"')[0]
+                zc = line2.split('"postalCode":"')[1].split('"')[0]
+                add = line2.split('"streetAddress":"')[1].split('"')[0]
+                city = line2.split('"addressLocality":"')[1].split('"')[0]
+                lat = line2.split('"latitude":')[1].split(',')[0]
+                lng = line2.split('"longitude":')[1].split(',')[0]
+                country = 'US'
+                hours = 'Mon: ' + line2.split('"day":"Monday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Monday","')[1].split('"closes":"')[1].split('"')[0]
+                hours = hours + '; ' + 'Tue: ' + line2.split('"day":"Tuesday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Tuesday","')[1].split('"closes":"')[1].split('"')[0]
+                hours = hours + '; ' + 'Wed: ' + line2.split('"day":"Wednesday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Wednesday","')[1].split('"closes":"')[1].split('"')[0]
+                hours = hours + '; ' + 'Thu: ' + line2.split('"day":"Thursday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Thursday","')[1].split('"closes":"')[1].split('"')[0]
+                hours = hours + '; ' + 'Fri: ' + line2.split('"day":"Friday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Friday","')[1].split('"closes":"')[1].split('"')[0]
+                hours = hours + '; ' + 'Sat: ' + line2.split('"day":"Saturday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Saturday","')[1].split('"closes":"')[1].split('"')[0]
+                try:
+                    hours = hours + '; ' + 'Sun: ' + line2.split('"day":"Sunday",')[1].split('"opens":"')[1].split('"')[0] + '-' + line2.split('"day":"Sunday","')[1].split('"closes":"')[1].split('"')[0]
+                except:
+                    hours = hours + '; Sun: Closed'
             except:
-                hours = hours + '; Sun: Closed'
+                store = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if store != '<MISSING>':
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
