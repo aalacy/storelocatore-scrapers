@@ -55,7 +55,7 @@ def fetch_data():
 
     for sl in sls:
         url = "https://www.lifestorage.com"+sl.get('href')
-        print(url)
+        #print(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         sa = soup.find_all('a', {'class': 'btn store'})
