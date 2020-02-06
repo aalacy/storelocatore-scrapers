@@ -39,15 +39,35 @@ def fetch_data():
         name = item['name']
         try:
             hours = 'Mon: ' + item['open']['mo'][0] + '-' + item['open']['mo'][1]
-            hours = hours + ';Tue: ' + item['open']['tu'][0] + '-' + item['open']['tu'][1]
-            hours = hours + ';Wed: ' + item['open']['we'][0] + '-' + item['open']['we'][1]
-            hours = hours + ';Thu: ' + item['open']['th'][0] + '-' + item['open']['th'][1]
-            hours = hours + ';Fri: ' + item['open']['fr'][0] + '-' + item['open']['fr'][1]
-            hours = hours + ';Sat: ' + item['open']['sa'][0] + '-' + item['open']['sa'][1]
-            hours = hours + ';Sun: ' + item['open']['su'][0] + '-' + item['open']['su'][1]
         except:
-            hours = '<MISSING>'
+            hours = 'Mon: Closed'
+        try:
+            hours = hours + '; Tue: ' + item['open']['tu'][0] + '-' + item['open']['tu'][1]
+        except:
+            hours = hours + '; Tue: Closed'
+        try:
+            hours = hours + '; Wed: ' + item['open']['we'][0] + '-' + item['open']['we'][1]
+        except:
+            hours = hours + '; Wed: Closed'
+        try:
+            hours = hours + '; Thu: ' + item['open']['th'][0] + '-' + item['open']['th'][1]
+        except:
+            hours = hours + '; Thu: Closed'
+        try:
+            hours = hours + '; Fri: ' + item['open']['fr'][0] + '-' + item['open']['fr'][1]
+        except:
+            hours = hours + '; Fri: Closed'
+        try:
+            hours = hours + '; Sat: ' + item['open']['sa'][0] + '-' + item['open']['sa'][1]
+        except:
+            hours = hours + '; Sat: Closed'
+        try:
+            hours = hours + '; Sun: ' + item['open']['su'][0] + '-' + item['open']['su'][1]
+        except:
+            hours = hours + '; Sun: Closed'
         state = state.replace(',','').strip()
+        if hours == 'Mon: Closed; Tue: Closed; Wed: Closed; Thu: Closed; Fri: Closed; Sat: Closed; Sun: Closed':
+            hours = '<MISSING>'
         yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
     url = 'https://www.thebodyshop.com/en-us/store-finder/search?country=US'
@@ -78,18 +98,38 @@ def fetch_data():
         name = item['name']
         try:
             hours = 'Mon: ' + item['open']['mo'][0] + '-' + item['open']['mo'][1]
-            hours = hours + ';Tue: ' + item['open']['tu'][0] + '-' + item['open']['tu'][1]
-            hours = hours + ';Wed: ' + item['open']['we'][0] + '-' + item['open']['we'][1]
-            hours = hours + ';Thu: ' + item['open']['th'][0] + '-' + item['open']['th'][1]
-            hours = hours + ';Fri: ' + item['open']['fr'][0] + '-' + item['open']['fr'][1]
-            hours = hours + ';Sat: ' + item['open']['sa'][0] + '-' + item['open']['sa'][1]
-            hours = hours + ';Sun: ' + item['open']['su'][0] + '-' + item['open']['su'][1]
         except:
-            hours = '<MISSING>'
+            hours = 'Mon: Closed'
+        try:
+            hours = hours + '; Tue: ' + item['open']['tu'][0] + '-' + item['open']['tu'][1]
+        except:
+            hours = hours + '; Tue: Closed'
+        try:
+            hours = hours + '; Wed: ' + item['open']['we'][0] + '-' + item['open']['we'][1]
+        except:
+            hours = hours + '; Wed: Closed'
+        try:
+            hours = hours + '; Thu: ' + item['open']['th'][0] + '-' + item['open']['th'][1]
+        except:
+            hours = hours + '; Thu: Closed'
+        try:
+            hours = hours + '; Fri: ' + item['open']['fr'][0] + '-' + item['open']['fr'][1]
+        except:
+            hours = hours + '; Fri: Closed'
+        try:
+            hours = hours + '; Sat: ' + item['open']['sa'][0] + '-' + item['open']['sa'][1]
+        except:
+            hours = hours + '; Sat: Closed'
+        try:
+            hours = hours + '; Sun: ' + item['open']['su'][0] + '-' + item['open']['su'][1]
+        except:
+            hours = hours + '; Sun: Closed'
         try:
             state = state.replace(',','').strip()
         except:
             state = '<MISSING>'
+        if hours == 'Mon: Closed; Tue: Closed; Wed: Closed; Thu: Closed; Fri: Closed; Sat: Closed; Sun: Closed':
+            hours = '<MISSING>'
         yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 def scrape():
     data = fetch_data()
