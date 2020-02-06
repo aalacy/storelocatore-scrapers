@@ -160,6 +160,7 @@ def fetch_data():
 
         location_type = '<MISSING>'
         page_url = link[0]
+        print(page_url)
       
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]

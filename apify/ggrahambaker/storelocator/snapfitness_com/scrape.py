@@ -88,7 +88,6 @@ def fetch_data():
 
 
 
-        print(len(link_list))
         for i, link in enumerate(link_list):
             
             driver.get(link)
