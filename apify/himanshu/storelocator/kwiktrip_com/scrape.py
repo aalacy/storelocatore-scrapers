@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
+import xmltodict
 import urllib3
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
@@ -13,27 +14,6 @@ import platform
 system = platform.system()
 
 urllib3.disable_warnings()
-
-
-# def get_driver():
-#     options = Options()
-#     # options.add_argument('--headless')
-#     options.add_argument('--no-sandbox')
-#     options.add_argument('--disable-dev-shm-usage')
-#     options.add_argument('--window-size=1920,1080')
-#     return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
-
-
-# headers = {
-#     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-#     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-#     }
-# base_url = "https://www.signaturestyle.com"
-# r = requests.get("https://kwiktrip.com/Maps-Downloads/Store-List")
-# soup = BeautifulSoup(r.text, "lxml" , verify=False)
-# print(soup)
-                
-
 
 
 
@@ -68,13 +48,23 @@ def fetch_data():
     driver = get_driver()
     driver.get("https://kwiktrip.com/Maps-Downloads/Store-List")
     locator_domain = "https://kwiktrip.com"
-    
+    hours_of_operation ="<MISSING>"
     # print(soup.find_all("table",{"id":"tablepress-4"}))
     while True:
         soup = BeautifulSoup(driver.page_source,"lxml")
         for data in soup.find_all("tbody",{"class":"row-hover"}):
             for tr in data.find_all("tr"):
                 store_number = list(tr.stripped_strings)[0]
+                driver.get("https://www.kwiktrip.com/locator/store?id="+str(store_number))
+                page_url = "https://www.kwiktrip.com/locator/store?id="+str(store_number)
+                # html = requests.get(page_url)
+                soup1 = BeautifulSoup(driver.page_source,"lxml")
+
+                try:
+                    hours_of_operation =  " ".join(list(soup1.find("div",{"class":"Store__dailyHours"}).stripped_strings))
+                except:
+                    hours_of_operation = " ".join(list(soup1.find("div",{"class":"Store__open24Hours"}).stripped_strings))
+                # print(" ".join(list(soup1.find("div",{"class":"Store__open24Hours"}).stripped_strings)))
                 location_name = list(tr.stripped_strings)[1]
                 street_address = list(tr.stripped_strings)[2]
                 city = list(tr.stripped_strings)[3]
@@ -83,17 +73,22 @@ def fetch_data():
                 phone = list(tr.stripped_strings)[6]
                 latitude = list(tr.stripped_strings)[7]
                 longitude = list(tr.stripped_strings)[8]
-                page_url ="<MISSING>"
+                # page_url ="<MISSING>"
                 location_type = "<MISSING>"
                 country_code = "US"
-                hours_of_operation = "<MISSING>"
                 store =[]
+                if hours_of_operation.strip():
+                    hours_of_operation1= hours_of_operation
+                else:
+                    hours_of_operation1 = "<MISSING>"
+
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                             store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+                             store_number, phone, location_type, latitude, longitude, hours_of_operation1, page_url]
 
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
+                #print("~~~~~~~~~~~~~~~~~~~~~~  ",store)
                 yield store
                 # print(list(tr.stripped_strings))
 

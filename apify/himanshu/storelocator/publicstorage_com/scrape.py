@@ -51,13 +51,19 @@ def fetch_data():
             zipp = json_data[0]['address']['postalCode']
 
             store_number = page_url.split("/")[-1]
-            
-            phone = json_data[0]['telephone']
+
+            if "telephone" in json_data[0]:
+                phone = json_data[0]['telephone']
+            else:
+                phone = "<MISSING>"
             latitude = json_data[0]['geo']['latitude']
             longitude = json_data[0]['geo']['longitude']
             country_code = "US"
 
-            hours_of_operation = "".join(list(soup3.find_all("div", {"class":"ps-properties-property__info__hours__section col-md-12 col-lg-6"})[0].stripped_strings)) +" "+ "".join(list(soup3.find_all("div", {"class":"ps-properties-property__info__hours__section col-md-12 col-lg-6"})[1].stripped_strings))
+            if soup3.find_all("div", {"class":"ps-properties-property__info__hours__section col-md-12 col-lg-6"}):
+                hours_of_operation = "".join(list(soup3.find_all("div", {"class":"ps-properties-property__info__hours__section col-md-12 col-lg-6"})[0].stripped_strings)) +" "+ "".join(list(soup3.find_all("div", {"class":"ps-properties-property__info__hours__section col-md-12 col-lg-6"})[1].stripped_strings))
+            else:
+                hours_of_operation = "<MISSING>"
             
             store = []
             store.append(base_url)
@@ -78,8 +84,8 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-            #print("data===="+str(store))
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            # print("data===="+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
             yield store
 
 

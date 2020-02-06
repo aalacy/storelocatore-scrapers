@@ -60,7 +60,7 @@ def fetch_data():
         hours_of_operation = ""
         if current_results_len > 0:
             for location in json_data["d"]:
-                #print(location)
+                # print(location)
                 street_address = location["AddressOne"] + " " + location["AddressTwo"]
                 city = location["City"]
                 zipp = location["ZipCode"]
@@ -69,10 +69,8 @@ def fetch_data():
                 phone = location["PhoneOne"]
                 longitude = location["Longitude"]
                 latitude = location["Latitude"]
-                if 'CompanyName' in location:
-                    location_name = location["CompanyName"]
-                else:
-                    location_name = "Dead River Company"
+                location_name = (str(city)+" , "+str(state))
+                # print(location_name)
                 page_url = "<MISSING>"
                 result_coords.append((latitude, longitude))
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,

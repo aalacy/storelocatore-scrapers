@@ -18,7 +18,8 @@ def write_output(data):
 
 
 def fetch_data():
-
+    addresses =[]
+    addresses1 =[]
     #### US location
     base_url = "https://sbarro.com"
     r = requests.get("https://sbarro.com/comment-card/")
@@ -55,21 +56,24 @@ def fetch_data():
 
             store = []
             store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp if zipp else "<MISSING>")
-            store.append(country_code)
+            store.append(location_name if location_name else "<MISSING")
+            store.append(street_address if street_address else "<MISSING")
+            store.append(city if city else "<MISSING")
+            store.append(state if state else "<MISSING")
+            store.append(zipp if zipp else "<MISSING")
+            store.append(country_code if country_code else "<MISSING")
             store.append("<MISSING>") 
-            store.append(phone)
-            store.append(location_type)
+            store.append(phone if phone else "<MISSING") 
+            store.append(location_type if location_type else "<MISSING")
             store.append(latitude[index])
             store.append(longitude[index])
-            store.append(hours_of_operation)
+            store.append(hours_of_operation.replace("Hours of Operation","") if hours_of_operation.replace("Hours of Operation","") else "<MISSING")
             store.append(page_url)
-           # print("data===="+str(store))
-           #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            if store[2] in addresses:
+                    continue
+            addresses.append(store[2])
+            # print("data===="+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
             yield store
 
@@ -102,21 +106,25 @@ def fetch_data():
 
             store = []
             store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
-            store.append(country_code)
+            store.append(location_name if location_name else "<MISSING")
+            store.append(street_address if street_address else "<MISSING")
+            store.append(city if city else "<MISSING")
+            store.append(state if state else "<MISSING")
+            store.append(zipp if zipp else "<MISSING")
+            store.append(country_code if country_code else "<MISSING")
             store.append("<MISSING>") 
-            store.append(phone)
-            store.append(location_type)
+            store.append(phone if phone else "<MISSING") 
+            store.append(location_type if location_type else "<MISSING")
             store.append(latitude[index])
             store.append(longitude[index])
-            store.append(hours_of_operation)
+            store.append(hours_of_operation.replace("Hours of Operation","") if hours_of_operation.replace("Hours of Operation","") else "<MISSING")
             store.append(page_url)
-            #print("data===="+str(store))
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+
+            if store[2] in addresses1:
+                    continue
+            addresses1.append(store[2])
+            # print("data===="+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
             yield store
 

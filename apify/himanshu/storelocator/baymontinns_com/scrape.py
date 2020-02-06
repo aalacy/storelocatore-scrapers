@@ -47,6 +47,10 @@ def fetch_data():
                             location_name = (h['name'])
                         else:
                             location_name = "<MISSING>"
+                        if "Baymont " in location_name:
+                            location_name = location_name
+                        else:
+                            continue
                         if "address" in h:
                             if "streetAddress" in h['address']:
                                 street_address = h['address']["streetAddress"]
@@ -105,14 +109,9 @@ def fetch_data():
                         else:
                             longitude = "<MISSING>"
 
-                        if "telephone" in h:
-                            phone = h['telephone']
-                        else:
-                            phone = "<MISSING>"
-
                         # latitude = h['geo']["latitude"]
                         # longitude = h['geo']["longitude"]
-                                      
+                        phone = h['telephone']              
                         store = []
                         store.append("https://www.baymontinns.com")
                         store.append(location_name if location_name else "<MISSING>") 
