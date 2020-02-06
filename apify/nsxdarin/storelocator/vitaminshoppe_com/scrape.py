@@ -85,7 +85,7 @@ def fetch_data():
                     if typ == '':
                         typ = '<MISSING>'
                     addinfo = add + city + state
-                    if addinfo not in addinfos:
+                    if addinfo not in addinfos and lat != '':
                         addinfos.append(addinfo)
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             except:
