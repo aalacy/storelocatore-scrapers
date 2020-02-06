@@ -14,7 +14,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    for x in range(2000, 8000):
+    for x in range(1999, 8000):
         url = 'https://www.tesco.com/store-locator/uk/?bid=' + str(x)
         r = session.get(url, headers=headers)
         Found = True
@@ -39,8 +39,12 @@ def fetch_data():
                 Found = False
             if '"storeDetails":' in line:
                 addinfo = line.split('"address":"')[1].split('"')[0]
-                if addinfo.count(',') == 3:
-                    add = addinfo.split(',')[0].strip()
+                if addinfo.count(',') == 4:
+                    add = addinfo.split(',')[0].strip() + ' ' + addinfo.split(',')[1].strip() + ' ' + addinfo.split(',')[2].strip()
+                    city = addinfo.split(',')[3].strip()
+                    zc = addinfo.split(',')[4].strip()
+                elif addinfo.count(',') == 3:
+                    add = addinfo.split(',')[0].strip() + ' ' + addinfo.split(',')[1].strip()
                     city = addinfo.split(',')[2].strip()
                     zc = addinfo.split(',')[3].strip()
                 else:
@@ -69,7 +73,7 @@ def fetch_data():
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
-        if Found:
+        if Found and name != '':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
