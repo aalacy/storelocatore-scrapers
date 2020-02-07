@@ -83,18 +83,21 @@ def fetch_data():
             
         
                 
-            lat = soup.find('meta', {'itemprop': 'latitude'})
-            longit = soup.find('meta', {'itemprop': 'longitude'})
-            if 'content' in lat:
-                lat = lat['content']
-            else:
+            lat_tag = soup.find('meta', {'itemprop': 'latitude'})
+            longit_tag = soup.find('meta', {'itemprop': 'longitude'})
+
+
+            try:
+                lat = lat_tag['content']
+            except:
                 lat = '<MISSING>'
-            if 'content' in longit:
-                longit = longit['content']
-            else:
+
+            try:
+                longit = longit_tag['content']
+            except:
                 longit = '<MISSING>'
-            
-            
+
+
             country_code = 'US'
             store_number = '<MISSING>'
             location_type = '<MISSING>'

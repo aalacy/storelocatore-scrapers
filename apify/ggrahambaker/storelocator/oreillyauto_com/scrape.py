@@ -65,7 +65,6 @@ def fetch_data():
                 
                 if len(loc_jsons) > 1:
                     continue
-                print(loc_jsons)
                 loc_info = json.loads(loc_jsons[0].text)[0]
 
 

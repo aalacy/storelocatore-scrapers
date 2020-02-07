@@ -44,8 +44,11 @@ def fetch_data():
     locs = main.find_elements_by_css_selector('tr.wsite-multicol-tr')
     loc_list = []
     for loc in locs:
+        
         cont = loc.text.split('\n')
-
+        print(cont)
+        print()
+        print()
         if 'We have Pie Kitchen locations to serve you in Louisville' in cont[0]:
             continue
 
@@ -53,6 +56,8 @@ def fetch_data():
             continue
 
         row = loc.find_elements_by_css_selector('tbody.wsite-multicol-tbody')
+
+        print(len(row))
 
         if len(row) == 2:
             for r in row:

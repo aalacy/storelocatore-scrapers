@@ -27,6 +27,12 @@ def fetch_data():
         locs = json.loads(r.content)['features']
         for loc in locs:
 
+            #print(loc)
+
+            print()
+            print()
+            print()
+
             
             props = loc['properties']
             zip_code = props['zip']
@@ -58,7 +64,8 @@ def fetch_data():
 
 
 
-            page_url = '<MISSING>'
+            page_url = 'https://world.maxmara.com/store/' + str(props['name'])
+            print(page_url)
             location_type = '<MISSING>'
             store_number = '<MISSING>'
 
