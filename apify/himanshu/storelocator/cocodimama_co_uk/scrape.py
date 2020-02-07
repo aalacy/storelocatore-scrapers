@@ -39,7 +39,16 @@ def fetch_data():
             hours_of_operation = (" ".join(list(link3.stripped_strings)).replace("Christmas Opening Hours",""))
             link4 = soup2.find("h3",{"class":"t-heading-delta"})
             location_name = ("".join(list(link4.stripped_strings)))
-            # link5 = soup2.find("h4",{"class":"t-heading-epsilon"}).find_next_siblings('span')[-1]
+            try:
+                k8 = soup2.find("iframe")
+                longitude = (k8['src'].split("!2d")[1].split("!3d")[0])
+            except:
+                longitude  = "<MISSING>"
+            try:
+                k8 = soup2.find("iframe")
+                latitude = (k8['src'].split("!3d")[1].split("!2m")[0].split("!3m2!1i")[0])
+            except:
+                latitude  = "<MISSING>" 
             try:
                 link5 = soup2.find("h4",{"class":"t-heading-epsilon"}).find_next_siblings('span')[-1]
                 phone = (link5.text.strip())
@@ -47,19 +56,19 @@ def fetch_data():
                 phone = "<MISSING>"
             store = []
             store.append("https://www.cocodimama.co.uk/")
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
+            store.append(location_name if location_name else "<MISSING>" )
+            store.append(street_address if street_address else "<MISSING>")
+            store.append(city if city else "<MISSING>")
             store.append("<MISSING>")
-            store.append(zipp)   
+            store.append(zipp if zipp else "<MISSING>")   
             store.append("UK")
             store.append("<MISSING>")
-            store.append(phone)
+            store.append(phone if phone else "<MISSING>")
             store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append(hours_of_operation)
-            store.append(k)  
+            store.append(latitude if latitude else "<MISSING>")
+            store.append(longitude if longitude else "<MISSING>")
+            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+            store.append(k if k else "<MISSING>" )  
             yield store
 def scrape():
     data = fetch_data()

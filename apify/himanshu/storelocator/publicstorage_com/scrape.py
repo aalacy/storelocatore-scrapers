@@ -34,6 +34,7 @@ def fetch_data():
         links = soup1.find_all("a", {"class":"base-link"})
         for link in links:
             page_url = base_url+link['href']
+            print(page_url)
             r3 = requests.get(page_url, headers=headers)
             soup3 = BeautifulSoup(r3.text, "lxml")
 

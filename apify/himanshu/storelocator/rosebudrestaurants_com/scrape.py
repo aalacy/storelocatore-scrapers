@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
+import unicodedata
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -56,6 +57,14 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(hours_of_operation if hours_of_operation else "<MISSING>")
         store.append(link)
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                    store[i] = ''.join((c for c in unicodedata.normalize(
+                        'NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            store = [x.replace("–", "-") if type(x) ==
+                     str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode(
+                'ascii').strip() if type(x) == str else x for x in store]
         yield store
 
 def scrape():

@@ -6,6 +6,10 @@ import json
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        # with open('ListingsPull-Amsterdam.csv', mode='a') as fd:
+        #     writer = csv.writer(fd)
+        #     rest_array = [text.encode("utf8") for text in rest_array]
+        #     writer.writerow(rest_array)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
@@ -32,6 +36,9 @@ def fetch_data():
             if c != [] and c != None:
                 for k in c:
                     y = (k.find("a")['href'])
+                    # print(y)
+                    store_number = y.split("-")[1].split(".s")[0]
+                    # print(store_number)
                     try:
                         r3 = requests.get(y,headers=headers)
                     except:
@@ -47,7 +54,8 @@ def fetch_data():
                             longitude = l['geo']['longitude']
                             hours_of_operation = l['openingHours'].replace("24:00","12:00").replace("23:00","11:00").replace("22:00","10:00") \
                             .replace("21:00","9:00").replace("20:00","8:00").replace("19:00","7:00").replace("18:00","6:00").replace("17:00","5:00") \
-                            .replace("16:00","4:00").replace("13:00","1:00").replace("14:00","2:00").replace("15:00","3:00")
+                            .replace("16:00","4:00").replace("13:00","1:00").replace("14:00","2:00").replace("15:00","3:00") \
+                            .replace("Su","Sun").replace("Mo","Mon").replace("Tu","Tue").replace("We","Wed").replace("Th","Thu").replace("Fr","Fri" ).replace("Sa","Sat")
                             phone = l['address']['telephone']
                             street_address = l['address']['streetAddress']
                             city = l['address']['addressLocality']
@@ -59,7 +67,8 @@ def fetch_data():
                         longitude = json_data['geo']['longitude']
                         hours_of_operation = json_data['openingHours'].replace("24:00","12:00").replace("23:00","11:00").replace("22:00","10:00").replace("21:00","9:00")\
                         .replace("20:00","8:00").replace("19:00","7:00").replace("18:00","6:00").replace("17:00","5:00").replace("16:00","4:00").replace("13:00","1:00") \
-                        .replace("14:00","2:00").replace("15:00","3:00")
+                        .replace("14:00","2:00").replace("15:00","3:00") \
+                        .replace("Su","Sun").replace("Mo","Mon").replace("Tu","Tue").replace("We","Wed").replace("Th","Thu").replace("Fr","Fri" ).replace("Sa","Sat")
                         phone = json_data['address']['telephone']
                         street_address = json_data['address']['streetAddress']
                         city = json_data['address']['addressLocality']
@@ -73,7 +82,7 @@ def fetch_data():
                     store.append(state)
                     store.append(zip1)   
                     store.append("US")
-                    store.append("<MISSING>")
+                    store.append( store_number if store_number else"<MISSING>")
                     store.append(phone)
                     store.append("<MISSING>")
                     store.append(latitude)
@@ -98,12 +107,14 @@ def fetch_data():
             longitude2 = l2['geo']['longitude']
             hours_of_operation2 = l2['openingHours'].replace("24:00","12:00").replace("23:00","11:00").replace("22:00","10:00") \
             .replace("21:00","9:00").replace("20:00","8:00").replace("19:00","7:00").replace("18:00","6:00").replace("17:00","5:00") \
-            .replace("16:00","4:00").replace("13:00","1:00").replace("14:00","2:00").replace("15:00","3:00")
+            .replace("16:00","4:00").replace("13:00","1:00").replace("14:00","2:00").replace("15:00","3:00") \
+            .replace("Su","Sun").replace("Mo","Mon").replace("Tu","Tue").replace("We","Wed").replace("Th","Thu").replace("Fr","Fri" ).replace("Sa","Sat")
             phone2 = l2['address']['telephone']
             street_address2 = l2['address']['streetAddress']
             city2 = l2['address']['addressLocality']
             state2 = l2['address']['addressRegion']
             zip3 = l2['address']['postalCode']
+            store_number2 = y.split("-")[1].split(".s")[0]
             # print(l)
             store2 = []
             store2.append("https://www.kohls.com/")
@@ -113,7 +124,7 @@ def fetch_data():
             store2.append(state2)
             store2.append(zip3)   
             store2.append("US")
-            store2.append("<MISSING>")
+            store2.append(store_number2 if store_number2 else"<MISSING>")
             store2.append(phone2)
             store2.append("<MISSING>")
             store2.append(latitude2)
@@ -138,12 +149,14 @@ def fetch_data():
             longitude1 = l1['geo']['longitude']
             hours_of_operation1 = l1['openingHours'].replace("24:00","12:00").replace("23:00","11:00").replace("22:00","10:00") \
             .replace("21:00","9:00").replace("20:00","8:00").replace("19:00","7:00").replace("18:00","6:00").replace("17:00","5:00") \
-            .replace("16:00","4:00").replace("13:00","1:00").replace("14:00","2:00").replace("15:00","3:00")
+            .replace("16:00","4:00").replace("13:00","1:00").replace("14:00","2:00").replace("15:00","3:00") \
+            .replace("Su","Sun").replace("Mo","Mon").replace("Tu","Tue").replace("We","Wed").replace("Th","Thu").replace("Fr","Fri" ).replace("Sa","Sat")
             phone1 = l1['address']['telephone']
             street_address1 = l1['address']['streetAddress']
             city1 = l1['address']['addressLocality']
             state1 = l1['address']['addressRegion']
             zip2 = l1['address']['postalCode']
+            store_number1 = y.split("-")[1].split(".s")[0]
             # print(l)
             store1 = []
             store1.append("https://www.kohls.com/")
@@ -153,7 +166,7 @@ def fetch_data():
             store1.append(state1)
             store1.append(zip2)   
             store1.append("US")
-            store1.append("<MISSING>")
+            store1.append(store_number1 if store_number1 else"<MISSING>")
             store1.append(phone1)
             store1.append("<MISSING>")
             store1.append(latitude1)
