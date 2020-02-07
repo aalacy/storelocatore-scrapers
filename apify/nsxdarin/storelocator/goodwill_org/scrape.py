@@ -17,7 +17,6 @@ def fetch_data():
     locs = []
     for x in range(0, 6000):
         url = 'https://www.goodwill.org/location/?store=' + str(x)
-        #print(str(x))
         Found = False
         website = 'goodwill.org'
         typ = '<MISSING>'
@@ -36,6 +35,12 @@ def fetch_data():
         lines = r.iter_lines()
         loc = url
         for line in lines:
+            if "<hr><div class='" in line:
+                tp = line.split("<hr><div class='")[1].split('>')[1].split('<')[0]
+                if typ == '<MISSING>':
+                    typ = tp
+                else:
+                    typ = typ + '; ' + tp
             if '<h4>Details</h4>' in line:
                 g = next(lines)
                 if '<span></span>' not in g:
