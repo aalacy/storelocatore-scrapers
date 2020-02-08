@@ -26,7 +26,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -55,6 +55,14 @@ def fetch_data():
                 location_name = content[0]
                 street_address = content[2]
 
+                phone_number = content[4]
+                
+                if 'COMING SOON' in phone_number:
+                    continue
+
+                if 'CLOSED' in content[3]:
+                    continue
+
                 if len(content[3].split(',')) == 3:
                     temp_addy = content[3].split(',')
                     street_address += ' ' + temp_addy[0]
@@ -71,7 +79,7 @@ def fetch_data():
                 else:
                     city, state, zip_code = addy_ext(content[3])
 
-                phone_number = content[4]
+                
                 if 'COMING' in phone_number:
                     phone_number = '<MISSING>'
 
@@ -89,7 +97,7 @@ def fetch_data():
                 longit = '<MISSING>'
 
                 store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                              store_number, phone_number, location_type, lat, longit, hours]
+                              store_number, phone_number, location_type, lat, longit, hours, href]
 
                 all_store_data.append(store_data)
 

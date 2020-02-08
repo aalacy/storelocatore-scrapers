@@ -83,7 +83,6 @@ def fetch_data():
        
         for loc in json_data['PhysicalStore']:
 
-            
             loc_name = loc['Description'][0]['displayStoreName'].replace(' ', '').strip()
 
             street_address = loc['addressLine'][0]
