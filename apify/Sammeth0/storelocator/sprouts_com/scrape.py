@@ -119,7 +119,7 @@ def fetch_data():
 		row.append(lats[l] if lats[l] else "<MISSING>")
 		row.append(longs[l] if longs[l] else "<MISSING>")
 		row.append(timing[l] if timing[l] else "<MISSING>") 
-		row.append(res[l] if res[l] else "<MISSING>") 
+		row.append(urls[l] if urls[l] else "<MISSING>") 
 		
 		return_main_object.append(row)
 	
