@@ -30,7 +30,7 @@ def fetch_data():
         try:
             r_json = r.json()
         except:
-            continue
+            pass
         for id,val in enumerate(r_json):
             locator_domain = base_url
             location_name = val['DealerName']
@@ -68,12 +68,12 @@ def fetch_data():
 
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
             # print('----demo '+str(store))
-            return_main_object.append(store)
+            # return_main_object.append(store)
+            yield store
 
 
 
-
-    return return_main_object
+    # return return_main_object
 
 
 

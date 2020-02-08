@@ -26,7 +26,10 @@ def fetch_data():
             "content-type": "application/x-www-form-urlencoded",
         }
         data = '_SERVICENAME=MYLEPOST_wr_dsplcr&_WEBAPP=MYLEPOST&_WEBROUTINE=wr_dsplcr&_PARTITION=TAL&_LANGUAGE=ENG&_SESSIONKEY=&_LW3TRCID=false&COUNTRY=&CITY=&STATE=&ZIP=' + str(store_zip) + '&ENTMILES=100&PST_LIST..=0'
-        r = requests.post("http://www.members.legion.org/CGI-BIN/lansaweb?webapp=MYLEPOST+webrtn=wr_editlcr+ml=LANSA:XHTML+partition=TAL+language=ENG",headers=headers,data=data)
+        try:
+            r = requests.post("http://www.members.legion.org/CGI-BIN/lansaweb?webapp=MYLEPOST+webrtn=wr_editlcr+ml=LANSA:XHTML+partition=TAL+language=ENG",headers=headers,data=data)
+        except:
+            pass
         soup = BeautifulSoup(r.text,"lxml")
         for location in soup.find("table").find_all("tr")[1:]:
             name = location.find_all("h3")[1].text
