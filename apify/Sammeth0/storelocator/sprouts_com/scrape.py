@@ -17,7 +17,7 @@ def get_driver():
 	return webdriver.Chrome('chromedriver', options=options)
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data2.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -61,16 +61,13 @@ def fetch_data():
 	for u in pages_url:
 		driver_page.get(u)
 		time.sleep(5)
-		stores=driver_page.find_elements_by_tag_name("a")
+		stores=driver_page.find_elements_by_tag_name("h4")
 		for s in stores:
-			if u.find('stores')!=-1:
-				url=u.split('stores')[0]+'store'+u.split('stores')[1]
-				if str(s.get_attribute('href')).find(url)!=-1:
-					urls.append(str(s.get_attribute('href'))[str(s.get_attribute('href')).find(url):])
-					
-		
-	[res.append(x) for x in urls if x not in res]
-	for u in res:
+			try:
+				urls.append(s.find_element_by_tag_name('a').get_attribute('href'))
+			except:
+				continue
+	for u in urls:
 		driver_url.get(u)
 		time.sleep(4)
 		locs.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/h1').text.replace('â€“',''))
