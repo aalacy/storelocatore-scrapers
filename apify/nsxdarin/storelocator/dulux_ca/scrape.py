@@ -59,7 +59,10 @@ def fetch_data():
                 if '<form method="post" action="' in line2:
                     store = line2.split('<form method="post" action="')[1].split('.aspx')[0].rsplit('-',1)[1]
                 if '<h1>' in line2:
-                    name = next(lines).split('>')[1].split('<')[0].strip().replace('\t','')
+                    g = next(lines)
+                    if '>' not in g:
+                        g = next(lines)
+                    name = g.split('>')[1].split('<')[0].strip().replace('\t','')
                     if ' in ' in name:
                         typ = name.split(' in ')[0]
                 if '<span itemprop="streetAddress" id="street">' in line2:

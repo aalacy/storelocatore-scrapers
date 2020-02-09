@@ -49,7 +49,7 @@ def fetch_data():
         # print("location_url === " + str(script["id"]))
         location_url = "http://www.chilis.ca/skins/chilis/js/" + script["id"].replace("link-", "") + ".js"
         
-        # print("location_url === " + location_url)
+        print("location_url === " + location_url)
         r_location = requests.get(location_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
 

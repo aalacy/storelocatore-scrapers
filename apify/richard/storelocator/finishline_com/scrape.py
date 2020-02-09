@@ -15,6 +15,10 @@ class Scraper(Scrape):
 
     def fetch_data(self):
         # store data
+        search = sgzip.ClosestNSearch()
+        search.initialize()
+        zip_search = search.next_zip()
+
         locations_ids = []
         locations_titles = []
         street_addresses = []
@@ -36,11 +40,12 @@ class Scraper(Scrape):
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
-        for zip_search in sgzip.for_radius(50):
+        while zip_search:
             driver.get(f"https://stores.finishline.com/search.html?q={zip_search}")
             data = [loc.get_attribute('href') for loc in driver.find_elements_by_css_selector('a.location-card-link.location-card-link-page')]
             stores.extend(data)
-            print(f"{len(data)} locations scraped for {zip_search}: {sgzip.for_radius(50).index(zip_search)} / {len(sgzip.for_radius(50))}")
+            print(f"{len(data)} locations scraped for {zip_search}")
+            zip_search = search.next_zip()
 
         for store in stores:
             if store not in self.seen:

@@ -22,7 +22,6 @@ def write_output(data):
 
 def fetch_data():
     # zips = sgzip.coords_for_radius(50)
-    return_main_object = []
     addresses = []
 
     # headers = {
@@ -44,7 +43,6 @@ def fetch_data():
     location_type = "<MISSING>"
     latitude = "<MISSING>"
     longitude = "<MISSING>"
-    raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
 
@@ -54,7 +52,7 @@ def fetch_data():
     # CA location
 
     r = requests.get(
-        'https://www.worldcasinodirectory.com/api?country=6251999&offset=0&limit=10000&order[slots]=DESC').json()
+        'https://www.worldcasinodirectory.com/api?country=6251999&offset=0&limit=10000&order[slots]=DESC', headers=headers).json()
     for loc in r['items']:
         if loc['coming_soon'] == False:
             store_number = loc['id']
@@ -117,13 +115,14 @@ def fetch_data():
                 continue
             addresses.append(store[-1])
 
-            #print("data = " + str(store))
-           
+            # print("data = " + str(store))
+            # print(
+            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
-            return_main_object.append(store)
+            yield store
     #### US Location #####
     r = requests.get(
-        'https://www.worldcasinodirectory.com/api?country=6252001&offset=0&limit=20000&order[slots]=DESC').json()
+        'https://www.worldcasinodirectory.com/api?country=6252001&offset=0&limit=20000&order[slots]=DESC', headers=headers).json()
     for loc in r['items']:
         if loc['coming_soon'] == False:
             store_number = loc['id']
@@ -178,16 +177,16 @@ def fetch_data():
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
             store = ["<MISSING>" if x == "" or x == None else x for x in store]
-            attr = store[2] + " " + store[3]
+            # attr = store[2] + " " + store[3]
             if store[-1] in addresses:
                 continue
             addresses.append(store[-1])
 
-            #print("data = " + str(store))
-       
-            return_main_object.append(store)
+            # print("data = " + str(store))
+            # print(
+            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
-    return return_main_object
+            yield store
 
 
 def scrape():

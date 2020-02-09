@@ -22,7 +22,7 @@ def fetch_data():
     return_main_object = []
     for i in range(page_size):
         while True:
-            print("https://www.trekbikes.com/us/en_US/store-finder/json/?q=11756&sort=Distance&distance=100000&page="+str(i))
+           # print("https://www.trekbikes.com/us/en_US/store-finder/json/?q=11756&sort=Distance&distance=100000&page="+str(i))
             page_request = requests.get("https://www.trekbikes.com/us/en_US/store-finder/json/?q=11756&sort=Distance&distance=100000&page="+str(i),headers=headers)
             try:
                 location_list = page_request.json()["searchPageData"]["results"]

@@ -102,7 +102,10 @@ def fetch_data():
                 lng = item['lng']
                 add = item['address']
                 country = 'US'
-                phone = item['telephone']
+                try:
+                    phone = item['telephone']
+                except:
+                    phone = '<MISSING>'
                 typ = 'Restaurant'
                 status = item['status']
                 state = item['state']

@@ -21,8 +21,40 @@ def fetch_data():
     headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
+    url1 = "https://beardpapas.com/locations/plano/"
+    r1 = requests.get(url1, headers=headers)
+    # print(r)
+    soup1 = BeautifulSoup(r1.text, "lxml")
+    data1 = soup1.find('div',{'class','about_content'})
+    hours_of_operation = (data1.text.split("Hours ")[1].replace("Directions",""))
+    r5 = data1.text.split("Hours ")[0]
+    phone = (r5.split("   ")[1])
+    city = (r5.split(", ")[0].split(" ")[-1])
+    street_address =  " ".join(r5.split(", ")[0].split(" ")[2:8])
+    location_name = city
+    zipp = (r5.split(", ")[1].split(" ")[1])
+    state = (r5.split(", ")[1].split(" ")[0])
+    # print(street_address)
+
+    store = []
+    store.append("https://beardpapas.com/")
+    store.append(location_name)
+    store.append(street_address)
+    store.append(city)
+    store.append(state)
+    store.append(zipp)
+    store.append("US")
+    store.append("<MISSING>")
+    store.append(phone )
+    store.append("<MISSING>")
+    store.append("<MISSING>")
+    store.append("<MISSING>")
+    store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+    store.append(url1)
+    yield store
     base_url = "https://beardpapas.com/locations/"
     r = requests.get(base_url, headers=headers)
+    # print(r)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     address = []
@@ -81,6 +113,7 @@ def fetch_data():
                     city = city.replace('Richmond','Vancouver')
                 if '4151 Hazelbridge Way' in street_address:
                     city = city.replace('Houston','Richmond')
+                
                 street_address =street_address.replace(city,"").replace("Vancouver","").replace("Burnaby","").replace("Richmond","")
                 store.append("https://beardpapas.com")
                 store.append(location_name)
@@ -96,7 +129,8 @@ def fetch_data():
                 store.append(longitude)
                 store.append(hours_of_operation)
                 store.append(detail_page.find('a', {'class', 'viewbtn'}).get('href'))
-                return_main_object.append(store)
+                yield store
+                # return_main_object.append(store)
         other = soup.find('ul', {'class', 'footer_loc'}).find_next('ul')
         for data in other.findAll('li'):
             detail_url = requests.get(data.find('a').get('href'), headers=headers)
@@ -176,8 +210,9 @@ def fetch_data():
                 store.append(longitude)
                 store.append(hours_of_operation)
                 store.append(detail_page.find('a', {'class', 'viewbtn'}).get('href'))
-                return_main_object.append(store)
-        return return_main_object
+                # 
+                yield store
+        # return return_main_object
     else:
         pass
 

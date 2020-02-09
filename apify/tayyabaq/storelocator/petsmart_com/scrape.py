@@ -1,6 +1,6 @@
 import csv
 import os
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re, time
 import datetime
@@ -13,8 +13,9 @@ def write_output(data):
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
-            writer.writerow(row.replace(u'\u2019',''))
+            writer.writerow(row)
 
+session = SgRequests()
 
 def fetch_data():
     data = []
@@ -23,18 +24,18 @@ def fetch_data():
     #CA stores
     url = 'https://www.petsmart.com/store-locator/all/'
     u='https://www.petsmart.com/'
-    page = requests.get(url)
+    page = session.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
     store=soup.find('div',class_='all-states-list container')
     str=store.find_all("a")
     for i in str:
         newurl=i['href']
-        page = requests.get(newurl)
+        page = session.get(newurl)
         soup = BeautifulSoup(page.content, "html.parser")
         store=soup.find_all('a', class_='store-details-link')
         for j in store:
             ul=u+j['href']
-            page = requests.get(ul)
+            page = session.get(ul)
             soup = BeautifulSoup(page.content, "html.parser")
             try:
                 loc=soup.find('h1', class_ ='store-name').text
@@ -66,19 +67,19 @@ def fetch_data():
                 print(hours)
                 data.append([
                     'https://www.petmarts.com/',
-                     ul,
-                    loc,
-                    street,
-                    cty,
-                    sts,
-                    zcode,
-                    'US',
-                    num,
-                    ph,
+                     ul.replace(u'\u2019',''),
+                    loc.replace(u'\u2019',''),
+                    street.replace(u'\u2019',''),
+                    cty.replace(u'\u2019',''),
+                    sts.replace(u'\u2019',''),
+                    zcode.replace(u'\u2019',''),
+                    'US'.replace(u'\u2019',''),
+                    num.replace(u'\u2019',''),
+                    ph.replace(u'\u2019',''),
                     '<MISSING>',
-                    lat,
-                    lng,
-                    hours
+                    lat.replace(u'\u2019',''),
+                    lng.replace(u'\u2019',''),
+                    hours.replace(u'\u2019','')
                     ])
          
     return data

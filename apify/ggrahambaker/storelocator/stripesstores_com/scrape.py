@@ -79,7 +79,7 @@ def fetch_data():
         lat = coords['latitude']
         longit = coords['longitude']
         
-        phone_number = loc['telephone']
+        phone_number = loc['telephone'].replace('+1', '').strip()
         
         hours_obj = loc['openingHoursSpecification'][0]
         hours = 'Open 24 / 7'

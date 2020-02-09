@@ -3,6 +3,7 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
+import time
 
 def get_driver():
     options = Options()
@@ -17,7 +18,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -37,6 +38,7 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(locator_domain + ext)
+    time.sleep(10)
 
     element = driver.find_elements_by_xpath('//button[@data-click="close"]')
     if len(element) != 0:
@@ -56,25 +58,27 @@ def fetch_data():
         href = a_tag.get_attribute('href')
 
         if re.search('^\d{5}?$', href[-5:]):
-            if 'gurnee' in href:
-                href = href[:-1]
+            
             location_name = a_tag.text
 
             address = store.find_element_by_css_selector('address').text.split('\n')
-            info = store.find_element_by_css_selector('p').text.split('\n')
-            street_address = address[0]
-            city, state, zip_code = addy_ext(address[1])
-            phone_number = info[0]
-            hours = ''
-            for h in info[1:]:
-                hours += h + ' '
+      
+            if len(address) == 2:
+                info = store.find_element_by_css_selector('p').text.split('\n')
+                street_address = address[0]
+                city, state, zip_code = addy_ext(address[1])
+                phone_number = info[0]
+                hours = ''
+                for h in info[1:]:
+                    hours += h + ' '
 
-            hours = hours.strip()
-            store_info = [street_address, city, state, zip_code, phone_number, hours, location_name]
-            link_list.append([href, store_info])
+                hours = hours.strip()
+                store_info = [street_address, city, state, zip_code, phone_number, hours, location_name]
+                link_list.append([href, store_info])
 
     all_store_data = []
     for link in link_list:
+
         driver.get(link[0])
         driver.implicitly_wait(10)
 
@@ -103,7 +107,7 @@ def fetch_data():
         store_number = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
+                      store_number, phone_number, location_type, lat, longit, hours, link[0]]
         all_store_data.append(store_data)
 
     driver.quit()

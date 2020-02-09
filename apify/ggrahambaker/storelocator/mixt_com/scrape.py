@@ -45,12 +45,18 @@ def fetch_data():
     all_store_data = []
     for store in stores:
         content = store.text.split('\n')
+        
+        if 'OPENING SOON' in content[0]:
+            continue
         if len(content) > 3:
             if 'CITY CENTER BISHOP RANCH' in content[0]:
                 street_address = content[1]
                 city, state, zip_code = addy_ext(content[2])
             else:
-                street_address = content[0]
+                if 'Los Angeles' in content[2]:
+                    street_address = content[1]
+                else:
+                    street_address = content[0]
                 city, state, zip_code = addy_ext(content[2])
 
             hours = ''

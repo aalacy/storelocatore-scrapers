@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import phonenumbers
 
 
 def write_output(data):
@@ -19,133 +20,53 @@ def write_output(data):
 
 def fetch_data():
   
-    base_url= "https://www.dicarlospizza.com/order"
-    r = requests.get(base_url)
-    soup= BeautifulSoup(r.text,"lxml")
-    address12 =[]
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
-    address=[]
-    k = (soup.find_all("div",{"class":"sqs-block-content"}))
+    headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
+    }
+    base_url = "https://www.dicarlospizza.com"
+    r =  requests.get("https://www.dicarlospizza.com/locations", headers=headers)
+    soup = BeautifulSoup(r.text, "lxml")    
+    data = json.loads(soup.find(lambda tag: (tag.name == "script") and "window.siteData =" in tag.text).text.split("window.siteData = ")[1].split(";")[0])
+    h = []
+    for k in range(0,4):
+        for i in data['page']['properties']['contentAreas']['userContent']['content']['cells'][k]['content']['properties']['detailsConfig']['content']['quill']['ops']:
+            info  = i['insert'].replace("\n","").replace("> PICK UP","").replace("(",'').replace(")",'').replace(">\ufeff PICK UP","").replace("\ufeff","")
+            if info:
+                h.append(info)
 
-    base_url= "https://www.dicarlospizza.com/order"
-    r = requests.get(base_url)
-    soup= BeautifulSoup(r.text,"lxml")
-  
-    for i in k:
-        tem_var=[]
-        if len(list(i.stripped_strings)) != 1 and list(i.stripped_strings) !=[] :
-            if "STEUBENVILLE*" in list(i.stripped_strings)[0]:
-                pass
-            else:
-                name = list(i.stripped_strings)[0]
-            phone1 =''
-            
-            if "Uptown"  in list(i.stripped_strings)[1]:
-                pass
-            else:
-                st = list(i.stripped_strings)[1]
+    location_name = []
+    street_address = []
+    city = []
+    zipp = []
+    phone = []
+    for i in range(0,len(h),3):
+        location_name.append(h[i])
+        street_address.append(h[i+1].split("/")[0])
+        city.append(h[i])
+        zipp.append(h[i+1].split("/")[1])
+        phone.append(phonenumbers.format_number(phonenumbers.parse(str(h[i+2].replace(" ","").replace("-",'')), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL))
+        # print(phone)
 
-            if "FALL 2019" in list(i.stripped_strings)[2]:
-                phone1 = "<MISSING>"
-            else:
-                phone1 =(list(i.stripped_strings)[2])
-
-            if "Downtown﻿" in phone1:
-                pass
-            else:
-                phone = (phone1)
-
-            store_name.append(name.replace("*",""))
-            tem_var.append(st)
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append("US")
-            tem_var.append("<MISSING>")
-            tem_var.append(phone)
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            store_detail.append(tem_var)
+    region = ['OH','OH','OH','OH','OH','PA','SC','WA','WA','WA','WA']
+    for index,states in enumerate(region):
+        state = states
 
 
-    jj= []
-    k = (soup.find_all("div",{"class":"sqs-col-4"}))
-    for x in k:
-        for y in x.find_all('div',{'class':'sqs-block-html'}):
-            locator_domain  = 'https://www.dicarlospizza.com/'
-            location_name = y.find('h3').text.strip()
-            street_address = y.find('p')
-            cnv  = str(street_address).replace('<br/>','%%')
-            jj.append(soup.find_all('script', {'type': 'application/ld+json'}))
-            soup = BeautifulSoup(cnv, "lxml")
-            street_address = soup.text.split('%%')[0]
-
-          
-
-            
-
-
-
-
-            phone = ''
-            if '.' in soup.text.split('%%')[1]:
-                phone  = soup.text.split('%%')[1]
-                print("================",phone)
-            if location_name == 'STEUBENVILLE*':
-                db = json.loads(jj[0][2].text)
-                street_address = db['address'].split('\n')[0] + ' ' + db['address'].split('\n')[1].strip().split(',')[0]
-                phone = y.find('a')['href'].replace("tel:","")
-                
-            city = ''
-            state = ''
-            zip = ''
-            country_code = 'US'
-            store_number = ''
-            location_type = ''
-            latitude = ''
-            longitude = ''
-            hours_of_operation = ''
-            page_url = base_url
-
-            store = []
-            store_name.append(location_name.replace("*","") if location_name.replace("*","") else '<MISSING>')
-            store.append(street_address if street_address else '<MISSING>')
-            store.append(city if city else '<MISSING>')
-            store.append(state if state else '<MISSING>')
-            store.append(zip if zip else '<MISSING>')
-            store.append(country_code if country_code else '<MISSING>')
-            store.append(store_number if store_number else '<MISSING>')
-            store.append(phone )
-            store.append(location_type if location_type else '<MISSING>')
-            store.append(latitude if latitude else '<MISSING>')
-            store.append(longitude if longitude else '<MISSING>')
-            store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-            store.append(page_url if hours_of_operation else '<MISSING>')
-            store_detail.append(store)
-   
-    del store_name[5]
-    del store_detail[5] 
-    # if "DICARLOS PIZZA STEUBENVILLE" in store_detail:
-    # print(store_detail)
-    # print(store_detail[-1])
-    # if store_detail[6]=="<MISSING>":
-    #     print("=============================-0------------",store_detail[-1])
-    for i in range(len(store_name)):
-        store = list()
-        store.append("https://www.dicarlospizza.com")
-        store.append(store_name[i])
-        store.extend(store_detail[i])
-        if store[2] in address12:
-            continue
-        address12.append(store[2])
-        return_main_object.append(store) 
-    return return_main_object
-
+        store = []
+        store.append(base_url)
+        store.append(location_name[index])
+        store.append(street_address[index])
+        store.append(city[index])
+        store.append(state)
+        store.append(zipp[index])
+        store.append("US")
+        store.append("<MISSING>")
+        store.append(phone[index])
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        yield store
 
 def scrape():
     data = fetch_data()

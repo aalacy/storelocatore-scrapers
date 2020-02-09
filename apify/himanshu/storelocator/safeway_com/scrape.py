@@ -29,7 +29,10 @@ def fetch_data():
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
     
     }
-    r = requests.get("https://local.safeway.com/index.html", headers=headers)
+    try:
+        r = requests.get("https://local.safeway.com/index.html", headers=headers)
+    except:
+        pass
     soup = BeautifulSoup(r.text, "lxml")
 
     content = soup.find_all("a",{"class":"Directory-listLink"})
@@ -46,6 +49,7 @@ def fetch_data():
             location_link = i['href'].replace("..","https://local.safeway.com")
         
             if "(1)" in i['data-count']:
+
                 page_url = location_link
                 r5 = requests.get(page_url, headers=headers)
                 soup5 = BeautifulSoup(r5.text, "lxml")
@@ -60,9 +64,34 @@ def fetch_data():
                 longitude = soup5.find("meta",{"itemprop":"longitude"})['content']
                 location_type = "Grocery"
                 country_code = "US"
+                
+                store = []
+                store.append(base_url)
+                store.append(location_name)
+                store.append(street_address)
+                store.append(city)
+                store.append(state)
+                store.append(zipp)
+                store.append(country_code)
+                store.append("<MISSING>")
+                store.append(phone )
+                store.append(location_type)
+                store.append(latitude)
+                store.append(longitude)
+                store.append(hours)
+                store.append(page_url)
+                # if store[2] in addresses:
+                #     continue
+                # addresses.append(store[2])
+                # print("data =="+str(store))
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                yield store
 
             else:
-                r6 = requests.get(location_link, headers=headers)
+                try:
+                    r6 = requests.get(location_link, headers=headers)
+                except:
+                    pass
                 soup6 = BeautifulSoup(r6.text, "lxml")
                 data_link = soup6.find_all("a",{"class":"Teaser-titleLink"})
                 for j in data_link:
@@ -81,30 +110,33 @@ def fetch_data():
                     longitude = soup7.find("meta",{"itemprop":"longitude"})['content']
                     location_type = "Grocery"
                     country_code = "US"
-            store = []
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
-            store.append(country_code)
-            store.append("<MISSING>")
-            store.append(phone )
-            store.append(location_type)
-            store.append(latitude)
-            store.append(longitude)
-            store.append(hours)
-            store.append(page_url)
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            #print("data =="+str(store))
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            yield store
+                    store = []
+                    store.append(base_url)
+                    store.append(location_name)
+                    store.append(street_address)
+                    store.append(city)
+                    store.append(state)
+                    store.append(zipp)
+                    store.append(country_code)
+                    store.append("<MISSING>")
+                    store.append(phone )
+                    store.append(location_type)
+                    store.append(latitude)
+                    store.append(longitude)
+                    store.append(hours)
+                    store.append(page_url)
+                    # if store[2] in addresses:
+                    #     continue
+                    # addresses.append(store[2])
+                    # print("data =="+str(store))
+                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                    yield store
 
     url = "https://local.safeway.com/"+content[1]['href']
-    r1 = requests.get(url, headers=headers)
+    try:
+        r1 = requests.get(url, headers=headers)
+    except:
+        pass
     soup1 = BeautifulSoup(r1.text, "lxml")
     list_link = soup1.find_all("a",{"class":"Directory-listLink"})
     for link in list_link:
@@ -139,8 +171,8 @@ def fetch_data():
         store.append(longitude)
         store.append(hours)
         store.append(page_url)
-        #print("data =="+str(store))
-        #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print("data =="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         yield store
         
        

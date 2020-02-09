@@ -16,8 +16,6 @@ def write_output(data):
 
         for row in data:
             writer.writerow(row)
-#         writer.writerows(data)
-
 
 data_list = []
 def fetch_data():
@@ -37,10 +35,8 @@ def fetch_data():
             url = re.findall(r'.*\D+\d+\-.*', state_loc)
             if url != []:
                 unique.append(url[0])
-        #     print(state)
         for i in state:
             if i not in unique:
-                #             print(i)
                 page = requests.get(i)
                 if page.status_code == 200:
                     bs = BeautifulSoup(page.text, "html.parser")
@@ -57,7 +53,7 @@ def fetch_data():
 
         for i in citi:
             if i not in unique:
-                page = requests.get(i, timeout=5)
+                page = requests.get(i)
                 bs = BeautifulSoup(page.text, "html.parser")
                 cont = bs.findAll("a", class_="Teaser-titleLink")
 
@@ -66,15 +62,20 @@ def fetch_data():
                     unique.append(city_links)
 
         for j in unique:
-            page = requests.get(j)
+            try:
+                page = requests.get(j, timeout=6)
+            except Exception as e:
+                continue
             if page.status_code == 200:
                 soup1 = BeautifulSoup(page.text, "html.parser")
+#                 page.close()
                 try:
                     add = soup1.find("div", class_="c-AddressRow")
                     addr = add.text
                     add1 = soup1.find("span", class_="c-address-street-2")
                     addr1 = add1.text
                     street = addr + addr1
+                    print(street)
 
                 except Exception as e:
                     street = "<MISSING>"
@@ -166,14 +167,11 @@ def fetch_data():
                 data_list.append(new_list)
         return data_list
 
-
     except Exception as e:
         print(str(e))
-
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

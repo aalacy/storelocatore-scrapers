@@ -32,8 +32,8 @@ def fetch_data():
         name = "McDonald's # " + store
         website = 'mcdonalds.com'
         typ = 'Restaurant'
-        lat = item['geometry']['coordinates'][0]
-        lng = item['geometry']['coordinates'][1]
+        lat = item['geometry']['coordinates'][1]
+        lng = item['geometry']['coordinates'][0]
         try:
             hours = 'Mon: ' + item['properties']['restauranthours']['hoursMonday']
             hours = hours + '; Tue: ' + item['properties']['restauranthours']['hoursTuesday']

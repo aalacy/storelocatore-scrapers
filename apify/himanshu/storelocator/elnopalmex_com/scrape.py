@@ -88,13 +88,13 @@ def fetch_data():
                             if "40031" in zipp:
                                 city = "La Grange"
                                 street_address = location_name
-                            elif "40220" in zipp:
+                            if "40220" in zipp :
                                 city = "Louisville"
                                 street_address = location_name
-                            elif "40217" in zipp:
+                            if "40217" in zipp :
                                 city = "Louisville"
                                 street_address = location_name
-                            elif "470 New Albany Plaza" in location_name:
+                            if "470 New Albany Plaza" in location_name:
                                 street_address = location_name
                                 city = "New Albany" 
                             latitude = str(lat)
@@ -133,8 +133,7 @@ def fetch_data():
                     except:
                         longitude = "-85.961299"
                     location_name = street_address
-                    if "5420 IN-62" in street_address:
-                        phone = "(812)590-3550"
+                    
                     
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,

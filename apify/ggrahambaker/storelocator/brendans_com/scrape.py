@@ -36,6 +36,10 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
+
+        print(link)
+        print()
+        print()
         driver.implicitly_wait(10)
         driver.get(link)
         map_element = driver.find_element_by_css_selector('div.sqs-block.map-block.sqs-block-map')

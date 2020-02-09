@@ -51,7 +51,7 @@ def fetch_data():
         try:
             r = requests.get(location_url, headers=headers)
         except:
-            print(location_url)
+            continue
         json_data = r.json()
         current_results_len = len(json_data['stations'])
         for i in json_data['stations']:
