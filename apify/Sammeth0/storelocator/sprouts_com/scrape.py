@@ -60,7 +60,7 @@ def fetch_data():
 	
 	for u in pages_url:
 		driver_page.get(u)
-		time.sleep(5)
+		time.sleep(6)
 		stores=driver_page.find_elements_by_tag_name("h4")
 		for s in stores:
 			try:
