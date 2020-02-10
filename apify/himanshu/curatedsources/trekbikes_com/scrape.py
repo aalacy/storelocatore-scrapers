@@ -64,11 +64,12 @@ def fetch_data():
                             else:
                                 hours = hours + " " + store_hours[i]["weekDayLong"] + " " + store_hours[i]["storeOpeningTime"]["formattedHour"] + " - " + store_hours[i]["storeClosingTime"]["formattedHour"]
                     store.append(hours if hours != "" else "<MISSING>")
-                    return_main_object.append(store)
+                    # return_main_object.append(store)
+                    yield store
                 break
             except:
                 continue
-    return return_main_object
+    # return return_main_object
 
 def scrape():
     data = fetch_data()

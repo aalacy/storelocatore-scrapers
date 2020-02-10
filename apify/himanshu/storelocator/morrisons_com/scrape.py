@@ -43,8 +43,6 @@ def fetch_data():
         h1  = (d['openingTimes'])
         for p in h1:
             hours_of_operation  = (hours_of_operation +' '+p + ' ' +h1[p]['open']+' '+h1[p]['close']).strip()
-
-          
         store = []
         store.append("https://morrisons.com/")
         store.append(location_name if location_name else '<MISSING>')
@@ -60,6 +58,8 @@ def fetch_data():
         store.append(longitude if longitude else '<MISSING>')
         store.append(hours_of_operation if hours_of_operation else '<MISSING>' )
         store.append(url)
+        if "Gibraltar" in location_name:
+            continue
         yield store
 
 def scrape():

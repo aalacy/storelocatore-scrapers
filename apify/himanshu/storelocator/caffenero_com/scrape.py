@@ -27,14 +27,13 @@ def fetch_data():
     base_url = "https://caffenero.com/"
 
     addresses = []
-    result_coords = []
     locator_domain = base_url
     location_name = ""
     street_address = ""
     city = ""
     state = ""
     zipp = ""
-    country_code = "Uk"
+    country_code = "US"
     store_number = ""
     phone = ""
     location_type = "<MISSING>"
@@ -51,7 +50,7 @@ def fetch_data():
     json_data = json.loads(script)
     for loc in json_data["stores"]:
         if "gb" in loc["country_code"]:
-            # country_code = loc["country_code"]
+            country_code = loc["country_code"].upper()
             store_number = loc["store_id"]
             location_name = loc["name"]
             latitude = loc["latitude"]
@@ -85,6 +84,74 @@ def fetch_data():
                 # print(
                 #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
+
+    #### US location
+    location_name = ""
+    street_address = ""
+    city = ""
+    state = ""
+    zipp = ""
+    country_code = "US"
+    store_number = ""
+    phone = ""
+    location_type = "<MISSING>"
+    latitude = ""
+    longitude = ""
+    raw_address = ""
+    hours_of_operation = ""
+    page_url = ""
+    r1 = requests.get("https://caffenero.com/us/stores/?country-code=us&search-region=&useLocation=true")
+    soup1 = BeautifulSoup(r1.text, "lxml")
+    script = soup1.find(lambda tag: (
+        tag.name == 'script') and "storesData" in tag.text).text.split("storesData =")[1].split(';')[0].strip()
+    json_data = json.loads(script)
+    for loc in json_data["stores"]:
+        if "us" in loc["country_code"]:
+            country_code = loc["country_code"].upper()
+            store_number = loc["store_id"]
+            location_name = loc["name"]
+            latitude = loc["latitude"]
+            longitude = loc["longitude"]
+            street_address = " ".join(loc['address'].split(",")[:-2]).strip()
+            city = loc['address'].split(",")[-2]
+            if len(loc['address'].split(",")[-1].split(" ")) ==2:
+                if len(loc['address'].split(",")[-1].split(" ")[-1]) == 7:
+                    state = loc['address'].split(",")[-1].split(" ")[-1].replace("MA01890","MA").replace("MA01742","MA")
+                    zipp = loc['address'].split(",")[-1].split(" ")[-1].replace("MA01890","01890").replace("MA01742","01742")
+                else:
+                    state = "<MISSING>"
+                    zipp = loc['address'].split(",")[-1].split(" ")[-1]
+            else:
+                state = loc["address"].split(',')[-1].split(" ")[1]
+                zipp = loc["address"].split(',')[-1].split(" ")[2]
+
+            page_url = "https://caffenero.com" + loc["permalink"]
+
+            r_loc = requests.get(page_url)
+            soup_loc = BeautifulSoup(r_loc.text, "lxml")
+            try:
+                phone = soup_loc.find(
+                    "img", {"alt": "phone"}).find_next("td").text.strip()
+            except:
+                phone = "<MISSING>"
+            try:
+                hours_of_operation = " ".join(
+                    list(soup_loc.find("div", class_="timings-info").stripped_strings)).replace("Opening Hours", "").strip()
+            except:
+                hours_of_operation = "<MISSING>"
+            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                     store_number, phone, location_type, latitude, longitude, hours_of_operation, raw_address, page_url]
+
+            if str(store[7]) not in addresses:
+                addresses.append(str(store[7]))
+                store = [x if x else "<MISSING>" for x in store]
+                # print("data = " + str(store))
+                # print(
+                #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                yield store
+
+
+
 
 
 def scrape():

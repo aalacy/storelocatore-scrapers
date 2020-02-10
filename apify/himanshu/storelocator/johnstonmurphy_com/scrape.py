@@ -48,9 +48,12 @@ def fetch_data():
 
     # it will used in store data.
     for zip_code in zips:
-        r = requests.get(
+        try:
+            r = requests.get(
             'https://www.johnstonmurphy.com/on/demandware.store/Sites-johnston-murphy-us-Site/en_US/Stores-FindStores?dwfrm_storelocator_countryCode=US&dwfrm_storelocator_distanceUnit=mi&dwfrm_storelocator_postalCode='+zip_code+'&dwfrm_storelocator_maxdistance=30000&dwfrm_storelocator_findbyzip=Search',
             headers=headers)
+        except:
+            pass
         soup1= BeautifulSoup(r.text,"lxml")
 
         k = (soup1.find_all("div",{"class":"store-name"}))      

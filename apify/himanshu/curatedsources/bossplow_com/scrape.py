@@ -25,7 +25,10 @@ def fetch_data():
     addresses = []
     zips = sgzip.for_radius(100)
     for x in zips:
-        r = requests.get("https://www.bossplow.com/en/locator?countryCode=US&postalCode="+x+"&resultType=Dealer", headers=header)
+        try:
+            r = requests.get("https://www.bossplow.com/en/locator?countryCode=US&postalCode="+x+"&resultType=Dealer", headers=header)
+        except:
+            continue
         soup = BeautifulSoup(r.text, "lxml")
         for zx in  soup.findAll('div',{'class':'dealer-panel-primary'}):
                 locator_domain = base_url

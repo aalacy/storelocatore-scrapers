@@ -39,13 +39,10 @@ def get_driver():
     else:
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
-
-
 def fetch_data():
-
-
     addresses = []
     driver = get_driver()
+    driver1 = get_driver()
     driver.get("https://kwiktrip.com/Maps-Downloads/Store-List")
     locator_domain = "https://kwiktrip.com"
     hours_of_operation ="<MISSING>"
@@ -55,16 +52,17 @@ def fetch_data():
         for data in soup.find_all("tbody",{"class":"row-hover"}):
             for tr in data.find_all("tr"):
                 store_number = list(tr.stripped_strings)[0]
-                driver.get("https://www.kwiktrip.com/locator/store?id="+str(store_number))
-                page_url = "https://www.kwiktrip.com/locator/store?id="+str(store_number)
-                # html = requests.get(page_url)
-                soup1 = BeautifulSoup(driver.page_source,"lxml")
-
+                print("https://www.kwiktrip.com/locator/store?id="+str(store_number))
+                driver1.get("https://www.kwiktrip.com/locator/store?id="+str(store_number))
+                soup1 = BeautifulSoup(driver1.page_source,"lxml")
                 try:
                     hours_of_operation =  " ".join(list(soup1.find("div",{"class":"Store__dailyHours"}).stripped_strings))
                 except:
                     hours_of_operation = " ".join(list(soup1.find("div",{"class":"Store__open24Hours"}).stripped_strings))
+                # time.sleep(1)
+                # driver1.back()
                 # print(" ".join(list(soup1.find("div",{"class":"Store__open24Hours"}).stripped_strings)))
+                page_url = "https://www.kwiktrip.com/locator/store?id="+str(store_number)
                 location_name = list(tr.stripped_strings)[1]
                 street_address = list(tr.stripped_strings)[2]
                 city = list(tr.stripped_strings)[3]
@@ -88,7 +86,7 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                #print("~~~~~~~~~~~~~~~~~~~~~~  ",store)
+                # print("~~~~~~~~~~~~~~~~~~~~~~  ",store)
                 yield store
                 # print(list(tr.stripped_strings))
 
@@ -99,10 +97,10 @@ def fetch_data():
             break
         if soup1.find("a",{"class":"paginate_button current"}).text=="15":
             driver.quit()
+            driver1.quit()
+
             break
-        
-    # time.sleep(2)
-    # soup = BeautifulSoup(driver.page_source,"xml")
+   
 
    
 
