@@ -52,6 +52,7 @@ def fetch_data():
                     lat = line2.split('&#34;,&#34;latitude&#34;:&#34;')[1].split('&#34')[0]
                     lng = line2.split('&#34;longitude&#34;:&#34;')[1].split('&#34')[0]
                     name = line2.split('&#34;name&#34;:&#34;')[1].split('&#34')[0].replace('\\u0026','&')
+                    zc = zc[:5]
                     if 'United States' in country:
                         country = 'US'
                     if 'Canada' in country:
