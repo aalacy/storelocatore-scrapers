@@ -27,7 +27,7 @@ def fetch_data():
         locs = json.loads(r.content)['features']
         for loc in locs:
 
-            #print(loc)
+            print(loc)
 
             print()
             print()
