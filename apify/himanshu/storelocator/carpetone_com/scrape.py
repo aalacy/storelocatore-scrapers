@@ -62,7 +62,7 @@ def fetch_data():
         try:
             r = requests.get('https://www.carpetone.com/carpetone/api/Locations/GetClosestStores?skip=0&zipcode=&latitude=' +
                          str(coord[0]) + '&longitude=' + str(coord[1]), headers=headers)
-            #print('https://www.carpetone.com/carpetone/api/Locations/GetClosestStores?skip=0&zipcode=&latitude=' +str(coord[0]) + '&longitude=' + str(coord[1]))
+            # print('https://www.carpetone.com/carpetone/api/Locations/GetClosestStores?skip=0&zipcode=&latitude=' +str(coord[0]) + '&longitude=' + str(coord[1]))
         except:
             pass
 
@@ -97,7 +97,11 @@ def fetch_data():
             # print(url)
             if url != None:
                 page_url = url
-                r_loc = requests.get(page_url, headers=headers)
+                #print("~~~~~~~~~~~~~~~~~~~~~~  ",page_url)
+                try:
+                    r_loc = requests.get(page_url, headers=headers)
+                except:
+                    pass
                 soup_loc = BeautifulSoup(r_loc.text, 'lxml')
                 phone_tag = soup_loc.find('a', class_='phone-link')
                 if phone_tag != None:

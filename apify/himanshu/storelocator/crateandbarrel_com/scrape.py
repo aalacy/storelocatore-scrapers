@@ -80,8 +80,10 @@ def fetch_data():
         city = i['City']
         state = i['State']
         zipp = i['Zip']
+        if "Philippines" in i['Country']:
+            continue
         country_code = i['Country'].replace("USA","US").replace("CAN","CA")
-        phone = ("("+i['PhoneAreacode']+")"+" "+i['PhonePrefix']+"-"+i['PhoneSuffix']).replace('() -','<MISSING>')
+        phone = "("+i['PhoneAreacode']+")"+" "+i['PhonePrefix']+"-"+i['PhoneSuffix']
         location_type = "Store"
         latitude = i['StoreLat']
         longitude = i['StoreLong']

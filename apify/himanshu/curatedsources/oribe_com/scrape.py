@@ -38,7 +38,7 @@ def fetch_data():
         store.append(store_data["city"])
         store[-1] = re.sub('[^0-9a-zA-Z < >]', ' ', store[-1])
         store.append(store_data["state"])
-        store[-1] = re.sub('[^0-9a-zA-Z < >]', ' ', store[-1])
+        store[-1] = re.sub('[^0-9a-zA-Z < >]', ' ', str(store[-1]))
         store.append(store_data["postal_code"])
         store.append("US" if store_data["country"] == "United States" else "CA")
         store.append(store_data["id"])
