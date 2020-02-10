@@ -14,8 +14,12 @@ def get_driver():
 
 def addy_ext(addy):
     address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
+    if len(address) == 1:
+        city = '<MISSING>'
+        state_zip = address[0].strip().split(' ')
+    else:
+        city = address[0]
+        state_zip = address[1].strip().split(' ')
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
@@ -77,6 +81,7 @@ def fetch_data():
                     zip_code = temp_addy[1].strip()
 
                 else:
+                    #print(content[3])
                     city, state, zip_code = addy_ext(content[3])
 
                 
