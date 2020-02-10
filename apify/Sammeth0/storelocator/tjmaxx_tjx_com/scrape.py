@@ -12,7 +12,7 @@ def get_driver():
 	options.add_argument('--no-sandbox')
 	options.add_argument('--disable-dev-shm-usage')
 	options.add_argument('--window-size=1920,1080')
-	options.add_argument("user-agent= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'")
+	options.add_argument("user-agent= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'")
 	return webdriver.Chrome('chromedriver', options=options)
 
 def write_output(data):
@@ -47,7 +47,7 @@ def fetch_data():
 	driver = get_driver()
 	driver_page = get_driver()
 	driver.get(location_url)
-	time.sleep(5)
+	time.sleep(10)
 	links=driver.find_elements_by_xpath('/html/body/div[3]/div/div/div[1]/section/div[3]/div')
 	for ls in links:	
 		link=ls.find_elements_by_tag_name('a')
@@ -70,7 +70,7 @@ def fetch_data():
 		except:
 			cities.append("<MISSING>")
 		print(cities)
-		states.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[1]/h1').text.split(', ')[1])
+		states.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[1]/h1').text.split(', ')[1].split(' ')[0])
 		print(states)
 		zips.append(p.split('/')[-3].split('-')[-1].replace('%20',''))
 		print(zips)
@@ -84,7 +84,10 @@ def fetch_data():
 		timing.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[1]').text
 		+' '+driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[2]').text.replace('\n',' '))
 		print(timing)
-		types.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul').text)
+		types.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[1]/span').text+' '+
+		driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[2]/span').text+' '+
+		driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[3]/span').text+' '+
+		driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[4]/span').text)
 		print(types)
 		try:
 			lats.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/input[1]').get_attribute('value'))
