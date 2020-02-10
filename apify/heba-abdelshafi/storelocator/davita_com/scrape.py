@@ -28,7 +28,7 @@ def fetch_data():
     sleep(5)    
     driver.execute_script("arguments[0].click();",driver.find_element_by_xpath('//a[@class="ng-tns-c0-0"]'))    
 
-    for state in driver.find_elements_by_xpath('//select[@name="state"]/option[@class="ng-tns-c0-0"]')[1:5]:
+    for state in driver.find_elements_by_xpath('//select[@name="state"]/option[@class="ng-tns-c0-0"]')[1:]:
         state.click()
         sleep(3)
         try:           
@@ -37,6 +37,7 @@ def fetch_data():
             end=int(rg[-1])
             
             for i in range(start,end+1):
+                sleep(5)
                 data['location_name'].extend([i.text for i in driver.find_elements_by_xpath('//a[contains(@aria-label,"REQUEST TREATMENT")][@class="no-scroll"]')])
                 data['street_address'].extend([i.text.split('\n')[0] for i in driver.find_elements_by_xpath('//div[@class="dv-results-card__info__col dv-results-card__info__body col-left"]/p[span[contains(text(),"")]]')])
                 data['city'].extend([i.text.split('\n')[-1].split(',')[0] for i in driver.find_elements_by_xpath('//div[@class="dv-results-card__info__col dv-results-card__info__body col-left"]/p[span[contains(text(),"")]]')])
@@ -54,11 +55,13 @@ def fetch_data():
                     data['hours_of_operation'].append('missing')
                     data['page_url'].append(driver.current_url)    
                 driver.execute_script("arguments[0].click();",driver.find_element_by_xpath('//a[@class="btn btn--white"][contains(text(),"Next")]'))
+
+               
         except:
             pass
     
 
-    #driver.close()
+    driver.close()
     return data
 
 
