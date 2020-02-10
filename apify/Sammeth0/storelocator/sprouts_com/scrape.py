@@ -69,7 +69,7 @@ def fetch_data():
 				continue
 	for u in urls:
 		driver_url.get(u)
-		time.sleep(5)
+		time.sleep(6)
 		locs.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/h1').text.replace('â€“',''))
 		try:
 			streets.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[2]/a').text.split('\n')[0])
