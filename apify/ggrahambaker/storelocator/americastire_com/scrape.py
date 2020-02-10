@@ -33,12 +33,19 @@ def fetch_data():
         print('{} zip codes remaining'.format(len(search.zipcodes)))
         
         url = 'https://www.americastire.com/store-locator/findStores?q=' + str(zip_code) + '&max=75'
-        new_zips = [] 
+        new_zips = [str(zip_code)] 
         
         
         r = session.get(url, headers=HEADERS)
         
         res_json = json.loads(r.content)
+
+        
+
+        if res_json['results'] == None:
+            search.max_distance_update(MAX_DISTANCE)
+            zip_code = search.next_zip()
+            continue
         
         for loc in res_json['results']:
     
