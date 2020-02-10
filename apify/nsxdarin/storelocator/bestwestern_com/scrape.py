@@ -1,6 +1,7 @@
 import csv
 import urllib2
 from sgrequests import SgRequests
+import time
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -21,7 +22,9 @@ def fetch_data():
         if '<loc>https://www.bestwestern.com/en_US/book/' in line and 'https://www.bestwestern.com/en_US/book/hotels-in-' not in line:
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
+    print('Found %s Locations...' % str(len(locs)))
     for loc in locs:
+        time.sleep(2)
         print('Pulling Location %s...' % loc)
         website = 'bestwestern.com'
         typ = '<MISSING>'
@@ -36,7 +39,7 @@ def fetch_data():
         phone = ''
         lat = ''
         lng = ''
-        r2 = session.get(loc, headers=headers)
+        r2 = session.get(loc, headers=headers, timeout=3)
         try:
             for line2 in r2.iter_lines():
                 if '&#34;street1&#34;:&#34;' in line2:
@@ -48,7 +51,7 @@ def fetch_data():
                     phone = line2.split('&#34;phoneNumber&#34;:&#34;')[1].split('&#34')[0]
                     lat = line2.split('&#34;,&#34;latitude&#34;:&#34;')[1].split('&#34')[0]
                     lng = line2.split('&#34;longitude&#34;:&#34;')[1].split('&#34')[0]
-                    name = line2.split('&#34;name&#34;:&#34;')[1].split('&#34')[0]
+                    name = line2.split('&#34;name&#34;:&#34;')[1].split('&#34')[0].replace('\\u0026','&')
                     if 'United States' in country:
                         country = 'US'
                     if 'Canada' in country:
