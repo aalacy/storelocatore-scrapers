@@ -2,7 +2,8 @@ import csv
 from sgrequests import SgRequests
 import json
 import sgzip 
-
+import time
+import re
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -42,21 +43,29 @@ def fetch_data():
     coord = search.next_coord()
     all_store_data = []
     while coord:
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        #print()
+        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        print()
         data = { 'lat': str(x), 'lng': str(y), 'action': 'get_stores', 'radius': 100 }
-
-        r = session.post('https://us.petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = data)
         
-            
+        try:
+            r = session.post('https://us.petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = data)
+        except:
+            print('sleeping:)')
+            time.sleep(15)
+            print('done')
+            r = session.post('https://us.petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = data)
+
         res_json = json.loads(r.content)
 
         result_coords = []
         
         for k, loc in res_json.items():
+            print(loc)
+            print()
+            print()
 
             location_name = loc['na']
             page_url = loc['gu']
@@ -124,14 +133,22 @@ def fetch_data():
     
     while coord:
         #print('can')
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        #print()
+        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        print()
         c_data = { 'lat': str(x), 'lng': str(y), 'action': 'get_stores', 'radius': 100 }
-        
-        r = session.post('https://petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = c_data)
+        try:
+            r = session.post('https://petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = c_data)
+
+        except:
+            print('sleeping:)')
+            time.sleep(15)
+            print('done')
+            r = session.post('https://petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = c_data)
+
+
 
     
             
@@ -158,8 +175,12 @@ def fetch_data():
             country_code = loc['co'].strip()
             state = loc['rg']
             phone_number = loc['te'].strip()
+            
+
             if phone_number == '':
                 phone_number = '<MISSING>'
+            else:
+                phone_number = re.sub("[^0-9]", "", phone_number)
 
 
             store_number = '<MISSING>'

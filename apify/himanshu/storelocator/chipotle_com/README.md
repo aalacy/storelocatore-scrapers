@@ -8,3 +8,6 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 address with no number,address contains state name,and i checked all data is true this website
+
+i have grabbed all us and canadian location from an api so 2604 data scraped 
+

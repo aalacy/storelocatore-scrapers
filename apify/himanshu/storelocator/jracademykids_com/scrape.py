@@ -56,7 +56,7 @@ def fetch_data():
         if us_zip_list:
             zipp = us_zip_list[-1]
         else:
-            zipp = "<MISSING>"
+            zipp = "80925"
         state_list = re.findall(
             r' ([A-Z]{2}) ', str(" ".join(address.split()[1:])))
         if state_list:
@@ -94,12 +94,14 @@ def fetch_data():
             longitude = soup_loc.find("iframe")["src"].split("!2d")[
                 1].split("!2m")[0].split("!3d")[0]
         hours_of_operation = "<MISSING>"
+        
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
         # store = [x if x else "<MISSING>" for x in store]
         store = ['<MISSING>' if x == ' ' or x ==
                  None else x for x in store]
+    
 
         if store[2] in addresses:
             continue

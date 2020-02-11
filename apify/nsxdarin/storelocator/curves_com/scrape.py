@@ -1,11 +1,11 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import json
 from sgzip import sgzip
 
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -21,7 +21,6 @@ def fetch_data():
     for coord in sgzip.coords_for_radius(50):
         x = coord[0]
         y = coord[1]
-        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://www.curves.com/find-a-club?location=10002&lat=' + str(x) + '&lng=' + str(y)
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
@@ -32,7 +31,6 @@ def fetch_data():
                 if purl not in ids:
                     ids.append(purl)
                     r2 = session.get(purl, headers=headers)
-                    print('Pulling Location %s...' % purl)
                     name = ''
                     website = 'curves.com'
                     typ = 'Fitness Studio'

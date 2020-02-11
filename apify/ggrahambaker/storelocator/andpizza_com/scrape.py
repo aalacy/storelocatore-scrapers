@@ -1,16 +1,6 @@
 import csv
-import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
+from sgrequests import SgRequests
+import json
 
 
 def write_output(data):
@@ -18,121 +8,72 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
-
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
-
-
-def clean(arr):
-    to_ret = []
-    for a in arr:
-        if a == ' ':
-            continue
-
-        to_ret.append(a)
-
-    return to_ret
-
-
 def fetch_data():
-    locator_domain = 'https://andpizza.com/'
-    ext = 'shop-locations'
+    locator_domain = 'https://andpizza.com/' 
+    ext = 'https://api.andpizza.com/webapi/v100/shops'
+    session = SgRequests()
 
-    driver = get_driver()
-    driver.get(locator_domain + ext)
 
-    tbodys = driver.find_elements_by_css_selector('tbody')
+    HEADERS = {'Host': 'api.andpizza.com',
+    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0',
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Referer': 'https://order.andpizza.com/',
+    'Api-Token': 'SrM8gqYvLYOowhu0deSheJxCuWBX',
+    'X-Client': 'NextGenOnline',
+    'X-Referrer': 'https://order.andpizza.com/#/locations',
+    'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJLeUZXTW9nUm5EN1BCbTU4MTU4MTA0NDM0OCIsImF1ZCI6Imd1ZXN0dXNlciIsImNsaWVudCI6Ik5leHRHZW5PbmxpbmUiLCJpc3MiOiJodHRwczovL2FwaS5hbmRwaXp6YS5jb20vd2ViYXBpL3YxMDAvdXNlci9ndWVzdC10b2tlbiIsImlhdCI6MTU4MTA0NDM0OCwiZXhwIjoxODk2NDA0MzQ4LCJuYmYiOjE1ODEwNDQzNDgsImp0aSI6IlEzdnpKSzBWVFFIZXZ0NHgifQ.6opbg1ZfFaCmkXjTbzYvoSMDZwztA0ulQIxYnVS4E4Q',
+    'Origin': 'https://order.andpizza.com',
+    'DNT': '1',
+    'Connection': 'keep-alive',
+    'Cache-Control': 'max-age=0',
+    'TE': 'Trailers'}
+
+
+    r = session.get(ext, headers = HEADERS)
+
+    loc_data = json.loads(r.content)
     all_store_data = []
-    for tbody in tbodys:
-        rows = tbody.find_elements_by_css_selector('tr')
-        for row in rows:
-            tds = row.find_elements_by_css_selector('td')
-            for td in tds:
-                cont = clean(td.text.split('\n'))
-                if len(cont) == 0:
-                    continue
-                elif len(cont) == 14:
-                    location_name = cont[0].strip()
-                    street_address = cont[1]
-                    city, state, zip_code = addy_ext(cont[3])
+    for loc in loc_data['data']:    
+        location_name = loc['name']
+        addy = loc['location']
+        street_address = addy['address1']
+        if addy['address2'] != None:
+            street_address += ' ' + addy['address2']
+            
+        city = addy['city']
+        state = addy['state']
+        zip_code = addy['zipcode']
+        phone_number = addy['phone']
+        
+        lat = addy['latitude']
+        longit = addy['longitude']
+        hours = ''
+        
+        for day in loc['service_schedule']['general']:
+            hours += day['label'] + ' ' + day['value'] + ' '
+            
 
-                    hours = ''
-                    for h in cont[4:]:
-                        hours += h + ' '
+        country_code = 'US'
+        page_url = '<MISSING>'
+        store_number = loc['id']
+        location_type = '<MISSING>'
+        
+        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
+                    store_number, phone_number, location_type, lat, longit, hours, page_url]
+        all_store_data.append(store_data)
 
-                    hours = hours.strip()
 
-                else:
-                    location_name = cont[0].strip()
-                    if 'NORTH BETHESDA' in location_name:
-                        street_address = cont[1]
-                        city, state, zip_code = addy_ext(cont[3])
-                        hours = ''
-                        for h in cont[4:]:
-                            hours += h + ' '
 
-                        hours = hours.strip()
-                    elif 'GAITHERSBURG' in location_name:
-                        street_address = cont[1]
-                        city, state, zip_code = addy_ext(cont[3])
-                        hours = ''
-                        for h in cont[4:]:
-                            hours += h + ' '
 
-                        hours = hours.strip()
-                    elif 'THE MALL AT PRINCE GEORGES' in location_name:
-                        street_address = cont[1] + ' ' + cont[2]
-                        city, state, zip_code = addy_ext(cont[3])
-                        hours = ''
-                        for h in cont[4:]:
-                            hours += h + ' '
 
-                        hours = hours.strip()
-                    elif 'WALNUT' in location_name:
-                        street_address = cont[1]
-                        city, state, zip_code = addy_ext(cont[3])
-                        hours = ''
-                        for h in cont[4:]:
-                            hours += h + ' '
 
-                        hours = hours.strip()
-                    elif 'HARD ROCK STADIUM' in location_name:
-                        street_address = cont[1]
-                        city, state, zip_code = addy_ext(cont[2])
-                        hours = '<MISSING>'
-
-                    else:
-                        street_address = cont[1]
-                        city, state, zip_code = addy_ext(cont[2])
-
-                        hours = ''
-                        for h in cont[3:]:
-                            hours += h + ' '
-
-                        hours = hours.strip()
-
-                lat = '<MISSING>'
-                longit = '<MISSING>'
-                country_code = 'US'
-                store_number = '<MISSING>'
-                phone_number = '<MISSING>'
-                location_type = '<MISSING>'
-
-                store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                              store_number, phone_number, location_type, lat, longit, hours]
-                all_store_data.append(store_data)
-
-    driver.quit()
     return all_store_data
 
 def scrape():

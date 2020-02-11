@@ -31,13 +31,14 @@ def fetch_data():
     while coord:
         coords = []
 
-        print('------------------------')
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print('------------------------')
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://www.oreillyauto.com/stores/list?lat=' + str(x) + '&lng=' + str(y)
-        print(url)
+        #print(url)
         try:
             r = session.get(url, headers=HEADERS)
         except:
@@ -46,6 +47,7 @@ def fetch_data():
             r = session.get(url, headers=HEADERS)
             #print(':)')
         soup = BeautifulSoup(r.content, 'html.parser')
+        coords.append((x, y))
  
         hrefs = soup.find_all('a', {'class': 'js-fas-details-link'})
         
@@ -87,9 +89,6 @@ def fetch_data():
                             store_number, phone_number, location_type, lat, longit, hours, page_url]
                 all_store_data.append(store_data)
             
-            
-                
-
         
         
         search.max_count_update(coords)

@@ -1,6 +1,6 @@
 import csv
 import os
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re, time
 
@@ -14,7 +14,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
+session = SgRequests()
 def fetch_data():
     data = []
     store_links =[]
@@ -23,12 +23,12 @@ def fetch_data():
     urls = ['https://stores.sunglasshut.com/ca.html','https://stores.sunglasshut.com/gb.html','https://stores.sunglasshut.com/us.html']
     u='https://stores.sunglasshut.com/'
     for url in urls:
-        page = requests.get(url)
+        page = session.get(url)
         soup = BeautifulSoup(page.content, "html.parser")
         store=soup.find_all('a',class_='c-directory-list-content-item-link')
         for i in store:
             newurl=u+i['href']
-            page = requests.get(newurl)
+            page = session.get(newurl)
             soup = BeautifulSoup(page.content, "html.parser")
             store=soup.find_all('a',class_='c-directory-list-content-item-link')
             if len(store)==0:
@@ -45,7 +45,7 @@ def fetch_data():
                 for j in store:
                     nurl=u+j['href']
                     nurl=nurl.replace("../","")
-                    page = requests.get(nurl)
+                    page = session.get(nurl)
                     soup = BeautifulSoup(page.content, "html.parser")
                     loc=soup.find('div',class_='banner-h1-content h1-large').text
                     if 'Locationsin ' in loc:
@@ -58,7 +58,7 @@ def fetch_data():
                     else:
                         store_links.append(nurl)
     for u in store_links:
-        page = requests.get(u)
+        page = session.get(u)
         soup = BeautifulSoup(page.content, "html.parser")
         loc=soup.find('div',class_='banner-h1-content h1-large').text
         if loc == "":

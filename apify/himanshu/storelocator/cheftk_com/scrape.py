@@ -3,12 +3,15 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import unicodedata
+
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',  encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -54,6 +57,18 @@ def fetch_data():
             zipp = (c[0].text.split( )[5].replace("96740(808)","96740"))
             phone = (c[0].text.split( )[6].replace("327-0070","(808)327-0070"))
             page_url = base_url+"/snow-factory-tk-kona.html"
+        if "gal-bi-808-bbq-mixed-plate.html" in  i.find('a')['href'] :
+            r3=requests.get(base_url+"/gal-bi-808-bbq-mixed-plate.html")
+            soup3=BeautifulSoup(r3.text,'lxml')
+            d = soup3.find_all('div',{'id':'wsb-element-57392ce1-dbea-4e87-93bf-eea49952ba45'})
+            for h in d:
+                zipp = (h.text.split()[-2].split("(")[0])
+                phone = (h.text.split()[-2].split("(")[1].replace("808)","(808)"))+ (h.text.split()[-1])
+                state = (h.text.split()[-3])
+                city = (h.text.split()[-4])
+                street_address = " ".join(h.text.split()[5:8]).split("te")[1]
+                location_name =" ".join(h.text.split()[0:6]).split("79")[0]
+                page_url = base_url+"/gal-bi-808-bbq-mixed-plate.html"
         if "tk-noodle-house-kainaliu.html" in  i.find('a')['href'] :
             r3=requests.get(base_url+"/tk-noodle-house-kainaliu.html")
             soup3=BeautifulSoup(r3.text,'lxml')
@@ -160,6 +175,11 @@ def fetch_data():
             adrr =name+' '+address + ' ' + city + ' ' + state + ' ' + zip
             if adrr not in output:
                 output.append(adrr)
+                for i in range(len(store)):
+                    if type(store[i]) == str:
+                        store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+                store = [x.replace("–","-") if type(x) == str else x for x in store]
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
                 yield store
             i+=1
 def scrape():

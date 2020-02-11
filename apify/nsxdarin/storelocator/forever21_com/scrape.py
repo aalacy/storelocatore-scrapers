@@ -46,6 +46,9 @@ def fetch_data():
                 zc = '<MISSING>'
             if 'AM' not in hours:
                 hours = '<MISSING>'
+            if '0.000000' in lat:
+                lat = '<MISSING>'
+                lng = '<MISSING>'
             hours = hours.replace('\t','').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ')
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 

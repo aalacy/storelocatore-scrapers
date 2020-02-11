@@ -1,1 +1,1 @@
-says a row duplicate but store number and website are different
+says a zip not in state but it is same in data

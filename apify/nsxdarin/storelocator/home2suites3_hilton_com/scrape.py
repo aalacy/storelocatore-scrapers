@@ -14,14 +14,20 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://home2suites3.hilton.com/sitemapurl-ht-00000.xml'
+    url = 'https://www.hilton.com/en/locations/homewood/'
     locs = []
+    hids = []
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if 'about/amenities.html</loc>' in line:
-            lurl = line.split('<loc>')[1].split('<')[0]
-            lurl = lurl.replace('about/amenities.html','index.html')
-            locs.append(lurl)
+        if '"ctyhocn":"' in line:
+            items = line.split('"ctyhocn":"')
+            for item in items:
+                if ',"thumbImage":' in item:
+                    hid = item.split('"')[0]
+                    if hid not in hids:
+                        hids.append(hid)
+                        lurl = 'https://www.hilton.com/en/hotels/' + hid
+                        locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
         name = ''
@@ -33,13 +39,15 @@ def fetch_data():
         zc = ''
         country = ''
         phone = ''
-        store = loc.replace('/index.html','').rsplit('-',1)[1]
+        store = ''
         hours = '<MISSING>'
         print('Pulling Location %s...' % loc)
         website = 'home2suites3.hilton.com'
         typ = 'Homewood Suites by Hilton | Extended Stay Hotels'
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            if '"url": "https://www.hilton.com/en/hotels/' in line2:
+                store = line2.split('"url": "https://www.hilton.com/en/hotels/')[1].split('-')[0]
             if '<meta name="og:title" content="' in line2:
                 name = line2.split('<meta name="og:title" content="')[1].split('"')[0]
             if '<meta name="geo.position" content="' in line2:

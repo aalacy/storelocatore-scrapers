@@ -17,11 +17,9 @@ def write_output(data):
 
 def fetch_data():
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
     }
     addresses = []
-    base_url = "https://flyhightrampolinepark.com/"
-    locator_domain = base_url
     location_name2 = ""
     street_address = ""
     city = ""
@@ -35,16 +33,25 @@ def fetch_data():
     longitude = ""
     hours_of_operation1 = ""
     page_url = ""
-
-    r = requests.get(base_url, headers=headers)
+    base_url = "https://flyhightrampolinepark.com/"
+    locator_domain = base_url
+    try :
+        r = requests.get(base_url, headers=headers)
+    except:
+        pass
     soup = BeautifulSoup(r.text, "lxml")
-    a = soup.find_all('a',{'class', 'btn btnc'})
+    a = soup.find_all('a',{'class', 'et_pb_button'})
     for i in a:
         page_url = (i['href'])
-        r1 = requests.get(page_url, headers=headers)
+        # print(page_url)
+        try:
+            r1 = requests.get(page_url, headers=headers)
+        except:
+            pass
         soup1 = BeautifulSoup(r1.text, "lxml")
         b = soup1.find_all('div',{'class','text-block'})
         for j in b:
+            # print(j)
             street_address = (list(j.stripped_strings)[1].replace("Fort Collins","218 Smokey Street"))
             location_name2 = (list(j.stripped_strings)[0])
             if "Fly High At Reno" in location_name2 :
@@ -58,7 +65,9 @@ def fetch_data():
             else:
                 location_name2 = "Fly High At Fort Collins"
             city = (list(j.stripped_strings)[2].replace("218 Smokey Street –","Fort Collins").split(",")[0])
+            # print(city)
             state = (list(j.stripped_strings)[2].split(",")[-1].strip().replace("218 Smokey Street –","CO").split(" ")[0])
+            # print(state)
             zipp = (list(j.stripped_strings)[2].split(",")[-1].strip().replace("218 Smokey Street –","80525").split(" ")[-1]) 
             phone = (list(j.stripped_strings)[3].replace("Fort Collins, CO 80525","(970) 305-5300"))
             q = location_name2.replace(" ","-")

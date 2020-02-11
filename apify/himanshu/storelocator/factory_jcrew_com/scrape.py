@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import unicodedata
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -59,9 +60,14 @@ def fetch_data():
         store.append(longitude if longitude else "<MISSING>")
         store.append(hours_of_operation if hours_of_operation else "<MISSING>" )
         store.append(page_url if page_url else "<MISSING>" )
-        if store[2] in addresses:
-            continue
-        addresses.append(store[2])
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                    store[i] = ''.join((c for c in unicodedata.normalize(
+                        'NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            store = [x.replace("–", "-") if type(x) ==
+                     str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode(
+                'ascii').strip() if type(x) == str else x for x in store]
         yield store
    
 def scrape():

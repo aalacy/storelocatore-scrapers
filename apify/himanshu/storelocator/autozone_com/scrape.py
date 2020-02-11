@@ -40,9 +40,11 @@ def fetch_data():
 
 
     # print("start")
+    base_url = "https://www.mynycb.com"
     addresses = []
     driver = get_driver()
     driver.get("https://www.autozone.com/locations/")
+    time.sleep(2)
     soup = BeautifulSoup(driver.page_source,"xml")
 
     headers = {
@@ -59,11 +61,10 @@ def fetch_data():
         if link != "1)":
             # print("-----------------------",i.find("a"))
             city_link = "https://www.autozone.com/locations/"+i.find("a")['href']
-            try:
-                driver.get(city_link)
-                soup1 = BeautifulSoup(driver.page_source,"xml")
-            except:
-                pass
+            driver.get(city_link)
+            time.sleep(2)
+            # ,headers=headers
+            soup1 = BeautifulSoup(driver.page_source,"xml")
             # print('rrrrrrrrrrrrrrrrrrrrrr ',soup1)
             citylink= soup1.find_all("li",{"class":"c-directory-list-content-item"})
             for c in citylink:
@@ -71,74 +72,41 @@ def fetch_data():
                 if link1 != "1)":
                     # print(c.find("a")['href'])
                     sublink = "https://www.autozone.com/locations/"+c.find("a")['href']
-                    try:
-                        driver.get(sublink)
-                        soup2 = BeautifulSoup(driver.page_source,"xml")
-                    except:
-                        pass
+                    driver.get(sublink)
+                    time.sleep(2)
+                    soup2 = BeautifulSoup(driver.page_source,"xml")
                     store_link = soup2.find_all("h5",class_="c-location-grid-item-title")
                     for st in store_link:
                         # print(st.find("a")['href'].replace("..",""))
                         # r3 = requests.get("https://locations.checkers.com"+st['href'].replace("..",""))
                         page_url = "https://www.autozone.com/locations"+st.find("a")['href'].replace("..","")
                         driver.get(page_url)
+                        time.sleep(2)
                         soup3 = BeautifulSoup(driver.page_source,"xml")
-                        
-                        try:
-                            streetAddress = soup3.find("span",{"class":"c-address-street-1"}).text.strip()
-                        except:
-                            streetAddress =''
-
-                        
-                        try:
-                            state = soup3.find("abbr",{"class":"c-address-state"}).text
-                        except:
-                            state =''
-
-                        try:
-                            zip1 = soup3.find("span",{"class":"c-address-postal-code"}).text
-                        except:
-                            zip1 =''
-                            
-                        try:
-                            city = soup3.find("span",{"class":"c-address-city"}).text
-                        except:
-                            city =''
-
-                        try:
-                            name = " ".join(list(soup3.find("h1",{"class":"c-location-title"}).stripped_strings))
-                        except:
-                            name =''
-                        try:
-                            phone = soup3.find("span",{"class":"c-phone-number-span c-phone-main-number-span"}).text
-                        except:
-                            phone =''
-
-                        try:    
-                            hours = " ".join(list(soup3.find("table",{"class":"c-location-hours-details"}).find("tbody").stripped_strings))
-                        except:
-                            hours = ''
-                        try:    
-                            latitude = soup3.find("meta",{"itemprop":"latitude"})['content']
-                            longitude = soup3.find("meta",{"itemprop":"longitude"})['content']
-                        except:
-                            latitude=''
-                            longitude = ''
+                        streetAddress = soup3.find("span",{"class":"c-address-street-1"}).text.strip()
+                        state = soup3.find("abbr",{"class":"c-address-state"}).text
+                        zip1 = soup3.find("span",{"class":"c-address-postal-code"}).text
+                        city = soup3.find("span",{"class":"c-address-city"}).text
+                        name = " ".join(list(soup3.find("h1",{"class":"c-location-title"}).stripped_strings))
+                        phone = soup3.find("span",{"class":"c-phone-number-span c-phone-main-number-span"}).text
+                        hours = " ".join(list(soup3.find("table",{"class":"c-location-hours-details"}).find("tbody").stripped_strings))
+                        latitude = soup3.find("meta",{"itemprop":"latitude"})['content']
+                        longitude = soup3.find("meta",{"itemprop":"longitude"})['content']
                         
                         tem_var =[]
                         tem_var.append("https://www.autozone.com")
-                        tem_var.append(name if name else "<MISSING>")
-                        tem_var.append(streetAddress if streetAddress else  "<MISSING>")
-                        tem_var.append(city if city else  "<MISSING>"  )
-                        tem_var.append(state if  state else  "<MISSING>")
-                        tem_var.append(zip1  if  zip1 else  "<MISSING>" )
+                        tem_var.append(name)
+                        tem_var.append(streetAddress)
+                        tem_var.append(city)
+                        tem_var.append(state)
+                        tem_var.append(zip1)
                         tem_var.append("US")
                         tem_var.append("<MISSING>")
-                        tem_var.append(phone if phone else  "<MISSING>")
+                        tem_var.append(phone)
                         tem_var.append("<MISSING>")
-                        tem_var.append(latitude if latitude else "<MISSING>" )
-                        tem_var.append(longitude if  longitude else "<MISSING>")
-                        tem_var.append(hours if   hours else "<MISSING>")
+                        tem_var.append(latitude)
+                        tem_var.append(longitude)
+                        tem_var.append(hours)
                         tem_var.append(page_url)
                         yield tem_var
                         # print("========================================",tem_var)
@@ -146,18 +114,11 @@ def fetch_data():
                 else:
                     one_link = "https://www.autozone.com/locations/"+c.find("a")['href']
                     page_url = one_link
-                    try:
-                        driver.get(one_link)
-                        soup4 = BeautifulSoup(driver.page_source,"xml")
-                    except:
-                        pass
-
+                    driver.get(one_link)
+                    time.sleep(2)
+                    soup4 = BeautifulSoup(driver.page_source,"xml")
                     streetAddress = soup4.find("span",{"class":"c-address-street-1"}).text.strip()
-                    try:
-                        state = soup4.find("abbr",{"class":"c-address-state"}).text
-                    except:
-                        state =''
-                    # state = soup4.find("abbr",{"class":"c-address-state"}).text
+                    state = soup4.find("abbr",{"class":"c-address-state"}).text
                     zip1 = soup4.find("span",{"class":"c-address-postal-code"}).text
                     city = soup4.find("span",{"class":"c-address-city"}).text
                     name = " ".join(list(soup4.find("h1",{"class":"c-location-title"}).stripped_strings))
@@ -168,37 +129,30 @@ def fetch_data():
 
                     tem_var =[]
                     tem_var.append("https://www.autozone.com")
-                    tem_var.append(name if name else "<MISSING>")
-                    tem_var.append(streetAddress if streetAddress else  "<MISSING>")
-                    tem_var.append(city if city else  "<MISSING>"  )
-                    tem_var.append(state if  state else  "<MISSING>")
-                    tem_var.append(zip1  if  zip1 else  "<MISSING>" )
+                    tem_var.append(name)
+                    tem_var.append(streetAddress)
+                    tem_var.append(city)
+                    tem_var.append(state)
+                    tem_var.append(zip1)
                     tem_var.append("US")
                     tem_var.append("<MISSING>")
-                    tem_var.append(phone if phone else  "<MISSING>")
+                    tem_var.append(phone)
                     tem_var.append("<MISSING>")
-                    tem_var.append(latitude if latitude else "<MISSING>" )
-                    tem_var.append(longitude if  longitude else "<MISSING>")
-                    tem_var.append(hours if   hours else "<MISSING>")
+                    tem_var.append(latitude)
+                    tem_var.append(longitude)
+                    tem_var.append(hours)
                     tem_var.append(page_url)
                     yield tem_var
                     # print("========================================",tem_var)
         else:
             one_link1 = "https://www.autozone.com/locations/"+i.find("a")['href']
             page_url = one_link1
-            
-            try:
-                driver.get(page_url)
-                soup5 = BeautifulSoup(driver.page_source,"xml")
-            except:
-                pass
+            driver.get(page_url)
+            time.sleep(2)
+            soup5 = BeautifulSoup(driver.page_source,"xml")
 
             streetAddress = soup5.find("span",{"class":"c-address-street-1"}).text.strip()
-            try:
-                state = soup4.find("abbr",{"class":"c-address-state"}).text
-            except:
-                state =''
-            # state = soup5.find("abbr",{"class":"c-address-state"}).text
+            state = soup5.find("abbr",{"class":"c-address-state"}).text
             zip1 = soup5.find("span",{"class":"c-address-postal-code"}).text
             city = soup5.find("span",{"class":"c-address-city"}).text
             name = " ".join(list(soup5.find("h1",{"class":"c-location-title"}).stripped_strings))
@@ -208,19 +162,19 @@ def fetch_data():
             longitude = soup5.find("meta",{"itemprop":"longitude"})['content']
             # print(streetAddress)
             tem_var =[]
-            tem_var.append("https://www.autozone.com")
-            tem_var.append(name if name else "<MISSING>")
-            tem_var.append(streetAddress if streetAddress else  "<MISSING>")
-            tem_var.append(city if city else  "<MISSING>"  )
-            tem_var.append(state if  state else  "<MISSING>")
-            tem_var.append(zip1  if  zip1 else  "<MISSING>" )
+            tem_var.append("https://www.autozone.com/")
+            tem_var.append(name)
+            tem_var.append(streetAddress)
+            tem_var.append(city)
+            tem_var.append(state)
+            tem_var.append(zip1)
             tem_var.append("US")
             tem_var.append("<MISSING>")
-            tem_var.append(phone if phone else  "<MISSING>")
+            tem_var.append(phone)
             tem_var.append("<MISSING>")
-            tem_var.append(latitude if latitude else "<MISSING>" )
-            tem_var.append(longitude if  longitude else "<MISSING>")
-            tem_var.append(hours if   hours else "<MISSING>")
+            tem_var.append(latitude)
+            tem_var.append(longitude)
+            tem_var.append(hours)
             tem_var.append(page_url)
             yield tem_var
             # print("========================================",tem_var)

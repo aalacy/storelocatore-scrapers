@@ -12,7 +12,7 @@ def get_driver():
 	options.add_argument('--no-sandbox')
 	options.add_argument('--disable-dev-shm-usage')
 	options.add_argument('--window-size=1920,1080')
-	options.add_argument("user-agent= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'")
+	options.add_argument("user-agent= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'")
 	return webdriver.Chrome('chromedriver', options=options)
 
 def write_output(data):
@@ -47,56 +47,43 @@ def fetch_data():
 	driver = get_driver()
 	driver_page = get_driver()
 	driver.get(location_url)
-	time.sleep(5)
+	time.sleep(10)
 	links=driver.find_elements_by_xpath('/html/body/div[3]/div/div/div[1]/section/div[3]/div')
 	for ls in links:	
 		link=ls.find_elements_by_tag_name('a')
 		for l in link:
-			print(l.get_attribute('href'))
 			pages.append(l.get_attribute('href'))	
-	print(pages)
-	print(len(pages))
 	
 	for p in pages:
 		driver_page.get(p)
 		time.sleep(5)
 		locs.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/input[3]').get_attribute('value'))
-		print(locs)
-		print(len(locs))
 		streets.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/form/div[4]/div[1]').text.split('\n')[0])
-		print(streets)
 		try:
 			cities.append(driver_page.find_element_by_xpath('/html/head/meta[13]').get_attribute('content').split(	'/')[-3].split('-')[-3].replace('+',' '))
 		except:
 			cities.append("<MISSING>")
-		print(cities)
-		states.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[1]/h1').text.split(', ')[1])
-		print(states)
+		states.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[1]/h1').text.split(', ')[1].split(' ')[0])
 		zips.append(p.split('/')[-3].split('-')[-1].replace('%20',''))
-		print(zips)
 		ids.append(driver_page.find_element_by_xpath('/html/head/meta[13]').get_attribute('content').split('/')[-2])
-		print(ids)
 		try:
 			phones.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[4]').text)
 		except:
 			phones.append("<MISSING>")
-		print(phones)
 		timing.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[1]').text
 		+' '+driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[2]').text.replace('\n',' '))
-		print(timing)
-		types.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul').text)
-		print(types)
+		types.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[1]/span').text+' '+
+		driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[2]/span').text+' '+
+		driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[3]/span').text+' '+
+		driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[4]/span').text)
 		try:
 			lats.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/input[1]').get_attribute('value'))
 		except:
 			lats.append("<MISSING>")
-		print(lats)
 		try:
 			longs.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/input[2]').get_attribute('value'))
 		except:
 			longs.append("<MISSING>")
-		print(longs)
-
 			
 						
 	return_main_object = []	

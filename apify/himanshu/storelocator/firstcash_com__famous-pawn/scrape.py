@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import unicodedata
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +20,6 @@ def write_output(data):
 
 
 def fetch_data():
-    return_main_object = []
     addresses = []
     
     headers = {
@@ -43,7 +42,6 @@ def fetch_data():
     location_type = ""
     latitude = ""
     longitude = ""
-    raw_address = ""
     hours_of_operation = ""
     for location in json_data:
         store_number =  str(location['storeNumber'])
@@ -77,11 +75,6 @@ def fetch_data():
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             # print("data = " + str(store))
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            for i in range(len(store)):
-                if type(store[i]) == str:
-                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-            store = [x.replace("–","-") if type(x) == str else x for x in store]
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
 
         

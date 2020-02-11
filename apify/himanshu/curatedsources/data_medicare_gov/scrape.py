@@ -25,12 +25,14 @@ def fetch_data():
     base_url = "https://data.medicare.gov/Hospital-Compare/Hospital-General-Information/xubh-q36u/data"
     return_main_object=[]
     location_url = "https://data.medicare.gov/api/id/xubh-q36u.json?$query=select%20*%2C%20%3Aid%20limit%205344"
+    # location_url = "https://data.medicare.gov/api/id/xubh-q36u.json?$query=select%20*%2C%20%3Aid%20limit%205344"
     locs = requests.get(location_url, headers=headers).json()
     for loc in locs:
+       
         tem_var =[]
         Facility_ID = loc['provider_id']
         location_name = loc['hospital_name']
-        print(location_name)
+        # print(location_name)
         street_address = loc['address']
         city = loc['city']
         state = loc['state']
@@ -42,16 +44,17 @@ def fetch_data():
         store_number = "<MISSING>"
         phone = loc['phone_number']
         location_type = loc['hospital_type']
-
-        if "latitude" in loc['location']:
-            latitude = loc['location']['latitude']
-            longitude = loc['location']['longitude']
+        
+        if "geocoded_column" in loc:
+            # print(loc['geocoded_column']['coordinates'][0])
+            latitude = loc['geocoded_column']['coordinates'][1]
+            longitude = loc['geocoded_column']['coordinates'][0]
         else:
             latitude = "<MISSING>"
             longitude = "<MISSING>"
+
         hours_of_operation = "<MISSING>"
         page_url = "<MISSING>"
-        
         tem_var.append(Facility_ID)
         tem_var.append("https://data.medicare.gov/Hospital-Compare/Hospital-General-Information/xubh-q36u/data")
         tem_var.append(location_name)
@@ -71,7 +74,7 @@ def fetch_data():
         if tem_var[2] in addresses:
             continue
         addresses.append(tem_var[2])
-        #print(tem_var)
+        # print(tem_var)
         # return_main_object.append(tem_var)
         yield tem_var
         

@@ -13,6 +13,16 @@ def get_driver():
     return webdriver.Chrome('chromedriver', options=options)
 
 
+
+def addy_ext(addy):
+    addy = addy.split(',')
+    city = addy[0]
+    state_zip = addy[1].strip().split(' ')
+    state = state_zip[0]
+    zip_code = state_zip[1]
+    return city, state, zip_code
+
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -25,20 +35,25 @@ def write_output(data):
 
 def fetch_data():
     locator_domain = 'https://www.lynccycling.com/'
-    ext = 'say-hello'
+    url = 'http://lynccycling.wpengine.com/studios/'
 
     driver = get_driver()
-    driver.get(locator_domain + ext)
+    driver.get(url)
 
     all_store_data = []
-    locs = driver.find_elements_by_css_selector('div.vcard')
-    for loc in locs:
-        location_name = loc.find_element_by_css_selector('span.city').text
-        street_address = loc.find_element_by_css_selector('div.street-address').text
-        city = loc.find_element_by_css_selector('span.locality').text
-        state = loc.find_element_by_css_selector('span.region').text
-        zip_code = loc.find_element_by_css_selector('span.postal-code').text
-        phone_number = loc.find_element_by_css_selector('div.phone').find_elements_by_css_selector('a')[1].text
+    locs = driver.find_elements_by_css_selector('div.elementor-text-editor')
+    names = driver.find_elements_by_css_selector('h2.elementor-heading-title')
+    for i, loc in enumerate(locs):
+
+        location_name = names[i].text
+        addy = loc.text.split('\n')
+        street_address = addy[0]
+        city, state, zip_code = addy_ext(addy[1])
+
+
+
+        
+        phone_number = '<MISSING>'
 
         country_code = 'US'
 

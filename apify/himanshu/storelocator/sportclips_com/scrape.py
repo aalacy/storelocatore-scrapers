@@ -69,9 +69,8 @@ def fetch_data():
             location_name = i['Title']
             if "COMING SOON!" in i['Address']:
                 continue
-            # print(page_url)
             address_list = i['Address'].split('|')
-            # print(address_list)
+
             if ".com" in i['Url']:
                 if len(address_list) == 5:
                     street_address = " ".join(address_list[:2]).replace("\t",'')
@@ -80,10 +79,15 @@ def fetch_data():
                     zipp = address_list[2].split(',')[1].split(' ')[-1]
                 
                 elif len(address_list) == 3:
-                    street_address = address_list[0].replace("\t",'')
-                    city = address_list[1].split(',')[0]
-                    zipp = address_list[1].split(',')[1].split(' ')[-1]
-                    
+                    try:
+                        street_address = address_list[0].replace("\t",'')
+                        city = address_list[1].split(',')[0]
+                        zipp = address_list[1].split(',')[1].split(' ')[-1]
+                    except:
+                        street_address = " ".join(address_list[:2]).replace("\t",'')
+                        city = address_list[-1].split(',')[0]
+                        zipp = address_list[-1].split(',')[1].split(' ')[-1]
+
                 else:
                     street_address = address_list[0].replace("\t",'') 
                     try:
@@ -113,7 +117,7 @@ def fetch_data():
                         city = address_list[2].split(',')[0]
                         zipp = ' '.join(address_list[2].split(',')[1].split(' ')[-2:])
 
-            phone = address_list[-1]
+            phone = address_list[-1].replace("Canal Winchester, Ohio 43110","<MISSING>")
             state = i['ExtCode'][:2]
             latitude = i['Lat']
             longitude = i['Long']
@@ -135,7 +139,7 @@ def fetch_data():
                     hours = ''
                     for i in range(0,7):
                         hours = hours+" "+soup1.find_all("div",{"class":"wtp-responsive-row row cols-25-75"})[i].text.strip()
-                    hours_of_operation = hours
+                    hours_of_operation = re.sub("\s+"," ",hours)
         
             except:
                 hours_of_operation = "<MISSING>"
@@ -146,7 +150,7 @@ def fetch_data():
             store.append(street_address)
             store.append(city)
             store.append(state)
-            store.append(zipp)
+            store.append(zipp if zipp else "<MISSING>")
             store.append(country_code)
             store.append("<MISSING>")
             store.append(phone )

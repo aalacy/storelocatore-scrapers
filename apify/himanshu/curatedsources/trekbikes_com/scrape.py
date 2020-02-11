@@ -22,7 +22,7 @@ def fetch_data():
     return_main_object = []
     for i in range(page_size):
         while True:
-            print("https://www.trekbikes.com/us/en_US/store-finder/json/?q=11756&sort=Distance&distance=100000&page="+str(i))
+           # print("https://www.trekbikes.com/us/en_US/store-finder/json/?q=11756&sort=Distance&distance=100000&page="+str(i))
             page_request = requests.get("https://www.trekbikes.com/us/en_US/store-finder/json/?q=11756&sort=Distance&distance=100000&page="+str(i),headers=headers)
             try:
                 location_list = page_request.json()["searchPageData"]["results"]
@@ -64,11 +64,12 @@ def fetch_data():
                             else:
                                 hours = hours + " " + store_hours[i]["weekDayLong"] + " " + store_hours[i]["storeOpeningTime"]["formattedHour"] + " - " + store_hours[i]["storeClosingTime"]["formattedHour"]
                     store.append(hours if hours != "" else "<MISSING>")
-                    return_main_object.append(store)
+                    # return_main_object.append(store)
+                    yield store
                 break
             except:
                 continue
-    return return_main_object
+    # return return_main_object
 
 def scrape():
     data = fetch_data()

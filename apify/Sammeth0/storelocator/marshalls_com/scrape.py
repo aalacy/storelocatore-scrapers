@@ -72,7 +72,10 @@ def fetch_data():
 			phones.append("<MISSING>")
 		timing.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[1]').text
 		+' '+driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[2]').text.replace('\n',' '))
-		types.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul').text)
+		types.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[1]/span').text+' '+
+		driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[2]/span').text+' '+
+		driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[3]/span').text+' '+
+		driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[4]/span').text)
 		try:
 			lats.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/input[1]').get_attribute('value'))
 		except:

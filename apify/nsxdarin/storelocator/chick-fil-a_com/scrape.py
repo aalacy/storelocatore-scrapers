@@ -23,7 +23,6 @@ def fetch_data():
             for item in items:
                 if '<?xml version="' not in item and 'browse' not in item:
                     locs.append('https://www.chick-fil-a.com/locations/' + item.split('<')[0])
-    print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
         name = ''
         add = ''

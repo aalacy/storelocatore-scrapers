@@ -22,6 +22,7 @@ def write_output(data):
 @timeout_decorator.timeout(30)
 def query_locator(zip_code):
     return session.get("https://locations.comerica.com/?q={}&filter=bc".format(zip_code))
+ 
 
 def fetch_data():
     return_main_object = []

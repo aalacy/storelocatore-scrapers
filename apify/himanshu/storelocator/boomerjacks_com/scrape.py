@@ -43,7 +43,6 @@ def fetch_data():
     location_type = ""
     latitude = ""
     longitude = ""
-    raw_address = ""
     hours_of_operation = ""
     page_url =''
     city1 =''
@@ -77,20 +76,20 @@ def fetch_data():
         
         city_add = location['address'].replace(state,"").replace(zipp,"")
         if len(city_add.split("Dr."))==2:
-            city1 = city_add.split("Dr.")[-1].replace("Texas","")
+            city = city_add.split("Dr.")[-1].replace("Texas","")
         else:
             kp = location['address'].replace(state,"").replace(zipp,"").strip().lstrip().split(",")
             if kp[-1]=='':
                 del kp[-1]
             if kp[-1]==" Texas":
                 del kp[-1]
-            city1 = (kp[-1].replace("158 W FM 544 Murphy","").replace("201 West State Highway 114 ","").replace("131 E Stacy Rd ","").replace("6155 Samuell Blvd ","").strip())
+            city = (kp[-1].replace("158 W FM 544 Murphy","").replace("201 West State Highway 114 ","").replace("131 E Stacy Rd ","").replace("6155 Samuell Blvd ","").strip())
 
         street_address = location['address'].replace(state,"").replace(zipp,"").split(",")[0].replace(city1,"")
         
         
       
-        store = [locator_domain, location_name, street_address, city1, state.replace("SW","Texas"), zipp, country_code,
+        store = [locator_domain, location_name, street_address, city, state.replace("SW","Texas"), zipp, country_code,
                     str(store_number), str(phone), location_type, str(latitude), str(longitude), hours_of_operation,page_url]
 
         if str(store[2]) + str(store[-3]) not in addresses:
@@ -99,10 +98,8 @@ def fetch_data():
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             # print("data = " + str(store))
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            if "131 E Stacy Rd" in street_address:
-                pass
-            else:
-                yield store
+        
+            yield store
 
         # hp=[]
         # return hp 

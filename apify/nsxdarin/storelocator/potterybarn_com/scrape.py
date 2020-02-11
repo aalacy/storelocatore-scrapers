@@ -16,7 +16,7 @@ def write_output(data):
 
 def fetch_data():
     url = 'https://www.potterybarn.com/customer-service/store-locator.html?cm_type=fnav'
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     storeinfo = []
     lines = r.iter_lines()
     for line in lines:
@@ -29,7 +29,7 @@ def fetch_data():
             storeinfo.append(pc + '|' + surl)
     locs = []
     url = 'https://www.potterybarn.com/search/stores.json?brands=PB,PK,PT&lat=40.714&lng=-73.986&radius=10000'
-    r = session.get(url, headers=headers)
+    r = session.get(url, headers=headers, verify=False)
     for item in json.loads(r.content)['storeListResponse']['stores']:
         country = item['properties']['COUNTRY_CODE']
         store = item['properties']['STORE_NUMBER']

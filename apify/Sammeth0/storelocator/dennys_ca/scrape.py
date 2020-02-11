@@ -57,7 +57,7 @@ def fetch_data():
 	for p in pages:
 		driver_page.get(p)
 		time.sleep(3)
-		locs.append(driver_page.find_element_by_xpath('/html/body/div/section/div[1]/div/h1').text)
+		locs.append(driver_page.find_element_by_xpath('/html/body/div/section/div[1]/div/h1').text.replace('â€“',''))
 		streets.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[1]').text)
 		cities.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[2]').text.split(',')[0])
 		states.append(driver_page.find_element_by_xpath('/html/body/div/main/article/section[1]/div/div/div[2]/div/div[1]/dl/dd/div[2]').text.split(',')[1])
