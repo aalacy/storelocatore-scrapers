@@ -81,7 +81,6 @@ def fetch_data():
                     zip_code = temp_addy[1].strip()
 
                 else:
-                    #print(content[3])
                     city, state, zip_code = addy_ext(content[3])
 
                 
