@@ -75,6 +75,7 @@ states_with_codes = {
     'ON': 'Ontario',
     'PE': 'Prince Edward Island',
     'QC': 'Quebec',
+    'QU': 'Quebec',
     'SK': 'Saskatchewan',
     'YT': 'Yukon'
 }
@@ -83,6 +84,7 @@ class Scrape(base.Spider):
         async with session.get(url, timeout=60 * 60) as response:
             r = await response.json()
             if r:
+                res = []
                 for resp in r['data']['locations']:
                     i = base.Item(resp)
 
@@ -107,19 +109,20 @@ class Scrape(base.Spider):
                     i.add_value('store_number', resp['extendedOAGCode'])
                     i.add_value('latitude', resp['latitude'])
                     i.add_value('longitude', resp['longitude'])
-                    i.add_value('location_type', resp['type'])
+                    i.add_value('location_type', resp['type'], lambda x: "Corporate" if x == "C" else "Independent License")
                     i.add_value('street_address', ''.join([s for s in [resp['streetAddressLine1'], resp['streetAddressLine2']] if s.strip()]), remove_tags)
 
                     if i.as_dict()['store_number'] not in crawled:
                         crawled.add(i.as_dict()['store_number'])
-                        return i
+                        res.append(i)
+                return res
 
     async def _fetch_cities(self, session, urls):
         results = []
         for url in urls:
             res = await self._fetch_store(session, url)
             if res:
-                results.append(res)
+                results+=res
         return results
 
     async def _fetch_state(self, session, url):
@@ -146,7 +149,7 @@ class Scrape(base.Spider):
 
     def crawl(self):
         urls = ["https://apiprod.hertz.com/rest/geography/city/country/US/state/{}/".format(s) for s in base.us_states_codes]
-        urls += ["https://apiprod.hertz.com/rest/geography/city/country/CA/state/{}/".format(s) for s in base.ca_provinces_codes]
+        urls += ["https://apiprod.hertz.com/rest/geography/city/country/CA/state/{}/".format(s) for s in list(base.ca_provinces_codes)+['QU']]
         loop = asyncio.get_event_loop()
         stores = loop.run_until_complete(self._fetch_stores(urls, loop))
         return [s for s in stores if s]
