@@ -3,8 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-from sgrequests import SgRequests
-session = SgRequests()
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +24,7 @@ def fetch_data():
     }
 
     base_url = "http://harmonsgrocery.com/"
-    r = session.get("https://www.harmonsgrocery.com/wp-admin/admin-ajax.php?action=get_ajax_posts&nextNonce=34695cf658", headers=headers).json()
+    r = requests.get("https://www.harmonsgrocery.com/wp-admin/admin-ajax.php?action=get_ajax_posts&nextNonce=34695cf658", headers=headers).json()
     for data in r:
         location_name = data['name']
         street_address = data['address'].split("<br />")[0].split("<p>")[1]
@@ -51,7 +50,7 @@ def fetch_data():
         store.append(latitude)
         store.append(longitude)
         store.append(hours_of_operation)
-        store.append("<MISSING>")
+        store.append(" https://www.harmonsgrocery.com/locations")
         # print("data====="+str(store))
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 

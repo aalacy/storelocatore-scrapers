@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-import xmltodict
 import urllib3
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
@@ -12,7 +11,6 @@ from selenium import webdriver
 import platform
 
 system = platform.system()
-
 urllib3.disable_warnings()
 
 
@@ -52,15 +50,17 @@ def fetch_data():
         for data in soup.find_all("tbody",{"class":"row-hover"}):
             for tr in data.find_all("tr"):
                 store_number = list(tr.stripped_strings)[0]
-                print("https://www.kwiktrip.com/locator/store?id="+str(store_number))
+                # print("https://www.kwiktrip.com/locator/store?id="+str(store_number))
                 driver1.get("https://www.kwiktrip.com/locator/store?id="+str(store_number))
                 soup1 = BeautifulSoup(driver1.page_source,"lxml")
+
                 try:
-                    hours_of_operation =  " ".join(list(soup1.find("div",{"class":"Store__dailyHours"}).stripped_strings))
+                    h = soup1.find("div",{"class":"Store__dailyHours"})
+                    if h != None:
+                        hours_of_operation =  " ".join(list(h.stripped_strings))
                 except:
-                    hours_of_operation = " ".join(list(soup1.find("div",{"class":"Store__open24Hours"}).stripped_strings))
-                # time.sleep(1)
-                # driver1.back()
+                    h = soup1.find("div",{"class":"Store__open24Hours"})
+                    hours_of_operation = " ".join(list(h.stripped_strings))
                 # print(" ".join(list(soup1.find("div",{"class":"Store__open24Hours"}).stripped_strings)))
                 page_url = "https://www.kwiktrip.com/locator/store?id="+str(store_number)
                 location_name = list(tr.stripped_strings)[1]

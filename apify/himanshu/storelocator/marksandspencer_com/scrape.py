@@ -3,9 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-from sgrequests import SgRequests
-
-session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +19,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url= "https://api.marksandspencer.com/v1/stores?apikey=aVCi8dmPbHgHrdCv9gNt6rusFK98VokK&jsonp=angular.callbacks._1&latlong=51.49919128417969,-0.09428299963474274&limit=3000&radius=5000000"
-    r = session.get(base_url, headers=headers)
+    r = requests.get(base_url, headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
     data = (soup.text.split(");")[0].split("callbacks._1(")[1])
     json_data = json.loads(data)
@@ -46,7 +43,7 @@ def fetch_data():
         url = "https://www.marksandspencer.com/MSResStoreFinderGlobalBaseCmd?storeId=10151&langId=-24&SAPStoreId="+str(store_number)+"&extid=local"
         hours_of_operation =''
         h1  = (d['coreOpeningHours'])
-        hours_of_operation = (str(h1).replace("'","").replace("{","").replace("}","").replace("[","").replace("]","").replace("day: ","")) 
+        hours_of_operation = (str(h1).replace("'","").replace("{","").replace("}","").replace("[","").replace("]","").replace("day: ","").replace(", close:"," -").replace(" open:","-").replace("y,","y ")) 
         store = []
         store.append("https://www.marksandspencer.com/")
         store.append(location_name if location_name else '<MISSING>')

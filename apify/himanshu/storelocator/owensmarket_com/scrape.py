@@ -50,7 +50,7 @@ def fetch_data():
                 store_number = i['storeNumber']
                 latitude = i['latitude']
                 longitude = i['longitude']
-                street_address = (str(i['address']['addressLine1'])+" "+str(i['address']['addressLine2']))
+                street_address = (str(i['address']['addressLine1'])+" "+str(i['address']['addressLine2']).replace("None",""))
                 city = (i['address']['city'])
                 zipp = (i['address']['zip'])
                 state = (i['address']['stateCode'])
@@ -99,7 +99,7 @@ def fetch_data():
                 store_number = i['storeNumber']
                 latitude = i['latitude']
                 longitude = i['longitude']
-                street_address = (str(i['address']['addressLine1'])+" "+str(i['address']['addressLine2']))
+                street_address = (str(i['address']['addressLine1'])+" "+str(i['address']['addressLine2']).replace("None",""))
                 city = (i['address']['city'])
                 zipp = (i['address']['zip'])
                 state = (i['address']['stateCode'])

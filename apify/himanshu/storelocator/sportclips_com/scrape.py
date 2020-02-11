@@ -139,7 +139,7 @@ def fetch_data():
                     hours = ''
                     for i in range(0,7):
                         hours = hours+" "+soup1.find_all("div",{"class":"wtp-responsive-row row cols-25-75"})[i].text.strip()
-                    hours_of_operation = hours
+                    hours_of_operation = re.sub("\s+"," ",hours)
         
             except:
                 hours_of_operation = "<MISSING>"
