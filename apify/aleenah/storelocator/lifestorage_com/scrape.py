@@ -83,6 +83,8 @@ def fetch_data():
             tim=""
             for l in timl:
                 tim+= l["dayOfWeek"]+": "+l["opens"]+" - "+l["closes"]+" "
+            if "Sunday:" not in tim:
+                tim+= "Sunday: Closed"
             timing.append(tim.strip())
             phones.append(js["telephone"])
             lat.append(js["geo"]["latitude"])
@@ -93,7 +95,7 @@ def fetch_data():
     all = []
     for i in range(0, len(locs)):
         row = []
-        row.append("https://www.cellularsales.com")
+        row.append("https://www.lifestorage.com/")
         row.append(locs[i])
         row.append(street[i])
         row.append(cities[i])
