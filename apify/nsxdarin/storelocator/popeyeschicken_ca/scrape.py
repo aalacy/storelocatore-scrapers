@@ -19,7 +19,7 @@ def fetch_data():
     for item in canada:
         lat = item.split(',')[0]
         lng = item.split(',')[1]
-        print('Pulling Coordinates %s-%s...' % (lat, lng))
+        #print('Pulling Coordinates %s-%s...' % (lat, lng))
         url = 'https://hosted.where2getit.com/popeyes/ajax?&xml_request=<request><appkey>17DA36EB-B7DF-3E53-B01F-391651032194<%2Fappkey><formdata+id%3D"locatorsearch"><dataview>store_default<%2Fdataview><limit>100<%2Flimit><geolocs><geoloc><addressline><%2Faddressline><longitude>' + lng + '<%2Flongitude><latitude>' + lat + '<%2Flatitude><country>CA<%2Fcountry><%2Fgeoloc><%2Fgeolocs><where><operatingstatus><or><eq>Operating<%2Feq><eq>Reopenings<%2Feq><%2For><%2Foperatingstatus><%2Fwhere><searchradius>250<%2Fsearchradius><%2Fformdata><%2Frequest>'
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
@@ -28,6 +28,14 @@ def fetch_data():
             if '<address2>' in line:
                 add = add + ' ' + line.split('<address2>')[1].split('<')[0]
                 add = add.strip()
+                if ' a/k' in add:
+                    add = add.split(' a/k')[0]
+                if ' a/K' in add:
+                    add = add.split(' a/K')[0]
+                if ' A/k' in add:
+                    add = add.split(' A/k')[0]
+                if ' A/K' in add:
+                    add = add.split(' A/K')[0]
             if '<city>' in line:
                 city = line.split('<city>')[1].split('<')[0]
             if '<country>' in line:
