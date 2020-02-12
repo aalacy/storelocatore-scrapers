@@ -21,14 +21,12 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     states = soup.find("select",{"name":"locSt"}).find_all("option")[1:]
     for state in states:
-        try:
-
-            r1 = session.get("https://www.shopversona.com/versonastores.cfm?&locSt="+str(state['value']))
-        except:
-            continue
+        r1 = session.get("https://www.shopversona.com/versonastores.cfm?&locSt="+str(state['value']))
+        
         soup1 = BeautifulSoup(r1.text, "lxml")
         data = soup1.find_all("div",{"class":"mapAddress"})
         for info in data:
+            
             latitude = info.find("h4")['onclick'].split(",")[1]
             longitude = info.find("h4")['onclick'].split(",")[2].replace(");","")
             addr = list(info.stripped_strings)
@@ -39,13 +37,13 @@ def fetch_data():
             location_name = addr[1]
             street_address = addr[2]
             city = addr[0].split(",")[0]
-            state = addr[0].split(",")[1]
+            state = addr[0].split(",")[1].strip()
             phone = addr[3]
             if len(addr) == 7:
-                hours_of_operation = " ".join(addr[4:6])
+                hours_of_operation = " ".join(addr[4:6]).replace("|","-")
             else:
                 hours_of_operation = "<MISSING>"
-           
+            page_url = "https://www.shopversona.com/versonastores.cfm?&locSt="+str(state)
 
 
             store = []
@@ -62,7 +60,7 @@ def fetch_data():
             store.append(latitude)
             store.append(longitude)
             store.append(hours_of_operation)
-            store.append("<MISSING>")         
+            store.append(page_url)         
             yield store 
 
 def scrape():

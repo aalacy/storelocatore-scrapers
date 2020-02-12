@@ -1,12 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import time
 from datetime import datetime
-
+session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -40,49 +40,32 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        location_url = "https://local.safeway.com/search.html?q="+str(zip_code)+"&storetype=5657&l=en"
+        location_url = " https://www.safeway.com/abs/pub/storelocator/api/accounts/me/locations/geosearch?api_key=843b2f10cedf121969b2e44eab5f15aa&v=20180530&location="+str(zip_code)+"&limit=10&radius=200&filters=%5B%7B%22custom95965%22%3A%20%7B%22equalTo%22%3A%5B%22safeway%22%5D%7D%7D%5D"
         
-        r = requests.get(location_url, headers=headers).json()
-        current_results_len = len(r['response']['entities'])
+        r = session.get(location_url).json()
+        current_results_len = len(r['response']['locations'])
 
-        for i in r['response']['entities']:
-            city = i['profile']['address']['city']
-            street_address = i['profile']['address']['line1']
-            state = i['profile']['address']['region']
-            zipp = i['profile']['address']['postalCode']
-            location_type = i['profile']['c_type']
-            phone = i['profile']['mainPhone']['display']
-            country_code = i['profile']['mainPhone']['countryCode']  
-            latitude = i['profile']['yextDisplayCoordinate']['lat']
-            longitude = i['profile']['yextDisplayCoordinate']['long']	
-            page_url = i['profile']['websiteUrl']
+        for i in r['response']['locations']:
 
-            drive_hours = ''
-            for drive in  i['profile']['hours']['normalHours']: 
-            
-                    
-                if drive['isClosed'] == False:
-                    for interval in (drive['intervals']):
-                        if interval['start'] == 0:
-                            value_starttime = datetime.strptime(str(interval['start']), "%H")
-                            starttime= value_starttime.strftime("%I:%M %p")
-                        else:
-                            value_starttime = datetime.strptime(str(interval['start']), "%H%M")
-                            starttime= value_starttime.strftime("%I:%M %p")
-                        if interval['end'] == 0:
-                            value_endtime = datetime.strptime(str(interval['end']), "%H")
-                            endtime= value_endtime.strftime("%I:%M %p")
-                        else:
-                            value_endtime = datetime.strptime(str(interval['end']), "%H%M")
-                            endtime= value_endtime.strftime("%I:%M %p")
-                        drive_hours = drive_hours+" "+drive['day']+" "+str(starttime)+"-"+str(endtime)
-                else:
-                    drive_hours = drive_hours+" "+drive['day']+" "+"closed"
-            hours_of_operation = drive_hours
+            street_address = i['address']
+            city = i['city']
+            state = i['state']
+            zipp = i['zip']
+            location_type = "Pharmacy "
+            phone = i['phone']
+            country_code = i['countryCode']
+            latitude = i['yextDisplayLat']
+            longitude = i['yextDisplayLng']	
+            page_url = "https://local.pharmacy.safeway.com/"+str(state.lower())+"/"+str(city.lower().replace(" ","-"))+"/"+str(street_address.lower().replace(" ","-").replace("#","-"))+".html"
+            r1 = session.get(page_url)
+            soup1 = BeautifulSoup(r1.text, "lxml")
+            if soup1.find("h1",{"class":"ContentBanner-h1"}):
+                location_name = soup1.find("h1",{"class":"ContentBanner-h1"}).text
 
-            r2 = requests.get(page_url, headers=headers)
-            soup2 = BeautifulSoup(r2.text, "lxml")
-            location_name = soup2.find("h1",{"class":"ContentBanner-h1"}).text
+                hours_of_operation = " ".join(list(soup1.find("table",{"class":"c-hours-details"}).stripped_strings)).replace("Day of the Week Hours","").strip()
+            else:
+                location_name = "<MISSING>"
+                hours_of_operation = "<MISSING>"
             
         
             result_coords.append((latitude, longitude))
@@ -104,11 +87,10 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            #print("data =="+str(store))
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # print("data =="+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
-        
-        
+    
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
