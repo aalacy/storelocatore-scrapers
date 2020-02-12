@@ -71,6 +71,8 @@ def fetch_data():
             soup = BeautifulSoup(driver.page_source, 'html.parser')
             data = soup.find_all('script', {'type': 'application/ld+json'})[-1].contents
             js=json.loads("".join(data))["@graph"][0]
+            if "coming soon" in js["image"]["name"].lower() or "opening soon" in js["image"]["name"].lower():
+                continue
             locs.append(js["alternateName"])
             ids.append(js["branchCode"])
             addr=js["address"]
