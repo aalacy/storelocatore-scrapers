@@ -14,6 +14,7 @@ def write_output(data):
 
 def fetch_data():
     states = []
+    pulled = []
     url = 'https://www.verizonwireless.com/stores'
     r = session.get(url, headers=headers)
     SFound = False
@@ -62,7 +63,9 @@ def fetch_data():
                             store = item.split('"netaceLocationCode":"')[1].split('"')[0]
                             if hours == '':
                                 hours = '<MISSING>'
-                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                            if loc not in pulled:
+                                pulled.append(loc)
+                                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
