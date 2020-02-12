@@ -50,6 +50,7 @@ def fetch_data():
         lat = '<MISSING>'
         lng = '<MISSING>'
         store = ''
+        HFound = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             if '<h1>' in line2:
@@ -68,8 +69,18 @@ def fetch_data():
                 phone = line2.split('itemprop=telephone')[1].split('>')[1].split('<')[0]
             if 'OfficeId' in line2:
                 store = line2.split('value="')[1].split('"')[0]
-            if 'openingHours' in line2:
-                hours = line2.split('content="')[1].split('"')[0]
+            if '<div class="office-hours-week' in line2 and hours == '':
+                HFound = True
+            if HFound and '</section>' in line2:
+                HFound = False
+            if HFound and '<span class="office-day-name">' in line2:
+                day = line2.split('<span class="office-day-name">')[1].split('<')[0]
+            if HFound and '<span class="office-day-hours">' in line2:
+                hrs = day + ': ' + line2.split('<span class="office-day-hours">')[1].split('<')[0]
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
         if phone == '':
             phone = '<MISSING>'
         if hours == '':
