@@ -27,10 +27,17 @@ def fetch_data():
         phone = item['phone']
         hours = '<MISSING>'
         purl = '<MISSING>'
-        add = item['streetaddress'].split(',')[0]
-        city = item['streetaddress'].split(',')[1].strip()
-        state = item['streetaddress'].split(',')[2].strip().split(' ')[0]
-        zc = item['streetaddress'].split(',')[2].strip().split(' ')[1]
+        print(item['streetaddress'])
+        if item['streetaddress'].count(',') == 3 or item['streetaddress'].count(',') >= 5:
+            add = item['streetaddress'].split(',')[0]
+            city = item['streetaddress'].split(',')[1].strip()
+            state = item['streetaddress'].split(',')[2].strip().split(' ')[0]
+            zc = item['streetaddress'].split(',')[2].strip().split(' ')[1]
+        else:
+            add = item['streetaddress'].split(',')[0] + ' ' + item['streetaddress'].split(',')[1]
+            city = item['streetaddress'].split(',')[2].strip()
+            state = item['streetaddress'].split(',')[3].strip().split(' ')[0]
+            zc = item['streetaddress'].split(',')[3].strip().split(' ')[1]
         country = 'US'
         if phone == '':
             phone = '<MISSING>'
