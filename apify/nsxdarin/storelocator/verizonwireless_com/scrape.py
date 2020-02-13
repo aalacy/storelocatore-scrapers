@@ -23,10 +23,10 @@ def fetch_data():
             SFound = True
             items = line.split('{"name":"')
             for item in items:
-                if '"url":"/stores/' in item:
+                if '"url":"/stores/' in item and 'florida' in item:
                     states.append('https://www.verizonwireless.com' + item.split('"url":"')[1].split('"')[0])
     for state in states:
-        #print('Pulling State %s...' % state)
+        print('Pulling State %s...' % state)
         locs = []
         cities = []
         r2 = session.get(state, headers=headers)
@@ -37,7 +37,7 @@ def fetch_data():
                     if '","url":"' in item and 'var stateJSON' not in item:
                         cities.append('https://www.verizonwireless.com' + item.split('"url":"')[1].split('"')[0])
         for city in cities:
-            #print('Pulling City %s...' % city)
+            print('Pulling City %s...' % city)
             r3 = session.get(city, headers=headers)
             for line3 in r3.iter_lines():
                 if '"stores":' in line3:
@@ -59,7 +59,7 @@ def fetch_data():
                             country = 'US'
                             typ = item.split('"typeOfStore":["')[1].split(']')[0].replace('"','')
                             hours = item.split('"openingHours":{')[1].split('}')[0].replace('":"',': ').replace('","','; ').replace('"','')
-                            zc = item.split(',"zip":')[1].split(',')[0]
+                            zc = item.split(',"zip":"')[1].split('"')[0]
                             store = item.split('"netaceLocationCode":"')[1].split('"')[0]
                             if hours == '':
                                 hours = '<MISSING>'
