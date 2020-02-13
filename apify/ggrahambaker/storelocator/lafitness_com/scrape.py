@@ -90,11 +90,8 @@ def fetch_data():
         driver.find_element_by_id('lnkClubHours').click()
         time.sleep(1)
         driver.implicitly_wait(5)
-        hours_elements = driver.find_elements_by_css_selector('div#divClubHourPanel')
-
-        if len(hours_elements) == 0:
-            hours = '<MISSING>'
-        else:
+        try:
+            driver.find_element_by_css_selector('div#divClubHourPanel')
             hoursHTML = hours_elements[0].get_attribute('innerHTML')
             soup = BeautifulSoup(hoursHTML, 'html.parser')
             rows = soup.find_all('tr')
@@ -108,6 +105,8 @@ def fetch_data():
                         hours += col.text + ' '
 
             hours = ' '.join(hours.split())
+        except:
+            hours = '<MISSING>'
 
         street_address = driver.find_element_by_id('ctl00_MainContent_lblClubAddress').text
         
