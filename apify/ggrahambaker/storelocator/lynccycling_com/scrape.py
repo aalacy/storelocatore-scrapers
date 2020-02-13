@@ -46,6 +46,8 @@ def fetch_data():
     for i, loc in enumerate(locs):
 
         location_name = names[i].text
+
+        page_url = 'http://lynccycling.wpengine.com/studios/' + location_name.lower()
         addy = loc.text.split('\n')
         street_address = addy[0]
         city, state, zip_code = addy_ext(addy[1])
@@ -58,7 +60,6 @@ def fetch_data():
         country_code = 'US'
 
         location_type = '<MISSING>'
-        page_url = '<MISSING>'
         hours = '<MISSING>'
         longit = '<MISSING>'
         lat = '<MISSING>'
