@@ -59,8 +59,8 @@ def fetch_data():
         hrefs = driver.find_elements_by_xpath('//a[contains(@href,"clubhome.aspx?clubid=")]')
 
         while True:
+            print('hmmm')
             for h in hrefs:
-                # print(h.get_attribute('href'))
                 link_list.append(h.get_attribute('href'))
         
             if len(hrefs) % 50 == 0:
@@ -78,35 +78,36 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
+        print(link)
         driver.get(link)
         location_name = driver.find_element_by_css_selector('h1.MainTitle').text
         
         if 'Premier Plus' in location_name:
             location_type = 'Premier Plus'
-     
+        elif 'Presale' in location_name:
+            continue
         else:
             location_type = '<MISSING>'
+        
         
         driver.find_element_by_id('lnkClubHours').click()
         time.sleep(1)
         driver.implicitly_wait(5)
-        try:
-            driver.find_element_by_css_selector('div#divClubHourPanel')
-            hoursHTML = hours_elements[0].get_attribute('innerHTML')
-            soup = BeautifulSoup(hoursHTML, 'html.parser')
-            rows = soup.find_all('tr')
-            hours = ''
-            for row in rows:
-                cols = row.find_all('td')
-                for col in cols:
-                    if 'HOURS' in col.text:
-                        continue
-                    else:
-                        hours += col.text + ' '
+        
+        hoursHTML = driver.find_element_by_css_selector('div#divClubHourPanel').get_attribute('innerHTML')
+        soup = BeautifulSoup(hoursHTML, 'html.parser')
+        rows = soup.find_all('tr')
+        hours = ''
+        for row in rows:
+            cols = row.find_all('td')
+            for col in cols:
+                if 'HOURS' in col.text:
+                    continue
+                else:
+                    hours += col.text + ' '
 
-            hours = ' '.join(hours.split())
-        except:
-            hours = '<MISSING>'
+        hours = ' '.join(hours.split())
+    
 
         street_address = driver.find_element_by_id('ctl00_MainContent_lblClubAddress').text
         
