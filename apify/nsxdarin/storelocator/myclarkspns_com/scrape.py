@@ -25,7 +25,7 @@ def fetch_data():
         lat = item['loc_lat']
         lng = item['loc_long']
         phone = item['phone']
-        hours = '<MISSING>'
+        hours = ''
         purl = '<MISSING>'
         print(item['streetaddress'])
         if item['streetaddress'].count(',') == 3 or item['streetaddress'].count(',') >= 5:
@@ -41,6 +41,16 @@ def fetch_data():
         country = 'US'
         if phone == '':
             phone = '<MISSING>'
+        if item['monday'] == '':
+            hours = '<MISSING>'
+        else:
+            hours = 'Mon: ' + item['monday']
+            hours = hours + '; Tue: ' + item['tuesday']
+            hours = hours + '; Wed: ' + item['wednesday']
+            hours = hours + '; Thu: ' + item['thursday']
+            hours = hours + '; Fri: ' + item['friday']
+            hours = hours + '; Sat: ' + item['saturday']
+            hours = hours + '; Sun: ' + item['sunday']
         yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 
