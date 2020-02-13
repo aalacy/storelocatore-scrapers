@@ -63,8 +63,10 @@ def fetch_data():
         longitude = "<MISSING>"
         hours_of_operation = "<MISSING>"
         page_url = "<MISSING>"
-    
-        json_data = requests.get("https://www.haagendazs.us/locator/ws/"+str(search.current_zip)+"/"+lat+"/"+lng+"/25/0/2452?lat="+lat+"&lon="+lng+"&radius="+str(MAX_DISTANCE)+"&zipcode="+str(search.current_zip)+"&BrandFlavorID=2452&targetsearch=3").json()
+        try:
+            json_data = requests.get("https://www.haagendazs.us/locator/ws/"+str(search.current_zip)+"/"+lat+"/"+lng+"/25/0/2452?lat="+lat+"&lon="+lng+"&radius="+str(MAX_DISTANCE)+"&zipcode="+str(search.current_zip)+"&BrandFlavorID=2452&targetsearch=3").json()
+        except:
+            pass
         current_results_len = len(json_data)
         for data in json_data:
             url = data['URL'].strip()

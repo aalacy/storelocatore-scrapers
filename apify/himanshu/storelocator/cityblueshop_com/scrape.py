@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 import ast
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
 from random import choice
 
 # def get_driver():
@@ -34,7 +32,7 @@ def proxy_request(request_type, url, **kwargs):
     return r
 
 def write_output(data):
-    with open('cityblueshop.csv', mode='w') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -146,9 +144,11 @@ def fetch_data():
                     zipcode = new[-1].split(",")[-1].strip().split( )[-1]
                     city = new[-1].split(",")[-2]
                     # street_address = new[-1].split(",")[0]
-                    print("~~~~~~~~~~~~~~~~~~~~~",street_address)
+                    #print("~~~~~~~~~~~~~~~~~~~~~",street_address)
                     longitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[0]
                     latitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[-1].split("!2m")[0].split("!3m")[0]
+            if "138-140 East State Street" in street_address:
+                zipcode = "<MISSING>"
 
             return_object =[]
             if "1330 Franklin Mills Circle" in street_address:
@@ -156,9 +156,9 @@ def fetch_data():
             else:
                 return_object.append("https://www.cityblueshop.com")
                 return_object.append(location_name.encode('ascii', 'ignore').decode('ascii').strip() if location_name else "<MISSING>")
-                return_object.append(street_address.encode('ascii', 'ignore').decode('ascii').strip() if street_address else "<MISSING>")
+                return_object.append(street_address.encode('ascii', 'ignore').decode('ascii').strip().replace("4601Northfield","4601 Northfield") if street_address else "<MISSING>")
                 return_object.append(city.encode('ascii', 'ignore').decode('ascii').strip() if city else "<MISSING>")
-                return_object.append(state.encode('ascii', 'ignore').decode('ascii').strip().replace("Philadelphia","PA").replace("Upper Darby","PA").replace("East Cleveland","HO").replace("North Randall","HO") if state.replace("Philadelphia","PA").replace("Upper Darby","PA").replace("Upper Darby","PA") else "<MISSING>")
+                return_object.append(state.encode('ascii', 'ignore').decode('ascii').strip().replace("Philadelphia","PA").replace("Upper Darby","PA").replace("East Cleveland","OH").replace("North Randall","OH") if state.replace("Philadelphia","PA").replace("Upper Darby","PA").replace("Upper Darby","PA") else "<MISSING>")
                 return_object.append(zipcode if zipcode else "<MISSING>")
                 return_object.append("US")
                 return_object.append("<MISSING>")
@@ -168,7 +168,7 @@ def fetch_data():
                 return_object.append(longitude if longitude else "<MISSING>")
                 return_object.append(hours.encode('ascii', 'ignore').decode('ascii').strip() if hours else "<MISSING>")
                 return_object.append(page_url)
-                # print("return_object---------------------  ",return_object)
+               # print("return_object---------------------  ",return_object)
                 if return_object[2] in addresses:
                     continue
                 addresses.append(return_object[2])
