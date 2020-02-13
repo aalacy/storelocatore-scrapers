@@ -67,6 +67,7 @@ class Scrape(base.Spider):
             url = sel.text
             if not url.endswith('locations/'):
                 urls.append(url)
+        urls.append('https://www.homedepot.com/c/designcenter')
         loop = asyncio.get_event_loop()
         stores = loop.run_until_complete(self._fetch_stores(urls, loop))
         return [s for s in stores if s]
