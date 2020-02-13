@@ -33,7 +33,12 @@ def fetch_data():
         # print("https://www.regmovies.com/"+href['href'])
         soup1 = BeautifulSoup(r1.text,"lxml")
         store_data = soup1.find(lambda tag: tag.name == "cinema-structured-data")
+        # print("~~~~~~~~~~~~~~~~~~~~",store_data )
+        if store_data == None:
+            continue
+
         address = store_data['data-address'].replace("["," ").replace("]"," ")
+            
         # print(store_data['data-telephone'])
         # location_list = json.loads(script.text.split("apiSitesList = ")[1].split("}}]")[0] + "}}]")
         # phone_request = requests.get("https://www.regmovies.com" + location_list[0]["uri"],headers=headers)
@@ -65,7 +70,7 @@ def fetch_data():
         if store[2] in addressess:
             continue
         addressess.append(store[2])
-        # print(store)
+        #print(store)
         yield store
        
 

@@ -26,7 +26,7 @@ def fetch_data():
             lurl = 'https://www.anthropologie.com' + line.split('href="')[1].split('"')[0]
             locs.append(lurl)
     for loc in locs:
-        time.sleep(3)
+        time.sleep(5)
         website = 'anthropologie.com'
         typ = '<MISSING>'
         hours = ''

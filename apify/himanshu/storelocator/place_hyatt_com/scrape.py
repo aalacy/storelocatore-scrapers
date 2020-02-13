@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
-session = SgRequests()
+
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -22,16 +22,18 @@ def fetch_data():
     headers = {
              'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Safari/537.36',    
     }
-
-    base_url = "https://www.place.hyatt.com/"     
-    r = session.get("https://www.hyatt.com/local", headers=headers)
+    session = SgRequests()
+    base_url = "https://www.hyatt.com/"     
+    r = session.get("https://www.hyatt.com/explore-hotels/partial?regionGroup=1-NorthAmerica&categories=&brands=", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    links = soup.find_all("a",{"class":"book-now-btn b-button b-button-browse-ol b-button_height-mini b-button_icon-newwinb-mt2@md"})
+    links = soup.find_all("a",{"class":"b-text_copy-3"})
 
     for link in links:
-
-        page_url = link['href']
-        r1 = requests.get(page_url, headers=headers)
+        if "hyatt-place" in link['href']:
+            page_url = link['href']
+        else:
+            continue
+        r1 = session.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         json_data = json.loads(soup1.find("script", {"type":"application/ld+json"}).text)
     
@@ -42,7 +44,10 @@ def fetch_data():
         zipp = json_data['address']['postalCode']
         country_code = json_data['address']['addressCountry'] 
         location_type = json_data['@type']
-        phone = json_data['telephone']
+        if "telephone" in json_data:
+            phone = json_data['telephone']
+        else:
+            phone = "<MISSING>"
         latitude = json_data['geo']['latitude']
         longitude = json_data['geo']['longitude']
         

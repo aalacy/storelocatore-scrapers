@@ -50,24 +50,37 @@ def fetch_data():
         lat = '<MISSING>'
         lng = '<MISSING>'
         store = ''
+        HFound = False
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             if '<h1>' in line2:
                 name = line2.split('<h1>')[1].split('<')[0]
-            if '<span itemprop="streetAddress">' in line2:
-                add = line2.split('<span itemprop="streetAddress">')[1].split('<')[0]
-            if '<span itemprop="addressLocality">' in line2:
-                city = line2.split('<span itemprop="addressLocality">')[1].split('<')[0]
-            if '<span itemprop="addressRegion">' in line2:
-                state = line2.split('<span itemprop="addressRegion">')[1].split('<')[0]
-            if '<span itemprop="postalCode">' in line2:
-                zc = line2.split('<span itemprop="postalCode">')[1].split('<')[0]
-            if '<span itemprop="telephone" class="hidden">' in line2:
-                phone = line2.split('<span itemprop="telephone" class="hidden">')[1].split('<')[0]
-            if '="OfficeId" type="hidden" value="' in line2:
-                store = line2.split('="OfficeId" type="hidden" value="')[1].split('"')[0]
-            if '<meta itemprop="openingHours" content="' in line2:
-                hours = line2.split('<meta itemprop="openingHours" content="')[1].split('"')[0]
+            if 'streetAddress>' in line2:
+                add = line2.split('streetAddress')[1].split('>')[1].split('<')[0]
+            if 'addressLocality' in line2:
+                city = line2.split('addressLocality')[1].split('>')[1].split('<')[0]
+            if 'addressRegion' in line2:
+                state = line2.split('addressRegion')[1].split('>')[1].split('<')[0]
+            if 'postalCode' in line2:
+                zc = line2.split('postalCode')[1].split('>')[1].split('<')[0]
+            if 'itemprop="telephone" class="hidden">' in line2:
+                phone = line2.split('<itemprop="telephone" class="hidden">')[1].split('<')[0]
+            if 'itemprop=telephone' in line2:
+                phone = line2.split('itemprop=telephone')[1].split('>')[1].split('<')[0]
+            if 'OfficeId' in line2:
+                store = line2.split('value="')[1].split('"')[0]
+            if '<div class="office-hours-week' in line2 and hours == '':
+                HFound = True
+            if HFound and '</section>' in line2:
+                HFound = False
+            if HFound and '<span class="office-day-name">' in line2:
+                day = line2.split('<span class="office-day-name">')[1].split('<')[0]
+            if HFound and '<span class="office-day-hours">' in line2:
+                hrs = day + ': ' + line2.split('<span class="office-day-hours">')[1].split('<')[0]
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
         if phone == '':
             phone = '<MISSING>'
         if hours == '':

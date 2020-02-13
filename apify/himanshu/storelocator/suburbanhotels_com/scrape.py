@@ -63,8 +63,8 @@ def fetch_data():
             result_coords.append((store_data["lat"], store_data["lon"]))
             if store_data["address"]["country"] != "US" and store_data["address"]["country"] != "CA":
                 continue
-            if store_data["brandCode"] != brand_id:
-                continue
+            # if store_data["brandCode"] != brand_id:
+            #     continue
             store = []
             store.append(main_url)
             store.append(store_data["name"])

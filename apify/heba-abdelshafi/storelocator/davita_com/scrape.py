@@ -47,12 +47,13 @@ def fetch_data():
                 data['phone'].extend([i.text for i in driver.find_elements_by_xpath('//strong[contains(text(),"Phone:")]/following-sibling::a')])
                 data['longitude'].extend([re.findall(r'(-[\d\.]+|[\d\.]+)',i.get_attribute('data-analytics'))[-1] for i in driver.find_elements_by_xpath('//a[@class="dv-results-card__directions"]')])
                 data['latitude'].extend([re.findall(r'(-[\d\.]+|[\d\.]+)',i.get_attribute('data-analytics'))[-2] for i in driver.find_elements_by_xpath('//a[@class="dv-results-card__directions"]')])
-        
+                data['location_type'].extend([i.text for i in driver.find_elements_by_xpath('//strong[contains(text(),"Treatment Options:")]/following-sibling::span')])
+ 
+       
                 for i in range (len ([i.text for i in driver.find_elements_by_xpath('//a[contains(@aria-label,"REQUEST TREATMENT")][@class="no-scroll"]')])):
-                    data['location_type'].append(driver.find_element_by_xpath('//h1[@class="dv-finder--search__title"]/span').text.split('\n')[-1])
                     data['locator_domain'].append('https://www.davita.com')
                     data['country_code'].append('US')
-                    data['hours_of_operation'].append('missing')
+                    data['hours_of_operation'].append('<MISSING>')
                     data['page_url'].append(driver.current_url)    
                 driver.execute_script("arguments[0].click();",driver.find_element_by_xpath('//a[@class="btn btn--white"][contains(text(),"Next")]'))
 

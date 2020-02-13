@@ -76,7 +76,9 @@ def fetch_data():
                     phone = '<MISSING>'
                 if hours == '':
                     hours = '<MISSING>'
-                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                if loc not in locs:
+                    locs.append(loc)
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

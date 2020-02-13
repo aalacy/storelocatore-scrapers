@@ -47,7 +47,7 @@ def fetch_data():
 	driver = get_driver()
 	driver_page = get_driver()
 	driver.get(location_url)
-	time.sleep(5)
+	time.sleep(6)
 	links=driver.find_elements_by_xpath('/html/body/div[3]/div/div/div[1]/section/div[3]/div')
 	for ls in links:	
 		link=ls.find_elements_by_tag_name('a')
@@ -56,26 +56,38 @@ def fetch_data():
 	
 	for p in pages:
 		driver_page.get(p)
-		time.sleep(5)
+		time.sleep(6)
 		locs.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/input[3]').get_attribute('value'))
 		streets.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/form/div[4]/div[1]').text.split('\n')[0])
 		try:
 			cities.append(driver_page.find_element_by_xpath('/html/head/meta[13]').get_attribute('content').split(	'/')[-3].split('-')[-3].replace('+',' '))
 		except:
 			cities.append("<MISSING>")
-		states.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[1]/h1').text.split(', ')[1])
-		zips.append(p.split('/')[-3].split('-')[-1].replace('%20',''))
-		ids.append(driver_page.find_element_by_xpath('/html/head/meta[13]').get_attribute('content').split('/')[-2])
+		try:
+			states.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[1]/h1').text.split(', ')[1])
+		except:
+			states.append("<MISSING>")
+		try:
+			zips.append(p.split('/')[-3].split('-')[-1].replace('%20',''))
+		except:
+			zips.append("<MISSING>")
+		try:
+			ids.append(driver_page.find_element_by_xpath('/html/head/meta[13]').get_attribute('content').split('/')[-2])
+		except:
+			ids.append("<MISSING>")
 		try:
 			phones.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[4]').text)
 		except:
 			phones.append("<MISSING>")
-		timing.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[1]').text
-		+' '+driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[2]').text.replace('\n',' '))
-		types.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[1]/span').text+' '+
-		driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[2]/span').text+' '+
-		driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[3]/span').text+' '+
-		driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[4]/span').text)
+		try:
+			timing.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[1]').text
+			+' '+driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/section/div/div[2]/div[1]/div[2]').text.replace('\n',' '))
+			types.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[1]/span').text+' '+
+			driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[2]/span').text+' '+
+			driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[3]/span').text+' '+
+			driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[5]/div/div/ul/li[4]/span').text)
+		except:
+			timing.append("<MISSING>")
 		try:
 			lats.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/input[1]').get_attribute('value'))
 		except:

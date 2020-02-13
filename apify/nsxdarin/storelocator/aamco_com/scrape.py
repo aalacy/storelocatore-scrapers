@@ -22,7 +22,7 @@ def fetch_data():
         if '<loc>https://www.aamco.com/Auto-Repair-Center/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        #print('Pulling Location %s...' % loc)
         website = 'aamco.com'
         name = ''
         store = '<MISSING>'
@@ -71,7 +71,10 @@ def fetch_data():
                     else:
                         zc = addinfo.rsplit(' ',2)[1] + ' ' + addinfo.rsplit(' ',1)[1]
             if 'Phone</span>' in line2:
-                phone = next(lines).split('">')[1].split('<')[0]
+                try:
+                    phone = next(lines).split('">')[1].split('<')[0]
+                except:
+                    phone = '<MISSING>'
             if 'var uluru = { lat:' in line2:
                 lat = line2.split('var uluru = { lat:')[1].split(',')[0].strip()
                 lng = line2.split('lng:')[1].split('}')[0].strip()

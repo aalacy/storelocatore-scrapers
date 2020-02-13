@@ -45,7 +45,10 @@ def fetch_data():
         for line2 in r2.iter_lines():
             if '"seoData":{"name":"' in line2:
                 name = line2.split('"seoData":{"name":"')[1].split('"')[0]
-                hours = line2.split('"openingHours":["')[1].split('"]')[0].replace('","','; ')
+                try:
+                    hours = line2.split('"openingHours":["')[1].split('"]')[0].replace('","','; ')
+                except:
+                    hours = '<MISSING>'
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
                 state = '<MISSING>'
                 add = line2.split('"streetAddress":"')[1].split('"')[0]

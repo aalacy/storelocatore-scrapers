@@ -36,11 +36,14 @@ def fetch_data():
             lat = props['lat']
             longit = props['lng']
             city = props['city']
-            state = props['formattedAddress'].split(',')[2]
-            for d in state:
+            addy_split = props['formattedAddress'].split(',')
+            state = addy_split[1]
+            
+            for d in addy_split[2]:
                 if d.isdigit():
                     state = '<MISSING>'
                     break
+
             location_name = props['displayName']
             
             phone_number = props['phone1']

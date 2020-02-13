@@ -24,7 +24,6 @@ def fetch_data():
     base_url = "https://www.follett.com"
     r = session.get("https://www.follett.com/college-bookstores/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    # print(soup.find_all("div",{"class":"block-store col-lg-4 col-md-4 col-sm-6 col-xs-12 widget-block"}))
     for link in soup.find_all("div",{"class":"block-store col-lg-4 col-md-4 col-sm-6 col-xs-12 widget-block"}):
         if "http://www.skyo.com/" in link.find_all("a")[-1]['href']:
             continue
@@ -54,7 +53,7 @@ def fetch_data():
         store = []
         store.append("https://www.follett.com")
         store.append(location_name)
-        store.append(street_address)
+        store.append(street_address if street_address else "<MISSING>")
         store.append(city)
         store.append(state)
         store.append(zipp)
@@ -67,8 +66,8 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(page_url)
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        #print("data ==="+str(store))
-        #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~```````````")
+        # print("data ==="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~```````````")
         yield store
 
 def scrape():

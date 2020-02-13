@@ -145,7 +145,7 @@ def fetch_data():
         if str(store[2]) + str(store[-3]) not in addresses:
             addresses.append(str(store[2]) + str(store[-3]))
             store = [x if x else "<MISSING>" for x in store]
-           # print("data = " + str(store))
+            #print("data = " + str(store))
             #print(
                 #'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store

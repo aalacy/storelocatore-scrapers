@@ -36,10 +36,7 @@ def fetch_data():
         y = coord[1]
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         r_data = '{"lat":' + str(x) + ',"lng":' + str(y) + ',"radius":50,"services":[],"resType":["BRANCHLOC","CAFELOC","ATMLOC","ALLPOINTATMLOC"]}'
-        try:
-            r = requests.post("https://locations.capitalone.com/resourcelocator/location/resources/",headers=headers,data=r_data)
-        except:
-            pass
+        r = requests.post("https://locations.capitalone.com/resourcelocator/location/resources/",headers=headers,data=r_data)
         data = r.json()["resourceList"]
         for store_data in data:
             lat = store_data["latitude"]
@@ -77,7 +74,7 @@ def fetch_data():
             if 'sunLobbyHours' in store_data and store_data["sunLobbyHours"] != None:
                 hours = hours + " sunday " + store_data["sunLobbyHours"]
             store.append(hours if hours != "" else "<MISSING>")
-           # print(store)
+            #print(store)
             yield store
         if len(data) < MAX_RESULTS:
             # print("max distance update")

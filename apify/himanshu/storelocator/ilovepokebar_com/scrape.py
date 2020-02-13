@@ -23,8 +23,8 @@ def fetch_data():
         city = data.find("div", {"class":"address-text-block"}).text.split(",")[0]
         if "New Zealand" in data.find("div", {"class":"address-text-block"}).text:
             continue
-        state = data.find("div", {"class":"address-text-block"}).text.strip().replace("â"," ").replace("El Paso TX 79932","El Paso, TX 79932").split(",")[1].split(" ")[1]
-        zipp = " ".join(data.find("div", {"class":"address-text-block"}).text.strip().replace("â"," ").replace("El Paso TX 79932","El Paso, TX 79932").split(",")[1].split(" ")[2:]).replace("V5T3J2","V5T 3J2")
+        state = data.find("div", {"class":"address-text-block"}).text.strip().replace("â"," ").replace("El Paso TX 79932","El Paso, TX 79932").split(",")[1].split(" ")[1].replace("\x80\x88","")
+        zipp = " ".join(data.find("div", {"class":"address-text-block"}).text.strip().replace("â"," ").replace("El Paso TX 79932","El Paso, TX 79932").split(",")[1].split(" ")[2:]).replace("V5T3J2","V5T 3J2").replace("\x80\x88","")
         if len(zipp) == 5:
             country_code = "US"
         else:
@@ -33,8 +33,8 @@ def fetch_data():
             phone = data.find("a", {"class":"phone-link"})['href'].replace("tel:","").strip().replace("#","<MISSING>")
         else:
             phone = "<MISSING>"
+        
         page_url =locator_domain+data.find("a",{"class":"text-link-button w-button"})['href']
-    
 
     
         store = []
@@ -47,14 +47,16 @@ def fetch_data():
         store.append(country_code)
         store.append("<MISSING>") 
         store.append(phone)
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
+        store.append("Fast-Food")
+        store.append("<INACCESSIBLE>")
+        store.append("<INACCESSIBLE>")
         store.append("<MISSING>")
         store.append(page_url)
+        
+
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        # print("data ===="+str(store))
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        # print("data ===="+str(store))
 
         yield store 
 

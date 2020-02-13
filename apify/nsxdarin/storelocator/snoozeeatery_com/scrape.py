@@ -45,7 +45,8 @@ def fetch_data():
         lurl = 'https://snoozeeatery.com/wp-json/koa/v1/entry/' + loc
         r2 = session.get(lurl, headers=headers)
         for line2 in r2.iter_lines():
-            if '{"id":' in line2:
+            if '{"id":' in line2 and 'Coming Soon' not in line2:
+                name = line2.split('"title":{"rendered":"')[1].split('"')[0]
                 store = line2.split('{"id":')[1].split(',')[0]
                 lat = line2.split('"latitude":"')[1].split('"')[0]
                 lng = line2.split('"longitude":"')[1].split('"')[0]
