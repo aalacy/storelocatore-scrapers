@@ -45,7 +45,7 @@ def fetch_data():
                         else:
                             cities.append(lurl)
     for city in cities:
-        print('Pulling City %s...' % city)
+        #print('Pulling City %s...' % city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
             if 'track="visitpage" href="../' in line2:
@@ -55,7 +55,7 @@ def fetch_data():
                         lurl = 'https://stores.sleepnumber.com/' + item.split('"')[0]
                         locs.append(lurl)
         for loc in locs:
-            print('Pulling Location %s...' % loc)
+            #print('Pulling Location %s...' % loc)
             website = 'sleepnumber.com'
             typ = '<MISSING>'
             hours = ''
@@ -66,11 +66,13 @@ def fetch_data():
             country = 'US'
             zc = ''
             phone = ''
-            store = ''
+            store = '<MISSING>'
             lat = ''
             lng = ''
             r2 = session.get(loc, headers=headers)
             for line2 in r2.iter_lines():
+                if '"entityType":"location","id":"' in line2:
+                    store = line2.split('"entityType":"location","id":"')[1].split('"')[0]
                 if '"name" id="location-name">' in line2:
                     name = line2.split('"name" id="location-name">')[1].split('<')[0]
                 if '"dimension4":"' in line2:
