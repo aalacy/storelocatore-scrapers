@@ -16,15 +16,17 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://nativerootscannabis.com/sitemap.xml'
+    url = 'https://nativerootscannabis.com/locations/'
     locs = []
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
-        if '<loc>https://nativerootscannabis.com/locations/' in line:
-            items = line.split('<loc>https://nativerootscannabis.com/locations/')
+        if '<a href="/locations/' in line:
+            items = line.split('<a href="/locations/')
             for item in items:
-                if 'xml version' not in item:
-                    locs.append('https://nativerootscannabis.com/locations/' + item.split('<')[0])
+                if '<!DOCTYPE html>' not in item:
+                    lurl = item.split('"')[0]
+                    if len(lurl) >= 2:
+                        locs.append('https://nativerootscannabis.com/locations/' + lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
         name = ''
