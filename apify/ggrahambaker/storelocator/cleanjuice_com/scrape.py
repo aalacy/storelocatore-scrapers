@@ -14,8 +14,12 @@ def get_driver():
 
 def addy_ext(addy):
     address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
+    if len(address) == 1:
+        city = '<MISSING>'
+        state_zip = address[0].strip().split(' ')
+    else:
+        city = address[0]
+        state_zip = address[1].strip().split(' ')
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
@@ -50,6 +54,12 @@ def fetch_data():
         driver.get(href)
         elements = driver.find_elements_by_css_selector('div.et_pb_column')
         for element in elements:
+            buttons = element.find_elements_by_css_selector('div.et_pb_button_module_wrapper')
+            if len(buttons) == 1:
+                page_url = buttons[0].find_element_by_css_selector('a').get_attribute('href')
+            else:
+                continue
+
             content = element.text.split('\n')
             if len(content) > 5:
                 location_name = content[0]
@@ -83,7 +93,9 @@ def fetch_data():
                 if 'COMING' in phone_number:
                     phone_number = '<MISSING>'
 
-                hours_arr = content[5:-1]
+                
+
+                hours_arr = content[5:]
                 hours = ''
                 for ele in hours_arr:
                     hours += ele + ' '
@@ -97,7 +109,7 @@ def fetch_data():
                 longit = '<MISSING>'
 
                 store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                              store_number, phone_number, location_type, lat, longit, hours, href]
+                              store_number, phone_number, location_type, lat, longit, hours, page_url]
 
                 all_store_data.append(store_data)
 

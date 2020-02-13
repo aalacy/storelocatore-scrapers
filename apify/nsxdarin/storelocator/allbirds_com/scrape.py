@@ -31,7 +31,7 @@ def fetch_data():
             lat = '<MISSING>'
             lng = '<MISSING>'
             hours = '<MISSING>'
-        if 'Auckland' in line:
+        if 'Auckland</h2>' in line:
             CFound = False
         if 'See Map</a></p>' in line and CFound:
             murl = line.split('href="')[1].split('"')[0]
@@ -52,8 +52,8 @@ def fetch_data():
             hours = g.split('">')[1].split('<')[0]
             if '</p>' in h:
                 hours = hours + '; ' + h.split('<')[0]
-        if 'Phone</h3>' in line and CFound:
-            phone = next(lines).split('">')[1].split('<')[0]
+        if 'paragraph">(' in line and CFound:
+            phone = line.split('paragraph">')[1].split('<')[0]
             yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

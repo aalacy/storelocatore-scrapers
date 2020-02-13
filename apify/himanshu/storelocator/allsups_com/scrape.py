@@ -1,6 +1,5 @@
 import csv
 import sys
-
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -26,7 +25,7 @@ def fetch_data():
     return_main_object = []
     base_url = "https://www.dunkindonuts.com/"
     search = sgzip.ClosestNSearch()
-    search.initialize(country_codes = ["US", "CA"])
+    search.initialize(country_codes = ["us", "ca"])
     postcode = search.next_zip()
 
     MAX_RESULTS = 10000
@@ -62,10 +61,7 @@ def fetch_data():
         # print(z)
         # try:
         locator_domain = "https://allsups.com"
-        try:
-            json_data = requests.post("https://allsups.com/ajax/Search.ashx",data=data,headers=headers).json()
-        except:
-            pass
+        json_data = requests.post("https://allsups.com/ajax/Search.ashx",data=data,headers=headers).json()
         # print(json_data)
         for data in json_data:
             street_address=''

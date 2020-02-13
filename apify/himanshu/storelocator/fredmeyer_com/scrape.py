@@ -1,4 +1,3 @@
-# https://www.fredmeyer.com/
 import csv
 import requests
 from bs4 import BeautifulSoup
@@ -36,8 +35,14 @@ def fetch_data():
             'content-type' : 'application/json;charset=UTF-8'
         }
         data = r'{"query":"\n      query storeSearch($searchText: String!, $filters: [String]!) {\n        storeSearch(searchText: $searchText, filters: $filters) {\n          stores {\n            ...storeSearchResult\n          }\n          fuel {\n            ...storeSearchResult\n          }\n          shouldShowFuelMessage\n        }\n      }\n      \n  fragment storeSearchResult on Store {\n    banner\n    vanityName\n    divisionNumber\n    storeNumber\n    phoneNumber\n    showWeeklyAd\n    showShopThisStoreAndPreferredStoreButtons\n    storeType\n    distance\n    latitude\n    longitude\n    tz\n    ungroupedFormattedHours {\n      displayName\n      displayHours\n      isToday\n    }\n    address {\n      addressLine1\n      addressLine2\n      city\n      countryCode\n      stateCode\n      zip\n    }\n    pharmacy {\n      phoneNumber\n    }\n    departments {\n      code\n    }\n    fulfillmentMethods{\n      hasPickup\n      hasDelivery\n    }\n  }\n","variables":{"searchText":"'+str(zip_code)+'","filters":[]},"operationName":"storeSearch"}'
-        r = requests.post('https://www.frysfood.com/stores/api/graphql', headers=headers,data=data)
-        datas = r.json()['data']['storeSearch']['stores']
+        try:
+            r = requests.post('https://www.frysfood.com/stores/api/graphql', headers=headers,data=data)
+        except:
+            pass
+        try:
+            datas = r.json()['data']['storeSearch']['stores']
+        except:
+            continue
         for key in datas:
             location_name = key['vanityName']
             street_address = key['address']['addressLine1'].capitalize()
@@ -85,7 +90,10 @@ def fetch_data():
             yield store
 
         ###fuel store
-        datas1 = r.json()['data']['storeSearch']['fuel']
+        try:
+            datas1 = r.json()['data']['storeSearch']['fuel']
+        except:
+            continue
         for key1 in datas1:
             location_name = key1['vanityName']
             street_address = key1['address']['addressLine1'].capitalize()

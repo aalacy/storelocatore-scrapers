@@ -49,7 +49,10 @@ def fetch_data():
                 zip_code = loc['zip']
                 country_code = loc['country']
                 
-                phone_number = loc['phone_link'].replace('+1', '').strip()
+                phone_number = loc['phone_link'].replace('+1', '').replace('tel:', '').strip()
+                if phone_number == '':
+                    phone_number = '<MISSING>'
+
                 
                 slug = loc['slug']
                 if slug == '':

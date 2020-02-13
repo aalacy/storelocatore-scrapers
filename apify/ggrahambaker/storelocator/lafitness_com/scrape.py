@@ -78,35 +78,36 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        
-        
         driver.get(link)
         location_name = driver.find_element_by_css_selector('h1.MainTitle').text
         
         if 'Premier Plus' in location_name:
             location_type = 'Premier Plus'
-        elif 'Presale' in location_name:
-            continue
+     
         else:
             location_type = '<MISSING>'
         
         driver.find_element_by_id('lnkClubHours').click()
         time.sleep(1)
         driver.implicitly_wait(5)
-        hoursHTML = driver.find_element_by_css_selector('div#divClubHourPanel').get_attribute('innerHTML')
-    
-        soup = BeautifulSoup(hoursHTML, 'html.parser')
-        rows = soup.find_all('tr')
-        hours = ''
-        for row in rows:
-            cols = row.find_all('td')
-            for col in cols:
-                if 'HOURS' in col.text:
-                    continue
-                else:
-                    hours += col.text + ' '
+        try:
+            driver.find_element_by_css_selector('div#divClubHourPanel')
+            hoursHTML = hours_elements[0].get_attribute('innerHTML')
+            soup = BeautifulSoup(hoursHTML, 'html.parser')
+            rows = soup.find_all('tr')
+            hours = ''
+            for row in rows:
+                cols = row.find_all('td')
+                for col in cols:
+                    if 'HOURS' in col.text:
+                        continue
+                    else:
+                        hours += col.text + ' '
 
-        hours = ' '.join(hours.split())
+            hours = ' '.join(hours.split())
+        except:
+            hours = '<MISSING>'
+
         street_address = driver.find_element_by_id('ctl00_MainContent_lblClubAddress').text
         
         city = driver.find_element_by_id('ctl00_MainContent_lblClubCity').text

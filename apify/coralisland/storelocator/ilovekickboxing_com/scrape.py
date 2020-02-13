@@ -126,10 +126,16 @@ def fetch_data():
                     output.append(get_value(store['state']['Code'])) #state
                     output.append(get_value(store['ZipCode'])) #zipcode
                     zip_len = len(get_value(store['ZipCode']).split(' '))
-                    if zip_len > 1:
-                        output.append('CA') #country code
+                    canada = ['SK','AB','BC','ON','QC','PE','YK','NL','NS','PEI']
+                    state = get_value(store['state']['Code'])
+                    #if zip_len > 1:
+                        #output.append('CA') #country code
+                    #else:
+                        #output.append('US') #country code
+                    if state in canada:
+                        output.append('CA')
                     else:
-                        output.append('US') #country code
+                        output.append('US')
                     output.append(get_value(store['ID'])) #store_number
                     output.append(get_value(store['phone'])) #phone
                     output.append('iLoveKickboxing') #location type

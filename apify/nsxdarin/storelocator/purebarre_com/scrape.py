@@ -60,7 +60,7 @@ def fetch_data():
             hours = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
-        if coming != 'true':
+        if coming is False:
             yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

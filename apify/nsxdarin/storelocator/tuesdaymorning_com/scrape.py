@@ -70,8 +70,11 @@ def fetch_data():
         phone = ''
         hours = ''
         Found = False
+        Closed = False
         r3 = session.get(loc, headers=headers)
         for line3 in r3.iter_lines():
+            if 'Tuesday Morning - CLOSED' in line3:
+                Closed = True
             if Found is False and 'class="LocationName-geo">' in line3:
                 Found = True
                 phone = line3.split('<a class="Phone-link" href="tel:+')[1].split('"')[0]
@@ -100,7 +103,8 @@ def fetch_data():
                             hours = hours + '; ' + hrs
         if hours == '':
             hours = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if Closed is False:
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
