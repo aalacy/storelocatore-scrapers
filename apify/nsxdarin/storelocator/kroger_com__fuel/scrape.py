@@ -47,47 +47,46 @@ def fetch_data():
                 items = line.split('"fuel":')[1].split('"banner":')
                 for item in items:
                     if '"vanityName":"' in item:
-                        name = item.split('vanityName":"')[1].split('"')[0]
-                        division = item.split('"divisionNumber":"')[1].split('"')[0]
-                        print(name + '|' + division)
-                        store = item.split('"storeNumber":"')[1].split('"')[0]
-                        phone = item.split('phoneNumber')[1].split(',')[0].replace('"','')
-                        lat = item.split('"latitude":"')[1].split('"')[0]
-                        lng = item.split('"longitude":"')[1].split('"')[0]
-                        add = item.split('"addressLine1":"')[1].split('"')[0]
-                        try:
-                            add = add + ' ' + item.split('"addressLine2":"')[1].split('"')[0]
-                        except:
-                            pass
-                        website = 'kroger.com/fuel'
-                        typ = 'Gas'
-                        country = 'US'
-                        state = item.split('"stateCode":"')[1].split('"')[0]
-                        zc = item.split('"zip":"')[1].split('"')[0]
-                        city = item.split('"city":"')[1].split('"')[0]
-                        info = add + ';' + city + ';' + state
-                        ids.add(info)
-                        array.append(info)
-                        hours = '<MISSING>'
-                        purl = 'https://www.kroger.com/stores/details/' + division + '/' + store
-                        r2 = session.get(purl, headers=headers1)
-                        for line2 in r2.iter_lines():
-                            if 'Store Hours:</span>' in line2:
-                                sinfo = line2.split('Store Hours:</span>')[1].split('></div></div></div>')[0]
-                                days = info.split('<span class="StoreInformation-day">')
-                                for day in days:
-                                    if '<div class="StoreInformation-dayAndHoursWrapper"' not in day:
-                                        hrs = day.split('<')[0] + ': ' + day.split('</span><span>')[1].split('<')[0]
-                                        if hours == '':
-                                            hours = hrs
-                                        else:
-                                            hours = hours + '; ' + hrs
-                        if info not in locations:
-                            locations.append(info)
-                            if hours == '':
-                                hours = '<MISSING>'
-                            if division == '034':
-                                print(purl)
+                        brand = item.split('"vanityName":"')[0]
+                        if 'KROGER' in brand:
+                            brand = 'KROGER'
+                            name = item.split('vanityName":"')[1].split('"')[0]
+                            division = item.split('"divisionNumber":"')[1].split('"')[0]
+                            print(name + '|' + division)
+                            store = item.split('"storeNumber":"')[1].split('"')[0]
+                            phone = item.split('phoneNumber')[1].split(',')[0].replace('"','')
+                            lat = item.split('"latitude":"')[1].split('"')[0]
+                            lng = item.split('"longitude":"')[1].split('"')[0]
+                            add = item.split('"addressLine1":"')[1].split('"')[0]
+                            try:
+                                add = add + ' ' + item.split('"addressLine2":"')[1].split('"')[0]
+                            except:
+                                pass
+                            website = 'kroger.com/fuel'
+                            typ = 'Gas'
+                            country = 'US'
+                            state = item.split('"stateCode":"')[1].split('"')[0]
+                            zc = item.split('"zip":"')[1].split('"')[0]
+                            city = item.split('"city":"')[1].split('"')[0]
+                            info = add + ';' + city + ';' + state
+                            ids.add(info)
+                            array.append(info)
+                            hours = '<MISSING>'
+                            purl = 'https://www.kroger.com/stores/details/' + division + '/' + store
+                            r2 = session.get(purl, headers=headers1)
+                            for line2 in r2.iter_lines():
+                                if 'Store Hours:</span>' in line2:
+                                    sinfo = line2.split('Store Hours:</span>')[1].split('></div></div></div>')[0]
+                                    days = sinfo.split('<span class="StoreInformation-day">')
+                                    for day in days:
+                                        if '<div class="StoreInformation-dayAndHoursWrapper"' not in day:
+                                            hrs = day.split('<')[0] + ': ' + day.split('</span><span>')[1].split('<')[0]
+                                            if hours == '':
+                                                hours = hrs
+                                            else:
+                                                hours = hours + '; ' + hrs
+                            if info not in locations:
+                                locations.append(info)
                                 yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         if len(array) <= MAX_RESULTS:
             print("max distance update")
