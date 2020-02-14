@@ -21,7 +21,7 @@ def fetch_data():
         lat = coord.split(',')[0]
         lng = coord.split(',')[1]
         print('Pulling %s-%s...' % (lat, lng))
-        url = 'https://cinnabon.ca/wp-admin/admin-ajax.php?action=store_search&lat=' + lat + '&lng=' + lng + '&max_results=75&search_radius=500'
+        url = 'https://cinnabon.ca/wp-admin/admin-ajax.php?action=store_search&lat=' + lat + '&lng=' + lng + '&max_results=75&search_radius=250'
         r = session.get(url, headers=headers)
         for item in json.loads(r.content):
             store = item['id']
