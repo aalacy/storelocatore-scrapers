@@ -71,7 +71,7 @@ def fetch_data():
                             info = add + ';' + city + ';' + state
                             ids.add(info)
                             array.append(info)
-                            hours = '<MISSING>'
+                            hours = ''
                             purl = 'https://www.kroger.com/stores/details/' + division + '/' + store
                             r2 = session.get(purl, headers=headers1)
                             for line2 in r2.iter_lines():
@@ -86,6 +86,10 @@ def fetch_data():
                                             else:
                                                 hours = hours + '; ' + hrs
                             if info not in locations:
+                                if hours == '':
+                                    hours = '<MISSING>'
+                                if phone == '':
+                                    phone = '<MISSING>'
                                 locations.append(info)
                                 yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         if len(array) <= MAX_RESULTS:
