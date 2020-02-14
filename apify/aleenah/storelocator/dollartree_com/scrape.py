@@ -54,5 +54,5 @@ def fetch_data():
             for p in pls:
                 page_url.append(p.get('href'))
                 print(p.get('href'))
-
+            break
 fetch_data()
