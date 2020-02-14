@@ -3,8 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import sgzip 
-import usaddress
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,36 +14,11 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-def parse_address(addy_string):
-    parsed_add = usaddress.tag(addy_string)[0]
-
-    street_address = ''
-
-    if 'AddressNumber' in parsed_add:
-        street_address += parsed_add['AddressNumber'] + ' '
-    if 'StreetNamePreDirectional' in parsed_add:
-        street_address += parsed_add['StreetNamePreDirectional'] + ' '
-    if 'StreetName' in parsed_add:
-        street_address += parsed_add['StreetName'] + ' '
-    if 'StreetNamePostType' in parsed_add:
-        street_address += parsed_add['StreetNamePostType'] + ' '
-    if 'OccupancyType' in parsed_add:
-        street_address += parsed_add['OccupancyType'] + ' '
-    if 'OccupancyIdentifier' in parsed_add:
-        street_address += parsed_add['OccupancyIdentifier'] + ' '
-    city = parsed_add['PlaceName']
-    state = parsed_add['StateName']
-    zip_code = parsed_add['ZipCode']
-
-    return street_address, city, state, zip_code
-
-
 def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
 
-    locator_domain = 'https://www.signaturestyle.com/brands/saturdays.html'
+    locator_domain = 'https://www.smartstyle.com/'
 
     search = sgzip.ClosestNSearch()
     search.initialize()
@@ -56,10 +29,12 @@ def fetch_data():
     all_store_data = []
     dup_tracker = []
     while coord:
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-
-        url = 'https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/' + str(x) + '/' + str(y) + '/0.5/0.5/true'
+        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        url = 'https://info3.regiscorp.com/salonservices/siteid/6/salons/searchGeo/map/' + str(x) + '/' + str(y) + '/0.8/0.5/true'
+        #url = 'https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/' + str(x) + '/' + str(y) + '/0.5/0.5/true'
 
         r = session.get(url, headers=HEADERS)
         
@@ -73,20 +48,33 @@ def fetch_data():
             longit = loc['longitude']
             result_coords.append((lat, longit))
             
-            if loc['actualSiteId'] != 23:
+            if loc['actualSiteId'] != 6:
                 continue
             
-            location_name = loc['title']
-            if location_name not in dup_tracker:
-                dup_tracker.append(location_name)
+            store_number = loc['storeID']
+            if store_number not in dup_tracker:
+                dup_tracker.append(store_number)
             else:
                 continue
-                
-                
-            store_number = loc['storeID']
-            addy = loc['subtitle']
+            page_json_url = 'https://info3.regiscorp.com/salonservices/siteid/6/salon/' + str(store_number)
             
-            street_address, city, state, zip_code = parse_address(addy)
+            r = session.get(page_json_url, headers=HEADERS)
+        
+            loc = json.loads(r.content)
+            #print(loc)
+            
+            location_name = loc['name']
+            street_address = loc['address']
+            city = loc['city']
+            state = loc['state']
+            zip_code = loc['zip']
+            if len(zip_code.split(' ')) == 2:
+                country_code = 'CA'
+            else:
+                country_code = 'US'
+                
+            phone_number = loc['phonenumber']
+                
             
             hours_obj = loc['store_hours']
             hours = ''
@@ -96,22 +84,29 @@ def fetch_data():
                 
                 hours += day + ' ' + hour_range + ' '            
             
-            
-            phone_number = loc['phonenumber']
-            
-            country_code = 'US'
+
+            if hours == '':
+                hours = '<MISSING>'
             location_type = '<MISSING>'
             page_url = '<MISSING>'
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-                
             all_store_data.append(store_data)
             
 
-        search.max_count_update(result_coords)    
+
+        #search.max_count_update(result_coords)
+        search.max_distance_update(MAX_DISTANCE)
+    
         coord = search.next_coord()  
+
+
+
+
+
+
 
 
     return all_store_data

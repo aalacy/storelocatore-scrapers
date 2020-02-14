@@ -57,6 +57,7 @@ def fetch_data():
             
             hours += h.text.replace(',', '') + ', '
    
+        hours = hours.replace('shop hours., ', '')
         
         location_type = '<MISSING>'
         
