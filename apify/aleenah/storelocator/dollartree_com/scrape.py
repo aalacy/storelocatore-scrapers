@@ -38,17 +38,19 @@ def fetch_data():
     res=session.get("https://www.dollartree.com/locations/")
     soup = BeautifulSoup(res.text, 'html.parser')
     sls = soup.find('div', {'class': 'content_area'}).find_all('a')
-    print(len(sls))
+    print("sls: ",len(sls))
     for sl in sls:
         res = session.get(sl.get('href'))
+        print(sl.get('href'))
         soup = BeautifulSoup(res.text, 'html.parser')
         cls = soup.find('div', {'class': 'content_area'}).find_all('a')
-        print(len(cls))
+        print("cls",len(cls))
         for cl in cls:
             res = session.get(cl.get('href'))
+            print(cl.get('href'))
             soup = BeautifulSoup(res.text, 'html.parser')
             pls = soup.find_all('div', {'class': 'storeinfo_div '})
-            print(len(pls))
+            print("pls: ",len(pls))
             for p in pls:
                 page_url.append(p.get('href'))
                 print(p.get('href'))
