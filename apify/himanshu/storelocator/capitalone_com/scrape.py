@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -22,7 +22,6 @@ def fetch_data():
         "content-type": "application/json;charset=UTF-8",
         "Accept": "application/json, text/plain, */*"
     }
-    return_main_object = []
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
@@ -36,7 +35,10 @@ def fetch_data():
         y = coord[1]
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         r_data = '{"lat":' + str(x) + ',"lng":' + str(y) + ',"radius":50,"services":[],"resType":["BRANCHLOC","CAFELOC","ATMLOC","ALLPOINTATMLOC"]}'
-        r = requests.post("https://locations.capitalone.com/resourcelocator/location/resources/",headers=headers,data=r_data)
+        try:
+            r = requests.post("https://locations.capitalone.com/resourcelocator/location/resources/",headers=headers,data=r_data)
+        except:
+            pass
         data = r.json()["resourceList"]
         for store_data in data:
             lat = store_data["latitude"]
@@ -55,7 +57,7 @@ def fetch_data():
             store.append("US")
             store.append(store_data["id"])
             store.append(store_data["phoneNumber"] if "phoneNumber" in store_data and store_data["phoneNumber"] != "" and store_data["phoneNumber"] != None  else "<MISSING>")
-            store.append(store_data["agentType"].replace("Allpoint","Allpoint /"))
+            store.append(store_data["locType"])
             store.append(lat)
             store.append(lng)
             hours = ""
@@ -74,7 +76,7 @@ def fetch_data():
             if 'sunLobbyHours' in store_data and store_data["sunLobbyHours"] != None:
                 hours = hours + " sunday " + store_data["sunLobbyHours"]
             store.append(hours if hours != "" else "<MISSING>")
-            #print(store)
+            store.append("https://locations.capitalone.com/location/"+str(store_data['id']))
             yield store
         if len(data) < MAX_RESULTS:
             # print("max distance update")

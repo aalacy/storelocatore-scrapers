@@ -32,7 +32,7 @@ def fetch_data():
         state = data['address'].split("<br />")[1].split("</p>")[0].split(",")[1].split(" ")[1]
         zipp = data['address'].split("<br />")[1].split("</p>")[0].split(",")[1].split(" ")[2]
         phone = data['address'].split("<p>")[2].replace("</p>",'').strip()
-        hours_of_operation = "".join(list(BeautifulSoup(data['address'], "lxml").find_all("p")[-1].stripped_strings))
+        hours_of_operation = " ".join(list(BeautifulSoup(data['address'], "lxml").find_all("p")[-1].stripped_strings))
         latitude = data['latitude']
         longitude = data['longitude']
         

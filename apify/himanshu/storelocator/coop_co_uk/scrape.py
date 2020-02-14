@@ -38,10 +38,12 @@ def fetch_data():
                     r3 = session.get("https://finder.coop.co.uk"+li.find("a")['href'])
                     soup3 = BeautifulSoup(r3.text,"lxml")
                     location_type1 = soup3.find("ul",{"class":"list--facilities"})
-                    # location_type1 =''
                     # print("https://finder.coop.co.uk"+li.find("a")['href'])
-                    # if location_type1 != None:
-                    #     print(location_type1.text.strip().replace("\n",' '))
+                    if location_type1 != None and location_type1.text.strip().replace("\n",' ')=="Bakery":
+                        location_type =(location_type1.text.strip().replace("\n",' '))
+                    else:
+                        location_type = "<MISSING>"
+                    # print(location_type)
                     page_url = "https://finder.coop.co.uk"+li.find("a")['href']
                     streetAddress = ''
                     data2 = list(soup3.find("address",{"data-store-address-24":""}).stripped_strings)
@@ -81,7 +83,7 @@ def fetch_data():
                     tem_var.append("UK")
                     tem_var.append("<MISSING>")
                     tem_var.append(phone.strip() if phone.strip() else "<MISSING>")
-                    tem_var.append("Co-op Food")
+                    tem_var.append(location_type)
                     tem_var.append(lat)
                     tem_var.append(lng)
                     tem_var.append(hours if hours.strip() else "<MISSING>")

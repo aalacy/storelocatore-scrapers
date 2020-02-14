@@ -33,8 +33,10 @@ def fetch_data():
         soup1 = BeautifulSoup(r1.text, "lxml")
         links = soup1.find_all("a", {"class":"base-link"})
         for link in links:
+            if link['href'] == "":
+                continue
             page_url = base_url+link['href']
-            print(page_url)
+            # print("page_url ===="+str(page_url))
             r3 = requests.get(page_url, headers=headers)
             soup3 = BeautifulSoup(r3.text, "lxml")
 
@@ -85,8 +87,8 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-            # print("data===="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            #print("data===="+str(store))
+            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
             yield store
 
 
