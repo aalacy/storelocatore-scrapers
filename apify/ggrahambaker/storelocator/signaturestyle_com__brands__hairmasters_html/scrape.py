@@ -69,6 +69,8 @@ def fetch_data():
         result_coords.append((x, y))
         
         for loc in res_json:
+            print("remaining zipcodes: " + str(len(search.zipcodes)))        
+
             lat = loc['latitude']
             longit = loc['longitude']
             result_coords.append((lat, longit))
@@ -76,17 +78,31 @@ def fetch_data():
             if loc['actualSiteId'] != 17:
                 continue
             
-            location_name = loc['title']
-            if location_name not in dup_tracker:
-                dup_tracker.append(location_name)
+            store_number = loc['storeID']
+            
+            if store_number not in dup_tracker:
+                dup_tracker.append(store_number)
             else:
                 continue
                 
-                
-            store_number = loc['storeID']
-            addy = loc['subtitle']
+            page_json_url = 'https://info3.regiscorp.com/salonservices/siteid/100/salon/' + str(store_number)
             
-            street_address, city, state, zip_code = parse_address(addy)
+            r = session.get(page_json_url, headers=HEADERS)
+        
+            loc = json.loads(r.content)
+            
+            location_name = loc['name']
+            street_address = loc['address']
+            city = loc['city']
+            state = loc['state']
+            zip_code = loc['zip']
+            if len(zip_code.split(' ')) == 2:
+                country_code = 'CA'
+            else:
+                country_code = 'US'
+                
+            phone_number = loc['phonenumber']
+                
             
             hours_obj = loc['store_hours']
             hours = ''
@@ -96,17 +112,16 @@ def fetch_data():
                 
                 hours += day + ' ' + hour_range + ' '            
             
-            
-            phone_number = loc['phonenumber']
-            
-            country_code = 'US'
+
+            if hours == '':
+                hours = '<MISSING>'
             location_type = '<MISSING>'
             page_url = '<MISSING>'
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-                
+            
             all_store_data.append(store_data)
             
 

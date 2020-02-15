@@ -51,7 +51,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
 
-    MAX_DISTANCE = 25
+    MAX_DISTANCE = 50
 
     coord = search.next_coord()
     all_store_data = []
@@ -78,28 +78,32 @@ def fetch_data():
             if loc['actualSiteId'] != 13:
                 continue
             
-            location_name = loc['title']
+=            store_number = loc['storeID']
             
-            if location_name not in dup_tracker:
-                dup_tracker.append(location_name)
+            if store_number not in dup_tracker:
+                dup_tracker.append(store_number)
             else:
                 continue
                 
-                
-            store_number = loc['storeID']
-
-            if "MALDEN SQUARE PLAZA" in location_name:
-                street_address = '5841 MALDEN RD SUITE 182'
-                city = 'LASALLE'
-                state = 'ON'
-                zip_code = 'N9H 1S4'
+=            page_json_url = 'https://info3.regiscorp.com/salonservices/siteid/100/salon/' + str(store_number)
+            
+            r = session.get(page_json_url, headers=HEADERS)
+        
+            loc = json.loads(r.content)
+            
+            location_name = loc['name']
+            street_address = loc['address']
+            city = loc['city']
+            state = loc['state']
+            zip_code = loc['zip']
+            if len(zip_code.split(' ')) == 2:
                 country_code = 'CA'
             else:
-                addy = loc['subtitle']
-                street_address, city, state, zip_code = parse_address(addy)
                 country_code = 'US'
-
                 
+            phone_number = loc['phonenumber']
+                
+            
             hours_obj = loc['store_hours']
             hours = ''
             for part in hours_obj:
@@ -108,16 +112,16 @@ def fetch_data():
                 
                 hours += day + ' ' + hour_range + ' '            
             
-            
-            phone_number = loc['phonenumber']
-            
+
+            if hours == '':
+                hours = '<MISSING>'
             location_type = '<MISSING>'
             page_url = '<MISSING>'
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-                
+            
             all_store_data.append(store_data)
             
         search.max_count_update(result_coords)    

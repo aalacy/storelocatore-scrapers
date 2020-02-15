@@ -34,7 +34,6 @@ def fetch_data():
         y = coord[1]
         print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://info3.regiscorp.com/salonservices/siteid/6/salons/searchGeo/map/' + str(x) + '/' + str(y) + '/0.8/0.5/true'
-        #url = 'https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/' + str(x) + '/' + str(y) + '/0.5/0.5/true'
 
         r = session.get(url, headers=HEADERS)
         
