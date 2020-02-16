@@ -35,7 +35,7 @@ class Scrape(base.Spider):
                 i.add_value('street_address', result.get('address', {}).get('streetAddress', '').strip())
                 i.add_value('store_number', url.split('/')[-1])
                 i.add_value('city', result.get('address', {}).get('addressLocality', '').strip())
-                i.add_value('state', result.get('address', {}).get('addressRegion', '').strip(), base.get_state_code)
+                i.add_value('state', result.get('address', {}).get('addressRegion', '').strip(), lambda x: "Newfoundland and Labrador" if x == "Newfoundland" else x, base.get_state_code)
                 i.add_value('zip', result.get('address', {}).get('postalCode', ''))
                 i.add_value('phone', result.get('address', {}).get('telephone', '').strip(),
                             lambda x: x.split(' (')[0] if x.count(' ') == 2 else x,

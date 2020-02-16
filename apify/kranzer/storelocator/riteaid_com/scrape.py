@@ -11,7 +11,6 @@ from lxml import html
 base_url = "https://locations.riteaid.com/index.html"
 flatten = lambda l: [item for sublist in l for item in sublist]
 
-
 class Scrape(base.Spider):
     crawled = set()
     async def _fetch_store(self, session, url):
@@ -35,7 +34,14 @@ class Scrape(base.Spider):
             def inline(x):
                 try:
                     return '; '.join([s.xpath('.//h3[@class="c-location-hours-title"]/text()')[0] + ' - ' + '; '.join(
-                    s.xpath('.//tr[@itemprop="openingHours"]/@content')) for s in x])
+                    s.xpath('.//tr[@itemprop="openingHours"]/@content')) for s in x])\
+                .replace('Mo ', 'Monday ')\
+                .replace('Tu ', 'Tuesday ')\
+                .replace('We ', 'Wednesday ')\
+                .replace('Th ', 'Thursday ')\
+                .replace('Fr ', 'Friday ')\
+                .replace('Sa ', 'Saturday ')\
+                .replace('Su ', 'Sunday ')
                 except:
                     pass
             i.add_xpath('hours_of_operation', '//div[@class="c-location-hours"][not(h4)]', inline)
@@ -73,8 +79,11 @@ class Scrape(base.Spider):
             cities_urls = []
             for href in sel.xpath('//a[@class="c-directory-list-content-item-link"]/@href'):
                 sp = href.split('/')
-                if len(sp) == 5:
-                    href = sp[0]+'/'+sp[1]+'/'+sp[2]+'/'+sp[3] + '.html'
+                if len(sp) > 4:
+                    s = sp[3]
+                    if not s.endswith('.html'):
+                        s += '.html'
+                    href = sp[0]+'/'+sp[1]+'/'+sp[2]+'/'+s
                 cities_urls.append(urljoin(base_url, href))
             cities = await self._fetch_cities(session, cities_urls)
             return cities
@@ -97,8 +106,12 @@ class Scrape(base.Spider):
         states = []
         for href in body.xpath('//a[@class="c-directory-list-content-item-link"]/@href'):
             sp = href.split('/')
-            if len(sp) == 5:
-                href = sp[0]+'/'+sp[1]+'/'+sp[2]+'.html'
+            if len(sp) > 2:
+                s = sp[1]
+                if not s.endswith('.html'):
+                    s+='.html'
+                href = sp[0]+'/'+s
+
             states.append(urljoin(base_url, href))
         loop = asyncio.get_event_loop()
         stores = loop.run_until_complete(self._fetch_all_states(states, loop))

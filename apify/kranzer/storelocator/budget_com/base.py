@@ -105,7 +105,7 @@ def get_country_by_code(code=''):
 
 def get_state_code(state=''):
     for k, v in states_with_codes.items():
-        if v == state:
+        if v.lower() == state.lower():
             return k
     return "<MISSING>"
 
