@@ -1,9 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+session = SgRequests()
 
 
 def write_output(data):
@@ -21,92 +22,107 @@ def write_output(data):
 
 def fetch_data():
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        "X-Requested-With": "XMLHttpRequest",
-        "content-type": "application/x-www-form-urlencoded"
+    'Accept': 'application/json, text/javascript, */*; q=0.01',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.100 Safari/537.36',
     }
-    return_main_object = []
+
+    base_url = "https://www.tommy.com"
     addresses = []
     search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 30
-    code = search.next_zip()
-    while code:
+    search.initialize(country_codes=['US','CA'])
+    MAX_RESULTS = 150
+    MAX_DISTANCE = 100
+    zip_code = search.next_zip()
+    while zip_code:
         result_coords = []
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
-        zip_code = code
-        #print('Pulling Zip %s...' % (zip_code))
-        r_data = "address=" + zip_code + "&Submit=SEARCH"
-        r = requests.post(
-            "https://secure.gotwww.com/gotlocations.com/tommy/index.php", headers=headers, data=r_data)
-        data_count = 0
-        for store_text in r.text.split("L.marker([")[1:]:
-            data_count = data_count + 1
-            lat = store_text.split(",")[0]
-            lng = store_text.split(",")[1].replace("]", "")
-            result_coords.append((lat, lng))
-            store_details = BeautifulSoup(store_text.split(
-                ".bindPopup(")[1].split(");")[0], "lxml")
-            address = store_details.find_all(
-                "a")[-1]["href"].split("=")[-1].replace("+", " ")
-            name = store_details.find("strong").text.strip()
-            location_details = list(store_details.stripped_strings)
-            phone = ""
-            for part in location_details:
-                if "PHONE:" in part:
-                    phone = part.split("PHONE:")[1]
-            hours = ""
-            for i in range(len(location_details)):
-                if "HOURS:" in location_details[i]:
-                    for k in range(i + 1, len(location_details)):
-                        if "PRODUCTS:" in location_details[k]:
-                            break
-                        hours = " " + hours + location_details[k]
-                    break
-            store = []
-            store.append("https://www.tommy.com")
-            store.append(name)
-            store.append(" ".join(address.split(",")[:-4]).strip())
-            if "  " in store[2]:
-                store[2] = " ".join(
-                    " ".join(address.split(",")[:-4]).split("  ")[1:]).strip()
+        data = '{"request":{"appkey":"0B93630E-2675-11E9-A702-7BCC0C70A832","formdata":{"geoip":false,"dataview":"store_default","limit":20,"geolocs":{"geoloc":[{"addressline":"'+str(zip_code)+'","country":"","latitude":"","longitude":"","state":"","province":"","city":"","address1":"","postalcode":""}]},"searchradius":"30|50|100|250","where":{"or":{"icon":{"like":""}}},"false":"0"}}}'
+    
+        r = session.post("https://hosted.where2getit.com/tommyhilfiger/rest/locatorsearch?like=0.8554840469970377", data=data, headers=headers).json()['response']
+        if "collection" in r:
+            current_results_len = len(r['collection'])
+            for data in r['collection']:
+                if "mall_name" in data:
+                    location_name = data['mall_name']
+                else:
+                    location_name = "<MISSING>"
+                street_address = (data['address1'] +" "+ str(data['address2'])).replace("None",'').strip()
+                # print(street_address)
+                city = data['city']
+                state = data['state']
+                zipp = data['postalcode']
+                # print(zipp)
+                country_code = data['country']
+                if "clientkey" in data:
+                    store_number = data['clientkey']
+                else:
+                    store_number = "<MISSING>"
+                if "phone" in data:
+                    phone = data['phone']
+                else:
+                    phone = "<MISSING>"
+                if "googlecat1" in data:
+                    location_type = data['googlecat1']
+                else:
+                    location_type = "<MISSING>"
+                if "latitude" in data:
+                    latitude = data['latitude']
+                else:
+                    latitude = "<MISSING>"
+                if "longitude" in data:
+                    longitude = data['longitude']
+                else:
+                    longitude = "<MISSING"
+                if "mondayopen" in data:
+                    hours = "Monday"+" "+ str(data['mondayopen']) +" "+"-"+" "+ str(data['mondayclose'])+ \
+                        " "+ "Tuesday"+" "+ str(data['tuesdayopen']) +" "+"-"+" "+ str(data['tuesdayopen'])+ \
+                        " "+ "Wednesday"+" "+ str(data['wednesdayopen']) +" "+"-"+" "+ str(data['wednesdayopen'])+ \
+                        " "+ "Thursday"+" "+ str(data['thursdayopen']) +" "+"-"+" "+ str(data['thursdayopen'])+ \
+                        " "+ "Friday"+" "+ str(data['fridayopen']) +" "+"-"+" "+ str(data['fridayopen'])+ \
+                        " "+ "Saturday"+" "+ str(data['saturdayopen']) +" "+"-"+" "+ str(data['saturdayopen'])+ \
+                        " "+ "Sunday"+" "+ str(data['sundayopen']) +" "+"-"+" "+ str(data['sundayopen']) 
+                else:
+                    hours = "<MISSING>"
+                if state != None and store_number != None:
+                    page_url = "https://stores.tommy.com/"+str(state.lower())+"/"+str(city.lower().replace(" ","-"))+"/"+str(store_number)+"/"
+                else:
+                    page_url = "<MISSING>"
+                
+                
+                
+                result_coords.append((latitude,longitude))
+                store = []
+                store.append(base_url)
+                store.append(location_name)
+                store.append(street_address)
+                store.append(city)
+                store.append(state)
+                store.append(zipp)
+                store.append(country_code)
+                store.append(store_number) 
+                store.append(phone)
+                store.append(location_type)
+                store.append(latitude)
+                store.append(longitude)
+                store.append(hours)
+                store.append(page_url)
+                if store[2] in addresses:
+                    continue
+                addresses.append(store[2])
+                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                # print("data ======="+str(store))
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                yield store
 
-            if ";" in store[2]:
-                store[2] = " ".join(" ".join(address.split(
-                    ",")[:-4]).split("  ")[-1].split(';')[1:]).strip()
-            store[2] = store[2].replace("Outlets of Little Rock", "").replace("The Outlet Collection l", "").replace(
-                "Outlet Marketplace", "").replace("Carolina Premium Outlets", "").replace("The Outlets of Maui", "").replace("BURNSIDE VILLAGE SHOPPING CENTRE", "").strip()
-            if "28" == store[2]:
-                store[2] = " ".join(address.split(",")[:-4]).strip()
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            if store[-1] in addresses:
-                continue
-            addresses.append(store[-1])
-            store.append(address.split(",")[-4])
-            store.append(address.split(",")[-3])
-            store.append(address.split(
-                ",")[-2] if address.split(",")[-2] != " " else "<MISSING>")
-            store.append(address.split(",")[-1])
-            if "US" not in store[-1] and "CA" not in store[-1]:
-                continue
-            store.append("<MISSING>")
-            store.append(phone if phone else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(lat)
-            store.append(lng)
-            store.append(hours if hours != "" else "<MISSING>")
-            store.append("https://secure.gotwww.com/gotlocations.com/tommy/index.php")
-            for i in range(len(store)):
-                store[i] = store[i].replace('\\', '')
-            # print(store)
-            yield store
         # print("max count update")
-        if data_count == MAX_RESULTS:
+        if current_results_len < MAX_RESULTS:
+            # print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
-            raise Exception("expected at most " +
-                            str(MAX_RESULTS) + " results")
-        code = search.next_zip()
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        zip_code = search.next_zip()
 
 
 def scrape():

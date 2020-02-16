@@ -36,7 +36,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 100000
-    MAX_DISTANCE = 200
+    MAX_DISTANCE = 1000
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
 
@@ -51,11 +51,11 @@ def fetch_data():
         url = "https://www.metrobyt-mobile.com/api/v1/commerce/store-locator"
         # print(str(search.current_zip))
         # data="https://www.metrobyt-mobile.com/api/v1/commerce/store-locator?address=10429%20n%2019th%20ave%20phoenix%20az&store-type=All&min-latitude=33.58853657681159&max-latitude=33.58853657681159&min-longitude=-112.10864146226419&max-longitude=-112.10864146226419"
-        querystring1 = {"address": ""+str(search.current_zip)+"", "store-type": "All", "min-latitude": "" + str(lat) + "",
-                       "max-latitude": "33.58853657681159", "min-longitude": "-73.17897948679246", "max-longitude": "" + str(lng) + ""}
+        querystring1 = {"address": ""+str(search.current_zip)+"", "store-type": "CorporateStore", "min-latitude": "19.50139",
+                       "max-latitude": ""+str(lat)+"", "min-longitude": "-68.01197", "max-longitude": ""+str(lng)+""}
         
-        querystring = {"address": ""+str(search.current_zip)+"", "store-type": "All", "min-latitude": "40.43638595942029",
-                       "max-latitude": "" + str(lat) + "", "min-longitude": "-73.17897948679246", "max-longitude": "" + str(lng) + ""}
+       
+        
 
         headers = {
             'Content-type': "*/*,multipart/form-data; boundary=--------------------------773008355060723902209115",
@@ -73,7 +73,7 @@ def fetch_data():
         try:
             response1 = requests.request(
                 "GET", url, headers=headers, params=querystring1).json()
-            # current_results_len = len(response1)
+            current_results_len = len(response1)
         except:
             continue
 
@@ -154,90 +154,7 @@ def fetch_data():
             #print("====", str(store1))
             yield store1
 
-        try:
-            response = requests.request(
-                "GET", url, headers=headers, params=querystring).json()
-            current_results_len = len(response)+len(response1)
-        except:
-            continue
-
-        for loc in response:
-            locator_domain = base_url
-            country_code = "US"
-            store_number1 = loc["id"]
-            location_type1 = loc["type"]
-            try:
-                location_name1 = loc["name"]
-            except:
-                location_name1 = "<MISSING>"
-            try:
-                phone1 = loc["telephone"]
-            except:
-                phone1 = "<MISSING>"
-            try:
-                latitude1 = loc["location"]["latitude"]
-                longitude1 = loc["location"]["longitude"]
-            except:
-                latitude1 = "<MISSING>"
-                longitude1 = "<MISSING>"
-            # print(loc["address"]["streetAddress"])
-            try:
-                street_address1 = loc["location"]["address"]["streetAddress"]
-            except:
-                street_address1 = "<MISSING>"
-            try:
-                city1 = loc["location"]["address"]["addressLocality"]
-            except:
-                city1 = "<MISSING>"
-            try:
-                state1 = loc["location"]["address"]["addressRegion"]
-            except:
-                state1 = "<MISSING>"
-            try:
-                zipp1 = loc["location"]["address"]["postalCode"]
-            except:
-                zipp1 = "<MISSING>"
-            if len(zipp1.strip()) == 4:
-                zipp1 = "0" + zipp1
-            #print(zipp)
-            try:
-                hours_of_operation1 = ""
-                for key, value in loc["openingHours"].items():
-                    hours_of_operation1 += key + " " + value + " "
-            except:
-                hours_of_operation1 = "<MISSING>"
-
-            page_url1 = "<MISSING>"
-            if phone1== None:
-                phone1 = "<MISSING>"
-
-            if phone1==".":
-                phone1 = "<MISSING>"
-
-
-            store = []
-            result_coords.append((latitude, longitude))
-            store.append(locator_domain if locator_domain else '<MISSING>')
-            store.append(location_name1 if location_name1 else '<MISSING>')
-            store.append(street_address1 if street_address1 else '<MISSING>')
-            store.append(city1 if city1 else '<MISSING>')
-            store.append(state1 if state1 else '<MISSING>')
-            store.append(zipp1 if zipp1 else '<MISSING>')
-            store.append(country_code if country_code else '<MISSING>')
-            store.append(store_number if store_number else '<MISSING>')
-            store.append(phone1.encode('ascii', 'ignore').decode('ascii').strip() if phone1.encode('ascii', 'ignore').decode('ascii').strip() else '<MISSING>')
-            store.append(location_type1 if location_type1 else '<MISSING>')
-            store.append(latitude1 if latitude1 else '<MISSING>')
-            store.append(longitude1 if longitude1 else '<MISSING>')
-            # store.append('<MISSING>')
-            store.append(
-                hours_of_operation1 if hours_of_operation1 else '<MISSING>')
-            store.append('<MISSING>')
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            #print("====", str(store))
-            yield store
+       
 
         if current_results_len < MAX_RESULTS:
             # print("max distance update")

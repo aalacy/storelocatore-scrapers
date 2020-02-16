@@ -1,12 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
 import time
-import sgzip
-
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -18,131 +17,75 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def request_wrapper(url,method,headers,data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = requests.get(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:            
-                r = requests.post(url,headers=headers,data=data)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None
+# def request_wrapper(url,method,headers,data=None):
+#     request_counter = 0
+#     if method == "get":
+#         while True:
+#             try:
+#                 r = session.get(url,headers=headers)
+#                 return r
+#                 break
+#             except:
+#                 time.sleep(2)
+#                 request_counter = request_counter + 1
+#                 if request_counter > 10:
+#                     return None
+#                     break
+#     elif method == "post":
+#         while True:
+#             try:            
+#                 r = session.post(url,headers=headers,data=data)
+#                 return r
+#                 break
+#             except:
+#                 time.sleep(2)
+#                 request_counter = request_counter + 1
+#                 if request_counter > 10:
+#                     return None
+#                     break
+#     else:
+#         return None
 
 def fetch_data():
-    cords = sgzip.coords_for_radius(100)
-    addresses = []
-    r_headers = {
-        'Accept': '*/*',
-        'Accept-Encoding':'gzip, deflate, br',
-        'Accept-Language': 'en-US,en;q=0.9,gu;q=0.8',
-        'Content-Type': 'application/json; charset=UTF-8',    
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
-    }
-    for cord in cords:
-        base_url = "https://sportclips.com"
-        r_data = '{"strLocation":"1","strLat":' + str(cord[0]) + ',"strLng":' + str(cord[1]) + ',"strRadius":"100","country":"US"}'
-        r = request_wrapper("https://sportclips.com/CustomWeb/StoreLocator.asmx/SearchByLocation", "post", headers=r_headers,data=r_data)
-        if r == None:
-            continue
-        data = json.loads(r.json()["d"])["Results"]
-        for i in data:
-            page_url = i['Url']
-            location_name = i['Title']
-            if "COMING SOON!" in i['Address']:
+    # addresses = []
+    # r_headers = {
+    #     'Accept': '*/*',
+    #     'Accept-Encoding':'gzip, deflate, br',
+    #     'Accept-Language': 'en-US,en;q=0.9,gu;q=0.8',
+    #     'Content-Type': 'application/json; charset=UTF-8',    
+    #     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
+    # }
+    base_url = "https://sportclips.com"
+   
+    r = session.get("https://sportclips.com/all-locations")
+    
+    soup = BeautifulSoup(r.text, "lxml")
+    for anchor in soup.find_all("div",{"class":"locations-list locations-list-noicon"}):
+        for link in anchor.find_all("a"):
+            if "google" in link['href']:
                 continue
-            address_list = i['Address'].split('|')
+            if "products" in link['href']:
+                continue
+            page_url = link['href'].replace("www.",'')
+            # print(page_url)
+            r1 = session.get(page_url)
+            soup1 = BeautifulSoup(r1.text, "lxml")
 
-            if ".com" in i['Url']:
-                if len(address_list) == 5:
-                    street_address = " ".join(address_list[:2]).replace("\t",'')
-                    city = address_list[2].split(',')[0]
-                    
-                    zipp = address_list[2].split(',')[1].split(' ')[-1]
-                
-                elif len(address_list) == 3:
-                    try:
-                        street_address = address_list[0].replace("\t",'')
-                        city = address_list[1].split(',')[0]
-                        zipp = address_list[1].split(',')[1].split(' ')[-1]
-                    except:
-                        street_address = " ".join(address_list[:2]).replace("\t",'')
-                        city = address_list[-1].split(',')[0]
-                        zipp = address_list[-1].split(',')[1].split(' ')[-1]
+            location_name = soup1.find("div",{"class":"contact-location"}).find("h1").text.strip()
+            
+            json_data = json.loads(soup1.find(lambda tag: (tag.name == "script") and "@context" in tag.text).text.replace("\t","").strip())
 
-                else:
-                    street_address = address_list[0].replace("\t",'') 
-                    try:
-                        city = address_list[1].split(',')[0]               
-                        zipp = address_list[1].split(',')[1].split(' ')[-1]
-                    except:
-                        city = address_list[2].split(',')[0]
-                        zipp = address_list[2].split(',')[1].split(' ')[-1]
-            else:
-                if len(address_list) == 5:
-                    street_address = " ".join(address_list[:2]).replace("\t",'')
-                    city = address_list[2].split(',')[0]
-                    
-                    zipp = ' '.join(address_list[2].split(',')[1].split(' ')[-2:])
-                
-                elif len(address_list) == 3:
-                    street_address = address_list[0].replace("\t",'')
-                    city = address_list[1].split(',')[0]
-                    zipp = ' '.join(address_list[1].split(',')[1].split(' ')[-2:])
-                    
-                else:
-                    street_address = address_list[0].replace("\t",'') 
-                    try:
-                        city = address_list[1].split(',')[0]               
-                        zipp = ' '.join(address_list[1].split(',')[1].split(' ')[-2:])
-                    except:
-                        city = address_list[2].split(',')[0]
-                        zipp = ' '.join(address_list[2].split(',')[1].split(' ')[-2:])
+            street_address = json_data['address']['streetAddress']
+            city = json_data['address']['addressLocality']
+            state = json_data['address']['addressRegion']
+            zipp = json_data['address']['postalCode']
+            phone = json_data['telephone']
+            location_type = json_data['@type']
+            latitude = json_data['geo']['latitude']
+            longitude = json_data['geo']['longitude']
 
-            phone = address_list[-1].replace("Canal Winchester, Ohio 43110","<MISSING>")
-            state = i['ExtCode'][:2]
-            latitude = i['Lat']
-            longitude = i['Long']
-            location_type = "HairSalon"
-            try:
-                r1 = requests.get(page_url, headers=r_headers)
-          
-             
-                soup1 = BeautifulSoup(r1.text, "lxml")
-                
+            hours_of_operation = " ".join(list(soup1.find("table").stripped_strings))
         
-                if ".com" in i['Url']:
-                    country_code = "US"
-                    hours_of_operation = "".join(soup1.find("table").text.strip())
-                    
-                
-                else:
-                    country_code = "CA"
-                    hours = ''
-                    for i in range(0,7):
-                        hours = hours+" "+soup1.find_all("div",{"class":"wtp-responsive-row row cols-25-75"})[i].text.strip()
-                    hours_of_operation = re.sub("\s+"," ",hours)
-        
-            except:
-                hours_of_operation = "<MISSING>"
         
             store = []
             store.append(base_url)
@@ -151,21 +94,21 @@ def fetch_data():
             store.append(city)
             store.append(state)
             store.append(zipp if zipp else "<MISSING>")
-            store.append(country_code)
+            store.append("US")
             store.append("<MISSING>")
-            store.append(phone )
+            store.append(phone)
             store.append(location_type)
             store.append(latitude)
             store.append(longitude)
-            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+            store.append(hours_of_operation)
             store.append(page_url)
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            for i in range(len(store)):
-                if type(store[i]) == str:
-                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-            store = [x.replace("–","-") if type(x) == str else x for x in store]
+            # if store[2] in addresses:
+            #     continue
+            # addresses.append(store[2])
+            # for i in range(len(store)):
+            #     if type(store[i]) == str:
+            #         store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            # store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             # print("data == "+str(store))
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")

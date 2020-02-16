@@ -66,12 +66,10 @@ def fetch_data():
                     phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(table[i]))
                     if phone_list:
                         phone = phone_list[-1]
-
                     us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(address_tage.text))
                     if us_zip_list:
                         zipp = us_zip_list[-1]
                         country_code = "US"
-
                     state_list = re.findall(r' ([A-Z]{2})', str(address_tage.text))
                     if state_list:
                         state = state_list[-1]
@@ -106,7 +104,7 @@ def fetch_data():
                     if store[2] in addressess:
                         continue
                     addressess.append(store[2])
-                    # print('---store--'+str(store))
+                   # print('---store--'+str(store))
                     yield store
                 
             # q= q+1

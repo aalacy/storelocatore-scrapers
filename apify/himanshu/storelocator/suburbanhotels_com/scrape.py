@@ -59,6 +59,8 @@ def fetch_data():
             continue
         data = r.json()["hotels"]
         for store_data in data:
+            if store_data['brandCode'] != "SB":
+                continue
             # print(store_data)
             result_coords.append((store_data["lat"], store_data["lon"]))
             if store_data["address"]["country"] != "US" and store_data["address"]["country"] != "CA":
