@@ -58,7 +58,6 @@ def fetch_data():
 	for a in range(57,80):
 		pages_url.append(locations[a].get_attribute('href'))
 	
-	print(pages_url)
 	for u in pages_url:
 		driver_page.get(u)
 		time.sleep(6)
@@ -72,63 +71,49 @@ def fetch_data():
 			#elements=s.find_elements_by_xpath('/html/body/div[8]/main/div/div/div')
 			#for e in elements:
 			try:
-				print(s.find_element_by_tag_name('a').get_attribute('href'))
 				urls.append(s.find_element_by_tag_name('a').get_attribute('href'))
 			except:
 				continue
 		
-	#urls = list(dict.fromkeys(urls))	
-	#[res.append(x) for x in urls if x not in res]
-	print(urls)
-	print(len(urls))
 	for u in urls:
 		driver_url.get(u)
 		time.sleep(6)
 		locs.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/h1').text.replace('â€“',''))
-		print(locs)
 		try:
 			streets.append(driver_url.find_element_by_class_name('store-address').text.split('\n')[0])
 		except:
 			streets.append("<MISSING>")
-		print(streets)
 		try:
 			cities.append(driver_url.find_element_by_class_name('store-address').text.split('\n')[1].split(',')[0])
 		except:
 			cities.append("<MISSING>")
-		print(cities)
 		try:
 			states.append(driver_url.find_element_by_class_name('store-address').text.split(',')[-1].split(' ')[1])
 		except:
 			states.append("<MISSING>")
-		print(states)
 		try:
 			zips.append(driver_url.find_element_by_class_name('store-address').text.split(',')[-1].split(' ')[2])
 		except:
 			zips.append("<MISSING>")
-		print(zips)
 		try:
 			ids.append(driver_url.find_element_by_xpath('/html/body/main/article/div/div/div[2]/div[1]/div/p[1]').text.split('#')[1])
 		except:
 			ids.append("<MISSING>")
-		print(ids)
 		try:
 			phones.append(driver_url.find_element_by_class_name("store-phone").text)
 		except:
 			phones.append("<MISSING>")
-		print(phones)
 		types_list=driver_url.find_element_by_xpath('/html/body/main/article/div/section[1]/div/div/div[1]').find_elements_by_tag_name("li")
 		type=''
 		for t in types_list:
 			type=type+' '+t.text.replace('\n',' ')
 		types.append(type.strip())
-		print(types)
 		lats.append(driver_url.find_element_by_xpath("/html/body/main/article/div/div/div[1]").get_attribute('lat'))	
 		longs.append(driver_url.find_element_by_xpath("/html/body/main/article/div/div/div[1]").get_attribute('lon'))
 		try:
 			timing.append(driver_url.find_element_by_class_name("store-hours").text)
 		except:
 			timing.append("<MISSING>")
-		print(timing)
 		
 	return_main_object = []	
 	for l in range(len(locs)):
