@@ -34,9 +34,8 @@ def fetch_data():
                     locs.append(linfo)
     for loc in locs:
         Found = False
-        print('Pulling Location %s...' % loc.split('|')[0])
+        #print('Pulling Location %s...' % loc.split('|')[0])
         llink = loc.split('|')[0]
-        r2 = session.get(loc, headers=headers)
         website = 'swgaoil.com/ss-food-stores'
         name = loc.split('|')[1]
         add = loc.split('|')[2]
@@ -45,10 +44,9 @@ def fetch_data():
         zc = loc.split('|')[5]
         lat = loc.split('|')[6]
         lng = loc.split('|')[7]
-        store = name.split('#')[1]
+        store = '<MISSING>'
         country = 'US'
         typ = '<MISSING>'
-        lines = r2.iter_lines()
         hours = '<MISSING>'
         phone = '<MISSING>'
         yield [website, llink, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
