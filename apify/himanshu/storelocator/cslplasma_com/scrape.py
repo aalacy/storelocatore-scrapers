@@ -1,15 +1,8 @@
-
 import csv
 import requests
 from bs4 import BeautifulSoup
 import re
 import json
-# from selenium import webdriver
-# from selenium.webdriver.firefox.options import Options
-# import platform
-
-# system = platform.system()
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -65,30 +58,31 @@ def fetch_data():
                     phone = "<MISSING>"
                 # print(phone)
                 page_url = base_url + location.find_all("a")[-1]['href']
-                r_loc = requests.get(page_url)
-                soup_loc = BeautifulSoup(r_loc.text, "lxml")
-                iframe = soup_loc.find(
-                    "iframe", {"id": "centermap_frame"})['src']
-                cr = requests.get(iframe)
-                soup_cr = BeautifulSoup(cr.text, "lxml")
-                script = soup_cr.find("script", text=re.compile(
-                    "initEmbed")).text.split("initEmbed(")[1].split(");")[0].split(",")[55:60]
-                if "0]" in " ".join(script):
-                    script.remove("0]")
-                if "[null" in " ".join(script):
-                    script.remove("[null")
-                newlist = []
-                for i in script:
-                    if i not in newlist:
-                        newlist.append(i)
-                if "null" in " ".join(newlist):
-                    newlist.remove("null")
-
-                latitude = newlist[0]
-                longitude = newlist[-1].replace("]", "").strip()
-                if "[1]]" in latitude:
-                    latitude = "<MISSING>"
-                    longitude = "<MISSING>"
+                # r_loc = requests.get(page_url)
+                # soup_loc = BeautifulSoup(r_loc.text, "lxml")
+                # iframe = soup_loc.find(
+                #     "iframe", {"id": "centermap_frame"})['src']
+                # cr = requests.get(iframe)
+                # soup_cr = BeautifulSoup(cr.text, "lxml")
+                # script = soup_cr.find("script", text=re.compile(
+                #     "initEmbed")).text.split("initEmbed(")[1].split(");")[0].split(",")[55:60]
+                # if "0]" in " ".join(script):
+                #     script.remove("0]")
+                # if "[null" in " ".join(script):
+                #     script.remove("[null")
+                
+                # newlist = []
+                # for i in script:
+                #     if i not in newlist:
+                #         newlist.append(i)
+                # if "null" in " ".join(newlist):
+                #     newlist.remove("null")
+                # print(newlist)
+                # latitude = newlist[0]
+                # longitude = newlist[-1].replace("]", "").strip()
+                # if "[1]]" in latitude:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
                 #print(latitude, longitude)
 
                 store = []
@@ -104,11 +98,11 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append(latitude)
                 store.append(longitude)
-                store.append(location_hours[-1] if location_hours[-1] !=
-                             "Contact Info" and location_hours[-1] != "Coming Soon" else "<MISSING>")
+                # print(location_hours)
+                store.append(location_hours[-1] if location_hours[-1] != "Contact Info" and location_hours[-1] != "Coming Soon" else "<MISSING>")
                 store.append(page_url)
-                #print("===" + str(store))
-                #print('~~~~~~~~~~~~~~~~~~~~`')
+                # print("===" + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~`')
                 yield store
 
 

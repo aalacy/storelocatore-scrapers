@@ -36,13 +36,14 @@ def fetch_data():
     state1 = list(soup1.find_all("div",{'class':"wpb_wrapper"})[14].stripped_strings)[2].split(",")[1].split( )[0]
     zip1= list(soup1.find_all("div",{'class':"wpb_wrapper"})[14].stripped_strings)[2].split(",")[1].split( )[-1]
     phone1 = list(soup1.find_all("div",{'class':"wpb_wrapper"})[14].stripped_strings)[-2]
-    hours1 = " ".join(list(soup1.find_all("div",{'class':"wpb_wrapper"})[8].stripped_strings)[1:])
+    # hours1 = " ".join(list(soup1.find("div",{'class':"wpb_text_column wpb_content_element  vc_custom_1575776937348"}).stripped_strings))
+    # print(soup1.find_all("div",{'class':"wpb_text_column wpb_content_element"}))
+    hours1 = (soup1.find(text='HOURS').parent.parent.text.replace("HOURS",''))
     longitude1 = soup1.find("iframe")['src'].split("!2d")[-1].split("!3d")[0]
     latitude1 = soup1.find("iframe")['src'].split("!2d")[-1].split("!3d")[1].split("!2m")[0]
-
     store = []
     store.append("https://slaters5050.com")
-    store.append(name1)
+    store.append(name1.encode('ascii', 'ignore').decode('ascii').strip())
     store.append(address2)
     store.append(city1)
     store.append(state1)
@@ -55,7 +56,7 @@ def fetch_data():
     store.append(longitude1)
     store.append(hours1.encode('ascii', 'ignore').decode('ascii').strip())
     store.append("http://slaters5050lasvegas.com/")
-    #print(store)
+    # print(store)
     yield store
     # print(soup1.find("iframe")['src'].split("!2d")[-1].split("!3d")[1].split("!2m")[0])
 
@@ -63,7 +64,7 @@ def fetch_data():
     for location in soup.find_all("li",{'class':re.compile("menu-item menu-item-type-post_type menu-item-object-locations")}):
         location_request = requests.get(location.find("a")["href"],headers=headers)
         page_url =  location.find("a")["href"]
-       # print(page_url)
+        # print(page_url)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         name = location_soup.find("main",{'role':"main"}).find("h1").text.strip()
         address = list(location_soup.find("p",{'class':"address"}).stripped_strings)
@@ -100,7 +101,7 @@ def fetch_data():
                 continue
             addresses123.append(address[0])
             # print(address)
-            hours = " ".join(list(location_soup.find("div",{'class':"hours"}).stripped_strings))
+            hours = " ".join(list(location_soup.find("div",{'class':"hours"}).stripped_strings)).split("Happy Hour")[0]
             phone = location_soup.find("p",{'class':"phone"}).text.strip()
         else:
             # print(page_url)
@@ -127,14 +128,14 @@ def fetch_data():
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append("<MISSING>")
-        store.append(hours.replace("Restaurant Hours Coming Soon","<MISSING>").replace("Restaurant Hours ","<MISSING>").encode('ascii', 'ignore').decode('ascii').strip())
+        store.append(hours.replace("Restaurant Hours Coming Soon","<MISSING>").encode('ascii', 'ignore').decode('ascii').strip())
         store.append(page_url)
         if "661.218.5050" in store:
             pass
         else:
             yield store
         # # return_main_object.append(store)
-       # print(store)
+        # print(store)
    
                 
 

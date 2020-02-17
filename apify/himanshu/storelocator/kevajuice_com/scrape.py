@@ -129,9 +129,9 @@ def fetch_data():
                 if store[1] + " " + store[2] in addresses:
                     continue
                 addresses.append(store[1] + " " + store[2])
-                # print("data = " + str(store))
-                # print(
-                #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                #print("data = " + str(store))
+                #print(
+                   # '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
 

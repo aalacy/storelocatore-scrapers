@@ -71,7 +71,7 @@ def fetch_data():
                 +" , "+contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text()   \
                 +" , "+contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text() \
                 +" , "+contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text()
-                print(hours_of_operation)
+               # print(hours_of_operation)
                 # .find_next('p').find_next('p').get_text() + ", " + contact_url_soup.select('.content')[1].find('h2').find_next(
                 #     'p').find_next('p').find_next('p').get_text() + ", " + contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').get_text()
             

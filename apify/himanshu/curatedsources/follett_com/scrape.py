@@ -28,10 +28,14 @@ def fetch_data():
         if "http://www.skyo.com/" in link.find_all("a")[-1]['href']:
             continue
         page_url = base_url+link.find_all("a")[-1]['href']
+        # print(page_url)
         r1 = session.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         location_name = soup1.find("span",{"itemprop":"name"}).text.strip()
-        street_address = re.sub("\s+"," ",str(soup1.find("span",{"itemprop":"streetAddress"}).text.replace("\r",'').strip()))
+        if soup1.find("span",{"itemprop":"streetAddress"}).text.replace("\r",'').strip() != "":
+            street_address = re.sub("\s+"," ",str(soup1.find("span",{"itemprop":"streetAddress"}).text.replace("\r",'').strip()))
+        else:
+            street_address = list(soup1.find("div",{"itemprop":"address"}).stripped_strings)[0].replace("\r",'').strip()
         city = soup1.find("span",{"itemprop":"addressLocality"}).text.strip()
         state = soup1.find("span",{"itemprop":"addressRegion"}).text.strip()
         zipp = list(soup1.find("div",{"itemprop":"address"}).stripped_strings)[-1]
