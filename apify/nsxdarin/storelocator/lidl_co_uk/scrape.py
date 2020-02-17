@@ -29,7 +29,7 @@ def fetch_data():
                     if 'CountryRegion' in item:
                         website = 'lidl.co.uk'
                         loc = '<MISSING>'
-                        name = 'Lidl'
+                        name = item.split('"ShownStoreName":"')[1].split('"')[0]
                         phone = '<MISSING>'
                         add = item.split('"AddressLine":"')[1].split('"')[0]
                         city = item.split('"Locality":"')[1].split('"')[0]
