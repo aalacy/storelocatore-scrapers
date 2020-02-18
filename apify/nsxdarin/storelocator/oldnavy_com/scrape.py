@@ -23,7 +23,7 @@ def fetch_data():
             stname = line.split('<a href="/stores/')[1].split('"')[0]
             if stname not in stnames:
                 stnames.append(stname)
-                states.append('https://bananarepublic.gap.com/stores/' + stname)
+                states.append('https://oldnavy.gap.com/stores/' + stname)
     for state in states:
         cities = []
         locs = []
@@ -31,13 +31,15 @@ def fetch_data():
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
             if '<a href="/stores/' in line2:
-                cities.append('https://bananarepublic.gap.com' + line2.split('href="')[1].split('"')[0])
+                cities.append('https://oldnavy.gap.com' + line2.split('href="')[1].split('"')[0])
         for city in cities:
+            #print('Pulling City %s...' % city)
             r3 = session.get(city, headers=headers)
             for line3 in r3.iter_lines():
                 if 'View Store Details</a>' in line3:
-                    locs.append('https://bananarepublic.gap.com' + line3.split('href="')[1].split('"')[0])
+                    locs.append('https://oldnavy.gap.com' + line3.split('href="')[1].split('"')[0])
             for loc in locs:
+                #print('Pulling Location %s...' % loc)
                 website = 'oldnavy.com'
                 typ = '<MISSING>'
                 store = loc.rsplit('-',1)[1].replace('.html','')
