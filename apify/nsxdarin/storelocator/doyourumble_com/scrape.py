@@ -32,7 +32,7 @@ def fetch_data():
         state = ''
         zc = ''
         country = 'US'
-        store = region
+        store = '<MISSING>'
         phone = '<MISSING>'
         lat = ''
         lng = ''
@@ -52,7 +52,12 @@ def fetch_data():
             if 'latLng: ["' in line2:
                 lat = line2.split('latLng: ["')[1].split('"')[0]
                 lng = line2.split('","')[1].split('"')[0]
-                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                if name == 'Upper East Side':
+                    names = ['Upper East Side Boxing','Upper East Side Training']
+                    for item in names:
+                        yield [website, loc, item, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                else:
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
