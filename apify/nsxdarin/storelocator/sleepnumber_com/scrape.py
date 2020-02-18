@@ -27,7 +27,8 @@ def fetch_data():
                     count = item.split('data-count="(')[1].split(')')[0]
                     lurl = 'https://stores.sleepnumber.com/' + item.split('"')[0]
                     if count == '1':
-                        locs.append(lurl)
+                        if lurl not in locs:
+                            locs.append(lurl)
                     else:
                         states.append(lurl)
     for state in states:
@@ -41,7 +42,8 @@ def fetch_data():
                         count = item.split('data-count="(')[1].split(')')[0]
                         lurl = 'https://stores.sleepnumber.com/' + item.split('"')[0]
                         if count == '1':
-                            locs.append(lurl)
+                            if lurl not in locs:
+                                locs.append(lurl)
                         else:
                             cities.append(lurl)
     for city in cities:
@@ -53,7 +55,8 @@ def fetch_data():
                 for item in items:
                     if 'View Store Details' in item:
                         lurl = 'https://stores.sleepnumber.com/' + item.split('"')[0]
-                        locs.append(lurl)
+                        if lurl not in locs:
+                            locs.append(lurl)
         for loc in locs:
             #print('Pulling Location %s...' % loc)
             website = 'sleepnumber.com'
