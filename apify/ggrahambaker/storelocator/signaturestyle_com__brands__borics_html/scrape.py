@@ -78,14 +78,14 @@ def fetch_data():
             if loc['actualSiteId'] != 13:
                 continue
             
-=            store_number = loc['storeID']
+            store_number = loc['storeID']
             
             if store_number not in dup_tracker:
                 dup_tracker.append(store_number)
             else:
                 continue
                 
-=            page_json_url = 'https://info3.regiscorp.com/salonservices/siteid/100/salon/' + str(store_number)
+            page_json_url = 'https://info3.regiscorp.com/salonservices/siteid/100/salon/' + str(store_number)
             
             r = session.get(page_json_url, headers=HEADERS)
         

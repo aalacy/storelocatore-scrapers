@@ -79,10 +79,9 @@ def fetch_data():
                 break
             hours += day.text.strip() + ' '
 
-        #hours_json = json.loads(soup.find_all('script', {'type': 'application/ld+json'})[1].text)#['openingHoursSpecification']
 
         hours = ' '.join( hours.split())
-        store_number = '<MISSING>'
+        store_number = link.split('/')[-2]
         location_type = '<MISSING>'
         page_url = link
         country_code = 'US'

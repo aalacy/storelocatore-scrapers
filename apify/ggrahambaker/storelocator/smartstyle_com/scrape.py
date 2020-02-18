@@ -23,7 +23,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
 
-    MAX_DISTANCE = 50
+    MAX_DISTANCE = 25
 
     coord = search.next_coord()
     all_store_data = []
@@ -60,7 +60,6 @@ def fetch_data():
             r = session.get(page_json_url, headers=HEADERS)
         
             loc = json.loads(r.content)
-            #print(loc)
             
             location_name = loc['name']
             street_address = loc['address']
@@ -96,7 +95,6 @@ def fetch_data():
             
 
 
-        #search.max_count_update(result_coords)
         search.max_distance_update(MAX_DISTANCE)
     
         coord = search.next_coord()  

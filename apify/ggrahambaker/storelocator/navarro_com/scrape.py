@@ -59,6 +59,7 @@ def fetch_data():
     still_scrolling = True
 
     all_store_data = []
+    dup_tracker = []
     while still_scrolling:
         driver.get(locator_domain + next_link)
         driver.implicitly_wait(5)
@@ -82,7 +83,11 @@ def fetch_data():
             off = 0
             cont = loc.text.split('\n')
 
-            location_name = cont[0]
+            location_name = cont[0].strip()
+            if location_name not in dup_tracker:
+                dup_tracker.append(location_name)
+            else:
+                continue
             if 'AIRPORT' in location_name:
                 street_address, city, state, zip_code = parse_address(cont[1] + ' ' + cont[2])
                 off = 1
