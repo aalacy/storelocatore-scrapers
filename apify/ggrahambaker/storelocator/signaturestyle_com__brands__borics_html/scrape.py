@@ -51,7 +51,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
 
-    MAX_DISTANCE = 50
+    MAX_DISTANCE = 25
 
     coord = search.next_coord()
     all_store_data = []
