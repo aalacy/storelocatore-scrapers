@@ -32,6 +32,9 @@ def fetch_data():
         city = item['zip']
         state = item['city'].strip().encode('utf-8').split(' ')[0]
         zc = item['zip']
+        if item['state']:
+            state = item['state']
+        city = item['city']
         country = item['country']['isocode'].encode('utf-8')
         lurl = '<MISSING>'
         lat = item['latlong'][0]
@@ -66,8 +69,12 @@ def fetch_data():
         except:
             hours = hours + '; Sun: Closed'
         state = state.replace(',','').strip()
-        if hours == 'Mon: Closed; Tue: Closed; Wed: Closed; Thu: Closed; Fri: Closed; Sat: Closed; Sun: Closed':
+        if hours == 'Mon: Closed;Tue: Closed;Wed: Closed;Thu: Closed;Fri: Closed;Sat: Closed;Sun: Closed':
             hours = '<MISSING>'
+        if city == 'Barrie' or city == 'Toronto':
+            state = 'Ontario'
+        if city == 'Saskatoon':
+            state = 'Saskatchewan'
         yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
     url = 'https://www.thebodyshop.com/en-us/store-finder/search?country=US'
@@ -87,10 +94,18 @@ def fetch_data():
         state = item['city'].strip().encode('utf-8').split(' ')[0]
         try:
             zc = item['city'].strip().encode('utf-8').split(' ')[1]
+            if 'a' in zc.lower() or 'e' in zc.lower() or 'i' in zc.lower() or 'o' in zc.lower() or 'u' in zc.lower():
+                zc = item['zip']
+                city = item['city']
+                state = item['state']
+            else:
+                zc = zc
         except:
             zc = item['zip']
             city = item['city']
             state = item['state']
+        if city == 'Fort Lauderdale':
+            state = 'FL'
         country = item['country']['isocode'].encode('utf-8')
         lurl = '<MISSING>'
         lat = item['latlong'][0]
@@ -128,7 +143,7 @@ def fetch_data():
             state = state.replace(',','').strip()
         except:
             state = '<MISSING>'
-        if hours == 'Mon: Closed; Tue: Closed; Wed: Closed; Thu: Closed; Fri: Closed; Sat: Closed; Sun: Closed':
+        if hours == 'Mon: Closed;Tue: Closed;Wed: Closed;Thu: Closed;Fri: Closed;Sat: Closed;Sun: Closed':
             hours = '<MISSING>'
         yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 def scrape():
