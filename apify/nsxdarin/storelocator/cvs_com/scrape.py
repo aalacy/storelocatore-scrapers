@@ -86,6 +86,7 @@ def fetch_data():
                 hours = '<MISSING>'
             if phone == '':
                 phone = '<MISSING>'
+            hours = hours.replace(':00:00',':00').replace(':30:00',':30')
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
