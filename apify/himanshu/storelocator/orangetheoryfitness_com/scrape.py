@@ -29,9 +29,10 @@ def fetch_data():
         lat = coord[0]
         lng = coord[1]
         base_url=  "https://www.orangetheoryfitness.com/service/directorylisting/filterMarkers?lat="+str(lat)+"&lng="+str(lng)+"&zoom=12"
-        
-        r = requests.get(base_url)
-        
+        try:
+            r = requests.get(base_url)
+        except:
+            pass
         json_data = r.json()
         current_results_len =len(json_data['markers'])
         for i in json_data['markers']:
