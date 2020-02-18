@@ -43,6 +43,7 @@ def fetch_data():
         result_coords.append((x, y))
         
         for i, loc in res_json.items():
+        
             lat = loc['latitude']
             longit = loc['longitude']
             result_coords.append((lat, longit))
@@ -50,7 +51,6 @@ def fetch_data():
             if 'BIRKENSTOCK' not in loc['name']:
                 continue
                 
-            
             location_name = loc['name']
             if location_name not in dup_tracker:
                 dup_tracker.append(location_name)
@@ -64,7 +64,8 @@ def fetch_data():
             state = loc['state']
             zip_code = loc['postalCode']
             country_code = loc['countryCode']
-            phone_number = loc['phone']
+            phone_number = loc['phoneAreaCode'] + ' ' + loc['phone']
+            phone_number = phone_number.replace('+1', '').strip()
             
             
             hours = ''

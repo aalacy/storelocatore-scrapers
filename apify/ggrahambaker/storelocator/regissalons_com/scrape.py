@@ -23,7 +23,7 @@ def fetch_data():
 
 
     MAX_RESULTS = 50
-    MAX_DISTANCE = 500
+    MAX_DISTANCE = 100
 
     coord = search.next_coord()
     all_store_data = []
