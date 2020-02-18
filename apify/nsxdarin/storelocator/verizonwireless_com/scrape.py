@@ -23,7 +23,7 @@ def fetch_data():
             SFound = True
             items = line.split('{"name":"')
             for item in items:
-                if '"url":"/stores/' in item and 'florida' in item:
+                if '"url":"/stores/' in item:
                     states.append('https://www.verizonwireless.com' + item.split('"url":"')[1].split('"')[0])
     for state in states:
         print('Pulling State %s...' % state)
