@@ -57,7 +57,7 @@ def fetch_data():
                             else:
                                 cities.append(lurl)
         for city in cities:
-            #print('Pulling City %s...' % city)
+            print('Pulling City %s...' % city)
             r2 = session.get(city, headers=headers)
             for line2 in r2.iter_lines():
                 if 'data-ya-track="visitpage" href="../../' in line2:
@@ -94,17 +94,20 @@ def fetch_data():
                     lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
                     lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]
                 if hours == '' and "data-days='[{" in line2:
-                    days = line2.split("data-days='[{")[1].split("]}]'")[0].split('"day":"')
-                    for day in days:
-                        if '"intervals"' in day:
-                            if '"intervals":[]' not in day:
-                                hrs = day.split('"')[0] + ': ' + day.split(',"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
-                            else:
-                                hrs = day.split('"')[0] + ': Closed'
-                            if hours == '':
-                                hours = hrs
-                            else:
-                                hours = hours + '; ' + hrs
+                    try:
+                        days = line2.split("data-days='[{")[1].split("]}]'")[0].split('"day":"')
+                        for day in days:
+                            if '"intervals"' in day:
+                                if '"intervals":[]' not in day:
+                                    hrs = day.split('"')[0] + ': ' + day.split(',"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                                else:
+                                    hrs = day.split('"')[0] + ': Closed'
+                                if hours == '':
+                                    hours = hrs
+                                else:
+                                    hours = hours + '; ' + hrs
+                    except:
+                        hours = '<MISSING>'
             if hours == '':
                 hours = '<MISSING>'
             if phone == '':
