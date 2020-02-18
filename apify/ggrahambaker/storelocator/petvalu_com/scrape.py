@@ -46,8 +46,6 @@ def fetch_data():
         print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        print()
         data = { 'lat': str(x), 'lng': str(y), 'action': 'get_stores', 'radius': 100 }
         
         try:
@@ -63,10 +61,6 @@ def fetch_data():
         result_coords = []
         
         for k, loc in res_json.items():
-            print(loc)
-            print()
-            print()
-
             location_name = loc['na']
             page_url = loc['gu']
             lat = loc['lat']
@@ -132,12 +126,10 @@ def fetch_data():
   
     
     while coord:
-        #print('can')
         print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        print()
+  
         c_data = { 'lat': str(x), 'lng': str(y), 'action': 'get_stores', 'radius': 100 }
         try:
             r = session.post('https://petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = c_data)
