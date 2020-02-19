@@ -65,6 +65,8 @@ def fetch_data():
             # print(table)
             for tr in table.find_all('tr')[1:]:
                 page_url = store_url
+                if 'http://kevajuice.com/colorado/'in page_url:
+                    page_url = 'http://www.kevajuicecolorado.com/index2.html'
                 address = list(tr.find_all('td')[0].stripped_strings)
                 # print(address)
                 # print('~~~~~~~~~~~~~~')

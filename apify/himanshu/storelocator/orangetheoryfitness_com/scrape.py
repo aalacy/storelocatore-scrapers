@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from time import sleep
+import time
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -11,7 +14,37 @@ def write_output(data):
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         for row in data:
             writer.writerow(row)
-
+def request_wrapper(url,method,headers,data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url,headers=headers,data=data)
+                else:
+                    r = requests.post(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
 def fetch_data():
     return_main_object = []
     addresses = []
@@ -29,19 +62,20 @@ def fetch_data():
         lat = coord[0]
         lng = coord[1]
         base_url=  "https://www.orangetheoryfitness.com/service/directorylisting/filterMarkers?lat="+str(lat)+"&lng="+str(lng)+"&zoom=12"
-        try:
-            r = requests.get(base_url)
-        except:
-            pass
+     
+        r = request_wrapper(base_url, "get", headers=headers)
+         
         json_data = r.json()
         current_results_len =len(json_data['markers'])
         for i in json_data['markers']:
+            print(i)
             store_number = i['id']
             location_name = i['name']
             street_address = i['address1']
             city = i['city']
             state = i['state']
-            zipp = i['zip'].replace("0209","80209").replace("880209","80209").replace("2550","12550").replace("125504","25504").replace("2145","02145").encode('ascii', 'ignore').decode('ascii').strip()
+            zipp = i['zip'].replace("0209","80209").replace("880209","80209").replace("2550","12550").replace("125504","25504").replace("2145","02145").replace('55555','<MISSING>').encode('ascii', 'ignore').decode('ascii').strip()
+            
             phone = i['phone'].replace("08837","<MISSING>").replace("(2683)","").encode('ascii', 'ignore').decode('ascii').strip()
             latitude  = i['lat']
             longitude = i['lon']
@@ -65,6 +99,7 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             if "Adjuntas" in store :
                 pass
             else:
