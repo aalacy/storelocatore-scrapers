@@ -71,18 +71,43 @@ def fetch_data():
         phone = ''
         city = '<MISSING>'
         country = 'CA'
-        zc = '<MISSING>'
+        zc = ''
         lat = ''
         lng = ''
         hours = '<MISSING>'
         r2 = session.get(lurl, headers=headers)
         lines = r2.iter_lines()
+        HFound = False
         for line2 in lines:
+            if HFound and 'Station</b><br />' in line2:
+                HFound = True
+            if HFound and '</table>' in line2:
+                HFound = False
+            if HFound and '<td style="padding-right: 10px;">' in line2:
+                g = next(lines)
+                next(lines)
+                next(lines)
+                h = next(lines)
+                hrs = g.strip().replace('\t','').replace('\r','').replace('\n','')
+                hrs = hrs + ': ' + h.strip().replace('\t','').replace('\r','').replace('\n','')
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
             if 'Address' in line2:
                 g = next(lines)
                 h = next(lines)
                 add = g.split('<')[0].strip().replace('\t','') + ' ' + h.split('<')[0].strip().replace('\t','')
                 add = add.strip()
+                g = ''
+                while ',' not in g:
+                    g = next(lines)
+                city = g.split(',')[0].strip().replace('\t','')
+                g = ''
+                while '&nbsp;' not in g:
+                    g = next(lines)
+                state = g.split('&')[0].strip().replace('\t','')
+                zc = g.split(';')[1].split('<')[0]
             if 'GetMap(' in line2:
                 lat = line2.split('GetMap(')[1].split(',')[0].replace("'",'')
                 lng = line2.split('GetMap(')[1].split(',')[1].replace("'",'')
@@ -96,9 +121,9 @@ def fetch_data():
             phone = '<MISSING>'
         if state == 'PQ':
             state = 'QC'
-        city = name
-        if '(' in city:
-            city = city.split('(')[0].strip()
+##        city = name
+##        if '(' in city:
+##            city = city.split('(')[0].strip()
         if add == '':
             add = '<MISSING>'
         yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
