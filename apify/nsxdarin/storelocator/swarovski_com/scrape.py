@@ -25,7 +25,7 @@ def fetch_data():
         rad = 1000
         if lng == '-95':
             rad = 500
-        url = 'https://www.swarovski.com/en-US/store-finder/list/?allBaseStores=true&latitude=' + lat + '&longitude=' + lng + '&radius=' + str(rad)
+        url = 'https://www.swarovski.com/en-US/store-finder/list/?allBaseStores=true&geoPoint.latitude=' + str(lat) + '&geoPoint.longitude=' + str(lng) + '&radius=' + str(rad)
         website = 'swarovski.com'
         typ = ''
         hours = ''
