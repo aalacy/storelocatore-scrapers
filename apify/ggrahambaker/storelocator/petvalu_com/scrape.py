@@ -71,15 +71,17 @@ def fetch_data():
             else:
                 continue
             
-            street_address = loc['st'].replace('<br>', ' ').strip()
+            street_address = loc['st'].split('<br>')[0].strip()
+
+    
             zip_code = loc['zp']
             if len(zip_code) == 4:
                 zip_code = '0' + zip_code
             
-            city = loc['ct']
-            country_code = loc['co']
-            state = loc['rg']
-            phone_number = loc['te']
+            city = loc['ct'].strip()
+            country_code = loc['co'].strip()
+            state = loc['rg'].strip()
+            phone_number = loc['te'].strip()
             
             
             store_number = '<MISSING>'
