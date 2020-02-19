@@ -94,6 +94,8 @@ def fetch_data():
                     addinfo = add + city + state
                     if addinfo not in addinfos:
                         addinfos.append(addinfo)
+                        if hours == 'Mo-Su':
+                            hours = '24 Hours'
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             except:
                 PFound = True
