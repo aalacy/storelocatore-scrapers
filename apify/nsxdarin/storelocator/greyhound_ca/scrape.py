@@ -79,7 +79,7 @@ def fetch_data():
         lines = r2.iter_lines()
         HFound = False
         for line2 in lines:
-            if HFound and 'Station</b><br />' in line2:
+            if 'Station<' in line2:
                 HFound = True
             if HFound and '</table>' in line2:
                 HFound = False
