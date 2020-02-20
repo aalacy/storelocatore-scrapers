@@ -100,7 +100,10 @@ def fetch_data():
         store = item['name']
         purl = 'https://www.aldoshoes.com/ca/en/store-locator/store/' + store
         typ = 'Store'
-        phone = item['address']['phone']
+        try:
+            phone = item['address']['phone']
+        except:
+            phone = '<MISSING>'
         days = item['openingHours']['weekDayOpeningList']
         hours = ''
         for day in days:
