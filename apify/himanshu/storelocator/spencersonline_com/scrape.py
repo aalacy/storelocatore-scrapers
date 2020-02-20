@@ -22,11 +22,12 @@ def fetch_data():
     soup = BeautifulSoup(r.text,"lxml")
     tag_store = soup.find(lambda tag: (tag.name == "script") and "var allStores" in  tag.text.strip())
     m = (tag_store.text)
-    for i in range(1,684):
+    for i in range(1,680):
         store_number = (m.split("store.STORE_NUMBER = '")[i].split("store.ADDRESS_LINE_1")[0].replace("';","").strip().lstrip())
-        street_address1 = (m.split("store.ADDRESS_LINE_1 = '")[i].split("store.ADDRESS_LINE_2 =")[0].replace("';","").strip())
-        street_address2 = (m.split("store.ADDRESS_LINE_2 = '")[i].split("store.CITY = '")[0].replace("';","").strip())
-        street_address = (street_address1 +" "+ street_address2).replace("\n","").replace("    "," ").strip()
+        # print(store_number)
+        # street_address = (m.split("store.ADDRESS_LINE_1 = '")[i].split("store.ADDRESS_LINE_2 =")[0].replace("';","").strip())
+        street_address = (m.split("store.ADDRESS_LINE_2 = '")[i].split("store.CITY = '")[0].replace("';","").strip())
+        # street_address = (street_address1 +" "+ street_address2).replace("\n","").replace("    "," ").strip()
         latitude = (m.split("store.LATITUDE = '")[i].split("store.LONGITUDE = '")[0].replace("';","").strip())
         longitude = (m.split("store.LONGITUDE = '")[i].split("store.STORE_STATUS = '")[0].replace("';","").strip())
         zipp = (m.split("store.ZIP_CODE = '")[i].split("store.PHONE = '")[0].replace("';","").strip())
@@ -50,9 +51,9 @@ def fetch_data():
         else:
             zipp = zipp[:5]+"-"+zipp[5:]
             country_code = "US" 
-        location_type = "<MISSING>"
-       
-         
+        location_type = "store"
+        if "07073" in zipp:
+            location_type = "<MISISNG>" 
         store = []
         store.append("https://www.spencersonline.com/store")
         store.append(location_name if location_name else "<MISSING>") 

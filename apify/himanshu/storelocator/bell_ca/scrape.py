@@ -103,13 +103,12 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            if adrr not in output:
-                output.append(adrr)
-                for i in range(len(store)):
-                    if type(store[i]) == str:
-                        store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-                store = [x.replace("\xe2","-") if type(x) == str else x for x in store]
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]          
+        
+            for i in range(len(store)):
+                if type(store[i]) == str:
+                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            store = [x.replace("–","-") if type(x) == str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]        
             yield store   
         if len(data) < MAX_RESULTS:
             # print("max distance update")
