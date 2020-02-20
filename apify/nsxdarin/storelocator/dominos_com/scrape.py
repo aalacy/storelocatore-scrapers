@@ -1,9 +1,9 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import json
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -34,6 +34,7 @@ def fetch_data():
                     locs.append(line2.replace('\r','').replace('\n','').replace('\t','').strip())
         print('%s Locations Found...' % str(len(locs)))
     for loc in locs:
+        #print('Pulling Location %s...' % loc)
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             if '"branchCode":"' in line2:
