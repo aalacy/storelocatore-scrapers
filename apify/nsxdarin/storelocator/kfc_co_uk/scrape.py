@@ -52,7 +52,7 @@ def fetch_data():
                             hours = hours + '; ' + 'Wed: ' + item.split('"kfc_wednesdayopening__c":"')[1].split('"')[0] + '-' + item.split('"kfc_wednesdayclosing__c":"')[1].split('"')[0]
                             hours = hours + '; ' + 'Thu: ' + item.split('"kfc_thursdayopening__c":"')[1].split('"')[0] + '-' + item.split('"kfc_thursdayclosing__c":"')[1].split('"')[0]
                             hours = hours + '; ' + 'Fri: ' + item.split('"kfc_fridayopening__c":"')[1].split('"')[0] + '-' + item.split('"kfc_fridayclosing__c":"')[1].split('"')[0]
-                            hours = hours + '; ' + 'Sat: ' + item.split('"kfc_satdayopening__c":"')[1].split('"')[0] + '-' + item.split('"kfc_satdayclosing__c":"')[1].split('"')[0]
+                            hours = hours + '; ' + 'Sat: ' + item.split('"kfc_saturdayopening__c":"')[1].split('"')[0] + '-' + item.split('"kfc_saturdayclosing__c":"')[1].split('"')[0]
                             if hours == '':
                                 hours = '<MISSING>'
                             loc = 'https://www.kfc.co.uk' + item['link'].replace('\\','')
