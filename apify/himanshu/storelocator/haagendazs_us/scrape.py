@@ -82,7 +82,11 @@ def fetch_data():
                 page_url="<MISSING>"
                 hours_of_operation ="<MISSING>"
             result_coords.append((data['lat__c'], data['lon__c']))
-            location_type = data['Shop_Location_Reference__c']     
+            location_type = data['IsHDShop']
+            if location_type == True:
+                location_type = 'shop'
+            else:
+                location_type='store'        
             store = [locator_domain, data['Name'], data['Shop_Street__c'], data['Shop_City__c'], data['Shop_State_Province__c'], data['Shop_Zip_Postal_Code__c'], country_code,
             store_number, data['phone'], location_type, data['lat__c'], data['lon__c'], hours_of_operation, page_url]
             store = [x if x else "<MISSING>" for x in store]

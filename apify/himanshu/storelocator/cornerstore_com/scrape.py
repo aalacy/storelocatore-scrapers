@@ -65,7 +65,7 @@ def store_handler(store_data,key):
     if store_data["op_status"] != "Open":
         return
     #print("https://www.circlek.com" + store_data["url"])
-    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~  ",store_data)
+    #print("~~~~~~~~~~~~~~~~~~~~~~~~~~  ",store_data)
     # exit()
     location_request = requests.get("https://www.circlek.com" + store_data["url"],headers=headers)
     location_soup = BeautifulSoup(location_request.text,"lxml")
@@ -142,7 +142,7 @@ def fetch_data():
     wait(fs)
     executor.shutdown(wait=False)
     for store in return_main_object:
-        # print("~~~~~~~~~~~~~~~~~ ",store)
+        print("~~~~~~~~~~~~~~~~~ ",store)
         yield store
 
 def scrape():

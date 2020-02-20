@@ -23,7 +23,6 @@ def write_output(data):
 def fetch_data():
     # header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5','Accept':'application/json, text/javascript, */*; q=0.01'}
     return_main_object = []
-    base_url = "https://www.dunkindonuts.com/"
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ["us", "ca"])
     postcode = search.next_zip()
@@ -62,7 +61,7 @@ def fetch_data():
         # try:
         locator_domain = "https://allsups.com"
         json_data = requests.post("https://allsups.com/ajax/Search.ashx",data=data,headers=headers).json()
-        # print(json_data)
+        print(json_data)
         for data in json_data:
             street_address=''
             city =''

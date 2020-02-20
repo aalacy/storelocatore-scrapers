@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 session = SgRequests()
+import requests
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -38,18 +39,18 @@ def parse_dms(dms):
 def fetch_data():
     base_url = "https://www.skyscanner.ca"
 
-    r = session.get("https://www.skyscanner.ca/airports/ca/airports-in-canada.html")
+    r = requests.get("https://www.skyscanner.ca/airports/ca/airports-in-canada.html")
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find("table",{"class":"sm_table sm_table_sections3"}).find_all("a"):
         url = base_url+link['href']
-        r1 = session.get(url)
+        r1 = requests.get(url)
         soup1 = BeautifulSoup(r1.text, "lxml")     
         if soup1.find("div",{"class":"lhs_info"}):
             for link in soup1.find("div",{"class":"lhs_info"}).find("ul").find_all("a"):
                 page_url = base_url+link['href']
-                r2 = session.get(page_url)
+                r2 = requests.get(page_url)
                 soup2 = BeautifulSoup(r2.text, "lxml")
-                location_name = soup2.find("h1",{"class":"t"}).text.strip().split(":")[0]
+                location_name = soup2.find("h1",{"class":"t"}).text.strip().replace("CA:","")
                 data = list(soup2.find_all("div",{"class":"content"})[-2].stripped_strings)
                 if len(data) == 7:
                     ICAO_code = "<MISSING>"
@@ -169,7 +170,7 @@ def fetch_data():
         store.append(base_url)
         store.append(location_name)
         store.append(street_address.replace(",","") if street_address else "<MISSING>")
-        store.append(city)
+        store.append(city.replace(",",""))
         store.append(state.replace(",",""))
         store.append(zipp.replace(",",""))
         store.append("CA")

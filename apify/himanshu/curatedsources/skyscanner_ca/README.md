@@ -10,6 +10,8 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-invalid state,and 1 record is dummy bcz IATA_code and ICAO_code is diffrent so i have scraped
+invalid state,and 1 record is dummy bcz IATA_code and ICAO_code is diffrent so i have scraped.
 
-and some location inside  address not available so i have put '<MISSING>' keyword. and also  i checked all data is true this website 
+and some location inside  address not available so i have put '<MISSING>' keyword. and also  i checked all data is true this website. 
+
+data not fetch using for SgRequests so i have not use SgRequests.
