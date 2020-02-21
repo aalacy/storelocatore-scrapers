@@ -1,9 +1,9 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import json
 
-session = requests.Session()
+session = SgRequests()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -19,7 +19,7 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
-        if '<loc>https://www.security-finance.com/locations/' in line:
+        if '<loc>https://www.securityfinance.com/locations/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
         r2 = session.get(loc, headers=headers, verify=False)
@@ -70,6 +70,8 @@ def fetch_data():
                             hours = dayname + ': ' + hrs
                         else:
                             hours = hours + '; ' + dayname + ': ' + hrs
+        if hours == '':
+            hours = '<MISSING>'
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
