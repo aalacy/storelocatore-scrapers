@@ -34,8 +34,9 @@ def fetch_data():
                 y = coord[1]
                 website = 'verizonwireless.com'
                 print('%s, %s...' % (x, y))
-                url = 'https://www.verizonwireless.com/stores/storesearchresults/?lat=40.7135097' + str(x) + '&long=' + str(y)
+                url = 'https://www.verizonwireless.com/stores/storesearchresults/?lat=' + str(x) + '&long=' + str(y)
                 r = session.get(url, headers=headers)
+                print(r.content)
                 result_coords = []
                 purl = '<MISSING>'
                 array = []
