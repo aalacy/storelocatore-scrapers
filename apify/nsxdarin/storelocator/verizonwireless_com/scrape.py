@@ -36,7 +36,6 @@ def fetch_data():
                 print('%s, %s...' % (x, y))
                 url = 'https://www.verizonwireless.com/stores/storesearchresults/?lat=' + str(x) + '&long=' + str(y)
                 r = session.get(url, headers=headers)
-                print(r.content)
                 result_coords = []
                 purl = '<MISSING>'
                 array = []
@@ -44,7 +43,7 @@ def fetch_data():
                     if 'var searchJSON' in line:
                         items = line.split('"storeName":"')
                         for item in items:
-                            if '"address":"' not in item:
+                            if '"address":"' in item:
                                 purl = item.split('"storeUrl":"')[1].split('"')[0]
                                 typ = item.split('"typeOfStore":["')[1].split('"')[0]
                                 name = item.split('"')[0]
