@@ -1,1 +1,4 @@
 rewrite of https://github.com/SafeGraphInc/crawl-service/blob/master/apify/zeeshan/storelocator/verizonwireless_com/scrape.py
+
+rewriting this on 2/21 - the previous script pulled all the stores from the store directory located here https://www.verizonwireless.com/stores but that directory doesn't show
+all stores, i.e. this one is not listed under Florida...https://www.verizonwireless.com/stores/florida/davenport/tcc-davenport-1443322/#/storeDetails
