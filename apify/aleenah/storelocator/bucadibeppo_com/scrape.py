@@ -62,12 +62,15 @@ def fetch_data():
                         page_url.append("https://locations.bucadibeppo.com/" +div.find("a").get("href").replace("../",""))
 
     for url in page_url:
-        print(url)
+        #print(url)
         res = requests.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
+        #print(soup)
+        #break
         try:
 
-            ids.append(re.findall(r', {"ids":(.*),"pageSetId"',str(soup))[0])
+            ids.append(re.findall(r'{"ids":(.*),"pageSetId"',str(soup),re.DOTALL)[0])
+            #print(url)
         except:
             if url == "https://locations.bucadibeppo.com/us/nj":
                 ids.append("<MISSING>")
