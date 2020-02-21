@@ -25,56 +25,51 @@ def fetch_data():
     locations = []
     coord = search.next_coord()
     while coord:
-        Found = True
-        while Found:
-            try:
-                Found = False
-                print("remaining zipcodes: " + str(len(search.zipcodes)))
-                x = coord[0]
-                y = coord[1]
-                website = 'verizonwireless.com'
-                print('%s, %s...' % (x, y))
-                url = 'https://www.verizonwireless.com/stores/storesearchresults/?lat=' + str(x) + '&long=' + str(y)
-                r = session.get(url, headers=headers)
-                result_coords = []
-                purl = '<MISSING>'
-                array = []
-                for line in r.iter_lines():
-                    if 'var searchJSON' in line:
-                        items = line.split('"storeName":"')
-                        for item in items:
-                            if '"address":"' in item:
-                                purl = item.split('"storeUrl":"')[1].split('"')[0]
-                                typ = item.split('"typeOfStore":["')[1].split('"')[0]
-                                name = item.split('"')[0]
-                                add = item.split('"address":"')[1].split('"')[0]
-                                city = item.split('"city":"')[1].split('"')[0]
-                                state = item.split('"stateAbbr":"')[1].split('"')[0]
-                                country = 'US'
-                                store = item.split('"storeNumber":"')[1].split('"')[0]
-                                lat = item.split('lat":"')[1].split('"')[0]
-                                lng = item.split('lng":"')[1].split('"')[0]
-                                phone = item.split('"phone":"')[1].split('"')[0]
-                                hours = item.split('"openingHours":{')[1].split('}')[0].replace('":"',': ').replace('","','; ').replace('"','')
-                                info = add + ';' + city + ';' + state
-                                if hours == '':
-                                    hours = '<MISSING>'
-                                ids.add(info)
-                                array.append(info)
-                                if info not in locations:
-                                    locations.append(info)
-                                    yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-                if len(array) <= MAX_RESULTS:
-                    print("max distance update")
-                    search.max_distance_update(MAX_DISTANCE)
-        ##        elif len(array) == MAX_RESULTS:
-        ##            print("max count update")
-        ##            search.max_count_update(result_coords)
-                else:
-                    raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-                coord = search.next_coord()
-            except:
-                Found = True
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        x = coord[0]
+        y = coord[1]
+        website = 'verizonwireless.com'
+        print('%s, %s...' % (x, y))
+        url = 'https://www.verizonwireless.com/stores/storesearchresults/?lat=' + str(x) + '&long=' + str(y)
+        r = session.get(url, headers=headers)
+        result_coords = []
+        purl = '<MISSING>'
+        array = []
+        for line in r.iter_lines():
+            if 'var searchJSON' in line:
+                items = line.split('"storeName":"')
+                for item in items:
+                    if '"address":"' in item:
+                        purl = item.split('"storeUrl":"')[1].split('"')[0]
+                        typ = item.split('"typeOfStore":["')[1].split('"')[0]
+                        name = item.split('"')[0]
+                        add = item.split('"address":"')[1].split('"')[0]
+                        city = item.split('"city":"')[1].split('"')[0]
+                        state = item.split('"stateAbbr":"')[1].split('"')[0]
+                        country = 'US'
+                        zc = item.split('"zip":"')[1].split('"')[0]
+                        store = item.split('"storeNumber":"')[1].split('"')[0]
+                        lat = item.split('lat":"')[1].split('"')[0]
+                        lng = item.split('lng":"')[1].split('"')[0]
+                        phone = item.split('"phone":"')[1].split('"')[0]
+                        hours = item.split('"openingHours":{')[1].split('}')[0].replace('":"',': ').replace('","','; ').replace('"','')
+                        info = add + ';' + city + ';' + state
+                        if hours == '':
+                            hours = '<MISSING>'
+                        ids.add(info)
+                        array.append(info)
+                        if info not in locations:
+                            locations.append(info)
+                            yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if len(array) <= MAX_RESULTS:
+            print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+##        elif len(array) == MAX_RESULTS:
+##            print("max count update")
+##            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_coord()
 
 def scrape():
     data = fetch_data()
