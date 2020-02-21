@@ -40,7 +40,7 @@ def fetch_data():
                 items = line.split('"storeName":"')
                 for item in items:
                     if '"address":"' in item:
-                        purl = item.split('"storeUrl":"')[1].split('"')[0]
+                        purl = 'https://www.verizonwireless.com' + item.split('"storeUrl":"')[1].split('"')[0]
                         typ = item.split('"typeOfStore":["')[1].split('"')[0]
                         name = item.split('"')[0]
                         add = item.split('"address":"')[1].split('"')[0]
@@ -51,8 +51,14 @@ def fetch_data():
                         store = item.split('"storeNumber":"')[1].split('"')[0]
                         lat = item.split('lat":"')[1].split('"')[0]
                         lng = item.split('lng":"')[1].split('"')[0]
-                        phone = item.split('"phone":"')[1].split('"')[0]
-                        hours = item.split('"openingHours":{')[1].split('}')[0].replace('":"',': ').replace('","','; ').replace('"','')
+                        try:
+                            phone = item.split('"phone":"')[1].split('"')[0]
+                        except:
+                            phone = '<MISSING>'
+                        try:
+                            hours = item.split('"openingHours":{')[1].split('}')[0].replace('":"',': ').replace('","','; ').replace('"','')
+                        except:
+                            hours = ''
                         info = add + ';' + city + ';' + state
                         if hours == '':
                             hours = '<MISSING>'
