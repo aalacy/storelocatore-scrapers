@@ -68,18 +68,30 @@ def fetch_data():
         json_data = r.json()
         current_results_len =len(json_data['markers'])
         for i in json_data['markers']:
-            print(i)
             store_number = i['id']
             location_name = i['name']
             street_address = i['address1']
             city = i['city']
             state = i['state']
-            zipp = i['zip'].replace("0209","80209").replace("880209","80209").replace("2550","12550").replace("125504","25504").replace("2145","02145").replace('55555','<MISSING>').encode('ascii', 'ignore').decode('ascii').strip()
-            
+            zipp = i['zip'].encode('ascii', 'ignore').decode('ascii').strip()
+            if zipp == "0209":
+                zipp = "80209"
+            if zipp == "2550":
+                zipp = "12550"
+            if zipp == "2145":
+                zipp = "02145"
+            if zipp == "L2R 6P9":
+                country_code = "CA"
+            # .replace("0209","80209").replace("880209","80209").replace("2550","12550").replace("125504","25504").replace("2145","02145").replace("802090","02090")
+            country_code = i['country'].replace("United States","US").replace("Canada","CA")
+            if country_code not in ['US','CA']:
+                continue
             phone = i['phone'].replace("08837","<MISSING>").replace("(2683)","").encode('ascii', 'ignore').decode('ascii').strip()
             latitude  = i['lat']
             longitude = i['lon']
             page_url = i['web_site']
+            if "https://www.orangetheoryfitness.co.uk" in page_url:
+                continue
             result_coords.append((latitude, longitude))
             store = []
             store.append("https://www.orangetheoryfitness.com/")
@@ -88,7 +100,7 @@ def fetch_data():
             store.append(city if city else "<MISSING>")
             store.append(state if state else "<MISSING>")
             store.append(zipp)
-            store.append("US" if zipp.replace("-",'').replace(" ",'').isdigit() else "CA")
+            store.append(country_code)
             store.append(store_number if store_number else "<MISSING>") 
             store.append(phone if phone else "<MISSING>")
             store.append("<MISSING>")
@@ -101,9 +113,9 @@ def fetch_data():
             addresses.append(store[2])
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             if "Adjuntas" in store :
-                pass
-            else:
-                yield store
+                continue
+            
+            yield store
             # print("--------------------",store)
         if current_results_len < MAX_RESULTS:
             search.max_distance_update(MAX_DISTANCE)

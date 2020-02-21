@@ -41,7 +41,6 @@ def fetch_data():
             r = requests.get(location_url, headers=headers)
         except:
             continue
-        
         soup = BeautifulSoup(r.text, "lxml") 
         data = soup.find("script",{"type":"application/json"}).text
         json_data = json.loads(data)

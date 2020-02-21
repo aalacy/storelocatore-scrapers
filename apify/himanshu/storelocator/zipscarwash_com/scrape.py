@@ -2,8 +2,6 @@ import csv
 import requests
 import json
 from bs4 import BeautifulSoup
-# import time
-# from random import randrange
 import re
 
 
@@ -66,7 +64,7 @@ def fetch_data():
 
         for direct in link:
             page_url.append("https://www.zipscarwash.com"+direct['href'])
-            location_name.append(direct.text)
+            location_name.append(direct.text.split("(")[0])
             
         for index,i in enumerate(address):
             street_address = i.find("span",{"class":"address-line1"}).text
@@ -95,8 +93,8 @@ def fetch_data():
             store.append(longitude[index])
             store.append(hours[index])
             store.append(page_url[index])
-            # print("===", str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            #print("===", str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
         page+=1
 

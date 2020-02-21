@@ -18,18 +18,48 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
+def request_wrapper(url,method,headers,data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url,headers=headers,data=data)
+                else:
+                    r = requests.post(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
 def fetch_data():
     addresses = []
     headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
     }
 
     base_url = "https://www.publicstorage.com"
-    r =  requests.get("https://www.publicstorage.com/site-map-states", headers=headers)
+    r =  request_wrapper("https://www.publicstorage.com/site-map-states",'get', headers=headers)
     soup = BeautifulSoup(r.text, "lxml")    
     data = soup.find("div",{"class":"ps-sitemap-states__states"})
     for i in data.find_all("a"):
-        r1 = requests.get(base_url+i['href'], headers=headers)
+        r1 = request_wrapper(base_url+i['href'],'get', headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         links = soup1.find_all("a", {"class":"base-link"})
         for link in links:
@@ -37,7 +67,7 @@ def fetch_data():
                 continue
             page_url = base_url+link['href']
             # print("page_url ===="+str(page_url))
-            r3 = requests.get(page_url, headers=headers)
+            r3 = request_wrapper(page_url,'get',headers=headers)
             soup3 = BeautifulSoup(r3.text, "lxml")
 
             if soup3.find("h1", {"class": "ps-properties-property-header__header"}):

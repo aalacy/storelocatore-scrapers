@@ -7,7 +7,7 @@ from sgrequests import SgRequests
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data .csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -33,6 +33,7 @@ def fetch_data():
         for href in data.find_all("a"):
             r2 = requests.get(href['href'])
             page_url = href['href']
+            # print(page_url)
             soup1 = BeautifulSoup(r2.text,"lxml")
             try:
                 streetAddress1  = soup1.find("div",{"class":"address1"}).text.strip()
@@ -43,14 +44,19 @@ def fetch_data():
             except:
                 streetAddress2 =''
             name = soup1.find("h3",{"class":"store-details-bar-header"}).text
-            city = soup1.find("div",{"class":"city"}).text.strip()
+            city = re.sub(r'\s+'," ",(soup1.find("div",{"class":"city"}).text))
+            if city == " ":
+                city = soup1.find("div",{"class":"address2"}).text.strip()
+            else:
+                city = city
+                
             zip1 = soup1.find("div",{"class":"StateZip"}).text
             try:
                 phone = soup1.find("div",{"class":"phone"}).text
             except:
                 phone = "<MISSING>"
 
-            hours =  " ".join(list(soup1.find("div",{"class":"store-hours current-wed"}).stripped_strings))
+            hours =  " ".join(list(soup1.find("store-hours").stripped_strings))
             stripts = soup1.find_all("script",{"type":"application/ld+json"})
             for stript in stripts:
                 if "latitude" in  stript.text:

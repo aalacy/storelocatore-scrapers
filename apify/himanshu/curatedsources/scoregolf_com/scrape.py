@@ -5,7 +5,7 @@ import re
 import json 
 import time
 session = SgRequests()
-
+import requests
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,15 +23,18 @@ def fetch_data():
     
     base_url = "https://scoregolf.com"
 
-    r = session.get("https://scoregolf.com/golf-course-guide/search")
+    r = requests.get("https://scoregolf.com/golf-course-guide/search")
     soup = BeautifulSoup(r.text, "lxml")
     links = soup.find("table",{"class":"tablesorter"}).find("tbody").find_all("a")
     for link in links:
         page_url = base_url+link['href']
-        if "/golf-course-guide/angel's-view-golf-course-oakville-ontario-canada" in link['href'] or "/golf-course-guide/club-de-golf-des-iles-inc-l'Étang-du-nord, qc-quebec-canada" in link['href'] or "" in link['href']:
+        if "/golf-course-guide/angel's-view-golf-course-oakville-ontario-canada" in link['href'] or "/golf-course-guide/club-de-golf-des-iles-inc-l'Étang-du-nord, qc-quebec-canada" in link['href']:
             continue
-        print(page_url)
-        r1 = session.get(page_url)
+        #print(page_url)
+        try:
+            r1 = requests.get(page_url)
+        except:
+            pass
         soup1 = BeautifulSoup(r1.text, "lxml")
         
         if soup1.find("div",{"class":"block crs-header-block"}) == None:

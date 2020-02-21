@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+import time
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,6 +18,38 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
+def request_wrapper(url,method,headers,data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url,headers=headers,data=data)
+                else:
+                    r = requests.post(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
 
 def fetch_data():
 
@@ -53,7 +87,7 @@ def fetch_data():
         # q = 0
 
         data="field_geofield_distance%5Bdistance%5D=500&field_geofield_distance%5Bunit%5D=3959&field_geofield_distance%5Borigin%5D="+str(zip_code)+"&view_name=station_locator_block&view_display_id=block&view_args=&view_path=node%2F21&view_base_path=&view_dom_id=999559f25a324da30a53db55ca017515&pager_element=0&ajax_html_ids%5B%5D=custom-bootstrap-menu&ajax_html_ids%5B%5D=block-views-station-locator-block-block&ajax_html_ids%5B%5D=views-exposed-form-station-locator-block-block&ajax_html_ids%5B%5D=edit-field-geofield-distance-wrapper&ajax_html_ids%5B%5D=edit-field-geofield-distance&ajax_html_ids%5B%5D=edit-field-geofield-distance-distance&ajax_html_ids%5B%5D=edit-field-geofield-distance-unit&ajax_html_ids%5B%5D=edit-field-geofield-distance-origin&ajax_html_ids%5B%5D=edit-submit-station-locator-block&ajax_html_ids%5B%5D=&ajax_html_ids%5B%5D=&ajax_html_ids%5B%5D=mm_sync_back_ground&ajax_page_state%5Btheme%5D=bootstrap_subtheme&ajax_page_state%5Btheme_token%5D=VK5PQBNQBSjygw9s9M9JrEaD1NW8gEEQvtSNaB68auA&ajax_page_state%5Bcss%5D%5Bmodules%2Fsystem%2Fsystem.base.css%5D=1&ajax_page_state%5Bcss%5D%5Bmodules%2Ffield%2Ftheme%2Ffield.css%5D=1&ajax_page_state%5Bcss%5D%5Bmodules%2Fnode%2Fnode.css%5D=1&ajax_page_state%5Bcss%5D%5Bsites%2Fall%2Fmodules%2Fviews%2Fcss%2Fviews.css%5D=1&ajax_page_state%5Bcss%5D%5Bsites%2Fall%2Fmodules%2Fckeditor%2Fcss%2Fckeditor.css%5D=1&ajax_page_state%5Bcss%5D%5Bsites%2Fall%2Fmodules%2Fctools%2Fcss%2Fctools.css%5D=1&ajax_page_state%5Bcss%5D%5Bmodules%2Fgeofield%2Fcss%2Fproximity-element.css%5D=1&ajax_page_state%5Bcss%5D%5Bsites%2Fall%2Fmodules%2Fwebform%2Fcss%2Fwebform.css%5D=1&ajax_page_state%5Bcss%5D%5B%2F%2Fcdn.jsdelivr.net%2Fbootstrap%2F3.3.7%2Fcss%2Fbootstrap.css%5D=1&ajax_page_state%5Bcss%5D%5Bsites%2Fall%2Fthemes%2Fbootstrap%2Fcss%2F3.3.7%2Foverrides.min.css%5D=1&ajax_page_state%5Bcss%5D%5Bsites%2Fall%2Fthemes%2Fbootstrap_subtheme%2Fcss%2Fstyle.css%5D=1&ajax_page_state%5Bjs%5D%5B0%5D=1&ajax_page_state%5Bjs%5D%5B1%5D=1&ajax_page_state%5Bjs%5D%5Bsites%2Fall%2Fthemes%2Fbootstrap%2Fjs%2Fbootstrap.js%5D=1&ajax_page_state%5Bjs%5D%5B%2F%2Fajax.googleapis.com%2Fajax%2Flibs%2Fjquery%2F1.10.2%2Fjquery.min.js%5D=1&ajax_page_state%5Bjs%5D%5Bmisc%2Fjquery.once.js%5D=1&ajax_page_state%5Bjs%5D%5Bmisc%2Fdrupal.js%5D=1&ajax_page_state%5Bjs%5D%5Bsites%2Fall%2Fmodules%2Fjquery_update%2Freplace%2Fui%2Fexternal%2Fjquery.cookie.js%5D=1&ajax_page_state%5Bjs%5D%5Bsites%2Fall%2Fmodules%2Fjquery_update%2Freplace%2Fmisc%2Fjquery.form.min.js%5D=1&ajax_page_state%5Bjs%5D%5Bmisc%2Fajax.js%5D=1&ajax_page_state%5Bjs%5D%5Bsites%2Fall%2Fmodules%2Fjquery_update%2Fjs%2Fjquery_update.js%5D=1&ajax_page_state%5Bjs%5D%5B%2F%2Fcdn.jsdelivr.net%2Fbootstrap%2F3.3.7%2Fjs%2Fbootstrap.js%5D=1&ajax_page_state%5Bjs%5D%5Bsites%2Fall%2Fmodules%2Fviews%2Fjs%2Fbase.js%5D=1&ajax_page_state%5Bjs%5D%5Bsites%2Fall%2Fthemes%2Fbootstrap%2Fjs%2Fmisc%2F_progress.js%5D=1&ajax_page_state%5Bjs%5D%5Bsites%2Fall%2Fmodules%2Fwebform%2Fjs%2Fwebform.js%5D=1&ajax_page_state%5Bjs%5D%5Bsites%2Fall%2Fmodules%2Fviews%2Fjs%2Fajax_view.js%5D=1&ajax_page_state%5Bjs%5D%5Bsites%2Fall%2Fmodules%2Fgoogle_analytics%2Fgoogleanalytics.js%5D=1&ajax_page_state%5Bjs%5D%5Bsites%2Fall%2Fthemes%2Fbootstrap%2Fjs%2Fmodules%2Fviews%2Fjs%2Fajax_view.js%5D=1&ajax_page_state%5Bjs%5D%5Bsites%2Fall%2Fthemes%2Fbootstrap%2Fjs%2Fmisc%2Fajax.js%5D=1&ajax_page_state%5Bjquery_version%5D=1.10"
-        json_data = requests.post("http://gulfoil.com/views/ajax" ,data=data, headers=headers).json()
+        json_data = request_wrapper("http://gulfoil.com/views/ajax" ,"post",data=data, headers=headers).json()
         for loc in json_data:
             if "data" in loc:
                 soup = BeautifulSoup(loc['data'], "lxml")

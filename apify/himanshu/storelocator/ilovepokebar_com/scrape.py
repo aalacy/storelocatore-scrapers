@@ -20,7 +20,7 @@ def fetch_data():
     for data in soup.find_all("div",{"class":"mini-location-module"}):
         location_name = data.find("h4",{"class":"location-module-subheader"}).text.strip()
         street_address = data.find("div", {"class":"subtext-block"}).text
-        city = data.find("div", {"class":"address-text-block"}).text.split(",")[0]
+        city = data.find("div", {"class":"address-text-block"}).text.replace("El Paso TX 79932","El Paso, TX 79932").split(",")[0]
         if "New Zealand" in data.find("div", {"class":"address-text-block"}).text:
             continue
         state = data.find("div", {"class":"address-text-block"}).text.strip().replace("â"," ").replace("El Paso TX 79932","El Paso, TX 79932").split(",")[1].split(" ")[1].replace("\x80\x88","")

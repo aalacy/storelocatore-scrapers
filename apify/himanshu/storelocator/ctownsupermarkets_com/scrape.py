@@ -19,39 +19,39 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
-
-   
     location_url= "https://locations.ctownsupermarkets.com/"
     r_locations= requests.get(location_url, headers=headers)
     soup = BeautifulSoup(r_locations.text, "lxml")
-    data = ''.join(soup.find_all("script")[14].text.split('=')[1:])
-    json_data = json.loads(data.replace('{}};','{}}'))
+    data = (soup.find_all("script")[17])
+    k = ''.join(data.text.split('=')[1:])
+    json_data = json.loads(k.replace('null};','null}'))
     for i in json_data["dataLocations"]["collection"]["features"]:
-        latitude = i["geometry"]["coordinates"][1]
-        longitude = i["geometry"]["coordinates"][0]
         location_name = i["properties"]["name"]
         store_number = '<MISSING>'
         link = "https://locations.ctownsupermarkets.com/"+i["properties"]["slug"]
-        r = requests.get(link, headers=headers)
-        soup1 = BeautifulSoup(r.text, "lxml")
-        data1 =''.join(soup1.find_all("script")[15].text.split('=')[1:])
-        json_data1 = json.loads(data1.replace('{}};','{}}'))
-        address2 = json_data1['dataLocations']['selectedLocation']['properties']['addressLine2']
-        street_address = json_data1['dataLocations']['selectedLocation']['properties']['addressLine1']
-        city = json_data1['dataLocations']['selectedLocation']['properties']['city']
-        state = json_data1['dataLocations']['selectedLocation']['properties']['province']
-        zipp = json_data1['dataLocations']['selectedLocation']['properties']['postalCode']
-        phone = json_data1['dataLocations']['selectedLocation']['properties']['phoneNumber']
-        hours = json_data1['dataLocations']['selectedLocation']['properties']['hoursOfOperation']
-        hours_of_operation =''
-        for k in hours:
-            for i in hours[k]:
-                d = datetime.strptime(i[0], "%H:%M")
-                t=d.strftime("%I:%M %p")
-                d1 = datetime.strptime(i[1], "%H:%M")
-                t1=d1.strftime("%I:%M %p")
-                hours_of_operation = hours_of_operation + ' '+ k + ' '+ t + ' '+  t1  
-            
+        r1 = requests.get(link, headers=headers)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        km = (soup1.find("script",{"type":"application/ld+json"}).text)
+        state  = (soup1.find("span",{"itemprop":"addressRegion"}).text.strip())
+        json_data1 = json.loads(km)
+        street_address = json_data1['address']['streetAddress']
+        city = json_data1['address']['addressLocality']
+        zipp = json_data1['address']['postalCode']
+        phone = json_data1['telephone']
+        country_code = json_data1['address']['addressCountry']
+        latitude = json_data1['geo']['latitude']
+        longitude = json_data1['geo']['longitude']
+        store_number = json_data1['branchCode']
+        location_type = json_data1['@type']
+        hours = json_data1['openingHoursSpecification']
+        mp =''
+        for k in hours:   
+            d = datetime.strptime(k['opens'], "%H:%M")
+            t=d.strftime("%I:%M %p")
+            d1 = datetime.strptime(k['closes'], "%H:%M")
+            t1=d1.strftime("%I:%M %p")
+            mp = mp +' '+k['dayOfWeek']+ ' '+ t + ' '+  t1 
+        hours_of_operation = (mp.strip())
         store=[]   
         store.append("https://www.ctownsupermarkets.com")
         store.append(location_name)
@@ -59,16 +59,17 @@ def fetch_data():
         store.append(city)
         store.append(state)
         store.append(zipp)
-        store.append("US")
+        store.append(country_code)
         store.append(store_number)
         store.append(phone)
-        store.append("<MISSING>")
+        store.append(location_type)
         store.append(latitude)
         store.append(longitude)
         store.append(hours_of_operation)
         store.append(link)
         #print(store)
         yield store 
+
 
 def scrape():
     data = fetch_data()

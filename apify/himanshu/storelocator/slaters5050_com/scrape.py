@@ -128,7 +128,7 @@ def fetch_data():
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append("<MISSING>")
-        store.append(hours.replace("Restaurant Hours Coming Soon","<MISSING>").encode('ascii', 'ignore').decode('ascii').strip())
+        store.append(hours.replace("Restaurant Hours Coming Soon","<MISSING>").replace("Restaurant Hours","").encode('ascii', 'ignore').decode('ascii').strip())
         store.append(page_url)
         if "661.218.5050" in store:
             pass
