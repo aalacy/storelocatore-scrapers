@@ -76,7 +76,6 @@ def fetch_data():
             for td in hours_table:
                 hours += td.text + ' '
                 
-            #print(hours)
             location_type = '<MISSING>'
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]

@@ -1,7 +1,7 @@
 import csv
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
-
+import sgzip 
+import json
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,94 +16,77 @@ def write_output(data):
 def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
+    locator_domain = 'https://www.pbteen.com/'
 
-    locator_domain = 'https://www.pbteen.com/' 
-    url = 'https://www.potterybarnkids.com/customer-service/store-locator.html'
+    search = sgzip.ClosestNSearch()
+    search.initialize(country_codes = ['us', 'ca'])
 
-    r = session.get(url, headers = HEADERS)
-    soup = BeautifulSoup(r.content, 'html.parser')
+    MAX_DISTANCE = 100
 
-    locs = soup.find('section', {'id': 'united-states'}).find_all('div', {'class': 'store-card'})
-    link_list = []
-    for l in locs:
-        link_list.append(l.find('a')['href'])
-
-        
-    locs = soup.find('section', {'id': 'canada'}).find_all('div', {'class': 'store-card'})
-    for l in locs:
-        link_list.append(l.find('a')['href'])
-
-
-
+    coord = search.next_coord()
     all_store_data = []
-    for link in link_list:
-        r = session.get(link, headers = HEADERS)
-        page_url = link
-        hours = ''
-        pushing_on = False
-        
-        lat = ''
-        longit = ''
-        zip_code = ''
-        
-        for i, line in enumerate(r.content.decode().splitlines()):
-            
-            if line.strip().startswith("lat:'"):
-                lat = line.strip().replace('lat:', '').replace("'", '').replace(',', '')
-            
-            if line.strip().startswith("lng:'"):
-                longit = line.strip().replace('lng:', '').replace("'", '').replace(',', '')
-            
-            if line.strip().startswith('zipCode:'):
-                zip_code = line.strip().replace('zipCode:', '').replace("'", '').replace(',', '')
-            
-            
-            if line.strip().startswith("origin:{"):
-                break
-            
-                
-            if pushing_on:
-                start = line.strip().find('day:')
-                end = line.strip().find("',")
-                day = line.strip()[start + 6: end]
-                start = line.strip().find('hours:')
-                end = line.strip().find("'}")
-                h = line.strip()[start + 8: end]
-                
-                
-                hours += day + ' ' + h + ' '
-            
-            if line.strip().startswith("storeHours:["):
-            
-                pushing_on = True
-                
-                
-        hours = hours.strip()
-        soup = BeautifulSoup(r.content, 'html.parser')
-        location_name = soup.find('h3', {'itemprop': 'name'}).text
-        street_address = soup.find('p', {'class': 'storeDetailsAddress'}).text.strip()
-        city = soup.find('span', {'itemprop': 'addressLocality'}).text
-        state = soup.find('span', {'itemprop': 'addressRegion'}).text
-        
-        
-        if '/ca/' in page_url:
-            country_code = 'CA'
-        
-        if '/us/' in page_url:
-            country_code = 'US'
-        
-        phone_number = soup.find('p', {'itemprop': 'telephone'}).text
-        
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-        
-        
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
+    dup_tracker = []
 
-
-        all_store_data.append(store_data)
+    while coord:
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        x = coord[0]
+        y = coord[1]
+        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        url = 'https://www.potterybarnkids.com/search/stores.json?brands=PT&lat=' + str(x) + '&lng=' + str(y) + '&radius=' + str(MAX_DISTANCE)
+        r = session.get(url, headers=HEADERS)
         
+        res_json = json.loads(r.content)['storeListResponse']['stores']
+
+        result_coords = []
+        
+        for loc in res_json:
+            full_loc = loc['properties']
+            
+            location_name = full_loc['STORE_NAME']
+            street_address = full_loc['ADDRESS_LINE_1'] + ' ' + full_loc['ADDRESS_LINE_2']
+            street_address = street_address.strip()
+            city = full_loc['CITY']
+            state = full_loc['STATE_PROVINCE']
+            zip_code = full_loc['POSTAL_CODE']
+            
+            country_code = full_loc['COUNTRY_CODE']
+            
+            phone_number = full_loc['PHONE_NUMBER_FORMATTED']
+            
+            store_number = full_loc['STORE_NUMBER']
+            if store_number not in dup_tracker:
+                dup_tracker.append(store_number)
+            else:
+                continue
+            
+            lat = full_loc['LATITUDE']
+            longit = full_loc['LONGITUDE']
+            
+            location_type = full_loc['STORE_TYPE']
+            
+            hours = full_loc['MONDAY_HOURS_FORMATTED'] + ' ' + full_loc['TUESDAY_HOURS_FORMATTED'] + ' ' + full_loc['WEDNESDAY_HOURS_FORMATTED'] + ' ' 
+            hours += full_loc['THURSDAY_HOURS_FORMATTED'] + ' ' + full_loc['FRIDAY_HOURS_FORMATTED'] + ' ' + full_loc['SATURDAY_HOURS_FORMATTED'] + ' ' 
+            hours += full_loc['SUNDAY_HOURS_FORMATTED']
+            
+            
+            page_url = '<MISSING>'
+            #'https://www.potterybarn.com/stores/' + country_code.lower() + '/' + state.lower() + '/' + city.lower().replace(' ', '-') + '-' + location_name.strip().lower().replace(' ', '-')
+            #print(page_url)
+            
+            
+            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
+                        store_number, phone_number, location_type, lat, longit, hours, page_url]
+
+            print(store_data)
+            print()
+            print()
+            all_store_data.append(store_data)
+
+            #result_coords.append((lat, longit))
+        
+        
+        search.max_distance_update(MAX_DISTANCE)
+        coord = search.next_coord()  
 
 
 
