@@ -48,7 +48,7 @@ def fetch_data():
     locator_domain = 'https://www.signaturestyle.com/brands/holiday-hair.html'
 
     search = sgzip.ClosestNSearch()
-    search.initialize()
+    search.initialize(country_codes = ['us', 'ca'])
 
     MAX_DISTANCE = 25
 

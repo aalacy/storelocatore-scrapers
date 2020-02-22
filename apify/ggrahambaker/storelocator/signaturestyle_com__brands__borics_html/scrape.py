@@ -49,7 +49,7 @@ def fetch_data():
     locator_domain = 'https://www.signaturestyle.com/brands/borics.html'
 
     search = sgzip.ClosestNSearch()
-    search.initialize()
+    search.initialize(country_codes = ['us', 'ca'])
 
     MAX_DISTANCE = 25
 
