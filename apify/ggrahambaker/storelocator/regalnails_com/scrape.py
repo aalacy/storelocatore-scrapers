@@ -31,10 +31,10 @@ def fetch_data():
     all_store_data = []
     dup_tracker = []
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://www.regalnails.com/wp-admin/admin-ajax.php?action=store_search&lat=' + str(x) + '&lng=' + str(y) + '&max_results=' + str(MAX_RESULTS) + '&search_radius=' + str(MAX_DISTANCE) + '&filter=13'
         r = session.get(url, headers=HEADERS)
         

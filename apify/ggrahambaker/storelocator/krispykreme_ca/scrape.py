@@ -32,20 +32,42 @@ def fetch_data():
     driver.get(locator_domain + ext)
     time.sleep(4)
     driver.implicitly_wait(30)
-    locs = driver.find_elements_by_css_selector('div.store-section')
+
+    SCROLL_PAUSE_TIME = 0.5
+
+    # Get scroll height
+    last_height = driver.execute_script("return document.body.scrollHeight")
+    scroll_len = 100
+    while scroll_len < last_height:
+        # Scroll down to bottom
+        
+        driver.execute_script("window.scrollTo(0, " + str(scroll_len) + ")")
+        scroll_len += 50
+        # Wait to load page
+        time.sleep(SCROLL_PAUSE_TIME)
+
+
+        
+
+
+    
+    locs = driver.find_elements_by_css_selector('div.location')
 
     all_store_data = []
     for loc in locs:
         
         cont = loc.text.split('\n')
-        
-        if len(cont) == 9:
+  
+        if len(cont) == 12:
             off = 1
         else:
             off = 0
-            
+
+
         location_name = cont[0]
         street_address = cont[1].split('(')[0].strip()
+
+                
         city_state = cont[off + 2].split(' ')
         if len(city_state) == 3:
             city = city_state[0] + ' ' + city_state[1]
@@ -56,17 +78,15 @@ def fetch_data():
         
         zip_code = cont[off + 3]
         
-        phone_number = cont[off + 4]
+        phone_number = cont[off + 5].replace('Tel:', '').strip()
+
+
+        hours = ''
+        for h in cont[off + 6:]:
+            hours += h + ' '
         
-        if len(cont) == 7:
-            hours = cont[off + 6]
-        else:
-            hours = cont[off + 6] + ' ' + cont[off + 7]
         
-        
-        
-        gmap_script = loc.find_element_by_css_selector('div.store-section-map').find_element_by_css_selector('iframe').get_attribute('src')
-        
+        gmap_script = loc.find_element_by_css_selector('div.location__map').find_element_by_css_selector('iframe').get_attribute('src')
         start = gmap_script.find('!2d')
 
         end = gmap_script.find('!2m')
@@ -86,6 +106,7 @@ def fetch_data():
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
+    
         all_store_data.append(store_data)
 
 

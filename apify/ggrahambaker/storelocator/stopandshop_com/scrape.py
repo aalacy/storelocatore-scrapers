@@ -54,8 +54,15 @@ def fetch_data():
             
     all_store_data = []
     for link in link_list:
+        
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
+
+        is_closed = soup.find_all('div', {'class': 'NAP-closedMessage'})
+        if len(is_closed) > 0:
+            continue
+
+
         location_name = soup.find('meta', {'itemprop': 'name'})['content']
         
         lat = soup.find('meta', {'itemprop': 'latitude'})['content']
@@ -69,8 +76,8 @@ def fetch_data():
 
         
         store_number = soup.find('div', {'class': 'StoreDetails-storeNum'}).text.replace('Store Number', '').replace('#', '').strip()
-        
-        
+
+            
         hours_json = json.loads(soup.find('div', {'class': 'js-location-hours'})['data-days'])
         hours = ''
         for h in hours_json:

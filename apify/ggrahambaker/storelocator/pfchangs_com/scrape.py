@@ -31,7 +31,7 @@ def fetch_data():
     driver.get(locator_domain + ext)
     driver.implicitly_wait(10)
 
-    hrefs = driver.find_elements_by_css_selector('a.c-directory-list-content-item-link')
+    hrefs = driver.find_elements_by_css_selector('a.Directory-listLink')
 
     state_link_list = []
     loc_link_list = []
@@ -49,11 +49,10 @@ def fetch_data():
         driver.get(state)
         driver.implicitly_wait(10)
 
-        hrefs = driver.find_elements_by_css_selector('a.c-directory-list-content-item-link')
+        hrefs = driver.find_elements_by_css_selector('a.Directory-listLink')
 
         for href in hrefs:
             link = href.get_attribute('href')
-
             if len(link.split('-')) > 3:
                 loc_link_list.append(link)
             else:
@@ -64,9 +63,9 @@ def fetch_data():
         driver.get(city)
         driver.implicitly_wait(10)
 
-        locs = driver.find_elements_by_css_selector('div.LocationCard-title')
+        locs = driver.find_elements_by_css_selector('a.Teaser-titleLink')
         for loc in locs:
-            link = loc.find_element_by_css_selector('a').get_attribute('href')
+            link = loc.get_attribute('href')
             loc_link_list.append(link)
 
 
@@ -77,27 +76,44 @@ def fetch_data():
         driver.get(link)
         driver.implicitly_wait(10)
 
-        location_name = driver.find_element_by_css_selector('div.Hero-title').text
-        street_address = driver.find_element_by_css_selector('span.c-address-street').text
+        location_name = driver.find_element_by_css_selector('span#location-name').text
+        
+        street_address = driver.find_element_by_css_selector('span.c-address-street-1').text
+        if len(driver.find_elements_by_css_selector('span.c-address-street-2')) == 1:
+            street_address += ' ' + driver.find_element_by_css_selector('span.c-address-street-2').text
+
         city = driver.find_element_by_css_selector('span.c-address-city').text.replace(',', '').strip()
         state = driver.find_element_by_css_selector('abbr.c-address-state').text
         zip_code = driver.find_element_by_css_selector('span.c-address-postal-code').text
 
-        phone_number = driver.find_element_by_css_selector('span.c-phone-number-span.c-phone-main-number-span').text
+        phone_number = driver.find_element_by_css_selector('div#phone-main').text
 
-        map_html = driver.find_element_by_css_selector('script.js-map-config').get_attribute('innerHTML')
-        map_json = json.loads(map_html)
-        
-        longit = map_json['locs'][0]['longitude']
-        lat = map_json['locs'][0]['latitude']
+
+        coords = driver.find_element_by_xpath('//meta[@name="geo.position"]').get_attribute('content').split(';')
+        lat = coords[0]
+        longit = coords[1]
+ 
         country_code = 'US'
         page_url = link
         location_type = '<MISSING>'
         store_number = '<MISSING>'
-        hours = driver.find_element_by_css_selector('table.c-location-hours-details').text.replace('\n', ' ').replace('Day of the Week', '').strip()
+        hours_td = driver.find_element_by_css_selector('div.js-hours-table').get_attribute('data-days')
+        hours_json = json.loads(hours_td)
+        hours = ''
+        for h in hours_json:
+            day = h['day']
+            if len(h['intervals']) == 0:
+                hours += day + ' Closed '
+            else:
+                start = h['intervals'][0]['start']
+                end = h['intervals'][0]['end']
 
+                hours += day + ' ' + str(start) + ' - ' + str(end) + ' '
+            
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
+        
+
         all_store_data.append(store_data)
         
 
