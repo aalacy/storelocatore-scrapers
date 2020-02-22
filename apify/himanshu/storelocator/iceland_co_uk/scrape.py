@@ -7,7 +7,7 @@ from sgrequests import SgRequests
 session = SgRequests()
 
 def write_output(data):
-    with open('data .csv', mode='w') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -26,7 +26,7 @@ def fetch_data():
 
     base_url = "https://www.iceland.co.uk/store-finder"
     addresses = []
-    r1 = session.get(base_url)
+    r1 = requests.get(base_url)
     soup = BeautifulSoup(r1.text,"lxml")
     state = soup.find_all("ul",{"class":"region-stores"})
     for data in state:

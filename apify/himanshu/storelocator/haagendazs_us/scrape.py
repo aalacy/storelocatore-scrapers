@@ -1,11 +1,8 @@
-
 import urllib.parse
 import requests
 from bs4 import BeautifulSoup
 import re
-# import ast
 import json
-# import sgzip
 import csv
 import sgzip
 
@@ -25,7 +22,7 @@ def write_output(data):
 
 
 def fetch_data():
-
+    ## FOR STORE    
     return_main_object = []
     addresses = []
     search = sgzip.ClosestNSearch()
@@ -44,9 +41,6 @@ def fetch_data():
         result_coords = []
         lat = str(coord[0])
         lng = str(coord[1])
-        # print(search.current_zip)
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
-        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         base_url = 'https://www.haagendazs.us'
         locator_domain = "https://www.haagendazs.us"
@@ -84,7 +78,7 @@ def fetch_data():
             result_coords.append((data['lat__c'], data['lon__c']))
             location_type = data['IsHDShop']
             if location_type == True:
-                location_type = 'shop'
+                continue
             else:
                 location_type='store'        
             store = [locator_domain, data['Name'], data['Shop_Street__c'], data['Shop_City__c'], data['Shop_State_Province__c'], data['Shop_Zip_Postal_Code__c'], country_code,
@@ -95,7 +89,7 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # print("~~~~~~~~~~~~~~~~~~~  ",store)
+            #print("~~~~~~~~~~~~~~~~~~~  ",store)
             yield store
 
         if current_results_len < MAX_RESULTS:
@@ -107,6 +101,49 @@ def fetch_data():
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         coord = search.next_coord()
+
+    ## FOR SHOP 
+    r = requests.get("https://www.haagendazs.us/all-shops")
+    soup = BeautifulSoup(r.text, "lxml")
+    links= soup.find("div",{"class":"view-content"}).find_all("a")
+    for link in links:
+        page_url = "https://www.haagendazs.us/"+link['href']
+        r1 = requests.get(page_url)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        location_name = soup1.find("h1",{"itemprop":"name"}).text.strip()
+        street_address = soup1.find("p",{"itemprop":"streetAddress"}).text.strip()
+        city = soup1.find("span",{"itemprop":"addressLocality"}).text.strip()
+        state = soup1.find("span",{"itemprop":"addressRegion"}).text.strip()
+        zipp = soup1.find("span",{"itemprop":"addressRegion"}).find_next("span").text.strip()
+        latitude = soup1.find(lambda tag: (tag.name == "script") and "lat" in tag.text).text.split('lat:"')[1].split('",')[0]
+        longitude = soup1.find(lambda tag: (tag.name == "script") and "lat" in tag.text).text.split('long:"')[1].split('",')[0]
+        if soup1.find("div",{"class":"office-hours"}):
+            hours = " ".join(list(soup1.find("div",{"class":"office-hours"}).stripped_strings))
+        else:
+            hours = "<MISSING>"
+
+        store = []
+        store.append("https://www.haagendazs.us")
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append("US")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("Shop")
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours)
+        store.append(page_url)
+        if store[2] in addresses:
+            continue
+        addresses.append(store[2])
+        # print("data ====="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+        yield store
     
 
 def scrape():

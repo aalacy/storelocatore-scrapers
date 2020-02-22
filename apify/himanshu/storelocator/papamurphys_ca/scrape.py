@@ -62,6 +62,7 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(hours_of_operation)
         store.append(location_url)
+        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         yield store
         
 

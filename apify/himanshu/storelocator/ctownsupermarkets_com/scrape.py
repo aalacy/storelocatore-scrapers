@@ -24,7 +24,8 @@ def fetch_data():
     soup = BeautifulSoup(r_locations.text, "lxml")
     data = (soup.find_all("script")[17])
     k = ''.join(data.text.split('=')[1:])
-    json_data = json.loads(k.replace('null};','null}'))
+    json_data = json.loads(k.replace('geolocation":{}};','geolocation":{}}'))
+    # print(json_data)
     for i in json_data["dataLocations"]["collection"]["features"]:
         location_name = i["properties"]["name"]
         store_number = '<MISSING>'
@@ -34,7 +35,7 @@ def fetch_data():
         km = (soup1.find("script",{"type":"application/ld+json"}).text)
         state  = (soup1.find("span",{"itemprop":"addressRegion"}).text.strip())
         json_data1 = json.loads(km)
-        street_address = json_data1['address']['streetAddress']
+        street_address = (json_data1['address']['streetAddress']).replace(", ","")
         city = json_data1['address']['addressLocality']
         zipp = json_data1['address']['postalCode']
         phone = json_data1['telephone']

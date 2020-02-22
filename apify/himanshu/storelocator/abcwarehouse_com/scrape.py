@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import ast
+requests.packages.urllib3.disable_warnings()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +17,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.abcwarehouse.com"
-    r = requests.get(base_url + "/store-locator")
+    r = requests.get(base_url + "/store-locator",verify=False)
 
     soup = BeautifulSoup(r.text,"lxml")
     store_list = ast.literal_eval(soup.find("input",{"class": "shop-resources"})["data-markersdata"])

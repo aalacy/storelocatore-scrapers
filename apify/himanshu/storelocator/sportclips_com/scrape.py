@@ -6,7 +6,8 @@ import json
 import unicodedata
 import time
 session = SgRequests()
-
+import requests
+requests.packages.urllib3.disable_warnings()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -57,7 +58,7 @@ def fetch_data():
     # }
     base_url = "https://sportclips.com"
    
-    r = session.get("https://sportclips.com/all-locations")
+    r = requests.get("https://sportclips.com/all-locations",verify=False)
     
     soup = BeautifulSoup(r.text, "lxml")
     for anchor in soup.find_all("div",{"class":"locations-list locations-list-noicon"}):
@@ -68,7 +69,7 @@ def fetch_data():
                 continue
             page_url = link['href'].replace("www.",'')
             # print(page_url)
-            r1 = session.get(page_url)
+            r1 = requests.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
 
             location_name = soup1.find("div",{"class":"contact-location"}).find("h1").text.strip()
