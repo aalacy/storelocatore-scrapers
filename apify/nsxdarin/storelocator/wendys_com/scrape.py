@@ -43,7 +43,7 @@ def fetch_data():
                         else:
                             states.append(lurl)
         for state in states:
-            print('Pulling State %s...' % state)
+            #print('Pulling State %s...' % state)
             r2 = session.get(state, headers=headers)
             for line2 in r2.iter_lines():
                 if '<a class="Directory-listLink" href="..' in line2:
@@ -57,7 +57,7 @@ def fetch_data():
                             else:
                                 cities.append(lurl)
         for city in cities:
-            print('Pulling City %s...' % city)
+            #print('Pulling City %s...' % city)
             r2 = session.get(city, headers=headers)
             for line2 in r2.iter_lines():
                 if 'data-ya-track="visitpage" href="../../' in line2:
