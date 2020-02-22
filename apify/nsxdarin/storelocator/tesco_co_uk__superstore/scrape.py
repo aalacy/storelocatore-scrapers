@@ -14,8 +14,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    #for x in range(1999, 8000):
-    stores = ['5750','6554']
+    for x in range(1999, 8000):
     for sid in stores:
         url = 'https://www.tesco.com/store-locator/uk/?bid=' + sid
         r = session.get(url, headers=headers)
