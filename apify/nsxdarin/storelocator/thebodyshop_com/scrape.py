@@ -75,6 +75,12 @@ def fetch_data():
             state = 'Ontario'
         if city == 'Saskatoon':
             state = 'Saskatchewan'
+        if hours == '':
+            hours = '<MISSING>'
+        if 'Mon: Closed;' in hours or 'Mon:Closed' in hours:
+            hours = '<MISSING>'
+        if '/' in phone:
+            phone = phone.split('/')[0].strip()
         yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
     url = 'https://www.thebodyshop.com/en-us/store-finder/search?country=US'
@@ -145,6 +151,12 @@ def fetch_data():
             state = '<MISSING>'
         if hours == 'Mon: Closed;Tue: Closed;Wed: Closed;Thu: Closed;Fri: Closed;Sat: Closed;Sun: Closed':
             hours = '<MISSING>'
+        if hours == '':
+            hours = '<MISSING>'
+        if 'Mon: Closed;' in hours or 'Mon:Closed' in hours:
+            hours = '<MISSING>'
+        if '/' in phone:
+            phone = phone.split('/')[0].strip()
         yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 def scrape():
     data = fetch_data()
