@@ -58,9 +58,10 @@ def fetch_data():
                 count+=1
             #print(len(page_url))
     print(count)
+    key_set=set([])
     all =[]
     for url in page_url:
-        res = session.get(url,proxies=proxies)
+        res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         data = soup.find_all('script', {'type': 'application/ld+json'})[1].contents
         js=json.loads("".join(data))
@@ -74,8 +75,11 @@ def fetch_data():
         p=js["telephone"]
         if p.strip()=="":
             p="<MISSING>"
+        key=addr["streetAddress"]+addr["addressLocality"]+addr["addressRegion"]+addr["postalCode"]
+        if key in key_set:
+            continue
         all.append([
-        "https://www.dollartree.com/",
+        "https://www.dollartree.com",
         js["containedIn"],
         addr["streetAddress"],
         addr["addressLocality"],
