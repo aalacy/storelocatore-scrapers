@@ -53,15 +53,20 @@ def fetch_data():
 
         js=json.loads("".join(js))
         addr=js["address"]
-
+        tim=""
+        left=soup.find_all('div',{'class':'sp-hours-left'})
+        right=soup.find_all('div',{'class':'sp-hours-right'})
+        for i in range(len(left)):
+            tim+=left.text.strip()+" "+right.text.strip()+" "
         coord=soup.find('div',{'class','sp-directions'}).find('a').get('href')
         #print(coord)
         lat = re.findall(r'!1d[-?\d\.]*!2d([-?\d\.]*)', coord)[0].replace("?","")
         long = re.findall(r'!1d(-?[\d\.]*)', coord)[0].replace("?","")
         #print(lat,long)
-        tim=""
+        """tim=""
         for t in js["openingHours"]:
             tim+= t+" "
+        """
         all.append([
         "https://www.carpetmart.com/",
         url.split("/")[-1].replace("-"," "),
@@ -75,7 +80,7 @@ def fetch_data():
         js["name"],  # type
         lat,  # lat
         long,  # long
-        tim.strip().replace("Mo","Monday").replace("Tu","Tuesday").replace("We","Wednesday").replace("Th","Thursday").replace("Fr","Friday").replace("Sa","Saturday").replace("Su","Sunday") , # timing
+        tim.strip() , # timing
         url])
 
     return all
