@@ -71,6 +71,9 @@ def fetch_data():
             tim+= l["dayOfWeek"][0]+": "+l["opens"]+" - "+l["closes"]+" "
         print(url)
         #print(js)
+        p=js["telephone"]
+        if p.strip()=="":
+            p="<MISSING>"
         all.append([
         "https://www.dollartree.com/",
         js["containedIn"],
@@ -80,7 +83,7 @@ def fetch_data():
         addr["postalCode"].split("-")[0],
         addr["addressCountry"],
         js["@id"],  # store #
-        js["telephone"],  # phone
+        p.strip(),  # phone
         js["@type"],  # type
         js["geo"]["latitude"],  # lat
         js["geo"]["longitude"],  # long
