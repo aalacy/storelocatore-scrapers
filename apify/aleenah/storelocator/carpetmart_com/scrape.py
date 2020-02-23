@@ -56,15 +56,15 @@ def fetch_data():
 
         coord=soup.find('div',{'class','sp-directions'}).find('a').get('href')
         #print(coord)
-        long = re.findall(r'!1d[-?\d\.]*!2d([-?\d\.]*)', coord)[0].replace("?","")
-        lat = re.findall(r'!1d(-?[\d\.]*)', coord)[0].replace("?","")
+        lat = re.findall(r'!1d[-?\d\.]*!2d([-?\d\.]*)', coord)[0].replace("?","")
+        long = re.findall(r'!1d(-?[\d\.]*)', coord)[0].replace("?","")
         #print(lat,long)
         tim=""
         for t in js["openingHours"]:
             tim+= t+" "
         all.append([
         "https://www.carpetmart.com/",
-        url.split("/")[-1],
+        url.split("/")[-1].replace("-"," "),
         addr["streetAddress"],
         addr["addressLocality"],
         addr["addressRegion"],
