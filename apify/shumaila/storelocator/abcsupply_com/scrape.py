@@ -4,7 +4,9 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
-
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 
 
 def write_output(data):
@@ -34,10 +36,11 @@ def fetch_data():
           "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
           "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
 
+    total = 0
     for i in range(0,len(states)):
         p = 0
         url = 'https://www.abcsupply.com/locations/location-results'
-        print(states[i])
+        #print(states[i])
         result = requests.get(url, data={'State': states[i]})
         #time.sleep(1)
         soup = BeautifulSoup(result.text,"html.parser")
@@ -46,8 +49,16 @@ def fetch_data():
         #print(result.text)
         result = result.text
         start = 0
+        
         flag = True
-
+        try:
+            counr = soup.find('div',{'class':'rcount'}).find('strong').text
+            total = total + int(counr)
+            #print(states[i],counr, total)
+        except:
+            pass
+        
+        
         while flag:
             start = result.find(" var marker = new google.maps.Marker",start)
             if start == -1:
@@ -90,7 +101,26 @@ def fetch_data():
                 start = end
                 hours = hoursd[p].text
                 hours = re.sub(pattern," ",hours)
-                
+                hours = hours.replace('Branch Hours','')
+                hours = hours.lstrip()
+                if len(hours) < 3:
+                    hours = "<MISSING>"
+                print([
+                    'https://www.abcsupply.com/',
+                    link,
+                    title,
+                    street,
+                    city,
+                    state,
+                    pcode,
+                    "US",
+                    store,
+                    phone,
+                    "<MISSING>",
+                    lat,
+                    longt,
+                    hours
+                ])
                 data.append([
                     'https://www.abcsupply.com/',
                     link,
@@ -108,10 +138,14 @@ def fetch_data():
                     hours
                 ])
                 p+=1
+                
+        
+        
 
 
 
-        #print("............................")
+        print("............................")
+    print(total)
     return data
 
 def scrape():
