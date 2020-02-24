@@ -16,6 +16,7 @@ def write_output(data):
 def fetch_data():
     locs = []
     for x in range(0, 6000):
+        print(str(x))
         url = 'https://www.goodwill.org/location/?store=' + str(x)
         Found = False
         website = 'goodwill.org'
@@ -44,11 +45,14 @@ def fetch_data():
             if '<h4>Details</h4>' in line:
                 g = next(lines)
                 h = next(lines)
+                i = next(lines)
                 if '<span></span>' not in g:
                     name = g.split('<span>')[1].split('<')[0]
                     add = g.split('<br />')[1]
                     if '<br />' in h:
                         g = g.replace('\r','').replace('\n','') + h
+                    if '<br />' in i:
+                        g = h.replace('\r','').replace('\n','') + i
                     if 'United States' in g.split('<br />')[3]:
                         csz = g.split('<br />')[2]
                         phone = g.split('<br />')[4]
