@@ -77,6 +77,10 @@ def fetch_data():
             store.append(data if data else "<MISSING>") 
             store.append("<MISSING>")
             store.append("<MISSING>")
+            if state == 'Fiji':
+                continue
+            if  state == 'Mexico':
+                continue
             store.append(state if state else "<MISSING>")
             store.append("<MISSING>")
             store.append("US")

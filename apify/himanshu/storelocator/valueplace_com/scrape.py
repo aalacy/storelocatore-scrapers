@@ -48,6 +48,8 @@ def fetch_data():
             store.append(store_data["hotelName"])
             location_request = requests.get("https://www-api.woodspring.com/v1/gateway/hotel/hotels/" + str(store_data["hotelId"]) + "?include=location,phones",headers=headers)
             location_data = location_request.json()
+            if location_data["hotelInfo"]["hotelSummary"]['hotelStatus'] == "Closed":
+                continue
             add = location_data["hotelInfo"]["hotelSummary"]["addresses"][0]
             store.append(",".join(add["street"]))
             if store[-1] in addresses:
@@ -61,13 +63,16 @@ def fetch_data():
             store.append(add["countryCode"])
             store.append("<MISSING>")
             try:
-                store.append(location_data["hotelInfo"]["hotelSummary"]["phones"][0]["areaCode"] + location_data["hotelInfo"]["hotelSummary"]["phones"][0]["number"] if location_data["hotelInfo"]["hotelSummary"]["phones"] else "<MISSING>")
+                store.append(location_data["hotelInfo"]["hotelSummary"]["phones"][1]["areaCode"] + location_data["hotelInfo"]["hotelSummary"]["phones"][1]["number"] if location_data["hotelInfo"]["hotelSummary"]["phones"] else "<MISSING>")
             except:
-                store.append(location_data["hotelInfo"]["hotelSummary"]["phones"][0]["number"] if location_data["hotelInfo"]["hotelSummary"]["phones"] and len(location_data["hotelInfo"]["hotelSummary"]["phones"][0]["number"]) != 7 else "<MISSING>")
+                store.append(location_data["hotelInfo"]["hotelSummary"]["phones"][-1]["number"] if location_data["hotelInfo"]["hotelSummary"]["phones"] and len(location_data["hotelInfo"]["hotelSummary"]["phones"][-1]["number"]) != 7 else "<MISSING>")
             store.append("<MISSING>")
             store.append(store_data["geographicLocation"]["latitude"])
             store.append(store_data["geographicLocation"]["longitude"])
-            store.append("<MISSING>")
+            try:
+                store.append(location_data['hotelInfo']['policyCodes'][0]['policyDescription'][0].replace("Hotel Office Hours :","").replace("|","").strip())
+            except:
+                store.append("<MISSING>")
             store.append("https://www.woodspring.com/" + str(store_data["hotelId"]))
             for i in range(len(store)):
                 if type(store[i]) == str:

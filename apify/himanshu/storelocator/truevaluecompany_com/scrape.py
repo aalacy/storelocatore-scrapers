@@ -6,6 +6,16 @@ import json
 import sgzip
 import time
 
+def write_output(data):
+    with open('data.csv', 'w') as output_file:
+        writer = csv.writer(output_file, delimiter=",")
+
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+
+        # print("data::" + str(data))
+        for i in data or []:
+            writer.writerow(i)
 
 def request_wrapper(url, method, headers, data=None):
     request_counter = 0
@@ -38,18 +48,6 @@ def request_wrapper(url, method, headers, data=None):
                     break
     else:
         return None
-
-
-def write_output(data):
-    with open('data.csv', 'w') as output_file:
-        writer = csv.writer(output_file, delimiter=",")
-
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
-
-        # print("data::" + str(data))
-        for i in data or []:
-            writer.writerow(i)
 
 
 def fetch_data():

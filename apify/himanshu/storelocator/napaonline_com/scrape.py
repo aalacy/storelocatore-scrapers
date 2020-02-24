@@ -7,6 +7,7 @@ import time
 import sgzip
 session = SgRequests()
 import requests
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -55,11 +56,11 @@ def fetch_data():
             addr = re.sub(r'\s+'," ",(data.find_all("div",{"class":"address-2"})[-1].text)).replace("Punta Gorda, FL, FL 33950","Punta Gorda, FL 33950")
             city = addr.split(",")[0]
             state = addr.split(",")[1].split(" ")[1]
-            zipp = addr.split(",")[1].split(" ")[2]
+            zipp = addr.split(",")[1].split(" ")[2].replace("00000","<MISSING>")
             store_number = page_url.split("/")[-1]
             phone = re.sub(r'\s+'," ",data.find("div",{"class":"phone"}).text)
             location_type = "Auto Parts"
-            hours = " ".join(list(data.find("div",{"class":"store-hours"}).stripped_strings)).replace('Shop this Store','').strip()
+            hours = " ".join(list(data.find("div",{"class":"store-hours"}).stripped_strings)).replace('Shop this Store','').replace("no online reservations Reserve Online Not Available. Why? We' re sorry, this store does not participate in Reserve Online. Please choose another store.",'').strip()
 
 
             
@@ -68,11 +69,11 @@ def fetch_data():
             store.append(location_name)
             store.append(street_address)
             store.append(city)
-            store.append(state)
-            store.append(zipp)
+            store.append(state.replace("00000","<MISSING>" if state else "<MISSING>"))
+            store.append(zipp if zipp else "<MISSING>")
             store.append("US")
             store.append(store_number)
-            store.append(phone)
+            store.append(phone.replace("0","<MISSING>") if phone else "<MISSING>")
             store.append(location_type)
             store.append(latitude[index])
             store.append(longitude[index])

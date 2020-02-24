@@ -69,6 +69,7 @@ def fetch_data():
             for inner_parts in store_soup.find_all("div", {"class": "rte-content colored-links"}):
                 temp_storeaddresss = list(inner_parts.stripped_strings)
                 location_name = semi_parts.text
+                # print(location_name)
                 if len(temp_storeaddresss) ==7:
                     phone1 = temp_storeaddresss[2].replace("Ph: ","")
                     # print(temp_storeaddresss[2].replace("Ph: ",""))
@@ -149,6 +150,8 @@ def fetch_data():
                     latitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[-1].split("!2m")[0].split("!3m")[0]
             if "138-140 East State Street" in street_address:
                 zipcode = "<MISSING>"
+            if '333 Naamans Rd' in street_address:
+                city = 'Claymont'    
 
             return_object =[]
             if "1330 Franklin Mills Circle" in street_address:
@@ -156,7 +159,7 @@ def fetch_data():
             else:
                 return_object.append("https://www.cityblueshop.com")
                 return_object.append(location_name.encode('ascii', 'ignore').decode('ascii').strip() if location_name else "<MISSING>")
-                return_object.append(street_address.encode('ascii', 'ignore').decode('ascii').strip().replace("4601Northfield","4601 Northfield") if street_address else "<MISSING>")
+                return_object.append(street_address.encode('ascii', 'ignore').decode('ascii').strip().replace('333 Naamans Rd Claymont','333 Naamans Rd').replace("4601Northfield","4601 Northfield") if street_address else "<MISSING>")
                 return_object.append(city.encode('ascii', 'ignore').decode('ascii').strip() if city else "<MISSING>")
                 return_object.append(state.encode('ascii', 'ignore').decode('ascii').strip().replace("Philadelphia","PA").replace("Upper Darby","PA").replace("East Cleveland","OH").replace("North Randall","OH") if state.replace("Philadelphia","PA").replace("Upper Darby","PA").replace("Upper Darby","PA") else "<MISSING>")
                 return_object.append(zipcode if zipcode else "<MISSING>")
