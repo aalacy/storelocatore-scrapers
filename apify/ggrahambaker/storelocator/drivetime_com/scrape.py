@@ -35,17 +35,19 @@ def addy_ext(addy):
 def fetch_data():
     # Your scraper here
     locator_domain = 'https://www.drivetime.com/'
-    ext = 'dealership/find'
+    ext = 'used-car-dealers'
 
     driver = get_driver()
     driver.get(locator_domain + ext)
-    element = driver.find_element_by_css_selector('span.right-text')
-    driver.execute_script("arguments[0].click();", element)
+    #element = driver.find_element_by_css_selector('span.right-text')
+    #driver.execute_script("arguments[0].click();", element)
 
-    ul = driver.find_element_by_css_selector('ul.dealer-filter-list')
-    lis = ul.find_elements_by_css_selector('li')
+    ul = driver.find_element_by_css_selector('ol.link-swamp-list')
+    lis = ul.find_elements_by_css_selector('a.inline-link')
+    print(len(lis))
     state_list = []
     for li in lis:
+        print(li.find_element_by_css_selector('a').get_attribute('href'))
         state_list.append(li.find_element_by_css_selector('a').get_attribute('href'))
 
     link_list = []

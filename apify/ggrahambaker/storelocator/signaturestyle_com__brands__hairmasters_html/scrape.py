@@ -48,7 +48,7 @@ def fetch_data():
     locator_domain = 'https://www.signaturestyle.com/brands/hairmasters.html'
 
     search = sgzip.ClosestNSearch()
-    search.initialize()
+    search.initialize(country_codes = ['us', 'ca'])
 
     MAX_DISTANCE = 25
 
@@ -115,6 +115,7 @@ def fetch_data():
 
             if hours == '':
                 hours = '<MISSING>'
+
             location_type = '<MISSING>'
             page_url = '<MISSING>'
             
