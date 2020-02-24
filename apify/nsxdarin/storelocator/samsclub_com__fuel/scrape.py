@@ -44,7 +44,10 @@ def fetch_data():
                 cinfo = line2.split(',"clubDetails":{"')[1]
                 name = cinfo.split('"name":"')[1].split('"')[0]
                 zc = cinfo.split('"postalCode":"')[1].split('"')[0]
-                add = cinfo.split(',"address1":"')[1].split('"')[0]
+                try:
+                    add = cinfo.split(',"address1":"')[1].split('"')[0]
+                except:
+                    add = ''
                 try:
                     add = add + ' ' + cinfo.split('"address2":"')[1].split('"')[0]
                 except:
@@ -69,7 +72,7 @@ def fetch_data():
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
-        if Fuel is True:
+        if Fuel is True and add != '':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
