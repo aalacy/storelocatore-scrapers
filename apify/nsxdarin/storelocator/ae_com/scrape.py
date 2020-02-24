@@ -60,8 +60,9 @@ def fetch_data():
             if '"latitude":' in line2:
                 lat = line2.split('"latitude":')[1].split(',')[0]
                 lng = line2.split('"longitude":')[1].split(',')[0]
-            if 'tealiumCategory = "' in line2:
-                name = line2.split('tealiumCategory = "')[1].split('"')[0]
+            if 'itemprop="name">' in line2:
+                typ = line2.split('itemprop="name">')[1].split('<')[0]
+                name = line2.split('itemprop="name">')[1].split('</h1>')[0].replace('<br>','')
             if 'c-address-street-1" itemprop="streetAddress">' in line2:
                 add = line2.split('c-address-street-1" itemprop="streetAddress">')[1].split('<')[0]
             if 'c-address-street-2" itemprop="streetAddress">' in line2:
@@ -79,12 +80,6 @@ def fetch_data():
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
-        if 'outlet' in name.lower():
-            typ = 'AE Factory Outlet'
-        if 'tailgate' in name.lower():
-            typ = 'Tailgate'
-        if 'aerie' in name.lower():
-            typ = 'Aerie'
         if typ == '':
             typ = 'American Eagle'
         if city != '' and hours != 'CLOSED':
