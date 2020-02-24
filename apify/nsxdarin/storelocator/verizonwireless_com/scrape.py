@@ -25,11 +25,11 @@ def fetch_data():
     locations = []
     coord = search.next_coord()
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
         website = 'verizonwireless.com'
-        print('%s, %s...' % (x, y))
+        #print('%s, %s...' % (x, y))
         url = 'https://www.verizonwireless.com/stores/storesearchresults/?lat=' + str(x) + '&long=' + str(y)
         r = session.get(url, headers=headers)
         result_coords = []
@@ -68,7 +68,7 @@ def fetch_data():
                             locations.append(info)
                             yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         if len(array) <= MAX_RESULTS:
-            print("max distance update")
+            #print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
 ##        elif len(array) == MAX_RESULTS:
 ##            print("max count update")
