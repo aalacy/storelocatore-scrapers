@@ -24,7 +24,6 @@ def fetch_data():
             locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
-        time.sleep(2)
         website = 'lululemon.com'
         typ = '<MISSING>'
         hours = ''
