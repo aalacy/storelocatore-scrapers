@@ -15,8 +15,23 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    website = 'potterybarn.ca'
+    country = 'CA'
+    loc = 'http://www.potterybarn.ca/edmonton-pb-ca'
+    store = '<MISSING>'
+    name = 'West Edmonton'
+    add = '8882 170 Street Northwest Space 205/213'
+    city = 'Edmonton'
+    state = 'AB'
+    zc = 'T5T 4J2'
+    phone = '780-486-0349'
+    typ = 'Pottery Barn'
+    lat = '53.522'
+    lng = '-113.623'
+    hours = 'Mon: 10:00am-9:00pm, Tue: 10:00am-9:00pm, Wed: 10:00am-9:00pm, Thu: 10:00am-9:00pm, Fri: 10:00am-9:00pm, Sat: 10:00am-9:00pm, Sun: 11:00am-6:00pm'
+    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     url = 'https://www.potterybarn.com/customer-service/store-locator.html?cm_type=fnav'
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     storeinfo = []
     lines = r.iter_lines()
     for line in lines:
@@ -29,7 +44,7 @@ def fetch_data():
             storeinfo.append(pc + '|' + surl)
     locs = []
     url = 'https://www.potterybarn.com/search/stores.json?brands=PB,PK,PT&lat=40.714&lng=-73.986&radius=10000'
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     for item in json.loads(r.content)['storeListResponse']['stores']:
         country = item['properties']['COUNTRY_CODE']
         store = item['properties']['STORE_NUMBER']
