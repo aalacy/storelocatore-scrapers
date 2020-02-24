@@ -1,11 +1,9 @@
 import csv
 import urllib2
-import requests
 import time
+from sgrequests import SgRequests
 
-requests.packages.urllib3.disable_warnings()
-
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -19,7 +17,7 @@ def write_output(data):
 def fetch_data():
     url = 'https://shop.lululemon.com/stores/all-lululemon-stores'
     locs = []
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if '"" href="https://shop.lululemon.com/stores/' in line:
             lurl = line.split('href="')[1].split('"')[0]
@@ -32,7 +30,7 @@ def fetch_data():
         hours = ''
         store = '<MISSING>'
         locurl = loc.split('|')[0]
-        r2 = session.get(locurl, headers=headers, verify=False)
+        r2 = session.get(locurl, headers=headers)
         for line2 in r2.iter_lines():
             if ',"streetAddress":"' in line2:
                 add = line2.split(',"streetAddress":"')[1].split('"')[0]
