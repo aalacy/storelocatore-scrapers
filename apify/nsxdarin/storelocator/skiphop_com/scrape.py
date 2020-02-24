@@ -92,6 +92,8 @@ def fetch_data():
                 state = 'CA'
             if state == 'BC' or state == 'ON' or state == 'QC':
                 country = 'CA'
+            if ',' in name:
+                name = name.split(',')[0]
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
