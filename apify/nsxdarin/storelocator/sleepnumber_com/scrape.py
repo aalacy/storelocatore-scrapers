@@ -14,6 +14,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    alllocs = []
     locs = []
     states = []
     cities = []
@@ -103,7 +104,10 @@ def fetch_data():
                                 hours = hours + '; ' + hrs
             if hours == '':
                 hours = '<MISSING>'
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            info = add + '|' + city
+            if info not in alllocs:
+                alllocs.append(info)
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
