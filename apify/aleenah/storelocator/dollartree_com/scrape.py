@@ -78,6 +78,7 @@ def fetch_data():
         key=addr["streetAddress"]+addr["addressLocality"]+addr["addressRegion"]+addr["postalCode"]
         if key in key_set:
             continue
+        key_set.add(key)
         all.append([
         "https://www.dollartree.com",
         js["containedIn"],
