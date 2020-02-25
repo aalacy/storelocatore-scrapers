@@ -30,14 +30,14 @@ def fetch_data():
                 cities.append('https://www.cvs.com' + line2.split('href="')[1].split('"')[0])
         for city in cities:
             r2 = session.get(city, headers=headers)
-            #print('Pulling City %s...' % city)
+            print('Pulling City %s...' % city)
             for line2 in r2.iter_lines():
                 if '<a href="/store-locator/cvs-pharmacy-address/' in line2:
                     lurl = 'https://www.cvs.com' + line2.split('href="')[1].split('"')[0]
                     if lurl not in locs:
                         locs.append(lurl)
         for loc in locs:
-            #print('Pulling Location %s...' % loc)
+            print('Pulling Location %s...' % loc)
             website = 'cvs.com'
             typ = '<MISSING>'
             hours = ''
