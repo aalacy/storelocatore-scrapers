@@ -26,7 +26,7 @@ def fetch_data():
         try:
             rc = rc + 1
             time.sleep(1)
-            print('Try %s...' % str(rc))
+            #print('Try %s...' % str(rc))
             r = session.get(url, headers=headers)
             for line in r.iter_lines():
                 if '"id":' in r.content:

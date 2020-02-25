@@ -22,8 +22,8 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
-        if '<loc>https://snoozeeatery.com/locations/' in line and 'post_id' not in line:
-            states.append(line.split('<loc>https://snoozeeatery.com/locations/')[1].split('/')[0])
+        if '<loc>https://www.snoozeeatery.com/locations/' in line and 'post_id' not in line:
+            states.append(line.split('<loc>https://www.snoozeeatery.com/locations/')[1].split('/')[0])
     for state in states:
         print('Pulling State %s...' % state)
         surl = 'https://snoozeeatery.com/wp-json/koa/v1/entry/' + state

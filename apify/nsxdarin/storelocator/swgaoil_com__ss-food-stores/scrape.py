@@ -47,10 +47,30 @@ def fetch_data():
         store = '<MISSING>'
         country = 'US'
         typ = '<MISSING>'
-        hours = '<MISSING>'
-        phone = '<MISSING>'
+        hours = ''
+        phone = ''
         if '#' in name:
             store = name.rsplit('#',1)[1]
+        r2 = session.get(llink, headers=headers)
+        lines = r2.iter_lines()
+        for line2 in lines:
+            if 'Phone:</strong>' in line2:
+                g = next(lines)
+                phone = g.split('<')[0].replace('\t','').strip()
+            if 'Hours:' in line2:
+                Found = True
+            if Found and '</div>' in line2:
+                Found = False
+            if Found and 'Hours:' not in line2 and '<' in line2:
+                hrs = line2.split('<')[0].strip().replace('\t','')
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
+        if hours == '':
+            hours = '<MISSING>'
+        if phone == '':
+            phone = '<MISSING>'
         yield [website, llink, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
