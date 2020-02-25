@@ -1,11 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import time
 
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,13 +20,12 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def request_wrapper(url, method, headers, data=None):
     request_counter = 0
     if method == "get":
         while True:
             try:
-                r = requests.get(url, headers=headers)
+                r = session.get(url, headers=headers)
                 return r
                 break
             except:
@@ -38,9 +38,9 @@ def request_wrapper(url, method, headers, data=None):
         while True:
             try:
                 if data:
-                    r = requests.post(url, headers=headers, data=data)
+                    r = session.post(url, headers=headers, data=data)
                 else:
-                    r = requests.post(url, headers=headers)
+                    r = session.post(url, headers=headers)
                 return r
                 break
             except:
@@ -142,7 +142,7 @@ def fetch_data():
                 page_url = "https://www.kroger.com/stores/details/" + \
                     str(script["divisionNumber"]) + \
                     "/" + str(script["storeNumber"])
-                r_loc = requests.get(page_url, headers=headers)
+                r_loc = session.get(page_url, headers=headers)
                 soup_loc = BeautifulSoup(r_loc.text, "lxml")
                 location_type = soup_loc.find("div", class_="logo").a["title"]
                 # print(location_type)
