@@ -45,7 +45,7 @@ def fetch_data():
                 name = cinfo.split('"name":"')[1].split('"')[0]
                 zc = cinfo.split('"postalCode":"')[1].split('"')[0]
                 try:
-                    add = cinfo.split(',"address1":"')[1].split('"')[0]
+                    add = cinfo.split('"address1":"')[1].split('"')[0]
                 except:
                     add = ''
                 try:
@@ -55,8 +55,8 @@ def fetch_data():
                 city = cinfo.split('"city":"')[1].split('"')[0]
                 state = cinfo.split('"state":"')[1].split('"')[0]
                 phone = cinfo.split('"phone":"')[1].split('"')[0]
-                lat = cinfo.split('"latitude":')[1].split(',')[0]
-                lng = cinfo.split('"longitude":')[1].split('}')[0]
+                lat = cinfo.split('"latitude":')[1].split('}')[0]
+                lng = cinfo.split('"longitude":')[1].split(',')[0]
                 fcinfo = cinfo.split('"displayName":"Fuel Center","operationalHours":')[1].split('}}},')[0]
                 try:
                     sathrs = fcinfo.split('"saturdayHrs":{"')[1].split('":"')[1].split('"')[0] + '-' + cinfo.split('"saturdayHrs":{"')[1].split('"endHr":"')[1].split('"')[0]
