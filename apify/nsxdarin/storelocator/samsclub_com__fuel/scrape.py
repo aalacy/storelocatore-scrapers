@@ -57,17 +57,17 @@ def fetch_data():
                 phone = cinfo.split('"phone":"')[1].split('"')[0]
                 lat = cinfo.split('"latitude":')[1].split('}')[0]
                 lng = cinfo.split('"longitude":')[1].split(',')[0]
-                fcinfo = cinfo.split('"displayName":"Fuel Center","operationalHours":')[1].split('}}},')[0]
-                try:
-                    sathrs = fcinfo.split('"saturdayHrs":{"')[1].split('":"')[1].split('"')[0] + '-' + cinfo.split('"saturdayHrs":{"')[1].split('"endHr":"')[1].split('"')[0]
-                except:
-                    sathrs = 'Closed'
-                try:
-                    sunhrs = fcinfo.split('"sundayHrs":{"')[1].split('":"')[1].split('"')[0] + '-' + cinfo.split('"sundayHrs":{"')[1].split('"endHr":"')[1].split('"')[0]
-                except:
-                    sunhrs = 'Closed'
-                mfhrs = fcinfo.split('"monToFriHrs":{"')[1].split('":"')[1].split('"')[0] + '-' + cinfo.split('"monToFriHrs":{"')[1].split('"endHr":"')[1].split('"')[0]
-                hours = 'M-F: ' + mfhrs + '; Sat: ' + sathrs + '; Sun: ' + sunhrs
+                fcinfo = cinfo.split('"displayName":"Fuel Center","operationalHours":{')[1].split('}}},')[0]
+                days = fcinfo.split('},"')
+                for day in days:
+                    hrs = day.split('"startHr":"')[1].split('"')[0] + '-' + day.split('"endHr":"')[1].split('"')[0]
+                    dname = day.split('Hrs":')[0].replace('"','')
+                    hrs = dname + ': ' + hrs
+                    hrs = hrs.replace('To','-')
+                    if hours == '':
+                        hours = hrs
+                    else:
+                        hours = hours + '; ' + hrs
         if hours == '':
             hours = '<MISSING>'
         if phone == '':
