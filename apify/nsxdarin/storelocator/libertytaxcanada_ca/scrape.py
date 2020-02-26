@@ -79,12 +79,15 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + '; ' + hrs
+            if '<span itemprop="telephone" class="hidden">' in line2:
+                phone = line2.split('<span itemprop="telephone" class="hidden">')[1].split('<')[0]
         if phone == '':
             phone = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
         hours = hours.replace('\t','').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ')
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if add != '':
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
