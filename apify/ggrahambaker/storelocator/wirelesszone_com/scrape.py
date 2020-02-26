@@ -32,7 +32,6 @@ def fetch_data():
         print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
 
         url = 'https://wirelesszone.com/wp-admin/admin-ajax.php?action=store_search&lat=' + str(x) + '&lng=' + str(y) + '&max_results=' + str(MAX_RESULTS) + '&search_radius=' + str(MAX_DISTANCE)
         r = session.get(url, headers=HEADERS)
@@ -84,15 +83,9 @@ def fetch_data():
             all_store_data.append(store_data)
         
         
-        if len(res_json) < MAX_RESULTS:
-            print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif len(res_json) == MAX_RESULTS:
-            print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + MAX_RESULTS + " results")
-            
+
+        print("max count update")
+        search.max_count_update(result_coords)
         coord = search.next_coord()  
 
 
