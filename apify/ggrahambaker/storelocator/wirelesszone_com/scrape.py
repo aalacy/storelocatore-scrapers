@@ -29,7 +29,6 @@ def fetch_data():
     dup_counter = []
     all_store_data = []
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
 
@@ -82,9 +81,7 @@ def fetch_data():
             
             all_store_data.append(store_data)
         
-        
 
-        print("max count update")
         search.max_count_update(result_coords)
         coord = search.next_coord()  
 
