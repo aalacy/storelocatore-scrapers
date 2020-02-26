@@ -57,7 +57,7 @@ def fetch_data():
     'Accept': 'application/json, text/javascript, */*; q=0.01',
     'Accept-Language': 'en-US,en;q=0.5',
     'Accept-Encoding': 'gzip, deflate, br',
-    'Referer': 'https://us.petvalu.com/store-locator/?location=new%20york,&radius=50',
+    'Referer': 'https://us.petvalu.com/store-locator/?location=new%20york,&radius=100',
     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
     'X-Requested-With': 'XMLHttpRequest',
     'Content-Length': '98',
@@ -72,11 +72,11 @@ def fetch_data():
 
     MAX_DISTANCE = 50
 
-    dup_tracker = []
+    dup_tracker = set()
     coord = search.next_coord()
     all_store_data = []
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
         data = { 'lat': str(x), 'lng': str(y), 'action': 'get_stores', 'radius': MAX_DISTANCE }
@@ -92,22 +92,30 @@ def fetch_data():
         res_json = json.loads(r.content)
 
         result_coords = []
+        if len(res_json) == 0:
+            search.max_distance_update(MAX_DISTANCE)
+        else:
         
-        for k, loc in res_json.items():
-            page_url = loc['gu']
-            if page_url not in dup_tracker:
-                dup_tracker.append(page_url)
-            else:
-                continue
-            
-            store_data = unpack(loc)
+            for k, loc in res_json.items():
+                page_url = loc['gu']
+                lat = loc['lat']
+                longit = loc['lng']
+                result_coords.append((lat, longit))
 
-            all_store_data.append(store_data)
+                if page_url not in dup_tracker:
+                    dup_tracker.add(page_url)
+                else:
+                    continue
+                
+                store_data = unpack(loc)
 
+                all_store_data.append(store_data)
+
+            search.max_count_update(result_coords)
             
     
         
-        search.max_distance_update(MAX_DISTANCE)
+        
         coord = search.next_coord()  
 
 
@@ -121,7 +129,7 @@ def fetch_data():
     'Accept': 'application/json, text/javascript, */*; q=0.01',
     'Accept-Language': 'en-US,en;q=0.5',
     'Accept-Encoding': 'gzip, deflate, br',
-    'Referer': 'https://petvalu.com/store-locator/?location=toronto,&radius=50',
+    'Referer': 'https://petvalu.com/store-locator/?location=toronto,&radius=100',
     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
     'X-Requested-With': 'XMLHttpRequest',
     'Content-Length': '99',
@@ -135,7 +143,7 @@ def fetch_data():
   
     
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
   
@@ -156,21 +164,27 @@ def fetch_data():
         res_json = json.loads(r.content)
 
         
-        for k, loc in res_json.items():
-            page_url = loc['gu']
-            if page_url not in dup_tracker:
-                dup_tracker.append(page_url)
-            else:
-                continue
+        result_coords = []
+        if len(res_json) == 0:
+            search.max_distance_update(MAX_DISTANCE)
+        else:
+        
+            for k, loc in res_json.items():
+                page_url = loc['gu']
+                lat = loc['lat']
+                longit = loc['lng']
+                result_coords.append((lat, longit))
 
-            store_data = unpack(loc)
+                if page_url not in dup_tracker:
+                    dup_tracker.add(page_url)
+                else:
+                    continue
+                
+                store_data = unpack(loc)
 
-            all_store_data.append(store_data)
-            
-
-
-
-        search.max_distance_update(MAX_DISTANCE)
+                all_store_data.append(store_data)
+                
+            search.max_count_update(result_coords)
 
         coord = search.next_coord()
 
