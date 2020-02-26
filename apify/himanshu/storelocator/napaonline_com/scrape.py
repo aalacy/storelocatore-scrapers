@@ -35,9 +35,10 @@ def fetch_data():
         'accept': 'text/html, */*; q=0.01'
         }
         #print("https://www.napaonline.com/en/store-finder?q="+str(zip_code)+"&sort=true")
-     
-        r = requests.get("https://www.napaonline.com/en/store-finder?q="+str(zip_code)+"&sort=true", headers=headers)
-       
+        try:
+            r = requests.get("https://www.napaonline.com/en/store-finder?q="+str(zip_code)+"&sort=true", headers=headers)
+        except:
+            pass
         soup = BeautifulSoup(r.text, "lxml")
         latitude = []
         longitude = []
@@ -57,8 +58,25 @@ def fetch_data():
             city = addr.split(",")[0]
             state = addr.split(",")[1].split(" ")[1]
             zipp = addr.split(",")[1].split(" ")[2].replace("00000","<MISSING>")
+            if state == "32330":
+                state = "<MISSING>"
+                zipp = "32330"
+            if state == "21960":
+                state = "<MISSING>"
+                zipp = "21960"
+            if state == "96799":
+                state = "<MISSING>"
+                zipp = "96799"
+            if state == "St.":
+                state = "St. Croix"
+                zipp = "00820"
+            if state == "96929":
+                state = "<MISSING>"
+                zipp = "96929"
             store_number = page_url.split("/")[-1]
             phone = re.sub(r'\s+'," ",data.find("div",{"class":"phone"}).text)
+            if phone == " 0 ":
+                phone = "<MISSING>"
             location_type = "Auto Parts"
             hours = " ".join(list(data.find("div",{"class":"store-hours"}).stripped_strings)).replace('Shop this Store','').replace("no online reservations Reserve Online Not Available. Why? We' re sorry, this store does not participate in Reserve Online. Please choose another store.",'').strip()
 
@@ -73,7 +91,7 @@ def fetch_data():
             store.append(zipp if zipp else "<MISSING>")
             store.append("US")
             store.append(store_number)
-            store.append(phone.replace("0","<MISSING>") if phone else "<MISSING>")
+            store.append(phone if phone else "<MISSING>")
             store.append(location_type)
             store.append(latitude[index])
             store.append(longitude[index])

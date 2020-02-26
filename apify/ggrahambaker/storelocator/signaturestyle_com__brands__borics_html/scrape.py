@@ -56,8 +56,7 @@ def fetch_data():
     coord = search.next_coord()
     all_store_data = []
     dup_tracker = []
-    while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))        
+    while coord:    
         x = coord[0]
         y = coord[1]
 

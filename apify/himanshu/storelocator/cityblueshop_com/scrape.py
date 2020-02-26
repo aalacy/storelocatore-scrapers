@@ -133,7 +133,7 @@ def fetch_data():
                         hours = " ".join(temp_storeaddresss[-3:])
                     street_address = temp_storeaddresss[0].split(",")[0]
                     
-                    phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(temp_storeaddresss))
+                    phone_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(temp_storeaddresss))
                     if phone_list:
                         phone1 = phone_list[-1]
                     
@@ -149,7 +149,7 @@ def fetch_data():
                     longitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[0]
                     latitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[-1].split("!2m")[0].split("!3m")[0]
             if "138-140 East State Street" in street_address:
-                zipcode = "<MISSING>"
+                zipcode = "08608"
             if '333 Naamans Rd' in street_address:
                 city = 'Claymont'    
 

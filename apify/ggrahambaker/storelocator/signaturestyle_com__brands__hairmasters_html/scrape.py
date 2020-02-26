@@ -56,6 +56,7 @@ def fetch_data():
     all_store_data = []
     dup_tracker = []
     while coord:
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
 
@@ -69,7 +70,7 @@ def fetch_data():
         result_coords.append((x, y))
         
         for loc in res_json:
-            print("remaining zipcodes: " + str(len(search.zipcodes)))        
+                    
 
             lat = loc['latitude']
             longit = loc['longitude']

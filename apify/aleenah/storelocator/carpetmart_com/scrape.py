@@ -7,12 +7,12 @@ from selenium.webdriver.chrome.options import Options
 import time
 import re
 
-
 options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 driver = webdriver.Chrome("chromedriver", options=options)
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,6 +29,7 @@ def write_output(data):
 
 session = SgRequests()
 
+
 def fetch_data():
     # Your scraper here
 
@@ -39,49 +40,48 @@ def fetch_data():
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     stores = soup.find_all('div', {'class': 'storelocator-store'})
     print(len(stores))
-    all=[]
+    all = []
     for store in stores:
-        print("here")
-        url=store.find_all('a')[2].get('href')
+        #print("here")
+        url = store.find_all('a')[2].get('href')
         driver.get(url)
-        print(url)
+        #print(url)
         time.sleep(2)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
-      
 
         js = soup.find_all('script', {'type': 'application/ld+json'})[-1].contents
 
-        js=json.loads("".join(js))
-        addr=js["address"]
-        tim=""
-        left=soup.find_all('div',{'class':'sp-hours-left'})
-        right=soup.find_all('div',{'class':'sp-hours-right'})
+        js = json.loads("".join(js))
+        addr = js["address"]
+        tim = ""
+        left = soup.find_all('div', {'class': 'sp-hours-left'})
+        right = soup.find_all('div', {'class': 'sp-hours-right'})
         for i in range(len(left)):
-            tim+=left.text.strip()+" "+right.text.strip()+" "
-        coord=soup.find('div',{'class','sp-directions'}).find('a').get('href')
-        #print(coord)
-        lat = re.findall(r'!1d[-?\d\.]*!2d([-?\d\.]*)', coord)[0].replace("?","")
-        long = re.findall(r'!1d(-?[\d\.]*)', coord)[0].replace("?","")
-        #print(lat,long)
+            tim += left[i].text.strip() + " " + right[i].text.strip() + " "
+        coord = soup.find('div', {'class', 'sp-directions'}).find('a').get('href')
+        # print(coord)
+        lat = re.findall(r'!1d[-?\d\.]*!2d([-?\d\.]*)', coord)[0].replace("?", "")
+        long = re.findall(r'!1d(-?[\d\.]*)', coord)[0].replace("?", "")
+        # print(lat,long)
         """tim=""
         for t in js["openingHours"]:
             tim+= t+" "
         """
         all.append([
-        "https://www.carpetmart.com/",
-        url.split("/")[-1].replace("-"," "),
-        addr["streetAddress"],
-        addr["addressLocality"],
-        addr["addressRegion"],
-        addr["postalCode"].split("-")[0],
-        "US",
-        "<MISSING>",  # store #
-        js["telePhone"],  # phone
-        js["name"],  # type
-        lat,  # lat
-        long,  # long
-        tim.strip() , # timing
-        url])
+            "https://www.carpetmart.com/",
+            url.split("/")[-1].replace("-", " "),
+            addr["streetAddress"],
+            addr["addressLocality"],
+            addr["addressRegion"],
+            addr["postalCode"].split("-")[0],
+            "US",
+            "<MISSING>",  # store #
+            js["telePhone"],  # phone
+            js["name"],  # type
+            lat,  # lat
+            long,  # long
+            tim.strip(),  # timing
+            url])
 
     return all
 
