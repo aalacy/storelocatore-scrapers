@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -18,6 +18,7 @@ def fetch_data():
     base_url = "https://www.viaero.com"
     r = requests.get("https://info.viaero.com/store-directory")
     soup = BeautifulSoup(r.text,"lxml")
+    addressess = []
     for location in soup.find_all('a'):
         if 'Visit Store' in location.text:
 
@@ -40,7 +41,7 @@ def fetch_data():
             hour=' '.join((list(location_soup.find("table").stripped_strings)))
             location_script = location_soup.find("script",{"type":"application/ld+json"}).text
              
-            latitude = location_script.split('"latitude":')[1].split('"longitude":')[0].strip()
+            latitude = location_script.split('"latitude":')[1].split('"longitude":')[0].strip().replace(",","")
             longitude = location_script.split('"longitude":')[1].split('},')[0].strip()
       
 
@@ -59,7 +60,10 @@ def fetch_data():
             store.append(longitude)
             store.append(hour)
             store.append(link)
-            #print(store)
+            if store[2] in addressess:
+                continue
+            addressess.append(store[2])
+            # print(store)
             yield store
 
 def scrape():

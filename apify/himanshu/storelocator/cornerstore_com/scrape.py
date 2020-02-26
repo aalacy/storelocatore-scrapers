@@ -142,7 +142,7 @@ def fetch_data():
     wait(fs)
     executor.shutdown(wait=False)
     for store in return_main_object:
-        print("~~~~~~~~~~~~~~~~~ ",store)
+        #print("~~~~~~~~~~~~~~~~~ ",store)
         yield store
 
 def scrape():
