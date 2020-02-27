@@ -22,164 +22,59 @@ def write_output(data):
 
 def fetch_data():
 
-    # for USA location 
-    addresses = []
-    search = sgzip.ClosestNSearch()    
-    search.initialize(country_codes=["US"])
-    MAX_RESULTS = 10000
-    MAX_DISTANCE = 1000
-    current_results_len = 0     # need to update with no of count.
-    zip_code = search.next_zip()
-    while zip_code:
-        result_coords = []
-        page = 1
-        while True:
-            base_url = "https://www.bossplow.com/"
-            try:
-                r = requests.get("https://www.bossplow.com/en/locator?countryCode=US&serviceType=Buy&postalCode="+str(zip_code)+"&resultType=Dealer&productType=354&categoryName=Contractor&productTypeName=&searchRadius="+str(MAX_DISTANCE)+"&page="+str(page))
-            except:
-                pass
-            soup = BeautifulSoup(r.text, "lxml")
-            if soup.find(lambda tag : (tag.name == "script") and "locations" in tag.text) == None:
-                break
-            json_data = json.loads(soup.find(lambda tag : (tag.name == "script") and "locations" in tag.text).text.split("locations:")[1].split("directionsButtonLabel")[0].replace("0}],","0}]").strip())
-            current_results_len += len(json_data)
-            for data in  json_data:
-                location_name = data['Name']
-                street_address = (data['Address']['AddressLine1'] + str(data['Address']['AddressLine2'])).replace("None","").strip()
-                city = data['Address']['City']
-                state = data['Address']['Region']
-                zipp = data['Address']['PostalCode']
-                country_code = data['Address']['Country']
-                store_number = "<MISSING>"
-                phone = data['Phone']
-                location_type = data['DealerType']
-                latitude = data['Latitude']
-                longitude = data['Longitude']
-                if data['Seasons'] != []:
-                    hours = " ".join(data['Seasons'][0]['Hours'])
-                else:
-                    hours = "<MISSING>"
-                
-                page_url = "<MISSING>"
-                
-                if street_address in addresses:
-                        continue
-                addresses.append(street_address)
-
-                result_coords.append((latitude,longitude))
-                store = []
-                store.append(base_url )
-                store.append(location_name if location_name else '<MISSING>')
-                store.append(street_address if street_address else '<MISSING>')
-                store.append(city if city else '<MISSING>')
-                store.append(state if state else '<MISSING>')
-                store.append(zipp if zipp else '<MISSING>')
-                store.append(country_code if country_code else '<MISSING>')
-                store.append(store_number if store_number else '<MISSING>')
-                store.append(phone if phone else '<MISSING>')
-                store.append(location_type if location_type else '<MISSING>')
-                store.append(latitude if latitude else '<MISSING>')
-                store.append(longitude if longitude else '<MISSING>')
-                store.append(hours if hours else '<MISSING>')
-                store.append(page_url)
-                # print("data ===="+str(store))
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-                yield store
-                
-            page += 1
-
-        if current_results_len < MAX_RESULTS:
-                # print("max distance update")
-                search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
+    base_url = "https://www.bossplow.com"
+    r = requests.get("https://www.bossplow.com/en/dealer-directory")
+    soup1 = BeautifulSoup(r.text, "lxml")
+    for link in soup1.find("div", {"class":"col-xs-12"}).find_all("a"):
+        if link['href'].count('/') !=5:
+            continue    
+        page_url = base_url + link['href']
+        # print(page_url)
+        try:        
+            r1 = requests.get(page_url)
+        except:
+            pass
+        soup = BeautifulSoup(r1.text, "lxml")
+        location_name = soup.find("h3").text.strip()
+        addr = list(soup.find("address").stripped_strings)
+        street_address = addr[0].split("|")[0].strip()
+        city = addr[0].split("|")[1].split(",")[0].strip()
+        state = addr[0].split("|")[1].split(",")[1].split(" ")[1]
+        zipp = " ".join(addr[0].split("|")[1].split(",")[1].split(" ")[2:]).upper()
+        # print(zipp)
+        if zipp.replace('-','').isdigit():
+            country_code = "US"
         else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
+            country_code = "CA"
+        try:
+            phone = addr[1]
+        except:
+            phone = "<MISSING>"
+        store_number = page_url.split("/")[-1]
+        if soup.find("ul",{"class":"list-hours"}):
+            hours = " ".join(list(soup.find("ul",{"class":"list-hours"}).stripped_strings))
+        else:
+            hours = "<MISSING>"
     
-
-
-
-
-
-    ##### for Canada location
-
-
-    addresses = []
-    search = sgzip.ClosestNSearch()    
-    search.initialize(country_codes=["CA"])
-    MAX_RESULTS = 10000
-    MAX_DISTANCE = 1000
-    current_results_len = 0     # need to update with no of count.
-    zip_code = search.next_zip()
-    while zip_code:
-        result_coords = []
-        page = 1
-        while True:
-            base_url = "https://www.bossplow.com/"
-            r = session.get("https://www.bossplow.com/en/locator?countryCode=CA&serviceType=Buy&postalCode="+str(zip_code)+"&resultType=Dealer&productType=354&categoryName=Contractor&productTypeName=&searchRadius="+str(MAX_DISTANCE)+"&page="+str(page))
-            soup = BeautifulSoup(r.text, "lxml")
-            if soup.find(lambda tag : (tag.name == "script") and "locations" in tag.text) == None:
-                break
-            json_data = json.loads(soup.find(lambda tag : (tag.name == "script") and "locations" in tag.text).text.split("locations:")[1].split("directionsButtonLabel")[0].replace("0}],","0}]").strip())
-            current_results_len += len(json_data)
-            for data in  json_data:
-                location_name = data['Name']
-                street_address = (data['Address']['AddressLine1'] + str(data['Address']['AddressLine2'])).replace("None","").strip()
-                city = data['Address']['City']
-                state = data['Address']['Region']
-                zipp = data['Address']['PostalCode']
-                country_code = data['Address']['Country']
-                store_number = "<MISSING>"
-                phone = data['Phone']
-                location_type = data['DealerType']
-                latitude = data['Latitude']
-                longitude = data['Longitude']
-                if data['Seasons'] != []:
-                    hours = " ".join(data['Seasons'][0]['Hours'])
-                else:
-                    hours = "<MISSING>"
-                
-                page_url = "<MISSING>"
-                
-                if street_address in addresses:
-                        continue
-                addresses.append(street_address)
-
-                result_coords.append((latitude,longitude))
-                store = []
-                store.append(base_url )
-                store.append(location_name if location_name else '<MISSING>')
-                store.append(street_address if street_address else '<MISSING>')
-                store.append(city if city else '<MISSING>')
-                store.append(state if state else '<MISSING>')
-                store.append(zipp if zipp else '<MISSING>')
-                store.append(country_code if country_code else '<MISSING>')
-                store.append(store_number if store_number else '<MISSING>')
-                store.append(phone if phone else '<MISSING>')
-                store.append(location_type if location_type else '<MISSING>')
-                store.append(latitude if latitude else '<MISSING>')
-                store.append(longitude if longitude else '<MISSING>')
-                store.append(hours if hours else '<MISSING>')
-                store.append(page_url)
-                # print("data ===="+str(store))
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-                yield store
-                
-            page += 1
-
-        if current_results_len < MAX_RESULTS:
-                # print("max distance update")
-                search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
-                   
+        store = []
+        store.append(base_url )
+        store.append(location_name if location_name else '<MISSING>')
+        store.append(street_address if street_address else '<MISSING>')
+        store.append(city if city else '<MISSING>')
+        store.append(state if state else '<MISSING>')
+        store.append(zipp if zipp else '<MISSING>')
+        store.append(country_code if country_code else '<MISSING>')
+        store.append(store_number if store_number else '<MISSING>')
+        store.append(phone if phone else '<MISSING>')
+        store.append('<MISSING>')
+        store.append('<MISSING>')
+        store.append('<MISSING>')
+        store.append(hours if hours else '<MISSING>')
+        store.append(page_url)
+        # print("data ===="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        yield store
+             
 def scrape():
     data = fetch_data()
 

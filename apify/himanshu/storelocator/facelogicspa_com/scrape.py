@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import io
 import json
-import requests
 
 session = SgRequests()
 
@@ -22,230 +21,197 @@ def write_output(data):
 
 
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
-    }
-    base_url = "http://www.facelogicspa.com/pages/spas"
-    r = requests.get(base_url, headers=headers)
-    addressess =[]
+    r = session.get("http://www.facelogicspa.com/pages/spas")
     soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
-    exists = soup.select('.pt25.pl25.pr25.pb25')
-    # pr/int(len(exists[0].find_all('a')))
-    # for link in exists[0].findAll('a'):
-    #     print(link['href'])
-
-    for links in exists[0].findAll('a'):
-        if "http" in links.get('href'):
-            detail_page_url = links.get('href')
-            # print(detail_page_url)
-            # print(links.get('href'))
-            if "Clovis" in links.get('href'):
-
-                contact_url_details = requests.get(
-                    "http://www.facelogicclovis.com/pages/contact", headers=headers)
-                contact_url_soup = BeautifulSoup(
-                    contact_url_details.text, "lxml")
-                page_url = "http://www.facelogicclovis.com/pages/contact"
-                address = contact_url_soup.find('h1').parent.get_text(
-                ).replace("\n", ' ').strip().split(',')
-                location_name = address[0].split(' ')[-1]
-                street_address = address[1].strip() + address[2].strip()
-                city = links.get_text()
-                state = address[-1].strip().split('.')[0].split(' ')[0]
-                zip = address[-1].strip().split('.')[0].split(' ')[1]
-                phone = address[-1].strip().split('.')[1].strip()[:-1]
-                hours_of_operation = "<MISSING>"
-            elif "facelogicbroomfield" in links.get('href'):
-                
-                # print("~~~~~~~~~~~~~~~~~ ",links.get('href'))
-                contact_url_details = requests.get(
-                    "http://www.facelogicbroomfield.com/facelogicco/ContactUs", headers=headers)
-                page_url = "http://www.facelogicbroomfield.com/facelogicco/ContactUs"
-                contact_url_soup = BeautifulSoup(
-                    contact_url_details.text, "lxml")
-                address = contact_url_soup.select(
-                    '.row-1')[0].findAll('p')[-1].get_text().split(',')
-                location_name = "Facelogic Essential Skincare Spa"
-                street_address = ' '.join(address[:-1])[9:]
-                city = links.get_text()
-                state = address[-1].strip().split(' ')[0]
-                zip = address[-1].strip().split(' ')[1]
-                phone = contact_url_soup.select(
-                    '.row-1')[0].findAll('p')[-3].get_text()[7:]
-                hours_of_operation = contact_url_soup.select('.content')[1].find('h2').find_next('p').get_text()+" , "+contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').get_text()+" , "+ contact_url_soup.select('.content')[1] \
-                .find('h2').find_next('p').find_next('p').find_next('p').get_text()+" , "+contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').get_text() \
-                +" , "+contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text()   \
-                +" , "+contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text() \
-                +" , "+contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').find_next('p').get_text()
-               # print(hours_of_operation)
-                # .find_next('p').find_next('p').get_text() + ", " + contact_url_soup.select('.content')[1].find('h2').find_next(
-                #     'p').find_next('p').find_next('p').get_text() + ", " + contact_url_soup.select('.content')[1].find('h2').find_next('p').find_next('p').find_next('p').find_next('p').get_text()
+    for link in soup.find("div",{"class":"pt25 pl25 pr25 pb25"}).find_all("a"):
+        if "http" not in link['href']:
             
-            elif "facelogicsc" in links.get('href'):
-                
-                contact_url_details = requests.get("https://facelogicsc.com", headers=headers)
-                contact_url_soup = BeautifulSoup(
-                    contact_url_details.text, "lxml")
-                page_url = "https://facelogicsc.com"
-                location_name = "Hautigo Spa"
-                address = contact_url_soup.findAll("div",{"class":"textwidget"})
-                # 'h3')[-1].find_next('p').get_text().replace("\n", ' ').split(',')
-                hours_of_operation = " ".join(list(address[1].stripped_strings)).split(".menu")[0]
-                # print(" ".join(list(address[1].stripped_strings)).split(".menu")[0])
-                phone = list(address[-1].stripped_strings)[0]
-                city = list(address[-1].stripped_strings)[-1].split(",")[0]
-                zip = list(address[-1].stripped_strings)[-1].split(",")[1].strip().split(" ")[-1]
-                state = list(address[-1].stripped_strings)[-1].split(",")[1].strip().split(" ")[0]
-                
-                # 
-                # street_address = address[0].strip()
-                # city = links.get_text()
-                # state = address[1].strip().split(' ')[0]
-                # zip = address[1].strip().split(' ')[1]
-                # phone = contact_url_soup.select(
-                #     '#text-8')[0].find('a').get_text()
-                hours_of_operation = contact_url_soup.select(
-                    '#text-7')[0].find('ul', {'class', 'menu'}).get_text().replace('\n', ' ').strip()
-            elif "facelogickisco" in links.get('href'):
-                # print("~~~~~~~vv~~~~~~~~~~ ",links.get('href'))
-
-                contact_url_details = requests.get(
-                    "https://facelogickisco.com/contact-find-us/", headers=headers)
-                page_url = "https://facelogickisco.com/contact-find-us/" 
-                contact_url_soup = BeautifulSoup(
-                    contact_url_details.text, "lxml")
-                address = contact_url_soup.select(
-                    '.entry-content')[0].findAll('p')[-2].get_text().replace("\n", ',').split(',')
-
-                location_name = "MT. KISCO, NEW YORK"
-                street_address = address[0].strip() + " " + address[1].strip()
-                city = links.get_text()
-                state = address[-3].strip().split(' ')[0]
-                zip = address[-3].strip().split(' ')[1]
-                phone = address[-2][7:]
-                hours_of_operation = contact_url_soup.select(
-                    '.textwidget.custom-html-widget')[0].get_text().replace('\n', ' ').strip()
-                # print(hours_of_operation)
-            elif "facelogicbcs" in links.get('href'):
-                
-                contact_url_details = requests.get(
-                    "http://www.facelogicbcs.com/", headers=headers)
-                page_url = "http://www.facelogicbcs.com/" 
-                contact_url_soup = BeautifulSoup(
-                    contact_url_details.text, "lxml")
-                address = contact_url_soup.find('h3').get_text().split(',')
-                location_name = "FacelogicBCS"
-                street_address = ' '.join(address[:-1])
-                # print(contact_url_soup.find("span",{"class":"site-phone"}).text)
-                #print(street_address)
-                city = links.get_text()
-                state = address[-1].split(' ')[1]
-                zip = address[-1].split(' ')[-1][1:]
-                phone = contact_url_soup.find("span",{"class":"site-phone"}).text
-                hours_of_operation = "<MISSING>"
-            elif "facelogichighlandpark" in links.get('href'):
-                # print("~~~~~~~done....~~~~~~~~~~ ",links.get('href'))
-                contact_url_details = requests.get(
-                    "https://facelogichighlandpark.com/contact-us", headers=headers)
-                page_url = "https://facelogichighlandpark.com/contact-us"
-                contact_url_soup = BeautifulSoup(
-                    contact_url_details.text, "lxml")
-                address = contact_url_soup.find('h4').find_next('h4').find_next(
-                    'p').get_text().replace('\n', ',').split(',')
-                # print("heeyyyy ",  address)
-                location_name = contact_url_soup.find(
-                    'h4').find_next('h4').get_text()
-                street_address = ' '.join(address[:-2])
-                city = links.get_text()
-                state = address[-2].strip().split(' ')[0]
-                zip = address[-2].strip().split(' ')[1]
-                phone = contact_url_soup.find('h4').find_next(
-                    'h4').find_next('p').find_next('p').find('a').get_text()
-                hours_of_operation = contact_url_soup.findAll(
-                    'h4')[-1].find_next('p').find_next('div').get_text().replace('\n', ' ')
-            elif "salonvision" in links.get('href'):
-                contact_url_details = requests.get(
-                    "https://www.salonvision.com/facelogictx/", headers=headers)
-                page_url = "https://www.salonvision.com/facelogictx/"
-                contact_url_soup = BeautifulSoup(
-                    contact_url_details.text, "lxml")
-                address = contact_url_soup.select(
-                    "#footerinfo")[0].get_text().replace("\r\n", '').split("|")
-                location_name = "<MISSING>"
-                street_address = address[0].replace("\n", '')
-                city = links.get_text()
-                state = address[1].strip().split(
-                    ',')[1].strip().split(' ')[0].strip()
-                zip = address[1].strip().split(
-                    ',')[1].strip().split(' ')[1].strip()
-                phone = address[-1].strip()
-                hours_of_operation = "<MISSING>"
-
-            # elif "facelogicspawaco" in links.get('href'):
-            else:
-                contact_url_details = requests.get(
-                    "https://facelogicspawaco.com/contact-us/", headers=headers)
-                page_url = "https://facelogicspawaco.com/contact-us/"
-                contact_url_soup = BeautifulSoup(
-                    contact_url_details.text, "lxml")
-                address = contact_url_soup.select(".et_pb_all_tabs")[0].select(
-                    '.et_pb_tab_content')[0].get_text().replace("\n", '').split(',')
-                location_name = "<MISSING>"
-                street_address = address[0]
-                city = links.get_text()
-                state = address[1].strip().split(' ')[0]
-                zip = address[1].strip().split(' ')[1]
-                phone = contact_url_soup.select(".et_pb_all_tabs")[0].select(
-                    '.et_pb_tab_content')[1].get_text().replace("\n", '').split("Email:")[0][14:]
-
-                hours_of_operation = contact_url_soup.select(".et_pb_all_tabs")[0].select(
-                    '.et_pb_tab_content')[2].get_text().replace('\n', ' ').strip().split(": CLOSED Note:")[0]
-        else:
-            detail_page_url = "http://www.facelogicspa.com" + links.get('href')
-            # print(detail_page_url)
-            detail_url = requests.get(
-                "http://www.facelogicspa.com" + links.get('href'), headers=headers)
-            page_url = "http://www.facelogicspa.com" + links.get('href')
-            detail_soup = BeautifulSoup(detail_url.text, "lxml")
-            address = detail_soup.select('.mt20.mb20')[0].find('p').get_text().replace(
-                '\r\n', '').strip().replace("         ", '').split(',')
+            page_url = "http://www.facelogicspa.com" + (link['href'])
+            r1 = session.get(page_url)
+            soup1 = BeautifulSoup(r1.text, "lxml")
             location_name = "<MISSING>"
-            street_address = ''.join(address[:-1])
-            city = links.get_text()
-            state = address[-1].strip().split(' ')[0]
-            zip = address[-1].strip().split(' ')[1]
-            phone = (detail_soup.select('.mt20.mb20')[0].find(
-                'p').next_sibling.strip()[3:]).replace('FACE ', '')
-            hours_of_operation = "<MISSING>"
-
-        street_address = street_address.replace(u'\xa0', u' ').replace("Chino Hills", "").replace("Tustin", "").replace("Broomfield", "").replace(
-            "Roswell", "").replace("Las Vegas", "").replace("|  College Station", "").replace("Dallas", "").replace(" San Antonio", "").strip()
-        city = city.split("-")[0].strip()
-        # print(street_address)
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            addr = list(soup1.select(".mt20.mb20")[0].find("p").stripped_strings)
+            street_address = " ".join(addr[:-1])
+            city = addr[-1].split(",")[0]
+            state = addr[-1].split(",")[1].split(" ")[1]
+            zipp =  addr[-1].split(",")[1].split(" ")[2]
+            phone = soup1.select(".mt20.mb20")[0].find("p").next_sibling.strip().replace("P:",'').replace("-FACE ","").strip()
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            hours = "<MISSING>"
+        else:
+        
+            if "facelogicclovis" in link['href']:
+        
+                page_url = "http://www.facelogicclovis.com/pages/contact"
+                r2 = session.get(page_url)
+                soup2 = BeautifulSoup(r2.text, "lxml")
+                location_name = "<MISSING>"
+                addr = list(soup2.find("div",{"id":"le_54868cf8ef5a3"}).stripped_strings)
+                location_name = addr[1]
+                street_address = addr[2]
+                city = addr[3].split(",")[0]
+                state = addr[3].split(",")[1].split(" ")[1]
+                zipp =  addr[3].split(",")[1].split(" ")[2]
+                phone = addr[4].replace("P:",'').replace("-SKIN ","").strip()
+                latitude = soup2.find("div",{"class":"le_plugin_map map-responsive"}).find("iframe")['src'].split("sll=")[1].split(",")[0]
+                longitude = soup2.find("div",{"class":"le_plugin_map map-responsive"}).find("iframe")['src'].split("sll=")[1].split(",")[1].split("&")[0]
+                hours = "<MISSING>"
+            elif "facelogicupland" in link['href']:
+                
+                page_url = "https://www.facelogicupland.com/about/"
+                r2 = session.get(page_url)
+                soup2 = BeautifulSoup(r2.text, "lxml")
+                location_name = soup2.find("div",{"class":"entry-content"}).find_all("p")[4].find_all("strong")[0].text
+                street_address = soup2.find("div",{"class":"entry-content"}).find_all("p")[4].find_all("strong")[1].text
+                addr = soup2.find("div",{"class":"entry-content"}).find_all("p")[4].find_all("strong")[2].text
+                city = addr.split(",")[0]
+                state = addr.split(",")[1].split(" ")[1]
+                zipp = addr.split(",")[1].split(" ")[2]
+                phone = soup2.find("div",{"class":"entry-content"}).find_all("p")[5].find("strong").text.strip()
+                hours = " ".join(list(soup2.find("div",{"class":"entry-content"}).find_all("p")[6].stripped_strings)[2:])
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+            elif "facelogicco" in link['href']:
+                
+                page_url = "http://www.facelogicbroomfield.com/facelogicco/ContactUs"
+                r2 = session.get(page_url)
+                soup2 = BeautifulSoup(r2.text, "lxml")
+                data = list(soup2.find_all("div",{"class":"content"})[1].stripped_strings)
+                location_name = "<MISSING>"
+                street_address = data[-2]
+                city = data[-1].split(",")[0]
+                state = data[-1].split(",")[1].split(" ")[1]
+                zipp = data[-1].split(",")[1].split(" ")[2]
+                phone = data[-6]
+                hours = " ".join(data[1:15])
+                latitude = soup2.find("iframe")['src'].split("!3d")[1].split("!2m")[0]
+                longitude = soup2.find("iframe")['src'].split("!3d")[0].split("!2d")[1]
+                
+            elif "facelogicsc" in link['href']:
+                
+                page_url = link['href']
+                r2 = session.get(page_url)
+                soup2 = BeautifulSoup(r2.text, "lxml")
+                data = list(soup2.find_all("div",{"class":"textwidget"})[-1].stripped_strings)
+                location_name = "<MISSING>"
+                street_address = data[-2]
+                city = data[-1].split(",")[0]
+                state = data[-1].split(",")[1].split(" ")[1]
+                zipp = data[-1].split(",")[1].split(" ")[2]
+                phone = data[0]
+                hours = " ".join(list(soup2.find_all("div",{"class":"textwidget"})[-2].find("ul").stripped_strings))
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+            elif "facelogickisco" in link['href']:
+                
+                page_url = link['href']
+                r2 = session.get(page_url)
+                soup2 = BeautifulSoup(r2.text, "lxml")
+                data = list(soup2.find_all("div",{"class":"textwidget"})[-3].stripped_strings)
+                location_name = "<MISSING>"
+                street_address = data[1]
+                city = data[2].split(",")[0]
+                state = data[2].split(",")[1].split(" ")[1]
+                zipp = data[2].split(",")[1].split(" ")[2]
+                phone = data[-1]
+                hours = " ".join(list(soup2.find_all("div",{"class":"textwidget"})[-1].find("p").stripped_strings))
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+            elif "cleveland" in link['href']:
+                
+                page_url = "https://facelogiccle.com/"
+                r2 = session.get(page_url)
+                soup2 = BeautifulSoup(r2.text, "lxml")
+                data = list(soup2.find("span",{"id":"address"}).stripped_strings)
+                location_name = data[0]
+                street_address = data[1]
+                city = data[2].split(",")[0]
+                state = data[2].split(",")[1].split(" ")[1]
+                zipp = data[2].split(",")[1].split(" ")[2]
+                phone = data[-2].replace("P:",'').replace("-SKIN ","").strip()
+                hours = "<MISSING>"
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+            elif "facelogicbcs" in link['href']:
+                
+                page_url = link['href']
+                r2 = session.get(page_url)
+                soup2 = BeautifulSoup(r2.text, "lxml")
+                location_name = "FacelogicBCS"
+                data = soup2.find("h3",{"class":"text-align-center"}).text.split("|")
+                street_address = data[0].strip()
+                city = data[1].split(",")[0].strip()
+                state = data[1].split(",")[1].strip()
+                zipp = data[-1].strip()
+                phone = soup2.find("span",{"class":"site-phone"}).text.strip()
+                hours = "<MISSING>"
+                latitude = soup2.find(lambda tag: (tag.name == "script") and "mapLat" in tag.text).text.split('"mapLat":')[1].split(",")[0]
+                longitude = soup2.find(lambda tag: (tag.name == "script") and "mapLat" in tag.text).text.split('"mapLng":')[1].split(",")[0]
+            elif "facelogichighlandpark" in link['href']:
+                
+                page_url = "https://facelogichighlandpark.com/contact-us"
+                r2 = session.get(page_url)
+                soup2 = BeautifulSoup(r2.text, "lxml")
+                location_name = soup2.find_all("h4",{'typography':"HeadingDelta"})[1].text
+                data = list(soup2.find("p",{'class':'x-el x-el-p c1-23 c1-24 c1-31 c1-4r c1-a c1-33 c1-19 c1-34 c1-9 c1-36 c1-6v c1-96 c1-97 c1-98 x-d-ux x-d-aid x-d-route'}).stripped_strings)
+                street_address = data[0].split("\n")[0]
+                city = data[0].split("\n")[1].split(",")[0]
+                state = data[0].split("\n")[1].split(",")[1].split(" ")[1]
+                zipp = data[0].split("\n")[1].split(",")[1].split(" ")[2]
+                phone = soup2.find("a",{'class':'x-el x-el-a c1-a c1-20 c1-5i c1-22 c1-23 c1-24 c1-25 c1-26 c1-9 c1-2b c1-2c c1-91 c1-92 x-d-ux x-d-aid'}).text.strip()
+                hours = " ".join(list(soup2.find("div",{"class":"x-el x-el-p c1-23 c1-24 c1-31 c1-4r c1-a c1-33 c1-19 c1-o c1-9 c1-9d c1-9e c1-9f c1-9g c1-9h c1-9i c1-9j c1-9k c1-9l c1-9m c1-9n c1-9o c1-9p c1-9q c1-9r c1-9s c1-9t c1-9u c1-9v c1-9w c1-9x c1-9y c1-9z c1-a0 c1-a1 c1-a2 c1-a3 c1-a4 c1-36 c1-6v c1-96 c1-97 c1-98 x-d-ux x-d-route x-d-aid x-d-field-route x-rt"}).stripped_strings))
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+            elif "facelogictx" in link['href']:
+                
+                page_url = "https://www.salonvision.com/facelogictx/AboutUs.aspx"
+                r2 = session.get(page_url)
+                soup2 = BeautifulSoup(r2.text, "lxml")
+                location_name = "<MISSING>"
+                street_address = soup2.find("span",{"id":"ctl00_cphBody_A2_lblAddress"}).text.strip()
+                city = soup2.find("span",{"id":"ctl00_cphBody_A2_lblCity"}).text.strip()
+                state = soup2.find("span",{"id":"ctl00_cphBody_A2_lblState"}).text.strip()
+                zipp = soup2.find("span",{"id":"ctl00_cphBody_A2_lblZip"}).text.strip()
+                phone = soup2.find("span",{"id":"ctl00_cphBody_A2_lblPhone"}).text.strip()
+                hours = " ".join(list(soup2.find("table").stripped_strings)[1:])
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+            else:
+                page_url = "https://facelogicspawaco.com/contact-us/"
+                r2 = session.get(page_url)
+                soup2 = BeautifulSoup(r2.text, "lxml")
+                location_name = "<MISSING>"
+                data = list(soup2.find("div",{"class":"et_pb_tab_content"}).stripped_strings)
+                street_address = data[0]
+                city = data[-1].split(",")[0].strip()
+                state = data[-1].split(",")[1].split(" ")[1]
+                zipp = data[-1].split(",")[1].split(" ")[2]
+                phone = soup2.find_all("div",{"class":"et_pb_tab_content"})[-2].text.replace("Phone Number:","").replace("Email: [email protected]","").strip()
+                hours = " ".join(list(soup2.find_all("div",{"class":"et_pb_tab_content"})[-1].stripped_strings)[:-1])
+                latitude = soup2.find("iframe")['src'].split("!3d")[1].split("!2m")[0]
+                longitude = soup2.find("iframe")['src'].split("!3d")[0].split("!2d")[1]
+        
         store = []
         store.append('http://www.facelogicspa.com/')
         store.append(location_name)
-        store.append(street_address.replace('Mt. Kisco',''))
+        store.append(street_address)
         store.append(city)
         store.append(state)
-        store.append(zip)
+        store.append(zipp)
         store.append("US")
         store.append("<MISSING>")
         store.append(phone)
         store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip())
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours.encode('ascii', 'ignore').decode('ascii').strip())
         store.append(page_url)
         # print(store)
-        # if store[2] in addressess:
-        #     continue
-        # addressess.append(store[2])
-        return_main_object.append(store)
+        yield store
+        
 
-    return return_main_object
+   
 
 
 def scrape():
