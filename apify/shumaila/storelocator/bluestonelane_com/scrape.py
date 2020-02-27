@@ -63,7 +63,7 @@ def fetch_data():
         ccode = 'US'
         soup = BeautifulSoup(driver.page_source, "html.parser")
         title = soup.find('h1').text
-        title = title[0:title.find('-')]
+        #title = title[0:title.find('-')]
         title.lstrip()
         maindiv = soup.find('aside')
         street = maindiv.find('span',{'id':'yext-address'})
@@ -103,6 +103,9 @@ def fetch_data():
             hours = maindiv.find('div',{'class':'yext-hours'}).text
             hours = hours.replace('\n',' ')
             hours = hours.lstrip()
+            hourscheck = maindiv.find('span',{'class':'hours'}).text
+            if len(hourscheck) < 2:
+                hours = "<MISSING>"
         except:
             hours = "<MISSING>"
         try:
@@ -112,11 +115,11 @@ def fetch_data():
             #print(coords)
             start = coords.find('!2d')+3
             end = coords.find('!3d',start)
-            lat = coords[start:end]
+            longt = coords[start:end]
             start = end + 3
             end = coords.find('!',start)
             
-            longt = coords[start:end]
+            lat = coords[start:end]
             
             
         except:
