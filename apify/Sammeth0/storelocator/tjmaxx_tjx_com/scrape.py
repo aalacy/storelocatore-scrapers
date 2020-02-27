@@ -16,7 +16,7 @@ def get_driver():
 	return webdriver.Chrome('chromedriver', options=options)
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', encoding='utf-8') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -52,8 +52,7 @@ def fetch_data():
 	for ls in links:	
 		link=ls.find_elements_by_tag_name('a')
 		for l in link:
-			pages.append(l.get_attribute('href'))	
-	
+			pages.append(l.get_attribute('href'))
 	for p in pages:
 		driver_page.get(p)
 		time.sleep(18)
@@ -106,9 +105,9 @@ def fetch_data():
 	for l in range(len(locs)):
 		row = []
 		row.append(base_url)
-		row.append(locs[l])
+		row.append(locs[l].encode("ascii", errors="ignore").decode())
 		row.append(streets[l])
-		row.append(cities[l])
+		row.append(cities[l].encode("ascii", errors="ignore").decode())
 		row.append(states[l])
 		row.append(zips[l])
 		row.append("US")
