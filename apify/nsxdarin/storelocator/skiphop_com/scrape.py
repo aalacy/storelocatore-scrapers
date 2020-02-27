@@ -92,6 +92,10 @@ def fetch_data():
                 state = 'CA'
             if state == 'BC' or state == 'ON' or state == 'QC':
                 country = 'CA'
+            if state.lower == 'virginia':
+                state = 'VA'
+            if city == '35':
+                city = 'California'
             if ',' in name:
                 name = name.split(',')[0]
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
