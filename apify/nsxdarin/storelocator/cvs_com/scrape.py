@@ -23,14 +23,14 @@ def fetch_data():
             states.append('https://www.cvs.com' + line.split('href="')[1].split('"')[0])
     for state in states:
         cities = []
-        print('Pulling State %s...' % state)
+        #print('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
             if '<a href="/store-locator/cvs-pharmacy-locations/' in line2:
                 cities.append('https://www.cvs.com' + line2.split('href="')[1].split('"')[0])
         for city in cities:
             r2 = session.get(city, headers=headers)
-            print('Pulling City %s...' % city)
+            #print('Pulling City %s...' % city)
             for line2 in r2.iter_lines():
                 if '<a href="/store-locator/cvs-pharmacy-address/' in line2:
                     lurl = 'https://www.cvs.com' + line2.split('href="')[1].split('"')[0]
@@ -40,7 +40,7 @@ def fetch_data():
             LFound = True
             while LFound:
                 try:
-                    print('Pulling Location %s...' % loc)
+                    #print('Pulling Location %s...' % loc)
                     website = 'cvs.com'
                     typ = '<MISSING>'
                     hours = ''
