@@ -68,7 +68,7 @@ def fetch_data():
             store1 = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store1]
 
             yield store1
-            #print("========================================",store1)
+            # print("========================================",store1)
         else:
             r2 = requests.get(state_link, headers=headers)
             soup2 = BeautifulSoup(r2.text, "lxml")
@@ -108,7 +108,7 @@ def fetch_data():
                     store2 = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store2]
 
                     yield store2
-                    #print("========================================",store2)
+                    # print("========================================",store2)
                 else:
                     r4 = requests.get("https://www.autozone.com/locations/"+count.find("a",{"class":"c-directory-list-content-item-link"})['href'], headers=headers)
                     soup4 = BeautifulSoup(r4.text, "lxml")
@@ -148,7 +148,7 @@ def fetch_data():
                         store3 = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store3]
 
                         yield store3
-                        #print("========================================",store3)
+                        # print("========================================",store3)
 
 
     

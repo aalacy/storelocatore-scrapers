@@ -34,7 +34,7 @@ def fetch_data():
         page = 1
         while True:
             
-            r = session.get("https://locations.comerica.com/?q="+str(zip_code)+"&filter=all&page="+str(page))
+            r = requests.get("https://locations.comerica.com/?q="+str(zip_code)+"&filter=all&page="+str(page))
             soup = BeautifulSoup(r.text, "lxml")
             data = soup.find(lambda tag: (tag.name == "script") and "var results" in tag.text)
             if data:
@@ -55,7 +55,7 @@ def fetch_data():
                     latitude = i['location']['lat']
                     longitude = i['location']['lng']
 
-                    r1 = session.get(page_url)
+                    r1 = requests.get(page_url)
                     soup1 = BeautifulSoup(r1.text, "lxml")
                     if soup1.find("h4",{"property":"name"}):
                         location_name = soup1.find("h4",{"property":"name"}).text.strip()
@@ -95,7 +95,7 @@ def fetch_data():
                     store.append(location_type)
                     store.append(latitude)
                     store.append(longitude)
-                    store.append(hours_of_operation)
+                    store.append(hours_of_operation.replace('PM','PM,'))
                     store.append(page_url)
 
                     if store[2] in addressess:

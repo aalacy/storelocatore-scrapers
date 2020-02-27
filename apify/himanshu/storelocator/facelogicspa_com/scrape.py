@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import io
 import json
+import requests
 
 session = SgRequests()
 
@@ -25,18 +26,23 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "http://www.facelogicspa.com/pages/spas"
-    r = session.get(base_url, headers=headers)
+    r = requests.get(base_url, headers=headers)
     addressess =[]
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     exists = soup.select('.pt25.pl25.pr25.pb25')
+    # pr/int(len(exists[0].find_all('a')))
+    # for link in exists[0].findAll('a'):
+    #     print(link['href'])
+
     for links in exists[0].findAll('a'):
         if "http" in links.get('href'):
             detail_page_url = links.get('href')
+            # print(detail_page_url)
             # print(links.get('href'))
             if "Clovis" in links.get('href'):
 
-                contact_url_details = session.get(
+                contact_url_details = requests.get(
                     "http://www.facelogicclovis.com/pages/contact", headers=headers)
                 contact_url_soup = BeautifulSoup(
                     contact_url_details.text, "lxml")
@@ -53,7 +59,7 @@ def fetch_data():
             elif "facelogicbroomfield" in links.get('href'):
                 
                 # print("~~~~~~~~~~~~~~~~~ ",links.get('href'))
-                contact_url_details = session.get(
+                contact_url_details = requests.get(
                     "http://www.facelogicbroomfield.com/facelogicco/ContactUs", headers=headers)
                 page_url = "http://www.facelogicbroomfield.com/facelogicco/ContactUs"
                 contact_url_soup = BeautifulSoup(
@@ -78,7 +84,7 @@ def fetch_data():
             
             elif "facelogicsc" in links.get('href'):
                 
-                contact_url_details = session.get("https://facelogicsc.com", headers=headers)
+                contact_url_details = requests.get("https://facelogicsc.com", headers=headers)
                 contact_url_soup = BeautifulSoup(
                     contact_url_details.text, "lxml")
                 page_url = "https://facelogicsc.com"
@@ -87,7 +93,7 @@ def fetch_data():
                 # 'h3')[-1].find_next('p').get_text().replace("\n", ' ').split(',')
                 hours_of_operation = " ".join(list(address[1].stripped_strings)).split(".menu")[0]
                 # print(" ".join(list(address[1].stripped_strings)).split(".menu")[0])
-                phone = list(address[-1].stripped_strings)[1]
+                phone = list(address[-1].stripped_strings)[0]
                 city = list(address[-1].stripped_strings)[-1].split(",")[0]
                 zip = list(address[-1].stripped_strings)[-1].split(",")[1].strip().split(" ")[-1]
                 state = list(address[-1].stripped_strings)[-1].split(",")[1].strip().split(" ")[0]
@@ -104,7 +110,7 @@ def fetch_data():
             elif "facelogickisco" in links.get('href'):
                 # print("~~~~~~~vv~~~~~~~~~~ ",links.get('href'))
 
-                contact_url_details = session.get(
+                contact_url_details = requests.get(
                     "https://facelogickisco.com/contact-find-us/", headers=headers)
                 page_url = "https://facelogickisco.com/contact-find-us/" 
                 contact_url_soup = BeautifulSoup(
@@ -123,7 +129,7 @@ def fetch_data():
                 # print(hours_of_operation)
             elif "facelogicbcs" in links.get('href'):
                 
-                contact_url_details = session.get(
+                contact_url_details = requests.get(
                     "http://www.facelogicbcs.com/", headers=headers)
                 page_url = "http://www.facelogicbcs.com/" 
                 contact_url_soup = BeautifulSoup(
@@ -140,7 +146,7 @@ def fetch_data():
                 hours_of_operation = "<MISSING>"
             elif "facelogichighlandpark" in links.get('href'):
                 # print("~~~~~~~done....~~~~~~~~~~ ",links.get('href'))
-                contact_url_details = session.get(
+                contact_url_details = requests.get(
                     "https://facelogichighlandpark.com/contact-us", headers=headers)
                 page_url = "https://facelogichighlandpark.com/contact-us"
                 contact_url_soup = BeautifulSoup(
@@ -159,7 +165,7 @@ def fetch_data():
                 hours_of_operation = contact_url_soup.findAll(
                     'h4')[-1].find_next('p').find_next('div').get_text().replace('\n', ' ')
             elif "salonvision" in links.get('href'):
-                contact_url_details = session.get(
+                contact_url_details = requests.get(
                     "https://www.salonvision.com/facelogictx/", headers=headers)
                 page_url = "https://www.salonvision.com/facelogictx/"
                 contact_url_soup = BeautifulSoup(
@@ -167,8 +173,7 @@ def fetch_data():
                 address = contact_url_soup.select(
                     "#footerinfo")[0].get_text().replace("\r\n", '').split("|")
                 location_name = "<MISSING>"
-                street_address = address[0].replace("\n", '').split(
-                    ',')[1].strip() + " " + address[1].strip().split(',')[0].strip()
+                street_address = address[0].replace("\n", '')
                 city = links.get_text()
                 state = address[1].strip().split(
                     ',')[1].strip().split(' ')[0].strip()
@@ -179,7 +184,7 @@ def fetch_data():
 
             # elif "facelogicspawaco" in links.get('href'):
             else:
-                contact_url_details = session.get(
+                contact_url_details = requests.get(
                     "https://facelogicspawaco.com/contact-us/", headers=headers)
                 page_url = "https://facelogicspawaco.com/contact-us/"
                 contact_url_soup = BeautifulSoup(
@@ -198,7 +203,8 @@ def fetch_data():
                     '.et_pb_tab_content')[2].get_text().replace('\n', ' ').strip().split(": CLOSED Note:")[0]
         else:
             detail_page_url = "http://www.facelogicspa.com" + links.get('href')
-            detail_url = session.get(
+            # print(detail_page_url)
+            detail_url = requests.get(
                 "http://www.facelogicspa.com" + links.get('href'), headers=headers)
             page_url = "http://www.facelogicspa.com" + links.get('href')
             detail_soup = BeautifulSoup(detail_url.text, "lxml")
@@ -234,9 +240,9 @@ def fetch_data():
         store.append(hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip())
         store.append(page_url)
         # print(store)
-        if store[2] in addressess:
-            continue
-        addressess.append(store[2])
+        # if store[2] in addressess:
+        #     continue
+        # addressess.append(store[2])
         return_main_object.append(store)
 
     return return_main_object

@@ -71,7 +71,7 @@ def fetch_data():
                 phone = "<MISSING>"
             try:
                 hours_of_operation = " ".join(
-                    list(soup_loc.find("div", class_="timings-info").stripped_strings)).replace("Opening Hours", "").strip()
+                    list(soup_loc.find("div", class_="timings-info").stripped_strings)).replace("Opening Hours", "").replace('Tuesday',',Tuesday').replace('Wednesday',',Wednesday').replace('Thursday',',Thursday').replace('Friday',',Friday').replace('Saturday',',Saturday').replace('Sunday',',Sunday').strip()
             except:
                 hours_of_operation = "<MISSING>"
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,

@@ -67,6 +67,7 @@ def fetch_data():
                         store.append(lat if lat else "<MISSING>")
                         store.append(lng if lng else "<MISSING>")
                         store.append(hour if hour else "<MISSING>")
+                        print(store)
                         return_main_object.append(store)
     return return_main_object
 
