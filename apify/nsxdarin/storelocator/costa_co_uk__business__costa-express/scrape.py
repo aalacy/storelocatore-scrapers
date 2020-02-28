@@ -48,7 +48,7 @@ def fetch_data():
                 zc = item['storeAddress']['postCode'].encode('utf-8')
                 country = 'GB'
                 lng = item['longitude']
-                website = 'costa.co.uk'
+                website = 'costa.co.uk/business/costa-express'
                 lat = item['latitude']
                 hours = 'Mon: ' + item['storeOperatingHours']['openMon'] + '-' + item['storeOperatingHours']['closeMon']
                 hours = hours + '; Tue: ' + item['storeOperatingHours']['openTue'] + '-' + item['storeOperatingHours']['closeTue']
