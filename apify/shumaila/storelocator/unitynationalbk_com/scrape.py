@@ -20,9 +20,10 @@ def fetch_data():
     # Your scraper here
 
     data = []
-    p = 1
+    p = 0
     pattern = re.compile(r'\s\s+')
     url = 'https://unitynationalbk.com/locations/?place&latitude&longitude&type=location#038;latitude&longitude&type=location'
+    url = 'https://unitynationalbk.com/locations/?place=&latitude=&longitude=&type=location&parent_bank%5B%5D=unity-national-bank'
     flag = True
     while flag:
         #print(url)
@@ -110,22 +111,8 @@ def fetch_data():
                 pcode = '0' + pcode
 
 
-            #print(url)
-            #print(title)
-            #print(store)
-            #print(ltype)
-            #print(address)
-            #print(street)
-            #print(city)
-            #print(state)
-            #print(pcode)
-            #print(hours)
-            #print(phone)
-            #print(lat)
-            #print(longt)
-            #print(p)
-            #print(".......................")
-            p += 1
+         
+            
             data.append([
                 'https://unitynationalbk.com',
                 url,
@@ -142,6 +129,8 @@ def fetch_data():
                 longt,
                 hours
             ])
+            #print(p,data[p])
+            p += 1
 
         next = soup.find('a', {'class': 'next page-numbers'})
         try:
