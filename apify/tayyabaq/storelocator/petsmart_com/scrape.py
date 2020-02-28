@@ -68,7 +68,7 @@ def fetch_data():
                 data.append([
                     'https://www.petmarts.com/',
                      ul.replace(u'\u2019',''),
-                    loc.replace(u'\u2019',''),
+                    loc.replace(u'\u2019','').strip(),
                     street.replace(u'\u2019',''),
                     cty.replace(u'\u2019',''),
                     sts.replace(u'\u2019',''),
