@@ -115,7 +115,7 @@ def fetch_data():
              street.replace(u'\u2019',''),
              cty.replace(u'\u2019',''),
              sts.replace(u'\u2019',''),
-             zcode.replace(u'\u2019',''),
+             zcode.replace(u'\u2019','').replace("\n",""),
              ctry.replace(u'\u2019',''),
              '<MISSING>',
              ph.replace(u'\u2019',''),
