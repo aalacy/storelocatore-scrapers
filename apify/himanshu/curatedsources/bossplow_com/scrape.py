@@ -7,7 +7,6 @@ import sgzip
 session = SgRequests()
 import requests
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -30,10 +29,7 @@ def fetch_data():
             continue    
         page_url = base_url + link['href']
         # print(page_url)
-        try:        
-            r1 = requests.get(page_url)
-        except:
-            pass
+        r1 = session.get(page_url)
         soup = BeautifulSoup(r1.text, "lxml")
         location_name = soup.find("h3").text.strip()
         addr = list(soup.find("address").stripped_strings)
@@ -41,6 +37,8 @@ def fetch_data():
         city = addr[0].split("|")[1].split(",")[0].strip()
         state = addr[0].split("|")[1].split(",")[1].split(" ")[1]
         zipp = " ".join(addr[0].split("|")[1].split(",")[1].split(" ")[2:]).upper()
+        if zipp == "UB11 1FW":
+            continue
         # print(zipp)
         if zipp.replace('-','').isdigit():
             country_code = "US"
@@ -71,8 +69,8 @@ def fetch_data():
         store.append('<MISSING>')
         store.append(hours if hours else '<MISSING>')
         store.append(page_url)
-        # print("data ===="+str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        #print("data ===="+str(store))
+        #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         yield store
              
 def scrape():
