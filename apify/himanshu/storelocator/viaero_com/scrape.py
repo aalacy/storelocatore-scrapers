@@ -21,12 +21,11 @@ def fetch_data():
     addressess = []
     for location in soup.find_all('a'):
         if 'Visit Store' in location.text:
-
-            link = 'https://info.viaero.com'+location["href"]
-            try:
-                location_request = requests.get(link)
-            except:
-                pass
+            if "https" in location['href']:
+                link = location['href']
+            else:
+                link = 'https://info.viaero.com'+location["href"]
+            location_request = requests.get(link)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             data = list(location_soup.find_all("span",{"class":"hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_rich_text"})[1].stripped_strings)
             if "@context" in data[-1]:

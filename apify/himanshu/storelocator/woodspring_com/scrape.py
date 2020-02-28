@@ -76,7 +76,7 @@ def fetch_data():
                 store.append(location_data['hotelInfo']['policyCodes'][0]['policyDescription'][0].replace("Hotel Office Hours :","").replace("|","").strip())
             except:
                 store.append("<MISSING>")
-            store.append("https://www.woodspring.com/" + str(store_data["hotelId"]))
+            store.append(main_url+str(store_data["hotelUri"]))
             for i in range(len(store)):
                 if type(store[i]) == str:
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
