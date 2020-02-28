@@ -1,4 +1,6 @@
 # Import libraries
+import xml
+import lxml
 import requests
 from bs4 import BeautifulSoup
 import csv
@@ -11,7 +13,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -20,21 +22,26 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
+    p = 0
     url = 'https://www.simplyss.com'
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
     repo_list = soup.findAll('div',{'class': 'column'})
     cleanr = re.compile('<.*?>')
     phoner = re.compile('(.*?)')
+    print(len(repo_list))
     for repo in repo_list:
         link = repo.find('a')
         link = link['href']
+        print('state=',link)
         page = requests.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
-        nextlist = soup.findAll('div', {'class': 'location-image'})
+        nextlist = soup.findAll('a',{'class':'btn-blue'})
+        print("CITY COUNT =",len(nextlist))
         for nextlink in nextlist:
-            link = nextlink.find('a')
-            link = link['href']
+            
+            link = nextlink['href']
+            #print('city=',link)
             page = requests.get(link)
             soup = BeautifulSoup(page.text, "html.parser")
             soup = str(soup)
@@ -43,27 +50,27 @@ def fetch_data():
             start = soup.find(":", start) + 3
             end = soup.find(",", start)
             title = soup[start:end - 1]
-            print(title)
+            #print(title)
             start = soup.find("streetAddress")
             start = soup.find(":", start) + 3
             end = soup.find(",", start)
             street = soup[start:end - 1]
-            print(street)
+            #print(street)
             start = soup.find("addressLocality")
             start = soup.find(":", start) + 3
             end = soup.find(",", start)
             city = soup[start:end - 1]
-            print(city)
+            #print(city)
             start = soup.find("addressRegion")
             start = soup.find(":", start) + 3
             end = soup.find(",", start)
             state = soup[start:end - 1]
-            print(state)
+            #print(state)
             start = soup.find("postalCode")
             start = soup.find(":", start) + 3
             end = soup.find(",", start)
             pcode = soup[start:end - 1]
-            print(pcode)
+            #print(pcode)
             if len(pcode) < 4:
                 pcode = "<MISSING>"
             start = soup.find("addressCountry")
@@ -73,12 +80,12 @@ def fetch_data():
             ccode = re.sub("\r", "", ccode)
             ccode = re.sub("\n", "", ccode)
             ccode = re.sub('"', "", ccode)
-            print(ccode)
+            #print(ccode)
             start = soup.find("latitude")
             start = soup.find(":", start) + 3
             end = soup.find(",", start)
             lat = soup[start:end - 1]
-            print(lat)
+            #print(lat)
             start = soup.find("longitude")
             start = soup.find(":", start) + 3
             end = soup.find("}", start)
@@ -86,13 +93,13 @@ def fetch_data():
             longt = re.sub("\r", "", longt)
             longt = re.sub("\n", "", longt)
             longt = re.sub('"', "", longt)
-            print(longt)
+            #print(longt)
             start = soup.find("openingHours")
             start = soup.find(":", start) + 3
             end = soup.find('"', start+1)
             hours = soup[start:end]
             hours = hours.replace(",", "-")
-            print(hours)
+            #print(hours)
             start = soup.find("telephone")
             start = soup.find(":", start) + 3
             end = soup.find('"', start+1)
@@ -100,11 +107,13 @@ def fetch_data():
             phone = re.sub("\r", "", phone)
             phone = re.sub("\n", "", phone)
             phone = re.sub('"', "", phone)
-            print(phone)
-            print("....................................")
-
+            #print(phone)
+            #print("....................................")
+            ccode = ccode.rstrip()
+            longt = longt.rstrip()
             data.append([
                     url,
+                    link,
                     title,
                     street,
                     city,
@@ -118,7 +127,10 @@ def fetch_data():
                     longt,
                     hours
             ])
+            #print(p,data[p])
+            p += 1
 
+    print(p)
     return data
 
 
