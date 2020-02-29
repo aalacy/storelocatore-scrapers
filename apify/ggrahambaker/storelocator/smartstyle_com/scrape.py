@@ -90,7 +90,6 @@ def fetch_data():
             hours = hours.strip()
             if street_address not in dup_tracker:
                 print(street_address)
- 
                 dup_tracker.add(street_address)
             else:
                 continue

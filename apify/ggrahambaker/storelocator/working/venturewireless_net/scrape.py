@@ -68,7 +68,6 @@ def fetch_data():
         all_store_data.append(store_data)
 
 
-
     driver.quit()
     return all_store_data
 
