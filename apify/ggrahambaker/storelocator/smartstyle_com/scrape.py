@@ -27,7 +27,9 @@ def fetch_data():
 
     coord = search.next_coord()
     all_store_data = []
-    dup_tracker = []
+    id_tracker = set()
+    dup_tracker = set()
+
     while coord:
         print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
@@ -51,10 +53,11 @@ def fetch_data():
                 continue
             
             store_number = loc['storeID']
-            if store_number not in dup_tracker:
-                dup_tracker.append(store_number)
+            if store_number not in id_tracker:
+                id_tracker.add(store_number)
             else:
                 continue
+            
             page_json_url = 'https://info3.regiscorp.com/salonservices/siteid/6/salon/' + str(store_number)
             
             r = session.get(page_json_url, headers=HEADERS)
@@ -62,7 +65,9 @@ def fetch_data():
             loc = json.loads(r.content)
             
             location_name = loc['name']
-            street_address = loc['address']
+            
+            street_address = loc['address'].strip()
+            
             city = loc['city']
             state = loc['state']
             zip_code = loc['zip']
@@ -80,13 +85,23 @@ def fetch_data():
                 day = part['days']
                 hour_range = part['hours']['open'] + ' - ' + part['hours']['close']
                 
-                hours += day + ' ' + hour_range + ' '            
-            
+                hours += day + ' ' + hour_range + ' '     
+
+            hours = hours.strip()
+            if street_address not in dup_tracker:
+                print(street_address)
+ 
+                dup_tracker.add(street_address)
+            else:
+                continue
+
+           
 
             if hours == '':
                 hours = '<MISSING>'
             location_type = '<MISSING>'
             page_url = '<MISSING>'
+            
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
