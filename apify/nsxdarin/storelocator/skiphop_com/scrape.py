@@ -92,7 +92,7 @@ def fetch_data():
                 state = 'CA'
             if state == 'BC' or state == 'ON' or state == 'QC':
                 country = 'CA'
-            if state.lower == 'virginia':
+            if state.lower() == 'virginia':
                 state = 'VA'
             if city == '35':
                 city = 'California'
