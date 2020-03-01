@@ -23,7 +23,7 @@ def fetch_data():
             locs.append(lurl)
     for loc in locs:
         Fuel = False
-        #print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc)
         website = 'samsclub.com/fuel'
         typ = 'Gas'
         hours = ''
@@ -37,27 +37,27 @@ def fetch_data():
         lng = ''
         phone = ''
         store = loc.rsplit('/',1)[1]
-        r2 = session.get(loc, headers=headers)
+        locurl = 'https://www.samsclub.com/api/node/clubfinder/' + store
+        r2 = session.get(locurl, headers=headers)
         for line2 in r2.iter_lines():
-            if ',"clubDetails":{"' in line2 and '"displayName":"Fuel Center"' in line2:
+            if '"postalCode":"' in line2 and '"displayName":"Fuel Center"' in line2:
                 Fuel = True
-                cinfo = line2.split(',"clubDetails":{"')[1]
-                name = cinfo.split('"name":"')[1].split('"')[0]
-                zc = cinfo.split('"postalCode":"')[1].split('"')[0]
+                name = line2.split('"name":"')[1].split('"')[0]
+                zc = line2.split('"postalCode":"')[1].split('"')[0]
                 try:
-                    add = cinfo.split('"address1":"')[1].split('"')[0]
+                    add = line2.split('"address1":"')[1].split('"')[0]
                 except:
                     add = ''
                 try:
-                    add = add + ' ' + cinfo.split('"address2":"')[1].split('"')[0]
+                    add = add + ' ' + line2.split('"address2":"')[1].split('"')[0]
                 except:
                     pass
-                city = cinfo.split('"city":"')[1].split('"')[0]
-                state = cinfo.split('"state":"')[1].split('"')[0]
-                phone = cinfo.split('"phone":"')[1].split('"')[0]
-                lat = cinfo.split('"latitude":')[1].split('}')[0]
-                lng = cinfo.split('"longitude":')[1].split(',')[0]
-                fcinfo = cinfo.split('"displayName":"Fuel Center","operationalHours":{')[1].split('}}},')[0]
+                city = line2.split('"city":"')[1].split('"')[0]
+                state = line2.split('"state":"')[1].split('"')[0]
+                phone = line2.split('"phone":"')[1].split('"')[0]
+                lat = line2.split('"latitude":')[1].split(',')[0]
+                lng = line2.split('"longitude":')[1].split('}')[0]
+                fcinfo = line2.split('"displayName":"Fuel Center","operationalHours":{')[1].split('}}},')[0]
                 days = fcinfo.split('},"')
                 for day in days:
                     hrs = day.split('"startHr":"')[1].split('"')[0] + '-' + day.split('"endHr":"')[1].split('"')[0]
