@@ -88,7 +88,7 @@ def fetch_data():
 		states.append(driver_store.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[2]').text.split(',')[1].split(' ')[-2])
 		zips.append(driver_store.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[2]').text.split(',')[1].split(' ')[-1])	
 		try:
-			ids.append(driver_store.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[3]').text.replace('#','').strip())
+			ids.append(driver_store.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[3]').text.replace('#','').replace('Store','').strip())
 		except:
 			ids.append("<MISSING>")		
 		try:
