@@ -41,6 +41,7 @@ def fetch_data():
         print(str(len(locs)) + ' Locations Found...')
     stores = []
     for loc in locs:
+        print('Pulling Location %s...' % loc)
         PFound = True
         while PFound:
             try:
@@ -96,6 +97,10 @@ def fetch_data():
                         addinfos.append(addinfo)
                         if hours == 'Mo-Su':
                             hours = '24 Hours'
+                        if 'atm-' in loc:
+                            typ = 'ATM'
+                        else:
+                            typ = 'Branch'
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             except:
                 PFound = True
