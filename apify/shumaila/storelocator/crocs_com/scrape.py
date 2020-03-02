@@ -41,7 +41,8 @@ def fetch_data():
         ccode = 'US'
         soup = BeautifulSoup(r.text, "html.parser")
         city_list = soup.findAll('div', {'class': 'itemlist'})
-        print("cities = ",len(city_list))
+
+        #print("cities = ",len(city_list))
 
         for cities in city_list:
             cities = cities.find('a')
@@ -107,8 +108,15 @@ def fetch_data():
                 hours = re.sub('\s+', ' ',hours).strip()
                 hours = hours.replace('Holiday hours may vary. Please call store for details.','')
                 hours = hours.replace('*','')
-                hours = hours.replace('day ','day :')
-
+                hours = hours.replace('day ','day : ')
+                soup = str(soup)
+                start = soup.find('org_icon')
+                start = soup.find("'",start)+1
+                end =  soup.find("'",start)
+                ltype = soup[start:end]
+                if len(ltype) < 2:
+                    ltype = "<MISSING>"
+                
                 data.append([
                         'https://www.crocs.com//',
                         link,                   
@@ -120,7 +128,7 @@ def fetch_data():
                         'US',
                         store,
                         phone,
-                        "<MISSING>",
+                        ltype,
                         lat,
                         longt,
                         hours
