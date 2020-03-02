@@ -67,7 +67,7 @@ def fetch_data():
             "https://www.awaytravel.com",
             loc,
             street,
-            city.replace(",","")
+            city.replace(",",""),
             state,
             zip,
             con,
