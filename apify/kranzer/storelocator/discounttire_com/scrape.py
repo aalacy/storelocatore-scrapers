@@ -38,17 +38,17 @@ class Scrape(base.Spider):
                 i.add_value('location_name', js['name'])
                 i.add_value('phone', js['telephone'])
                 i.add_value('hours_of_operation', '; '.join(js['openingHours']))
-                # try:
-                #     lat_lng = sel.xpath('//div[@class="static-map__container___1pH0L"][1]/@style')[0].split('=')[1]
-                #     lat_lng = lat_lng[:lat_lng.find('&')]
-                #     i.add_value('latitude', lat_lng.split(',')[0])
-                #     i.add_value('longitude', lat_lng.split(',')[1])
-                # except:
-                #     pass
-                i.add_value('latitude', "<INACCESSIBLE>")
-                i.add_value('longitude', "<INACCESSIBLE>")
+                try:
+                    lat_lng = sel.xpath('//div[contains(@class, "main-content")]/script[contains(text(), "__pageModel")]/text()')[0]
+                    latitude = re.findall(r'store:.+?latitude\":(.+?),', lat_lng)
+                    longitude = re.findall(r'store:.+?longitude\":(.+?)\}', lat_lng)
+                    i.add_value('latitude', latitude[0])
+                    i.add_value('longitude', longitude[0])
+                except:
+                    pass
                 if i.as_dict()['store_number'] not in crawled:
                     crawled.add(i.as_dict()['store_number'])
+                    print(i)
                     return i
 
     async def _fetch_stores(self, urls, loop):
