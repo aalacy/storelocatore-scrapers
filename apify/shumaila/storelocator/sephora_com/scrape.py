@@ -11,7 +11,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -20,11 +20,12 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
-    p = 1
+    p = 0
     url = 'https://www.sephora.com/happening/storelist'
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
-    repo_list = soup.findAll('a', {'class': 'css-j9u336'})
+    repo_list = soup.findAll('a', {'class': 'css-119uldj'})
+    print(len(repo_list))
     cleanr = re.compile('<.*?>')
     phoner = re.compile('(.*?)')
     for repo in repo_list:
@@ -132,10 +133,12 @@ def fetch_data():
             store = "<MISSING>"
         if state == "NW":
             state = "WA"
+        hours = hours.replace('PM',' PM')
+        hours = hours.replace('AM',' AM')
+        hours = hours.replace('pm',' pm')
+        hours = hours.replace('am',' am')
 
        
-
-        #print("................")
 
         flag = 0
         for chk in data:
@@ -146,7 +149,8 @@ def fetch_data():
 
         if flag == 0:
             data.append([
-                url,
+                'https://www.sephora.com/',
+                link,
                 title,
                 street,
                 city,
@@ -160,7 +164,8 @@ def fetch_data():
                 longt,
                 hours
             ])
-        p += 1
+            #print(p,data[p])
+            p += 1
 
     return data
 

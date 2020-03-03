@@ -74,7 +74,7 @@ def fetch_data():
         zc = ''
         lat = ''
         lng = ''
-        hours = '<MISSING>'
+        hours = ''
         r2 = session.get(lurl, headers=headers)
         lines = r2.iter_lines()
         HFound = False

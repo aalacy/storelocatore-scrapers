@@ -36,7 +36,7 @@ def fetch_data():
                 locs.append('https://www.libertytaxcanada.ca' + line2.split('href="')[1].split('"')[0])
     for loc in locs:
         time.sleep(5)
-        #print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc)
         website = 'libertytaxcanada.ca'
         typ = '<MISSING>'
         hours = ''
@@ -55,7 +55,7 @@ def fetch_data():
         for line2 in r2.iter_lines():
             if '<h1>' in line2:
                 name = line2.split('<h1>')[1].split('<')[0]
-            if 'streetAddress>' in line2:
+            if 'streetAddress' in line2:
                 add = line2.split('streetAddress')[1].split('>')[1].split('<')[0]
             if 'addressLocality' in line2:
                 city = line2.split('addressLocality')[1].split('>')[1].split('<')[0]
@@ -63,12 +63,10 @@ def fetch_data():
                 state = line2.split('addressRegion')[1].split('>')[1].split('<')[0]
             if 'postalCode' in line2:
                 zc = line2.split('postalCode')[1].split('>')[1].split('<')[0]
-            if 'itemprop="telephone" class="hidden">' in line2:
-                phone = line2.split('<itemprop="telephone" class="hidden">')[1].split('<')[0]
-            if 'itemprop=telephone' in line2:
-                phone = line2.split('itemprop=telephone')[1].split('>')[1].split('<')[0]
+            if 'id=office-number' in line2:
+                phone = line2.split('tel:')[1].split('"')[0]
             if 'OfficeId' in line2:
-                store = line2.split('value="')[1].split('"')[0]
+                store = line2.split('value=')[1].split(' ')[0].replace('"','').strip()
             if '<div class="office-hours-week' in line2 and hours == '':
                 HFound = True
             if HFound and '</section>' in line2:
@@ -81,11 +79,15 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + '; ' + hrs
+            if '<span itemprop="telephone" class="hidden">' in line2:
+                phone = line2.split('<span itemprop="telephone" class="hidden">')[1].split('<')[0]
         if phone == '':
             phone = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        hours = hours.replace('\t','').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ')
+        if add != '':
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

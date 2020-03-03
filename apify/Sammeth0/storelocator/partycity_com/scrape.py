@@ -65,7 +65,7 @@ def fetch_data():
 	
 	for pl in pages_links:
 		driver_page.get(pl)
-		time.sleep(5)
+		time.sleep(10)
 		loc_links=driver_page.find_elements_by_xpath('/html/body/div[1]/div[5]/div[1]/div[1]/div/div[2]/div[3]/div/div')
 		for ll in loc_links:
 			loc_link=ll.find_element_by_tag_name('a').get_attribute('href')
@@ -73,25 +73,22 @@ def fetch_data():
 	
 	for lp in pages_locs:
 		driver_loc.get(lp)
-		time.sleep(5)
-		try:
-			page_loc=driver_loc.find_elements_by_xpath('/html/body/div[1]/div[5]/div[1]/div[1]/div/div[2]/div[3]/div/div')
-			for pl in page_loc:
-				pages.append(pl.find_element_by_tag_name('a').get_attribute('href'))
-		except:
-			continue
+		time.sleep(10)
+		page_loc=driver_loc.find_elements_by_xpath('/html/body/div[1]/div[5]/div[1]/div[1]/div/div[2]/div[3]/div/div')
+		for pl in page_loc:
+			pages.append(pl.find_element_by_tag_name('a').get_attribute('href'))
 		
 	
 	for p in pages:
 		driver_store.get(p)
-		time.sleep(8)
-		locs.append(driver_store.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/span').text)
+		time.sleep(15)
+		locs.append(driver_store.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/span').text)	
 		streets.append(driver_store.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[1]').text)
 		cities.append(driver_store.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[2]').text.split(',')[0])
 		states.append(driver_store.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[2]').text.split(',')[1].split(' ')[-2])
 		zips.append(driver_store.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[2]').text.split(',')[1].split(' ')[-1])	
 		try:
-			ids.append(driver_store.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[3]').text.split('# ')[1])
+			ids.append(driver_store.find_element_by_xpath('/html/body/div[1]/div[5]/div[1]/div/div[1]/div/div[2]/div/div/div[1]/div[2]/div[3]').text.replace('#','').replace('Store','').strip())
 		except:
 			ids.append("<MISSING>")		
 		try:

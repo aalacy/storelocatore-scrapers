@@ -5,7 +5,7 @@ import re
 import json
 import datetime
 from datetime import datetime
-
+import requests
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,15 +27,16 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
-    r = session.get("https://www.waitrose.com/content/waitrose/en/bf_home/bf/474.html",headers=headers )
+    r = requests.get("https://www.waitrose.com/content/waitrose/en/bf_home/bf/474.html",headers=headers )
     soup = BeautifulSoup(r.text, "lxml")
     data = soup.find("select",{"id":"global-form-select-branch"}).find_all("option")
     for value in data:
+        print(value)
         if value['value'] == "":
             continue
         page_url = "https://www.waitrose.com/content/waitrose/en/bf_home/bf/"+str(value['value'])+".html"
         
-        r1 = session.get(page_url, headers=headers)
+        r1 = requests.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         if soup1.find("div",{"class":"col branch-details"}) == None:
             continue

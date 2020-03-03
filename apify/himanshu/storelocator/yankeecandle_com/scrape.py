@@ -36,13 +36,18 @@ def fetch_data():
         json_data = json.loads(data)
         for h in json_data['props']['pageData']['storesData']:
             k = (h['stores'])
+            
             for j in k:
+                dictionary = {'1':"Authorized Retailer",'2':"Yankee Candle",'3':"Outlet",'5':"Woodwick"}
+                location_type = dictionary[str(h['type'])]
                 
+
                 location_name = (j['label'])
                 street_address = (j['address']+" "+j['address2'])
                 city = (j['city'])
                 zipp = (j['zip'])
                 phone = (j['phone'])
+
                 
                 store_number = (j['id'])
                 state = j['state']['abbr']
@@ -71,7 +76,7 @@ def fetch_data():
                 hours_of_operation = (regHours1+' '+specialHours1).strip()
                 store = []
                 store.append("https://www.yankeecandle.com")
-                store.append(location_name if location_name else "<MISSING>") 
+                store.append(location_name.replace('&amp;','') if location_name else "<MISSING>") 
                 store.append(street_address if street_address else "<MISSING>")
                 store.append(city if city else "<MISSING>")
                 store.append(state if state else "<MISSING>")
@@ -79,7 +84,7 @@ def fetch_data():
                 store.append("US")
                 store.append(store_number if store_number else "<MISSING>") 
                 store.append(phone if phone else "<MISSING>")
-                store.append("<MISSING>")
+                store.append(location_type)
                 store.append(latitude if latitude else "<MISSING>")
                 store.append(longitude if longitude else "<MISSING>")
                 store.append(hours_of_operation if hours_of_operation else "<MISSING>")
@@ -87,7 +92,7 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-
+                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
                 yield store
     # canada location
     canada_r = requests.get("https://www.yankeecandle.com/stores/ontario", headers=headers)
@@ -97,6 +102,9 @@ def fetch_data():
     for h1 in json_data1['props']['pageData']['storesData']:
         k1 = (h1['stores'])
         for j1 in k1:
+            dictionary = {'1':"Authorized Retailer",'2':"Yankee Candle",'3':"Outlet",'5':"Woodwick"}
+            location_type = dictionary[str(h1['type'])]
+            # print(location_type)
             location_name = (j1['label'])
             street_address = (j1['address']+" "+j1['address2'])
             city = (j1['city'])
@@ -120,7 +128,7 @@ def fetch_data():
             longitude = (soup3.find(lambda tag: (tag.name ==  "script" and "latitude" in tag.text)).text.split('{"latitude":"')[1].split('","longitude":"')[1].split('","zoomLevel"')[0])
             store = []
             store.append("https://www.yankeecandle.com")
-            store.append(location_name if location_name else "<MISSING>") 
+            store.append(location_name.replace('&amp;','') if location_name else "<MISSING>") 
             store.append(street_address if street_address else "<MISSING>")
             store.append(city if city else "<MISSING>")
             store.append(state if state else "<MISSING>")
@@ -128,11 +136,12 @@ def fetch_data():
             store.append("CA")
             store.append(store_number if store_number else "<MISSING>") 
             store.append(phone if phone else "<MISSING>")
-            store.append("<MISSING>")
+            store.append(location_type)
             store.append(latitude if latitude else "<MISSING>")
             store.append(longitude if longitude else "<MISSING>")
             store.append(hours_of_operation if hours_of_operation else "<MISSING>")
             store.append(page_url)
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
 
 def scrape():

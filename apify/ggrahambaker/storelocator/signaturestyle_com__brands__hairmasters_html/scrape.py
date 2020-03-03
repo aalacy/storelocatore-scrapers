@@ -48,7 +48,7 @@ def fetch_data():
     locator_domain = 'https://www.signaturestyle.com/brands/hairmasters.html'
 
     search = sgzip.ClosestNSearch()
-    search.initialize()
+    search.initialize(country_codes = ['us', 'ca'])
 
     MAX_DISTANCE = 25
 
@@ -56,6 +56,7 @@ def fetch_data():
     all_store_data = []
     dup_tracker = []
     while coord:
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
 
@@ -69,7 +70,7 @@ def fetch_data():
         result_coords.append((x, y))
         
         for loc in res_json:
-            print("remaining zipcodes: " + str(len(search.zipcodes)))        
+                    
 
             lat = loc['latitude']
             longit = loc['longitude']
@@ -115,6 +116,7 @@ def fetch_data():
 
             if hours == '':
                 hours = '<MISSING>'
+
             location_type = '<MISSING>'
             page_url = '<MISSING>'
             

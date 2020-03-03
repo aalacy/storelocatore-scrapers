@@ -1,13 +1,50 @@
 import csv
-import sys
-
-import requests
 from bs4 import BeautifulSoup
+from sgrequests import SgRequests
+import requests
+from random import choice
+import http.client
 import re
 import json
 import sgzip
+import ssl
+import urllib3
+import pprint
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+import platform
 
+system = platform.system()
+session = SgRequests()
+requests.packages.urllib3.disable_warnings() 
+import urllib3
 
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    if "linux" in system.lower():
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
+    else:
+        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+def get_proxy():
+    url = "https://www.sslproxies.org/"
+    r = requests.get(url)
+    soup = BeautifulSoup(r.content, "html5lib")
+    return {'https': (choice(list(map(lambda x:x[0]+':'+x[1],list(zip(map(lambda x:x.text,soup.findAll('td')[::8]),map(lambda x:x.text,soup.findAll('td')[1::8])))))))}
+
+def proxy_request(request_type, url, **kwargs):
+    while 1:
+        try:
+            proxy = get_proxy()
+            # print("Using Proxy {}".format(proxy))
+            r = requests.request(request_type, url, proxies=proxy, timeout=3, **kwargs)
+            break
+        except:
+            pass
+    return r
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -22,123 +59,88 @@ def write_output(data):
 
 
 def fetch_data():
+    driver = get_driver()
+    urllib3.disable_warnings()
+    
+    base_url = "https://www.wawa.com"
+    driver.get(base_url)
+    cookies_list = driver.get_cookies()
+        # print("cookies_list === " + str(cookies_list))
+    cookies_json = {}
+    for cookie in cookies_list:
+        cookies_json[cookie['name']] = cookie['value']
+
+    cookies_string = str(cookies_json).replace("{", "").replace("}", "").replace("'", "").replace(": ", "=").replace(
+    ",", ";")
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'en-US,en;q=0.9,gu;q=0.8',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Cookie': cookies_string,
+        'Host': 'www.wawa.com',
+        'Pragma': 'no-cache',
+        'Referer': 'https://www.wawa.com/',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'same-origin',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
+        'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36',
+    
     }
-    base_url = "https://www.wawa.com"
+    r = proxy_request("get","https://www.wawa.com/site-map", verify=False, headers=headers)
+    soup = BeautifulSoup(r.text, "lxml")
+    # print(soup)
+    for link in soup.find_all("ul",{"class":"CMSSiteMapList"})[-1].find_all("a",{"class":"CMSSiteMapLink"}):
+        store_number = link['href'].split("/")[2]
+        page_url = base_url + link['href']
+        driver.get(page_url)
+        cookies_list = driver.get_cookies()
+        # print("cookies_list === " + str(cookies_list))
+        cookies_json = {}
+        for cookie in cookies_list:
+            cookies_json[cookie['name']] = cookie['value']
 
-    addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 200000
-    current_results_len = 0  # need to update with no of count.
-    coord = search.next_coord()    # zip_code = search.next_zip()
+        cookies_string = str(cookies_json).replace("{", "").replace("}", "").replace("'", "").replace(": ", "=").replace(
+        ",", ";")  # use for header cookie
+        r_headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36',
+            'Cookie': cookies_string,
+        }
+        #print(page_url)
+        r1 = proxy_request("get",page_url, headers=r_headers, verify=False)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        location_name = soup1.find("span",{"itemprop":"name"}).text.strip()
+        street_address = soup1.find("span",{"itemprop":"streetAddress"}).text.strip()
+        city = soup1.find("span",{"itemprop":"addressLocality"}).text.strip()
+        state = soup1.find("span",{"itemprop":"addressRegion"}).text.strip()
+        zipp = soup1.find("span",{"itemprop":"postalCode"}).text.strip()
+        phone = soup1.find("span",{"itemprop":"telephone"}).text.replace("Phone Number:","").strip()
+        latitude = soup1.find("meta",{"itemprop":"latitude"})['content']
+        longitude = soup1.find("meta",{"itemprop":"longitude"})['content']
+        hours = soup1.find("meta",{"itemprop":"openinghours"})['content']
 
-    while coord:
-        result_coords = []
-        locator_domain = base_url
-        location_name = ""
-        street_address = ""
-        city = ""
-        state = ""
-        zipp = ""
-        country_code = "US"
-        store_number = ""
-        phone = ""
-        location_type = ""
-        latitude = ""
-        longitude = ""
-        hours_of_operation = ""
-        lat = coord[0]
-        lng = coord[1]
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
-        # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
-        # lat = -42.225
-        # lng = -42.225
-        # zip_code = 11576
-        # print('location_url ==' +location_url))
-
-        try:
-            location_url = "https://www.wawa.com/Handlers/LocationByLatLong.ashx?limit=" + \
-                str(MAX_RESULTS) + "&lat=" + str(lat) + "&long=" + str(lng)
-            k = requests.get(location_url, headers=headers).json()
-        except:
-            continue
-
-        if "locations" in k:
-            current_results_len = len(k['locations'])
-            # print("==============",current_results_len)
-            for index, i in enumerate(k['locations']):
-                try:
-                    street_address = i['addresses'][0]['address'].encode(
-                        'ascii', 'ignore').decode('ascii').strip().replace(" (@", "")
-                except:
-                    street_address = "<MISSING>"
-                try:
-                    city = i['addresses'][0]['city'].encode(
-                        'ascii', 'ignore').decode('ascii').strip()
-                except:
-                    city = "<MISSING>"
-                try:
-                    state = i['addresses'][0]['state'].encode(
-                        'ascii', 'ignore').decode('ascii').strip()
-                except:
-                    state = "<MISSING>"
-                try:
-                    zipp = i['addresses'][0]['zip'].encode(
-                        'ascii', 'ignore').decode('ascii').strip()
-                except:
-                    zipp = "<MISSING>"
-                try:
-                    lat = i['addresses'][1]['loc'][0]
-                    lng = i['addresses'][1]['loc'][1]
-                except:
-                    lat = "<MISSING>"
-                    lng = "<MISSING>"
-                try:
-                    phone = i['telephone'].encode(
-                    'ascii', 'ignore').decode('ascii').strip()
-                except:
-                    phone = "<MISSING>"
-                try:
-                    hours_of_operation = i['openType'].encode(
-                        'ascii', 'ignore').decode('ascii').strip()
-                except:
-                    hours_of_operation = "<MISSING>"
-                store_number = i['storeNumber']
-                location_name = '<MISSING>'
-                latitude = lat
-                longitude = lng
-                page_url = location_url
-                result_coords.append((latitude, longitude))
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-                # store = [locator_domain, location_name.strip(), street_address.strip().replace(" (@",""), city.strip(), state, zipp.strip(), country_code,
-                #         store_number, phone.strip(), location_type, latitude, longitude, hours_of_operation.strip(),page_url]
-
-                if str(store[2]) + str(store[-3]) not in addresses:
-                    addresses.append(str(store[2]) + str(store[-3]))
-                    store = [x if x else "<MISSING>" for x in store]
-                    # print("data = " + str(store))
-                    # print(
-                    #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    yield store
-
-            if current_results_len < MAX_RESULTS:
-                # print("max distance update")
-                search.max_distance_update(MAX_DISTANCE)
-            elif current_results_len == MAX_RESULTS:
-                # print("max count update")
-                search.max_count_update(result_coords)
-            else:
-                raise Exception("expected at most " +
-                                str(MAX_RESULTS) + " results")
-
-        coord = search.next_coord()   # zip_code = search.next_zip()
-        # break
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append("US")
+        store.append(store_number)
+        store.append(phone)
+        store.append("<MISSING>")
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours)
+        store.append(page_url)
+        #print("data ==="+str(store))
+        #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
+        yield store
 
 
 def scrape():

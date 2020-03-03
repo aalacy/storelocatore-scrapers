@@ -33,6 +33,7 @@ class Scrape(base.Spider):
                 i.add_value('latitude', result.get('geo', {}).get('latitude', ''))
                 i.add_value('longitude', result.get('geo', {}).get('longitude', ''))
                 i.add_value('hours_of_operation', result.get('openingHours', []), lambda x: x+['Sun Closed'] if not check_sun(x) else x, lambda x: '; '.join(x))
+                i.add_value('location_type', ', '.join(res_sel.xpath('//ul[preceding-sibling::h3[1][contains(text(), "Services")]]/li/a/text()')))
                 return i
         except:
             return None

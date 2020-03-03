@@ -1,5 +1,4 @@
 import os, csv, requests
-from pdb import set_trace as bp
 
 def xpath(hxt, query_string):
     hxp = hxt.xpath(query_string)

@@ -78,7 +78,7 @@ def fetch_data():
             continue
 
         for loc in response1:
-            locator_domain = base_url
+            locator_domain = 'https://www.metrobyt-mobile.com'
             country_code = "US"
             store_number = loc["id"]
             location_type = loc["type"]

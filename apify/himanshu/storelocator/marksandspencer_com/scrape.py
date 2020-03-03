@@ -59,7 +59,8 @@ def fetch_data():
         store.append(longitude if longitude else '<MISSING>')
         store.append(hours_of_operation if hours_of_operation else '<MISSING>' )
         store.append(url)
-        yield store
+        if "United Kingdom" in country_code:
+            yield store
 def scrape():
     data = fetch_data()
     write_output(data)

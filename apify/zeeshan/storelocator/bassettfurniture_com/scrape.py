@@ -3,7 +3,6 @@ import time
 import json
 import urllib
 import requests
-from pdb import set_trace as bp
 
 class BassettFurniture(base.Base):
 

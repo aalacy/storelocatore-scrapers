@@ -37,12 +37,16 @@ def fetch_data():
         except:
             pass
         json_data = r.json()
+        # print(json_data)
         current_results_len =len(json_data['data'])
    
         for i in json_data['data']:
+                # print(i)
                 b = i['OPERATING_HOUR_SET']
+                # print(b)
                 soup= BeautifulSoup(b,"lxml")
                 hours_of_operation = (soup.text.replace('AM','AM '))
+                print(hours_of_operation)
 
                 street_address = i["streetNumber"]+' '+i["ADDRESS_LINE_1"]
                 city = i["CITY"]

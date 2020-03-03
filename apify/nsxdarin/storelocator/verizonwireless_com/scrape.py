@@ -10,7 +10,7 @@ session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
-MAX_RESULTS = 25
+MAX_RESULTS = 250
 MAX_DISTANCE = 5
 
 def write_output(data):
@@ -23,6 +23,7 @@ def write_output(data):
 def fetch_data():
     ids = set()
     locations = []
+    alllocs = []
     coord = search.next_coord()
     while coord:
         print("remaining zipcodes: " + str(len(search.zipcodes)))
@@ -64,8 +65,8 @@ def fetch_data():
                             hours = '<MISSING>'
                         ids.add(info)
                         array.append(info)
-                        if info not in locations:
-                            locations.append(info)
+                        if purl not in alllocs:
+                            alllocs.append(purl)
                             yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         if len(array) <= MAX_RESULTS:
             print("max distance update")

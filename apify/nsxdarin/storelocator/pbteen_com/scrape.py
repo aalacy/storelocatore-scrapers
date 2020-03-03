@@ -16,8 +16,9 @@ def write_output(data):
 
 def fetch_data():
     url = 'https://www.potterybarn.com/customer-service/store-locator.html?cm_type=fnav'
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     storeinfo = []
+    storelist = ['6095','6060','6058','981','888','6023','983','6101','665','6036','655','6033']
     lines = r.iter_lines()
     for line in lines:
         if '<div class="store-card">' in line:
@@ -29,7 +30,7 @@ def fetch_data():
             storeinfo.append(pc + '|' + surl)
     locs = []
     url = 'https://www.potterybarn.com/search/stores.json?brands=PB,PK,PT&lat=40.714&lng=-73.986&radius=10000'
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     for item in json.loads(r.content)['storeListResponse']['stores']:
         country = item['properties']['COUNTRY_CODE']
         store = item['properties']['STORE_NUMBER']
@@ -57,11 +58,11 @@ def fetch_data():
         hours = hours + '; Fri: ' + item['properties']['FRIDAY_HOURS_FORMATTED']
         hours = hours + '; Sat: ' + item['properties']['SATURDAY_HOURS_FORMATTED']
         hours = hours + '; Sun: ' + item['properties']['SUNDAY_HOURS_FORMATTED']
-        if country == 'US' and 'PT ' in typ:
+        if country == 'US' and store in storelist:
             for sitem in storeinfo:
                 if zc == sitem.split('|')[0]:
                     loc = sitem.split('|')[1]
-            typ = typ.replace('PT ','Pottery Barn Teen')
+            typ = 'Pottery Barn Teen'
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

@@ -1,75 +1,113 @@
 import csv
-import requests
-from bs4 import BeautifulSoup
-import re
+import os
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import usaddress
+
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', options=options)
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
-# gets hours from link
-def get_hours(url):
-    page = requests.get(url)
-    assert page.status_code == 200
-    soup = BeautifulSoup(page.content, 'html.parser')
-
-    hours = soup.find_all('p')[0].text.replace('Store Hours:', '').replace('\n', ' ').strip()
-    return hours
 
 
-## generalize scraping for each url
-def scrape_url(page, all_store_data, locator_domain):
-    soup = BeautifulSoup(page.content, 'html.parser')
-    stores = soup.find_all('div', {'class': 'location-content'})
-    for store in stores:
-        location_name = store.find('a').text.strip()
-        new_link = store.find('a')['href'][1:]
 
-        hours = get_hours(locator_domain + new_link)
+def parse_address(addy_string):
+    parsed_add = usaddress.tag(addy_string)[0]
 
-        addy_info = store.find('p').text.strip().split('\n')
+    street_address = ''
+
+    if 'AddressNumber' in parsed_add:
+        street_address += parsed_add['AddressNumber'] + ' '
+    if 'StreetNamePreDirectional' in parsed_add:
+        street_address += parsed_add['StreetNamePreDirectional'] + ' '
+    if 'StreetName' in parsed_add:
+        street_address += parsed_add['StreetName'] + ' '
+    if 'StreetNamePostType' in parsed_add:
+        street_address += parsed_add['StreetNamePostType'] + ' '
+    if 'OccupancyType' in parsed_add:
+        street_address += parsed_add['OccupancyType'] + ' '
+    if 'OccupancyIdentifier' in parsed_add:
+        street_address += parsed_add['OccupancyIdentifier'] + ' '
+    city = parsed_add['PlaceName']
+    state = parsed_add['StateName']
+    zip_code = parsed_add['ZipCode']
+
+    return street_address, city, state, zip_code
+
+
+def fetch_data():
+    locator_domain = 'https://www.perfectlooksalons.com/'
+    ext = 'family-haircare/'
+    driver = get_driver()
+    driver.get(locator_domain + ext)
+
+    main = driver.find_element_by_css_selector('ul.side-locations')
+    links = main.find_elements_by_css_selector('a')
+    state_list = []
+    for link in links:
+        state_list.append(link.get_attribute('href'))
+        
+
+    link_list = []
+    for state in state_list:
+        driver.get(state)
+        driver.implicitly_wait(10)
+        
+        locs = driver.find_elements_by_css_selector('div.location-content')
+        for loc in locs:
+            link = loc.find_element_by_css_selector('a').get_attribute('href')
+            link_list.append(link)
+        
+        
     
-        street_address = addy_info[0].strip()
         
-        city = addy_info[1].split('\xa0')[0].strip()[:-8].strip()
-        state_zip = addy_info[1].split('\xa0')[0].strip()[-8:].split(' ')
-        state = state_zip[0]
-        zip_code = state_zip[1]
+    all_store_data = []
+    for link in link_list:
+        driver.get(link)
+        driver.implicitly_wait(10)
         
-        phone_number = addy_info[3]
+        location_name = driver.find_element_by_css_selector('h1.uk-article-title').text
+    
+        hours = driver.find_element_by_css_selector('p.hours').text.replace('Store Hours:', '').replace('\n', ' ')
+        cont = driver.find_element_by_css_selector('div.uk-width-large-2-5').text.split('\n')
+
+        street_address, city, state, zip_code = parse_address(cont[0] + ' ' + cont[1])
+        phone_number = cont[2]
+
+        href = driver.find_element_by_xpath('//a[contains(@href,"maps.google.com/maps")]').get_attribute('href')
+        start = href.find('?ll=')
+        coords = href[start + 4:].split(',')
+        lat = coords[0]
+        longit = coords[1].split('&')[0]
         
-        country_code = 'US'
-        location_type = '<MISSING>'
-        lat = '<INACCESSIBLE>'
-        longit = '<INACCESSIBLE>'
+        
         store_number = '<MISSING>'
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                         store_number, phone_number, location_type, lat, longit, hours ]
+        location_type = '<MISSING>'
+        country_code = 'US'
+        locator_domain = 'https://www.perfectlooksalons.com/'
+        
+        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
+                    store_number, phone_number, location_type, lat, longit, hours, link]
+
         all_store_data.append(store_data)
         
-    
-def fetch_data():
-    locator_domain = 'https://www.perfectlooksalons.com/' 
 
-    ext_arr = ['/family-haircare/alaska/', 'family-haircare/arizona/', 'family-haircare/idaho/', 'family-haircare/oregon/', 'family-haircare/washington/']
-
-    all_store_data = []
-    for ext in ext_arr:
-        to_scrape = locator_domain + ext
-        page = requests.get(to_scrape)
-        assert page.status_code == 200
-
-        scrape_url(page, all_store_data, locator_domain)
-        
-
-    
-
+    driver.quit()
     return all_store_data
 
 def scrape():

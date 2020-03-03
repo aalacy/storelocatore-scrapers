@@ -75,6 +75,29 @@ def fetch_data():
                 add = '<MISSING>'
             if state == 'SL':
                 state = 'FL'
+            if city == 'Ca':
+                city = state
+                state = 'CA'
+            if state == 'NEW JERSEY':
+                state = 'NJ'
+            if state == 'CALIFORNIA':
+                state = 'CA'
+            if state == 'MISSISSIPPI':
+                state = 'MS'
+            if state == 'ONTARIO':
+                state = 'ON'
+            if city == 'St. Paul':
+                state = 'MN'
+            if city == 'San Diego':
+                state = 'CA'
+            if state == 'BC' or state == 'ON' or state == 'QC':
+                country = 'CA'
+            if state.lower() == 'virginia':
+                state = 'VA'
+            if city == '35':
+                city = 'California'
+            if ',' in name:
+                name = name.split(',')[0]
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

@@ -45,6 +45,11 @@ def fetch_data():
     cities = []
     for button in driver.find_elements_by_xpath("//select[@name='parent_selection']/option"):
         state = button.get_attribute("value")
+        # if state == 'British Columbia':
+        #     country_code='CA'
+        # else:
+        #     country_code='US'
+        # print(country_code)
         # if len(state) != 2:
         #     continue
         if state:
@@ -77,9 +82,17 @@ def fetch_data():
             store.append(data if data else "<MISSING>") 
             store.append("<MISSING>")
             store.append("<MISSING>")
+            if state == 'Fiji':
+                continue
+            if  state == 'Mexico':
+                continue
+            if state =='British Columbia':
+                country_code='CA'
+            else:
+                country_code='US'
             store.append(state if state else "<MISSING>")
-            store.append("<MISSING>")
-            store.append("US")
+            store.append("<MISSING>")           
+            store.append(country_code)              
             store.append("<MISSING>") 
             store.append("<MISSING>")
             store.append("RESORT")

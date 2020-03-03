@@ -15,11 +15,10 @@ def write_output(data):
 
 def fetch_data():
     for x in range(1999, 8000):
-    for sid in stores:
-        url = 'https://www.tesco.com/store-locator/uk/?bid=' + sid
+        url = 'https://www.tesco.com/store-locator/uk/?bid=' + str(x)
         r = session.get(url, headers=headers)
         Found = True
-        website = 'tesco.com/extra'
+        website = 'tesco.com'
         name = ''
         add = ''
         loc = url
@@ -27,7 +26,7 @@ def fetch_data():
         state = '<MISSING>'
         zc = ''
         country = 'UK'
-        store = sid
+        store = str(x)
         phone = ''
         typ = '<MISSING>'
         lat = ''

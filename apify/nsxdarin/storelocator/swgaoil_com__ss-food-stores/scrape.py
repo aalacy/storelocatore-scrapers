@@ -34,7 +34,7 @@ def fetch_data():
                     locs.append(linfo)
     for loc in locs:
         Found = False
-        #print('Pulling Location %s...' % loc.split('|')[0])
+        print('Pulling Location %s...' % loc.split('|')[0])
         llink = loc.split('|')[0]
         website = 'swgaoil.com/ss-food-stores'
         name = loc.split('|')[1]
@@ -49,17 +49,19 @@ def fetch_data():
         typ = '<MISSING>'
         hours = ''
         phone = ''
+        if '#' in name:
+            store = name.rsplit('#',1)[1]
         r2 = session.get(llink, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
-            if 'Phone' in line2:
-                phone = next(lines).split('<')[0].strip().replace('\t','')
+            if 'Phone:</strong>' in line2:
+                g = next(lines)
+                phone = g.split('<')[0].replace('\t','').strip()
             if 'Hours:' in line2:
                 Found = True
-            if Found and '</p>' in line2:
+            if Found and '</div>' in line2:
                 Found = False
-                hours = hours + '; ' + line2.split('<')[0].strip().replace('\t','')
-            if Found and 'Hours:' not in line2:
+            if Found and 'Hours:' not in line2 and '<' in line2:
                 hrs = line2.split('<')[0].strip().replace('\t','')
                 if hours == '':
                     hours = hrs

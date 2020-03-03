@@ -59,7 +59,6 @@ def fetch_data():
         hrefs = driver.find_elements_by_xpath('//a[contains(@href,"clubhome.aspx?clubid=")]')
 
         while True:
-            print('hmmm')
             for h in hrefs:
                 link_list.append(h.get_attribute('href'))
         
@@ -78,7 +77,6 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        print(link)
         driver.get(link)
         location_name = driver.find_element_by_css_selector('h1.MainTitle').text
         

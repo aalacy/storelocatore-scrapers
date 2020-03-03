@@ -61,6 +61,9 @@ def fetch_data():
         if len(addy) == 2:
             street_address = addy[0]
             city, state, zip_code = addy_ext(addy[1])
+        elif 'PR-2 Km 159,' in addy[0]:
+            street_address = addy[0]
+            city, state, zip_code = addy_ext(addy[1])
         else:
             addy = addy[0].split('Email')[0].split('.')
             street_address = addy[0]

@@ -28,7 +28,7 @@ def request_wrapper(url,method,headers,data=None):
                 return r
                 break
             except:
-                time.sleep(2)
+                time.sleep(1)
                 request_counter = request_counter + 1
                 if request_counter > 10:
                     return None
@@ -43,7 +43,7 @@ def request_wrapper(url,method,headers,data=None):
                 return r
                 break
             except:
-                time.sleep(2)
+                time.sleep(1)
                 request_counter = request_counter + 1
                 if request_counter > 10:
                     return None

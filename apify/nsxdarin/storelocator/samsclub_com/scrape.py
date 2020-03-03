@@ -22,9 +22,10 @@ def fetch_data():
             lurl = line.split('<loc>')[1].split('<')[0]
             locs.append(lurl)
     for loc in locs:
+        Fuel = False
         print('Pulling Location %s...' % loc)
         website = 'samsclub.com'
-        typ = '<MISSING>'
+        typ = 'Gas'
         hours = ''
         name = ''
         country = 'US'
@@ -36,37 +37,43 @@ def fetch_data():
         lng = ''
         phone = ''
         store = loc.rsplit('/',1)[1]
-        r2 = session.get(loc, headers=headers)
+        locurl = 'https://www.samsclub.com/api/node/clubfinder/' + store
+        r2 = session.get(locurl, headers=headers)
         for line2 in r2.iter_lines():
-            if ',"clubDetails":{"' in line2:
-                cinfo = line2.split(',"clubDetails":{"')[1]
-                name = cinfo.split('"name":"')[1].split('"')[0]
-                zc = cinfo.split('"postalCode":"')[1].split('"')[0]
-                add = cinfo.split(',"address1":"')[1].split('"')[0]
+            if '"postalCode":"' in line2:
+                Fuel = True
+                name = line2.split('"name":"')[1].split('"')[0]
+                zc = line2.split('"postalCode":"')[1].split('"')[0]
                 try:
-                    add = add + ' ' + cinfo.split('"address2":"')[1].split('"')[0]
+                    add = line2.split('"address1":"')[1].split('"')[0]
+                except:
+                    add = ''
+                try:
+                    add = add + ' ' + line2.split('"address2":"')[1].split('"')[0]
                 except:
                     pass
-                city = cinfo.split('"city":"')[1].split('"')[0]
-                state = cinfo.split('"state":"')[1].split('"')[0]
-                phone = cinfo.split('"phone":"')[1].split('"')[0]
-                lat = cinfo.split('"latitude":')[1].split(',')[0]
-                lng = cinfo.split('"longitude":')[1].split('}')[0]
-                try:
-                    sathrs = cinfo.split('"saturdayHrs":{"')[1].split('":"')[1].split('"')[0] + '-' + cinfo.split('"saturdayHrs":{"')[1].split('"endHr":"')[1].split('"')[0]
-                except:
-                    sathrs = 'Closed'
-                try:
-                    sunhrs = cinfo.split('"sundayHrs":{"')[1].split('":"')[1].split('"')[0] + '-' + cinfo.split('"sundayHrs":{"')[1].split('"endHr":"')[1].split('"')[0]
-                except:
-                    sunhrs = 'Closed'
-                mfhrs = cinfo.split('"monToFriHrs":{"')[1].split('":"')[1].split('"')[0] + '-' + cinfo.split('"monToFriHrs":{"')[1].split('"endHr":"')[1].split('"')[0]
-                hours = 'M-F: ' + mfhrs + '; Sat: ' + sathrs + '; Sun: ' + sunhrs
+                city = line2.split('"city":"')[1].split('"')[0]
+                state = line2.split('"state":"')[1].split('"')[0]
+                phone = line2.split('"phone":"')[1].split('"')[0]
+                lat = line2.split('"latitude":')[1].split(',')[0]
+                lng = line2.split('"longitude":')[1].split('}')[0]
+                fcinfo = line2.split('"operationalHours":{')[1].split(',"geoPoint"')[0]
+                days = fcinfo.split('},"')
+                for day in days:
+                    hrs = day.split('"startHr":"')[1].split('"')[0] + '-' + day.split('"endHr":"')[1].split('"')[0]
+                    dname = day.split('Hrs":')[0].replace('"','')
+                    hrs = dname + ': ' + hrs
+                    hrs = hrs.replace('To','-')
+                    if hours == '':
+                        hours = hrs
+                    else:
+                        hours = hours + '; ' + hrs
         if hours == '':
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if add != '':
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

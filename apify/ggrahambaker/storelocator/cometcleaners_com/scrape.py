@@ -1,18 +1,9 @@
 import csv
-import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException
-import time
+import sgzip 
+import json
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -20,98 +11,91 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", 'page_url'])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
-
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
-
-
-
 def fetch_data():
+    session = SgRequests()
+    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
+
+    search = sgzip.ClosestNSearch()
+    search.initialize()
     locator_domain = 'https://www.cometcleaners.com/'
-    ext = 'comet-cleaners-locations/'
 
-    driver = get_driver()
-    driver.get(locator_domain + ext)
 
-    scrollHeight = driver.execute_script("return document.body.scrollHeight")
+    MAX_RESULTS = 100
+    MAX_DISTANCE = 500
 
-    for i in range(0, scrollHeight, 100):
-        # Scroll down to bottom
-        driver.execute_script("window.scrollTo(0, " + str(i) + ");")
-        time.sleep(0.2)
-
-    main = driver.find_element_by_css_selector('div#main-content')
-
-    locs = main.find_elements_by_css_selector('div.wpb_content_element')
-    link_store_data = []
-    for loc in locs:
-        link = loc.find_elements_by_css_selector('a')[1].get_attribute('href')
-
-        cont = loc.text.split('\n')
-        if 'COMET CLEANERS' not in cont[0]:
-            continue
-        if 'MONCLOVA' in cont[0]:
-            break
-
-        location_name = cont[0]
-        street_address = cont[1]
-        city, state, zip_code = addy_ext(cont[2])
-        phone_number = cont[3]
-        if "THAT'S MY COMET CLEANERS!" in phone_number:
-            phone_number = '<MISSING>'
-
-        country_code = 'US'
-        location_type = '<MISSING>'
-        store_number = '<MISSING>'
-        hours = '<MISSING>'
-        longit = '<MISSING>'
-        lat = '<MISSING>'
-
-        store_data = [link, [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]]
-        link_store_data.append(store_data)
-
+    coord = search.next_coord()
+    dup_tracker = set()
     all_store_data = []
+    while coord:
+        x = coord[0]
+        y = coord[1]
+        url = 'https://www.cometcleaners.com/wp-admin/admin-ajax.php?action=store_search&lat=' + str(x) + '&lng=' + str(y) + '&max_results=' + str(MAX_RESULTS) + '&search_radius=' + str(MAX_DISTANCE)
+        r = session.get(url, headers=HEADERS)
+        
+        res_json = json.loads(r.content)
+        result_coords = []
+        result_coords.append((x, y))
+        
+        for loc in res_json:
+            lat = loc['lat']
+            longit = loc['lng']
+            store_number = loc['id']
+            result_coords.append((lat, longit))
+            if store_number not in dup_tracker:
+                dup_tracker.add(store_number)
+            else:
+                continue
+            
+            location_name = loc['store']
+            street_address = loc['address'] + ' ' + loc['address2']
+            street_address = street_address.strip()
+            city = loc['city']
+            state = loc['state']
+            zip_code = loc['zip']
+            if 'United States' in loc['country']:
+                country_code = 'US'
+            else:
+                continue
+                
+            phone_number = loc['phone']
+            if len(phone_number) == 15:
+                continue
+            hours_table = loc['hours']
+            
+            soup = BeautifulSoup(hours_table, 'html.parser')
 
-    for data in link_store_data:
-        driver.get(data[0])
-        driver.implicitly_wait(10)
+            rows = soup.find_all('tr')
+            hours = ''
+            for r in rows:
+                cols = r.find_all('td')
+                day = cols[0].text
+                time = cols[1].text
+                hours += day + ' ' + time + ' '
+                
+            hours = hours.strip()
+            
+            page_url = loc['url']
+            location_type = '<MISSING>'
+            
+            
+            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
+                        store_number, phone_number, location_type, lat, longit, hours, page_url]
+            all_store_data.append(store_data)
+            
+        if len(res_json) < MAX_RESULTS:
+            search.max_distance_update(MAX_DISTANCE)
+        elif len(res_json) == MAX_RESULTS:
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + MAX_RESULTS + " results")
+        coord = search.next_coord()  
 
-        try:
-            google_src = driver.find_element_by_xpath("//iframe[contains(@src, 'www.google.com/maps/')]").get_attribute('src')
 
-        except NoSuchElementException:
-            all_store_data.append(data[1])
-            continue
-
-
-        start = google_src.find('!2d')
-        if start > 0:
-            end = google_src.find('!2m')
-            coords = google_src[start + 3: end].split('!3d')
-
-            # lat
-            data[1][-3] = coords[1]
-            # longit
-            data[1][-2] = coords[0]
-
-        # link
-        data[1][-1] = data[0]
-        all_store_data.append(data[1])
-
-        time.sleep(1)
-
-    driver.quit()
     return all_store_data
 
 def scrape():
