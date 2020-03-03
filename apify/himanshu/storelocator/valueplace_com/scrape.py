@@ -40,6 +40,7 @@ def fetch_data():
             coord = search.next_coord()
             continue
         data = r.json()["searchResults"]
+        print(data)
         for store_data in data:
             result_coords.append((store_data["geographicLocation"]["latitude"], store_data["geographicLocation"]["longitude"]))
             if store_data["address"]["countryCode"] != "US" and store_data["address"]["countryCode"] != "CA":
