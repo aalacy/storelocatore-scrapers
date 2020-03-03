@@ -35,6 +35,10 @@ def fetch_data():
         if location_name == '':
             continue
 
+        if 'Opening Soon' in locator_domain:
+            continue
+
+
         raw_json = soup.find('script', {'type': 'application/ld+json'}).text.replace('\r\n', '').replace("\\\\\\\'", "'")
         formatted_json = raw_json.replace("\\", "")
     
@@ -53,7 +57,7 @@ def fetch_data():
         state = addy['addressRegion']
         zip_code = addy['postalCode']
         street_address = addy['streetAddress']
-        phone_number = addy['telephone'].strip()
+        phone_number = addy['telephone'].replace('=', '').replace('+1', '').strip()
         if phone_number == '':
             phone_number = '<MISSING>'
         location_name = addy['name']
@@ -61,7 +65,7 @@ def fetch_data():
         
         country_code = 'CA'
         
-        store_number = '<MISSING>'
+        store_number = i
         location_type = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
