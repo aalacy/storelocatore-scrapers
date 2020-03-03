@@ -63,8 +63,8 @@ def fetch_data():
                 Found = True
             if Found and '</script>' in line2:
                 Found = False
-            if Found and '"name": "' in line2:
-                typ = line2.split('"name": "')[1].split('"')[0]
+            if '| Toy Store |' in line2:
+                typ = line2.split(' in')[0].strip().replace('\t','')
             if Found and '"streetAddress":"' in line2:
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
             if Found and '"addressLocality":"' in line2:
