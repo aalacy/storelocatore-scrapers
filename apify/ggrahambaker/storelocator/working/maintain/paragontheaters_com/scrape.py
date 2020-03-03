@@ -13,46 +13,53 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def addy_ext(addy):
+    addy = addy.split(',')
+    city = addy[0]
+    state_zip = addy[1].strip().split(' ')
+    state = state_zip[0]
+    zip_code = state_zip[1]
+    return city, state, zip_code
+
 def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
 
-    locator_domain = 'https://www.roseoilco.com/landl-stores' 
-
-    r = session.get('https://www.roseoilco.com/rosemart-stores', headers = HEADERS)
+    locator_domain = 'https://paragontheaters.com' 
+    ext = '/locations'
+    r = session.get(locator_domain + ext, headers = HEADERS)
 
 
     soup = BeautifulSoup(r.content, 'html.parser')
 
-    table = soup.find('table')
-    rows = table.find_all('tr')
-
+    locs = soup.find_all('div', {'id': 'theaterBox'})
     all_store_data = []
-    for row in rows[1:]:
-        location_name = row.find('th').text.replace(':', '')
-        if 'L&L' not in location_name:
-            continue
+    for loc in locs:
+        page_url = locator_domain + loc.find('a')['href']
+        location_name = loc.find('h4').text
+        brs = loc.find('p').prettify().split('\n')
+        cont = []
+        for br in brs:
+            if '<' in br:
+                continue
+            cont.append(br.strip())
         
-        addy = row.find('td').text.split(',')
-        street_address = addy[0]
-        city = addy[1].strip()
-        state = addy[2].strip()
-        zip_code = '<MISSING>'
-        phone_number = '252-438-7141'
+        street_address = cont[0]
+        city, state, zip_code =  addy_ext(cont[1])
+        phone_number = cont[2]
+
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
         hours = '<MISSING>'
-        page_url = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
-
+                        store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-        
+
 
     return all_store_data
 

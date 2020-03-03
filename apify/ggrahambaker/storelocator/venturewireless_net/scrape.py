@@ -49,8 +49,9 @@ def fetch_data():
         street_address = info[1].strip()
         city, state, zip_code = addy_ext(info[2])
         phone_number = info[3]
+
         hours = ''
-        for h in hours[5:]:
+        for h in info[5:]:
             hours += h + ' '
             
         hours = hours.strip()
