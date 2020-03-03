@@ -15,6 +15,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    allids = []
     states = []
     cities = []
     url = 'https://www.uhaul.com/Locations/US_and_Canada/'
@@ -24,13 +25,12 @@ def fetch_data():
             lurl = 'https://www.uhaul.com' + line.split("href='")[1].split("'")[0]
             states.append(lurl)
     for state in states:
-        if 'Minnesota' in state:
-            print('Pulling State %s...' % state)
-            r2 = session.get(state, headers=headers)
-            for line2 in r2.iter_lines():
-                if "<a href='/Locations/" in line2:
-                    lurl = 'https://www.uhaul.com' + line2.split("href='")[1].split("'")[0]
-                    cities.append(lurl)
+        print('Pulling State %s...' % state)
+        r2 = session.get(state, headers=headers)
+        for line2 in r2.iter_lines():
+            if "<a href='/Locations/" in line2:
+                lurl = 'https://www.uhaul.com' + line2.split("href='")[1].split("'")[0]
+                cities.append(lurl)
     for city in cities:
         coords = []
         alllocs = []
@@ -62,7 +62,10 @@ def fetch_data():
                     plat = place.split('|')[1]
                     plng = place.split('|')[2]
                     lurl = location.split('|')[0]
-                    if lurl not in locs:
+                    lid = lurl.rsplit('/',1)[1]
+                    lurl = 'https://www.uhaul.com/Locations/Truck-Rentals/' + lid
+                    if lid not in allids:
+                        allids.append(lid)
                         locs.append(lurl + '|' + plat + '|' + plng)
     for loc in locs:
         print('Pulling Location %s...' % loc.split('|')[0])
