@@ -61,7 +61,7 @@ def fetch_data():
     key_set=set([])
     all =[]
     for url in page_url:
-        print(url)
+        #print(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         data = soup.find_all('script', {'type': 'application/ld+json'})[1].contents
@@ -71,7 +71,7 @@ def fetch_data():
         tim=""
         for l in timl:
             tim+= l["dayOfWeek"][0]+": "+l["opens"]+" - "+l["closes"]+" "
-        print(url)
+        #print(url)
         #print(js)
         p=js["telephone"]
         if p.strip()=="":
