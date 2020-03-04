@@ -35,7 +35,7 @@ def fetch_data():
         if location_name == '':
             continue
 
-        if 'Opening Soon' in locator_domain:
+        if 'Opening' in location_name:
             continue
 
 

@@ -90,6 +90,7 @@ def fetch_data():
             longit = coords[1]
             hours_split = div.findNext('p').prettify().split('\n')
             if len(hours_split) == 6:
+
                 hours_split = div.findNext('p').findNext('p').prettify().split('\n')
       
             hours = ''
