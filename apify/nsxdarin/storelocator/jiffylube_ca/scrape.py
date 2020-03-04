@@ -31,6 +31,32 @@ def fetch_data():
                         website = 'jiffylube.ca'
                         name = 'Jiffy Lube'
                         typ = '<MISSING>'
+                        hours = ''
+                        surl = item.split('StoreUrl":"')[1].split('"')[0] + '/wp-admin/admin-ajax.php?action=load_hours'
+                        try:
+                            r3 = session.get(surl, headers=headers)
+                            lines = r3.iter_lines()
+                            for line3 in lines:
+                                if '<span class="textday">' in line3:
+                                    g = next(lines)
+                                    day = g.split('<')[0].strip().replace('\t','')
+                                    next(lines)
+                                    next(lines)
+                                    next(lines)
+                                    next(lines)
+                                    next(lines)
+                                    g = next(lines)
+                                    hrs = g.replace('\r','').replace('\t','').replace('\n','')
+                                    hrs = hrs.replace('<strong>','').replace('</strong>','')
+                                    hrs = hrs.replace('<span class="hours-start">','').replace('</span>','')
+                                    hrs = hrs.replace('<span class="hours-end">','')
+                                    hrs = day + ': ' + hrs
+                                    if hours == '':
+                                        hours = hrs
+                                    else:
+                                        hours = hours + '; ' + hrs
+                        except:
+                            pass
                         phone = item.split('Phone_Number":"')[1].split('"')[0]
                         lat = item.split('"Latitude":')[1].split(',')[0]
                         lng = item.split('"Longitude":')[1].split(',')[0]
