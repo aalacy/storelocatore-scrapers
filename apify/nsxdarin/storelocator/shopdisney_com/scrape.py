@@ -57,8 +57,8 @@ def fetch_data():
         for line2 in r2.iter_lines():
             if '<meta property="og:url" content="' in line2:
                 store = line2.split('<meta property="og:url" content="')[1].split('"')[0].rsplit('/',1)[1]
-            if '<h1 class="toptitle">' in line2:
-                name = line2.split('<h1 class="toptitle">')[1].split('<')[0]
+            if '<meta property="og:title" content="' in line2:
+                name = line2.split('<meta property="og:title" content="')[1].split('"')[0]
             if '"@id":"https://stores.shopdisney.com' in line2:
                 Found = True
             if Found and '</script>' in line2:
@@ -69,8 +69,8 @@ def fetch_data():
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
             if Found and '"addressLocality":"' in line2:
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
-            if Found and '"addressRegion":"' in line2:
-                state = line2.split('"addressRegion":"')[1].split('"')[0]
+            if '<span itemprop="addressRegion">' in line2:
+                state = line2.split('<span itemprop="addressRegion">')[1].split('<')[0]
             if Found and '"postalCode":"' in line2:
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
             if Found and '"addressCountry":"' in line2:
