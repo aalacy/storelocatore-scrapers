@@ -55,7 +55,7 @@ def fetch_data():
         phone_number = driver.find_element_by_css_selector('p.PhoneNumber').find_element_by_css_selector('a').text
         hours = driver.find_element_by_css_selector('table#hours_info-BS').text.replace('Hours of Operation:', '').strip().replace('\n', ' ')
         
-        
+        hours = hours.split('Store')[0]
         country_code = 'US'
         lat = '<MISSING>'
         longit = '<MISSING>'

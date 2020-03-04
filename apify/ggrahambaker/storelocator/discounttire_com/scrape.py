@@ -22,7 +22,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
 
-    MAX_DISTANCE = 75
+    MAX_DISTANCE = 25
 
 
     store_ids = set()
