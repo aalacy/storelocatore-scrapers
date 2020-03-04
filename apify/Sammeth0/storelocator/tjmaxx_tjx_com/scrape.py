@@ -55,7 +55,7 @@ def fetch_data():
 			pages.append(l.get_attribute('href'))
 	for p in pages:
 		driver_page.get(p)
-		time.sleep(18)
+		time.sleep(25)
 		locs.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/input[3]').get_attribute('value'))
 		try:
 			streets.append(driver_page.find_element_by_xpath('/html/body/div[3]/div/div/div[2]/div/section/section/form/div[4]/div[1]').text.split('\n')[0])
