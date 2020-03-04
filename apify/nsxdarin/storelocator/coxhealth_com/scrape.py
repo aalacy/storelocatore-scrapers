@@ -39,6 +39,8 @@ def fetch_data():
         lat = ''
         lng = ''
         for line2 in lines:
+            if 'open 24 hours' in line2.lower():
+                hours = 'Open 24 Hours'
             if '<title>' in line2:
                 name = line2.split('<title>')[1].split(' |')[0]
             if 'Address</h3>' in line2:
