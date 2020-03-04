@@ -1,6 +1,20 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import json
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', options=options)
+
+
+
+
 
 
 def write_output(data):
@@ -27,8 +41,31 @@ def fetch_data():
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
     locator_domain = 'http://www.hometownbuffet.com/'
     all_store_data = []
+
+
+
+    map_url = 'http://www.hometownbuffet.com/locator/'
+    driver = get_driver()
+    driver.get(map_url)
+
+    map_data = driver.execute_script('return usahtml5map_map_cfg_0')['map_data']
+
+    #map_json = json.loads(map_data)
+
+
+
+    skip_states = set()
+    for state, info in map_data.items():
+        if info['comment'] == '':
+            skip_states.add(info['id'])
+
+    
+
+    driver.quit()
     for i in range(50):
         url = 'http://www.hometownbuffet.com/index.php?usahtml5map_get_state_info=' + str(i) + '&map_id=0'    
+        if i in skip_states:
+            continue
         r = session.get(url, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
         for div in soup.find_all('div'):
