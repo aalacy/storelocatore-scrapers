@@ -37,15 +37,13 @@ def fetch_data():
         locs = driver.find_elements_by_css_selector('div.node-content')
         for loc in locs:
             location_name = loc.find_element_by_css_selector('div.title').text
+            print(location_name)
         
             store_number = location_name.split('#')[1].strip()
             
             street_address= loc.find_element_by_css_selector('div.thoroughfare').text
             
-            if store_number not in dup_tracker:
-                dup_tracker.add(store_number)
-            else:
-                continue
+            
             city = loc.find_element_by_css_selector('span.locality').text
             state = loc.find_element_by_css_selector('span.state').text
             zip_code = loc.find_element_by_css_selector('span.postal-code').text
@@ -62,6 +60,16 @@ def fetch_data():
                 phone_number = phone_number_div[0].text.replace('Phone:', '').strip()
             else:
                 phone_number = '<MISSING>'
+
+            print(phone_number)
+
+
+            if store_number not in dup_tracker:
+                if phone_number == '<MISSING>':
+                    continue
+                dup_tracker.add(store_number)
+            else:
+                continue
             
             
             
