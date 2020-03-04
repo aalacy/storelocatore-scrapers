@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
-
+import requests
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,7 +21,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url= "https://api.morrisons.com/location/v2//stores?apikey=kxBdM2chFwZjNvG2PwnSn3sj6C53dLEY&distance=5000000&lat=51.49919128417969&limit=500000&lon=-0.09428299963474274&offset=0&storeformat=supermarket"
-    r = session.get(base_url, headers=headers).json()
+    r = requests.get(base_url, headers=headers).json()
 
     for d in r['stores']:
         location_name = (d['storeName'])
@@ -58,8 +58,8 @@ def fetch_data():
         store.append(longitude if longitude else '<MISSING>')
         store.append(hours_of_operation if hours_of_operation else '<MISSING>' )
         store.append(url)
-        # if "Gibraltar" in location_name:
-        #     continue
+        if "Gibraltar" in location_name:
+            continue
         yield store
 
 def scrape():

@@ -3,10 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
 import time
 from datetime import datetime
-from time import sleep
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -35,7 +34,6 @@ def fetch_data():
     location_url = "https://www.safeway.ca/find-a-store/"
 
     r = requests.get(location_url, headers=headers)
-    sleep(2)
     soup = BeautifulSoup(r.text, "lxml")
     data = soup.find_all("div",{"class":"store-result"})
     for location in data:
@@ -54,7 +52,7 @@ def fetch_data():
         location_type = "Pharmacy"
         services = soup1.find("div",{"class":"single_store_info services"}).text
         if "PharmacyGet" in services:
-            hours = ' '.join(list(soup1.find("table",{"class":"table"}).stripped_strings)).replace("Day Hours","")
+            hours = ' '.join(list(soup1.find("table",{"class":"table"}).stripped_strings)).replace("Day Hours","").replace("pm","pm ;")
            
             if len(list(soup1.find("div",{"class":"store_mngr_dt"}).stripped_strings)) == 11:
                 phone = list(soup1.find("div",{"class":"store_mngr_dt"}).stripped_strings)[-3]

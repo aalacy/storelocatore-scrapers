@@ -160,7 +160,7 @@ def fetch_data():
 
                 result_coords.append((lat, lng))
                 store = []
-                page_url = "<MISSING>"
+    
                 store.append(base_url)
                 store.append(name if name else "<MISSING>")
                 store.append(address if address else "<MISSING>")

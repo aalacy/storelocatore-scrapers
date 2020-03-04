@@ -19,24 +19,30 @@ def fetch_data():
     r = requests.get("https://info.viaero.com/store-directory")
     soup = BeautifulSoup(r.text,"lxml")
     addressess = []
-    for location in soup.find_all('a'):
-        if 'Visit Store' in location.text:
-            if "https" in location['href']:
-                link = location['href']
+    for location in soup.find_all("div",{"class":"hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_inline_rich_text"}):
+        data = list(location.stripped_strings)
+        if data != []:
+            street_address = data[2]
+            city = data[3].split(",")[0]
+            state = data[3].split(",")[1].split(" ")[1]
+            
+            zipp = data[3].split(",")[1].split(" ")[2]
+            if '820 W 1st St' in street_address:
+                zipp='69153'
+            if '2485 N Diers Ave' in street_address:
+                zipp='68803'    
+            phone = data[-2]
+            if "https" in location.find("a")['href']:
+                page_url = location.find("a")['href']
             else:
-                link = 'https://info.viaero.com'+location["href"]
-            location_request = requests.get(link)
+                page_url = 'https://info.viaero.com'+location.find("a")['href']
+        
+            location_request = requests.get(page_url)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             data = list(location_soup.find_all("span",{"class":"hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_rich_text"})[1].stripped_strings)
             if "@context" in data[-1]:
                 del data[-1]
             location_name = data[1]
-            street_address = data[2]
-            city = data[-2].split(",")[0]
-            state = data[-2].split(",")[1].split(" ")[1]
-            zipp = data[-2].split(",")[1].split(" ")[2]
-            phone = data[-1]
-            
             hour=' '.join((list(location_soup.find("table").stripped_strings)))
             location_script = location_soup.find("script",{"type":"application/ld+json"}).text
              
@@ -58,10 +64,10 @@ def fetch_data():
             store.append(latitude)
             store.append(longitude)
             store.append(hour)
-            store.append(link)
-            if store[2] in addressess:
-                continue
-            addressess.append(store[2])
+            store.append(page_url)
+            # if store[2] in addressess:
+            #     continue
+            # addressess.append(store[2])
             # print(store)
             yield store
 

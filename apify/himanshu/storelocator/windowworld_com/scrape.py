@@ -101,6 +101,8 @@ def fetch_data():
                 data = k['entities']
                 # print(data)
                 for id,val in enumerate(data):
+                    print(val)
+                    exit()
                     locator_domain = base_url
                     location_name = val['attributes']['locationName'].strip()
                     street_address = val['attributes']['address'].strip()
@@ -117,6 +119,7 @@ def fetch_data():
                     hours_of_operation = ''
                     if 'openingHoursSpecification' in val['schema']:
                         hour = val['schema']['openingHoursSpecification']
+                        # print(hour)
                         jk = []
                         dayOfWeek = opens = closes = ''
                         for z in hour:
@@ -126,7 +129,7 @@ def fetch_data():
                                 opens =  z['opens']
                             if 'closes' in z:
                                 closes = z['closes']
-                            jk.append(dayOfWeek + " opens " + opens + "  closes " + closes)
+                            jk.append(dayOfWeek+' ' + opens + 'am'+"-" + closes+'pm'+',')
 
                         hours_of_operation = ' '.join(jk)
                     if street_address in addresses:
@@ -148,7 +151,7 @@ def fetch_data():
                     store.append(longitude if longitude else '<MISSING>')
                     store.append(hours_of_operation if hours_of_operation else '<MISSING>')
                     store.append(page_url if page_url else '<MISSING>')
-                    #print("===", str(store))
+                    # print("===", str(store))
                     yield store
 
             # if current_results_len < MAX_RESULTS:

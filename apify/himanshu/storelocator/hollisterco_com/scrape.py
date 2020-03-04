@@ -33,12 +33,9 @@ def fetch_data():
     data = soup.find_all("li",{"class":"view-all-stores__store"})
     for link in data:
         
-        if "/shop/us/clothing-stores/CA" in link.find("a")['href'] or "/shop/us/clothing-stores/US/"in link.find("a")['href']:
+        if "/shop/wd/clothing-stores/CA/" in link.find("a")['href'] or "/shop/wd/clothing-stores/US/"in link.find("a")['href']:
             page_url = base_url+link.find("a")['href']
-            try:
-                r = requests.get(page_url, headers=headers)
-            except:
-                pass
+            r = requests.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "lxml")
             if soup.find(lambda tag: (tag.name == "script") and "geoNodeUniqueId" in tag.text) == None:
                 continue
