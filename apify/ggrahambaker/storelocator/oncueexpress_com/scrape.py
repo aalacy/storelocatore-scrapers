@@ -29,16 +29,20 @@ def fetch_data():
     driver = get_driver()
 
     all_store_data = []
-    driver.get(locator_domain + ext)
-    driver.implicitly_wait(10)
+   
     dup_tracker = set()
     last = driver.find_elements_by_css_selector('li.pager-last')
-    while len(last) > 0:
+    done = True
+
+    for i in range(15):
+        driver.get('https://oncueexpress.com/find-a-store?page=' + str(i))
+        driver.implicitly_wait(10)
+        time.sleep(5)
         locs = driver.find_elements_by_css_selector('div.node-content')
+        if len(locs) == 1:
+            break
         for loc in locs:
-            location_name = loc.find_element_by_css_selector('div.title').text
-            print(location_name)
-        
+            location_name = loc.find_element_by_css_selector('div.title').text        
             store_number = location_name.split('#')[1].strip()
             
             street_address= loc.find_element_by_css_selector('div.thoroughfare').text
@@ -61,8 +65,6 @@ def fetch_data():
             else:
                 phone_number = '<MISSING>'
 
-            print(phone_number)
-
 
             if store_number not in dup_tracker:
                 if phone_number == '<MISSING>':
@@ -78,10 +80,7 @@ def fetch_data():
 
             all_store_data.append(store_data)
             
-        next_button = driver.find_element_by_css_selector('li.pager-next')
-        next_button.click()
-        time.sleep(5)
-        last = driver.find_elements_by_css_selector('li.pager-last')
+
         
 
 

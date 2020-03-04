@@ -22,7 +22,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
 
-    MAX_DISTANCE = 25
+    MAX_DISTANCE = 75
 
 
     store_ids = set()
@@ -32,7 +32,7 @@ def fetch_data():
     while zip_code:
         print('{} zip codes remaining'.format(len(search.zipcodes)))
         
-        url = 'https://www.americastire.com/store-locator/findStores?q=' + str(zip_code) + '&max=75'
+        url = 'https://www.discounttire.com/store-locator/findStores?q=' + str(zip_code) + '&max=75'
         new_zips = [str(zip_code)] 
         
         r = session.get(url, headers=HEADERS)
