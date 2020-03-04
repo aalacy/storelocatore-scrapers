@@ -50,9 +50,6 @@ def fetch_data():
 
     map_data = driver.execute_script('return usahtml5map_map_cfg_0')['map_data']
 
-    #map_json = json.loads(map_data)
-
-
 
     skip_states = set()
     for state, info in map_data.items():
@@ -83,6 +80,8 @@ def fetch_data():
             city, state, zip_code = addy_ext(addy_br.next.strip())
             
             location_name = city
+ 
+                
 
             google_href = div.find('a')['href']
             coords = google_href[google_href.find('@') + 1:].split(',')
@@ -90,6 +89,9 @@ def fetch_data():
             lat = coords[0]
             longit = coords[1]
             hours_split = div.findNext('p').prettify().split('\n')
+            if len(hours_split) == 6:
+                hours_split = div.findNext('p').findNext('p').prettify().split('\n')
+      
             hours = ''
             for h in hours_split:
                 if '<' in h:
@@ -101,7 +103,6 @@ def fetch_data():
                 
             
             hours = hours.strip()
-            
             phone_number = div.find('i', {'class': 'icon-call'}).next.strip()
             
             country_code = 'US'
