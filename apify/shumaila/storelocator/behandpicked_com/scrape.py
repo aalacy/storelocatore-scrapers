@@ -49,13 +49,17 @@ def fetch_data():
             soup = BeautifulSoup(r.text, "html.parser")
             address = soup.find('div', {'id': 's-6ce2c10f-fdec-427c-b554-d5f32de0ceb1'}).text
             #print(address)
-            phone = soup.find('div', {'id': 's-04d3662a-c533-428e-b658-f34783561e24'}).text
+            phone = soup.find('div', {'id': 's-04d3662a-c533-428e-b658-f34783561e24'}).find('h4').text
+            if phone.find("Phone") == -1:
+                phone = soup.find('div', {'id': 's-04d3662a-c533-428e-b658-f34783561e24'})
+                phone = phone.findAll('h4')
+                phone = phone[1].text
             #print(phone)
             #print(title)
             phone = phone.replace('Phone:','')
             phone = phone.replace('Phone #','')
             phone = phone.lstrip()
-            phone = phone[0:phone.find('\n')]
+            
             detail = str(soup)
             start = detail.find('data-latitude')
             start = detail.find('"',start)+1
@@ -103,7 +107,9 @@ def fetch_data():
             if len(pcode) < 2:
                 pcode = "<MISSING>"
             phone = phone.replace('.','-')
-            if len(phone) < 2 or len(phone) > 13 or phone.find('Phone') == -1:
+            if phone.find('\n') > -1:
+                phone = phone[0:phone.find('\n')]
+            if len(phone) < 2:
                 phone =  "<MISSING>"
             data.append([
                             'https://behandpicked.com/',
