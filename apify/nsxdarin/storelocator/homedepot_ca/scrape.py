@@ -60,6 +60,11 @@ def fetch_data():
                 hours = line2.split('"openingHours": "')[1].split('"')[0].strip()
         if hours == '':
             hours = '<MISSING>'
+        hours = hours.replace('Su','Sun').replace(' Mo','; Mon').replace(' Tu','; Tue')
+        hours = hours.replace(' We','; Wed')
+        hours = hours.replace(' Th','; Thu')
+        hours = hours.replace(' Fr','; Fri')
+        hours = hours.replace(' Sa','; Sat')
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
