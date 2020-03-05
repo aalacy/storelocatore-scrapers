@@ -27,10 +27,16 @@ def fetch_data():
                     if '"cost_center":"' in item and 'Mexico' not in item:
                         store = item.split('"')[0]
                         name = item.split('"name":"')[1].split('"')[0]
-                        phone = item.split(',"phone":"')[1].split('"')[0]
+                        try:
+                            phone = item.split(',"phone":"')[1].split('"')[0]
+                        except:
+                            phone = '<MISSING>'
                         website = 'hooters.com'
                         typ = '<MISSING>'
-                        zc = item.split('"zip":"')[1].split('"')[0]
+                        try:
+                            zc = item.split('"zip":"')[1].split('"')[0]
+                        except:
+                            zc = '<MISSING>'
                         add = item.split('"line-1":"')[1].split('"')[0]
                         city = item.split('"line-2":"')[1].split(',')[0]
                         state = item.split('"line-2":"')[1].split(',')[1].strip().split(' ')[0]
