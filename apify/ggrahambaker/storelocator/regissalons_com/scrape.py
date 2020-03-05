@@ -22,8 +22,8 @@ def fetch_data():
     search.initialize(country_codes = ['ca', 'us'])
 
 
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 100
+    MAX_RESULTS = 25
+    MAX_DISTANCE = 500
 
     coord = search.next_coord()
     all_store_data = []
@@ -51,11 +51,14 @@ def fetch_data():
             result_coords.append((lat, longit))
             
         
-            location_name = loc['address']
-            if location_name not in dup_tracker:
-                dup_tracker.append(location_name)
+            location_name = loc['store'].replace('&#8211;', '').replace('&#8217;', "'").replace('&#038;', '&')
+           
+            phone_number = loc['phone']
+            if phone_number not in dup_tracker:
+                dup_tracker.append(phone_number)
             else:
                 continue
+
                 
             street_address = loc['address2']
             city = loc['city']
@@ -84,7 +87,7 @@ def fetch_data():
                 for td in tds:
                     hours += td.text + ' '
 
-            phone_number = loc['phone']
+            
             page_url = loc['permalink']
             
             location_type = '<MISSING>'
@@ -97,18 +100,12 @@ def fetch_data():
             
         
         if len(res_json) < MAX_RESULTS:
-            print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(res_json) == MAX_RESULTS:
-            print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + MAX_RESULTS + " results")
         coord = search.next_coord()  
-
-
-
-
 
 
 

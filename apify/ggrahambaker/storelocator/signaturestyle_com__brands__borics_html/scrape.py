@@ -2,7 +2,7 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-import sgzip 
+from sgzip import ClosestNSearch
 import usaddress
 
 
@@ -48,7 +48,7 @@ def fetch_data():
 
     locator_domain = 'https://www.signaturestyle.com/brands/borics.html'
 
-    search = sgzip.ClosestNSearch()
+    search = ClosestNSearch()
     search.initialize(country_codes = ['us', 'ca'])
 
     MAX_DISTANCE = 25
