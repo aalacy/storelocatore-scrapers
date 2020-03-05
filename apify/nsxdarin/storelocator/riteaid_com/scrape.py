@@ -7,7 +7,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
            }
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data2.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
@@ -59,7 +59,10 @@ def fetch_data():
                 days = line2.split("data-days='[{")[1].split(']}]')[0].split('"day":"')
                 for day in days:
                     if '"intervals":' in day:
-                        hrs = day.split('"')[0] + ': ' + day.split(',"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                        try:
+                            hrs = day.split('"')[0] + ': ' + day.split(',"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                        except:
+                            hrs = day.split('"')[0] + ': Closed'
                         if hours == '':
                             hours = hrs
                         else:
