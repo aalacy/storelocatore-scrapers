@@ -50,7 +50,6 @@ def fetch_data():
 
     all_store_data = []
     for city_link in city_list:
-        print(city_link)
         r = session.get(city_link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
         
@@ -104,10 +103,6 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-            print(store_data)
-            print()
-            print()
-            print()
 
             all_store_data.append(store_data)
             

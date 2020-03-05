@@ -50,6 +50,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ['us', 'ca'])
     MAX_DISTANCE = 25
+    MAX_RESULTS = 50
 
     coord = search.next_coord()
     all_store_data = []
@@ -123,8 +124,14 @@ def fetch_data():
             all_store_data.append(store_data)
             
 
-        search.max_count_update(result_coords)    
-        coord = search.next_coord()  
+        if len(res_json) < MAX_RESULTS:
+            search.max_distance_update(MAX_DISTANCE)
+        elif len(res_json) == MAX_RESULTS:
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + MAX_RESULTS + " results")
+           
+        coord = search.next_coord()    
 
 
     return all_store_data

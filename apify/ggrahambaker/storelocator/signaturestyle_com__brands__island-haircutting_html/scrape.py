@@ -46,7 +46,7 @@ def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
 
-    locator_domain = 'https://www.signaturestyle.com/brands/borics.html'
+    locator_domain = 'https://www.signaturestyle.com/brands/island-haircutting.html'
 
     search = ClosestNSearch()
     search.initialize(country_codes = ['us', 'ca'])
@@ -57,13 +57,12 @@ def fetch_data():
     coord = search.next_coord()
     all_store_data = []
     dup_tracker = []
-    while coord:   
-        print("remaining zipcodes: " + str(len(search.zipcodes))) 
+    while coord:    
         x = coord[0]
         y = coord[1]
 
         url = 'https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/' + str(x) + '/' + str(y) + '/0.5/0.5/true'
-        print(url)
+
         r = session.get(url, headers=HEADERS)
         
         res_json = json.loads(r.content)['stores']
@@ -76,7 +75,7 @@ def fetch_data():
             longit = loc['longitude']
             result_coords.append((lat, longit))
             
-            if loc['actualSiteId'] != 13:
+            if loc['actualSiteId'] != 21:
                 continue
             
             store_number = loc['storeID']

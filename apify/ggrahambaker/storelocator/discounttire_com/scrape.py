@@ -29,9 +29,7 @@ def fetch_data():
     zip_code = search.next_zip()
     all_store_data = []
     dup_counter = []
-    while zip_code:
-        print('{} zip codes remaining'.format(len(search.zipcodes)))
-        
+    while zip_code:        
         url = 'https://www.discounttire.com/store-locator/findStores?q=' + str(zip_code) + '&max=75'
         new_zips = [str(zip_code)] 
         
