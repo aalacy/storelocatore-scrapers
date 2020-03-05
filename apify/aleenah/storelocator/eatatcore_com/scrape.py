@@ -52,7 +52,7 @@ def fetch_data():
             p="<MISSING>"
 
         all.append([
-            "https://www.corelifeeatery.com",
+            "https://www.eatatcore.com",
             loc,
             addr["streetAddress"],
             addr["addressLocality"],
