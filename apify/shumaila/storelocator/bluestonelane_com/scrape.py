@@ -24,9 +24,9 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-notifications")
-    #return webdriver.Chrome('chromedriver', chrome_options=options)
-    chrome_path = 'c:\\Users\\Dell\\local\\chromedriver.exe'
-    return webdriver.Chrome(chrome_path)
+    return webdriver.Chrome('chromedriver', chrome_options=options)
+    #chrome_path = 'c:\\Users\\Dell\\local\\chromedriver.exe'
+    #return webdriver.Chrome(chrome_path)
 
 def fetch_data():
     # Your scraper here
