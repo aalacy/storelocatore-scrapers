@@ -68,7 +68,6 @@ def fetch_data():
         res_json = json.loads(r.content)['stores']
 
         result_coords = []
-        result_coords.append((x, y))
         
         for loc in res_json:
                     

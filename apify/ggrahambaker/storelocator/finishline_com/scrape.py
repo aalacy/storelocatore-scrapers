@@ -102,7 +102,7 @@ def fetch_data():
             country_code = 'US'
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
-
+-
 
             all_store_data.append(store_data)
             
@@ -154,20 +154,9 @@ def fetch_data():
 
 
         all_store_data.append(store_data)
-        print(store_data)
-        print(len(all_store_data))
-            
-        print()
-        print()
-        print()
-
-                
-                
+  
                 
             
-
-
-
 
 
 
