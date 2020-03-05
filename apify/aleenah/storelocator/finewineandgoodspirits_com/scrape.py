@@ -1,7 +1,7 @@
 import csv
 import re
 from bs4 import BeautifulSoup
-import requests
+from sgrequests import SgRequests
 
 
 def write_output(data):
@@ -14,7 +14,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
+session = SgRequests()
 def fetch_data():
     # Your scraper here
     locs = []
@@ -30,7 +30,7 @@ def fetch_data():
     ids=[]
     page_url=[]
 
-    res=requests.get("https://www.finewineandgoodspirits.com/webapp/wcs/stores/servlet/FindStoreView?storeId=10051&langId=-1&catalogId=10051&pageNum=1&listSize=1000&category=&city=&zip_code=&county=All+Stores&storeNO=")
+    res=session.get("https://www.finewineandgoodspirits.com/webapp/wcs/stores/servlet/FindStoreView?storeId=10051&langId=-1&catalogId=10051&pageNum=1&listSize=1000&category=&city=&zip_code=&county=All+Stores&storeNO=")
     soup = BeautifulSoup(res.text, 'html.parser')
 
     divs= soup.find_all('div', {'class': 'tabContentRow'})
