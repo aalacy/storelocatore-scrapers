@@ -1,9 +1,10 @@
 import csv
 import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -28,67 +29,48 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     address = []
-    for state in soup.find_all("div", {"class": "avaris-pagebuilder-block avaris-pagebuilder-block-column col-sm-6"}):
-        state_request = requests.get(state.find("a")["href"], headers=headers)
-        state_soup = BeautifulSoup(state_request.text, 'lxml')
-        for location in state_soup.find_all("div", {'class': "avaris-pagebuilder"}):
-            for link in location.find_all("a"):
-                location_request = requests.get(link["href"], headers=headers)
-                location_soup = BeautifulSoup(location_request.text, 'lxml')
-                for store_data in location_soup.find_all("div", {"class": "avaris-pagebuilder-block"}):
-                    location_details = list(store_data.stripped_strings)
-                    if len(location_details) > 2 and len(location_details) < 6:
-                        if len(location_details) == 4:
-                            if location_details[2] in address:
-                                continue
-                            location_details = location_details[1:]
-                            address.append(location_details[1])
-                        else:
-                            if location_details[1] in address:
-                                continue
-                            address.append(location_details[1])
-                        store = []
-                        store.append("http://muchasgraciasmexicanfood.com")
-                        store.append(location_details[0])
-                        if len(location_details[1].split(",")) == 3:
-                            store.append(location_details[1].split(",")[0])
-                            store.append(location_details[1].split(",")[1])
-                        else:
-                            store.append(
-                                " ".join(location_details[1].split(",")[0].split(" ")[:-1]))
-                            store.append(location_details[1].split(
-                                ",")[0].split(" ")[-1])
-                        if len(location_details[1].split(",")[-1].split(" ")) < 3:
-                            store.append(location_details[1].split(
-                                ",")[-1].split(" ")[-1])
-                            store.append("<MISSING>")
-                        else:
-                            store.append(location_details[1].split(
-                                ",")[-1].split(" ")[-2])
-                            store.append(location_details[1].split(
-                                ",")[-1].split(" ")[-1])
-                        store.append("US")
-                        store.append("<MISSING>")
-                        store.append(location_details[2])
-                        store.append("<MISSING>")
-                        if store_data.find("a", {"href": re.compile("/@")}) == None:
-                            try:
-                                geo_location = location_soup.find(
-                                    "a", {"href": re.compile("/@")})["href"]
-                            except:
-                                continue
-                        else:
-                            geo_location = store_data.find(
-                                "a", {"href": re.compile("/@")})["href"]
-                        store.append(geo_location.split("/@")[1].split(",")[0])
-                        store.append(geo_location.split("/@")[1].split(",")[1])
-                        store.append("<MISSING>")
-                        store.append(link["href"])
-                        return_main_object.append(store)
-                        # print("data == " + str(store))
-                        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    return return_main_object
-
+    for city in soup.find_all("ul",{"class":"sub-menu"})[1].find_all("ul",{"class":"sub-menu"}):
+        for url in city.find_all("a"):
+            page_url = url['href']
+            location_r = session.get(page_url, headers=headers)
+            location_soup = BeautifulSoup(location_r.text, "lxml")
+            location_name = location_soup.find_all("h6",{"class":"avaris-contact-title"})[0].text
+            addr = location_soup.find_all("h6",{"class":"avaris-contact-title"})[1].text
+            if len(addr.split(",")) == 2:
+                street_address = " ".join(addr.split(",")[0].split(" ")[:-1]).replace("Grants","").strip()
+                city = addr.split(",")[0].split(" ")[-1].replace("Pass","Grants Pass")
+                state = addr.split(",")[1].split(" ")[1]
+                zipp = addr.split(",")[1].split(" ")[2]
+            else:
+                street_address = addr.split(",")[0]
+                city = addr.split(",")[1]
+                if len(addr.split(",")[-1].split(" ")) == 2:
+                    state = addr.split(",")[-1].split(" ")[1]
+                    zipp = "<MISSING>"
+                else:
+                    state = addr.split(",")[-1].split(" ")[1]
+                    zipp = addr.split(",")[-1].split(" ")[2]
+            phone = location_soup.find_all("h6",{"class":"avaris-contact-title"})[-1].text.strip()
+            geo_location = location_soup.find("a", {"href": re.compile("/@")})['href']
+            latitude = geo_location.split("/@")[1].split(",")[0]
+            longitude = geo_location.split("/@")[1].split(",")[1]
+            
+            store = []
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
+            store.append("US")
+            store.append("<MISSING>")
+            store.append(phone)
+            store.append("<MISSING>")
+            store.append(latitude)
+            store.append(longitude)
+            store.append("<MISSING>")
+            store.append(page_url)
+            yield store
 
 def scrape():
     data = fetch_data()

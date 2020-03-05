@@ -28,18 +28,6 @@ def fetch_data():
     
     r = requests.get(get_url, headers=headers)    
     soup = BeautifulSoup(r.text, "lxml")
-    main1 =soup.find_all("div",{"class":"link-wrap"})     
-    for i in main1:
-        
-        link1 = base_url+i.find('a')['href']
-        link = link1.replace("../","")  
-        link_append.append(link)
-        
-        r1 = requests.get(link, headers=headers)
-        soup1 = BeautifulSoup(r1.text, "lxml")
-        main2 =soup1.find("div",{"id":"location"})
-        hour = main2.find("div",{"class":"hours"}).text
-        hour_append.append(hour)
     main =soup.find("script",{"class":"js-react-on-rails-component"}).text
     js = json.loads(main)
     
@@ -57,6 +45,18 @@ def fetch_data():
         phone=i['phone']
         lat= i['lat']
         lng=i['lng']      
+        location_type = i['__typename']
+        page_url = "https://www.larsensrestaurants.com/"+str(i['slug'])+"-california"
+        
+        r1 = requests.get(page_url)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        try:
+            hour = " ".join(list(soup1.find("div",{"class":"hours"}).stripped_strings)).replace("Join us for Happy Hour Daily* from 5:00 PM to 7:00 PM & Sunday 5:00 PM to Close","").replace("* Holidays excluded Feb 14, 15, Easter, Mother's Day, Father's Day, Thanksgiving, Dec 24, 25, 31","").replace("Join us for Happy Hour Mon-Fri* from 5:00 PM to 7:00 PM & Sunday 5:00 PM to Close","").replace("Happy Hour Daily* 5-7pm *Holidays excluded including 2/14 & 2/15, Easter, Mother's Day, Father's Day, Thanksgiving, 12/24,25,31","").replace("Daily* from 5:00 PM- 7:00 PM","").replace("Join us for Happy Hour","").replace("Join us for Happy Hour Daily* from 4:00 PM to Close","")
+        except:
+            hour = "Monday - Friday from 5:00 PM to Close Saturday & Sunday from 3:00 PM to Close"
+        
+ 
+
         store = []
         store.append(base_url if base_url else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
@@ -70,8 +70,9 @@ def fetch_data():
         store.append('<MISSING>')
         store.append(lat if lat else '<MISSING>')
         store.append(lng if lng else '<MISSING>')
-        store.append(hour_append[index])
-        store.append(link_append[index])        
+        store.append(hour)
+        store.append(page_url)  
+        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]      
         return_main_object.append(store)
 
     return return_main_object

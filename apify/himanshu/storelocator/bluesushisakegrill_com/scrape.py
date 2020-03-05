@@ -21,63 +21,63 @@ def write_output(data):
 def fetch_data():
     addresses = []
     base_url = "https://bluesushisakegrill.com/"
-    page_url = "https://bluesushisakegrill.com/locations"
-    r = requests.get(page_url)
+    get_url = "https://bluesushisakegrill.com/locations"
+    r = requests.get(get_url)
     soup = BeautifulSoup(r.text, "lxml")
     store_name = []
     store_detail = []
     return_main_object = []
     name1 = []
-    data = soup.find_all("div", {"class": "locations-city"})
+    main = soup.find_all("h3", {"class": "locations-item-title"})
+    
+    for i in main:
+        addresss= i.find('locations-item-details-item')
+        link =i.find('a').text
+        if 'The Domain - Coming Soon!' in link:
+            continue
+      
+        link =i.find('a')['href']
+        r1 = requests.get(link)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        main1 = soup1.find("div", {"class": "location_details-address"})
+        location_name = soup1.find('div',{'class':'page_header-container'}).text.strip()
+        data= list(main1.stripped_strings)
+        address= data[2]
+        city = data[3].split(',')[0]
+        state = data[3].split(',')[1].strip().split(' ')[0]
+        zip = data[3].split(',')[1].strip().split(' ')[1]
+        phone= soup1.find('p',{'class':'location_details-phone'}).text
+        hour_tmp = soup1.find('div',{'class':'location_details-hours'})
+        hour= ' '.join(list(hour_tmp.stripped_strings))
+        cords = soup1.find('a',{'class':'location_details-address-directions button button--primary button--solid'})['href'].split('@')#[1].split(',')[0]
+        if(len(cords)==2):
 
-    for i in data:
-        p = i.find_all("div", {"class": "locations-item-details"})
-        name = i.find_all("h3", {"class": "locations-item-title"})
-        for j in name:
-            name1.append(j.text)
-        for index, j in enumerate(p):
-            tem_var = []
-            if len(j.a['href'].split('@')) == 2:
-                lat = j.a['href'].split('@')[1].split(',')[0]
-                lon = j.a['href'].split('@')[1].split(',')[1]
+            lat = soup1.find('a',{'class':'location_details-address-directions button button--primary button--solid'})['href'].split('@')[1].split(',')[0]
+            lng = soup1.find('a',{'class':'location_details-address-directions button button--primary button--solid'})['href'].split('@')[1].split(',')[1]
+        elif(len(cords)==1):
+            lat = soup1.find('a',{'class':'location_details-address-directions button button--primary button--solid'})['href'].split('=')[-1].split('+')[0]
+            lng = soup1.find('a',{'class':'location_details-address-directions button button--primary button--solid'})['href'].split('=')[-1].split('+')[1]
+            # print(lat)
 
-            else:
-                lat = j.a['href'].split("ll=")[-1].split("+")[0]
-                lon = j.a['href'].split("ll=")[-1].split("+")[1]
-                # print(j.a['href'].split("ll=")[-1].split("+"))
-            st = list(j.stripped_strings)[0]
-            city = list(j.stripped_strings)[1].split(",")[0]
-            state_list = list(j.stripped_strings)[1].split(",")
-            if "Coming Soon :" in " ".join(state_list):
-                continue
-            # print(state_list)
-            state = list(j.stripped_strings)[1].split(",")[1].split()[0]
-            zip1 = list(j.stripped_strings)[1].split(",")[1].split()[1]
-            phone = list(j.stripped_strings)[2]
-            hours = " ".join(list(j.stripped_strings)[3:])
 
-            tem_var.append("https://bluesushisakegrill.com")
-            tem_var.append(name1[index])
-            tem_var.append(st)
-            tem_var.append(city)
-            tem_var.append(state)
-            tem_var.append(zip1)
-            tem_var.append("US")
-            tem_var.append("<MISSING>")
-            tem_var.append(phone)
-            tem_var.append("<MISSING>")
-            tem_var.append(lat)
-            tem_var.append(lon)
-            tem_var.append(hours)
-            tem_var.append(page_url)
-            # print("data == " + str(tem_var))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            if tem_var[2] in addresses:
-                continue
-            addresses.append(tem_var[2])
-            return_main_object.append(tem_var)
-
-    return return_main_object
+        store=list()
+        store.append("https://bluesushisakegrill.com")
+        store.append(location_name)
+        store.append(address)
+        store.append(city)
+        store.append(state)
+        store.append(zip)
+        store.append("US")
+        store.append("<MISSING>")
+        store.append(phone)
+        store.append("<MISSING>")
+        store.append(lat)
+        store.append(lng)
+        store.append(hour)
+        store.append(link)
+        yield store
+    
+   # return return_main_object
 
 
 def scrape():
