@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,53 +13,53 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-
 def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
 
-    locator_domain = 'https://www.signaturestyle.com/' 
-    ext = 'brands/we-care-hair.html'
+    locator_domain = 'https://www.grabbagreen.com/' 
+    ext = 'locator/index.php?brand=34&mode=desktop&pagesize=10000&q=california'
     r = session.get(locator_domain + ext, headers = HEADERS)
 
-    soup = BeautifulSoup(r.content, 'html.parser')
-    locs = soup.find_all('div', {'class': 'other-salon'})
-    link_list = [loc.find('a')['href'] for loc in locs]
 
+    soup = BeautifulSoup(r.content, 'html.parser')
+
+    locs = soup.find_all('div', {'class': 'store'})
     all_store_data = []
-    for link in link_list:
-        r = session.get(link, headers = HEADERS)
+    for loc in locs:
+        store_number = loc.text.split('#')[1].strip()
+        page_url = 'https://www.grabbagreen.com/stores/' + store_number
+        r = session.get(page_url, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
+        loc_json = json.loads(soup.find('script', {'type': 'application/ld+json'}).text)
+
+        location_name = loc_json['name']
+        phone_number = loc_json['telephone'].strip()
+
+        if phone_number == '':
+            phone_number = '<MISSING>' 
+        addy = loc_json['address']
         
-        location_name = soup.find('h1', {'class': 'salontitle_salonsmalltxt'}).text
-        print(location_name)
-        street_address = soup.find('span', {'itemprop': 'streetAddress'}).text
-        city = soup.find('span', {'itemprop': 'addressLocality'}).text
-        state = soup.find('span', {'itemprop': 'addressRegion'}).text
-        zip_code = soup.find('span', {'itemprop': 'postalCode'}).text
-        
-        phone_number = soup.find('a', {'id': 'sdp-phone'}).text
-        
-        lat = soup.find('meta', {'itemprop': 'latitude'})['content']
-        longit = soup.find('meta', {'itemprop': 'longitude'})['content']
-        
+        street_address = addy['streetAddress']
+        city = addy['addressLocality']
+        state = addy['addressRegion']
+        zip_code = addy['postalCode']
         country_code = 'US'
-        store_number = '<MISSING>'
+        
+        coords = loc_json['geo']
+        lat = coords['latitude']
+        longit = coords['longitude']
+        hours = loc_json['openingHours'].strip()
+        if hours == '':
+            hours = '<MISSING>'
+        
         location_type = '<MISSING>'
         
-        hours = '<MISSING>'
-        page_url = link
-
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
-
         all_store_data.append(store_data)
 
-
-        
 
 
     return all_store_data

@@ -66,7 +66,6 @@ def fetch_data():
         res_json = json.loads(r.content)['stores']
 
         result_coords = []
-        result_coords.append((x, y))
         
         for loc in res_json:
             lat = loc['latitude']
@@ -124,12 +123,10 @@ def fetch_data():
             all_store_data.append(store_data)
             
 
-        if len(res_json) < MAX_RESULTS:
+        if len(res_json) == 0:
             search.max_distance_update(MAX_DISTANCE)
-        elif len(res_json) == MAX_RESULTS:
-            search.max_count_update(result_coords)
         else:
-            raise Exception("expected at most " + MAX_RESULTS + " results")
+            search.max_count_update(result_coords)
            
         coord = search.next_coord()    
 

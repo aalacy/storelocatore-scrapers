@@ -49,7 +49,7 @@ def fetch_data():
     locator_domain = 'https://www.signaturestyle.com/brands/island-haircutting.html'
 
     search = ClosestNSearch()
-    search.initialize(country_codes = ['us', 'ca'])
+    search.initialize(country_codes = ['ca'])
 
     MAX_DISTANCE = 25
     MAX_RESULTS = 50
@@ -62,7 +62,6 @@ def fetch_data():
         y = coord[1]
 
         url = 'https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/' + str(x) + '/' + str(y) + '/0.5/0.5/true'
-
         r = session.get(url, headers=HEADERS)
         
         res_json = json.loads(r.content)['stores']
@@ -75,7 +74,7 @@ def fetch_data():
             longit = loc['longitude']
             result_coords.append((lat, longit))
             
-            if loc['actualSiteId'] != 21:
+            if loc['actualSiteId'] != 47:
                 continue
             
             store_number = loc['storeID']
@@ -124,12 +123,11 @@ def fetch_data():
             
             all_store_data.append(store_data)
             
-        if len(res_json) < MAX_RESULTS:
+        if len(res_json) == 0:
             search.max_distance_update(MAX_DISTANCE)
-        elif len(res_json) == MAX_RESULTS:
-            search.max_count_update(result_coords)
         else:
-            raise Exception("expected at most " + MAX_RESULTS + " results")
+            search.max_count_update(result_coords)
+       
         
         
         coord = search.next_coord()    
