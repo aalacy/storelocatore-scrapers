@@ -24,9 +24,9 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-notifications")
-    return webdriver.Chrome('chromedriver', chrome_options=options)
-    #chrome_path = 'c:\\Users\\Dell\\local\\chromedriver.exe'
-    #return webdriver.Chrome(chrome_path)
+    #return webdriver.Chrome('chromedriver', chrome_options=options)
+    chrome_path = 'c:\\Users\\Dell\\local\\chromedriver.exe'
+    return webdriver.Chrome(chrome_path)
 
 def fetch_data():
     # Your scraper here
@@ -34,7 +34,7 @@ def fetch_data():
     url = 'https://bluestonelane.com/cafe-and-coffee-shop-locations/?shop-sort=nearest&view-all=1&lat=33.6592896&lng=73.144729'
     driver = get_driver()
     #time.sleep(3)
-    driver.set_page_load_timeout(30)
+    driver.set_page_load_timeout(60)
     p = 0
     try:
         driver.get(url)
@@ -58,7 +58,7 @@ def fetch_data():
         except:
             pass
         
-        time.sleep(4)
+        time.sleep(5)
         #print(link)
         ccode = 'US'
         soup = BeautifulSoup(driver.page_source, "html.parser")
@@ -66,107 +66,111 @@ def fetch_data():
         #title = title[0:title.find('-')]
         title.lstrip()
         maindiv = soup.find('aside')
-        street = maindiv.find('span',{'id':'yext-address'})
         try:
-            store = street['data-yext-location-id']
-        except:
-            store = "<MISSING>"
-        #print(store)
-        try:
-            street = street.text
-        except:
-            street = "<MISSING>"
-        try:
-            city = maindiv.find('span',{'id':'yext-city'}).text
-        except:
-            city = "<MISSING>"
-        try:
-            state = maindiv.find('span',{'id':'yext-state'}).text
-           
-        except:
-            state = "<MISSING>"
-        try:
-            pcode = maindiv.find('span',{'id':'yext-zip'}).text
-            
+            street = maindiv.find('span',{'id':'yext-address'})
             try:
-                state1,temp = pcode.split(' ')
-                ccode = "CA"
+                store = street['data-yext-location-id']
             except:
-                ccode = 'US'
-        except:
-            pcode = "<MISSING>"
-        try:
-            phone = maindiv.find('a',{'data-yext-field':'phone'}).text
-        except:
-            phone = "<MISSING>"
-        try:
-            hours = maindiv.find('div',{'class':'yext-hours'}).text
-            hours = hours.replace('\n',' ')
-            hours = hours.lstrip()
-            hourscheck = maindiv.find('span',{'class':'hours'}).text
-            if len(hourscheck) < 2:
+                store = "<MISSING>"
+            #print(store)
+            try:
+                street = street.text
+            except:
+                street = "<MISSING>"
+            try:
+                city = maindiv.find('span',{'id':'yext-city'}).text
+            except:
+                city = "<MISSING>"
+            try:
+                state = maindiv.find('span',{'id':'yext-state'}).text
+               
+            except:
+                state = "<MISSING>"
+            try:
+                pcode = maindiv.find('span',{'id':'yext-zip'}).text
+                
+                try:
+                    state1,temp = pcode.split(' ')
+                    ccode = "CA"
+                except:
+                    ccode = 'US'
+            except:
+                pcode = "<MISSING>"
+            try:
+                phone = maindiv.find('a',{'data-yext-field':'phone'}).text
+            except:
+                phone = "<MISSING>"
+            try:
+                hours = maindiv.find('div',{'class':'yext-hours'}).text
+                hours = hours.replace('\n',' ')
+                hours = hours.lstrip()
+                hourscheck = maindiv.find('span',{'class':'hours'}).text
+                if len(hourscheck) < 2:
+                    hours = "<MISSING>"
+            except:
                 hours = "<MISSING>"
+            try:
+                mapdiv = soup.find('div',{'class':'sidebar-map-embed'})
+                coords = mapdiv.find('iframe')
+                coords = str(coords['src'])
+                #print(coords)
+                start = coords.find('!2d')+3
+                end = coords.find('!3d',start)
+                longt = coords[start:end]
+                start = end + 3
+                end = coords.find('!',start)
+                
+                lat = coords[start:end]
+                
+                
+            except:
+                lat = "<MISSING>"
+                longt = "<MISSING>"
+
+            if len(street) <2:
+                street = "<MISSING>"
+            if len(city) <2:
+                city = "<MISSING>"
+            if len(state) <2:
+                state = "<MISSING>"
+            if len(pcode) <2:
+                pcode = "<MISSING>"
+            if len(ccode) <2:
+                ccode = "<MISSING>"
+            if len(phone) <2:
+                phone = "<MISSING>"
+            if len(store) <1:
+                store = "<MISSING>"
+            if len(lat) <2:
+                lat = "<MISSING>"
+            if len(longt) <2:
+                longt = "<MISSING>"
+            if len(hours) <2:
+                hours = "<MISSING>"
+
+            if pcode.find('-') == -1:
+
+                data.append([
+                        'https://bluestonelane.com/',
+                        link,
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        ccode,
+                        store,
+                        phone,
+                        "<MISSING>",
+                        lat,
+                        longt,
+                        hours
+                    ])
+                #print(p,data[p])
+                p += 1
+                
         except:
-            hours = "<MISSING>"
-        try:
-            mapdiv = soup.find('div',{'class':'sidebar-map-embed'})
-            coords = mapdiv.find('iframe')
-            coords = str(coords['src'])
-            #print(coords)
-            start = coords.find('!2d')+3
-            end = coords.find('!3d',start)
-            longt = coords[start:end]
-            start = end + 3
-            end = coords.find('!',start)
-            
-            lat = coords[start:end]
-            
-            
-        except:
-            lat = "<MISSING>"
-            longt = "<MISSING>"
-
-        if len(street) <2:
-            street = "<MISSING>"
-        if len(city) <2:
-            city = "<MISSING>"
-        if len(state) <2:
-            state = "<MISSING>"
-        if len(pcode) <2:
-            pcode = "<MISSING>"
-        if len(ccode) <2:
-            ccode = "<MISSING>"
-        if len(phone) <2:
-            phone = "<MISSING>"
-        if len(store) <1:
-            store = "<MISSING>"
-        if len(lat) <2:
-            lat = "<MISSING>"
-        if len(longt) <2:
-            longt = "<MISSING>"
-        if len(hours) <2:
-            hours = "<MISSING>"
-
-        if pcode.find('-') == -1:
-
-            data.append([
-                    'https://bluestonelane.com/',
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    ccode,
-                    store,
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours
-                ])
-            #print(p,data[p])
-            p += 1
+            pass
         
     return data
 
