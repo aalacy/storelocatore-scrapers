@@ -34,7 +34,11 @@ def fetch_data():
  
         if len(addy) == 3:
             street_address = addy[0]
-            city = addy[1].strip()
+            if 'Unit' in addy[1]:
+                street_address += ' Unit 1624'
+                city = 'Richmond'
+            else: 
+                city = addy[1].strip()
             state = addy[2].strip()
             zip_code = '<MISSING>'
         else:
