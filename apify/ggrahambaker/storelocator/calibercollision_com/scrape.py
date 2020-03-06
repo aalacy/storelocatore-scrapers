@@ -62,12 +62,6 @@ def fetch_data():
                 hours += ' CLOSED SUN'
         hours = hours.strip().replace('&amp;', '&').replace('SUN-', 'SUN')
 
-        if 'Burbank' in location_name:
-            print(loc)
-            print(hours)
-            print()
-            print()
-
 
         addy = loc['address_info'][0]
         street_address = addy['address']
