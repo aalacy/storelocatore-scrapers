@@ -56,11 +56,12 @@ def fetch_data():
     all_store_data = []
     dup_tracker = []
     while coord:
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
 
         url = 'https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/' + str(x) + '/' + str(y) + '/0.5/0.5/true'
-
+        print(url)
         r = session.get(url, headers=HEADERS)
         
         res_json = json.loads(r.content)['stores']
@@ -127,8 +128,9 @@ def fetch_data():
             search.max_distance_update(MAX_DISTANCE)
         else:
             search.max_count_update(result_coords)
-           
+        
         coord = search.next_coord()    
+
 
 
     return all_store_data

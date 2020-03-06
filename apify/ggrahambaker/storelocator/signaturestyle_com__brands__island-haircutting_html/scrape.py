@@ -76,7 +76,8 @@ def fetch_data():
             
             if loc['actualSiteId'] != 47:
                 continue
-            
+
+
             store_number = loc['storeID']
             
             if store_number not in dup_tracker:

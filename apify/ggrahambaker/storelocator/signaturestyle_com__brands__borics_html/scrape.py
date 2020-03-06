@@ -58,6 +58,7 @@ def fetch_data():
     all_store_data = []
     dup_tracker = []
     while coord:   
+        
         x = coord[0]
         y = coord[1]
 

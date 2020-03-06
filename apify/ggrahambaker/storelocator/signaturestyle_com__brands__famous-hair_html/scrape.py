@@ -1,16 +1,9 @@
 import csv
-import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
+import json
+from sgzip import ClosestNSearch
+import usaddress
 
 
 def write_output(data):
@@ -23,77 +16,120 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
+def parse_address(addy_string):
+    parsed_add = usaddress.tag(addy_string)[0]
+
+    street_address = ''
+
+    if 'AddressNumber' in parsed_add:
+        street_address += parsed_add['AddressNumber'] + ' '
+    if 'StreetNamePreDirectional' in parsed_add:
+        street_address += parsed_add['StreetNamePreDirectional'] + ' '
+    if 'StreetName' in parsed_add:
+        street_address += parsed_add['StreetName'] + ' '
+    if 'StreetNamePostType' in parsed_add:
+        street_address += parsed_add['StreetNamePostType'] + ' '
+    if 'OccupancyType' in parsed_add:
+        street_address += parsed_add['OccupancyType'] + ' '
+    if 'OccupancyIdentifier' in parsed_add:
+        street_address += parsed_add['OccupancyIdentifier'] + ' '
+    city = parsed_add['PlaceName']
+    state = parsed_add['StateName']
+    zip_code = parsed_add['ZipCode']
+
+    return street_address, city, state, zip_code
+
+
 def fetch_data():
+
+    session = SgRequests()
+    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
+
     locator_domain = 'https://www.signaturestyle.com/brands/famous-hair.html'
-    loc_domain = 'https://www.signaturestyle.com/'
-    ext = 'salon-directory.html'
 
-    driver = get_driver()
-    driver.get(loc_domain + ext)
+    search = ClosestNSearch()
+    search.initialize(country_codes = ['us', 'ca'])
 
-    sections = driver.find_elements_by_css_selector('div.acs-commons-resp-colctrl-row')
-    state_link_list = []
-    for sec in sections:
-        hrefs = sec.find_elements_by_css_selector('a')
-        for h in hrefs:
-            state_link_list.append(h.get_attribute('href'))
+    MAX_DISTANCE = 25
+    MAX_RESULTS = 50
 
-    store_link_list = []
-    for state_link in state_link_list:
-        driver.get(state_link)
-        driver.implicitly_wait(10)
-        salon_groups = driver.find_elements_by_css_selector('div.salon-group')
-        for group in salon_groups:
-            salons = group.find_elements_by_css_selector('a')
-            for salon in salons:
-                store_link_list.append(salon.get_attribute('href'))
-
+    coord = search.next_coord()
     all_store_data = []
-    duplicate_checker = []
-    for link in store_link_list:
-        driver.get(link)
-        driver.implicitly_wait(30)
+    dup_tracker = []
+    while coord:   
+        x = coord[0]
+        y = coord[1]
 
-        try:
-            phone_number = driver.find_element_by_xpath('//span[@itemprop="telephone"]').text
-        except NoSuchElementException:
-            print('closed')
-            continue
+        url = 'https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/' + str(x) + '/' + str(y) + '/0.5/0.5/true'
+        r = session.get(url, headers=HEADERS)
+        res_json = json.loads(r.content)['stores']
 
+        result_coords = []
+        
+        for loc in res_json:
+            lat = loc['latitude']
+            longit = loc['longitude']
+            result_coords.append((lat, longit))
+            
+            if loc['actualSiteId'] != 18:
+                continue
+            
+            store_number = loc['storeID']
+            
+            if store_number not in dup_tracker:
+                dup_tracker.append(store_number)
+            else:
+                continue
+                
+            page_json_url = 'https://info3.regiscorp.com/salonservices/siteid/100/salon/' + str(store_number)
+            
+            r = session.get(page_json_url, headers=HEADERS)
+        
+            loc = json.loads(r.content)
+            
+            location_name = loc['name']
+            street_address = loc['address']
+            city = loc['city']
+            state = loc['state']
+            zip_code = loc['zip']
+            if len(zip_code.split(' ')) == 2:
+                country_code = 'CA'
+            else:
+                country_code = 'US'
+                
+            phone_number = loc['phonenumber']
+                
+            
+            hours_obj = loc['store_hours']
+            hours = ''
+            for part in hours_obj:
+                day = part['days']
+                hour_range = part['hours']['open'] + ' - ' + part['hours']['close']
+                
+                hours += day + ' ' + hour_range + ' '            
+            
 
-        if phone_number not in duplicate_checker:
-            duplicate_checker.append(phone_number)
+            if hours == '':
+                hours = '<MISSING>'
+            location_type = '<MISSING>'
+            page_url = '<MISSING>'
+            
+            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
+                        store_number, phone_number, location_type, lat, longit, hours, page_url]
+
+            
+            all_store_data.append(store_data)
+            
+        if len(res_json) == 0:
+            search.max_distance_update(MAX_DISTANCE)
         else:
-            continue
+            search.max_count_update(result_coords)
+       
+        
+        coord = search.next_coord()    
 
-        location_name = driver.find_element_by_css_selector('div.h2.h3').text
-        location_type = driver.find_element_by_css_selector('small.sub-brand').text
 
-        street_address = driver.find_element_by_xpath('//span[@itemprop="streetAddress"]').text
-        city = driver.find_element_by_xpath('//span[@itemprop="addressLocality"]').text
-        state = driver.find_element_by_xpath('//span[@itemprop="addressRegion"]').text
-        zip_code = driver.find_element_by_xpath('//span[@itemprop="postalCode"]').text
-        if ' ' in zip_code:
-            country_code = 'CA'
-        else:
-            country_code = 'US'
-
-        geo = driver.find_element_by_xpath('//div[@itemprop="geo"]')
-        lat = geo.find_element_by_xpath('//meta[@itemprop="latitude"]').get_attribute('content')
-        longit = geo.find_element_by_xpath('//meta[@itemprop="longitude"]').get_attribute('content')
-
-        hours = driver.find_element_by_css_selector('div.salon-timings').text.replace('DIRECTIONS', '').replace('\n',' ').strip()
-        if hours == '':
-            hours = '<MISSING>'
-
-        store_number = '<MISSING>'
-
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours, link]
-    
-        all_store_data.append(store_data)
-
-    driver.quit()
     return all_store_data
 
 def scrape():

@@ -34,7 +34,6 @@ def fetch_data():
         soup = BeautifulSoup(r.content, 'html.parser')
         
         location_name = soup.find('h1', {'class': 'salontitle_salonsmalltxt'}).text
-        print(location_name)
         street_address = soup.find('span', {'itemprop': 'streetAddress'}).text
         city = soup.find('span', {'itemprop': 'addressLocality'}).text
         state = soup.find('span', {'itemprop': 'addressRegion'}).text
@@ -60,7 +59,6 @@ def fetch_data():
         all_store_data.append(store_data)
 
 
-        
 
 
     return all_store_data
