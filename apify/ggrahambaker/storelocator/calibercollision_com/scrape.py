@@ -25,11 +25,11 @@ def fetch_data():
 
     all_store_data = []
     for loc in loc_json:
+
         location_name = loc['title']
+
         if 'No Location' in location_name:
             continue
-
-        print(loc)
         if 'hours' not in loc:
             if 'newTime_open' not in loc:
                 hours = 'By Appointment Only'
@@ -49,21 +49,20 @@ def fetch_data():
         elif loc['hours'].strip() == '':
             hours = loc['newTime_open'] + '-' + loc['newTime_closed'] + ' M-F ' 
             hours += loc['newTime_open_saturday'] + '-' + loc['newTime_closed_saturday']
+        
         else:
             hours_raw = loc['hours'].replace('\n', '').replace('<br />', '').replace('<br>', ' ').strip()
             hours = ' '.join(hours_raw.split())
+            if 'SAT' not in hours:
+                hours += ' ' + loc['newTime_open_saturday'] + '-' + loc['newTime_closed_saturday']
+
             
         if 'SUN' not in hours:
             if 'Appointment' not in hours:
                 hours += ' CLOSED SUN'
         hours = hours.strip()
 
-        print(hours)
-        print()
-        print()
-        print()
 
-    
         addy = loc['address_info'][0]
         street_address = addy['address']
         city = addy['city']
