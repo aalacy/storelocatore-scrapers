@@ -46,7 +46,7 @@ def fetch_data():
         
         country_code = 'US'
         store_number = '<MISSING>'
-        location_type = '<MISSING>'
+        location_type = 'We Care Hair'
         
         hours = '<MISSING>'
         page_url = link

@@ -3,8 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 from sgzip import ClosestNSearch
-import usaddress
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,28 +15,6 @@ def write_output(data):
             writer.writerow(row)
 
 
-def parse_address(addy_string):
-    parsed_add = usaddress.tag(addy_string)[0]
-
-    street_address = ''
-
-    if 'AddressNumber' in parsed_add:
-        street_address += parsed_add['AddressNumber'] + ' '
-    if 'StreetNamePreDirectional' in parsed_add:
-        street_address += parsed_add['StreetNamePreDirectional'] + ' '
-    if 'StreetName' in parsed_add:
-        street_address += parsed_add['StreetName'] + ' '
-    if 'StreetNamePostType' in parsed_add:
-        street_address += parsed_add['StreetNamePostType'] + ' '
-    if 'OccupancyType' in parsed_add:
-        street_address += parsed_add['OccupancyType'] + ' '
-    if 'OccupancyIdentifier' in parsed_add:
-        street_address += parsed_add['OccupancyIdentifier'] + ' '
-    city = parsed_add['PlaceName']
-    state = parsed_add['StateName']
-    zip_code = parsed_add['ZipCode']
-
-    return street_address, city, state, zip_code
 
 
 def fetch_data():
@@ -114,7 +90,7 @@ def fetch_data():
 
             if hours == '':
                 hours = '<MISSING>'
-            location_type = '<MISSING>'
+            location_type = 'Best Cuts'
             page_url = '<MISSING>'
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
