@@ -27,9 +27,6 @@ def fetch_data():
     store_name=[]
     store_detail=[]
     return_main_object=[]
-    lat =[]
-    lon =[]
-    hours1 =[]
     k = soup.find_all("a",{"data-ux":"ContentCardButton"})
     name3 = soup.find_all("h4",{"data-ux":"ContentCardHeading"})
     address = soup.find_all("div",{"data-ux":"ContentCardText"})
@@ -86,22 +83,9 @@ def fetch_data():
                 if 'var props = {"structuredHours"' in j.text:
                     json1 = json.loads(j.text.split("var props = ")[1].split("var context = ")[0].replace("};","}"))
                     for j in json1['structuredHours']:
-                        if "openTime" in j and "openTime" in j:
+                        if "openTime" in j and "closeTime" in j:
                             time = time + ' ' +j['day']+ ' '+j['openTime']+ ' '+j['closeTime']
-
-            script = soup2.find_all("script",{"type":"text/javascript"})
-            for j in script:
-                if 'var props = {"isPublishMode"' in j.text:
-                    jason2 =json.loads(j.text.split("var props = ")[1].split(" var context")[0].replace("};","}"))
-                    lat1 = (jason2['lat'])
-                    lon1 = (jason2['lon'])
-    
-            if "60-49 Myrtle Ave" == st:
-                lat.append("<MISSING>")
-                lon.append("<MISSING>")
-            else:    
-                lat.append(lat1)
-                lon.append(lon1)
+                        
 
 
             name1 = soup2.find("h2",{"data-aid":"CONTACT_SECTION_TITLE_REND","data-ux":"SectionSplitHeading"})
@@ -121,17 +105,15 @@ def fetch_data():
             tem_var.append(phone)
             tem_var.append("<MISSING>")
             store_detail.append(tem_var)
-            hours1.append(time + ' ' +"Sunday" + ' closed ')
-            # print("=============================")
   
     for i in range(len(store_name)):
        store = list()
        store.append("https://unitedtkdcenters.com")
        store.append(store_name[i])
        store.extend(store_detail[i])
-       store.append(lat[i])
-       store.append(lon[i])
-       store.append(hours1[i])
+       store.append("<MISSING>")
+       store.append("<MISSING>")
+       store.append("<INACCESSIBLE>")
        store.append(url[i])
        if store[2] in address:
             continue

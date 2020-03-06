@@ -12,7 +12,7 @@ def get_driver():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    chrome_path = '/Users/Dell/local/chromedriver'
+    #chrome_path = '/Users/Dell/local/chromedriver'
     return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
@@ -92,16 +92,7 @@ def fetch_data():
         phone = phone.lstrip()
         pcode = pcode.lstrip()
 
-        print(store)
-        print(title)
-        print(street)
-        print(city)
-        print(state)
-        print(pcode)
-        print(phone)
-        print(hours)
-
-        print("......................................")
+        
         data.append([
             url,
             title,

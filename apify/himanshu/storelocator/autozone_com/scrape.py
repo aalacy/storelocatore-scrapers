@@ -30,14 +30,14 @@ def fetch_data():
     headers = {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36',
     }
-    r = requests.get("https://www.autozone.com/locations/", headers=headers)
+    r = session.get("https://www.autozone.com/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     links = soup.find_all("li",{"class":"c-directory-list-content-item"})
     for link in links:
 
         state_link = "https://www.autozone.com/locations/"+(link.find("a")['href'])
         if link.find("span",{"class":"c-directory-list-content-item-count"}).text == "(1)":
-            r1 = requests.get(state_link, headers=headers)
+            r1 = session.get(state_link, headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
             page_url = state_link
             street_address = soup1.find("span",{"class":"c-address-street-1"}).text.strip()
@@ -70,12 +70,12 @@ def fetch_data():
             yield store1
             # print("========================================",store1)
         else:
-            r2 = requests.get(state_link, headers=headers)
+            r2 = session.get(state_link, headers=headers)
             soup2 = BeautifulSoup(r2.text, "lxml")
             for count in soup2.find_all("li",{"class":"c-directory-list-content-item"}):
                 if count.find("span",{"class":"c-directory-list-content-item-count"}).text == "(1)":
                     page_url = "https://www.autozone.com/locations/"+count.find("a",{"class":"c-directory-list-content-item-link"})['href']
-                    r3 = requests.get(page_url, headers=headers)
+                    r3 = session.get(page_url, headers=headers)
                     soup3 = BeautifulSoup(r3.text, "lxml")
                     street_address = soup3.find("span",{"class":"c-address-street-1"}).text.strip()
                     try:
@@ -110,11 +110,11 @@ def fetch_data():
                     yield store2
                     # print("========================================",store2)
                 else:
-                    r4 = requests.get("https://www.autozone.com/locations/"+count.find("a",{"class":"c-directory-list-content-item-link"})['href'], headers=headers)
+                    r4 = session.get("https://www.autozone.com/locations/"+count.find("a",{"class":"c-directory-list-content-item-link"})['href'], headers=headers)
                     soup4 = BeautifulSoup(r4.text, "lxml")
                     for url in soup4.find_all("a",{"data-ya-track":"visitpage"}):
                         page_url = url['href'].replace('..','https://www.autozone.com/locations')
-                        r5 = requests.get(page_url, headers=headers)
+                        r5 = session.get(page_url, headers=headers)
                         soup5 = BeautifulSoup(r5.text, "lxml")
                         
                         street_address = soup5.find("span",{"class":"c-address-street-1"}).text.strip()
@@ -150,7 +150,47 @@ def fetch_data():
                         yield store3
                         # print("========================================",store3)
 
+    ## For WC location
 
+    r_wc = session.get("https://www.autozone.com/locations/dc/washington.html", headers=headers)
+    soup_wc = BeautifulSoup(r_wc.text, "lxml")
+    for link in soup_wc.find("div",{"class":"row grid-container"}).find_all("h5",{"class":"c-location-grid-item-title"}):
+        page_url = link.find("a")['href'].replace("..","https://www.autozone.com/locations")
+        r6 = session.get(page_url)
+        soup6 = BeautifulSoup(r6.text, "lxml")
+        street_address = soup6.find("span",{"class":"c-address-street-1"}).text.strip()
+        try:
+            state = soup6.find("abbr",{"class":"c-address-state"}).text
+        except:
+            state = "<MISSING>"
+        zip1 = soup6.find("span",{"class":"c-address-postal-code"}).text
+        city = soup6.find("span",{"class":"c-address-city"}).text
+        name = " ".join(list(soup6.find("h1",{"class":"c-location-title"}).stripped_strings))
+        phone = soup6.find("span",{"class":"c-phone-number-span c-phone-main-number-span"}).text
+        hours = " ".join(list(soup6.find("table",{"class":"c-location-hours-details"}).find("tbody").stripped_strings))
+        latitude = soup6.find("meta",{"itemprop":"latitude"})['content']
+        longitude = soup6.find("meta",{"itemprop":"longitude"})['content']
+        
+        store4 =[]
+        store4.append(base_url)
+        store4.append(name)
+        store4.append(street_address)
+        store4.append(city)
+        store4.append(state)
+        store4.append(zip1)
+        store4.append("US")
+        store4.append("<MISSING>")
+        store4.append(phone)
+        store4.append("<MISSING>")
+        store4.append(latitude)
+        store4.append(longitude)
+        store4.append(hours)
+        store4.append(page_url)
+        store4 = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store4]
+
+        yield store4
+
+        
     
 
 

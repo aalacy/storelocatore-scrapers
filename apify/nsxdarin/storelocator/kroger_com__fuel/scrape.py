@@ -34,7 +34,7 @@ def fetch_data():
     while coord:
         print("remaining zipcodes: " + str(len(search.zipcodes)))
         website = 'kroger.com/fuel'
-        print('%s...' % coord)
+        #print('%s...' % coord)
         url = 'https://www.kroger.com/stores/api/graphql'
         data = "{\"query\":\"\\n      query storeSearch($searchText: String!, $filters: [String]!) {\\n        storeSearch(searchText: $searchText, filters: $filters) {\\n          stores {\\n            ...storeSearchResult\\n          }\\n          fuel {\\n            ...storeSearchResult\\n          }\\n          shouldShowFuelMessage\\n        }\\n      }\\n      \\n  fragment storeSearchResult on Store {\\n    banner\\n    vanityName\\n    divisionNumber\\n    storeNumber\\n    phoneNumber\\n    showWeeklyAd\\n    showShopThisStoreAndPreferredStoreButtons\\n    storeType\\n    distance\\n    latitude\\n    longitude\\n    tz\\n    ungroupedFormattedHours {\\n      displayName\\n      displayHours\\n      isToday\\n    }\\n    address {\\n      addressLine1\\n      addressLine2\\n      city\\n      countryCode\\n      stateCode\\n      zip\\n    }\\n    pharmacy {\\n      phoneNumber\\n    }\\n    departments {\\n      code\\n    }\\n    fulfillmentMethods{\\n      hasPickup\\n      hasDelivery\\n    }\\n  }\\n\",\"variables\":{\"searchText\":\"" + str(coord) + "\",\"filters\":[]},\"operationName\":\"storeSearch\"}"
         r = session.post(url, headers=headers, data=data)
@@ -52,9 +52,9 @@ def fetch_data():
                             brand = 'KROGER'
                             name = item.split('vanityName":"')[1].split('"')[0]
                             division = item.split('"divisionNumber":"')[1].split('"')[0]
-                            print(name + '|' + division)
+                            #print(name + '|' + division)
                             store = item.split('"storeNumber":"')[1].split('"')[0]
-                            phone = item.split('phoneNumber')[1].split(',')[0].replace('"','')
+                            phone = item.split('"phoneNumber":"')[1].split('"')[0].replace('"','')
                             lat = item.split('"latitude":"')[1].split('"')[0]
                             lng = item.split('"longitude":"')[1].split('"')[0]
                             add = item.split('"addressLine1":"')[1].split('"')[0]
@@ -77,7 +77,7 @@ def fetch_data():
                             for line2 in r2.iter_lines():
                                 if 'Store Hours:</span>' in line2:
                                     sinfo = line2.split('Store Hours:</span>')[1].split('></div></div></div>')[0]
-                                    days = sinfo.split('<span class="StoreInformation-day">')
+                                    days = sinfo.split('class="StoreInformation-day font-medium">')
                                     for day in days:
                                         if '<div class="StoreInformation-dayAndHoursWrapper"' not in day:
                                             hrs = day.split('<')[0] + ': ' + day.split('</span><span>')[1].split('<')[0]
@@ -91,6 +91,7 @@ def fetch_data():
                                 if phone == '':
                                     phone = '<MISSING>'
                                 locations.append(info)
+                                hours = hours.replace(': :',':')
                                 yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         if len(array) <= MAX_RESULTS:
             print("max distance update")

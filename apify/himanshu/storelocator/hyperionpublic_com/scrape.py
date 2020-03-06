@@ -11,7 +11,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -25,61 +25,47 @@ def fetch_data():
     addresses = []
 
     base_url = "https://www.hyperionpublic.com"
-    r = requests.get("https://www.hyperionpublic.com/", headers=headers,verify=False)
-    soup = BeautifulSoup(r.text, "lxml")
-    return_main_object = []
-    #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
-    # for link in soup.find_all('ul',re.compile('content')):
-    #     print(link)
-
-    # it will used in store data.
-    locator_domain = base_url
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zipp = ""
-    country_code = ""
-    store_number = "<MISSING>"
-    phone = ""
-    location_type = "hyperionpublic"
-    latitude = "<MISSING>"
-    longitude = "<MISSING>"
-    hours_of_operation = ""
-
-    # print("data ====== "+str(soup))
-    for script in soup.find("div", {"id": "SITE_FOOTERcenteredContent"}).find_all("div", {"id": re.compile("comp-i"),
-                                                                                          "class": "txtNew",
-                                                                                          "data-packed": "true"}):
-        list_location = list(script.stripped_strings)
-
-        if len(list_location) > 3:
-            street_address = list_location[0]
-            city = list_location[1].split(',')[0]
-            state = list_location[1].split(',')[1].strip().split(' ')[-2]
-            zipp = list_location[1].split(',')[1].strip().split(' ')[-1]
-            phone = list_location[2]
-            country_code = "US"
-            location_name = city
-
-            hours_of_operation = " ".join(list_location[3:]).replace("\xa0", "").replace("\u200b", "").strip()
-            # if 'More info' in list_location:
-            #     list_location.remove('More info')
-
-            # print(str(len(list_location)) + " ==== script === " + str(list_location))
-
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation]
-
-            if str(store[2]) + str(store[-3]) not in addresses:
-                addresses.append(str(store[2]) + str(store[-3]))
-
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            yield store
-
+    r = requests.get("https://hyperionpublic.site/wp-json/tribe/events/v1/events/?start_date=today&end_date=+2%20days").json()
+    for data in r['events']:
+        location_name = "<MISSING>"
+        street_address = data['venue']['address']
+        city = data['venue']['city']
+        state = data['venue']['state']
+        zipp = data['venue']['zip']
+        country_code = "US"
+        store_number = data['venue']['id']
+        phone = data['venue']['phone']
+        location_type = "<MISSING>"
+        latitude = "<MISSING>"
+        longitude = "<MISSING>"
+        if "website" in data['venue']:
+            page_url = data['venue']['website']
+        else:
+            page_url = "http://hyperionpublic.com/silver-lake"
+        if "silver-lake" in page_url:
+            hours = "RESTAURANT : Monday11AM10PM Tuesday11AM10PM Wednesday11AM10PM Thursday11AM11PM Friday11AM11PM Saturday 9AM11PM Sunday 9AM10PM COMMUNITY PUB : Monday 4PM2AM Tuesday 4PM2AM Wednesday 4PM2AM Thursday 4PM2AM Friday 4PM2AM Saturday 9AM2AM Sunday 9AM2AM"
+        else:
+            hours = "<MISSING>"
+        
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append("US")
+        store.append(store_number)
+        store.append(phone)
+        store.append(location_type)
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours)
+        store.append(page_url)
+        if store[2] in  addresses:
+            continue
+        addresses.append(store[2])
+        yield store
 
 def scrape():
     data = fetch_data()
