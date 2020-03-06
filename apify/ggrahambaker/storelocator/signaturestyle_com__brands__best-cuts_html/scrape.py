@@ -33,7 +33,7 @@ def fetch_data():
     coord = search.next_coord()
     all_store_data = []
     dup_tracker = []
-    while coord:    
+    while coord:
         x = coord[0]
         y = coord[1]
 
@@ -50,9 +50,28 @@ def fetch_data():
             longit = loc['longitude']
             result_coords.append((lat, longit))
             
-            if loc['actualSiteId'] != 21:
+            if loc['actualSiteId'] == 21:
+                location_type = 'Best Cuts'
+            elif loc['actualSiteId'] == 13:
+                location_type = 'BoRics'
+            elif loc['actualSiteId'] == 18:
+                location_type = 'Famous Hair'
+            elif loc['actualSiteId'] == 16:
+                location_type = 'Fiesta Salons'
+            elif loc['actualSiteId'] == 17:
+                location_type = 'Hairmasters'
+            elif loc['actualSiteId'] == 15:
+                location_type = 'Holiday Hair'
+            elif loc['actualSiteId'] == 47:
+                location_type = 'Island Haircutting'
+            elif loc['actualSiteId'] == 23:
+                location_type = 'Saturdays'
+            else:
                 continue
-            
+                
+
+
+
             store_number = loc['storeID']
             
             if store_number not in dup_tracker:
@@ -65,6 +84,7 @@ def fetch_data():
             r = session.get(page_json_url, headers=HEADERS)
         
             loc = json.loads(r.content)
+
             
             location_name = loc['name']
             street_address = loc['address']
@@ -90,7 +110,7 @@ def fetch_data():
 
             if hours == '':
                 hours = '<MISSING>'
-            location_type = 'Best Cuts'
+            
             page_url = '<MISSING>'
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 

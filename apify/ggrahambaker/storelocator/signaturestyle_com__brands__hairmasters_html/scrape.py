@@ -50,8 +50,8 @@ def fetch_data():
             longit = loc['longitude']
             result_coords.append((lat, longit))
             
-            if loc['actualSiteId'] != 17:
-                continue
+            if loc['actualSiteId'] == 17:
+                location_type = 'Hairmasters'
             
             store_number = loc['storeID']
             
