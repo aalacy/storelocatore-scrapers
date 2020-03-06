@@ -75,9 +75,9 @@ def fetch_data():
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
         
-        location_name = soup.find('meta', {'itemprop': 'name'}).text
         
         street_address = soup.find('span', {'itemprop': 'streetAddress'}).text.strip()
+        location_name =  street_address
         city = soup.find('span', {'itemprop': 'addressLocality'}).text
         state = soup.find('abbr', {'itemprop': 'addressRegion'}).text
         zip_code = soup.find('span', {'itemprop': 'postalCode'}).text

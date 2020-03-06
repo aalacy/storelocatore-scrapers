@@ -41,6 +41,7 @@ def fetch_data():
                         hours += loc['newTime_open_saturday'].replace('&amp;', '&')
                     else:
                         hours += loc['newTime_open_saturday'] + '-' + loc['newTime_closed_saturday']
+                        
 
 
         elif loc['hours'].strip() == '':
@@ -50,7 +51,11 @@ def fetch_data():
             hours_raw = loc['hours'].replace('\n', '').replace('<br />', '').replace('<br>', ' ').strip()
             hours = ' '.join(hours_raw.split())
             
+        if 'SUN' not in hours:
+            if 'Appointment' not in hours:
+                hours += ' CLOSED SUN'
         hours = hours.strip()
+
     
         addy = loc['address_info'][0]
         street_address = addy['address']
