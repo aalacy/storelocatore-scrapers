@@ -51,7 +51,7 @@ def fetch_data():
             hours += loc['newTime_open_saturday'] + '-' + loc['newTime_closed_saturday']
         
         else:
-            hours_raw = loc['hours'].replace('\n', '').replace('<br />', '').replace('<br>', ' ').strip()
+            hours_raw = loc['hours'].replace('\n', ' ').replace('<br />', ' ').replace('<br>', ' ').replace('<br/>', ' ').strip()
             hours = ' '.join(hours_raw.split())
             if 'SAT' not in hours:
                 hours += ' ' + loc['newTime_open_saturday'] + '-' + loc['newTime_closed_saturday']
@@ -60,7 +60,13 @@ def fetch_data():
         if 'SUN' not in hours:
             if 'Appointment' not in hours:
                 hours += ' CLOSED SUN'
-        hours = hours.strip()
+        hours = hours.strip().replace('&amp;', '&').replace('SUN-', 'SUN')
+
+        if 'Burbank' in location_name:
+            print(loc)
+            print(hours)
+            print()
+            print()
 
 
         addy = loc['address_info'][0]
