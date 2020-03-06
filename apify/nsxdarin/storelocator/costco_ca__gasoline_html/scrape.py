@@ -33,7 +33,7 @@ def fetch_data():
         lat = ''
         lng = ''
         store = ''
-        country = 'US'
+        country = 'CA'
         HFound = False
         IsGas = False
         r2 = session.get(loc, headers=headers)
