@@ -38,11 +38,10 @@ def fetch_data():
 
     main = driver.find_element_by_css_selector('div.aem-rendered-content')
     hrefs = main.find_elements_by_xpath("//a[contains(@href, 'overview')]")
-    print(len(hrefs))
+
     link_list = []
     for h in hrefs:
         link = h.get_attribute('href')
-        print(link)
         link_list.append(link)
 
     all_store_data = []
@@ -67,7 +66,7 @@ def fetch_data():
         country_name = loc_json['address']['addressCountry']
         if 'Mexico' in country_name:
             break
-        
+
         if 'United States' in country_name:
             country_code = 'US'
         else:
