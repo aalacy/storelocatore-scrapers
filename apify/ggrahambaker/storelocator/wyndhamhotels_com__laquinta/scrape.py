@@ -1,17 +1,10 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 import json
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -28,31 +21,43 @@ def write_output(data):
 
 
 def fetch_data():
+    session = SgRequests()
+    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
     locator_domain = 'https://www.wyndhamhotels.com/laquinta/'
     ext = 'locations'
+    r = session.get(locator_domain + ext, headers = HEADERS)
 
 
+    soup = BeautifulSoup(r.content, 'html.parser')
 
-    driver = get_driver()
-    driver.get(locator_domain + ext)
 
-    main = driver.find_element_by_css_selector('div.aem-rendered-content')
-    hrefs = main.find_elements_by_xpath("//a[contains(@href, 'overview')]")
-
+    main = soup.find('div', {'class': 'aem-rendered-content'})
+    hrefs = main.find_all("a")
     link_list = []
+    base_url = 'https://www.wyndhamhotels.com'
     for h in hrefs:
-        link = h.get_attribute('href')
-        link_list.append(link)
+        if 'overview' in h['href']:
+            link_list.append(base_url + h['href'])
 
     all_store_data = []
     for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(30)
-        loc_j = driver.find_element_by_xpath('//script[@type="application/ld+json"]')
-        loc_json = json.loads(loc_j.get_attribute('innerHTML'))
+        r = session.get(link, headers = HEADERS)
+        soup = BeautifulSoup(r.content, 'html.parser')
+        
+        loc_j = soup.find('script', {'type': "application/ld+json"}).text
+        loc_json = json.loads(loc_j)
+
 
         lat = loc_json['geo']['latitude']
         longit = loc_json['geo']['longitude']
+        country_name = loc_json['address']['addressCountry']
+        if 'Mexico' in country_name:
+            break
+
+        if 'United States' in country_name:
+            country_code = 'US'
+        else:
+            country_code = 'CA'
 
         location_name = loc_json['name']
         zip_code = loc_json['address']['postalCode']
@@ -63,14 +68,7 @@ def fetch_data():
 
         state = loc_json['address']['addressRegion']
 
-        country_name = loc_json['address']['addressCountry']
-        if 'Mexico' in country_name:
-            break
 
-        if 'United States' in country_name:
-            country_code = 'US'
-        else:
-            country_code = 'CA'
 
         phone_number = loc_json['telephone']
 
@@ -80,12 +78,11 @@ def fetch_data():
         hours = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours, page_url]
+                    store_number, phone_number, location_type, lat, longit, hours, page_url]
 
 
         all_store_data.append(store_data)
 
-    driver.quit()
     return all_store_data
 
 
