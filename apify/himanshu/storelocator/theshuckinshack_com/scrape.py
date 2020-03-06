@@ -30,15 +30,26 @@ def fetch_data():
     for state in soup.find_all("div", {'class': "location-wrapper"}):
         current_state = state.find("h2").text.strip()
         for location in state.find_all("a"):
-            if "coming-soon" in location["href"]:
+            if "https://www.theshuckinshack.com/location/easley/" in location["href"]:
                 continue
             page_url = location["href"]
+           # print(page_url)
             location_request = requests.get(location["href"], headers=headers)
             location_soup = BeautifulSoup(location_request.text, "lxml")
             if list(location_soup.find("div", {"class": "flex-column-30"}).find_all("p")[0].stripped_strings) == []:
                 continue
             address = list(location_soup.find(
                 "div", {"class": "flex-column-30"}).find_all("p")[0].stripped_strings)
+            if "," not in address[1]:
+                city = address[1]
+                zipp = "<MISSING>"
+            else:
+                # print(address[1])
+                city = address[1].split(",")[0]
+                if len(address[1].split(",")[1].split(" ")) == 3:
+                    zipp = address[1].split(",")[1].split(" ")[2]
+                else:
+                    zipp = "<MISSING>"
             phone = list(location_soup.find(
                 "div", {"class": "flex-column-30"}).find_all("p")[1].stripped_strings)[0]
             hours = " ".join(list(location_soup.find(
@@ -53,12 +64,12 @@ def fetch_data():
             store.append("http://www.theshuckinshack.com")
             store.append(location.text.strip())
             store.append(address[0].strip())
-            store.append(address[1].strip())
+            store.append(city)
             store.append(current_state)
-            store.append("<MISSING>")
+            store.append(zipp)
             store.append("US")
             store.append("<MISSING>")
-            store.append(phone)
+            store.append(phone.replace("easley021@theshuckinshack.com","<MISSING>"))
             store.append("<MISSING>")
             store.append(geo_location1.split(
                 "/@")[1].split(",")[0] if "/@" in geo_location1 else "<MISSING>")
