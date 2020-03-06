@@ -54,7 +54,7 @@ def fetch_data():
                             division = item.split('"divisionNumber":"')[1].split('"')[0]
                             print(name + '|' + division)
                             store = item.split('"storeNumber":"')[1].split('"')[0]
-                            phone = item.split('phoneNumber')[1].split(',')[0].replace('"','')
+                            phone = item.split('"phoneNumber":"')[1].split('"')[0].replace('"','')
                             lat = item.split('"latitude":"')[1].split('"')[0]
                             lng = item.split('"longitude":"')[1].split('"')[0]
                             add = item.split('"addressLine1":"')[1].split('"')[0]
@@ -77,7 +77,7 @@ def fetch_data():
                             for line2 in r2.iter_lines():
                                 if 'Store Hours:</span>' in line2:
                                     sinfo = line2.split('Store Hours:</span>')[1].split('></div></div></div>')[0]
-                                    days = sinfo.split('<span class="StoreInformation-day">')
+                                    days = sinfo.split('class="StoreInformation-day font-medium">')
                                     for day in days:
                                         if '<div class="StoreInformation-dayAndHoursWrapper"' not in day:
                                             hrs = day.split('<')[0] + ': ' + day.split('</span><span>')[1].split('<')[0]
