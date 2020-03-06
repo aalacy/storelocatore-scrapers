@@ -28,6 +28,8 @@ def fetch_data():
         location_name = loc['title']
         if 'No Location' in location_name:
             continue
+
+        print(loc)
         if 'hours' not in loc:
             if 'newTime_open' not in loc:
                 hours = 'By Appointment Only'
@@ -55,6 +57,11 @@ def fetch_data():
             if 'Appointment' not in hours:
                 hours += ' CLOSED SUN'
         hours = hours.strip()
+
+        print(hours)
+        print()
+        print()
+        print()
 
     
         addy = loc['address_info'][0]
