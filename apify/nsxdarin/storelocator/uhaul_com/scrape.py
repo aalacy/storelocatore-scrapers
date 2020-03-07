@@ -109,7 +109,7 @@ def fetch_data():
         if typ == '':
             typ = 'U-Haul'
         if add != '':
-        yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
