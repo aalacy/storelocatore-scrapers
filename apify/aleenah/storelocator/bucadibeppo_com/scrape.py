@@ -35,10 +35,10 @@ def fetch_data():
 
     for li in lis:
         num = int(li.find('span').text.replace("(","").replace(")",""))
+        uli="https://locations.bucadibeppo.com/"+li.find("a").get("href").replace("../","")
+        if num == 1 and uli !="https://locations.bucadibeppo.com/us/nj" :
 
-        if num == 1:
-
-            page_url.append("https://locations.bucadibeppo.com/"+li.find("a").get("href").replace("../",""))
+            page_url.append(uli)
         else:
             res = requests.get("https://locations.bucadibeppo.com/"+li.find("a").get("href").replace("../",""))
             soup = BeautifulSoup(res.text, 'html.parser')
@@ -72,7 +72,7 @@ def fetch_data():
             ids.append(re.findall(r'{"ids":(.*),"pageSetId"',str(soup),re.DOTALL)[0])
             #print(url)
         except:
-            if url == "https://locations.bucadibeppo.com/us/nj":
+                print(url)
                 ids.append("<MISSING>")
                 locs.append("<MISSING>")
                 street.append("<MISSING>")
@@ -102,7 +102,13 @@ def fetch_data():
         states.append(soup.find('span', {'itemprop': 'addressRegion'}).text)
         zips.append(soup.find('span', {'itemprop': 'postalCode'}).text)
         phones.append(soup.find('span', {'class': 'c-phone-number-span c-phone-main-number-span'}).text.strip())
-        timing.append(soup.find('div', {'class': 'c-location-hours-details-wrapper js-location-hours'}).text)
+        tdays=soup.find_all('td', {'class': 'c-location-hours-details-row-day'})
+        topens= soup.find_all('span', {'class': 'c-location-hours-details-row-intervals-instance-open'})
+        tcloses=soup.find_all('span', {'class': 'c-location-hours-details-row-intervals-instance-close'})
+        tim=""
+        for t in range(7):
+            tim+=tdays[t].text+": "+topens[t].text+" - "+tcloses[t].text+" "
+        timing.append(tim.strip())
         long.append(soup.find('meta', {'itemprop': 'longitude'}).get("content"))
         lat.append(soup.find('meta', {'itemprop': 'latitude'}).get("content"))
     all = []
