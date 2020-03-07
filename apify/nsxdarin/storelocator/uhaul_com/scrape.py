@@ -104,8 +104,11 @@ def fetch_data():
                 hours = hours.replace('[','').replace(']','').replace('","','; ').replace('"','')
         if hours == '':
             hours = '<MISSING>'
+        if phone == '':
+            phone = '<MISSING>'
         if typ == '':
             typ = 'U-Haul'
+        if add != '':
         yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
