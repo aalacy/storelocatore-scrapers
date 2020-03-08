@@ -41,7 +41,7 @@ def fetch_data():
         timl = js["openingHoursSpecification"]
         tim = ""
         for l in timl:
-            tim += l["dayOfWeek"][0] + ": " + l["opens"] + " - " + l["closes"] + " "
+            tim += ", ".join(l["dayOfWeek"]) + ": " + l["opens"] + " - " + l["closes"] + " "
         coord=soup.find('iframe').get('src')
         long = re.findall(r'!1d[-?\d\.]*!2d([-?\d\.]*)', coord)[0].replace("?", "")
         lat = re.findall(r'!3d(-?[\d\.]*)', coord)[0].replace("?", "")
@@ -59,7 +59,7 @@ def fetch_data():
             addr["addressRegion"],
             addr["postalCode"].split("-")[0],
             addr["addressCountry"],
-            id,  # store #
+            id.replace("post-",""),  # store #
             p,  # phone
             "<MISSING>",  # type
             lat,  # lat
