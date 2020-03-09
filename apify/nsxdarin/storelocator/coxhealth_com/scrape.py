@@ -41,6 +41,10 @@ def fetch_data():
         for line2 in lines:
             if 'open 24 hours' in line2.lower():
                 hours = 'Open 24 Hours'
+            if 'Hours</h3>' in line2:
+                g = next(lines)
+                if hours != 'Open 24 Hours':
+                    hours = g.split('<p>')[1].split('<')[0]
             if '<title>' in line2:
                 name = line2.split('<title>')[1].split(' |')[0]
             if 'Address</h3>' in line2:
@@ -63,6 +67,8 @@ def fetch_data():
             if 'data-lat="' in line2:
                 lat = line2.split('data-lat="')[1].split('"')[0]
                 lng = line2.split('data-lng="')[1].split('"')[0]
+        if hours == '':
+            hours = '<MISSING>'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
