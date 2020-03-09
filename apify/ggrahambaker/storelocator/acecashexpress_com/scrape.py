@@ -1,7 +1,7 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-
+import time
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -50,7 +50,13 @@ def fetch_data():
 
     link_list = []
     for city in city_list:
-        r = session.get(city, headers = HEADERS)
+        try:
+            r = session.get(city, headers = HEADERS)
+        except:
+            time.sleep(10)
+            r = session.get(city, headers = HEADERS)
+
+            
         soup = BeautifulSoup(r.content, 'html.parser')
         
         page_count = soup.find_all('p', {'class': 'page-count'})
@@ -72,12 +78,17 @@ def fetch_data():
     all_store_data = []
     dup_tracker = set()
     for link in link_list:
-        r = session.get(link, headers = HEADERS)
+        try:
+            r = session.get(link, headers = HEADERS)
+        except:
+            time.sleep(10)
+            r = session.get(link, headers = HEADERS)
+        
         soup = BeautifulSoup(r.content, 'html.parser')
         
-        
         street_address = soup.find('span', {'itemprop': 'streetAddress'}).text.strip()
-        location_name =  street_address
+    
+        location_name =  soup.find('p', {'class': 'store'}).find('span', {'itemprop': 'name'}).text
         city = soup.find('span', {'itemprop': 'addressLocality'}).text
         state = soup.find('abbr', {'itemprop': 'addressRegion'}).text
         zip_code = soup.find('span', {'itemprop': 'postalCode'}).text

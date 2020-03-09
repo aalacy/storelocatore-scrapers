@@ -48,10 +48,29 @@ def fetch_data():
         for loc in res_json:
             lat = loc['latitude']
             longit = loc['longitude']
-            result_coords.append((lat, longit))
             
-            if loc['actualSiteId'] == 17:
+            if loc['actualSiteId'] == 21:
+                location_type = 'Best Cuts'
+            elif loc['actualSiteId'] == 13:
+                location_type = 'BoRics'
+            elif loc['actualSiteId'] == 18:
+                location_type = 'Famous Hair'
+            elif loc['actualSiteId'] == 16:
+                location_type = 'Fiesta Salons'
+            elif loc['actualSiteId'] == 17:
                 location_type = 'Hairmasters'
+            elif loc['actualSiteId'] == 15:
+                location_type = 'Holiday Hair'
+            elif loc['actualSiteId'] == 47:
+                location_type = 'Island Haircutting'
+            elif loc['actualSiteId'] == 23:
+                location_type = 'Saturdays'
+            elif loc['actualSiteId'] == 41:
+                location_type = 'City Looks'
+            elif loc['actualSiteId'] == 22:
+                location_type = 'TGF'
+            else:
+                continue
             
             store_number = loc['storeID']
             
@@ -91,7 +110,7 @@ def fetch_data():
             if hours == '':
                 hours = '<MISSING>'
 
-            location_type = 'Hairmasters'
+           
             page_url = '<MISSING>'
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 

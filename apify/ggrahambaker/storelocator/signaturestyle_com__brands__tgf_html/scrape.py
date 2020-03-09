@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import json
 from sgzip import ClosestNSearch
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -16,15 +15,17 @@ def write_output(data):
             writer.writerow(row)
 
 
+
+
 def fetch_data():
 
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
 
-    locator_domain = 'https://www.signaturestyle.com/brands/island-haircutting.html'
+    locator_domain = 'https://www.signaturestyle.com/brands/tgf.html'
 
     search = ClosestNSearch()
-    search.initialize(country_codes = ['ca'])
+    search.initialize(country_codes = ['us', 'ca'])
 
     MAX_DISTANCE = 25
     MAX_RESULTS = 50
@@ -32,17 +33,17 @@ def fetch_data():
     coord = search.next_coord()
     all_store_data = []
     dup_tracker = []
-    while coord:    
+    while coord:
         x = coord[0]
         y = coord[1]
 
         url = 'https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/' + str(x) + '/' + str(y) + '/0.5/0.5/true'
+
         r = session.get(url, headers=HEADERS)
         
         res_json = json.loads(r.content)['stores']
 
         result_coords = []
-        result_coords.append((x, y))
         
         for loc in res_json:
             lat = loc['latitude']
@@ -72,7 +73,6 @@ def fetch_data():
                 continue
             
 
-
             store_number = loc['storeID']
             
             if store_number not in dup_tracker:
@@ -85,6 +85,7 @@ def fetch_data():
             r = session.get(page_json_url, headers=HEADERS)
         
             loc = json.loads(r.content)
+
             
             location_name = loc['name']
             street_address = loc['address']
@@ -119,11 +120,11 @@ def fetch_data():
             
             all_store_data.append(store_data)
             
+
         if len(res_json) == 0:
             search.max_distance_update(MAX_DISTANCE)
         else:
             search.max_count_update(result_coords)
-       
         
         
         coord = search.next_coord()    

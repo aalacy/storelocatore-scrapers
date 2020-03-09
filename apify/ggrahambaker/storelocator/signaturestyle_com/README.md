@@ -13,5 +13,8 @@ https://www.signaturestyle.com/brands/holiday-hair.html - 15
 https://www.signaturestyle.com/brands/island-haircutting.html - 47
 https://www.signaturestyle.com/brands/saturdays.html - 23
 https://www.signaturestyle.com/brands/famous-hair.html - 18
+https://www.signaturestyle.com/brands/city-looks.html - 41
+https://www.signaturestyle.com/brands/tgf.html - 22
+
 we-care-hair only has a partial set in the api. i scrape directly from 
 https://www.signaturestyle.com/brands/we-care-hair.html
