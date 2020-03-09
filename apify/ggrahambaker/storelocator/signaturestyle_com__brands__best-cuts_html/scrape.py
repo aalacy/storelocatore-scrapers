@@ -48,7 +48,6 @@ def fetch_data():
         for loc in res_json:
             lat = loc['latitude']
             longit = loc['longitude']
-            result_coords.append((lat, longit))
             
             if loc['actualSiteId'] == 21:
                 location_type = 'Best Cuts'
@@ -66,6 +65,10 @@ def fetch_data():
                 location_type = 'Island Haircutting'
             elif loc['actualSiteId'] == 23:
                 location_type = 'Saturdays'
+            elif loc['actualSiteId'] == 41:
+                location_type = 'City Looks'
+            elif loc['actualSiteId'] == 22:
+                location_type = 'TGF'
             else:
                 continue
                 
