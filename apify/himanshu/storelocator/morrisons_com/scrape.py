@@ -25,6 +25,8 @@ def fetch_data():
 
     for d in r['stores']:
         location_name = (d['storeName'])
+        if "Gibraltar" in location_name:
+            continue
         # print(latitude)
         m = d['address']['addressLine1']
         p = d['address']['addressLine2']
@@ -58,8 +60,7 @@ def fetch_data():
         store.append(longitude if longitude else '<MISSING>')
         store.append(hours_of_operation if hours_of_operation else '<MISSING>' )
         store.append(url)
-        if "Gibraltar" in location_name:
-            continue
+        
         yield store
 
 def scrape():

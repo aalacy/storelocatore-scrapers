@@ -54,19 +54,34 @@ def fetch_data():
         else:
             Mon_start = "Close"
             Mon_close = "Close"
-        
-        Tue_start = datetime.strptime(str(location['hoursOfOperation']['Tue'][0][0]), "%H:%M").strftime("%I:%M %p")
-        Tue_close = datetime.strptime(str(location['hoursOfOperation']['Tue'][0][1]), "%H:%M").strftime("%I:%M %p")
+        if location['hoursOfOperation']['Tue'] != []:
 
-        Wed_start = datetime.strptime(str(location['hoursOfOperation']['Wed'][0][0]), "%H:%M").strftime("%I:%M %p")
-        Wed_close = datetime.strptime(str(location['hoursOfOperation']['Wed'][0][1]), "%H:%M").strftime("%I:%M %p")
-        
-        Thu_start = datetime.strptime(str(location['hoursOfOperation']['Thu'][0][0]), "%H:%M").strftime("%I:%M %p")
-        Thu_close = datetime.strptime(str(location['hoursOfOperation']['Thu'][0][1]), "%H:%M").strftime("%I:%M %p")
+            Tue_start = datetime.strptime(str(location['hoursOfOperation']['Tue'][0][0]), "%H:%M").strftime("%I:%M %p")
+            Tue_close = datetime.strptime(str(location['hoursOfOperation']['Tue'][0][1]), "%H:%M").strftime("%I:%M %p")
+        else:
+            Tue_start='Close'
+            Tue_close='Close'
+        if location['hoursOfOperation']['Wed'] != []:
 
-        Fri_start = datetime.strptime(str(location['hoursOfOperation']['Fri'][0][0]), "%H:%M").strftime("%I:%M %p")
-        Fri_close = datetime.strptime(str(location['hoursOfOperation']['Fri'][0][1]), "%H:%M").strftime("%I:%M %p")
+            Wed_start = datetime.strptime(str(location['hoursOfOperation']['Wed'][0][0]), "%H:%M").strftime("%I:%M %p")
+            Wed_close = datetime.strptime(str(location['hoursOfOperation']['Wed'][0][1]), "%H:%M").strftime("%I:%M %p")
+        else:
+            Wed_start='Close'
+            Wed_close='Close'
+        if location['hoursOfOperation']['Thu'] != []:
 
+            Thu_start = datetime.strptime(str(location['hoursOfOperation']['Thu'][0][0]), "%H:%M").strftime("%I:%M %p")
+            Thu_close = datetime.strptime(str(location['hoursOfOperation']['Thu'][0][1]), "%H:%M").strftime("%I:%M %p")
+        else:
+            Thu_start='Close'
+            Thu_close='Close'
+        if location['hoursOfOperation']['Wed'] != []:
+
+            Fri_start = datetime.strptime(str(location['hoursOfOperation']['Fri'][0][0]), "%H:%M").strftime("%I:%M %p")
+            Fri_close = datetime.strptime(str(location['hoursOfOperation']['Fri'][0][1]), "%H:%M").strftime("%I:%M %p")
+        else:
+            Fri_start='Close'
+            Fri_close='Close'
         if location['hoursOfOperation']['Sat'] != []:
             Sat_start = datetime.strptime(str(location['hoursOfOperation']['Sat'][0][0]), "%H:%M").strftime("%I:%M %p")
             Sat_close = datetime.strptime(str(location['hoursOfOperation']['Sat'][0][1]), "%H:%M").strftime("%I:%M %p")

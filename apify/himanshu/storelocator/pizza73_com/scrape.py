@@ -5,7 +5,7 @@ import re
 import json
 import sgzip
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
@@ -45,7 +45,7 @@ def fetch_data():
                 b = i['OPERATING_HOUR_SET']
                 # print(b)
                 soup= BeautifulSoup(b,"lxml")
-                hours_of_operation = (soup.text.replace('AM','AM '))
+                hours_of_operation = (soup.text.replace('AM','AM ').replace(',',' , ').replace('PM','PM '))
                 print(hours_of_operation)
 
                 street_address = i["streetNumber"]+' '+i["ADDRESS_LINE_1"]
@@ -72,9 +72,9 @@ def fetch_data():
                 store.append(hours_of_operation)
                 store.append(base_url)
 
-                if store[2] in addresses:
-                    continue
-                addresses.append(store[2])
+                # if store[2] in addresses:
+                #     continue
+                # addresses.append(store[2])
                 yield store
                  
        
@@ -92,3 +92,4 @@ def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
+#33 loc
