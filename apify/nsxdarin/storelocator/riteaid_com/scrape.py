@@ -7,7 +7,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
            }
 
 def write_output(data):
-    with open('data2.csv', mode='w') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
@@ -25,7 +25,7 @@ def fetch_data():
                 locs.append(lurl)
     print('Found %s Locations...' % str(len(locs)))
     for loc in locs:
-        #print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc)
         website = 'riteaid.com'
         typ = '<MISSING>'
         name = ''
@@ -69,7 +69,8 @@ def fetch_data():
                             hours = hours + '; ' + hrs
         if hours == '':
             hours = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if store != '':
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
