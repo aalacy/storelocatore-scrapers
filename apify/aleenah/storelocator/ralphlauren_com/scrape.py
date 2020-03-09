@@ -116,7 +116,7 @@ def fetch_data():
                     "<MISSING>",  # type
                     "<INACCESSIBLE>",  # lat
                     "<INACCESSIBLE>",  # long
-                    tim.strip(),  # timing
+                    tim.strip().replace("Mon:"," Mon:").replace("Tue:"," Tue:").replace("Wed:"," Wed:").replace("Thu:"," Thu:").replace("Fri:"," Fri:").replace("Sat:"," Sat:").replace("Sun:"," Sun:").replace("  "," "),  # timing
                     url])
 
     return all
