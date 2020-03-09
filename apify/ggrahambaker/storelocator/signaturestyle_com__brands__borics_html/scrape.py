@@ -34,7 +34,7 @@ def fetch_data():
     coord = search.next_coord()
     all_store_data = []
     dup_tracker = []
-    while coord:   
+    while coord: 
         
         x = coord[0]
         y = coord[1]
@@ -69,7 +69,7 @@ def fetch_data():
                 location_type = 'Saturdays'
             else:
                 continue
-            
+
             store_number = loc['storeID']
             
             if store_number not in dup_tracker:
@@ -112,8 +112,7 @@ def fetch_data():
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
-
-            
+                  
             all_store_data.append(store_data)
             
         if len(res_json) == 0:
