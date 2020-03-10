@@ -36,10 +36,10 @@ def fetch_data():
         zip=addr.split("-")[-1].strip()
         if ", United States. " in addr:
             cont="US"
+            addr = addr.split(", United States. ")[0].strip()
         elif ", Canada. " in addr:
             cont="CA"
-
-        addr=addr.split(", United States. ")[0].strip()
+            addr = addr.split(", Canada. ")[0].strip()
         add=addr.split(",")
         state=add[-1]
         city=add[-2]
