@@ -41,7 +41,6 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        print(link)
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
         try:
