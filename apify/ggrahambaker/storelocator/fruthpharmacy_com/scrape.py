@@ -61,6 +61,8 @@ def fetch_data():
                 dup_tracker.add(location_name)
             else:
                 continue
+
+            store_number = location_name.split('#')[1].strip()
             street_address = loc.find_element_by_css_selector('span.slp_result_address.slp_result_street').text
             address = loc.find_element_by_css_selector('span.slp_result_address.slp_result_citystatezip').text.split(',')
 
@@ -87,20 +89,8 @@ def fetch_data():
             if phone_number == '':
                 phone_number = '<MISSING>'
 
-            hours_div = loc.find_element_by_css_selector('span.slp_result_hours').text.replace('\n', ' ')
+            hours = loc.find_element_by_css_selector('span.slp_result_hours').text.replace('\n', ' ').split('Need a prescription')[0]
             
-            print(hours_div)
-            print()
-            print()
-            #if len(hours_div) == 1:
-            #    hours = '<MISSING>'
-            #else:
-            #    hours = ''
-            #    for h in hours_div[:3]:
-            #        hours += h + ' '
-
-            #    hours = hours.replace('Store Hours:', '').strip()
-
             country_code = 'US'
             store_number = '<MISSING>'
             location_type = '<MISSING>'
