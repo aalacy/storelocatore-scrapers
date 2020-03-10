@@ -41,10 +41,13 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
+        print(link)
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
-        
-        loc_j = soup.find('script', {'type': "application/ld+json"}).text
+        try:
+            loc_j = soup.find('script', {'type': "application/ld+json"}).text
+        except:
+            continue
         loc_json = json.loads(loc_j)
 
 
