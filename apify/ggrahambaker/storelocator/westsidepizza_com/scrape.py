@@ -47,7 +47,7 @@ def fetch_data():
         state = soup.find('div', {'class': 'field-state'}).text
         zip_code = soup.find('div', {'class': 'field-zip-code'}).text
 
-        location_name = soup.find('h1', {'class': 'title'}).text
+        location_name = soup.find('h1', {'class': 'title'}).text.strip()
 
         phone_number = soup.find('div', {'class': 'field-phone'}).text
 

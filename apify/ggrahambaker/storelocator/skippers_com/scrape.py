@@ -1,5 +1,6 @@
 import csv
-from sgrequests import SgRequests
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import json
 import usaddress
@@ -14,6 +15,8 @@ def parse_address(addy_string):
         street_address += parsed_add['AddressNumber'] + ' '
     if 'StreetNamePreDirectional' in parsed_add:
         street_address += parsed_add['StreetNamePreDirectional'] + ' '
+    if 'StreetNamePreType' in parsed_add:
+        street_address += parsed_add['StreetNamePreType'] + ' '
     if 'StreetName' in parsed_add:
         street_address += parsed_add['StreetName'] + ' '
     if 'StreetNamePostType' in parsed_add:
@@ -41,6 +44,15 @@ def parse_address(addy_string):
     return street_address, city, state, zip_code
 
 
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', options=options)
+
+
 
 
 def write_output(data):
@@ -54,36 +66,23 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://skippers.com/wp-json/wpgmza/v1/markers/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUgsSKgYLRsbVKtQCV7hBN'
-
-    HEADERS = {'Host': 'skippers.com',
-    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:73.0) Gecko/20100101 Firefox/73.0',
-    'Accept': '*/*',
-    'Accept-Language': 'en-US,en;q=0.5',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'X-WP-Nonce': '59aa4fe148',
-    'X-Requested-With': 'XMLHttpRequest',
-    'DNT': '1',
-    'Connection': 'keep-alive',
-    'Referer': 'https://skippers.com/locations/',
-    'Cookie': 'tk_ai=woo%3A0kJozCAwfRaGyVyFKY3%2Bv1q%2F',
-    'Pragma': 'no-cache',
-    'Cache-Control': 'no-cache'}
-
-
-    session = SgRequests()
-
-    r = session.get(url, headers = HEADERS)
-
-    loc_info = json.loads(r.content)
     locator_domain = 'https://skippers.com/'
+    url = 'https://skippers.com/wp-json/wpgmza/v1/markers/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUgsSKgYLRsbVKtQCV7hBN'
+        
+    driver = get_driver()
+    driver.get(locator_domain)
+    driver.get(url)
+    driver.implicitly_wait(10)
+    loc_info = json.loads(driver.find_element_by_css_selector('body').text)
+
     all_store_data = []
     for loc in loc_info:
         location_name = loc['title']
         store_number = loc['id']
-        street_address, city, state, zip_code = parse_address(loc['address'])
-        
-        
+        street_address, city, state, zip_code = parse_address(loc['address'].replace(', USA', '').strip())
+
+        state = state.replace(', USA', '').strip()
+
         loc['description']
         
         phone_number = loc['description'].strip()
@@ -111,7 +110,7 @@ def fetch_data():
 
 
 
-
+    driver.quit()
     return all_store_data
 
 def scrape():

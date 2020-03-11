@@ -56,10 +56,13 @@ def fetch_data():
         city, state, zip_code = addy_ext(info[1 + off])
         phone_number = info[2 + off].replace('Phone:', '').strip()
         hours = ''
-        for h in info[4 + off:]:
+
+        for h in info[3 + off:]:
+            if 'Fax' in h:
+                continue
             hours += h + ' '
             
-        hours = hours.replace('&amp;', '&').strip()
+        hours = hours.replace('&amp;', '&').replace('Hours:', '').strip()
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
