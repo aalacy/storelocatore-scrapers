@@ -3,6 +3,39 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import time
+
+def request_wrapper(url,method,headers,data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url,headers=headers,data=data)
+                else:
+                    r = requests.post(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -21,17 +54,17 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
     }
     base_url= "https://www.kohls.com/stores.shtml"
-    r = requests.get(base_url)
+    r = request_wrapper(base_url,'get',headers=headers)
     address =[]
     soup= BeautifulSoup(r.text,"lxml")
     a = (soup.find_all("a",{"class":"regionlist"}))
     for i in a :
-        r1 = requests.get(i['href'])
+        r1 = request_wrapper(i['href'],'get',headers=headers)
         soup1 = BeautifulSoup(r1.text,"lxml")
         b =soup1.find_all("a",{"class":"citylist"})
         for j in b :
             try:
-                r2 = requests.get(j['href'])
+                r2 = request_wrapper(j['href'],'get',headers=headers)
             except:
                 pass
             soup2 = BeautifulSoup(r2.text,"lxml")
@@ -43,7 +76,7 @@ def fetch_data():
                     store_number = y.split("-")[1].split(".s")[0]
                     # print(store_number)
                     try:
-                        r3 = requests.get(y,headers=headers)
+                        r3 = request_wrapper(y,'get',headers=headers)
                     except:
                         continue
                     soup3 = BeautifulSoup(r3.text,"lxml")
@@ -97,7 +130,7 @@ def fetch_data():
                         continue
                     address.append(store[2])
                     yield store
-    r2 = requests.get("https://www.kohls.com/stores/wy/casper-1420.shtml")
+    r2 = request_wrapper("https://www.kohls.com/stores/wy/casper-1420.shtml",'get',headers=headers)
     address =[]
     soup2 = BeautifulSoup(r2.text,"lxml")
     d2 = soup2.find("script",{"type":"application/ld+json"})
@@ -139,7 +172,7 @@ def fetch_data():
                 continue
             address.append(store2[2])
             yield store2
-    r1 = requests.get("https://www.kohls.com/stores/wy/cheyenne-1205.shtml")
+    r1 = request_wrapper("https://www.kohls.com/stores/wy/cheyenne-1205.shtml",'get',headers=headers)
     address =[]
     soup1 = BeautifulSoup(r1.text,"lxml")
     d1 = soup1.find("script",{"type":"application/ld+json"})

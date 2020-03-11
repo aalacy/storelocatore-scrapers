@@ -40,24 +40,25 @@ def fetch_data():
         r1 = requests.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         if soup1.find("div",{"class":"col branch-details"}) == None:
-            print(page_url)
+            #print(page_url)
             continue
         try:
             location_name = soup1.find("h1",{"class":"pageTitle"}).text.replace("Welcome to little","").replace("Welcome to Little",'').replace("Welcome to",'').strip()
         except:
-            location_name = "<MISSING>"
+            location_name = soup1.find("div",{"class":"title"}).text.replace("Welcome to little","").strip()
+
         addr = list(soup1.find("div",{"class":"col branch-details"}).stripped_strings)
         try: 
             if len(addr) == 6:
                 street_address = " ".join(addr[:2])
                 city = addr[2]
-                state = "<MISSING>"
+                state = "<INACCESSIBLE>"
                 zipp = addr[-2]
                 phone = addr[-1]
             else:
                 street_address = addr[0]
                 city = addr[1]
-                state = "<MISSING>"
+                state = "<INACCESSIBLE>"
                 zipp = addr[-2]
                 phone = addr[-1]
         except:

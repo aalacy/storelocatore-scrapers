@@ -50,9 +50,7 @@ def fetch_data():
     }
     while zip_code:
         result_coords = []
-
         #print("zip_code === "+zip_code)
-
         base_url=  "https://www.orangetheoryfitness.com/service/directorylisting/filterMarkers?s="+str(zip_code)
         try:
             r = requests.get(base_url)
@@ -64,7 +62,6 @@ def fetch_data():
             store_number = i['id']
             location_name = i['name']
             street_address = i['address1']
-            
             city = i['city']
             state = i['state']
             zipp = i['zip'].replace("0209","80209").replace("880209","80209").replace("2550","12550").replace("125504","25504").replace("2145","02145").encode('ascii', 'ignore').decode('ascii').strip()
@@ -96,19 +93,16 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(latitude if latitude else "<MISSING>")
             store.append(longitude if longitude else "<MISSING>")
-            store.append("<MISSING>")
+            store.append("Mo-Su 05:00-19:00")
             store.append(page_url)
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            
             if "Adjuntas" in store :
                 pass
             else:
-
                 yield store
             # print("--------------------",store)
-
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
