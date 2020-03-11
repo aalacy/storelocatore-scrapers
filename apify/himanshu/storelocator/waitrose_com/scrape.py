@@ -31,14 +31,16 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     data = soup.find("select",{"id":"global-form-select-branch"}).find_all("option")
     for value in data:
-        print(value)
+        # print(value)
         if value['value'] == "":
             continue
         page_url = "https://www.waitrose.com/content/waitrose/en/bf_home/bf/"+str(value['value'])+".html"
+        # print(page_url)s
         
         r1 = requests.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         if soup1.find("div",{"class":"col branch-details"}) == None:
+            print(page_url)
             continue
         try:
             location_name = soup1.find("h1",{"class":"pageTitle"}).text.replace("Welcome to little","").replace("Welcome to Little",'').replace("Welcome to",'').strip()

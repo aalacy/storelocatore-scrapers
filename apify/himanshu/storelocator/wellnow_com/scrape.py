@@ -6,7 +6,7 @@ import json
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -40,8 +40,9 @@ def fetch_data():
 
             r2 = requests.get(link, headers=headers)
             soup = BeautifulSoup(r2.text,"lxml")
-            hours = (" ".join(list(soup.find("div",{"class":"col-md-6 py-5 white-text location-hours"}).stripped_strings)).split("We are open")[0].replace("Hours","").strip())
-            
+            hours = list(soup.find("div",{"class":"col-md-6 py-5 white-text location-hours"}).stripped_strings)[1]
+            # print(hours)
+            # hours = (" ".join(list(soup.find("div",{"class":"col-md-6 py-5 white-text location-hours"}).stripped_strings)).split("We are open")[0].replace("Hours","").replace("Holiday","").strip())
             if us_zip_list:
                 zipp = us_zip_list[-1]
                 country_code = "US"
@@ -57,7 +58,7 @@ def fetch_data():
             store.append("https://wellnow.com")
             store.append(name1)
             store.append(street_address)
-            store.append(city)
+            store.append(city.strip())
             store.append(state)
             store.append(zipp)
             store.append("US")

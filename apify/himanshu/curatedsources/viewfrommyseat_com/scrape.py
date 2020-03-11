@@ -40,6 +40,8 @@ def fetch_data():
         except:
             zipp = "<MISSING>"   
         store = []
+        if mp['country'] == 'Mexico' or mp['country'] == 'Costa Rica' or mp['country'] =='Nicaragua':
+            continue
         store.append("https://aviewfrommyseat.com/")
         store.append(mp['name'] if mp['name'] else "<MISSING>" )
         store.append(mp['address'] if mp['address'] else "<MISSING>")
@@ -55,7 +57,7 @@ def fetch_data():
         store.append("<MISSING>")
         store.append("https://aviewfrommyseat.com/venue/"+str(location_name)+"/about/")
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-        # if store[2] in addresses :
+        # if 'store[2]' in addresses :
         #     continue
         # addresses.append(store[2])
         yield store    
