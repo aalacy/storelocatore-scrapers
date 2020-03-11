@@ -44,7 +44,11 @@ def fetch_data():
             hrlink = url + soup.find('div', {'class': 'holder hours'}).find('a').get('href')
             res = session.get(hrlink)
             soup = BeautifulSoup(res.text, 'html.parser')
-            timl = soup.find('table', {'class': 'hours_table'}).text.split("\n")
+            timl = soup.find_all('table', {'class': 'hours_table'})[0].text
+            if "Monday:" in timl:
+                timl=timl.split("\n")
+            else:
+                timl = soup.find_all('table', {'class': 'hours_table'})[1].text.split("\n")
 
 
         except:
