@@ -24,7 +24,8 @@ def fetch_data():
     locator_domain = 'https://www.signaturestyle.com/brands/island-haircutting.html'
 
     search = ClosestNSearch()
-    search.initialize(country_codes = ['ca'])
+    search.initialize(country_codes = ['us', 'ca'])
+
 
     MAX_DISTANCE = 25
     MAX_RESULTS = 50

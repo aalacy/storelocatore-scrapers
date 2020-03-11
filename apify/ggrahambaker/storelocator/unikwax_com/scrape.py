@@ -90,7 +90,6 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        print(link)
         driver.get(link)
         driver.implicitly_wait(10)
         
