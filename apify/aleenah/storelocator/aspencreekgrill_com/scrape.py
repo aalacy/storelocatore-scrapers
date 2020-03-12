@@ -47,7 +47,8 @@ def fetch_data():
         tim=divs[1].text.replace("\n"," ").replace("pm","pm ").strip()
         phone=soup.find('a', {'class': 'et_pb_button et_pb_button_0 et_hover_enabled et_pb_bg_layout_dark'}).get('href').replace("tel:","").strip()
         if phone=="":
-            phone="<MISSING>"
+            phone=soup.find('h4', {'class': 'dsm-title et_pb_module_header'}).text
+            phone = re.findall(r'[\d\-]+',phone)[0]
         all.append([
             "https://aspencreekgrill.com/",
             loc,
