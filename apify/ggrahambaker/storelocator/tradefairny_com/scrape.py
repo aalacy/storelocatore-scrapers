@@ -2,6 +2,9 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import json
+from fuzzywuzzy import fuzz
+
 
 
 def get_driver():
@@ -40,7 +43,26 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(locator_domain + ext)
+
+
+    #source = str(driver.page_source.encode("utf-8"))
+    ss = driver.find_elements_by_css_selector('script')
+    coord_tracker = []
+    for s in ss:
+        if 'mapbox.generateMap(mapboxDiv' in s.get_attribute('innerHTML'):
+            raw_coords = s.get_attribute('innerHTML').split('mapbox.generateMap')[1]
+            street_address = raw_coords.split('"')[1].split(',')[0]
+            start = raw_coords.find('{')
+            end = raw_coords.find('}')
+            
+            loc = json.loads(raw_coords[start - 1: end + 1].strip().replace(':', ' :').replace(',', ' ,').replace(' ', '"'))
+            coord_tracker.append([street_address, loc['lat'], loc['lng']])
+    
+
     locs = driver.find_elements_by_css_selector('div.wsb-element-text')
+
+
+
 
     all_store_data = []
     for loc in locs:
@@ -52,14 +74,25 @@ def fetch_data():
         location_name = cont[0]
         store_number = location_name.split('#')[1]
         street_address = cont[1]
+        high_score = 0
+        lat = ''
+        longit = ''
+        for coord in coord_tracker:
+            score = fuzz.ratio(street_address, coord[0])
+            if score > high_score:
+                high_score = score
+                lat = coord[1]
+                longit = coord[2]
+
+
+        
         city, state, zip_code = addy_ext(cont[2])
         hours = cont[3]
         phone_number = cont[4].replace('Store Phone:', '').strip()
         
         country_code = 'US'
         location_type = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
+
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
