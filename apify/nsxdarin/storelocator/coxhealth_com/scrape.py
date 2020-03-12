@@ -69,6 +69,14 @@ def fetch_data():
                 lng = line2.split('data-lng="')[1].split('"')[0]
         if hours == '':
             hours = '<MISSING>'
+        if 'cox-north' in loc and 'emergency' not in loc and 'pharmacy' not in loc:
+            hours = 'Mon-Fri: 6:00pm - 7:00pm; Sat-Sun: 1:45pm - 3:15pm'
+        if 'branson-west' in loc:
+            hours = 'Monday-Thursday: 7 a.m.-5:45 p.m; Friday: 7 a.m.-4:45 p.m.'
+        if 'cox-medical-center-south' in loc:
+            hours = 'General: 7 a.m. - 8:30 p.m. daily'
+        if 'meyer-ortho' in loc:
+            hours = 'Sun-Sat: 10:30 a.m. - 8:30 p.m'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

@@ -85,6 +85,8 @@ def fetch_data():
         if phone == '':
             phone = '<MISSING>'
         if name != '':
+            if '; MONDAY' in hours:
+                hours = hours.split('; MONDAY')[0]
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

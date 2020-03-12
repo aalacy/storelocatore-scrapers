@@ -10,7 +10,7 @@ from sgrequests import SgRequests
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w',encoding="utf-8",newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -28,9 +28,9 @@ def fetch_data():
     return_main_object = []
     addresses = []
     search = sgzip.ClosestNSearch()
-    search.initialize(include_canadian_fsas = True)
+    search.initialize(include_canadian_fsas=True)
     # MAX_RESULTS = 32
-    MAX_DISTANCE = 100
+    MAX_DISTANCE = 50
     coord = search.next_coord()
     while coord:
         result_coords = []

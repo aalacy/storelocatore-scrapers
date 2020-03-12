@@ -6,7 +6,7 @@ import json
 import time
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -64,8 +64,8 @@ def fetch_data():
                 addresses.append(street_address)
                 city = location_soup.find("span",{'class':"property-addressLocality"}).text.strip()
                 state = location_soup.find("span",{'class':"property-addressRegion"}).text.strip()
-                store_zip = location_soup.find("span",{'class':"property-postalCode"}).text.strip()
-                phone = location_soup.find("span",{'class':"property-telephone"}).text.strip()
+                store_zip_tag = location_soup.find("span",{'class':"property-postalCode"}).text.strip()
+                phone_tag = location_soup.find("span",{'class':"property-telephone"}).text.strip()
             else:
                 location_details = {}
                 for script in location_soup.find_all("script",{'type':"application/ld+json"}):
@@ -77,15 +77,34 @@ def fetch_data():
                         continue
                 if location_details == {}:
                     continue
-                name = location_details["name"]
-                street_address = location_details["address"]["streetAddress"]
-                if street_address in addresses:
+                try:
+                    name = location_details["name"]
+                    street_address = location_details["address"]["streetAddress"]
+                    if street_address in addresses:
+                        continue
+                    addresses.append(street_address)
+                    city = location_details["address"]["addressLocality"]
+                    state = location_details["address"]["addressRegion"]
+                    store_zip_tag = location_details["address"]["postalCode"]
+                    phone_tag = location_details["telephone"]
+                except:
                     continue
-                addresses.append(street_address)
-                city = location_details["address"]["addressLocality"]
-                state = location_details["address"]["addressRegion"]
-                store_zip = location_details["address"]["postalCode"]
-                phone = location_details["telephone"]
+            phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
+            if phone_list:
+                phone = phone_list[-1]
+            else:
+                phone = "<MISSING>"
+            ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(store_zip_tag))
+            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(store_zip_tag))
+            if ca_zip_list:
+                store_zip = ca_zip_list[-1]
+            elif us_zip_list:
+                store_zip = us_zip_list[-1]
+            else:
+                store_zip= "<MISSING>"
+            if "Newfoundland/Labr." in state:
+                state = "Newfoundland and Labrador"
+
             store = []
             if(state == 'Washington'):
                 state ='WA'
@@ -103,6 +122,8 @@ def fetch_data():
             store.append(cord["longitude"])
             store.append("<MISSING>")
             store.append(location_url)
+            # print("data === ",str(store))
+            # print("-------------------------------------------------------------------------------")
             yield store
 
 def scrape():

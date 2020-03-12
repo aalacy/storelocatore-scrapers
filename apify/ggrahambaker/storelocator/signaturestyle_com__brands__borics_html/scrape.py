@@ -71,8 +71,20 @@ def fetch_data():
                 location_type = 'City Looks'
             elif loc['actualSiteId'] == 22:
                 location_type = 'TGF'
+            elif loc['actualSiteId'] == 24:
+                location_type = 'Head Start'
+            elif loc['actualSiteId'] == 7:
+                location_type = 'First Choice'
+            elif loc['actualSiteId'] == 5:
+                location_type = 'Cost Cutters'
+            elif loc['actualSiteId'] == 58:
+                location_type = 'Chicago Hair'
+            elif loc['actualSiteId'] == 14:
+                location_type = 'Style America'
+            elif loc['actualSiteId'] == 44:
+                location_type = 'We Care Hair'
             else:
-                continue
+                location_type = '<MISSING>'
             
             store_number = loc['storeID']
             

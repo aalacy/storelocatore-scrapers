@@ -1,12 +1,12 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import datetime
 from datetime import datetime
 import requests
-session = SgRequests()
+import itertools as it
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -25,23 +25,25 @@ def fetch_data():
     base_url = "https://www.waitrose.com/"
   
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36,'
     }
-    r = requests.get("https://www.waitrose.com/content/waitrose/en/bf_home/bf/474.html",headers=headers )
+    r = requests.get("https://www.waitrose.com/content/waitrose/en/bf_home/bf/689.html",headers=headers )
     soup = BeautifulSoup(r.text, "lxml")
-    data = soup.find("select",{"id":"global-form-select-branch"}).find_all("option")
-    for value in data:
+    data = soup.find_all("option")
+    
+    for value in it.chain(range(100,975), range(1250,1260)):
         # print(value)
-        if value['value'] == "":
+        if value == "":
             continue
-        page_url = "https://www.waitrose.com/content/waitrose/en/bf_home/bf/"+str(value['value'])+".html"
-        # print(page_url)s
+        page_url = "https://www.waitrose.com/content/waitrose/en/bf_home/bf/"+str(value)+".html"
+        # print(page_url)
         
         r1 = requests.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         if soup1.find("div",{"class":"col branch-details"}) == None:
-            #print(page_url)
+            # print(page_url)
             continue
+
         try:
             location_name = soup1.find("h1",{"class":"pageTitle"}).text.replace("Welcome to little","").replace("Welcome to Little",'').replace("Welcome to",'').strip()
         except:
@@ -52,24 +54,42 @@ def fetch_data():
             if len(addr) == 6:
                 street_address = " ".join(addr[:2])
                 city = addr[2]
-                state = "<INACCESSIBLE>"
+                state = "<MISSING>"
                 zipp = addr[-2]
                 phone = addr[-1]
             else:
                 street_address = addr[0]
                 city = addr[1]
-                state = "<INACCESSIBLE>"
+                state = "<MISSING>"
                 zipp = addr[-2]
                 phone = addr[-1]
+
         except:
             pass 
+        else:
+            if street_address == "STREET_ADDR" and city == "BRANCH_PHONE_NUM" and zipp == "STREET_ADDR" and phone == "BRANCH_PHONE_NUM":
+                street_address = "<MISSING>"
+                city = "<MISSING>"
+                zipp = "<MISSING>"
+                phone = "<MISSING>"
+
+
         try:  
             latitude = soup1.find("a",{"class":"secondary load-branch-map"})['data-lat']
             longitude = soup1.find("a",{"class":"secondary load-branch-map"})['data-long']
         except:
             latitude = "<MISSING>"
             longitude = "<MISSING>"
-        store_number = value['value']
+        else:
+            if latitude == "0.00000" and latitude == "0.00000":
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+
+
+
+
+        #print(latitude, longitude)
+        store_number = value
         hours_of_operation = " ".join(list(soup1.find("table").stripped_strings))
         store = []
         store.append(base_url)
@@ -86,9 +106,9 @@ def fetch_data():
         store.append(longitude )
         store.append(hours_of_operation)
         store.append(page_url)
-        if store[2] in addresses:
-                continue
-        addresses.append(store[2])
+        # if store[2] in addresses:
+        #         continue
+        # addresses.append(store[2])
         yield store
 
 def scrape():

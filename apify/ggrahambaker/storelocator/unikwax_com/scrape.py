@@ -27,6 +27,8 @@ def parse_address(addy_string):
         street_address += parsed_add['AddressNumber'] + ' '
     if 'StreetNamePreDirectional' in parsed_add:
         street_address += parsed_add['StreetNamePreDirectional'] + ' '
+    if 'StreetNamePreType' in parsed_add:
+        street_address += parsed_add['StreetNamePreType'] + ' '
     if 'StreetName' in parsed_add:
         street_address += parsed_add['StreetName'] + ' '
     if 'StreetNamePostType' in parsed_add:
@@ -98,8 +100,24 @@ def fetch_data():
         phone_number = cols[0].find_element_by_css_selector('a.number').text
     
         addy = cols[0].find_element_by_css_selector('a.direction').get_attribute('href').replace('https://maps.google.com/?daddr=%20Uni%20K%20Wax%20Studio', '').replace('%20', ' ').strip()
-        street_address, city, state, zip_code = parse_address(addy)
-        
+        if '22-22 Jackson Avenue' in addy:
+            street_address = '22-22 Jackson Avenue' 
+            city = 'Long Island City'
+            state = '<MISSING>'
+            zip_code = '11101'
+        elif '665 Lexington Ave Manhattan' in addy:
+            street_address = '665 Lexington Ave'
+            city = 'New York' 
+            state = 'New York'
+            zip_code = '10022'
+        elif '606 Washington Street' in addy:
+            street_address = '606 Washington Street'
+            city = 'Hoboken' 
+            state = 'New Jersey'
+            zip_code =  '07030'
+        else:
+            street_address, city, state, zip_code = parse_address(addy)
+
         
         hours = cols[1].text.replace('\n', ' ').replace('Studio Hours', '').strip()
 

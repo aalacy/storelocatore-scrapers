@@ -25,6 +25,22 @@ def fetch_data():
     link_append=[]
     get_url = "https://www.larsensrestaurants.com/locations-and-menus"
     base_url = "https://larsensrestaurants.com/"
+    r1 = requests.get(base_url,headers= headers)
+    soup1 = BeautifulSoup(r1.text,"lxml")
+    hours_list = []
+    l_name = []
+    for h in soup1.findAll("div",class_="hours"):
+        hours = " ".join(list(h.stripped_strings)).split("Join us")[0]
+        if "Happy Hour Daily*" in hours:
+            hours = hours.split("Happy Hour Daily*")[0]
+        hours_list.append(hours)
+        l_name.append(h.parent.h4.text.strip())
+        # print("l_name ==== ",h.parent.h4.text.strip())
+        
+
+
+        
+
     
     r = requests.get(get_url, headers=headers)    
     soup = BeautifulSoup(r.text, "lxml")
@@ -32,10 +48,13 @@ def fetch_data():
     js = json.loads(main)
     
     obj = js['preloadQueries'][0]['data']['restaurant']['locations']
+    lname = []
     for index,i in enumerate(obj):
   
         # return_main_object = []
-        location_name=i['name']
+        l_name.append(i['name'].strip())
+        location_name=i['name'].strip()
+        # print(location_name)
         address =i['streetAddress']
         city= i['city']
         state=i['state']
@@ -48,15 +67,15 @@ def fetch_data():
         location_type = i['__typename']
         page_url = "https://www.larsensrestaurants.com/"+str(i['slug'])+"-california"
         
-        r1 = requests.get(page_url)
-        soup1 = BeautifulSoup(r1.text, "lxml")
-        try:
-            hour = " ".join(list(soup1.find("div",{"class":"hours"}).stripped_strings)).replace("Join us for Happy Hour Daily* from 5:00 PM to 7:00 PM & Sunday 5:00 PM to Close","").replace("* Holidays excluded Feb 14, 15, Easter, Mother's Day, Father's Day, Thanksgiving, Dec 24, 25, 31","").replace("Join us for Happy Hour Mon-Fri* from 5:00 PM to 7:00 PM & Sunday 5:00 PM to Close","").replace("Happy Hour Daily* 5-7pm *Holidays excluded including 2/14 & 2/15, Easter, Mother's Day, Father's Day, Thanksgiving, 12/24,25,31","").replace("Daily* from 5:00 PM- 7:00 PM","").replace("Join us for Happy Hour","").replace("Join us for Happy Hour Daily* from 4:00 PM to Close","")
-        except:
-            hour = "Monday - Friday from 5:00 PM to Close Saturday & Sunday from 3:00 PM to Close"
         
+        h_list = []
+        for i in range(len(hours_list)):
+            if l_name[i] == location_name:
+                h_list.append(hours_list[i])
+                
  
-
+        hour = " ".join(h_list)
+        # print(hour)
         store = []
         store.append(base_url if base_url else '<MISSING>')
         store.append(location_name if location_name else '<MISSING>')
@@ -73,10 +92,8 @@ def fetch_data():
         store.append(hour)
         store.append(page_url)  
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]      
-        return_main_object.append(store)
-
-    return return_main_object
-
+        yield store
+        # print("store == ",str(store))
 
 def scrape():
     data = fetch_data()

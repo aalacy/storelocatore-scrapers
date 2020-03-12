@@ -16,5 +16,10 @@ https://www.signaturestyle.com/brands/famous-hair.html - 18
 https://www.signaturestyle.com/brands/city-looks.html - 41
 https://www.signaturestyle.com/brands/tgf.html - 22
 
+Chicago Hair - 58
+Cost Cutters - 5
+First Choice - 7
+
+
 we-care-hair only has a partial set in the api. i scrape directly from 
 https://www.signaturestyle.com/brands/we-care-hair.html

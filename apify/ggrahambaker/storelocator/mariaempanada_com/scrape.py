@@ -43,7 +43,7 @@ def fetch_data():
         location_type = main.find('h6').text
         more_info = main.find_all('div', {'class': 'wpb_text_column'})[1]
         ps = more_info.find_all('p')
-        street_address = ps[0].text.strip()
+        street_address = ps[0].text.strip().replace(',', '').strip()
         city, state, zip_code = addy_ext(ps[1].text.strip())    
         if len(ps) == 4:
             phone_number = '<MISSING>'
@@ -62,7 +62,6 @@ def fetch_data():
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
-        print(store_data)
         all_store_data.append(store_data)
 
 
