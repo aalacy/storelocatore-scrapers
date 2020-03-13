@@ -55,7 +55,7 @@ def fetch_data():
         if timl==[]:
             timl=soup.find('h5').text
         else:
-            timl=timl.text
+            timl=timl[0].text
         print(timl)
         tim=re.findall(r'Hours:(.*)',timl.replace("\n"," ").replace(".",""),re.DOTALL)[0].strip()
         print(soup.find('iframe').get('src'))
