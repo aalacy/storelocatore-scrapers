@@ -59,8 +59,10 @@ def fetch_data():
 
 
     all_store_data = []
+    print(len(loc_link_list))
     for link in loc_link_list:
-
+        print(link)
+        print()
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
 

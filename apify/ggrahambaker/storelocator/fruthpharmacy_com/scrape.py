@@ -90,9 +90,8 @@ def fetch_data():
                 phone_number = '<MISSING>'
 
             hours = loc.find_element_by_css_selector('span.slp_result_hours').text.replace('\n', ' ').split('Need a prescription')[0]
-            
+            hours =  hours.replace('Store Hours:', '').strip()
             country_code = 'US'
-            store_number = '<MISSING>'
             location_type = '<MISSING>'
             lat = '<MISSING>'
             longit = '<MISSING>'
