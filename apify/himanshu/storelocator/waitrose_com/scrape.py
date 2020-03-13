@@ -1,4 +1,5 @@
 import csv
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -6,7 +7,7 @@ import datetime
 from datetime import datetime
 import requests
 import itertools as it
-
+session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -54,13 +55,13 @@ def fetch_data():
             if len(addr) == 6:
                 street_address = " ".join(addr[:2])
                 city = addr[2]
-                state = "<MISSING>"
+                state = addr[-3]
                 zipp = addr[-2]
                 phone = addr[-1]
             else:
                 street_address = addr[0]
                 city = addr[1]
-                state = "<MISSING>"
+                state = addr[-3]
                 zipp = addr[-2]
                 phone = addr[-1]
 
@@ -93,19 +94,19 @@ def fetch_data():
         hours_of_operation = " ".join(list(soup1.find("table").stripped_strings))
         store = []
         store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)   
+        store.append(location_name if location_name else "<MISSING>") 
+        store.append(street_address if street_address else "<MISSING>")
+        store.append(city if city else "<MISSING>")
+        store.append(state if state else "<MISSING>")
+        store.append(zipp if zipp else "<MISSING>")   
         store.append("UK")
-        store.append(store_number)
+        store.append(store_number if store_number else "<MISSING>") 
         store.append(phone)
         store.append("<MISSING>")
-        store.append(latitude )
-        store.append(longitude )
-        store.append(hours_of_operation)
-        store.append(page_url)
+        store.append(latitude if latitude else "<MISSING>")
+        store.append(longitude if longitude else "<MISSING>")
+        store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+        store.append(page_url if page_url else "<MISSING>")
         # if store[2] in addresses:
         #         continue
         # addresses.append(store[2])
