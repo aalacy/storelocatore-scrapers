@@ -77,6 +77,10 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
+        print(link)
+        print()
+        print()
+        print()
         driver.get(link)
         location_name = driver.find_element_by_css_selector('h1.MainTitle').text
         
