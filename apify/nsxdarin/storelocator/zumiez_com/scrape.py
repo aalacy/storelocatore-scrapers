@@ -15,7 +15,6 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    locs = []
     url = 'https://www.zumiez.com/storelocator/search/latlng/?lat=40.7135097&lng=-73.9859414&radius=10000'
     r = session.get(url, headers=headers)
     for item in json.loads(r.content):
