@@ -112,10 +112,14 @@ def fetch_data():
                 phone.append(driver.find_element_by_class_name('phone').text)
             else:
                 phone.append("<MISSING>")
-            hours_of_operation.append(
-                driver.find_element_by_xpath('//div[@class="inner"]/div[3]').text + " " + driver.find_element_by_xpath(
-                    '//div[@class="inner"]/span[1]').text + " " + driver.find_element_by_xpath(
-                    '//div[@class="inner"]/span[2]').text)
+            try:
+                hours_of_operation.append(
+                driver.find_element_by_xpath('//div[@class="inner"]/div[3]').text.strip() + " " + driver.find_element_by_xpath(
+                    '//div[@class="inner"]/span[1]').text.strip() + " " + driver.find_element_by_xpath(
+                    '//div[@class="inner"]/span[2]').text.strip())
+            except:
+                 hours_of_operation.append(
+                driver.find_element_by_xpath('//div[@class="inner"]/div[3]').text.strip())
             lat_lon = b = driver.find_element_by_xpath(
                 '//a[contains(@href,"https://www.google.com/maps")]').get_attribute('href')
             try:
