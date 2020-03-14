@@ -25,18 +25,18 @@ def fetch_data():
         location_name = (mp['name'].replace(' ',"+"))
         try:
             zipp1 = ("https://aviewfrommyseat.com/venue/"+str(location_name)+"/about/")
-            if 'Theatre' in zipp1:
-                location_type='Theatre'
-            elif 'Stadium' in zipp1:
-                location_type='Stadium'
-            else:
-                location_type='Teams'        
+            # if 'Theatre' in zipp1:
+            #     location_type='Theatre'
+            # elif 'Stadium' in zipp1:
+            #     location_type='Stadium'
+            # else:
+            #     location_type='Teams'        
             r =  requests.get(zipp1, headers=headers)
             soup = BeautifulSoup(r.text, "lxml")
             data = soup.find("script",{"type":"application/ld+json"}).text
             json_data = json.loads(data)
             zipp = (json_data['address']['postalCode'])
-            # location_type = json_data['@type']
+            location_type = json_data['@type']
         except:
             zipp = "<MISSING>"   
         store = []

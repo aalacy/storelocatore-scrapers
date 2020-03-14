@@ -52,6 +52,7 @@ def request_wrapper(url,method,headers,data=None):
         return None
 
 def fetch_data():
+    address = []
     base_url = "https://tropicalsmoothiecafe.com"
     addresses = []
     search = sgzip.ClosestNSearch()
@@ -145,10 +146,9 @@ def fetch_data():
                 store.append(longitude if longitude else '<MISSING>')
                 store.append(hours_of_operation if hours_of_operation else '<MISSING>')
                 store.append(page_url if page_url else '<MISSING>')
-                if store[2] in addresses:
+                if store[2] in address:
                     continue
-                addresses.append(store[2])
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+                address.append(store[2])
                 yield store
 
             if current_results_len < MAX_RESULTS:
