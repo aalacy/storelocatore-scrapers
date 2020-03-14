@@ -12,6 +12,7 @@ from random import choice
 import unicodedata
 
 
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -52,7 +53,7 @@ def fetch_data():
     'Sec-Fetch-Mode': 'cors',
     'Sec-Fetch-Site': 'cross-site',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
-}
+    }
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes= ["CA"])
@@ -63,7 +64,7 @@ def fetch_data():
         result_coords = []
         x = coord[0]
         y = coord[1]
-        # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         r = proxy_request("get","https://bellca.know-where.com/bellca/cgi/selection?lang=en&loadedApiKey=main&ll="+str(x)+"%2C"+str(y)+"&stype=ll&async=results&key", headers=headers)
 
         soup = BeautifulSoup(r.text,"lxml")
@@ -103,13 +104,15 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-        
+
             for i in range(len(store)):
                 if type(store[i]) == str:
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-            store = [x.replace("–","-") if type(x) == str else x for x in store]
-            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]        
-            yield store   
+            store = [str(x).replace("\xe2","-") if x else "<MISSING>" for x in store]
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            # print("data == " + str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            yield store
         if len(data) < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)

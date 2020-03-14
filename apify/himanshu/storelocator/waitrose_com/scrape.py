@@ -8,6 +8,39 @@ from datetime import datetime
 import requests
 import itertools as it
 session = SgRequests()
+import time
+
+def request_wrapper(url,method,headers,data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url,headers=headers,data=data)
+                else:
+                    r = requests.post(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -28,18 +61,21 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36,'
     }
-    r = requests.get("https://www.waitrose.com/content/waitrose/en/bf_home/bf/689.html",headers=headers )
+    try:
+        r = request_wrapper("https://www.waitrose.com/content/waitrose/en/bf_home/bf/689.html",'get',headers=headers )
+    except:
+        pass
     soup = BeautifulSoup(r.text, "lxml")
     data = soup.find_all("option")
     
     for value in it.chain(range(100,975), range(1250,1260)):
         # print(value)
-        if value == "":
+        if value == "" or value == 593 or value == 505 or value == 579:
             continue
         page_url = "https://www.waitrose.com/content/waitrose/en/bf_home/bf/"+str(value)+".html"
         # print(page_url)
         
-        r1 = requests.get(page_url, headers=headers)
+        r1 = request_wrapper(page_url,'get', headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         if soup1.find("div",{"class":"col branch-details"}) == None:
             # print(page_url)

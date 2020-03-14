@@ -3,13 +3,42 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+from shapely.prepared import prep
+from shapely.geometry import Point
+from shapely.geometry import mapping, shape
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
 import time
 import unicodedata
 import platform
+
 system = platform.system()
+countries = {}
+   
+
+def getcountrygeo():
+    data = requests.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
+
+    for feature in data["features"]:
+        geom = feature["geometry"]
+        country = feature["properties"]["ADMIN"]
+        countries[country] = prep(shape(geom))
+
+
+def getplace(lat, lon):
+    if lon != "" and lat != "":
+        point = Point(float(lon), float(lat))
+    else:
+        point = Point(0, 0)
+        # print("lat == ",lat,"lng == ",lon)
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    
+    for country, geom in countries.items():
+        if geom.contains(point):
+            return country
+
+    return "unknown"
 
 def write_output(data):
     with open('data.csv', mode='w',newline='') as output_file:
@@ -33,6 +62,7 @@ def get_driver():
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def fetch_data():
+    getcountrygeo()
     driver = get_driver()
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
@@ -56,6 +86,13 @@ def fetch_data():
         for location in soup.find('div',{'class':'js-property-list-container'}).find_all("div",{"data-brand":str(brand_id)},recursive=False):
             if location["data-brand"] != brand_id:
                 continue
+            lat = json.loads(location["data-property"])["lat"]
+            lng = json.loads(location["data-property"])["longitude"]
+            country_name = getplace(lat, lng)
+            if country_name not in ["United States of America","Canada"]:
+                continue
+            #print(country_name)
+            
             name = location.find("span",{"class":"l-property-name"}).text
             address = location.find("div",{"data-address-line1":True})
             street_address = address["data-address-line1"]
@@ -63,12 +100,11 @@ def fetch_data():
                 street_address = street_address + " " + address["data-address-line2"]
             city = address["data-city"]
             state = address["data-state"]
-            if state in ["QROO","JAL","BC","DF","NL"]:
+            if state in ["QROO","JAL","DF","NL"]:
                 continue
             store_zip = address["data-postal-code"]
             phone = address["data-contact"]
-            lat = json.loads(location["data-property"])["lat"]
-            lng = json.loads(location["data-property"])["longitude"]
+            
             page_url = "https://www.marriott.com" + location.find("span",{"class":"l-property-name"}).parent.parent["href"]
             store = []
             store.append(domain_url)
@@ -109,7 +145,7 @@ def fetch_data():
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
-            #print("data === ",str(store))
+            # print("data === ",str(store))
         # if len(soup.find('div',{'class':'js-property-list-container'}).find_all("div",{"data-brand":str(brand_id)})) <= 0:
         #     break
         soup = BeautifulSoup(driver.page_source,"lxml")
