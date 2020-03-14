@@ -15,6 +15,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    donelocs = []
     states = []
     url = 'https://www.cvs.com/store-locator/cvs-pharmacy-locations'
     r = session.get(url, headers=headers)
@@ -23,77 +24,85 @@ def fetch_data():
             states.append('https://www.cvs.com' + line.split('href="')[1].split('"')[0])
     for state in states:
         cities = []
-        #print('Pulling State %s...' % state)
+        print('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
             if '<a href="/store-locator/cvs-pharmacy-locations/' in line2:
                 cities.append('https://www.cvs.com' + line2.split('href="')[1].split('"')[0])
         for city in cities:
             r2 = session.get(city, headers=headers)
-            #print('Pulling City %s...' % city)
+            print('Pulling City %s...' % city)
             for line2 in r2.iter_lines():
                 if '<a href="/store-locator/cvs-pharmacy-address/' in line2:
                     lurl = 'https://www.cvs.com' + line2.split('href="')[1].split('"')[0]
                     if lurl not in locs:
                         locs.append(lurl)
-        for loc in locs:
-            LFound = True
-            while LFound:
-                try:
-                    #print('Pulling Location %s...' % loc)
-                    website = 'cvs.com'
-                    typ = '<MISSING>'
-                    hours = ''
-                    name = ''
-                    add = ''
-                    city = ''
-                    state = ''
-                    zc = ''
-                    country = 'US'
-                    store = ''
-                    phone = ''
-                    lat = ''
-                    lng = ''
-                    Found = False
-                    r2 = session.get(loc, headers=headers)
-                    for line2 in r2.iter_lines():
-                        if name == '' and '"name": "' in line2:
-                            name = line2.split('"name": "')[1].split('"')[0]
-                            LFound = False
-                        if add == '' and '"streetAddress": "' in line2:
-                            add = line2.split('"streetAddress": "')[1].split('"')[0]
-                        if city == '' and '"addressLocality": "' in line2:
-                            city = line2.split('"addressLocality": "')[1].split('"')[0]
-                        if state == '' and '"addressRegion": "' in line2:
-                            state = line2.split('"addressRegion": "')[1].split('"')[0]
-                        if zc == '' and '"postalCode": "' in line2:
-                            zc = line2.split('"postalCode": "')[1].split('"')[0]
-                        if phone == '' and '"telephone": "' in line2:
-                            phone = line2.split('"telephone": "')[1].split('"')[0]
-                        if '"latitude": "' in line2:
-                            lat = line2.split('"latitude": "')[1].split('"')[0]
-                        if '"longitude": "' in line2:
-                            lng = line2.split('"longitude": "')[1].split('"')[0]
-                        if 'store_id : "' in line2 and 'cvs' not in line2:
-                            store = line2.split('store_id : "')[1].split('"')[0]
-                        if '"openingHours":' in line2 and hours == '':
-                            Found = True
-                        if Found and ']' in line2:
-                            Found = False
-                        if Found and '"' in line2 and 'openingHours' not in line2:
-                            hrs = line2.split('"')[1]
-                            if hours == '':
-                                hours = hrs
-                            else:
-                                hours = hours + '; ' + hrs
-                    if hours == '':
-                        hours = '<MISSING>'
-                    if phone == '':
-                        phone = '<MISSING>'
-                    hours = hours.replace(':00:00',':00').replace(':30:00',':30')
-                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-                except:
+            for loc in locs:
+                if loc not in donelocs:
                     LFound = True
+                    lcount = 0
+                    while LFound:
+                        try:
+                            lcount = lcount + 1
+                            print('Pulling Location %s-%s...' % (loc, str(lcount)))
+                            website = 'cvs.com'
+                            typ = '<MISSING>'
+                            hours = ''
+                            name = ''
+                            add = ''
+                            city = ''
+                            state = ''
+                            zc = ''
+                            country = 'US'
+                            store = ''
+                            phone = ''
+                            lat = ''
+                            lng = ''
+                            Found = False
+                            r3 = session.get(loc, headers=headers)
+                            for line3 in r3.iter_lines():
+                                if name == '' and '"name": "' in line3:
+                                    name = line3.split('"name": "')[1].split('"')[0]
+                                    LFound = False
+                                if add == '' and '"streetAddress": "' in line3:
+                                    add = line3.split('"streetAddress": "')[1].split('"')[0]
+                                if city == '' and '"addressLocality": "' in line3:
+                                    city = line3.split('"addressLocality": "')[1].split('"')[0]
+                                if state == '' and '"addressRegion": "' in line3:
+                                    state = line3.split('"addressRegion": "')[1].split('"')[0]
+                                if zc == '' and '"postalCode": "' in line3:
+                                    zc = line3.split('"postalCode": "')[1].split('"')[0]
+                                if phone == '' and '"telephone": "' in line3:
+                                    phone = line3.split('"telephone": "')[1].split('"')[0]
+                                if '"latitude": "' in line3:
+                                    lat = line3.split('"latitude": "')[1].split('"')[0]
+                                if '"longitude": "' in line3:
+                                    lng = line3.split('"longitude": "')[1].split('"')[0]
+                                if 'store_id : "' in line3 and 'cvs' not in line3:
+                                    store = line3.split('store_id : "')[1].split('"')[0]
+                                if '"openingHours":' in line3 and hours == '':
+                                    Found = True
+                                if Found and ']' in line3:
+                                    Found = False
+                                if Found and '"' in line3 and 'openingHours' not in line3:
+                                    hrs = line3.split('"')[1]
+                                    if hours == '':
+                                        hours = hrs
+                                    else:
+                                        hours = hours + '; ' + hrs
+                            if hours == '':
+                                hours = '<MISSING>'
+                            if phone == '':
+                                phone = '<MISSING>'
+                            hours = hours.replace(':00:00',':00').replace(':30:00',':30')
+                            donelocs.append(loc)
+                            if loc not in donelocs:
+                                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                        except:
+                            if lcount <= 3:
+                                LFound = True
+                            else:
+                                LFound = False
 
 def scrape():
     data = fetch_data()
