@@ -77,6 +77,10 @@ def fetch_data():
             hours = 'General: 7 a.m. - 8:30 p.m. daily'
         if 'meyer-ortho' in loc:
             hours = 'Sun-Sat: 10:30 a.m. - 8:30 p.m'
+        if '525' in add and 'Branson' in city:
+            hours = 'General: 7 a.m. - 9 p.m. daily'
+        if '2900' in add and 'Springfield' in city:
+            hours = 'Monday-Friday: 8 a.m.-8 p.m.'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
