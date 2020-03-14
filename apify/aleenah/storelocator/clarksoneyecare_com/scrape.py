@@ -56,7 +56,7 @@ def fetch_data():
                 "US",
                 "<MISSING>",  # store #
                 js["phone_number"],  # phone
-                js["name"],  # type
+                "<MISSING>",  # type
                 js["lat"],  # lat
                 js["lng"],  # long
                 tim,  # timing
