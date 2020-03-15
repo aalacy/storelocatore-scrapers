@@ -136,7 +136,7 @@ def fetch_data():
                 except:
                     longitude.append('<MISSING>')
                     
-                break
+            break
 
 
     data = []
