@@ -39,7 +39,7 @@ def fetch_data():
         if a==[]:
             continue
         url="https://www.picklemans.com/"+a[0].get('href')
-        print(url)
+        #print(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         try:
