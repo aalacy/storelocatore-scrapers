@@ -55,33 +55,35 @@ def fetch_data():
     soup = BeautifulSoup(r.text,'html.parser')
     li = soup.find('li',{'data-tag':'Campuses'}).find_all('a')
     for i in li:
-        if  "/campuses/remote" not in i['href']:
-            r_loc = requests.get(locator_domain + i['href'],headers = headers)
-            soup = BeautifulSoup(r_loc.text,'lxml')
-            loc = soup.find('textarea',{'id':'state'}).text
-            script_text = loc.split(',"location":')[-1].split('}')[0]+"}"
-            json_data = eval(script_text)
-            latitude = json_data['lat']
-            longitude = json_data['lon']
-            zipp = json_data['zip']
-            city = json_data['city']
-            location_name = json_data['name']
-            phone = json_data['phone']
-            state = json_data['state']
-            street_address = json_data['address']
-            page_url = locator_domain + i['href']
+        if  "/campuses/remote" in i['href'] or "/campuses/san-jose" in i['href']:
+            continue
+        r_loc = requests.get(locator_domain + i['href'],headers = headers)
+        # print(locator_domain + i['href'])
+        soup = BeautifulSoup(r_loc.text,'lxml')
+        loc = soup.find('textarea',{'id':'state'}).text
+        script_text = loc.split(',"location":')[-1].split('}')[0]+"}"
+        json_data = eval(script_text)
+        latitude = json_data['lat']
+        longitude = json_data['lon']
+        zipp = json_data['zip']
+        city = json_data['city']
+        location_name = json_data['name']
+        phone = json_data['phone']
+        state = json_data['state']
+        street_address = json_data['address']
+        page_url = locator_domain + i['href']
 
 
 
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-            store = ["<MISSING>" if x == "" or x == "Blank" else x for x in store]
+        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                        store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+        store = ["<MISSING>" if x == "" or x == "Blank" else x for x in store]
 
-            # print("data = " + str(store))
-            # print(
-            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        # print("data = " + str(store))
+        # print(
+        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
-            return_main_object.append(store)
+        return_main_object.append(store)
 
     return return_main_object
 

@@ -64,60 +64,57 @@ def fetch_data():
         try:
             r = session.post(url, data=payload, headers=headers, params=querystring).json()
             
+            data = r["hotels"]
+            for store_data in data:
+                # if store_data["address"]["country"] != "US":
+                #     continue
+                result_coords.append((store_data["lat"],store_data["lon"]))
+                store = []
+                store.append("https://mainstaysuites.com")
+                store.append(store_data["name"])
+                address = ""
+                if "line1" in store_data["address"]:
+                    address = address + store_data["address"]["line1"]
+                if "line2" in store_data["address"]:
+                    address = address + store_data["address"]["line2"]
+                if "line3" in store_data["address"]:
+                    address = address + store_data["address"]["line3"]
+                store.append(address)
+                if store[-1] in addresses:
+                    continue
+                addresses.append(store[-1])
+                if "city" in store_data["address"]:
+
+                    store.append(store_data["address"]["city"])
+                else:
+                    store.append("<MISSING>")
+                if  "subdivision" in store_data["address"]:
+
+                    store.append(store_data["address"]["subdivision"])
+                else:
+                    store.append("<MISSING>")
+                if "postalCode" in store_data["address"]    :
+                    store.append(store_data["address"]["postalCode"])
+                    if len(store[-1]) == 10:
+                        store[-1] = store[-1][:5] + "-" + store[-1][6:]
+                else:
+                    store.append("<MISSING>")
+                
+                store.append(store_data["address"]["country"])
+                store.append(store_data["id"])
+                try:
+                    store.append(store_data["phone"])
+                except:
+                    store.append("<MISSING>")
+                store.append("<MISSING>")
+                store.append(store_data["lat"])
+                store.append(store_data["lon"])
+                store.append("<MISSING>")
+                store.append("<MISSING>")
+                # print("data =="+str(store))
+                yield store
         except:
             pass
-
-
-        data = r["hotels"]
-        for store_data in data:
-            # if store_data["address"]["country"] != "US":
-            #     continue
-            result_coords.append((store_data["lat"],store_data["lon"]))
-            store = []
-            store.append("https://mainstaysuites.com")
-            store.append(store_data["name"])
-            address = ""
-            if "line1" in store_data["address"]:
-                address = address + store_data["address"]["line1"]
-            if "line2" in store_data["address"]:
-                address = address + store_data["address"]["line2"]
-            if "line3" in store_data["address"]:
-                address = address + store_data["address"]["line3"]
-            store.append(address)
-            if store[-1] in addresses:
-                continue
-            addresses.append(store[-1])
-            if "city" in store_data["address"]:
-
-                store.append(store_data["address"]["city"])
-            else:
-                store.append("<MISSING>")
-            if  "subdivision" in store_data["address"]:
-
-                store.append(store_data["address"]["subdivision"])
-            else:
-                store.append("<MISSING>")
-            if "postalCode" in store_data["address"]    :
-                store.append(store_data["address"]["postalCode"])
-                if len(store[-1]) == 10:
-                    store[-1] = store[-1][:5] + "-" + store[-1][6:]
-            else:
-                store.append("<MISSING>")
-            
-            store.append(store_data["address"]["country"])
-            store.append(store_data["id"])
-            try:
-                store.append(store_data["phone"])
-            except:
-                store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append(store_data["lat"])
-            store.append(store_data["lon"])
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-           # print("data =="+str(store))
-            yield store
-
         if len(data) < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)

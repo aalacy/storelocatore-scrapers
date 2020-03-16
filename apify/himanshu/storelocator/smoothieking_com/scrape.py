@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import sgzip
 import time 
 from datetime import datetime
 session = SgRequests()
@@ -29,6 +30,8 @@ def fetch_data():
         if 'message' in  json_r:
             break
         for data in json_r:
+            if data['store_info']['status'] == "coming soon":
+                continue
             street_address = data['store_info']['address']
             if data['store_info']['address_extended']:
                 street_address = street_address +" "+ data['store_info']['address_extended']

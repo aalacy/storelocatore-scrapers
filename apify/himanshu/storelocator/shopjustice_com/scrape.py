@@ -37,7 +37,7 @@ def fetch_data():
             location_name = " ".join(list(location_soup.find("h1",{"class":"Hero-title"}).stripped_strings))
             
             if location_soup.find("span",{"class":"c-address-street-2"}):
-                street_address = location_soup.find("span",{"class":"c-address-street-1"}).text.strip() + location_soup.find("span",{"class":"c-address-street-2"}).text.strip()
+                street_address = location_soup.find("span",{"class":"c-address-street-1"}).text.strip() +" "+ location_soup.find("span",{"class":"c-address-street-2"}).text.strip()
             else:
                 street_address = location_soup.find("span",{"class":"c-address-street-1"}).text.strip()
             city = location_soup.find("span",{"class":"c-address-city"}).text.strip()
@@ -46,6 +46,7 @@ def fetch_data():
             phone = location_soup.find("div",{"itemprop":"telephone"}).text
             latitude = location_soup.find("meta", {"itemprop":"latitude"})['content']
             longitude = location_soup.find("meta", {"itemprop":"longitude"})['content']
+            store_number = location_soup.find_all("span",{"class":"c-bread-crumbs-name"})[-1].text.replace("#","").strip()
             hours = " ".join(list(location_soup.find("table",{'class':"c-hours-details"}).stripped_strings)).replace("Day of the Week Hours","").strip()
             store = []
             store.append(base_url)
@@ -55,7 +56,7 @@ def fetch_data():
             store.append(state)
             store.append(zipp )
             store.append("US" if zipp.replace("-","").isdigit() else "CA")
-            store.append("<MISSING>")
+            store.append(store_number)
             store.append(phone)
             store.append("<MISSING>")
             store.append(latitude)
@@ -87,6 +88,7 @@ def fetch_data():
                     phone = location_soup.find("div",{"itemprop":"telephone"}).text
                     latitude = location_soup.find("meta", {"itemprop":"latitude"})['content']
                     longitude = location_soup.find("meta", {"itemprop":"longitude"})['content']
+                    store_number = location_soup.find_all("span",{"class":"c-bread-crumbs-name"})[-1].text.replace("#","").strip()
                     hours = " ".join(list(location_soup.find("table",{'class':"c-hours-details"}).stripped_strings)).replace("Day of the Week Hours","").strip()
 
 
@@ -98,7 +100,7 @@ def fetch_data():
                     store.append(state)
                     store.append(zipp )
                     store.append("US" if zipp.replace("-","").isdigit() else "CA")
-                    store.append("<MISSING>")
+                    store.append(store_number)
                     store.append(phone)
                     store.append("<MISSING>")
                     store.append(latitude)
@@ -129,6 +131,7 @@ def fetch_data():
                         phone = location_soup.find("div",{"itemprop":"telephone"}).text
                         latitude = location_soup.find("meta", {"itemprop":"latitude"})['content']
                         longitude = location_soup.find("meta", {"itemprop":"longitude"})['content']
+                        store_number = location_soup.find_all("span",{"class":"c-bread-crumbs-name"})[-1].text.replace("#","").strip()
                         hours = " ".join(list(location_soup.find("table",{'class':"c-hours-details"}).stripped_strings)).replace("Day of the Week Hours","").strip()
 
 
@@ -140,7 +143,7 @@ def fetch_data():
                         store.append(state)
                         store.append(zipp )
                         store.append("US" if zipp.replace("-","").isdigit() else "CA")
-                        store.append("<MISSING>")
+                        store.append(store_number)
                         store.append(phone)
                         store.append("<MISSING>")
                         store.append(latitude)

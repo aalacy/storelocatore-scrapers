@@ -63,7 +63,7 @@ def fetch_data():
         latitude = i['coordinates'][0]
         longitude = i['coordinates'][1]
         location_type =  ""
-        phone = "815 397 9410"
+        phone = ""
         mp = location_name.replace(" ","-").replace(".","")
         new_url = "https://kelleysmarket.com/locations/location/"+str(mp)
         r = request_wrapper(new_url,"get",headers=headers)
