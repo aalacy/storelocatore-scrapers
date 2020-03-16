@@ -31,7 +31,7 @@ def fetch_data():
     page_url=[]
     driver.get("https://www.picklemans.com/locations.php")#,headers={'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'})
     soup = BeautifulSoup(driver.page_source, 'html.parser')
-    print(soup)
+    #print(soup)
     urls = soup.find_all('p', {'class': 'storemapper-address'})
     print(len(urls))
     for url in urls:
