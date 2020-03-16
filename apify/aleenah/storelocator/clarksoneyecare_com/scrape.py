@@ -48,19 +48,19 @@ def fetch_data():
             print(tim)
             all.append([
                 "https://www.clarksoneyecare.com",
-                js["name"],
-                js["address1"]+" "+js["address2"]+" "+js["address3"].strip(),
-                js["city"],
-                js["state"],
-                js["zip_code"],
+                js["name"].replace( '\u200b',''),
+                js["address1"]+" "+js["address2"]+" "+js["address3"].strip().replace( '\u200b',''),
+                js["city"].replace( '\u200b',''),
+                js["state"].replace( '\u200b',''),
+                js["zip_code"].replace( '\u200b',''),
                 "US",
                 "<MISSING>",  # store #
-                js["phone_number"],  # phone
+                js["phone_number"].replace( '\u200b',''),  # phone
                 "<MISSING>",  # type
-                js["lat"],  # lat
-                js["lng"],  # long
-                tim,  # timing
-                url])
+                js["lat"].replace( '\u200b',''),  # lat
+                js["lng"].replace( '\u200b',''),  # long
+                tim.replace( '\u200b',''),  # timing
+                url.replace( '\u200b','')])
 
 
     return all
