@@ -9,7 +9,7 @@ options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome("chromedriver", options=options)
+driver = webdriver.Chrome("/home/aleena/Downloads/chromedriver", options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -48,7 +48,10 @@ def fetch_data():
             loc = soup.find('h1', {'itemprop': 'name'}).text.replace("\n", " ").strip()
         street=soup.find('span', {'itemprop': 'streetAddress'}).text
         city=soup.find('span', {'itemprop': 'addressLocality'}).text
-        state=soup.find('span', {'itemprop': 'addressRegion'}).text
+        try:
+              state=soup.find('span', {'itemprop': 'addressRegion'}).text
+        except:
+              state=soup.find_all('span', {'itemprop': 'addressLocality'})[1].text
         zip=soup.find('span', {'itemprop': 'postalCode'}).text
         phone=soup.find('span', {'itemprop': 'telephone'}).text
         timl=soup.find_all('bd1')
@@ -56,18 +59,18 @@ def fetch_data():
             timl=soup.find('h5').text
         else:
             timl=timl[0].text
-        print(timl)
+        #print(timl)
         tim=re.findall(r'Hours:(.*)',timl.replace("\n"," ").replace(".",""),re.DOTALL)[0].strip()
-        print(soup.find('iframe').get('src'))
+        #print(soup.find('iframe').get('src'))
         long,lat=re.findall(r'.*!2d(.*)!3d([\d\.]+)!',soup.find('iframe').get('src'))[0]
-        print(tim)
-        print(lat,long)
+        #print(tim)
+        #print(lat,long)
         all.append([
             "https://www.picklemans.com/",
             loc,
             street,
             city,
-            state,
+            state.replace(",","").strip(),
             zip,
             'US',
             "<MISSING>",  # store #
