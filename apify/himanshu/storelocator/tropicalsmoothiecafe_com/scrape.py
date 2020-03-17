@@ -53,7 +53,7 @@ def request_wrapper(url,method,headers,data=None):
 
 def fetch_data():
     address = []
-    base_url = "https://tropicalsmoothiecafe.com"
+    base_url = "https://locations.tropicalsmoothiecafe.com"
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
@@ -76,7 +76,7 @@ def fetch_data():
     while coords:
 
             result_coords = []
-            #print("zip_code === " + str(coords))
+           # print("zip_code === " + str(coords))
             #print("ramiang zip =====" + str(search.current_zip))
             
             r = request_wrapper("https://locations.tropicalsmoothiecafe.com/search?q=" + str(search.current_zip) + "&r=" + str(MAX_RESULTS),'get', headers=headers)

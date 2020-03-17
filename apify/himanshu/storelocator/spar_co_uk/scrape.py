@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import sgzip
 import datetime
 from datetime import datetime
 session = SgRequests()
@@ -13,7 +14,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","raw_address""page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -33,7 +34,7 @@ def fetch_data():
     for link in soup.find_all("a"):
         if "/store-locator/" in link['href']:
             page_url = base_url + link['href']
-            #print(page_url)
+            # print(page_url)
 
             r1 = session.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
@@ -41,18 +42,8 @@ def fetch_data():
                 continue
             addr = json.loads(soup1.find(lambda tag : (tag.name == "script") and "latitude" in tag.text).text)
             location_name = addr['name']
-            try:
-                street_address = (addr['address']['streetAddress'] +" "+ str(addr['address']['addressLocality'])).strip()
-             except:
-                street_address = "<MISSING>"
-            try:
-                city = addr['address']['addressLocality']
-            except:
-                city = "<MISSING>"
-            try:
-                state = addr['address']['addressRegion']
-            except:
-                state = "<MISSING>"
+            raw_address = re.sub(r'\s+'," "," ".join(list(soup1.find("div",{"class":"store-details__contact"}).find_all("p")[-1].stripped_strings)))
+
             try:
                 zipp = addr['address']['postalCode']
             except:
@@ -87,9 +78,9 @@ def fetch_data():
             result_coords.append((latitude,longitude))
             store.append(base_url)
             store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
+            store.append("<INACCESSIBLE>")
+            store.append("<INACCESSIBLE>")
+            store.append("<INACCESSIBLE>")
             store.append(zipp)   
             store.append("UK")
             store.append(store_number)
@@ -99,8 +90,8 @@ def fetch_data():
             store.append(longitude )
             store.append(hours)
             store.append(page_url)
-            #print("data==="+str(store))
-           # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            # print("data==="+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
             yield store
                 
        

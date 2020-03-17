@@ -75,15 +75,16 @@ def fetch_data():
             latitude    = "<MISSING>"
             longitude = "<MISSING>"
             store_number = "<MISSING>"
-            location_type = "<MISSING>"
+            location_type = location_name.split("Superstores")[1].replace("-","").replace("–","").strip()
+                
             country_code = "US"
-            store = [locator_domain, location_name,street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+            store = [locator_domain, location_name,street_address, city, state, zipp, country_code,store_number, phone, location_type if location_type else "<MISSING>", latitude, longitude, hours_of_operation, page_url]
             
             if str(store[2]) not in addresses:
                 addresses.append(str(store[2]) )
                 store = [x if x else "<MISSING>" for x in store]
-                #print("data = " + str(store))
-               # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
                 
 
@@ -109,7 +110,10 @@ def fetch_data():
         latitude    = "<MISSING>"
         longitude = "<MISSING>"
         store_number = "<MISSING>"
-        location_type = "<MISSING>"
+        try:
+            location_type = location_name.split("Superstores")[1].replace("-","").replace("–","").strip()
+        except:
+            location_type = "<MISSING>"
         country_code = "US"
         store = [locator_domain, location_name,street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
         
