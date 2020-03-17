@@ -42,8 +42,8 @@ def fetch_data():
             addr = json.loads(soup1.find(lambda tag : (tag.name == "script") and "latitude" in tag.text).text)
             location_name = addr['name']
             try:
-                street_address = addr['address']['streetAddress']
-            except:
+                street_address = (addr['address']['streetAddress'] +" "+ str(addr['address']['addressLocality'])).strip()
+             except:
                 street_address = "<MISSING>"
             try:
                 city = addr['address']['addressLocality']
