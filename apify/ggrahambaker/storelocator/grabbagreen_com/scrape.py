@@ -29,8 +29,6 @@ def fetch_data():
     locs = soup.find_all('div', {'class': 'store'})
     all_store_data = []
     for loc in locs:
-
-        34084
         store_number = loc.text.split('#')[1].strip()
         ## check if coming soon
         info_url = 'https://locator.kahalamgmt.com/locator/index.php?mode=infowindow&brand=34&store=' + store_number
