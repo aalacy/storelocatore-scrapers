@@ -29,7 +29,7 @@ def fetch_data():
     key_set=set([])
     coords = sgzip.coords_for_radius(50)
     for coord in coords:
-        print(coord)
+        #print(coord)
         url="https://www.clarksoneyecare.com/wp-json/352inc/v1/locations/coordinates?lat="+coord[0]+"&lng="+coord[1]
         res = session.get(url)
         try:
