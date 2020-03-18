@@ -7,49 +7,19 @@ import json
 from shapely.prepared import prep
 from shapely.geometry import Point
 from shapely.geometry import mapping, shape
+import phonenumbers
+                    
 
 countries = {}
-import time
+   
 
-def request_wrapper(url,method,headers,data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = requests.get(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:
-                if data:
-                    r = requests.post(url,headers=headers,data=data)
-                else:
-                    r = requests.post(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None   
+def getcountrygeo():
+    data = requests.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
 
-# def getcountrygeo():
-#     data = requests.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
-
-#     for feature in data["features"]:
-#         geom = feature["geometry"]
-#         country = feature["properties"]["ADMIN"]
-#         countries[country] = prep(shape(geom))
+    for feature in data["features"]:
+        geom = feature["geometry"]
+        country = feature["properties"]["ADMIN"]
+        countries[country] = prep(shape(geom))
 
 
 def getplace(lat, lon):
@@ -82,7 +52,7 @@ def write_output(data):
 
 
 def fetch_data():
-    # getcountrygeo()
+    getcountrygeo()
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
@@ -96,7 +66,7 @@ def fetch_data():
     city = ""
     state = ""
     zipp = ""
-    country_code = "US"
+    country_code = ""
     store_number = ""
     phone = ""
     location_type = ""
@@ -104,9 +74,9 @@ def fetch_data():
     longitude = ""
     raw_address = ""
     hours_of_operation = ""
-
+    # print("start")
     location_url = "https://www.circlek.com/stores_new.php?lat=40.8&lng=-73.65&distance=100000&services=&region=global"
-    r = request_wrapper(location_url,'get', headers=headers).json()
+    r = requests.get(location_url, headers=headers).json()
     for key, value in r["stores"].items():
         latitude = value["latitude"]
         longitude = value["longitude"]
@@ -127,7 +97,7 @@ def fetch_data():
             page_url = "https://www.circlek.com" + value["url"]
             # print(page_url)
             # print(value["country"])
-            r_loc = request_wrapper(page_url,'get', headers=headers)
+            r_loc = requests.get(page_url, headers=headers)
             soup_loc = BeautifulSoup(r_loc.text, "lxml")
             try:
                 csz = list(soup_loc.find(
@@ -172,8 +142,11 @@ def fetch_data():
                 phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
                 if phone_list:
                     phone = phone_list[0]
+                    phone = phonenumbers.format_number(phonenumbers.parse(phone, 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
+                    # print(phone)
                 else:
                     phone = "<MISSING>"
+               
                 hours_of_operation = " ".join(list(soup_loc.find(
                     "div", class_="columns large-12 middle hours-wrapper").stripped_strings)).replace("hours", "").strip()
             except:
@@ -189,8 +162,8 @@ def fetch_data():
             store = [locator_domain, location_name.encode('ascii', 'ignore').decode('ascii').strip(), street_address.encode('ascii', 'ignore').decode('ascii').strip(), city.encode('ascii', 'ignore').decode('ascii').strip(), state.encode('ascii', 'ignore').decode('ascii').strip(), zipp.encode('ascii', 'ignore').decode('ascii').strip(), country_code,
                         store_number, phone.encode('ascii', 'ignore').decode('ascii').strip(), location_type, latitude, longitude, hours_of_operation.replace("hours", "").encode('ascii', 'ignore').decode('ascii').strip(), page_url]
 
-            if str(store[2]) + str(store[-1]) not in addresses:
-                addresses.append(str(store[2]) + str(store[-1]))
+            if str(store[2]) not in addresses:
+                addresses.append(str(store[2]))
                 store = [x if x else "<MISSING>" for x in store]
                 # print("data = " + str(store))
                 # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

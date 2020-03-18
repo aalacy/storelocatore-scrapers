@@ -3,6 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+import time
+from datetime import  datetime
 import sgzip
 
 def write_output(data):
@@ -22,11 +24,10 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 4000
-    MAX_DISTANCE = 200
+    MAX_RESULTS = 100
+    MAX_DISTANCE = 10
     current_results_len = 0    
-    # zip_code = search.next_zip()
-    coord = search.next_coord()
+    zip_code = search.next_zip()
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
@@ -34,16 +35,14 @@ def fetch_data():
 
     base_url = "dollargeneral.com"
 
-    while coord:
-        lat = coord[0]
-        lng = coord[1]
+    while zip_code:
         result_coords = []
-        # data ='{"request":{"appkey":"9E9DE426-8151-11E4-AEAC-765055A65BB0","formdata":{"geoip":"start","dataview":"store_default","geolocs":{"geoloc":[{"addressline":"","country":"","latitude":"","longitude":""}]},"searchradius":"10|20|50|100","where":{"nci":{"eq":""},"and":{"PROPANE":{"eq":""},"REDBOX":{"eq":""},"RUGDR":{"eq":""},"MULTICULTURAL_HAIR":{"eq":""},"TYPE_ID":{"eq":""},"DGGOCHECKOUT":{"eq":""},"FEDEX":{"eq":""},"DGGOCART":{"eq":""},"DGPICKUP":{"eq":""},"NCI":{"eq":""}}}},"geoip":1}}'
+
         # print("zip_code === "+zip_code)
-        # print(search.current_zip)
-        data= '{"request":{"appkey":"9E9DE426-8151-11E4-AEAC-765055A65BB0","formdata":{"geoip":"start","dataview":"store_default","geolocs":{"geoloc":[{"addressline":"'+str(search.current_zip)+'","country":"","latitude":"'+str(lat)+'","longitude":"'+str(lng)+'"}]},"searchradius":"'+str(MAX_DISTANCE)+'","where":{"nci":{"eq":""},"and":{"PROPANE":{"eq":""},"REDBOX":{"eq":""},"RUGDR":{"eq":""},"MULTICULTURAL_HAIR":{"eq":""},"TYPE_ID":{"eq":""},"DGGOCHECKOUT":{"eq":""},"FEDEX":{"eq":""},"DGGOCART":{"eq":""},"DGPICKUP":{"eq":""},"NCI":{"eq":""}}}},"geoip":1}}'
-        # data = '{"request":{"appkey":"9E9DE426-8151-11E4-AEAC-765055A65BB0","formdata":{"geoip":false,"dataview":"store_default","geolocs":{"geoloc":[{"addressline":"'+str(zip_code)+'","country":"US","latitude":"","longitude":""}]},"searchradius":"10|20|50|200","where":{"nci":{"eq":""},"and":{"PROPANE":{"eq":""},"REDBOX":{"eq":""},"RUGDR":{"eq":""},"MULTICULTURAL_HAIR":{"eq":""},"TYPE_ID":{"eq":""},"DGGOCHECKOUT":{"eq":""},"FEDEX":{"eq":""},"DGGOCART":{"eq":""}}},"false":"0"}}}'
-        location_url = "http://hosted.where2getit.com/dollargeneral/rest/locatorsearch"
+        data = '{"request":{"appkey":"9E9DE426-8151-11E4-AEAC-765055A65BB0","formdata":{"geoip":false,"dataview":"store_default","geolocs":{"geoloc":[{"addressline":"'+str(zip_code)+'","country":"US","latitude":"","longitude":""}]},"searchradius":"10|20|50|100","where":{"nci":{"eq":""},"and":{"PROPANE":{"eq":""},"REDBOX":{"eq":""},"RUGDR":{"eq":""},"MULTICULTURAL_HAIR":{"eq":""},"TYPE_ID":{"eq":""},"DGGOCHECKOUT":{"eq":""},"FEDEX":{"eq":""},"DGGOCART":{"eq":""}}},"false":"0"}}}'
+        
+        
+        location_url = "http://hosted.where2getit.com/dollargeneral/rest/locatorsearch?like=0.9394142712975708"
         try:
 
             loc = requests.post(location_url,headers=headers,data=data).json()
@@ -51,7 +50,7 @@ def fetch_data():
             pass
       
 
-        locator_domain = base_url
+        locator_domain = "https://www.dollargeneral.com/"
         location_name = ""
         street_address = ""
         city = ""
@@ -65,6 +64,7 @@ def fetch_data():
         longitude = ""
         raw_address = ""
         hours_of_operation = ""
+
         hours_of_operation =''
        
         if "collection" in loc['response']:
@@ -72,36 +72,44 @@ def fetch_data():
             for data in loc['response']['collection']:
                 store_number = data['name'].split("#")[-1]
                 
-                hours_of_operation =' Monday '+ data['opening_time_mon']+ ' ' +data['closing_time_mon']+' Tuesday ' +data['opening_time_tue'] + ' ' +data['closing_time_tue'] + ' Wednesday ' + data['opening_time_wed'] + ' ' +data['closing_time_wed'] + ' Thursday ' + data['opening_time_thu'] + ' ' +data['closing_time_thu']+ ' Friday ' + data['opening_time_fri'] + ' ' +data['closing_time_fri']+ ' Saturday ' + data['opening_time_sat'] + ' ' +data['closing_time_sat']+ ' Sunday ' + data['opening_time_sun'] + ' ' +data['closing_time_sun']
+                hours_of_operation =' Monday '+ str(datetime.strptime(data['opening_time_mon'].replace("7.:00","07:00").replace("8.:00","08:00").replace("24:00","00:00"), "%H:%M").strftime("%I:%M %p"))+ ' - ' + \
+                str(datetime.strptime(data['closing_time_mon'].replace("8.:00","08:00").replace("24:00","00:00"), "%H:%M").strftime("%I:%M %p"))+","+' Tuesday ' +str(datetime.strptime(data['opening_time_tue'].replace("7.:00","07:00").replace("8.:00","08:00").replace("24:00","00:00"), "%H:%M").strftime("%I:%M %p"))\
+                + ' - ' +str(datetime.strptime(data['closing_time_tue'].replace("7.:00","07:00").replace("8.:00","08:00").replace("24:00","00:00"), "%H:%M").strftime("%I:%M %p")) +","+ ' Wednesday ' + str(datetime.strptime(data['opening_time_wed'].replace("7.:00","07:00").replace("8.:00","08:00").replace("24:00","00:00"), "%H:%M").strftime("%I:%M %p")) \
+                + ' - ' +str(datetime.strptime(data['closing_time_wed'].replace("7.:00","07:00").replace("8.:00","08:00").replace("24:00","00:00"), "%H:%M").strftime("%I:%M %p")) +","+ ' Thursday ' + str(datetime.strptime(data['opening_time_thu'].replace("7.:00","07:00").replace("8.:00","08:00").replace("24:00","00:00"), "%H:%M").strftime("%I:%M %p")) \
+                + ' - ' +str(datetime.strptime(data['closing_time_thu'].replace("7.:00","07:00").replace("8.:00","08:00").replace("24:00","00:00"), "%H:%M").strftime("%I:%M %p"))+","+ ' Friday ' + str(datetime.strptime(data['opening_time_fri'].replace("7.:00","07:00").replace("8.:00","08:00").replace("24:00","00:00"), "%H:%M").strftime("%I:%M %p")) \
+                + ' - ' +str(datetime.strptime(data['closing_time_fri'].replace("7.:00","07:00").replace("8.:00","08:00").replace("24:00","00:00"), "%H:%M").strftime("%I:%M %p"))+","+ ' Saturday ' + str(datetime.strptime(data['opening_time_sat'].replace("7.:00","07:00").replace("8.:00","08:00").replace("24:00","00:00"), "%H:%M").strftime("%I:%M %p")) \
+                + ' - ' +str(datetime.strptime(data['closing_time_sat'].replace("7.:00","07:00").replace("8.:00","08:00").replace("24:00","00:00"), "%H:%M").strftime("%I:%M %p"))+","+ ' Sunday ' + str(datetime.strptime(data['opening_time_sun'].replace("7.:00","07:00").replace("8.:00","08:00").replace("24:00","00:00"), "%H:%M").strftime("%I:%M %p")) \
+                + ' - ' +str(datetime.strptime(data['closing_time_sun'].replace("7.:00","07:00").replace("8.:00","08:00").replace("24:00","00:00"), "%H:%M").strftime("%I:%M %p"))
                 
-                page_url = "<MISSING>"
+                
+                p = store_number.strip()
+                page_url = "http://www2.dollargeneral.com/Savings/Circulars/Pages/index.aspx?store_code="+str(p)
                 result_coords.append((latitude, longitude))
                 store = [locator_domain, data['name'], data['address1'], data['city'], data['state'], data['postalcode'], country_code,
                         store_number, data['phone'], location_type, data['latitude'], data['longitude'], hours_of_operation,page_url]
 
-                if store[2]  in addresses:
+                if store[2] + store[-3] in addresses:
                     continue
 
-                addresses.append(store[2] )
+                addresses.append(store[2] + store[-3])
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                #print("data = " + str(store))
+                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 yield store
           
 
        
         if current_results_len < MAX_RESULTS:
-            #print("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-            #print("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        # zip_code = search.next_zip()
-        coord = search.next_coord()
+        zip_code = search.next_zip()
         
 
 

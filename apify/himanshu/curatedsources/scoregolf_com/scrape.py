@@ -55,7 +55,7 @@ def fetch_data():
 
         store = []
         store.append(base_url)
-        store.append(location_name if location_name else '<MISSING>')
+        store.append(location_name.split('in')[0] if location_name else '<MISSING>')
         store.append(street_address if street_address else '<MISSING>')
         store.append(city if city else '<MISSING>')
         store.append(state if state else '<MISSING>')

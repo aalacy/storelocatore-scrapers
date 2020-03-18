@@ -35,7 +35,7 @@ def fetch_data():
         x = coord[0]
         y = coord[1]
         #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        url = 'https://www.regalnails.com/wp-admin/admin-ajax.php?action=store_search&lat=' + str(x) + '&lng=' + str(y) + '&max_results=' + str(MAX_RESULTS) + '&search_radius=' + str(MAX_DISTANCE) + '&filter=13'
+        url = 'https://www.regalnails.com/wp-admin/admin-ajax.php?action=store_search&lat=' + str(x) + '&lng=' + str(y) + '&max_results=' + str(MAX_RESULTS) + '&search_radius=' + str(MAX_DISTANCE) + '&filter=10&autoload=1'
         r = session.get(url, headers=HEADERS)
         
         res_json = json.loads(r.content)
@@ -43,12 +43,16 @@ def fetch_data():
         result_coords = []
         
         for loc in res_json:
-            location_name = loc['store']
-            page_url = loc['permalink']
+            location_name = loc['store'].replace('&#038;', '&')
+            phone_number = loc['phone']
+
+            page_url = loc['url']
+            if page_url == '':
+                page_url = '<MISSING>'
             lat = loc['lat']
             longit = loc['lng']
-            if page_url not in dup_tracker:
-                dup_tracker.append(page_url)
+            if phone_number not in dup_tracker:
+                dup_tracker.append(phone_number)
                 
                 
             else:
@@ -76,9 +80,8 @@ def fetch_data():
                     country_code = 'US'
             
             result_coords.append((lat, longit))
-            phone_number = loc['phone']
             
-            store_number = loc['store_number'].strip()
+            store_number = loc['id'].strip()
             if store_number == '':
                 store_number = '<MISSING>'
             
@@ -94,15 +97,12 @@ def fetch_data():
         
         
         
-        if len(res_json) < MAX_RESULTS:
-            print("max distance update")
+        
+        if len(res_json) == 0:
             search.max_distance_update(MAX_DISTANCE)
-        elif len(res_json) == MAX_RESULTS:
-            print("max count update")
-            search.max_count_update(result_coords)
         else:
-            raise Exception("expected at most " + MAX_RESULTS + " results")
-        coord = search.next_coord()
+            search.max_count_update(result_coords)
+        coord = search.next_coord()  
 
 
 

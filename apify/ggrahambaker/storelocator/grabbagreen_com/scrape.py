@@ -19,6 +19,8 @@ def fetch_data():
 
     locator_domain = 'https://www.grabbagreen.com/' 
     ext = 'locator/index.php?brand=34&mode=desktop&pagesize=10000&q=california'
+
+    
     r = session.get(locator_domain + ext, headers = HEADERS)
 
 
@@ -28,6 +30,14 @@ def fetch_data():
     all_store_data = []
     for loc in locs:
         store_number = loc.text.split('#')[1].strip()
+        ## check if coming soon
+        info_url = 'https://locator.kahalamgmt.com/locator/index.php?mode=infowindow&brand=34&store=' + store_number
+        r = session.get(info_url, headers = HEADERS)
+        soup = BeautifulSoup(r.content, 'html.parser')
+
+        if 'Coming Soon' in soup.find('h1').text:
+            continue
+
         page_url = 'https://www.grabbagreen.com/stores/' + store_number
         r = session.get(page_url, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')

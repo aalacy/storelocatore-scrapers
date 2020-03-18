@@ -1,6 +1,6 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import sgzip
 
 search = sgzip.ClosestNSearch()
@@ -25,7 +25,7 @@ def fetch_data():
     alllocs = []
     coord = search.next_coord()
     while coord:
-        session = requests.Session()
+        session = SgRequests()
         #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]

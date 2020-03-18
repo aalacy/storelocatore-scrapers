@@ -64,68 +64,79 @@ def fetch_data():
 
             countries.append(country[n].text)
     for n in range(0, len(links)):
-        #print(links[n])
-        
-        driver.get(links[n])
-
-        time.sleep(5)
-        addr = driver.find_element_by_class_name('address').text.replace(",,", ",").split("\n")[0].strip()
-        loca=driver.find_element_by_class_name('location-x').text.lower()
-        if  "COMING SOON" not in addr and "COMING SOON!"not in addr and "coming soon" not in loca:
-
-            location_name.append(driver.find_element_by_class_name('title').text.strip())
-            z = re.findall(r'[0-9]{5}', addr)
-            if z == []:
-                z = re.findall(r'[A-Z][0-9][A-Z] [0-9][A-Z][0-9]', addr)
+        #
+        while True:   
+            try:
+                driver.get(links[n])
+    
+                time.sleep(5)
+            except:
+                continue
+            #print(links[n])
+            
+            addr = driver.find_element_by_class_name('address').text.replace(",,", ",").split("\n")[0].strip()
+            loca=driver.find_element_by_class_name('location-x').text.lower()
+            if  "COMING SOON" not in addr and "COMING SOON!"not in addr and "coming soon" not in loca:
+    
+                location_name.append(driver.find_element_by_class_name('title').text.strip())
+                z = re.findall(r'[0-9]{5}', addr)
                 if z == []:
-                    z = "<MISSING>"
+                    z = re.findall(r'[A-Z][0-9][A-Z] [0-9][A-Z][0-9]', addr)
+                    if z == []:
+                        z = "<MISSING>"
+                    else:
+                        z = z[-1]
+                        addr = addr.replace(z, "")
                 else:
+                    if re.findall(r'[0-9]{5}\-[\d]+', addr) != []:
+                        addr=addr.replace(re.findall(r'[0-9]{5}(\-[\d]+)', addr)[-1],"")
                     z = z[-1]
                     addr = addr.replace(z, "")
-            else:
-                if re.findall(r'[0-9]{5}\-[\d]+', addr) != []:
-                    addr=addr.replace(re.findall(r'[0-9]{5}(\-[\d]+)', addr)[-1],"")
-                z = z[-1]
-                addr = addr.replace(z, "")
-
-            s = re.findall(r'[A-Z]{2}', addr)
-            if s == []:
-                s = "<MISSING>"
-            else:
-                s = s[-1]
-                addr = addr.replace(s, "")
-            state.append(s)
-            addr= re.findall(r'(.*[a-z0-9])[ ,.]*', addr)[0]
-            c = addr.split(",")[-1]
-            city.append(c)
-            zipcode.append(z)
-            pages_url.append(links[n])
-            street_address.append(addr.replace(c, "").replace(",",""))
-            #print(addr)
-            #print(c)
-            #rint(street_address)
-            #print(z)
-            f_countries.append(countries[n])
-            ids.append(str(links[n]).split('/')[-1].split('-')[0])
-            #rint(ids)
-            if driver.find_element_by_class_name('phone').text != "Coming Soon":
-                phone.append(driver.find_element_by_class_name('phone').text)
-            else:
-                phone.append("<MISSING>")
-            hours_of_operation.append(
-                driver.find_element_by_xpath('//div[@class="inner"]/div[3]').text + " " + driver.find_element_by_xpath(
-                    '//div[@class="inner"]/span[1]').text + " " + driver.find_element_by_xpath(
-                    '//div[@class="inner"]/span[2]').text)
-            lat_lon = b = driver.find_element_by_xpath(
-                '//a[contains(@href,"https://www.google.com/maps")]').get_attribute('href')
-            try:
-                latitude.append(lat_lon.split("n/")[1].split(",")[0])
-            except:
-                latitude.append('<MISSING>')
-            try:
-                longitude.append(lat_lon.split("n/")[1].split(",")[1])
-            except:
-                longitude.append('<MISSING>')
+    
+                s = re.findall(r'[A-Z]{2}', addr)
+                if s == []:
+                    s = "<MISSING>"
+                else:
+                    s = s[-1]
+                    addr = addr.replace(s, "")
+                state.append(s)
+                addr= re.findall(r'(.*[a-z0-9])[ ,.]*', addr)[0]
+                c = addr.split(",")[-1]
+                city.append(c)
+                zipcode.append(z)
+                pages_url.append(links[n])
+                street_address.append(addr.replace(c, "").replace(",",""))
+                #print(addr)
+                #print(c)
+                #rint(street_address)
+                #print(z)
+                f_countries.append(countries[n])
+                ids.append(str(links[n]).split('/')[-1].split('-')[0])
+                #rint(ids)
+                if driver.find_element_by_class_name('phone').text != "Coming Soon":
+                    phone.append(driver.find_element_by_class_name('phone').text)
+                else:
+                    phone.append("<MISSING>")
+                try:
+                    hours_of_operation.append(
+                    driver.find_element_by_xpath('//div[@class="inner"]/div[3]').text.strip() + " " + driver.find_element_by_xpath(
+                        '//div[@class="inner"]/span[1]').text.strip() + " " + driver.find_element_by_xpath(
+                        '//div[@class="inner"]/span[2]').text.strip())
+                except:
+                     hours_of_operation.append(
+                    driver.find_element_by_xpath('//div[@class="inner"]/div[3]').text.strip())
+                lat_lon = b = driver.find_element_by_xpath(
+                    '//a[contains(@href,"https://www.google.com/maps")]').get_attribute('href')
+                try:
+                    latitude.append(lat_lon.split("n/")[1].split(",")[0])
+                except:
+                    latitude.append('<MISSING>')
+                try:
+                    longitude.append(lat_lon.split("n/")[1].split(",")[1])
+                except:
+                    longitude.append('<MISSING>')
+                    
+            break
 
 
     data = []

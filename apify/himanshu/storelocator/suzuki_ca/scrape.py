@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+requests.packages.urllib3.disable_warnings()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -22,7 +23,7 @@ def fetch_data():
     }
     data = 'ajax=1&action=get_nearby_stores&distance=100000&suzukitype=matv&storetype=undefined&lat=43.7086666&lng=-79.30808809999996'
     base_url = "https://www.suzuki.ca"
-    r = requests.post("https://www.suzuki.ca/mapsearch/index_matvmarine.php",headers=headers,data=data)
+    r = requests.post("https://www.suzuki.ca/mapsearch/index_matvmarine.php",headers=headers,data=data,verify=False)
     return_main_object = []
     location_data = r.json()['stores']
     for store_data in location_data:

@@ -28,10 +28,10 @@ def fetch_data():
     dup_tracker = []
 
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://www.potterybarnkids.com/search/stores.json?brands=PT&lat=' + str(x) + '&lng=' + str(y) + '&radius=' + str(MAX_DISTANCE)
         r = session.get(url, headers=HEADERS)
         
@@ -77,12 +77,9 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-            print(store_data)
-            print()
-            print()
+ 
             all_store_data.append(store_data)
 
-            #result_coords.append((lat, longit))
         
         
         search.max_distance_update(MAX_DISTANCE)

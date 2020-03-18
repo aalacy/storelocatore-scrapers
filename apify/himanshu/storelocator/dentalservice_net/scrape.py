@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+requests.packages.urllib3.disable_warnings()
  
 
 def write_output(data):
@@ -27,7 +28,7 @@ def fetch_data():
     base_url = "https://www.dentalservice.net"
     addresses = []
 
-    r = requests.get("https://www.dentalservice.net/contact-us/find-your-office/", headers=headers)
+    r = requests.get("https://www.dentalservice.net/contact-us/find-your-office/", headers=headers,verify=False)
     soup = BeautifulSoup(r.text, "lxml")
     data_id = soup.find("script", {"data-id": re.compile("")})["data-id"]
     # print("data_id === " + str(data_id))
@@ -37,7 +38,7 @@ def fetch_data():
     while True:
         r = requests.get(
             "https://locator-api.localsearchprofiles.com/api/LocationSearchResults/?configuration=" + data_id + "&start=" + str(
-                page_count), headers=headers)
+                page_count), headers=headers,verify=False)
         json_data = r.json()
 
         if len(json_data["Hit"]) <= 0:
