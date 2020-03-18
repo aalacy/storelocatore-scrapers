@@ -6,7 +6,6 @@ import sgzip
 search = sgzip.ClosestNSearch()
 search.initialize()
 
-session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -26,6 +25,7 @@ def fetch_data():
     alllocs = []
     coord = search.next_coord()
     while coord:
+        session = requests.Session()
         #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
