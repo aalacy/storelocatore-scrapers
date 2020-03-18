@@ -19,7 +19,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 100
-    MAX_DISTANCE = 1000
+    MAX_DISTANCE = 50
     current_results_len = 0 
     zip_code = search.next_zip()
 
@@ -31,6 +31,7 @@ def fetch_data():
     base_url = "https://www.deadriver.com"
 
     while zip_code:
+        # print(zip_code)
         result_coords = []
         location_url = "https://www.deadriver.com/LocationFinder.asmx/GetLocation"
         try:
@@ -75,12 +76,11 @@ def fetch_data():
                 result_coords.append((latitude, longitude))
                 store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-                if str(store[2]) in addresses:
-
+                if store[2] in addresses:
                     continue
                 addresses.append(str(store[2]))
                 store = [x if x else "<MISSING>" for x in store]
-                #print("~~~~~~~~~~~~~~~~`"+str(store))
+                # print("~~~~~~~~~~~~~~~~`"+str(store))
                 yield store
 
         if current_results_len < MAX_RESULTS:

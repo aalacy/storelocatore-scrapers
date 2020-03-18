@@ -36,23 +36,30 @@ def fetch_data():
         if "stores" in json_data['searchResults']:
             datas = json_data['searchResults']['stores']
             for key in datas:
-                    location_name = key['vanityName']
+                    location_name = key['vanityName'] 
                     street_address = key['address']['addressLine1'].capitalize()
+                    if street_address == "10304 w 13th st n":
+                        location_name = "Wichita Dillons"
                     city = key['address']['city'].capitalize()
                     state = key['address']['stateCode']
                     zipp =  key['address']['zip']
                     country_code = key['address']['countryCode']
                     store_number = key['storeNumber']
-                    if key['phoneNumber']:
-                        phone = phonenumbers.format_number(phonenumbers.parse(str(key['phoneNumber']), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
-                    else:
-                        phone = "<MISSING>"
                     location_type = "store"
+                    try:
+                        phone = key['pharmacy']['phoneNumber']
+                    except:
+                        phone = key['phoneNumber']
                     latitude = key['latitude']
                     longitude = key['longitude']  
-                    for hr in key['ungroupedFormattedHours']:
-                            hours_of_operation= " Sun - Sat:" +" "+hr['displayHours']
                     page_url = "https://www.metromarket.net/stores/details/"+str(key['divisionNumber'])+"/"+str(store_number)
+                    hours_of_operation = ""
+                    if key['ungroupedFormattedHours']:
+                        for hour in key['ungroupedFormattedHours']:
+                            hours_of_operation+= hour['displayName']+": "+ hour['displayHours']+" "
+                        hours_of_operation = hours_of_operation.strip()
+                    else:
+                        hours_of_operation = "<MISSING>"
 
                     store = []
                     store.append(locator_domain if locator_domain else '<MISSING>')
@@ -86,17 +93,22 @@ def fetch_data():
                 zipp =  key1['address']['zip']
                 country_code = key1['address']['countryCode']
                 store_number = key1['storeNumber']
-                phone = key1['phoneNumber']
+                try:
+                    phone = key1['pharmacy']['phoneNumber']
+                except:
+                    phone = key1['phoneNumber']
                 location_type = "fuel"
                 latitude = key1['latitude']
                 longitude = key1['longitude']
-                hours_of_operation = ''
-                if key1['ungroupedFormattedHours']:
-                    for hr in key1['ungroupedFormattedHours']:
-                        hours_of_operation= " Sun - Sat:" +" "+hr['displayHours']
-                else:
-                    hours_of_operation =  "<MISSING>"
                 page_url = "https://www.metromarket.net/stores/details/"+str(key1['divisionNumber'])+"/"+str(store_number)
+                hours_of_operation = ""
+                if key1['ungroupedFormattedHours']:
+                    for hour in key1['ungroupedFormattedHours']:
+                        hours_of_operation+= hour['displayName']+":"+ hour['displayHours']+" "
+                    hours_of_operation = hours_of_operation.strip()
+                else:
+                    hours_of_operation = "<MISSING>"
+                
 
                 store = []
                 store.append(locator_domain if locator_domain else '<MISSING>')

@@ -48,11 +48,10 @@ def request_wrapper(url,method,headers,data=None):
 def fetch_data():
     address = []
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
-    base_url = "https://westin.marriott.com/"
+    base_url = "https://w-hotels.marriott.com"
     location_url = "https://w-hotels.marriott.com"
     r = request_wrapper(location_url,"get",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    # print(soup)
     data = soup.find_all("script",{"type":"text/javascript"})[5]
     mp = (data.text.split("MARRIOTT_GEO_DATA = ")[1].replace('South America"}}};','South America"}}}'))
     json_data = json.loads(mp)
@@ -73,6 +72,8 @@ def fetch_data():
             longitude = mp1['longitude']
             data = street_address.lower().replace(" ","-")
             page_url = "https://www.marriott.com/hotels/travel/"+str(key)
+            if city == 'Toronto':
+                continue
             store = []
             store.append(base_url if base_url else "<MISSING>")
             store.append(location_name if location_name else "<MISSING>") 
@@ -83,7 +84,7 @@ def fetch_data():
             store.append(country_code if country_code else "<MISSING>")
             store.append("<MISSING>") 
             store.append(phone if phone else "<MISSING>")
-            store.append("<MISSING>")
+            store.append("W Hotels Worldwide")
             store.append(latitude if latitude else "<MISSING>")
             store.append(longitude if longitude else "<MISSING>")
             store.append("<MISSING>")
@@ -124,6 +125,8 @@ def fetch_data():
             store.append(longitude if longitude else "<MISSING>")
             store.append("<MISSING>")
             store.append(page_url if page_url else "<MISSING>")
+            if state == 'Pennsylvania' or state == 'Tennessee' :
+                continue
             if store[2] in address :
                 continue
             address.append(store[2])

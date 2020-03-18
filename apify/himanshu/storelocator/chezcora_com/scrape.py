@@ -62,13 +62,13 @@ def fetch_data():
         for i in data1:
             location_name = (i.find("h2").text.replace("é","e").replace("è","e").replace("â","a").replace("ô","o"))
             url = i.find("h2").find("a")['href']
-            street_address = " ".join(i.find("p").text.split('<br/>')).split("\n\t\t\t\t\t\t\t\t\t\t")[1].replace("é","e").replace("è","e").replace("â","a").replace("ô","o")
+            street_address = " ".join(i.find("p").text.split('<br/>')).split("\n\t\t\t\t\t\t\t\t\t\t")[1].replace("é","e").replace("è","e").replace("â","a").replace("ô","o").encode('ascii', 'ignore').decode('ascii')
             city =  " ".join(i.find("p").text.split('<br/>')).split("\n\t\t\t\t\t\t\t\t\t\t")[2].split(",")[0].replace("é","e").replace("è","e").replace("â","a").replace("ô","o")
             state = " ".join(i.find("p").text.split('<br/>')).split("\n\t\t\t\t\t\t\t\t\t\t")[2].split(",")[1].strip().rstrip().lstrip()
             zipp = " ".join(i.find("p").text.split('<br/>')).split("\n\t\t\t\t\t\t\t\t\t\t")[2].split(",")[2:][0].strip().rstrip().lstrip()
             phone = i.find_all("p")[1].text.replace("      ","")
             hours = (i.find("div",{"class":"tabHoraire"}).text.strip().lstrip().rstrip().replace("\n","").split(" "))
-            hours_of_operation = " ".join(hours).replace("\n","").replace("\t","").replace("\r","")
+            hours_of_operation = " ".join(hours).replace("\n","").replace("\t","").replace("\r","").encode('ascii', 'ignore').decode('ascii').strip().replace("p.m.Saturday","p.m. Saturday").replace("p.m.Sunday","p.m. Sunday")
             page_url = ("https://www.chezcora.com"+str(url))
             r2 = request_wrapper(page_url,"get",headers=headers)
             soup2 = BeautifulSoup(r2.text,"lxml")
@@ -89,10 +89,10 @@ def fetch_data():
             store.append("CA")
             store.append("<MISSING>") 
             store.append(phone if phone else "<MISSING>")
-            store.append("<MISSING>")
+            store.append("chezcora")
             store.append(latitude if latitude else "<MISSING>")
             store.append(longitude if longitude else"<MISSING>")
-            store.append(hours_of_operation.replace('Now open!','') if hours_of_operation else "<MISSING>")
+            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
             store.append(page_url if page_url else "<MISSING>")
             if store[2] in address :
                 continue

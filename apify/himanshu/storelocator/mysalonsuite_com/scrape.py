@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
-import requests
+
 session = SgRequests()
 
 
@@ -28,12 +28,12 @@ def fetch_data():
     }
 
     base_url = "http://www.mysalonsuite.com"
-    r =  requests.get(base_url, headers=headers)
+    r =  session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml") 
     
     for data in soup.find_all("ul", {"class":"wsite-menu"})[2].find_all("a"):
         state_link = base_url+data['href']
-        city_r = requests.get(state_link)
+        city_r = session.get(state_link)
         city_soup = BeautifulSoup(city_r.text, "lxml")
 
         for link in city_soup.find("div",{"class":"paragraph"}).find_all("a"):
@@ -43,12 +43,12 @@ def fetch_data():
                 page_url = "http://www.mysalonsuite.com"+link['href']
             if "http://www.mysalonsuite.com/get-started.html" in page_url or "http://www.mysalonsuite.com/in-the-news" in page_url:
                 continue
-            location_r = requests.get(page_url)
+            location_r = session.get(page_url)
             location_soup = BeautifulSoup(location_r.text, "lxml")
             location_name = location_soup.find("span",{"class":"wsite-text wsite-headline"}).text.strip()
             addr = list(location_soup.find("span",{"class":"wsite-text wsite-headline-paragraph"}).stripped_strings)
             if len(addr) == 3:
-                street_address = " ".join(addr[:-2]).replace("Northlake Shopping Center","1858 North Causeway Blvd.").replace("The Terrace at Windy Hill","3000 Windy Hill Road SE").replace("\xa0","").strip()
+                street_address = addr[1].replace("Northlake Shopping Center","1858 North Causeway Blvd.").replace("The Terrace at Windy Hill","3000 Windy Hill Road SE").replace("\xa0","").strip()
 
                 if len(addr[-2].split(",")) == 2:
                     city = addr[-2].split(",")[0].replace("1858 North Causeway Blvd. Mandeville","Mandeville").replace("\u200b","").strip()
@@ -120,17 +120,14 @@ def fetch_data():
                     del addr[-2]
                 if addr[1] == "Brookfield":
                     del addr[1]
+
                 if len(addr)==2:
                     street_address = addr[0].split(",")[0]
                     city = addr[0].split(",")[1].split(" ")[1]
                     state = addr[0].split(",")[1].split(" ")[2]
                     zipp = "<MISSING>"
                 else:
-                    street_address1 = " ".join(addr[:-2]).replace("Across From Rosedale Mall","Across From Rosedale Mall 1721 County Road B2").replace("Located inside The Brookwood","Located inside The Brookwood 1820 Peachtree Road NE")
-                    street_address2 = street_address1.replace('Crossroads Towne Center','').replace('Gateway South Shopping Center','').replace('Located next to Publix in downtown Alpharetta','').replace('Located inside The Brookwood','')
-                    street_address3 = street_address2.replace('Located in the CityWalk across from Kroger','').replace('Next to Caffe! Caffe! ','').replace('Conveniently located in W','').replace('The Streets of West Chester','').replace('West Goshen Shopping Center','').replace('WESTGATE SHOPPING CENTER','')
-                    street_address = street_address3.replace('HILL COUNTRY GALLERIA','').replace(' (Located next to Regal Cinema)','').replace('Colonnades West Shopping Center','').replace('Across From Rosedale Mall ','').replace('averly Place ','')
-                    print(street_address)
+                    street_address = " ".join(addr[:-2]).replace("Across From Rosedale Mall","Across From Rosedale Mall 1721 County Road B2").replace("Located inside The Brookwood","Located inside The Brookwood 1820 Peachtree Road NE")
                     city = addr[-2].replace(", WI 53005","Brookfield, WI 53005").replace("\u200b","").replace("\xa0","").split(",")[0].replace("1820 Peachtree Road NE Atlanta","Atlanta").replace("1721 County Road B2 WestRoseville","West Roseville").strip()
                     state = addr[-2].split(",")[1].split(" ")[1]
                     zipp = addr[-2].split(",")[1].split(" ")[2]
@@ -144,7 +141,9 @@ def fetch_data():
             except:
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
-            
+            if street_address == "427 Stillson Road":
+                zipp = "06825"
+
             store = []
             store.append(base_url)
             store.append(location_name)
@@ -169,12 +168,12 @@ def fetch_data():
 
 
     ########## CANADA LOCATION
-    r =  requests.get(base_url, headers=headers)
+    r =  session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml") 
     
     for data in soup.find_all("div", {"class":"wsite-menu-wrap"})[-2].find_all("a"):
         page_url = base_url+data['href']
-        r1 = requests.get(page_url)
+        r1 = session.get(page_url)
         soup1 = BeautifulSoup(r1.text, "lxml")
         location_name = soup1.find("span",{"class":"wsite-text wsite-headline"}).text.strip()
         addr = list(soup1.find("span",{"class":"wsite-text wsite-headline-paragraph"}).stripped_strings)

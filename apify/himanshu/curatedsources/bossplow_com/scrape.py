@@ -3,9 +3,8 @@ from  sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
 session = SgRequests()
-import requests
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +21,7 @@ def write_output(data):
 def fetch_data():
 
     base_url = "https://www.bossplow.com"
-    r = requests.get("https://www.bossplow.com/en/dealer-directory")
+    r = session.get("https://www.bossplow.com/en/dealer-directory")
     soup1 = BeautifulSoup(r.text, "lxml")
     for link in soup1.find("div", {"class":"col-xs-12"}).find_all("a"):
         if link['href'].count('/') !=5:
@@ -69,7 +68,7 @@ def fetch_data():
         store.append('<MISSING>')
         store.append(hours if hours else '<MISSING>')
         store.append(page_url)
-        #print("data ===="+str(store))
+       # print("data ===="+str(store))
         #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         yield store
              
