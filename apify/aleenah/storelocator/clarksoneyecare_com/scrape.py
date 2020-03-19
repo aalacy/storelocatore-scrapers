@@ -48,19 +48,19 @@ def fetch_data():
             print(tim)
             all.append([
                 "https://www.clarksoneyecare.com",
-                js["name"].replace( '\u200b',''),
-                js["address1"]+" "+js["address2"]+" "+js["address3"].strip().replace( '\u200b',''),
-                js["city"].replace( '\u200b',''),
-                js["state"].replace( '\u200b',''),
-                js["zip_code"].replace( '\u200b',''),
+                js["name"].replace( u'\u200b',''),
+                js["address1"]+" "+js["address2"]+" "+js["address3"].strip().replace( u'\u200b',''),
+                js["city"].replace( u'\u200b',''),
+                js["state"].replace( u'\u200b',''),
+                js["zip_code"].replace( u'\u200b',''),
                 "US",
                 "<MISSING>",  # store #
-                js["phone_number"].replace( '\u200b',''),  # phone
+                js["phone_number"].replace( u'\u200b',''),  # phone
                 "<MISSING>",  # type
-                js["lat"].replace( '\u200b',''),  # lat
-                js["lng"].replace( '\u200b',''),  # long
-                tim.replace( '\u200b',''),  # timing
-                url.replace( '\u200b','')])
+                js["lat"].replace( u'\u200b',''),  # lat
+                js["lng"].replace( u'\u200b',''),  # long
+                tim.replace( u'\u200b',''),  # timing
+                url.replace( u'\u200b','')])
 
 
     return all
