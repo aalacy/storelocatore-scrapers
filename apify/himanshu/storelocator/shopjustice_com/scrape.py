@@ -79,7 +79,7 @@ def fetch_data():
                     location_name = " ".join(list(location_soup.find("h1",{"class":"Hero-title"}).stripped_strings))
             
                     if location_soup.find("span",{"class":"c-address-street-2"}):
-                        street_address = location_soup.find("span",{"class":"c-address-street-1"}).text.strip() + location_soup.find("span",{"class":"c-address-street-2"}).text.strip()
+                        street_address = location_soup.find("span",{"class":"c-address-street-1"}).text.strip() +" "+ location_soup.find("span",{"class":"c-address-street-2"}).text.strip()
                     else:
                         street_address = location_soup.find("span",{"class":"c-address-street-1"}).text.strip()
                     city = location_soup.find("span",{"class":"c-address-city"}).text.strip()
@@ -122,7 +122,7 @@ def fetch_data():
                         location_name = " ".join(list(location_soup.find("h1",{"class":"Hero-title"}).stripped_strings))
                 
                         if location_soup.find("span",{"class":"c-address-street-2"}):
-                            street_address = location_soup.find("span",{"class":"c-address-street-1"}).text.strip() + location_soup.find("span",{"class":"c-address-street-2"}).text.strip()
+                            street_address = location_soup.find("span",{"class":"c-address-street-1"}).text.strip() +" "+ location_soup.find("span",{"class":"c-address-street-2"}).text.strip()
                         else:
                             street_address = location_soup.find("span",{"class":"c-address-street-1"}).text.strip()
                         city = location_soup.find("span",{"class":"c-address-city"}).text.strip()

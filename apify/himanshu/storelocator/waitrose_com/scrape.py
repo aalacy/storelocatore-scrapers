@@ -1,5 +1,4 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,7 +6,6 @@ import datetime
 from datetime import datetime
 import requests
 import itertools as it
-session = SgRequests()
 import time
 
 def request_wrapper(url,method,headers,data=None):
