@@ -38,8 +38,8 @@ def fetch_data():
     data = soup.find_all("div",{"class":"store-result"})
     for location in data:
         store_number = location['data-id']
-        latitude = location['data-lng']
-        longitude = location['data-lat']
+        latitude = location['data-lat']
+        longitude = location['data-lng']
         city = location['data-city']
         state = location['data-province'].upper()
         zipp = location['data-postal-code'].upper()

@@ -30,7 +30,8 @@ def fetch_data():
         "https://api.zenlocator.com/v1/apps/app_vfde3mfb/locations/search?northeast=82.292272%2C90.108768&southwest=-57.393433%2C-180").json()
 
     for vj in r['locations']:
-        # print(vj)
+        print(vj)
+        exit()
 
         locator_domain = base_url
 

@@ -31,7 +31,10 @@ def fetch_data():
     for cord in coords:
         r = requests.get("https://www.bestwestern.com/bin/bestwestern/proxy?gwServiceURL=HOTEL_SEARCH&distance=250&latitude=" + str(cord[0]) + "&longitude=" + str(cord[1]),headers=headers)
         location_list = r.json()
+        
         for location in location_list:
+            print(location)
+            exit()
             store_data = location["resortSummary"]
             if store_data["countryCode"] not in ["US","CA"]:
                 continue
