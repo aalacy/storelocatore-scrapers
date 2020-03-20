@@ -7,13 +7,16 @@ from datetime import datetime
 import requests
 import itertools as it
 import time
+from sgrequests import SgRequests
+session = SgRequests()
+
 
 def request_wrapper(url,method,headers,data=None):
     request_counter = 0
     if method == "get":
         while True:
             try:
-                r = requests.get(url,headers=headers)
+                r = session.get(url,headers=headers)
                 return r
                 break
             except:
@@ -26,9 +29,9 @@ def request_wrapper(url,method,headers,data=None):
         while True:
             try:
                 if data:
-                    r = requests.post(url,headers=headers,data=data)
+                    r = session.post(url,headers=headers,data=data)
                 else:
-                    r = requests.post(url,headers=headers)
+                    r = session.post(url,headers=headers)
                 return r
                 break
             except:
