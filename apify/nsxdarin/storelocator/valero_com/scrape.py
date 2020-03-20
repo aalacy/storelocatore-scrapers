@@ -18,6 +18,7 @@ def write_output(data):
 def fetch_data():
     ids = []
     url = 'https://valeromaps.valero.com/Home/Search?SPHostUrl=https%3A%2F%2Fwww.valero.com%2Fen-us'
+    r = session.get('https://www.valero.com/en-us/ProductsAndServices/Consumers/StoreLocator', headers=headers)
     for x in range(15, 50, 5):
         for y in range(-65, -120, -5):
             print('%s-%s...' % (str(x), str(y)))
