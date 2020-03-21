@@ -1,4 +1,3 @@
-
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
@@ -46,9 +45,12 @@ def fetch_data():
             soup = BeautifulSoup(res.text, 'html.parser')
             tim = soup.find('div', {'class': 'col-lg-4 times'}).text.replace("\n"," ").strip()
             print(tim)
+            name=js["name"].replace(";s ","; ").replace( u'\u200b','')
+            if ";" in name:
+                name=name.split(';')[-1]
             all.append([
                 "https://www.clarksoneyecare.com",
-                js["name"].replace(";s ","; ").split(";")[-1].replace( u'\u200b',''),
+                name,
                 js["address1"]+" "+js["address2"]+" "+js["address3"].strip().replace( u'\u200b',''),
                 js["city"].replace( u'\u200b',''),
                 js["state"].replace( u'\u200b',''),
