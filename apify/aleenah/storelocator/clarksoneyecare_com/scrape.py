@@ -48,7 +48,7 @@ def fetch_data():
             print(tim)
             all.append([
                 "https://www.clarksoneyecare.com",
-                js["name"].replace( u'\u200b',''),
+                js["name"].replace(";s ","; ").split(";")[-1].replace( u'\u200b',''),
                 js["address1"]+" "+js["address2"]+" "+js["address3"].strip().replace( u'\u200b',''),
                 js["city"].replace( u'\u200b',''),
                 js["state"].replace( u'\u200b',''),
