@@ -106,6 +106,11 @@ def fetch_data():
                 if len(hours) < 2:
                     hours =  "<MISSING>"
                 phone = phone.lstrip()
+                if hours.lower().find('happy') > -1 :
+                    hours = hours[0:hours.find('Happy')]
+                if hours.lower().find('after') > -1 :
+                    hours = hours[0:hours.find('After')]
+                hours = hours.rstrip()
                 #print(phone)
                 #print(hours) 
                 data.append([
