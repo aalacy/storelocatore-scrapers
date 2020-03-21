@@ -45,7 +45,7 @@ def fetch_data():
         city=text[2]
 
         all.append([
-            "http://www.senorfish.com/",
+            "http://www.xn--seorfish-e3a.com",
             loc,
             street,
             city,
