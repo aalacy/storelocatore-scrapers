@@ -51,7 +51,7 @@ def fetch_data():
     option_list = mainselect.findAll('option')
     for m in range(1,len(option_list)):
         try:
-            if option_list[m]['value'].find('newmexico') == -1:
+            if True:#option_list[m]['value'].find('dada') == -1:
                 link = 'https://www.wholehogcafe.com/locations/' + option_list[m]['value']
                 #print(link)
                 driver.get(link)
@@ -146,7 +146,7 @@ def fetch_data():
                             "<MISSING>",
                             hours
                         ])
-                       # print(p,data[p])
+                        #print(p,data[p])
                         p += 1
                     except Exception as e:
                         #print(e)
