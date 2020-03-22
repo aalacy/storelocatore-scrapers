@@ -31,17 +31,21 @@ def fetch_data():
     urls=data.split('"};')
     #print(urls)
     ids = re.findall('\["([\d]+)"\]',data)
-    print(ids)
+    
     all=[]
     for yrl in urls:
      #   print(url)
         url="https://www.amazinglashstudio.com"+re.findall('(/studios/.*)',yrl)[0]
 
 
-        print(url)
+        
         res=session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         #print(soup)
+        if "coming soon" in soup.find('div', {"class": "hero__img-subtext"}).text.lower():
+            print(url)
+            print("coming soon")
+            continue
         jss=soup.find_all('script', {"type": "application/ld+json"})
         if len(jss) ==1:
             jss=jss[0]
@@ -65,6 +69,10 @@ def fetch_data():
         s=addr["streetAddress"].split("[")[0]
         if s=="TBD":
             s="<MISSING>"
+        if "openingHours" in js:
+             tim=' '.join(js["openingHours"])
+        else:
+              tim="<MISSING>"
         all.append([
         "https://www.amazinglashstudio.com",
         js["name"],
@@ -78,7 +86,7 @@ def fetch_data():
         js["@type"],  # type
         lat,  # lat
         long,  # long
-        ' '.join(js["openingHours"]),  # timing
+        tim,  # timing
         url])
 
     return all
