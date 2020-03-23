@@ -23,7 +23,7 @@ def fetch_data():
     clear_links =[]
     #CA stores
     url = 'https://www.petsmart.com/stores/ca/'
-    u='https://www.petsmart.com/'
+    u='https://www.petsmart.ca/'
     page = session.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
     store=soup.find('div',class_='all-states-list container')
@@ -102,7 +102,7 @@ def fetch_data():
                 hours=hours.replace("-null","")
                 print(hours)"""
             data.append([
-                    'https://www.petsmart.com/',
+                    'https://www.petsmart.ca/',
                      ul.replace(u'\u2019',''),
                     loc.replace(u'\u2019','').strip(),
                     street.replace(u'\u2019',''),
