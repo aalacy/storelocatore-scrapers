@@ -66,7 +66,7 @@ def fetch_data():
                 hours=hours.replace("-null","")
                 print(hours)
                 data.append([
-                    'https://www.petmarts.com/',
+                    'https://www.petsmart.com/',
                      ul.replace(u'\u2019',''),
                     loc.replace(u'\u2019','').strip(),
                     street.replace(u'\u2019',''),
