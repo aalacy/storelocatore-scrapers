@@ -35,7 +35,7 @@ def fetch_data():
             if "Now Open" in addr[1]:
                 del addr[1]
             location_name = addr[1]
-            street_address = addr[2]
+            street_address = addr[2].split("(")[0].strip()
             city = addr[0].split(",")[0]
             state = addr[0].split(",")[1].strip()
             phone = addr[3]
