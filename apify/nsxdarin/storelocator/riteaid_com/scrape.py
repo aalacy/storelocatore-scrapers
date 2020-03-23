@@ -56,53 +56,58 @@ def fetch_data():
                         locs.append(lurl)
     print('Found %s Locations...' % str(len(locs)))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
-        website = 'riteaid.com'
-        typ = '<MISSING>'
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        country = 'US'
-        zc = ''
-        store = ''
-        phone = ''
-        lat = ''
-        lng = ''
-        hours = ''
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            if 'data-storeid="' in line2:
-                store = line2.split('data-storeid="')[1].split('"')[0]
-            if 'id="location-name">' in line2:
-                name = line2.split('id="location-name">')[1].split('<')[0]
-            if '<meta itemprop="latitude" content="' in line2:
-                lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
-                lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]
-            if " 'dimension4', '" in line2:
-                add = line2.split(" 'dimension4', '")[1].split("'")[0]
-                zc = line2.split("dimension5', '")[1].split("'")[0]
-                state = line2.split("'dimension2', '")[1].split("'")[0]
-                city = line2.split("'dimension3', '")[1].split("'")[0]
-            if 'itemprop="telephone" id="telephone">' in line2:
-                phone = line2.split('itemprop="telephone" id="telephone">')[1].split('<')[0]
-            if hours == '' and "data-days='[{" in line2:
-                days = line2.split("data-days='[{")[1].split(']}]')[0].split('"day":"')
-                for day in days:
-                    if '"intervals":' in day:
-                        try:
-                            hrs = day.split('"')[0] + ': ' + day.split(',"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
-                        except:
-                            hrs = day.split('"')[0] + ': Closed'
-                        if hours == '':
-                            hours = hrs
-                        else:
-                            hours = hours + '; ' + hrs
-        if hours == '':
-            hours = '<MISSING>'
-        if store != '':
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-
+        LocFound = True
+        while LocFound:
+            try:
+                LocFound = False
+                print('Pulling Location %s...' % loc)
+                website = 'riteaid.com'
+                typ = '<MISSING>'
+                name = ''
+                add = ''
+                city = ''
+                state = ''
+                country = 'US'
+                zc = ''
+                store = ''
+                phone = ''
+                lat = ''
+                lng = ''
+                hours = ''
+                r2 = session.get(loc, headers=headers)
+                for line2 in r2.iter_lines():
+                    if 'data-storeid="' in line2:
+                        store = line2.split('data-storeid="')[1].split('"')[0]
+                    if 'id="location-name">' in line2:
+                        name = line2.split('id="location-name">')[1].split('<')[0]
+                    if '<meta itemprop="latitude" content="' in line2:
+                        lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
+                        lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]
+                    if " 'dimension4', '" in line2:
+                        add = line2.split(" 'dimension4', '")[1].split("'")[0]
+                        zc = line2.split("dimension5', '")[1].split("'")[0]
+                        state = line2.split("'dimension2', '")[1].split("'")[0]
+                        city = line2.split("'dimension3', '")[1].split("'")[0]
+                    if 'itemprop="telephone" id="telephone">' in line2:
+                        phone = line2.split('itemprop="telephone" id="telephone">')[1].split('<')[0]
+                    if hours == '' and "data-days='[{" in line2:
+                        days = line2.split("data-days='[{")[1].split(']}]')[0].split('"day":"')
+                        for day in days:
+                            if '"intervals":' in day:
+                                try:
+                                    hrs = day.split('"')[0] + ': ' + day.split(',"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                                except:
+                                    hrs = day.split('"')[0] + ': Closed'
+                                if hours == '':
+                                    hours = hrs
+                                else:
+                                    hours = hours + '; ' + hrs
+                if hours == '':
+                    hours = '<MISSING>'
+                if store != '':
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            except:
+                LocFound = True
 def scrape():
     data = fetch_data()
     write_output(data)
