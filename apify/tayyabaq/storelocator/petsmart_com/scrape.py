@@ -39,7 +39,10 @@ def fetch_data():
             page = session.get(ul)
             soup = BeautifulSoup(page.content, "html.parser")
             div = soup.find('div',class_='store-page-details')
-            loc = div.find('h1').text
+            try:
+              loc = div.find('h1').text
+            except:
+               continue
             ph=div.find('p',class_='store-page-details-phone').text
             addr=div.find('p',class_='store-page-details-address').text.strip().split("\n")
             street=addr[0]
