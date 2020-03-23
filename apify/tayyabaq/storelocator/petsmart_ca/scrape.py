@@ -22,7 +22,7 @@ def fetch_data():
     store_links =[]
     clear_links =[]
     #CA stores
-    url = 'https://www.petsmart.com/stores/ca/'
+    url = 'https://www.petsmart.ca/stores/ca/'
     u='https://www.petsmart.ca/'
     page = session.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
