@@ -7,7 +7,7 @@ import usaddress
 
 
 def write_output(data):
-    with open('talbot_data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -74,6 +74,8 @@ def fetch_data():
             street=street[0].strip()
         elif len(street)==2:
             street=street[1].strip()
+        else:
+            street=" ".join(street)
         
 
         num = soup.find("div", class_="number").text
