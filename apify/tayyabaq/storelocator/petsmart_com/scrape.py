@@ -34,19 +34,30 @@ def fetch_data():
         soup = BeautifulSoup(page.content, "html.parser")
         store=soup.find_all('a', class_='store-details-link')
         for j in store:
-            #print(j)
+
             ul=u+j['href']
+            print(ul)
             page = session.get(ul)
             soup = BeautifulSoup(page.content, "html.parser")
             div = soup.find('div',class_='store-page-details')
             try:
               loc = div.find('h1').text
+              if "closed" in loc.lower():
+                continue
             except:
                continue
-            ph=div.find('p',class_='store-page-details-phone').text
+            ph=div.find('p',class_='store-page-details-phone').text.strip()
             addr=div.find('p',class_='store-page-details-address').text.strip().split("\n")
-            street=addr[0]
-            addr=addr[1].strip().split(',')
+            print(addr)
+            if len(addr) ==2:
+                street=addr[0]
+                addr=addr[1].strip().split(',')
+            elif len(addr)>2:
+                add=addr[-1]
+                del addr[-1]
+                street=" ".join(addr)
+                addr=add.strip().split(',')
+            
             cty=addr[0]
             addr=addr[1].strip().split(' ')
             sts=addr[0]
@@ -55,7 +66,7 @@ def fetch_data():
                 hours=soup.find('div',class_='store-page-details-hours-mobile visible-sm visible-md ui-accordion ui-widget ui-helper-reset').text
             except:
                 hours=soup.find('div',class_='store-page-details-hours-mobile visible-sm visible-md').text
-            hours=hours.strip().replace('\n\n',' ').replace('\n',' ')
+            hours=hours.strip().replace('\n\n','').replace('\n','')
             for day in ['MON','TUE','THU','WED','FRI','SAT','SUN']:
                 if day not in hours:
                     hours=hours.replace('TODAY',day)
