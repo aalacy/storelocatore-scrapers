@@ -146,7 +146,9 @@ def fetch_data():
                 flag = 1
                 #print("Already exist")
                 break
-
+        if flag == 0:
+            if street.find('html') > -1 and title.find('html') > -1:
+                flag = 1
         if flag == 0:
             data.append([
                 'https://www.sephora.com/',
