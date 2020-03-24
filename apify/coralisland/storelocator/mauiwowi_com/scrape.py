@@ -43,6 +43,7 @@ def fetch_data():
     response = etree.HTML(request.text)
     store_list = response.xpath('//div[@class="divLocationListItem clearfix"]//a/@href')
     for link in store_list:
+        print(link)
         link = base_url + '/' + link        
         store = etree.HTML(session.get(link).text)
         output = []
