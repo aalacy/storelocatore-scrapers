@@ -64,6 +64,7 @@ def fetch_data():
                         add = add + ' ' + g.split('<br />')[2] + ' ' + g.split('<br />')[3]
                         csz = g.split('<br />')[4]
                         phone = g.split('<br />')[6]
+                    csz = csz.replace(',,',',')
                     city = csz.split(',')[0]
                     state = csz.split(',')[1].strip().split(' ')[0]
                     zc = csz.split(',')[1].rsplit(' ',1)[1]
