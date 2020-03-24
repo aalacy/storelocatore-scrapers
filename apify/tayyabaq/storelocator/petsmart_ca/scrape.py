@@ -36,7 +36,7 @@ def fetch_data():
         for j in store:
 
             ul=u+j['href']
-            print(ul)
+            #print(ul)
             page = session.get(ul)
             soup = BeautifulSoup(page.content, "html.parser")
             div = soup.find('div',class_='store-page-details')
@@ -48,7 +48,7 @@ def fetch_data():
                continue
             ph=div.find('p',class_='store-page-details-phone').text.strip()
             addr=div.find('p',class_='store-page-details-address').text.strip().split("\n")
-            print(addr)
+            #print(addr)
             if len(addr) ==2:
                 street=addr[0]
                 addr=addr[1].strip().split(',')
@@ -70,7 +70,8 @@ def fetch_data():
             for day in ['MON','TUE','THU','WED','FRI','SAT','SUN']:
                 if day not in hours:
                     hours=hours.replace('TODAY',day)
-            #print(hours)
+            lat,long=re.findall(r'center=([\d\.]+),([\-\d\.]+)',soup.find('div',class_='store-page-map mapViewstoredetail').find('img').get('src'))[0]
+            #print(lat,long)
             
             
             """try:
@@ -113,8 +114,8 @@ def fetch_data():
                     j['id'].replace(u'\u2019',''),
                     ph.replace(u'\u2019',''),
                     '<MISSING>',
-                    '<MISSING>',
-                    '<MISSING>',
+                    lat,
+                    long,
                     hours.replace(u'\u2019','')
                     ])
          
