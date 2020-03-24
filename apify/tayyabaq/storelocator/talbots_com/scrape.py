@@ -72,11 +72,14 @@ def fetch_data():
                     cty = key
         
         street=street.strip().split('\n')
-        
+        if link=="https://www.talbots.com/store?StoreID=04036":
+           print(link)
+           
+           print(street)
         if len(street ) == 1:
             street=street[0].strip()
         elif len(street)==2:
-            if len(street[1].strip().split(" "))==1:
+            if len(street[1].strip().split(" "))==1 or "suite" in street[1].lower().strip().split(" ")[0]:
                  street=" ".join(street)
             else:
                  street=street[1].strip()
