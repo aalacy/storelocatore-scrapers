@@ -7,7 +7,7 @@ import usaddress
 
 
 def write_output(data):
-    with open('data2.csv', mode='w') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -72,10 +72,7 @@ def fetch_data():
                     cty = key
         
         street=street.strip().split('\n')
-        if link=="https://www.talbots.com/store?StoreID=04036":
-           print(link)
-           
-           print(street)
+        
         if len(street ) == 1:
             street=street[0].strip()
         elif len(street)==2:
