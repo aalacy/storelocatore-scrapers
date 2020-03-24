@@ -25,7 +25,7 @@ def fetch_data():
             lurl = 'https://www.uhaul.com' + line.split("href='")[1].split("'")[0]
             states.append(lurl)
     for state in states:
-        print('Pulling State %s...' % state)
+        #print('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
             if "<a href='/Locations/" in line2:
@@ -34,7 +34,7 @@ def fetch_data():
     for city in cities:
         coords = []
         alllocs = []
-        print('Pulling City %s...' % city)
+        #print('Pulling City %s...' % city)
         r2 = session.get(city, headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
@@ -68,7 +68,7 @@ def fetch_data():
                         allids.append(lid)
                         locs.append(lurl + '|' + plat + '|' + plng)
     for loc in locs:
-        print('Pulling Location %s...' % loc.split('|')[0])
+        #print('Pulling Location %s...' % loc.split('|')[0])
         website = 'uhaul.com'
         typ = ''
         hours = ''
