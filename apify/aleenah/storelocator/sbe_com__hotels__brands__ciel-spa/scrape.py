@@ -37,6 +37,7 @@ def fetch_data():
         state = soup.find('span', {'class': 'state'}).text.strip()
         zip = soup.find('span', {'class': 'postal_code'}).text.strip()
         tim = soup.find('div', {'class': 'text-spaced-extra more_info'}).text.replace('Order Food Delivery with DoorDash', '').replace('\n', ' ').strip()
+        tim=tim.replace('Hours of Operation:','').replace('Open','').strip()
         phone = soup.find('li', {'class': 'serif-face cols borderright'}).find('a').text.strip()
         lat = soup.find('div', {'id': 'map_canvas'}).get('data-latitude')
         long = soup.find('div', {'id': 'map_canvas'}).get('data-longitude')
