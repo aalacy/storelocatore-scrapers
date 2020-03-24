@@ -61,7 +61,8 @@ def fetch_data():
             cty=addr[0]
             addr=addr[1].strip().split(' ')
             sts=addr[0]
-            zcode=addr[1]
+            del addr[0]
+            zcode=" ".join(addr).strip()
             try:
                 hours=soup.find('div',class_='store-page-details-hours-mobile visible-sm visible-md ui-accordion ui-widget ui-helper-reset').text
             except:
