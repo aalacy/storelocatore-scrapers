@@ -41,7 +41,7 @@ def fetch_data():
         print(str(len(locs)) + ' Locations Found...')
     stores = []
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        #print('Pulling Location %s...' % loc)
         PFound = True
         while PFound:
             try:
