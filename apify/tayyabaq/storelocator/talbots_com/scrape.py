@@ -7,7 +7,7 @@ import usaddress
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data2.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -56,7 +56,9 @@ def fetch_data():
                 sts = key
             elif values in ['ZipCode']:
                 zcode = key
+        
         if any(c.isalpha() for c in zcode):
+            street=""
             ctry = 'CA'
             zcode = add2[-10:]
             sts = add2[-13:-10]
@@ -68,12 +70,16 @@ def fetch_data():
                     street += key
                 elif values in ['PlaceName']:
                     cty = key
+        
         street=street.strip().split('\n')
-        #print(street)
+        
         if len(street ) == 1:
             street=street[0].strip()
         elif len(street)==2:
-            street=street[1].strip()
+            if len(street[1].strip().split(" "))==1:
+                 street=" ".join(street)
+            else:
+                 street=street[1].strip()
         else:
             street=" ".join(street)
         
