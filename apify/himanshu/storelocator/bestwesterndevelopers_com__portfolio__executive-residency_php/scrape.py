@@ -57,7 +57,7 @@ def fetch_data():
             store.append(store_data["latitude"])
             store.append(store_data["longitude"])
             store.append("<MISSING>")
-            store.append("<MISSING>")
+            store.append("https://www.bestwestern.com/bin/bestwestern/proxy?gwServiceURL=HOTEL_SEARCH&distance=250&latitude=" + str(cord[0]) + "&longitude=" + str(cord[1]))
             # print(store)
             yield store
 

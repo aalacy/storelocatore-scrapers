@@ -1,12 +1,12 @@
+
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import requests
 import urllib3
+import requests
 session = SgRequests()
-# urllib3.disable_warnings()
 requests.packages.urllib3.disable_warnings()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,44 +32,55 @@ def fetch_data():
     
     }
     
-    r = session.get(base_url, headers=headers, verify=False)
+    r = session.get("https://centurytheatres.com/full-theatre-list", headers=headers, verify=False)
 
-    soup1 = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.text, "lxml")
+    data = soup.find("div",{"class":"columnList wide"})
+    for link in data.find_all("a"):
+        if "Tinseltown" not in link.text:
+            continue
 
-    data = json.loads(soup1.find_all("script",{"type":"application/ld+json"})[-1].text)
-    for address in  data['address']:
-        street_address = address['streetAddress']
-        city = address['addressLocality']
-        state = address['addressRegion']
-        zipp = address['postalCode']
-        country_code = address['addressCountry']
-    phone = data['telephone']
-    location_name = data['name']
-    location_type = data['@type']
-    latitude = soup1.find("img",{"class":"img-responsive lazyload"})['data-src'].split("pp=")[1].split(",")[0]
-    longitude = soup1.find("img",{"class":"img-responsive lazyload"})['data-src'].split("pp=")[1].split(",")[1].split("&")[0]
+        page_url = "https://centurytheatres.com"+link['href']
+        #print(page_url)
+        r1 = session.get(page_url, headers=headers, verify=False)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        info = soup1.find_all("script",{"type":"application/ld+json"})[-1].text
+        data = json.loads(info)
+        for address in  data['address']:
+            street_address = address['streetAddress']
+            city = address['addressLocality']
+            state = address['addressRegion']
+            zipp = address['postalCode']
+            country_code = address['addressCountry']
+        phone = data['telephone']
+        location_name = data['name']
+        if "NOW CLOSED".lower() in location_name.lower():
+            continue
+        location_type = data['@type']
+        latitude = soup1.find("img",{"class":"img-responsive lazyload"})['data-src'].split("pp=")[1].split(",")[0]
+        longitude = soup1.find("img",{"class":"img-responsive lazyload"})['data-src'].split("pp=")[1].split(",")[1].split("&")[0]
         
 
        
-    store = []
-    store.append(base_url)
-    store.append(location_name)
-    store.append(street_address)
-    store.append(city)
-    store.append(state)
-    store.append(zipp)
-    store.append(country_code)
-    store.append("<MISSING>")
-    store.append(phone if phone else "<MISSING>")
-    store.append(location_type)
-    store.append(latitude if latitude else "<MISSING>")
-    store.append(longitude if longitude else "<MISSING>")
-    store.append("<MISSING>")
-    store.append(base_url)
-    # print("data =="+str(store))
-    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    yield store
-    
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append(country_code)
+        store.append("<MISSING>")
+        store.append(phone if phone else "<MISSING>")
+        store.append(location_type)
+        store.append(latitude if latitude else "<MISSING>")
+        store.append(longitude if longitude else "<MISSING>")
+        store.append("<MISSING>")
+        store.append(page_url)
+        # print("data =="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        yield store
+        
        
         
 def scrape():
