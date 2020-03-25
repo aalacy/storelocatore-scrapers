@@ -49,12 +49,22 @@ def fetch_data():
 
         driver.get(link)
         driver.implicitly_wait(10)
+        print(link)
+
 
         try:
             location_name = driver.find_element_by_xpath('//span[@itemprop="name"]').text
         
         except NoSuchElementException:
             continue
+
+        print(location_name)
+        if 'CLOSED' in location_name:
+            continue
+
+        print()
+        print()
+        print()
 
         store_number = location_name.split('#')[1]
         

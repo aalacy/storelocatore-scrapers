@@ -56,6 +56,7 @@ def fetch_data():
 
     link_list = []
     for url_ext in url_list:
+        
         url = 'https://www.lendnation.com/location/' + url_ext[0]
         driver.get(url)
         driver.implicitly_wait(10)
@@ -69,7 +70,7 @@ def fetch_data():
         driver.get(link)
         driver.implicitly_wait(10)
 
-        location_name = driver.find_element_by_css_selector('div.Nap-title.Heading--lead').text
+        location_name = driver.find_element_by_css_selector('h1.Hero-title').text
         
         lat = driver.find_element_by_xpath('//meta[@itemprop="latitude"]').get_attribute('content')
         longit = driver.find_element_by_xpath('//meta[@itemprop="longitude"]').get_attribute('content')
@@ -106,6 +107,7 @@ def fetch_data():
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
+
         all_store_data.append(store_data)
 
         

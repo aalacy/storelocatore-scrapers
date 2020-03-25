@@ -54,6 +54,7 @@ def fetch_data():
     locs = driver.find_elements_by_css_selector('div.location-name-container')
 
     all_store_data = []
+    dup_tracker = set()
     for loc in locs:
         country_name = loc.find_element_by_xpath('..').find_element_by_css_selector('div.address').find_elements_by_css_selector('span')[-1].get_attribute('innerHTML')##
         
@@ -68,11 +69,14 @@ def fetch_data():
         location_span = loc.find_element_by_css_selector('span.location-name')
         on_click = location_span.get_attribute('onclick')
         location_name = location_span.get_attribute('innerHTML')
+        if location_name not in dup_tracker:
+            dup_tracker.add(location_name)
+        else:
+            continue
         
         driver.execute_script(on_click)
         driver.implicitly_wait(5)
         
-
         
         addy = driver.find_element_by_css_selector('div.address').text.split('\n')
         if len(addy) == 3:
