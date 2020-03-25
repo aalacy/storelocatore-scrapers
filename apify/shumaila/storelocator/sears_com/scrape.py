@@ -118,8 +118,8 @@ def fetch_data():
                                     title = title.lstrip()
                                     title = title.encode('ascii', 'ignore').decode('ascii')
                                     
-
-                                    data.append([
+                                    if title.find('Find Your Next Closest Store') == -1:
+                                        data.append([
                                         'https://www.sears.com/',
                                         link,
                                         title,
@@ -135,9 +135,9 @@ def fetch_data():
                                         longt,
                                         hours
                                     ])
-                                    #print(k,data[k])
-                                    k += 1
-                                    flag = False
+                                        #print(k,data[k])
+                                        k += 1
+                                        flag = False
                                 except:
                                     pass
 
