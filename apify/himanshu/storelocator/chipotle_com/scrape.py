@@ -23,7 +23,7 @@ def write_output(data):
 def fetch_data():
     timestamp = datetime. now(). strftime("%m/%d/%Y, %H:%M:%S %p")
     addresses = []
-    data = '{"timestamp":"'+str(timestamp)+'","radius":804679,"restaurantStatuses":["OPEN"],"conceptIds":["CMG"],"orderBy":"distance","orderByDescending":"false","pageSize":10000,"pageIndex":0,"embeds":{"addressTypes":["MAIN"],"publicPhoneTypes":["MAIN PHONE"],"realHours":"true","normalHours":"true","directions":"true","catering":"true","onlineOrdering":"true"}}' ## you have to change timestamp in data corresponding to your time when you run this code
+    data = '{"timestamp":"'+str(timestamp)+'","radius":804679,"restaurantStatuses":["OPEN"],"conceptIds":["CMG"],"orderBy":"distance","orderByDescending":"false","pageSize":10000,"pageIndex":0,"embeds":{"addressTypes":["MAIN"],"publicPhoneTypes":["MAIN PHONE"],"realHours":"true","normalHours":"true","directions":"true","catering":"true","onlineOrdering":"true"}}' 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
         'Accept': 'application/json, text/plain, */*',
@@ -53,13 +53,17 @@ def fetch_data():
         store.append(store_data["restaurantLocationType"])
         store.append(store_data['addresses'][0]["latitude"])
         store.append(store_data['addresses'][0]["longitude"])
-        store_hours = store_data["normalHours"]
+        # store_hours = store_data["normalHours"]
         hours = ""
-        for k in range(len(store_hours)):
-            hours = hours + " " + store_hours[k]["dayOfWeek"] + " from " + \
-                store_hours[k]["openTime"] + \
-                " to " + store_hours[k]["closeTime"]
-        store.append(hours if hours != "" else "<MISSING>")
+        try:
+            for k in range(len(store_data["normalHours"])):
+                
+                hours = hours + " " + store_data["normalHours"][k]["dayOfWeek"] + " " + \
+                    store_data["normalHours"][k]["openTime"] + \
+                    " - " + store_data["normalHours"][k]["closeTime"]
+            store.append(hours if hours != "" else "<MISSING>")
+        except:
+            store.append("<MISSING>")
         page_url = "https://locations.chipotle.com/" + \
             store[4].lower() + "/" + \
             " ".join(store[3].lower().split()).replace(

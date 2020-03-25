@@ -23,7 +23,7 @@ def write_output(data):
 
 
 def fetch_data():
-
+    addresses = []
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
@@ -55,33 +55,32 @@ def fetch_data():
             Mon_start = "Close"
             Mon_close = "Close"
         if location['hoursOfOperation']['Tue'] != []:
-
             Tue_start = datetime.strptime(str(location['hoursOfOperation']['Tue'][0][0]), "%H:%M").strftime("%I:%M %p")
             Tue_close = datetime.strptime(str(location['hoursOfOperation']['Tue'][0][1]), "%H:%M").strftime("%I:%M %p")
         else:
-            Tue_start='Close'
-            Tue_close='Close'
-        if location['hoursOfOperation']['Wed'] != []:
+            Tue_start = "Close"
+            Tue_close = "Close"
 
+        if location['hoursOfOperation']['Wed'] != []:
             Wed_start = datetime.strptime(str(location['hoursOfOperation']['Wed'][0][0]), "%H:%M").strftime("%I:%M %p")
             Wed_close = datetime.strptime(str(location['hoursOfOperation']['Wed'][0][1]), "%H:%M").strftime("%I:%M %p")
         else:
-            Wed_start='Close'
-            Wed_close='Close'
-        if location['hoursOfOperation']['Thu'] != []:
+            Wed_start = "Close"
+            Wed_close = "Close"
 
+        if location['hoursOfOperation']['Thu'] != []:
             Thu_start = datetime.strptime(str(location['hoursOfOperation']['Thu'][0][0]), "%H:%M").strftime("%I:%M %p")
             Thu_close = datetime.strptime(str(location['hoursOfOperation']['Thu'][0][1]), "%H:%M").strftime("%I:%M %p")
         else:
-            Thu_start='Close'
-            Thu_close='Close'
-        if location['hoursOfOperation']['Wed'] != []:
-
+            Thu_start = "Close"
+            Thu_close = "Close"
+        if location['hoursOfOperation']['Fri'] != []:
             Fri_start = datetime.strptime(str(location['hoursOfOperation']['Fri'][0][0]), "%H:%M").strftime("%I:%M %p")
             Fri_close = datetime.strptime(str(location['hoursOfOperation']['Fri'][0][1]), "%H:%M").strftime("%I:%M %p")
         else:
-            Fri_start='Close'
-            Fri_close='Close'
+            Fri_start = "Close"
+            Fri_close = "Close"
+
         if location['hoursOfOperation']['Sat'] != []:
             Sat_start = datetime.strptime(str(location['hoursOfOperation']['Sat'][0][0]), "%H:%M").strftime("%I:%M %p")
             Sat_close = datetime.strptime(str(location['hoursOfOperation']['Sat'][0][1]), "%H:%M").strftime("%I:%M %p")
@@ -119,6 +118,9 @@ def fetch_data():
         store.append(longitude)
         store.append(hours_of_operation.replace("Close to Close","Closed"))
         store.append(page_url)        
+        if store[2] in addresses:
+            continue
+        addresses.append(store[2])
 
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         # print("data = " + str(store))

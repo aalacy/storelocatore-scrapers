@@ -85,10 +85,11 @@ def fetch_data():
     # # print("=============================data ",s.cookies)
     # soup = BeautifulSoup(driver.page_source, "lxml")
     data = s.get("https://www.smartandfinal.com/api/m_store_location?store_type_ids=1,2,3",headers=headers).json()
+    # print(data)
     for loc in data['stores']:
         store_number =loc['store_number']
         location_type =''
-        country_code ='US'
+        country_code =''
         hours_of_operation =''
         locator_domain ='https://www.smartandfinal.com/'
         phone =''

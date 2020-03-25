@@ -47,7 +47,7 @@ def fetch_data():
     country_code = "US"
     store_number = ""
     phone = ""
-    location_type = "abercrombie"
+    location_type = ""
     latitude = ""
     longitude = ""
     raw_address = ""
@@ -58,7 +58,7 @@ def fetch_data():
 
     for location in json_data["physicalStores"]:
         # print("location ==== " + str(location))
-
+        location_type = location['physicalStoreAttribute'][7]['value'].replace("ACF","abercrombie and fitch").replace("KID","abercrombie and fitch Kids")
         store_number = location["storeNumber"]
         location_name = location["name"]
         city = location["city"]
@@ -85,23 +85,24 @@ def fetch_data():
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
-        if str(store[2]) not in addresses:
-            addresses.append(str(store[2]))
+        # if str(store[2]) in addresses:
+        #     continue
+        # addresses.append(store[2])
 
-            # store = [x if x else "<MISSING>" for x in store]
-            store = [x.encode('ascii', 'ignore').decode(
-                'ascii').strip() if x else "<MISSING>" for x in store]
+        # store = [x if x else "<MISSING>" for x in store]
+        store = [x.encode('ascii', 'ignore').decode(
+            'ascii').strip() if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print(
-            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            yield store
+        # print("data = " + str(store))
+        # print(
+        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        yield store
     r = session.get("https://www.abercrombie.com/api/ecomm/a-wd/storelocator/search?country=CA&radius=10000",
                     headers=headers)
     json_data = r.json()
     for location in json_data["physicalStores"]:
         # print("location ==== " + str(location))
-
+        location_type = location['physicalStoreAttribute'][7]['value'].replace("ACF","abercrombie and fitch").replace("KID","abercrombie and fitch Kids")
         store_number = location["storeNumber"]
         location_name = location["name"]
         city = location["city"]
@@ -128,17 +129,18 @@ def fetch_data():
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
-        if str(store[2]) not in addresses:
-            addresses.append(str(store[2]))
+        # if store[2] in addresses:
+        #     continue
+        # addresses.append(store[2])
 
-            # store = [x if x else "<MISSING>" for x in store]
-            store = [x.encode('ascii', 'ignore').decode(
-                'ascii').strip() if x else "<MISSING>" for x in store]
+        # store = [x if x else "<MISSING>" for x in store]
+        store = [x.encode('ascii', 'ignore').decode(
+            'ascii').strip() if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print(
-            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            yield store
+        # print("data = " + str(store))
+        # print(
+        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        yield store
 
 
 def scrape():
