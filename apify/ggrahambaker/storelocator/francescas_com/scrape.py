@@ -45,12 +45,10 @@ def fetch_data():
         link_list.append(link)
         
     all_store_data = []
+    dup_tracker = set()
     for i, link in enumerate(link_list):
-
         driver.get(link)
         driver.implicitly_wait(10)
-        print(link)
-
 
         try:
             location_name = driver.find_element_by_xpath('//span[@itemprop="name"]').text
@@ -58,17 +56,18 @@ def fetch_data():
         except NoSuchElementException:
             continue
 
-        print(location_name)
-        if 'CLOSED' in location_name:
-            continue
+        if len(location_name.split('#')) == 2:
+            store_number = location_name.split('#')[1].split('-')[0].strip()
+        else:
+            store_number = '<MISSING>'
 
-        print()
-        print()
-        print()
 
-        store_number = location_name.split('#')[1]
         
         street_address = driver.find_element_by_xpath('//span[@itemprop="streetAddress"]').text.replace('\n', ' ')
+        if street_address not in dup_tracker:
+            dup_tracker.add(street_address)
+        else:
+            continue
         city = driver.find_element_by_xpath('//span[@itemprop="addressLocality"]').text
         state = driver.find_element_by_xpath('//span[@itemprop="addressRegion"]').text
         zip_code = driver.find_element_by_xpath('//span[@itemprop="postalCode"]').text

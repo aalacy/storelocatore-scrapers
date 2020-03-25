@@ -179,7 +179,6 @@ def fetch_data():
            
 
             addy = addy.split(',')
-            print(addy)
             if len(addy) > 1:
                 if len(addy) == 4:
                     street_address = addy[0].strip() + ' ' + addy[1].strip()
