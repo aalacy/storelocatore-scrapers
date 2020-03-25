@@ -37,6 +37,8 @@ def fetch_data():
     for rep in link_list:
         link = rep.find('a')
         title = link.text
+        link = rep.find('p',{'class':'location-links'})
+        link = link.find('a')
         maindiv = rep.findAll('p')
         #print(states.text.strip())
         link = 'https://www.fordsgarageusa.com'+ link['href']
@@ -81,24 +83,7 @@ def fetch_data():
             hours = hours.replace('\n',' ' )
             
             
-        else:
-            
-            street = maindiv[0].text
-            street = street.replace('\n','')
-            state = maindiv[1].text
-            city,state = address.split(', ')
-            state = state.lstrip()
-            state,pcode = state.split(' ')
-            phone =maindiv[2].text
-            hourd  = rep.findAll('p',{'class':'hours-row'})
-            hours = ''
-            if len(hourd) > 0:
-                for det in detail:
-                    hours = hours + hourd.text +' '
-            else:
-                hours = "<MISSING>"
-            lat = "<MISSING>"
-            longt = "<MISSING>"
+        
             
 
         if len(hours) < 3:
@@ -109,6 +94,9 @@ def fetch_data():
             lat = "<MISSING>"
         if len(longt) < 3:
             longt = "<MISSING>"
+        if city.find('\n') > -1:
+            street = street + ' '+ city[0:city.find('\n')]
+            city = city[city.find('\n')+1:len(city)]
             
         data.append(['https://www.fordsgarageusa.com/',link,title,street,city,state,pcode,
                      'US','<MISSING>',phone,'<MISSING>',lat,longt,hours])
