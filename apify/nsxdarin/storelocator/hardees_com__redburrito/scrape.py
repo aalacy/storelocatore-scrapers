@@ -51,7 +51,7 @@ def fetch_data(search):
                             country = 'CA'
                         else:
                             continue
-                        website = 'hardees.com'
+                        website = 'hardees.com/redburrito'
                         typ = item.split('"')[0]
                         name = item.split('"')[0]
                         add = item.split('"street":"')[1].split('"')[0]
