@@ -32,6 +32,7 @@ def fetch_data():
         link = "https://www.sephora.com" + repo['href']
         # link = "https://www.sephora.com/happening/stores/silverdale-jcpenney-at-kitsap-mall"
         #print(link)
+        #link ='https://www.sephora.com/happening/stores/farmington-jcpenney-at-westfarms-mall'
         page = requests.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
         detail = soup.find('script', {'type': 'application/ld+json'})
@@ -115,7 +116,10 @@ def fetch_data():
             city = "<MISSING>"
         if len(ccode) < 2:
             ccode = "<MISSING>"
-        if len(pcode) < 5:
+        
+        if len(pcode) == 4:
+            pcode = '0' + pcode
+        if len(pcode) < 3:
             pcode = "<MISSING>"
         if len(store) < 2:
             store = "<MISSING>"
