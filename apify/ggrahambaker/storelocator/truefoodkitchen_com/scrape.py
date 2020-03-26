@@ -48,7 +48,6 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
-        print(link)
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
         
@@ -63,6 +62,11 @@ def fetch_data():
 
         r = session.get(url, headers = HEADERS)
         loc = json.loads(r.content)
+
+
+        if loc['status'] == 'coming soon':
+            continue
+
         
         street_address = loc['address'] + ' ' + loc['addressExtended']
         phone_number = loc['phone']
@@ -101,11 +105,7 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, link]
 
 
-        
-        print(store_data)
-        print()
-        print()
-        print()
+
         
         all_store_data.append(store_data)
         
