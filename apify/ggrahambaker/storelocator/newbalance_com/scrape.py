@@ -90,8 +90,7 @@ def fetch_data():
 
                     hours = hours.strip()
                 
-                
-                
+    
                 store_number = '<MISSING>'
           
                 

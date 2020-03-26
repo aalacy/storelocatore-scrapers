@@ -60,7 +60,7 @@ def fetch_data():
         city, state, zip_code = addy_ext(cont[2])
         
         phone_number = cont[3]
-        hours = cont[8]
+        hours = cont[7]
         
         
         country_code = 'US'
@@ -71,6 +71,8 @@ def fetch_data():
         page_url = link
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
+
+
         
         all_store_data.append(store_data)
 
