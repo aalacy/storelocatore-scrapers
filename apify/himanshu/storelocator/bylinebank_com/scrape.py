@@ -2,11 +2,10 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
-# import http.client
 import sgzip
 import json
-# import  pprint
 import time
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -18,37 +17,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-def request_wrapper(url,method,headers,data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = requests.get(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:
-                if data:
-                    r = requests.post(url,headers=headers,data=data)
-                else:
-                    r = requests.post(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None
+
 
 def fetch_data():
     base_url = "https://www.bylinebank.com"
@@ -70,21 +39,10 @@ def fetch_data():
         # try:
         result_coords = []
         url = 'https://bylinebank.locatorsearch.com/GetItems.aspx'
-        # data = "lat=41.66097757926449&lng=-87.78996078404255&searchby=FCS%7CATMSF%7COFC%7C&SearchKey=&rnd=1569844320549"
-        data = "lat="+str(coords[0])+"&lng="+str(coords[1])+"&searchby=FCS%7CATMSF%7COFC%7C&SearchKey=&rnd=1569844320549"
-        # pagereq = request_wrapper(url,"post",data=data, headers=header)
-        # if pagereq==None:
-            # continue
-        # print(coords)
-        s = requests.Session()
-        # r= requests.post(
-        #     'https://bylinebank.locatorsearch.com/GetItems.aspx',
-        #     headers=header,data=data,
-        # )
-        pagereq = s.get(url,data=data, headers=header)
-        soup = BeautifulSoup(pagereq.content, 'html.parser')
-        # for i in soup.find_all("marker"):
-        #     print(i.attrs['lng'])
+       
+        data = "address="+str(search.current_zip)+"&lat="+str(coords[0])+"&lng="+str(coords[1])+"&searchby=ATMSF%7C&SearchKey=&rnd=1569844320549"
+        pagereq = requests.post(url,data=data, headers=header)
+        soup = BeautifulSoup(pagereq.text, 'html.parser')
         add2 = soup.find_all("add2")
         address1 = soup.find_all("add1")
         current_results_len = len(address1)
@@ -93,11 +51,10 @@ def fetch_data():
         name = soup.find_all("title")
         locator_domain = "https://www.bylinebank.com"
         store_number ="<MISSING>"
-        location_type ='bylinebank'
+        location_type ='ATM'
         for i in range(len(address1)):
             street_address = address1[i].text
             city = add2[i].text.split(",")[0]
-            #print(add2[i].text)
             state = add2[i].text.replace(",,",",").split(",")[1].split( )[0]
             
             zip1 = add2[i].text.replace(",,",",").split(",")[1].split( )[1]
@@ -105,20 +62,21 @@ def fetch_data():
                 phone = add2[i].text.split("<b>")[1].replace("</b>","").strip()
             else:
                 phone = "<MISSING>"
-
+            # print(name[i])
             location_name = name[i].text.replace("<br>","")
 
             if len(zip1)==3 or len(zip1)==7:
                 country_code = "CA"
             else:
                 country_code = "US"
+            
             soup_hour = BeautifulSoup(hours[i].text,'lxml')
             if soup_hour.find("table"):
                 h = []
                 for i in soup_hour.find("table"):
                     h.append(i.text)
 
-                hour = "".join(h)
+                hour = " ".join(h).replace(":"," : ").strip()
             else:
                 hour = "<MISSING>"
             hours_of_operation = hour
@@ -148,8 +106,8 @@ def fetch_data():
                 continue
             addresses.append(store[2])
 
-            #print("data = " + str(store))
-            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
         if current_results_len < MAX_RESULTS:
@@ -163,7 +121,141 @@ def fetch_data():
       
         coords = search.next_coord()
         
+
+
+
+
+
+    # BRANCH LOCATIONS ##
+    data = 'lat=41.828699&lng=-87.771381&searchby=FCS%7C&SearchKey=&rnd=1585207554632'
+    pagereq = requests.post("https://bylinebank.locatorsearch.com/GetItems.aspx", data=data, headers=header)
+    soup = BeautifulSoup(pagereq.text, 'html.parser')
+    add2 = soup.find_all("add2")
+    address1 = soup.find_all("add1")
+    current_results_len = len(address1)
+    loc = soup.find_all("marker")
+    hours = soup.find_all("contents")
+    name = soup.find_all("title")
+    locator_domain = "https://www.bylinebank.com"
+    store_number ="<MISSING>"
+    location_type ='BRANCH'
+    for i in range(len(address1)):
+        street_address = address1[i].text
+        city = add2[i].text.split(",")[0]
+        state = add2[i].text.replace(",,",",").split(",")[1].split( )[0]
         
+        zip1 = add2[i].text.replace(",,",",").split(",")[1].split( )[1].split("<br>")[0]
+        if "<b>" in add2[i].text:
+            phone = add2[i].text.split("<b>")[1].replace("</b>","").strip()
+        else:
+            phone = "<MISSING>"
+        # print(name[i])
+        location_name = name[i].text.replace("<br>","")
+
+        if len(zip1)==3 or len(zip1)==7:
+            country_code = "CA"
+        else:
+            country_code = "US"
+        
+        soup_hour = BeautifulSoup(hours[i].text,'lxml')
+        if soup_hour.find("table"):
+            h = []
+            for i in soup_hour.find("table"):
+                h.append(i.text)
+
+            hour = " ".join(h).replace(":"," : ").strip()
+        else:
+            hour = "<MISSING>"
+        hours_of_operation = hour
+        try:
+            latitude = loc[i].attrs['lat']
+            longitude = loc[i].attrs['lng']
+        except:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+        
+        store1 = []
+        store1.append(locator_domain if locator_domain else '<MISSING>')
+        store1.append(location_name if location_name else '<MISSING>')
+        store1.append(street_address if street_address else '<MISSING>')
+        store1.append(city if city else '<MISSING>')
+        store1.append(state if state else '<MISSING>')
+        store1.append(zip1 if zip1 else '<MISSING>')
+        store1.append(country_code if country_code else '<MISSING>')
+        store1.append(store_number if store_number else '<MISSING>')
+        store1.append(phone if phone else '<MISSING>')
+        store1.append(location_type)
+        store1.append(latitude if latitude else '<MISSING>')
+        store1.append(longitude if longitude else '<MISSING>')
+        store1.append(hours_of_operation if hours_of_operation else '<MISSING>')
+        store1.append("https://www.bylinebank.com/locator/")
+        # print("data=="+str(store1))
+        yield store1
+
+
+    # OFFICE LOCATIONS
+    data = 'lat=41.828699&lng=-87.771381&searchby=OFC%7C&SearchKey=&rnd=1585212256530'
+    pagereq = requests.post("https://bylinebank.locatorsearch.com/GetItems.aspx", data=data, headers=header)
+    soup = BeautifulSoup(pagereq.text, 'html.parser')
+    add2 = soup.find_all("add2")
+    address1 = soup.find_all("add1")
+    current_results_len = len(address1)
+    loc = soup.find_all("marker")
+    hours = soup.find_all("contents")
+    name = soup.find_all("title")
+    locator_domain = "https://www.bylinebank.com"
+    store_number ="<MISSING>"
+    location_type ='OFFICE'
+    for i in range(len(address1)):
+        street_address = address1[i].text
+        city = add2[i].text.split(",")[0]
+        state = add2[i].text.replace(",,",",").split(",")[1].split( )[0]
+        
+        zip1 = add2[i].text.replace(",,",",").split(",")[1].split( )[1].split("<br>")[0]
+        if "<b>" in add2[i].text:
+            phone = add2[i].text.split("<b>")[1].replace("</b>","").strip()
+        else:
+            phone = "<MISSING>"
+        # print(name[i])
+        location_name = name[i].text.replace("<br>","")
+
+        if len(zip1)==3 or len(zip1)==7:
+            country_code = "CA"
+        else:
+            country_code = "US"
+        
+        soup_hour = BeautifulSoup(hours[i].text,'lxml')
+        if soup_hour.find("table"):
+            h = []
+            for i in soup_hour.find("table"):
+                h.append(i.text)
+
+            hour = " ".join(h).replace(":"," : ").strip()
+        else:
+            hour = "<MISSING>"
+        hours_of_operation = hour
+        try:
+            latitude = loc[i].attrs['lat']
+            longitude = loc[i].attrs['lng']
+        except:
+            pass
+        
+        store2 = []
+        store2.append(locator_domain if locator_domain else '<MISSING>')
+        store2.append(location_name if location_name else '<MISSING>')
+        store2.append(street_address if street_address else '<MISSING>')
+        store2.append(city if city else '<MISSING>')
+        store2.append(state if state else '<MISSING>')
+        store2.append(zip1 if zip1 else '<MISSING>')
+        store2.append(country_code if country_code else '<MISSING>')
+        store2.append(store_number if store_number else '<MISSING>')
+        store2.append(phone if phone else '<MISSING>')
+        store2.append(location_type)
+        store2.append(latitude if latitude else '<MISSING>')
+        store2.append(longitude if longitude else '<MISSING>')
+        store2.append(hours_of_operation if hours_of_operation else '<MISSING>')
+        store2.append("https://www.bylinebank.com/locator/")
+        yield store2
 
 def scrape():
     data = fetch_data()

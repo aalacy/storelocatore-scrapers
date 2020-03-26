@@ -7,7 +7,7 @@ import sgzip
 import datetime
 from datetime import datetime
 session = SgRequests()
-
+import requests
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -29,14 +29,14 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     result_coords = []
-    r = session.get("https://www.spar.co.uk/sitemap-page",headers=headers)
+    r = requests.get("https://www.spar.co.uk/sitemap-page",headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find_all("a"):
         if "/store-locator/" in link['href']:
             page_url = base_url + link['href']
             # print(page_url)
 
-            r1 = session.get(page_url)
+            r1 = requests.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
             if soup1.find("span",{"class":"page__notice-title"}):
                 continue

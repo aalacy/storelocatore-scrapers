@@ -10,3 +10,5 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 addresss with no number,address contains state name,lat & lng length short this website
+
+and i checked all data is true this website 

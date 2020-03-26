@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import phonenumbers
+import requests
 
 session = SgRequests()
 def write_output(data):
@@ -34,7 +35,7 @@ def fetch_data():
             "dwfrm_storelocator_postalCode": "85029",
             "dwfrm_storelocator_maxdistance": "999999",
             "dwfrm_storelocator_findbyzip": "Search by Zip"}
-    r = session.post("https://www.oreck.com/stores-results/", data=data, headers=headers)
+    r = requests.post("https://www.oreck.com/stores-results/", data=data, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for loc in soup.find("div",{"class":"store-location-results"}).find_all("tr"):
         location_name = loc.find("td",{"class":"quarter dealer-name"}).text.strip()
@@ -76,7 +77,7 @@ def fetch_data():
         longitude = data['longitude']
         location_type = "Exclusive Oreck Dealers"
         page_url = "https://www.oreck.com/stores-details/?StoreID="+str(data['id'])
-        r1 = session.get(page_url)
+        r1 = requests.get(page_url)
         soup1 = BeautifulSoup(r1.text, "lxml")
         # print(page_url)
         try:
