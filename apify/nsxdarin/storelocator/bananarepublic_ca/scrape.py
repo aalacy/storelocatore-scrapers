@@ -44,7 +44,7 @@ def fetch_data():
                     locs.append(lurl)
     for loc in locs:
         loc = loc.replace('ca//stores','ca/stores')
-        print('Pulling Location %s...' % loc)
+        #print('Pulling Location %s...' % loc)
         website = 'bananarepublic.ca'
         typ = ''
         hours = ''
