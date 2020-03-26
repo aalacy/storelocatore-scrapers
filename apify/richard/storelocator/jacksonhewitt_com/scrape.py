@@ -3,7 +3,7 @@ import json
 import requests
 import sgzip
 from Scraper import Scrape
-
+import time
 
 URL = "https://www.jacksonhewitt.com"
 
@@ -28,6 +28,7 @@ class Scraper(Scrape):
         countries = []
         location_types = []
         stores = []
+        urls = []
         seen = []
 
         cookies = {
@@ -78,12 +79,25 @@ class Scraper(Scrape):
                 headers=headers,
                 cookies=cookies,
             )
-            data = json.loads(response.content)["Offices"]
+            try:
+                data = json.loads(response.content)["Offices"]
+            except:
+                print('sleeeeeping..............\n\n\n\n\n\n\n\n\n')
+                time.sleep(60)
+                response = requests.get(
+                    f"https://www.jacksonhewitt.com/api/offices/search/{zipcode}",
+                    headers=headers,
+                    cookies=cookies,
+                )
+                data = json.loads(response.content)["Offices"]
+
             stores.extend(data)
             print(f"{len(data)} of locations scraped for zipcode: {zipcode}")
 
         for store in stores:
             if store["OfficeNumber"] not in seen:
+
+                print(store)
                 # Store ID
                 location_id = store["OfficeNumber"]
 
@@ -120,6 +134,8 @@ class Scraper(Scrape):
                 # hour
                 hour = store["OfficeHours"]
 
+                url = 'https://www.jacksonhewitt.com/' + store['DetailsUrl']
+
                 # Store data
                 locations_ids.append(location_id)
                 locations_titles.append(location_title)
@@ -133,6 +149,7 @@ class Scraper(Scrape):
                 cities.append(city)
                 countries.append(country)
                 location_types.append(location_type)
+                urls.append(url)
                 seen.append(location_id)
 
         for (
@@ -148,6 +165,7 @@ class Scraper(Scrape):
             location_id,
             country,
             location_type,
+            url
         ) in zip(
             locations_titles,
             street_addresses,
@@ -161,6 +179,7 @@ class Scraper(Scrape):
             locations_ids,
             countries,
             location_types,
+            urls
         ):
             self.data.append(
                 [
@@ -177,6 +196,7 @@ class Scraper(Scrape):
                     latitude,
                     longitude,
                     hour,
+                    url
                 ]
             )
 

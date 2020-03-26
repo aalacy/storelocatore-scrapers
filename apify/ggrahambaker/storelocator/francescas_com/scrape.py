@@ -4,6 +4,9 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 import json
+import time
+
+
 def get_driver():
     options = Options()
     options.add_argument('--headless')
@@ -49,6 +52,7 @@ def fetch_data():
     for i, link in enumerate(link_list):
         driver.get(link)
         driver.implicitly_wait(10)
+        time.sleep(3)
 
         try:
             location_name = driver.find_element_by_xpath('//span[@itemprop="name"]').text

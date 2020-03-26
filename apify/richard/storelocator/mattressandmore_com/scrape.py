@@ -34,7 +34,7 @@ class Scraper(Scrape):
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
-        location_url = 'https://mattressandmore.com/allshops'
+        location_url = 'https://ffohome.com/allshops'
         driver.get(location_url)
         stores = [info for info in driver.find_elements_by_css_selector('div.info-wrap')]
 
@@ -44,6 +44,9 @@ class Scraper(Scrape):
 
             #Page Url
             page_url = store.find_element_by_css_selector('a.read-more').get_attribute('href')
+            print(page_url)
+            print()
+            print()
 
             # Type
             location_type = 'Mattress Retail'
