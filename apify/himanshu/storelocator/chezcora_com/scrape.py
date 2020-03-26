@@ -89,10 +89,10 @@ def fetch_data():
             store.append("CA")
             store.append("<MISSING>") 
             store.append(phone if phone else "<MISSING>")
-            store.append("chezcora")
+            store.append("<MISSING>")
             store.append(latitude if latitude else "<MISSING>")
             store.append(longitude if longitude else"<MISSING>")
-            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+            store.append("<MISSING>")
             store.append(page_url if page_url else "<MISSING>")
             if store[2] in address :
                 continue
