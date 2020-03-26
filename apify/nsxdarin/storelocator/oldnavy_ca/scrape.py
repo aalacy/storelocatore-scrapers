@@ -22,7 +22,7 @@ def fetch_data():
     for line in r.iter_lines():
         if 'class="ga-link" data-ga="Maplist, Region ' in line:
             stub = line.split('href="')[1].split('"')[0]
-            lurl = 'https://bananarepublic.gapcanada.ca/' + stub
+            lurl = 'https://oldnavy.gapcanada.ca/' + stub
             if lurl not in states:
                 states.append(lurl)
     for state in states:
@@ -31,7 +31,7 @@ def fetch_data():
             r2 = session.get(state, headers=headers)
             for line2 in r2.iter_lines():
                 if 'data-city-item="' in line2:
-                    lurl = 'https://bananarepublic.gapcanada.ca/' + line2.split('href="')[1].split('"')[0]
+                    lurl = 'https://oldnavy.gapcanada.ca/' + line2.split('href="')[1].split('"')[0]
                     if lurl not in cities:
                         cities.append(lurl)
     for city in cities:
@@ -39,7 +39,7 @@ def fetch_data():
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
             if '<a class="view-store ga-link"' in line2:
-                lurl = 'https://bananarepublic.gapcanada.ca/' + line2.split('href="')[1].split('"')[0]
+                lurl = 'https://oldnavy.gapcanada.ca/' + line2.split('href="')[1].split('"')[0]
                 if lurl not in locs:
                     locs.append(lurl)
     for loc in locs:
