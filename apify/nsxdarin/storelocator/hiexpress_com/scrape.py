@@ -24,13 +24,13 @@ def fetch_data():
                 states.append(line.split('href="')[1].split('"')[0])
         for state in states:
             cities = []
-            print('Pulling State %s...' % state)
+            #print('Pulling State %s...' % state)
             r2 = session.get(state, headers=headers)
             for line2 in r2.iter_lines():
                 if 'Hotels</span></a>' in line2:
                     cities.append(line2.split('href="')[1].split('"')[0])
             for city in cities:
-                print('Pulling City %s...' % city)
+                #print('Pulling City %s...' % city)
                 r3 = session.get(city, headers=headers)
                 for line3 in r3.iter_lines():
                     if '"@type":"Hotel","name":"Holiday Inn Express' in line3:
