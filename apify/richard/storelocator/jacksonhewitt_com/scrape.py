@@ -105,7 +105,10 @@ class Scraper(Scrape):
                 location_title = "Hackson Hewitt" + " " + store["City"]
 
                 # Type
-                location_type = store["Location"]
+                location_type = store["Location"].strip()
+
+                if location_type == '':
+                    location_type = '<MISSING>'
 
                 # Street
                 street_address = store["Address1"] + store["Address2"]
@@ -132,7 +135,13 @@ class Scraper(Scrape):
                 phone = store["Phone"]
 
                 # hour
-                hour = store["OfficeHours"]
+                hour_arr = store["OfficeHours"]
+                hour = ''
+                for h in hour_arr:
+                    hour += h['DayOfWeek'] + ' ' + h['Hours'] + ' '
+
+                hour = hour.strip()
+
 
                 url = 'https://www.jacksonhewitt.com/' + store['DetailsUrl']
 
