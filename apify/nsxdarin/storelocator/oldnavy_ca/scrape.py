@@ -15,34 +15,80 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = 'https://oldnavy.gapcanada.ca/customerService/info.do?cid=57308&mlink=5151,8551677,7'
+    states = []
+    cities = []
+    url = 'https://oldnavy.gapcanada.ca/stores?cid=57308&mlink=5151,8551677,7'
     r = session.get(url, headers=headers)
-    Found = False
-    website = 'oldnavy.ca'
-    typ = '<MISSING>'
-    hours = '<MISSING>'
     for line in r.iter_lines():
-        if ' var caStores=[' in line:
-            Found = True
-        if Found and '</script>' in line:
-            Found = False
-        if Found and ", '" in line and "store locator ID" not in line:
-            name = line.split("'")[1]
-            add = line.split("'")[3]
-            city = line.split("'")[5]
-            state = line.split("'")[7]
-            country = 'CA'
-            zc = line.split("'")[9]
-            phone = line.split("'")[11]
-            lat = line.split("',")[6].split(']')[0].split(',')[8].strip()
-            lng = line.split("',")[6].split(']')[0].split(',')[9].strip()
-            loc = '<MISSING>'
-            store = '<MISSING>'
-            if zc == '':
-                zc = '<MISSING>'
-            if phone == '':
-                phone = '<MISSING>'
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if 'class="ga-link" data-ga="Maplist, Region ' in line:
+            stub = line.split('href="')[1].split('"')[0]
+            lurl = 'https://bananarepublic.gapcanada.ca/' + stub
+            if lurl not in states:
+                states.append(lurl)
+    for state in states:
+        if '/' in state:
+            print('Pulling Province %s...' % state)
+            r2 = session.get(state, headers=headers)
+            for line2 in r2.iter_lines():
+                if 'data-city-item="' in line2:
+                    lurl = 'https://bananarepublic.gapcanada.ca/' + line2.split('href="')[1].split('"')[0]
+                    if lurl not in cities:
+                        cities.append(lurl)
+    for city in cities:
+        print('Pulling City %s...' % city)
+        r2 = session.get(city, headers=headers)
+        for line2 in r2.iter_lines():
+            if '<a class="view-store ga-link"' in line2:
+                lurl = 'https://bananarepublic.gapcanada.ca/' + line2.split('href="')[1].split('"')[0]
+                if lurl not in locs:
+                    locs.append(lurl)
+    for loc in locs:
+        loc = loc.replace('ca//stores','ca/stores')
+        #print('Pulling Location %s...' % loc)
+        website = 'oldnavy.ca'
+        typ = ''
+        hours = ''
+        name = ''
+        add = ''
+        city = ''
+        state = ''
+        zc = ''
+        country = 'CA'
+        store = ''
+        phone = ''
+        lat = ''
+        lng = ''
+        r2 = session.get(loc, headers=headers)
+        lines = r2.iter_lines()
+        for line2 in lines:
+            if 'class="daypart" data-daypart="' in line2:
+                day = line2.split('data-daypart="')[1].split('"')[0]
+                next(lines)
+                next(lines)
+                next(lines)
+                hrs = day + ': ' + next(lines).split('>')[1].split('<')[0]
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
+            if '{"docEl":null' in line2:
+                store = line2.split('"lid":')[1].split(',')[0]
+                name = line2.split('location_name\\":\\"')[1].split('\\')[0]
+                city = line2.split('"city\\":\\"')[1].split('\\')[0]
+                lat = line2.split('"lat":')[1].split(',')[0]
+                lng = line2.split('"lng":')[1].split(',')[0]
+                try:
+                    add = line2.split('"address_1\\":\\"')[1].split('\\')[0] + ' ' + line2.split('"address_2\":\"')[1].split('\\')[0]
+                    add = add.strip()
+                except:
+                    add = line2.split('"address_1\\":\\"')[1].split('\\')[0]
+                state = line2.split('"region\\":\\"')[1].split('\\')[0]
+                zc = line2.split('"post_code\\":\\"')[1].split('\\')[0]
+                phone = line2.split('"local_phone\\":\\"')[1].split('\\')[0]
+                typ = line2.split('"store_type\\": \\"')[1].split('\\')[0]
+        if typ == '':
+            typ = 'Store'
+        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
