@@ -5,14 +5,19 @@ from selenium.webdriver.firefox.options import Options
 import re
 from bs4 import BeautifulSoup
 import json
+import platform
 
+system = platform.system()
 def get_driver():
     options = Options()
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
-    return webdriver.Firefox(options=options,executable_path="./geckodriver")
+    if "linux" in system.lower():
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
+    else:
+        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,7 +35,7 @@ def fetch_data():
     driver = get_driver()
     driver.get('https://www.armani.com/experience/us/?yoox_storelocator_action=true&action=yoox_storelocator_get_all_stores')
     cookies_list = driver.get_cookies()
-    print(cookies_list)
+    #sssprint(cookies_list)
     soup = BeautifulSoup(driver.page_source,"lxml")
     dict_from_json = json.loads(soup.find("body").text)
     return_main_object = []

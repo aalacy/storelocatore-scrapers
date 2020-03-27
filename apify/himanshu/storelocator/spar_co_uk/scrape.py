@@ -3,18 +3,17 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
 import datetime
 from datetime import datetime
 session = SgRequests()
-import requests
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","raw_address""page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -29,25 +28,56 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     result_coords = []
-    r = requests.get("https://www.spar.co.uk/sitemap-page",headers=headers)
+    r = session.get("https://www.spar.co.uk/sitemap-page",headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find_all("a"):
         if "/store-locator/" in link['href']:
             page_url = base_url + link['href']
             # print(page_url)
 
-            r1 = requests.get(page_url)
+            r1 = session.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
             if soup1.find("span",{"class":"page__notice-title"}):
                 continue
             addr = json.loads(soup1.find(lambda tag : (tag.name == "script") and "latitude" in tag.text).text)
             location_name = addr['name']
             raw_address = re.sub(r'\s+'," "," ".join(list(soup1.find("div",{"class":"store-details__contact"}).find_all("p")[-1].stripped_strings)))
-
-            try:
-                zipp = addr['address']['postalCode']
-            except:
+            data = raw_address.split(",")
+            if len(data) == 1:
+                street_address = data[0]
+                city = "<MISSING>"
+                state = "<MISSING>"
                 zipp = "<MISSING>"
+            elif len(data) == 2:
+                street_address = data[0]
+                city = "<MISSING>"
+                state = "<MISSING>"
+                zipp = data[1]
+            elif len(data) == 3:
+                street_address = data[0].strip()
+                city = data[1].strip()
+                state = "<MISSING>"
+                zipp = data[-1].strip()
+            elif len(data) == 4:
+                street_address = data[0].strip()
+                city = data[1].strip()
+                state = data[2].strip()
+                zipp = data[3].strip()
+            # elif len(data) == 5:
+            #     street_address = " ".join(data[:-3]).strip()
+            #     city = data[-3].strip()
+            #     state = data[-2].strip()
+            #     zipp = data[-1].strip()
+            # elif len(data) == 6:
+            #     street_address = " ".join(data[:-3]).strip()
+            #     city = data[-3].strip()
+            #     state = data[-2].strip()
+            #     zipp = data[-1].strip()
+            else:
+                street_address = re.sub(r'\s+'," "," ".join(data[:-3]).strip())
+                city = data[-3].strip()
+                state = data[-2].strip()
+                zipp = data[-1].strip()
             try:
                 phone = addr['telephone']
             except:
@@ -77,17 +107,17 @@ def fetch_data():
             store = []
             result_coords.append((latitude,longitude))
             store.append(base_url)
-            store.append(location_name)
-            store.append("<INACCESSIBLE>")
-            store.append("<INACCESSIBLE>")
-            store.append("<INACCESSIBLE>")
-            store.append(zipp)   
+            store.append(location_name if location_name else "<MISSING>")
+            store.append(street_address if street_address else "<MISSING>")
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")   
             store.append("UK")
             store.append(store_number)
             store.append(phone)
             store.append(location_type)
-            store.append(latitude )
-            store.append(longitude )
+            store.append(latitude.replace("0","<MISSING>"))
+            store.append(longitude.replace("0","<MISSING>"))
             store.append(hours)
             store.append(page_url)
             # print("data==="+str(store))

@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",'page_url'])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -38,7 +38,12 @@ def fetch_data():
                 
                     data = json.loads(soup1.find(lambda tag: (tag.name == "script") and '"address"' in tag.text).text)['@graph'][-1]
                     location_name = data['name']
-                    street_address = data['address']['streetAddress']
+                    addr = data['address']['streetAddress'].split(",")
+                    if len(addr) == 3 or len(addr) == 4:
+                        street_address = addr[1]+" "+ addr[2]
+                    else:
+                        street_address = data['address']['streetAddress']
+                        
                     city = data['address']['addressLocality']
                     state = data['address']['addressRegion']
                     zipp = data['address']['postalCode']
@@ -46,7 +51,7 @@ def fetch_data():
                         phone = data['telephone']
                     except:
                         phone = "<MISSING>"
-                    location_type = "UW Medicine"
+                    location_type = "MedicalClinic"
                     try:
                         hours = " ".join(list(soup1.find("table",{"class":"clinic-page__hours-table"}).find("tbody").stripped_strings))
                     except:

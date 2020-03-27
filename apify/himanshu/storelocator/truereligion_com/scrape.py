@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 session = SgRequests()
-import requests
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -18,11 +18,14 @@ def write_output(data):
 def fetch_data():
     base_url = "https://www.truereligion.com"
     data = '{"request":{"appkey":"1C4F6E2A-C3CC-11E2-A252-16BE05D25870","formdata":{"geoip":false,"dataview":"store_default","limit":500,"geolocs":{"geoloc":[{"addressline":"","country":"US","latitude":"","longitude":"","state":"","province":"","city":"","address1":"","postalcode":""}]},"searchradius":"5000","stateonly":"","where":{"or":{"fullprice":{"eq":""},"outlet":{"eq":""},"factory":{"eq":""},"internationalwholesale":{"eq":""}}},"false":"0"}}}'
-    json_data = requests.post('https://hosted.where2getit.com/truereligion/rest/locatorsearch?like=0.09181422211445356', data=data).json()['response']['collection']
+    json_data = session.post('https://hosted.where2getit.com/truereligion/rest/locatorsearch?like=0.09181422211445356', data=data).json()['response']['collection']
     # print(json_data)
     addressess = []
     
     for poi in json_data:
+        location_type = poi['icon']
+        if location_type == "True_International":
+            continue
         name = poi['name']
         address = (poi['address1'] +" "+ str(poi['address2'])).replace("None","").strip()
         storeno = poi['clientkey']
@@ -62,7 +65,7 @@ def fetch_data():
         store.append(country if country else "<MISSING>")
         store.append(storeno if storeno else "<MISSING>")
         store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
+        store.append(location_type)
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
         store.append(hour if hour else "<MISSING>")
