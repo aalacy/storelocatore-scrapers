@@ -72,18 +72,32 @@ def fetch_data():
                     cty = key
         
         street=street.strip().split('\n')
-        
+        print(street)
         if len(street ) == 1:
-            street=street[0].strip()
+            street=re.findall(r'[0-9].+',street[0])[0].strip()
+            print(street[0])
+            
         elif len(street)==2:
             if len(street[1].strip().split(" "))==1 or "suite" in street[1].lower().strip().split(" ")[0]:
+                 if re.findall(r'(\d.*)',street[0])!=[]:
+                   street[0]=re.findall(r'(\d.*)',street[0])[0]
+                 print(street[0])
                  street=" ".join(street)
-            else:
-                 street=street[1].strip()
-        else:
-            street=" ".join(street)
-        
 
+                 
+            else:
+
+                street=street[1].strip()
+        else:
+            
+            if re.findall(r'\d',street[0])!=[]:
+                street = " ".join(street)
+                
+            else:
+                del street[0]
+                street=" ".join(street)
+        
+        print (street)
         num = soup.find("div", class_="number").text
         num = num.replace("Store #", "")
         num = num.replace("\t", "")
@@ -95,13 +109,17 @@ def fetch_data():
         hours = (hours.split("</div>")[1]).split("</div")[0]
         hours = hours.replace("\t", "")
         street = street.replace("\n", " ")
-        street = street.replace(" +", "")
+        street = street.replace(" +", "").replace(zcode,"")
         cty = cty.replace(",", "")
         coord = soup.find("input", id="address")["value"]
         lat = coord.split(",")[0]
         lng = coord.split(",")[1]
         hours = hours.replace(" +", "")
         hours = hours.strip()
+        if lat.strip() == "null" :
+            lat="<MISSING>"
+        if lng.strip() == "null" :
+            lng="<MISSING>"
         data.append([
             'https://www.talbots.com/',
             link,
