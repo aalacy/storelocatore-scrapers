@@ -117,6 +117,8 @@ def fetch_data():
                                     hours = hours.strip()
                                     title = title.lstrip()
                                     title = title.encode('ascii', 'ignore').decode('ascii')
+                                    title = title.replace('Sears','Sears ')
+                                    title = title.replace('  ',' ')
                                     
                                     if title.find('Find Your Next Closest Store') == -1:
                                         data.append([
