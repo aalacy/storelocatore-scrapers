@@ -83,6 +83,7 @@ def fetch_data():
             hours = hours.replace('\n',' ' )
             
             
+            
         
             
 
@@ -97,7 +98,8 @@ def fetch_data():
         if city.find('\n') > -1:
             street = street + ' '+ city[0:city.find('\n')]
             city = city[city.find('\n')+1:len(city)]
-            
+        phone = phone.replace('Phone:','')
+        phone = phone.lstrip()
         data.append(['https://www.fordsgarageusa.com/',link,title,street,city,state,pcode,
                      'US','<MISSING>',phone,'<MISSING>',lat,longt,hours])
     
