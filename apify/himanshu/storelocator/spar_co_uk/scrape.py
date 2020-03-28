@@ -101,6 +101,10 @@ def fetch_data():
             coord = soup1.find(lambda tag : (tag.name == "script") and "storeLat" in tag.text).text
             latitude = coord.split('storeLat = "')[1].split('";')[0]
             longitude = coord.split('storeLng = "')[1].split('";')[0]
+            if latitude == "0":
+                latitude = "<MISSING>"
+            if longitude == "0":
+                longitude = "<MISSING>"
             store_number = coord.split('storeId = ')[1].split(";")[0]
                     
                 
@@ -116,8 +120,8 @@ def fetch_data():
             store.append(store_number)
             store.append(phone)
             store.append(location_type)
-            store.append(latitude.replace("0","<MISSING>"))
-            store.append(longitude.replace("0","<MISSING>"))
+            store.append(latitude)
+            store.append(longitude)
             store.append(hours)
             store.append(page_url)
             # print("data==="+str(store))

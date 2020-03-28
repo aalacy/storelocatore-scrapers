@@ -3,92 +3,121 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
-import time 
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.support.wait import WebDriverWait
+import time
+import unicodedata
+import platform
+system = platform.system()
+
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", 'page_url'])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
-def request_wrapper(url,method,headers,data=None):
-   request_counter = 0
-   if method == "get":
-       while True:
-           try:
-               r = requests.get(url,headers=headers)
-               return r
-               break
-           except:
-               time.sleep(2)
-               request_counter = request_counter + 1
-               if request_counter > 10:
-                   return None
-                   break
-   elif method == "post":
-       while True:
-           try:
-               if data:
-                   r = requests.post(url,headers=headers,data=data)
-               else:
-                   r = requests.post(url,headers=headers)
-               return r
-               break
-           except:
-               time.sleep(2)
-               request_counter = request_counter + 1
-               if request_counter > 10:
-                   return None
-                   break
-   else:
-       return None
+
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    if "linux" in system.lower():
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
+    else:
+        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+
 def fetch_data():
-    address = []
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
-    base_url = "https://renaissance-hotels.marriott.com"
-    location_url = "https://renaissance-hotels.marriott.com/locations-list-view"
-    r = request_wrapper(location_url,"get",headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    data = soup.find_all("script",{"type":"text/javascript"})[7]
-    k = (data.text.split('renaissance":{"locations":')[1].split('},"js":{"tokens"')[0])
-    json_data = json.loads(k)
-    for i in json_data:
-        mp = (i['url'])
-        r1 = request_wrapper(mp,"get",headers=headers)
-        soup1 = BeautifulSoup(r1.text,"lxml")
-        data = soup1.find(lambda tag : (tag.name == "script") and "addressLocality" in tag.text).text.replace("\r\n",'')
-        fdata  = (json.loads(re.sub(r'\s+'," ",data)))
-        for h in fdata['contactPoint']:
-            if 'telephone' in h:
-                phone = (h['telephone'])
-                zipp = fdata['address']['postalCode'].replace("OK ","").replace("NY ","")
-                store = []
-                store.append(base_url if base_url else "<MISSING>")
-                store.append(fdata['name'] if fdata['name'] else "<MISSING>") 
-                store.append(fdata['address']['streetAddress'] if fdata['address']['streetAddress'] else "<MISSING>")
-                store.append(fdata['address']['addressLocality'] if fdata['address']['addressLocality'] else "<MISSING>")
-                store.append(fdata['address']['addressRegion'] if fdata['address']['addressRegion'] else "<MISSING>")
-                store.append( zipp if zipp else "<MISSING>")
-                store.append(fdata['address']['addressCountry'] if fdata['address']['addressCountry'] else "<MISSING>")
-                store.append("<MISSING>") 
-                store.append(phone if phone else "<MISSING>")
-                store.append(fdata['branchOf']['name'] if fdata['branchOf']['name'] else "<MISSING>")
-                store.append(fdata['geo']['latitude'] if fdata['geo']['latitude'] else "<MISSING>")
-                store.append(fdata['geo']['longitude'] if fdata['geo']['longitude'] else "<MISSING>")
-                store.append("<MISSING>")
-                store.append(fdata['url'] if fdata['url'] else "<MISSING>")
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                if store[2] in address :
-                    continue
-                address.append(store[2])
-                if fdata['address']['addressCountry'] == 'United States' or fdata['address']['addressCountry'] == 'USA' or fdata['address']['addressCountry'] =='Canada' or fdata['address']['addressCountry'] =='' or fdata['address']['addressCountry'] =='United States Virgin Islands':
-                    yield store 
+    driver = get_driver()
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+    }
+    addresses = []
+    brand_id = "BR"
+    domain_url = "https://renaissance-hotels.marriott.com"
+    driver.get("https://www.marriott.com/search/submitSearch.mi?showMore=true&marriottBrands=" + str(brand_id) + "&destinationAddress.country=US")
+    element = WebDriverWait(driver, 10).until(lambda x: x.find_element_by_xpath('//input[@id="keywords"]'))
+    element.send_keys("renaissance") 
+    WebDriverWait(driver, 10).until(lambda x: x.find_element_by_xpath('//input[@value="Search Hotels"]')).click()
+    while True:
+        # wait = WebDriverWait(driver, 10)
+        # element = wait.until(lambda x: x.find_element_by_xpath("//div[text()='Destination']"))
+        soup = BeautifulSoup(driver.page_source,"lxml")
+ 
+        for location in soup.find('div',{'class':'js-property-list-container'}).find_all("div",{"data-brand":str(brand_id)},recursive=False):
+            if location["data-brand"] != brand_id:
+                continue
+            name = location.find("span",{"class":"l-property-name"}).text
+            address = location.find("div",{"data-address-line1":True})
+            street_address = address["data-address-line1"]
+            if location.find("div",{"data-address-line2":True}):
+                street_address = street_address + " " + address["data-address-line2"]
+            city = address["data-city"]
+            state = address["data-state"]
+            if state in ["QROO","JAL","BC","DF","NL","SP","LU"]:
+                continue
+            store_zip = address["data-postal-code"]
+            phone = address["data-contact"]
+            lat = json.loads(location["data-property"])["lat"]
+            lng = json.loads(location["data-property"])["longitude"]
+            page_url = "https://www.marriott.com" + location.find("span",{"class":"l-property-name"}).parent.parent["href"]
+            store = []
+            store.append(domain_url)
+            store.append(name if name else "<MISSING>")
+            store.append(street_address if street_address else "<MISSING>")
+            if store[-1] == "":
+                continue
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(store_zip))
+            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(store_zip))
+            if ca_zip_list:
+                zipp = ca_zip_list[-1]
+                country_code = "CA"
+
+            elif us_zip_list:
+                zipp = us_zip_list[-1]
+                country_code = "US"
+            else:
+                continue
+            store.append(zipp if zipp else "<MISSING>")
+            if len(store[-1]) == 10:
+                store[-1] = store[-1].replace(" ","-")
+            store.append(country_code)
+            store.append("<MISSING>")
+            store.append(phone if phone else "<MISSING>")
+            store.append("<MISSING>")
+            store.append(lat)
+            store.append(lng)
+            store.append("<MISSING>")
+            store.append(page_url)
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
+            for i in range(len(store)):
+                if type(store[i]) == str:
+                    store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            store = [x.replace("–","-") if type(x) == str else x for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            yield store
+            # print("data === ",str(store))
+        # if len(soup.find('div',{'class':'js-property-list-container'}).find_all("div",{"data-brand":str(brand_id)})) <= 0:
+        #     break
+        soup = BeautifulSoup(driver.page_source,"lxml")
+
+        if soup.find("a",{"title":"Next"}):
+            driver.find_element_by_xpath("//a[@title='Next']").click()
+        else:
+            break
+    driver.close()
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 scrape()

@@ -1,9 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
+session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -13,123 +14,58 @@ def write_output(data):
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
-            writer.writerow(row)
-
-
-def request_wrapper(url,method,headers,data=None):
-   request_counter = 0
-   if method == "get":
-       while True:
-           try:
-               r = requests.get(url,headers=headers)
-               return r
-               break
-           except:
-               time.sleep(2)
-               request_counter = request_counter + 1
-               if request_counter > 10:
-                   return None
-                   break
-   elif method == "post":
-       while True:
-           try:
-               if data:
-                   r = requests.post(url,headers=headers,data=data)
-               else:
-                   r = requests.post(url,headers=headers)
-               return r
-               break
-           except:
-               time.sleep(2)
-               request_counter = request_counter + 1
-               if request_counter > 10:
-                   return None
-                   break
-   else:
-       return None      
+            writer.writerow(row)      
 
 def fetch_data():
-    addresses = []
+    addressess = []
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
-    country_code = "US"
-    base_url = "https://www.freseniuskidneycare.com/"
-    locator_domain = base_url
-    location_type = ""
-    # lat = coord[0]
-    # lng = coord[1]
-    for i in range(1,281):
-       # print(i)
-        location_url = "https://www.freseniuskidneycare.com/dialysis-centers?lat=39.3096984&lng=-76.6701475&address=Baltimore,%20MD%2021216,%20USA&radius=10000&page=" + str(i)
-        k = request_wrapper(location_url,"get",headers=headers)
-        soup = BeautifulSoup(k.text,"lxml")
-        # data = soup.find_all("script",{'type':"application/ld+json"})[2:].text
-        for i in soup.find_all("script",{'type':"application/ld+json"})[2:]:
-            text = i.text
-            json_data = json.loads(text)
-            if "address" in json_data:
-                store_number = "<MISSING>"
-                if "geo" in json_data :
-                    if "latitude" in json_data['geo']:
-                        latitude = json_data['geo']['latitude']
-                    else:
-                        latitude = "<MISSING>"
-                    if "longitude" in json_data['geo']:
-                        longitude = json_data['geo']['longitude']
-                    else:
-                        longitude = "<MISSING>"
-                else:
-                    latitude="<MISSING>"
-                    longitude ="<MISSING>"
-                if "name" in json_data:
-                    location_name = json_data['name'] 
-                else:
-                    location_name = "<MISSING>"
-                if "address" in json_data:
-                    if "addressLocality" in json_data['address']:
-                        city = json_data['address']['addressLocality'] 
-                    else:
-                        city = "<MISSING>"
-                    if "addressRegion" in json_data['address']:
-                        state = json_data['address']['addressRegion']
-                    else:
-                        state = "<MISSING>"
-                    if "postalCode" in json_data['address']:
-                        zipp = json_data['address']['postalCode']
-                    else:
-                        zipp = "<MISSING>"
-                else:
-                    street_address ="<MISSING>"
-                    city = "<MISSING>"
-                    state = "<MISSING>"
-                    zipp = "<MISSING>"
-                if "telephone" in json_data:
-                    phone = json_data['telephone']
-                else:
-                    phone = "<MISSING>"
-                if "@type" in json_data:
-                    location_type = json_data['@type'] 
-                else:
-                    location_type = "<MISSING>"
-                if "openingHours" in json_data:
-                    hours_of_operation = "  ".join(json_data['openingHours'])
-                else:
-                    hours_of_operation = "<MISSING>"
-                if "url" in json_data:
-                    page_url = json_data['url']
-                    k1 = request_wrapper(page_url,"get",headers=headers)
-                    soup1 = BeautifulSoup(k1.text,"lxml")
-                    data1 = soup1.find_all("p",{'class':"locator-text"})[1].find("span")
-                    street_address1 = (data1.text.replace("\n","").replace("\r","").replace("\t","").strip().lstrip().rstrip())
-                    street_address = street_address1.replace("                                   "," ")
-                store = [locator_domain, location_name.encode('ascii', 'ignore').decode('ascii').strip(), street_address.encode('ascii', 'ignore').decode('ascii').strip(), city.encode('ascii', 'ignore').decode('ascii').strip(), state.encode('ascii', 'ignore').decode('ascii').strip(), zipp.encode('ascii', 'ignore').decode('ascii').strip(), country_code,
-                            store_number, phone.encode('ascii', 'ignore').decode('ascii').strip(), location_type, latitude, longitude, hours_of_operation.replace("hours", "").encode('ascii', 'ignore').decode('ascii').strip(), page_url]
-                if str(store[2]) + str(store[-3]) not in addresses:
-                    addresses.append(str(store[2]) + str(store[-3]))
-                    store = [x if x else "<MISSING>" for x in store]
-                    yield store
+    base_url = "https://www.freseniuskidneycare.com"
+    for page_number in range(1,281):
+        location_url = "https://www.freseniuskidneycare.com/dialysis-centers?lat=39.3096984&lng=-76.6701475&radius=10000&page=" + str(page_number)
+        location_r = session.get(location_url, headers=headers)
+        location_soup = BeautifulSoup(location_r.text, "lxml")
+        for data in location_soup.find_all("tr",{"class":"locator-results-item js-locator-item js-loadmore-item"}):
+            location_name = data['data-clinicname'].split(".")[1]
+            street_address = data['data-clinicaddr1']
+            if data['data-clinicaddr2']:
+                street_address+=" "+ data['data-clinicaddr2']
+            city = data['data-clinicaddr3'].split(",")[0].strip()
+            state = data['data-clinicaddr3'].split(",")[1].strip()
+            zipp = data['data-clinicaddr3'].split(",")[2].strip()
+            if zipp == "00765":
+                continue
+            page_url = base_url + data['data-clinicdetailsurl']
+            store_number = page_url.split("/")[-1]
+            latitude = data['data-coords'].split(",")[0]
+            longitude = data['data-coords'].split(",")[1]
+            phone = data.find("td",{"class":{"location-phone-list"}}).find_all("div")[1].find("a").text.strip()
+            hours = " ".join(list(data.find_next("tr").find("div",{"class":"locator-results-item--more__hours-details"}).stripped_strings))
+            location_type = "MedicalClinic"
 
+            store = []
+            store.append(base_url)
+            store.append(location_name if location_name else '<MISSING>')
+            store.append(street_address if street_address else '<MISSING>')
+            store.append(city if city else '<MISSING>')
+            store.append(state if state else '<MISSING>')
+            store.append(zipp if zipp else '<MISSING>')
+            store.append("US")
+            store.append(store_number if store_number else '<MISSING>')
+            store.append(phone if phone else '<MISSING>')
+            store.append(location_type if location_type else '<MISSING>')
+            store.append(latitude if latitude else '<MISSING>')
+            store.append(longitude if longitude else '<MISSING>')
+            store.append(hours if hours else '<MISSING>')
+            store.append(page_url)
+            if store[2] in addressess:
+                continue
+            addressess.append(store[2])
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            # print('---store--'+str(store))
+            yield store
+        
 
 
 
