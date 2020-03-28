@@ -78,7 +78,7 @@ def fetch_data():
             print(street[0])
             
         elif len(street)==2:
-            if len(street[1].strip().split(" "))==1 or "suite" in street[1].lower().strip().split(" ")[0]:
+            if len(street[1].strip().split(" "))==1 or re.findall(r'(\d.*)',street[0])!=[] or "suite" in street[1].lower().strip().split(" ")[0]or "suite" in street[0].lower().strip().split(" ")[0]:
                  if re.findall(r'(\d.*)',street[0])!=[]:
                    street[0]=re.findall(r'(\d.*)',street[0])[0]
                  print(street[0])
@@ -109,7 +109,7 @@ def fetch_data():
         hours = (hours.split("</div>")[1]).split("</div")[0]
         hours = hours.replace("\t", "")
         street = street.replace("\n", " ")
-        street = street.replace(" +", "").replace(zcode,"")
+        street = street.replace(" +", "").replace(zcode,"").strip()
         cty = cty.replace(",", "")
         coord = soup.find("input", id="address")["value"]
         lat = coord.split(",")[0]
