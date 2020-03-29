@@ -80,7 +80,30 @@ def fetch_data():
             pcode = "<MISSING>"
         if state == 'West Virginia':
             state = 'WV'
-                
+       
+        link = 'https://www.bankwithunited.com/contact-us?geolocation_geocoder_google_places_api='+pcode+'&geolocation_geocoder_google_places_api_state=0&field_geolocation_proximity-lat=&field_geolocation_proximity-lng=&field_geolocation_proximity=25&name=Apply#location'        
+        #print(pcode, link)
+        r = session.get(link, headers=headers, verify=False)  
+        soup =BeautifulSoup(r.text, "html.parser")
+        divlist = soup.findAll('div',{'class':'adrs'})
+        hours = "<MISSING>"
+        for div in divlist:
+            addr = div.find('div',{'class':'views-field-address'})
+            if addr.text.find(pcode) > -1:
+                try:
+                    hours = div.find('div',{'class':'views-field views-field-field-location-service-hour'}).text
+                    if hours.find("Drive") > -1:
+                        hours = hours[0:hours.find("Drive")]
+                except:
+                    hours = "<MISSING>"
+                break
+        hours = hours.replace('\n','')
+        hours = hours.rstrip()
+        if len(hours) < 3:
+            hours = "<MISSING>"
+        #print(hours)
+        
+           
         data.append([
                         'https://www.bankwithunited.com/',
                         url,                   
@@ -95,7 +118,7 @@ def fetch_data():
                         ltype,
                         lat,
                         longt,
-                        "<MISSING>"
+                        hours
                     ])
         #print(p,data[p])
         p += 1
