@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,12 +19,12 @@ def write_output(data):
 def fetch_data():
     base_url = "https://www.54thstreetgrill.com"
     return_main_object = []
-    r = requests.get(base_url + "/54th-all-locations.html")
+    r = session.get(base_url + "/54th-all-locations.html")
     soup = BeautifulSoup(r.text,"lxml")
     for parts in soup.find_all("li",{"class": "accordion-navigation"}):
         for semi_parts in parts.find_all("div",{"class": re.compile("columns small-12 medium-4")}):
             return_object = []
-            store_request = requests.get(base_url + semi_parts.find("h4").find("a")['href'])
+            store_request = session.get(base_url + semi_parts.find("h4").find("a")['href'])
             store_soup = BeautifulSoup(store_request.text,"lxml")
             locationDetails = store_soup.find("div",{"id": "locationDetails"})
             temp_list = list(locationDetails.find_all("p"))

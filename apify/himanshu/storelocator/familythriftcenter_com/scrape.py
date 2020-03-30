@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import cgi
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -36,7 +39,7 @@ def fetch_data():
         
         base_url= "https://familythriftcenter.com/wp-content/plugins/store-locator/sl-xml.php?mode=gen&lat="+ str(lat)+"&lng="+str(lng)+"&radius=500"
         try:
-            r = requests.get(base_url)
+            r = session.get(base_url)
         except:
             continue
         soup= BeautifulSoup(r.text,"lxml")

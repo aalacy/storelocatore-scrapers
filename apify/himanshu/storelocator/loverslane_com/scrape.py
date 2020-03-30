@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.loverslane.com"
-    r = requests.get(base_url+'/stores')
+    r = session.get(base_url+'/stores')
     soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
     main=soup.find_all('script', type="text/javascript")
@@ -26,7 +29,7 @@ def fetch_data():
                 lat=link[1]
                 lng=link[2]
                 name=link[0]
-                r1 = requests.get(base_url+link[-1])
+                r1 = session.get(base_url+link[-1])
                 soup1=BeautifulSoup(r1.text,'lxml')
                 address=soup1.find('span',itemprop="streetAddress").text.strip()
                 city=soup1.find('span',itemprop="addressLocality").text.strip()

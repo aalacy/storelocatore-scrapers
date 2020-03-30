@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import urllib3
+
+session = SgRequests()
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def write_output(data):
@@ -25,7 +28,7 @@ def fetch_data():
     addresses = []
 
     base_url = "https://www.hyperionpublic.com"
-    r = requests.get("https://hyperionpublic.site/wp-json/tribe/events/v1/events/?start_date=today&end_date=+2%20days").json()
+    r = session.get("https://hyperionpublic.site/wp-json/tribe/events/v1/events/?start_date=today&end_date=+2%20days").json()
     for data in r['events']:
         location_name = "<MISSING>"
         street_address = data['venue']['address']

@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -67,7 +70,7 @@ def fetch_data():
     address=[]
     for zip_code in zips:
         # print(zip_code)
-        r = requests.get(
+        r = session.get(
             'https://www.bmwusa.com/api/dealers/'+zip_code+'/100',
             headers=headers,
        

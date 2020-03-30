@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,19 +22,19 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
-    r = requests.get("https://www.shopfamilyfare.com/locations",headers=headers)
+    r = session.get("https://www.shopfamilyfare.com/locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     count = int(soup.find("ul",{'class':"pagination"}).find_all("a")[-2].text)
     location_url = []
     for i in range(1,count+1):
-        r = requests.get("https://www.shopfamilyfare.com/locations?page=" + str(i),headers=headers)
+        r = session.get("https://www.shopfamilyfare.com/locations?page=" + str(i),headers=headers)
         soup = BeautifulSoup(r.text,"lxml")
         for location in soup.find_all("div",{"class":"store"}):
             phone = location.find("a",{'href':re.compile("tel:")}).text.strip()
             address = list(location.find("p",{"class":"address"}).stripped_strings)
             name = location.find("a").text.strip()
             url = location.find("a")["href"]
-            location_request = requests.get(url,headers=headers)
+            location_request = session.get(url,headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             street_address = address[0]
             city = address[1].split(",")[0]

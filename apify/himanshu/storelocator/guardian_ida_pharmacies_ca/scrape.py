@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
     # print("soup ===  first")
 
     base_url = "https://www.guardian-ida-pharmacies.ca"
-    r = requests.get("https://www.guardian-ida-pharmacies.ca/en/find-a-pharmacy", headers=headers)
+    r = session.get("https://www.guardian-ida-pharmacies.ca/en/find-a-pharmacy", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
@@ -48,7 +51,7 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
 
     location_url = base_url + soup.find('div',{'class':'pharmacy-map loading'})['data-pharmacies-url']
-    r_location = requests.get(location_url, headers=headers)
+    r_location = session.get(location_url, headers=headers)
     location_json = r_location.json()
 
     for location_list in location_json['pharmacies']:

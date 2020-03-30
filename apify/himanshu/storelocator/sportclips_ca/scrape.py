@@ -1,10 +1,13 @@
 import csv
 #import sys
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -42,7 +45,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = ""
     page_url = ""
-    r = requests.get(
+    r = session.get(
         "https://sportclips.ca/store-locator")
     soup = BeautifulSoup(r.text, "lxml")
     script = soup.find(lambda tag: (
@@ -59,7 +62,7 @@ def fetch_data():
         zipp = loc["Postal"]
         country_code = "CA"
         page_url = loc["Web"]
-        r_loc = requests.get(page_url)
+        r_loc = session.get(page_url)
         soup_loc = BeautifulSoup(r_loc.text, "lxml")
         try:
             info = list(soup_loc.find(

@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     coords = sgzip.coords_for_radius(200)
     for coord in coords:
         #print("https://www.desigual.com/on/demandware.store/Sites-dsglcom_prod_at-Site/de_AT/Stores-FindStores?showMap=true&radius=200&showOnlyAllowDevosStores=false&showOfficialStores=false&showOutlets=false&showAuthorized=false&lat="+ str(coord[0]) + "&long=" + str(coord[1]))
-        r = requests.get("https://www.desigual.com/on/demandware.store/Sites-dsglcom_prod_at-Site/de_AT/Stores-FindStores?showMap=true&radius=200&showOnlyAllowDevosStores=false&showOfficialStores=false&showOutlets=false&showAuthorized=false&lat="+ str(coord[0]) + "&long=" + str(coord[1]),headers=headers)
+        r = session.get("https://www.desigual.com/on/demandware.store/Sites-dsglcom_prod_at-Site/de_AT/Stores-FindStores?showMap=true&radius=200&showOnlyAllowDevosStores=false&showOfficialStores=false&showOutlets=false&showAuthorized=false&lat="+ str(coord[0]) + "&long=" + str(coord[1]),headers=headers)
         data = r.json()["stores"]
         for store_data in data:
             if store_data["countryCode"] not in ["US","CA"]:

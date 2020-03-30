@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.regencyhospital.com"
-    r = requests.get("https://www.selectmedical.com/locations",headers=headers)
+    r = session.get("https://www.selectmedical.com/locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     data = json.loads(soup.find("div",{'class':"component search-results col-xs-12 location-cards-list"})["data-properties"])
@@ -28,7 +31,7 @@ def fetch_data():
     v = data["v"]
     count = 0
     while True:
-        location_request = requests.get("https://www.selectmedical.com//sxa/search/results/?s="+ s + "&itemid=" + item_id + "&sig=&autoFireSearch=true&v=" + v + "&p=8&e=" + str(count),headers=headers)
+        location_request = session.get("https://www.selectmedical.com//sxa/search/results/?s="+ s + "&itemid=" + item_id + "&sig=&autoFireSearch=true&v=" + v + "&p=8&e=" + str(count),headers=headers)
         try:
             location_list = location_request.json()["Results"]
         except:

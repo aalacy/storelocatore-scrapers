@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json,urllib
 import time
 import lxml
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,7 +24,7 @@ def fetch_data():
 
     base_url = "http://tristanmed.com/locations"
 
-    r = requests.get(base_url)
+    r = session.get(base_url)
 
     main_soup = BeautifulSoup(r.content,"lxml")
     store_detail = []
@@ -34,7 +37,7 @@ def fetch_data():
     for i in k:
         ds = ''
         a  = i.find('a',{'class':"btn btn-primary pi-btn-grey no-rounded"})
-        r = requests.get(a['href'])
+        r = session.get(a['href'])
         soup = BeautifulSoup(r.content,"lxml")
         lat_log1 = soup.find("a",{"class":"btn btn-lg pi-btn-default"})
         if len(lat_log1['href'].split("n/")[1].split('%20')) ==1:

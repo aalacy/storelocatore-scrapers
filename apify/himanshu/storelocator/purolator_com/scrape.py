@@ -1,12 +1,15 @@
 import csv
 import time
 
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -30,7 +33,7 @@ def fetch_data():
     addresses = []
     return_main_object=[] 
     base_url = 'https://api.purolator.com/'
-    r = requests.get("https://api.purolator.com/locator/puro/json/location/byCoordinates/53.541047/-113.581174?radialDistanceInKM=50&holdForPickup=false&dangerousGoods=false&kiosk=false&streetAccess=false&wheelChairAccess=false&maxNumberofLocations=30&openTime=01:00:00&closeTime=20:00:00&currentlyOpen=true&gmtOffset=05:00:00&locationType=Staples&locationType=ShippingCentre&locationType=ShippingAgent&locationType=DropBox&locationType=MobileQuickStop&locationType=QuickStopKiosk&locationType=QuickStopAgent&dayOfWeek=Sunday&dayOfWeek=Monday&dayOfWeek=Tuesday&dayOfWeek=Wednesday&dayOfWeek=Thursday&dayOfWeek=Friday&dayOfWeek=Saturday", headers=headers).json()
+    r = session.get("https://api.purolator.com/locator/puro/json/location/byCoordinates/53.541047/-113.581174?radialDistanceInKM=50&holdForPickup=false&dangerousGoods=false&kiosk=false&streetAccess=false&wheelChairAccess=false&maxNumberofLocations=30&openTime=01:00:00&closeTime=20:00:00&currentlyOpen=true&gmtOffset=05:00:00&locationType=Staples&locationType=ShippingCentre&locationType=ShippingAgent&locationType=DropBox&locationType=MobileQuickStop&locationType=QuickStopKiosk&locationType=QuickStopAgent&dayOfWeek=Sunday&dayOfWeek=Monday&dayOfWeek=Tuesday&dayOfWeek=Wednesday&dayOfWeek=Thursday&dayOfWeek=Friday&dayOfWeek=Saturday", headers=headers).json()
     k = r['locations']
     for i in k:
         tem_var =[]

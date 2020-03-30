@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def fetch_data():
     return_main_object = []
     base_url = "https://www.centier.com/"
     location_url  = 'https://www.centier.com/includes/_ajax.php?action=getClosestLocations&filters=branch%2Catm%2Cez_deposit&lat=40.2671941&lng=-86.13490189999999'
-    r = requests.get(location_url ,headers = header).json()
+    r = session.get(location_url ,headers = header).json()
     for idx, val in enumerate(r['locationDetails']):
         if idx > 0:
             if val != "":

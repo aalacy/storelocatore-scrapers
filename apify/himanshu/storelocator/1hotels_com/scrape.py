@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,16 +27,16 @@ def fetch_data():
     }
 
     base_url = "https://www.1hotels.com"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for parts in soup.find_all("ul", {"class": "menu menu-level-0"}):
             semi_part = parts.find_all("li", {"class": "menu-item menu-item--expanded"})[0]
             for inner_semi_part in semi_part.find_all("span", {"class": "menu-item col-12 col-md-4 col-lg-3","data-id":"open-2"}):
                 if (inner_semi_part.find("a")):
                     page_url = base_url + inner_semi_part.find("a")['href']
-                    store_request = requests.get(page_url,headers=headers)
+                    store_request = session.get(page_url,headers=headers)
                     store_soup = BeautifulSoup(store_request.text, "lxml")
-                    phone_request = requests.get(base_url + store_soup.find("a",text=re.compile("Contact Us"))["href"],headers=headers)
+                    phone_request = session.get(base_url + store_soup.find("a",text=re.compile("Contact Us"))["href"],headers=headers)
                     phone_soup = BeautifulSoup(phone_request.text, "lxml")
                     phone = ""
                     for a in phone_soup.find_all("a",{"href":re.compile("tel: ")}):

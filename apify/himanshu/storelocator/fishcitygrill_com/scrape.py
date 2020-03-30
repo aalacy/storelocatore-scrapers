@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import io
 import json
 import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -33,7 +36,7 @@ def fetch_data():
         'Pragma': 'no-cache',
     }
     url = "https://fishcitygrill.com/locations/"
-    r = requests.get(url, headers=headers)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     address = []
@@ -45,7 +48,7 @@ def fetch_data():
             location_name = data.text.replace(
                 '– NOW OPEN!', '').replace('&', '').strip()
             # print(location_name)
-            r_loc = requests.get(page_url, headers=headers1)
+            r_loc = session.get(page_url, headers=headers1)
             soup_loc = BeautifulSoup(r_loc.text, 'lxml')
             # div = soup_loc.find('div', class_='mk-main-wrapper-holder')
             # info = div.find('div', class_='vc_column-inner ')

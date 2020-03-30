@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -16,7 +19,7 @@ def write_output(data):
 def fetch_data():
     base_url = "https://www.towerhealthurgentcare.org"
     headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"}
-    r = requests.get(base_url+"/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=92aa77e208&layout=0").json()
+    r = session.get(base_url+"/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=92aa77e208&layout=0").json()
     for loc in r:
         city=loc['city']
         lat=loc['lat']

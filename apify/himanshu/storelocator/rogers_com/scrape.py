@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -71,7 +74,7 @@ def fetch_data():
         }
         # print("data ===" + data)
         try:
-            r= requests.post ('https://1-dot-rogers-store-finder.appspot.com/searchRogersStoresService',data = data,headers = headers)
+            r= session.post ('https://1-dot-rogers-store-finder.appspot.com/searchRogersStoresService',data = data,headers = headers)
         except:
             continue
         json_data = r.json()

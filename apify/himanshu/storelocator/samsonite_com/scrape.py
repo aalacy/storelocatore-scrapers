@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.samsonite.com"
-    r = requests.get("https://shop.samsonite.com/on/demandware.store/Sites-samsonite-Site/default/Stores-GetNearestStores?postalCode=11756&distanceUnit=mi&maxdistance=150000000&maxResults=10000")
+    r = session.get("https://shop.samsonite.com/on/demandware.store/Sites-samsonite-Site/default/Stores-GetNearestStores?postalCode=11756&distanceUnit=mi&maxdistance=150000000&maxResults=10000")
     data = r.json()["stores"]
     return_main_object = []
     for i in range(len(data)):

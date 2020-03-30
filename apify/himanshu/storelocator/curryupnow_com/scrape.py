@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -49,7 +52,7 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
 
-    r = requests.get(
+    r = session.get(
         'https://api.storepoint.co/v1/15952ca8657a3c/locations?lat=40.7987048&long=-73.6506776&radius=5000', headers=headers).json()
     for loc_list in r['results']['locations']:
         try:

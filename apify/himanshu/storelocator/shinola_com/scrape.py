@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
 ######## authorised_retailers################
     count = 0
     while True:
-        r = requests.get(
+        r = session.get(
             'https://www.shinola.com/shinstorelocator/index/searchlocation/?location=&authorizedRetailersCurrentPage=' + str(count)).json()
         last_page = r['authorized_retailers_is_last_page']
 
@@ -84,7 +87,7 @@ def fetch_data():
     # return return_main_object
 
     ####shinola_store#########
-    r = requests.get("https://www.shinola.com/store-locator")
+    r = session.get("https://www.shinola.com/store-locator")
     soup = BeautifulSoup(r.text, "lxml")
 
     vk = soup.find('div', {'id': 'amazon-root'}).find_next('script').find_next(
@@ -127,7 +130,7 @@ def fetch_data():
             # print('data ==' + str(store))
             # print('~~~~~~~~~~~~~~~~~~~~~~')
     return return_main_object
-    # r = requests.get(
+    # r = session.get(
     #     'https://www.shinola.com/shinstorelocator/index/searchlocation/?location=&shinolaStoresCurrentPage=0').json()
     # for loc in r['shinola_stores']:
     #     if loc["country"] in ["US", "CA"]:

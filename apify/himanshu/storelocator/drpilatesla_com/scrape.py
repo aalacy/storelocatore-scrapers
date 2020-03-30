@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://drpilatesla.com"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     return_main_object = []
     soup = BeautifulSoup(r.text,"lxml")
     lcoations = soup.find("div",{"class":"section locations"})

@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -8,6 +8,9 @@ import time
 
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -59,7 +62,7 @@ def fetch_data():
         # y = coord[1]
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         try:
-            r = requests.get("https://www.insureone.com/locations/?address=" + str(zip_code) + "&search=search&page=1&radius=200",
+            r = session.get("https://www.insureone.com/locations/?address=" + str(zip_code) + "&search=search&page=1&radius=200",
                                 "get", headers=headers)
                                 
         except:
@@ -88,7 +91,7 @@ def fetch_data():
 
 
                 try:   
-                    r_loc = requests.get(page_url)
+                    r_loc = session.get(page_url)
                     soup_loc = BeautifulSoup(r_loc.text, 'lxml')
                     script = soup_loc.find(
                         'script', {"type": "application/ld+json"}).text.strip()

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 from urllib.request import urlopen
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,7 +24,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.zoogym.com/wp-admin/admin-ajax.php?action=store_search&lat=26.101509&lng=-80.26195999999999&max_results=25&search_radius=50&autoload=1"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup = json.loads(r.text)
     store_name = []
     store_detail =[]

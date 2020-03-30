@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -22,7 +25,7 @@ def fetch_data():
     }
     page = 0
     while True:
-        r = requests.get("https://keyfoodstores.keyfood.com/store/keyFood/en/store-locator?q=11756&page=" + str(page) + "&radius=5000000000&all=true",headers=headers)
+        r = session.get("https://keyfoodstores.keyfood.com/store/keyFood/en/store-locator?q=11756&page=" + str(page) + "&radius=5000000000&all=true",headers=headers)
         data = r.json()["data"]
         for store_data in data:
             store = []

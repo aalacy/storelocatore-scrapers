@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 from datetime import datetime
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     }
     for cord in cords:
         base_url = "https://can-am.brp.com"
-        r = requests.get("https://can-am.brp.com/rest/dealerlocator/search?latitude=" + str(cord[0]) + "&longitude=" + str(cord[1]) + "&radius=200&country_code=US&language_code=en&zip_code=&product_line=roadster",headers=headers)
+        r = session.get("https://can-am.brp.com/rest/dealerlocator/search?latitude=" + str(cord[0]) + "&longitude=" + str(cord[1]) + "&radius=200&country_code=US&language_code=en&zip_code=&product_line=roadster",headers=headers)
         for store_data in r.json()["nearbyDealers"]:
             if store_data["country"] != "CA" and store_data["country"] != "US":
                 continue

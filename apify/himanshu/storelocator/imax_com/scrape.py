@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -62,7 +65,7 @@ def fetch_data():
         # print("zips === " + str(zip_code))
         #print(coord)
         try:
-            r = requests.get(
+            r = session.get(
                 'https://www.imax.com/showtimes/ajax/theatres?date=2019-09-13&lat='+str(coord[0])+'&lon='+str(coord[1]),
                 headers=headers)
 

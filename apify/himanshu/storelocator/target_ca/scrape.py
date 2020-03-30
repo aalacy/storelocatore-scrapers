@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -54,7 +57,7 @@ def fetch_data():
     address=[]
     while zip_code:
         try:
-            r = requests.get(
+            r = session.get(
                 'https://redsky.target.com/v3/stores/nearby/'+ str(zip_code) +'?key=eb2551e4accc14f38cc42d32fbc2b2ea&limit='+str(MAX_RESULTS)+'&within='+str(MAX_DISTANCE)+'&unit=kilometer',
                 headers=headers,
         

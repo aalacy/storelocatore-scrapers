@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -75,7 +78,7 @@ def fetch_data():
         lat = coord[0]
         lng = coord[1]
 
-        r = requests.get(
+        r = session.get(
             'https://us.nissan-api.net/v2/dealers?size='+str(MAX_DISTANCE)+'&lat='+str(lat)+'&long='+str(lng)+'&serviceFilterType=AND&include=openingHours',
             headers=headers,
        

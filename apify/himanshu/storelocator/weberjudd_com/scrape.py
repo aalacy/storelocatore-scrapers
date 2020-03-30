@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -44,7 +47,7 @@ def fetch_data():
     hours_of_operation = ""
     page_url = ""
     # 800 N. 2nd Street
-    r = requests.get("https://www.googletagmanager.com/gtm.js?id=GTM-5TL68P", headers=headers)
+    r = session.get("https://www.googletagmanager.com/gtm.js?id=GTM-5TL68P", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     caption_value_list = soup.text.split('Coption value=\\"')
     for cap_val in caption_value_list[2:]:
@@ -52,7 +55,7 @@ def fetch_data():
         page_url = "https://www.hy-vee.com/stores/detail.aspx?s=" + str(cap_val.split('\\"')[0])
 
         # print("page_url === "+ page_url)
-        r_location = requests.get(page_url, headers=headers)
+        r_location = session.get(page_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
 
         if not soup_location.find("div", {"class": "col-sm-6 util-padding-bottom-15"}):

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.savers.com"
-    r = requests.get("https://maps.savers.com/api/getAsyncLocations?template=search&level=search&radius=1000000000&search=11756",headers=headers)
+    r = session.get("https://maps.savers.com/api/getAsyncLocations?template=search&level=search&radius=1000000000&search=11756",headers=headers)
     return_main_object = []
     location_list = r.json()["markers"]
     for store_data in location_list:
@@ -44,7 +47,7 @@ def fetch_data():
         store.append("savers")
         store.append(store_data["lat"])
         store.append(store_data["lng"])
-        location_request = requests.get(BeautifulSoup(store_data["info"],"lxml").find("a")["href"],headers=headers)
+        location_request = session.get(BeautifulSoup(store_data["info"],"lxml").find("a")["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         store.append(" ".join(list(location_soup.find('div',{'class':"hours"}).stripped_strings)))
         return_main_object.append(store)

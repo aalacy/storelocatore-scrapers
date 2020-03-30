@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -28,7 +31,7 @@ def fetch_data():
     addresses = []
     base_url = "http://www.wetzels.com"
 
-    r = requests.get("https://www.wetzels.com/locate", headers=headers)
+    r = session.get("https://www.wetzels.com/locate", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     locator_domain = base_url
@@ -50,7 +53,7 @@ def fetch_data():
     projectid = soup.find("ul", {"id": "ctl01_ucMenuItems_ulNavMenus"})["projectid"]
     sitepageid = soup.find("div", {"id": "ctl01_modLocationLocator"})["data-sitepagemoduleid"]
     json_body = '{"method":"GetLocationLocator","format":"json","parameters":"ProjectID=' + projectid + '&SitePageModuleID=' + sitepageid + '&Latitude=&Longitude=","typefields":[{"DataType":"LocationLocatorRow","Columns":"*"}],"host":"websiteoutput"}'
-    r_json = requests.post("https://websiteoutputapi.mopro.com/WebsiteOutput.svc/api/get",
+    r_json = session.post("https://websiteoutputapi.mopro.com/WebsiteOutput.svc/api/get",
                            headers=headers,
                            data=json_body)
     json_data = r_json.json()

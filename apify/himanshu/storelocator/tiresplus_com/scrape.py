@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -18,7 +21,7 @@ def fetch_data():
     base_url = "https://www.tiresplus.com"
     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36',"Content-Type": "application/json; charset=utf-8"}
     return_main_object=[]
-    r = requests.get('https://www.tiresplus.com/bsro/services/store/location/get-list-by-zip?zipCode=60605',headers=headers).json()
+    r = session.get('https://www.tiresplus.com/bsro/services/store/location/get-list-by-zip?zipCode=60605',headers=headers).json()
     for loc in r['data']['stores']:
         name=loc['storeName']
         address=loc['address']

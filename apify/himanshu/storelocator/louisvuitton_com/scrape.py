@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
     addresses = []
     base_url = "http://www.louisvuitton.com"
 
-    r = requests.get("https://us.louisvuitton.com/eng-us/stores", headers=headers)
+    r = session.get("https://us.louisvuitton.com/eng-us/stores", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     locator_domain = base_url
@@ -80,7 +83,7 @@ def fetch_data():
         # print(str(location["zip"])+" == state ==== " + str(zipp))
 
         page_url = location["url"]
-        r_hours = requests.get(page_url, headers=headers)
+        r_hours = session.get(page_url, headers=headers)
         soup_hours = BeautifulSoup(r_hours.text, "lxml")
 
         hours_of_operation = " ".join(

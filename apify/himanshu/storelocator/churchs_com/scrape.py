@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,16 +27,16 @@ def fetch_data():
     }
     addresses = []
     #base_url = "https://mbfinancial.com"
-    r = requests.get("https://locations.churchs.com", headers=headers)
+    r = session.get("https://locations.churchs.com", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     for states in soup.find_all("a", {'class': "Directory-listLink"}):
-        state_request = requests.get(
+        state_request = session.get(
             "https://locations.churchs.com/" + states["href"])
         state_soup = BeautifulSoup(state_request.text, "lxml")
         for city in state_soup.find_all("a", {'class': "Directory-listLink"}):
             #print("https://locations.churchs.com/" + city["href"].replace("../",""))
-            city_request = requests.get(
+            city_request = session.get(
                 "https://locations.churchs.com/" + city["href"].replace("../", ""))
             city_soup = BeautifulSoup(city_request.text, "lxml")
             for location in city_soup.find_all("a", {'class': "Teaser-titleLink"}):
@@ -45,7 +48,7 @@ def fetch_data():
                 location_name = location.find(
                     "span", class_="LocationName-brand").text.strip()
                 # print(location_name)
-                location_request = requests.get(
+                location_request = session.get(
                     "https://locations.churchs.com/" + location["href"].replace("../", ""))
                 location_soup = BeautifulSoup(location_request.text, "lxml")
                 try:

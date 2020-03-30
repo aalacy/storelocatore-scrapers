@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import io
 import json
 import time
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -31,14 +34,14 @@ def fetch_data():
         'Pragma': 'no-cache',
     }
     base_url = "https://benitospizza.com/choose-your-state/"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     address = []
     exists = soup.select("#myDropdown")
     if exists:
         for data in exists[0].findAll('a'):
-            detail_url = requests.get(data.get('href'), headers=headers1, timeout=5)
+            detail_url = session.get(data.get('href'), headers=headers1, timeout=5)
             detail_soup = BeautifulSoup(detail_url.text, "lxml")
             if detail_soup.findAll('table', {'class', 'aligncenter'}):
                 for all_values in detail_soup.findAll('table', {'class', 'aligncenter'}):

@@ -1,7 +1,10 @@
 import csv
 from bs4 import BeautifulSoup
 import json
-import requests
+from sgrequests import SgRequests
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,7 +17,7 @@ def fetch_data():
     addresses = []
     headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
     }
-    r =  requests.get("http://blarneycastleoil.com/ez-mart-promo/ez-mart-locations/", headers=headers)
+    r =  session.get("http://blarneycastleoil.com/ez-mart-promo/ez-mart-locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")   
     links = soup.find_all("script",{"type":"text/javascript"})[-3]
     mp = (links.text.split('{"KOObject":')[1].split(',"pluginurl":')[0]) 

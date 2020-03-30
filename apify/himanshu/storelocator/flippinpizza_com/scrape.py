@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "https://flippinpizza.com"
-    r = requests.get("https://flippinpizza.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php",headers=headers)
+    r = session.get("https://flippinpizza.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     location_url = []
@@ -30,10 +33,10 @@ def fetch_data():
         lat = location.find("latitude").text
         lng = location.find("longitude").text
         location_url = BeautifulSoup(location.find("description").text,"lxml").find_all("a")[-1]["href"]
-        location_request = requests.get(location_url,headers=headers)
+        location_request = session.get(location_url,headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         yelp_url = location_soup.find("a",text="Yelp")["href"]
-        yelp_request = requests.get(yelp_url,headers=headers)
+        yelp_request = session.get(yelp_url,headers=headers)
         yelp_soup = BeautifulSoup(yelp_request.text,"lxml")
         hours = " ".join(list(yelp_soup.find("table",{"class":"lemon--table__373c0__2clZZ table__373c0__3JVzr table--simple__373c0__3lyDA"}).stripped_strings))
         store = []

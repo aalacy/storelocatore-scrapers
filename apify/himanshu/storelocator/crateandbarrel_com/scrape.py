@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -12,6 +12,9 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import http.client
 import platform
+
+
+session = SgRequests()
 
 system = platform.system()
 
@@ -43,7 +46,7 @@ def get_driver():
 
 def get_proxy():
     url = "https://www.sslproxies.org/"
-    r = requests.get(url)
+    r = session.get(url)
     soup = BeautifulSoup(r.content, "html5lib")
     return {'https': (choice(list(map(lambda x:x[0]+':'+x[1],list(zip(map(lambda x:x.text,soup.findAll('td')[::8]),map(lambda x:x.text,soup.findAll('td')[1::8])))))))}
 

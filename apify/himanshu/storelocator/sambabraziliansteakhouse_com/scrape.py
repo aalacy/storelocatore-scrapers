@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -41,7 +44,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = base_url
-    r = requests.get("https://sambabraziliansteakhouse.com/", headers=headers)
+    r = session.get("https://sambabraziliansteakhouse.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     script = soup.find_all('script', {'type': 'application/json'})[-1]
     json_script = json.loads(script.text)

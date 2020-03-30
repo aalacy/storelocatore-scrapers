@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -8,6 +8,9 @@ from selenium.webdriver.firefox.options import Options
 import time
 from selenium.webdriver.support.wait import WebDriverWait
 import platform
+
+session = SgRequests()
+
 system = platform.system()
 
 
@@ -88,10 +91,10 @@ def fetch_data():
         # print(list(location.stripped_strings)[0] )
         # print(list(location.stripped_strings))
         # .find_all("a")
-    #     location_request = requests.get(location["href"],headers=headers)
+    #     location_request = session.get(location["href"],headers=headers)
     #     location_soup = BeautifulSoup(location_request.text,"lxml")
     #     location_details = list(location_soup.find("div",{'class':"et_pb_blurb_description"}).stripped_strings)
-    #     geo_request = requests.get(location_soup.find("iframe",{'src':re.compile("google")})["src"],headers=headers)
+    #     geo_request = session.get(location_soup.find("iframe",{'src':re.compile("google")})["src"],headers=headers)
     #     geo_soup = BeautifulSoup(geo_request.text,"lxml")
     #     for script in geo_soup.find_all("script"):
     #         if "initEmbed" in script.text:

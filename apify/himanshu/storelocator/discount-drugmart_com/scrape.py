@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
-    r = requests.get("https://discount-drugmart.com/our-store/store-locator/#o=0&t=&ot=oc1&oc=1000&m=10000&s=11756",headers=headers)
+    r = session.get("https://discount-drugmart.com/our-store/store-locator/#o=0&t=&ot=oc1&oc=1000&m=10000&s=11756",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     for script in soup.find_all("script"):
         if "var stores = " in script.text:

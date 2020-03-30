@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -43,7 +46,7 @@ def fetch_data():
             # print("zip_code === " + zip_code)
             # zip_code = "39114"
             location_url = "http://www.fredsmeds.com/locate/?find-a-store=" + zip_code
-            r_locations = requests.get(location_url, headers=headers)
+            r_locations = session.get(location_url, headers=headers)
             soup_locations = BeautifulSoup(r_locations.text, "lxml")
 
             location_list = soup_locations.find_all("div", {"class": "store-info"})

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,12 +22,12 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://firstknox.com"
-    r = requests.get("https://firstknox.com/locations/",headers=headers)
+    r = session.get("https://firstknox.com/locations/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     page_number = int(soup.find_all("a",{'class':"page-numbers"})[-2]["href"].split("/")[-2])
     for i in range(1,page_number + 2):
-        page_request = requests.get("https://firstknox.com/locations/page/"+ str(i) + "/",headers=headers)
+        page_request = session.get("https://firstknox.com/locations/page/"+ str(i) + "/",headers=headers)
         page_soup = BeautifulSoup(page_request.text,"lxml")
         location_object = []
         for script in page_soup.find_all("script"):

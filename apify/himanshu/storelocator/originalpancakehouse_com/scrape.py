@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time 
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -20,12 +23,12 @@ def fetch_data():
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
     base_url = "http://originalpancakehouse.com/"
     location_url = "http://originalpancakehouse.com/locations.html"
-    r = requests.get(location_url,headers=headers)
+    r = session.get(location_url,headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     for i in soup.find("ul",{"id":"state_list"}).find_all("a"):
         link = (i['href'])
         page_url = "http://originalpancakehouse.com/"+str(link)
-        r1 = requests.get(page_url,headers=headers)
+        r1 = session.get(page_url,headers=headers)
         soup1 = BeautifulSoup(r1.text,"lxml") 
         for y in soup1.find("div",{"class":"locations"}).find_all("div",{"class":"location"}):
             data = list(y.stripped_strings)

@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import io
 import unicodedata
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -21,7 +24,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.wework.com/locations"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     address = []
@@ -33,11 +36,11 @@ def fetch_data():
         else:
             continue
         for city in country.find_next_sibling("ul").find_all("a"):
-            city_request = requests.get("https://www.wework.com" + city["href"],headers=headers)
+            city_request = session.get("https://www.wework.com" + city["href"],headers=headers)
             city_soup = BeautifulSoup(city_request.text,"lxml")
             for locaion in city_soup.find_all("a",{"class":'ray-card'}):
                 page_url = "https://www.wework.com" + locaion["href"]
-                location_request = requests.get(page_url,headers=headers)
+                location_request = session.get(page_url,headers=headers)
                 location_soup = BeautifulSoup(location_request.text,"lxml")
                 for script in location_soup.find_all("script",{"type":'application/ld+json'}):
                     json_data = json.loads(script.text)

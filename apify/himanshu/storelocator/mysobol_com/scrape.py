@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
  
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
     domain_url ='https://mysobol.com/'
     
     return_main_object=[]
-    r = requests.get(get_url,headers=headers).json()
+    r = session.get(get_url,headers=headers).json()
     main = r['objects']
     for i in main:
         store =[]

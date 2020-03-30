@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://f45training.com"
-    r = requests.get("https://f45training.com/find-a-studio/",headers=headers)
+    r = session.get("https://f45training.com/find-a-studio/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
 
@@ -51,7 +54,7 @@ def fetch_data():
                 else:
                     continue
                 store.append(current_store["id"])
-                location_request = requests.get("https://f45training.com/" + current_store["slug"],headers=headers)
+                location_request = session.get("https://f45training.com/" + current_store["slug"],headers=headers)
                 location_soup = BeautifulSoup(location_request.text,"lxml")
                 if location_soup.find("a",{"href":re.compile('tel:')}) == None:
                     phone = "<MISSING>"

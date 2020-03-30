@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ import json
 # from selenium.webdriver.firefox.options import Options
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -49,13 +52,13 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
 
-    r = requests.get(
+    r = session.get(
         "https://www.outrigger.com/hotels-resorts", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     for view in soup.find_all('a',class_="promo-cta"):
         page_url = base_url + view['href']
-        r1 = requests.get(base_url+view['href'],headers = headers)
+        r1 = session.get(base_url+view['href'],headers = headers)
         soup_r1 = BeautifulSoup(r1.text,'lxml')
         div = soup_r1.find('p',class_ = "pdp-overview-promo-desc")
         if div != None:

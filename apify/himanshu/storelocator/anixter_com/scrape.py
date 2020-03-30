@@ -4,7 +4,10 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-import requests
+from sgrequests import SgRequests
+
+session = SgRequests()
+
 session = SgRequests()
 
 
@@ -38,7 +41,7 @@ def fetch_data():
     #### USA Loactions
     US_states = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH",'OK',"OR","PA","RI","SC","SD",'TN',"TX","UT","VT","VA","WA","WV","WI","WY"]
     for state in US_states:
-        json_data = requests.get("https://www.anixter.com/en_us/pos/region?searchCode=US-"+str(state), headers=headers).json()
+        json_data = session.get("https://www.anixter.com/en_us/pos/region?searchCode=US-"+str(state), headers=headers).json()
         for data in json_data:
             location_name = data['address']['department']
             street_address = (data['address']['line1'] +" "+ str(data['address']['line2'])).replace("None","").strip().capitalize()
@@ -84,7 +87,7 @@ def fetch_data():
     addresses1 = []
     US_states = ["NL","PE","NS","NB","QC","ON","MB","SK","AB","BC","YT","NT","NU"]
     for state in US_states:
-        json_data = requests.get("https://www.anixter.com/en_us/pos/region?searchCode=CA-"+str(state), headers=headers).json()
+        json_data = session.get("https://www.anixter.com/en_us/pos/region?searchCode=CA-"+str(state), headers=headers).json()
         # print("https://www.anixter.com/en_us/pos/region?searchCode=CA-"+str(state))
         # print(json_data)
         # print("======================================================")

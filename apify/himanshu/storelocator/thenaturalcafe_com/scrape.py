@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', 'w') as output_file:
         writer = csv.writer(output_file, delimiter=",")
@@ -50,7 +53,7 @@ def fetch_data():
     from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
     warnings.simplefilter('ignore',InsecureRequestWarning)
-    r = requests.get('https://thenaturalcafe.com/locations/',headers = headers,verify = False)
+    r = session.get('https://thenaturalcafe.com/locations/',headers = headers,verify = False)
     soup = BeautifulSoup(r.text,'lxml')
     # print(soup.prettify())
     for loc in soup.find_all('div',class_='location'):

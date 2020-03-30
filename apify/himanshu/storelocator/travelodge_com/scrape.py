@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 from sgrequests import SgRequests
+
+session = SgRequests()
+
 session = SgRequests() 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -38,7 +41,7 @@ def fetch_data():
             k = (b.find('a')['href'])
             location_url = base_url+k
             try:
-                r1 = requests.get(location_url, headers=headers,  allow_redirects=False)
+                r1 = session.get(location_url, headers=headers,  allow_redirects=False)
             except Exception as e:
                 pass
             soup1= BeautifulSoup(r1.text,"lxml")

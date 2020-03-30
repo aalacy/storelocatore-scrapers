@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def write_output(data):
 def fetch_data():
 
     base_url1="https://www.portcityjava.com/our-locations"
-    r = requests.get(base_url1)
+    r = session.get(base_url1)
     soup1= BeautifulSoup(r.text,"lxml")
     site_rl=soup1.find("div",{"class":"col-md-5 col-md-offset-1"})
     link = site_rl.find_all('a')
@@ -31,7 +34,7 @@ def fetch_data():
     longitude1 =[]
 
     for a in link:
-        r = requests.get("https://www.portcityjava.com"+a['href'])
+        r = session.get("https://www.portcityjava.com"+a['href'])
         soup= BeautifulSoup(r.text,"lxml")
         info = soup.find_all("ul",{"id":"all-locations"})
         for i in info:

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -34,10 +37,10 @@ def fetch_data():
         lat = str(coord[0])
         lng = str(coord[1])
         phone =''
-        # r1 = requests.get(base_url + zp['href'])
+        # r1 = session.get(base_url + zp['href'])
         # soup1 = BeautifulSoup(r.text, 'lxml')
         try:
-            r2 = requests.get('https://www.hsbc.ca/1/PA_ABSL-JSR168/ABSLFCServlet?event=cmd_ajax&location_type=show-all-results&address=&cLat='+lat+'&cLng='+lng+'&LOCALE=en&rand='+str(MAX_DISTANCE)).json()
+            r2 = session.get('https://www.hsbc.ca/1/PA_ABSL-JSR168/ABSLFCServlet?event=cmd_ajax&location_type=show-all-results&address=&cLat='+lat+'&cLng='+lng+'&LOCALE=en&rand='+str(MAX_DISTANCE)).json()
         except:
             continue
         current_results_len = len(r2['results'])

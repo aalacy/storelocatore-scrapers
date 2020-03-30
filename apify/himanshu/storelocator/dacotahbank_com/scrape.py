@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.dacotahbank.com"
-    r = requests.get("https://www.dacotahbank.com/locations",headers=headers)
+    r = session.get("https://www.dacotahbank.com/locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for locations in soup.find_all("div",{'class':"large-6 columns"}):
@@ -40,7 +43,7 @@ def fetch_data():
         lng = geo_location.split("/@")[1].split(",")[1]
         store.append(lat)
         store.append(lng)
-        location_request = requests.get(base_url + locations.find("a")["href"],headers=headers)
+        location_request = session.get(base_url + locations.find("a")["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         hours = ""
         for store_hours in location_soup.find_all("table",{"class":"hours-table"}):

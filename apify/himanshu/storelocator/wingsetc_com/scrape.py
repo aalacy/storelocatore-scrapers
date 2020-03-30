@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.wingsetc.com"
-    r = requests.get(
+    r = session.get(
         'https://www.wingsetc.com/locations/?CallAjax=GetLocations')
     data = r.json()
     addresses = []
@@ -39,7 +42,7 @@ def fetch_data():
         country_code = "US"
         location_type = "<MISSING>"
         page_url = base_url + i['Path']
-        r1 = requests.get(page_url)
+        r1 = session.get(page_url)
         soup1 = BeautifulSoup(r1.text,"lxml")
         #print(page_url)
         try:

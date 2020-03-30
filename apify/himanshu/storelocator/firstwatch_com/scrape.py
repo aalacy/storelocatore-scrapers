@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', 'w') as output_file:
         writer = csv.writer(output_file, delimiter=",")
@@ -46,7 +49,7 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     for cord in coords:
         try:
-            r =requests.get('https://www.firstwatch.com/api/get_locations.php?latitude='+str(cord[0])+'&longitude='+str(cord[1]),headers = headers)
+            r =session.get('https://www.firstwatch.com/api/get_locations.php?latitude='+str(cord[0])+'&longitude='+str(cord[1]),headers = headers)
 
 
             location_list = r.json()
@@ -85,7 +88,7 @@ def fetch_data():
                     # else:
                     #     hours_of_operation = "<MISSING>"
 
-                    hours = requests.get(page_url,headers = headers)
+                    hours = session.get(page_url,headers = headers)
                     soup = BeautifulSoup(hours.text,'lxml')
                     h_list = soup.find('script',{'id':'locations-detail'})
                     if h_list != None:

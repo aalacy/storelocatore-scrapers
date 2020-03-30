@@ -5,13 +5,16 @@
 
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 
 
 # In[36]:
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -42,7 +45,7 @@ def write_output(data):
 
 
 base_url = 'https://flipsgrill.com' 
-r = requests.get(base_url + '/locations')
+r = session.get(base_url + '/locations')
 soup = BeautifulSoup(r.text, "lxml")
 soup
 

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -18,7 +21,7 @@ def fetch_data():
     }
     print("soup ===  first")
     base_url = "https://www.rachellebery.com"
-    r = requests.get("https://www.rachellebery.ca/trouver-un-magasin/", headers=headers)
+    r = session.get("https://www.rachellebery.ca/trouver-un-magasin/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
@@ -41,7 +44,7 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     datapath_url = soup.text.split('datapath":"')[1].split('"')[0].replace("\\", "")
     # print("datapath_url === " + datapath_url)
-    r1 = requests.get(datapath_url, headers=headers)
+    r1 = session.get(datapath_url, headers=headers)
     json_data = r1.json()
     arr_street_address = []
     for data in json_data:

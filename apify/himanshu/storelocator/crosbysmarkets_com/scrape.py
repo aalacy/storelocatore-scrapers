@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -9,6 +9,9 @@ from selenium.webdriver.support.wait import WebDriverWait
 import time
 import html
 import platform
+
+
+session = SgRequests()
 
 system = platform.system()
 
@@ -35,10 +38,10 @@ def get_driver():
 
 
 def fetch_data():
-    r = requests.get("http://www.crosbysmarkets.com/?page_id=14")
+    r = session.get("http://www.crosbysmarkets.com/?page_id=14")
     main_soup = BeautifulSoup(r.text,"lxml")
     iframe_link = main_soup.find("iframe")["src"]
-    r = requests.get(iframe_link)
+    r = session.get(iframe_link)
     soup = BeautifulSoup(r.text,"lxml")
     geo_location = {}
     for script in soup.find_all("script"):

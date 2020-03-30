@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
@@ -13,6 +13,9 @@ import platform
 import time
 import sgzip
 import unicodedata
+
+
+session = SgRequests()
 
 system = platform.system()
 
@@ -145,10 +148,10 @@ def fetch_data():
                 if store_data["website"]:
                     page_url = "https://www.la-z-boy.com" + \
                         store_data["website"]
-                    hours_request = requests.get(page_url, headers=headers)
+                    hours_request = session.get(page_url, headers=headers)
                     hours_soup = BeautifulSoup(hours_request.text, "lxml")
                     if hours_soup.find("a", text=re.compile("Store Hours")):
-                        hours_details_request = requests.get("https://www.la-z-boy.com" + hours_soup.find(
+                        hours_details_request = session.get("https://www.la-z-boy.com" + hours_soup.find(
                             "a", text=re.compile("Store Hours"))["href"], headers=headers)
                         hours_details_soup = BeautifulSoup(
                             hours_details_request.text, "lxml")

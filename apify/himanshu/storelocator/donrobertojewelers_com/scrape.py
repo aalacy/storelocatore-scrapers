@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,7 +34,7 @@ def fetch_data():
     while True:
         page_id = page_id + 1
         # print(page_id)
-        page_reqeust = requests.post(base_url+locations_url+str(page_id),headers=header,data=body)
+        page_reqeust = session.post(base_url+locations_url+str(page_id),headers=header,data=body)
         locations = page_reqeust.json()["markers"]
         if locations[0]['location_id'] == location_id:
             break

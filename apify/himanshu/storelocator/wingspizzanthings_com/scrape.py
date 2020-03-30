@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -20,12 +23,12 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "http://wingspizzanthings.com/"
-    r = requests.get("http://wingspizzanthings.com/locations.html",headers=headers)
+    r = session.get("http://wingspizzanthings.com/locations.html",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for map_part in soup.find_all("map",{'id':re.compile("map")}):
         for location in map_part.find_all("area",{"href":re.compile(".")}):
-            location_request = requests.get(base_url + location['href'],headers=headers)
+            location_request = session.get(base_url + location['href'],headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             if location_soup.find("div",{'id':"divMain"}).find("img",{"alt":re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")}):
                 location_text = location_soup.find("div",{'id':"divMain"}).find("img",{"alt":re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?")})["alt"]

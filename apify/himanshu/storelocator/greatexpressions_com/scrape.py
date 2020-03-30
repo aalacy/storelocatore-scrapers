@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,11 +22,11 @@ def fetch_data():
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "https://www.greatexpressions.com"
-    r = requests.get("https://www.greatexpressions.com/wp-admin/admin-ajax.php?action=fetch_offices_updated_again&page=1&search_type=zip&zip=11756&city=&state=&radius=100000&search=",headers=headers)
+    r = session.get("https://www.greatexpressions.com/wp-admin/admin-ajax.php?action=fetch_offices_updated_again&page=1&search_type=zip&zip=11756&city=&state=&radius=100000&search=",headers=headers)
     return_main_object = []
     page_size = r.json()['data']["maxPages"]
     for i in range(1,int(page_size) + 1):
-        page_request = requests.get("https://www.greatexpressions.com/wp-admin/admin-ajax.php?action=fetch_offices_updated_again&page=" + str(i) + "&search_type=zip&zip=11756&city=&state=&radius=100000&search=",headers=headers)
+        page_request = session.get("https://www.greatexpressions.com/wp-admin/admin-ajax.php?action=fetch_offices_updated_again&page=" + str(i) + "&search_type=zip&zip=11756&city=&state=&radius=100000&search=",headers=headers)
         for store_data in page_request.json()["data"]["posts"]:
             store = []
             store.append("https://www.greatexpressions.com")

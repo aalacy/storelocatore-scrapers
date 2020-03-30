@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -20,7 +23,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.tods.com"
-    r = requests.get("https://www.geocms.it/Server/servlet/S3JXServletCall?parameters=method_name%3DGetObject%26callback%3Dscube.geocms.GeoResponse.execute%26id%3D5%26query%3D%255BcountryCode%255D%2520%253D%2520%255BUS%255D%26clear%3Dtrue%26licenza%3Dgeo-todsgroupspa%26progetto%3DTods%26lang%3DALL&encoding=UTF-8",headers=headers)
+    r = session.get("https://www.geocms.it/Server/servlet/S3JXServletCall?parameters=method_name%3DGetObject%26callback%3Dscube.geocms.GeoResponse.execute%26id%3D5%26query%3D%255BcountryCode%255D%2520%253D%2520%255BUS%255D%26clear%3Dtrue%26licenza%3Dgeo-todsgroupspa%26progetto%3DTods%26lang%3DALL&encoding=UTF-8",headers=headers)
     return_main_object = []
     data = json.loads(json.loads(r.text.split("eval(scube.geocms.GeoResponse.execute(")[1].split(',"",')[0]))["L"][0]["O"]
     for store_data in data:

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -45,29 +48,29 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://rallys.com"
-    r = requests.get("https://locations.rallys.com/index.html",headers=headers)
+    r = session.get("https://locations.rallys.com/index.html",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for states in soup.find_all("li",{'class':"c-directory-list-content-item"}):
         if states.find("a")["href"].count("/") == 2:
-            location_request = requests.get("https://locations.rallys.com/" + states.find("a")["href"])
+            location_request = session.get("https://locations.rallys.com/" + states.find("a")["href"])
             location_soup = BeautifulSoup(location_request.text,"lxml")
             store_data = parser(location_soup)
             return_main_object.append(store_data)
         else:
-            state_request = requests.get("https://locations.rallys.com/" + states.find("a")["href"])
+            state_request = session.get("https://locations.rallys.com/" + states.find("a")["href"])
             state_soup = BeautifulSoup(state_request.text,"lxml")
             for city in state_soup.find_all("li",{'class':"c-directory-list-content-item"}):
                 if city.find("a")["href"].count("/") == 2:
-                    location_request = requests.get("https://locations.rallys.com/" + city.find("a")["href"])
+                    location_request = session.get("https://locations.rallys.com/" + city.find("a")["href"])
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                     store_data = parser(location_soup)
                     return_main_object.append(store_data)
                 else:
-                    city_request = requests.get("https://locations.rallys.com/" + city.find("a")["href"] )
+                    city_request = session.get("https://locations.rallys.com/" + city.find("a")["href"] )
                     city_soup = BeautifulSoup(city_request.text,"lxml")
                     for location in city_soup.find_all("li",{'class':"c-LocationGridList-item"}):
-                        location_request = requests.get("https://locations.rallys.com/" + location.find("a")["href"].replace("../",""))
+                        location_request = session.get("https://locations.rallys.com/" + location.find("a")["href"].replace("../",""))
                         location_soup = BeautifulSoup(location_request.text,"lxml")
                         store_data = parser(location_soup)
                         return_main_object.append(store_data)

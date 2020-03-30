@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "http://kidtokid.com"
-    r = requests.get(base_url+"/stores/")
+    r = session.get(base_url+"/stores/")
     soup=BeautifulSoup(r.text ,"lxml")
     return_main_object = []
     main=soup.find_all('script')
@@ -26,7 +29,7 @@ def fetch_data():
             for val in data['KOObject'][0]['locations']:
                 lat=val['latitude']
                 lng=val['longitude']
-                r1 = requests.get(base_url+'/'+val['title'].lower())
+                r1 = session.get(base_url+'/'+val['title'].lower())
                 soup1=BeautifulSoup(r1.text ,"lxml")
                 for script1 in soup1.find_all('script'):
                     if "var ajax " in script1.text:
@@ -36,7 +39,7 @@ def fetch_data():
                             'Accept': 'application/json'
                         }
                         dt=script1.text.split('id:')[1].split('}')[0]
-                        r3 = requests.post(link1,data="action=csl_ajax_loaddtemplate&id="+dt, headers=headers).json()
+                        r3 = session.post(link1,data="action=csl_ajax_loaddtemplate&id="+dt, headers=headers).json()
                         address=r3['response'][0]['address']
                         name=r3['response'][0]['title']
                         city=r3['response'][0]['city']

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', 'w') as output_file:
         writer = csv.writer(output_file, delimiter=",")
@@ -44,7 +47,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = '<MISSING>'
-    r = requests.get('https://www.vermeer.com/NA/en/N/dealer_locator',headers = headers)
+    r = session.get('https://www.vermeer.com/NA/en/N/dealer_locator',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
 
 

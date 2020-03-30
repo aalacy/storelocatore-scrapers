@@ -1,12 +1,15 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import http.client
+
+session = SgRequests()
+
 http.client._MAXHEADERS = 1000
 
 
@@ -49,7 +52,7 @@ def fetch_data():
         location_url = "https://www.chevronwithtechron.com/webservices/ws_getChevronTexacoNearMe_r2.aspx?lat="+str(lat)+"&lng="+str(lng)
     
         try:
-            r = requests.get(location_url, headers=headers)
+            r = session.get(location_url, headers=headers)
         except:
             continue
         json_data = r.json()
@@ -67,7 +70,7 @@ def fetch_data():
             page_url = "https://www.chevronwithtechron.com/station/"+str(street_address.replace(' ','-').replace('.','').replace("/",""))+"-"+str(city.replace(' ','-'))+"-"+str(state)+"-"+str(zipp)+"-id"+str(store_number)
             #print(page_url)
             
-            r1 = requests.get(page_url, headers=headers)
+            r1 = session.get(page_url, headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
             if soup1.find("span",{"class":"section__station-details-status"}):
                 hours = soup1.find("span",{"class":"section__station-details-status"}).text

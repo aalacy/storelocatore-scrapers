@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import calendar
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -46,7 +49,7 @@ def fetch_data():
 
     isFinish = False
     while isFinish is not True:
-        r = requests.get(
+        r = session.get(
             "https://getgocafe.com/api/sitecore/locations/getlocationlistvm?q=banner:(code+(GG))&skip=" + str(skip) + "&top=5&orderBy=geo.distance(storeCoordinate,%20geography%27POINT(72.8302%2021.1959)%27)%20asc", headers=headers)
         # print("json==" + r.text)
         # # print(str(page))

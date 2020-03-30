@@ -1,12 +1,15 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import requests
+from sgrequests import SgRequests
 import re
 import json
 import sgzip
 # from tenacity import *
 # import timeout_decorator
+
+
+session = SgRequests()
 
 session = SgRequests()
 def write_output(data):
@@ -34,7 +37,7 @@ def fetch_data():
         page = 1
         while True:
             
-            r = requests.get("https://locations.comerica.com/?q="+str(zip_code)+"&filter=all&page="+str(page))
+            r = session.get("https://locations.comerica.com/?q="+str(zip_code)+"&filter=all&page="+str(page))
             soup = BeautifulSoup(r.text, "lxml")
             data = soup.find(lambda tag: (tag.name == "script") and "var results" in tag.text)
             if data:
@@ -55,7 +58,7 @@ def fetch_data():
                     latitude = i['location']['lat']
                     longitude = i['location']['lng']
 
-                    r1 = requests.get(page_url)
+                    r1 = session.get(page_url)
                     soup1 = BeautifulSoup(r1.text, "lxml")
                     if soup1.find("h4",{"property":"name"}):
                         location_name = soup1.find("h4",{"property":"name"}).text.strip()

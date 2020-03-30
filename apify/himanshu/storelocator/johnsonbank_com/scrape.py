@@ -1,10 +1,13 @@
 import csv
 import time
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -45,13 +48,13 @@ def fetch_data():
 
         location_url = "https://johnsonbank.locatorsearch.com/GetItems.aspx"
         try:
-            r = requests.post(location_url, headers=headers, data="lat=" + str(lat) + "&lng=" + str(
+            r = session.post(location_url, headers=headers, data="lat=" + str(lat) + "&lng=" + str(
                 lng) + "&searchby=FCS%7CDRIVEUP%7CDRIVEUPATM%7CATMSF%7C")
         except :
             continue
 
         try:
-            r1 = requests.post(location_url, headers=headers, data="lat=" + str(lat) + "&lng=" + str(
+            r1 = session.post(location_url, headers=headers, data="lat=" + str(lat) + "&lng=" + str(
                 lng) + "&searchby=ATMSF%7C&SearchKey=&rnd=1575264836020")
         except :
             continue

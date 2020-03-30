@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import time
 from selenium.webdriver.support.wait import WebDriverWait
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -33,7 +36,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://annashouseus.com"
-    r = requests.get("https://annashouseus.com/locations/",headers=headers)
+    r = session.get("https://annashouseus.com/locations/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     location_object = {}

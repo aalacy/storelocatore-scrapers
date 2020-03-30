@@ -1,12 +1,15 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -47,7 +50,7 @@ def fetch_data():
         location_url = "https://api.honda.ca/dealer/H/Live/dealers/" + str(lat) + "/" + str(
             lng) + "/with-driving-distance"
 
-        r = requests.get(location_url, headers=headers)
+        r = session.get(location_url, headers=headers)
 
         # print("location_url ==== " + location_url)
 

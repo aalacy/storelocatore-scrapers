@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def write_output(data):
 def fetch_data():
   
     base_url= "https://api.storepoint.co/v1/15946036157640205728661006/locations?rq"
-    r = requests.get(base_url).json()
+    r = session.get(base_url).json()
     
     store_name=[]
     store_detail=[]

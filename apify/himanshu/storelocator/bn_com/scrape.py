@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -45,7 +48,7 @@ def fetch_data():
 
         # zip_code = 11030
         try:
-            r = requests.get("https://stores.barnesandnoble.com/stores?page=0&size=1000000&searchText=" + str(
+            r = session.get("https://stores.barnesandnoble.com/stores?page=0&size=1000000&searchText=" + str(
             zip_code) + "+&storeFilter=all&view=list&v=1", headers=headers)
         except:
             continue
@@ -74,7 +77,7 @@ def fetch_data():
             page_url = location_url
             # print("location_url === " + str(location_url))
 
-            r_location = requests.get(location_url, headers=headers)
+            r_location = session.get(location_url, headers=headers)
             soup_location = BeautifulSoup(r_location.text, "lxml")
             try:
                 address_list = soup_location.find(

@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding='utf8') as output_file:
@@ -29,7 +32,7 @@ def fetch_data():
     }
 
     base_url = "https://urbanbrickspizza.com/"
-    r = requests.get(base_url +'/locations' , headers=headers)
+    r = session.get(base_url +'/locations' , headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     for part in soup.find_all("div", {"class": "main_color av_default_container_wrap container_wrap fullsize"}):

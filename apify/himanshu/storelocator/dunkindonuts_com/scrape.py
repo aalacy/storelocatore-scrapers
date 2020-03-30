@@ -1,12 +1,15 @@
 import csv
 import sys
 
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -38,7 +41,7 @@ def fetch_data():
         result_coords = []
         # z = str(search.current_zip)
         # try:
-        r = requests.get("https://www.mapquestapi.com/search/v2/radius?callback=jQuery22408729727990432037_1568814338463&key=Gmjtd%7Clu6t2luan5%252C72%253Do5-larsq&origin=" + str(postcode) + "&units=m&maxMatches=30&radius=25&hostedData=mqap.33454_DunkinDonuts&ambiguities=ignore&_=1568814338464")
+        r = session.get("https://www.mapquestapi.com/search/v2/radius?callback=jQuery22408729727990432037_1568814338463&key=Gmjtd%7Clu6t2luan5%252C72%253Do5-larsq&origin=" + str(postcode) + "&units=m&maxMatches=30&radius=25&hostedData=mqap.33454_DunkinDonuts&ambiguities=ignore&_=1568814338464")
             
         # except:
         #     pass

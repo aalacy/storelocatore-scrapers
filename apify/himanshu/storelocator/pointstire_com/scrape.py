@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -18,7 +21,7 @@ def fetch_data():
     return_main_object=[]
     url=[]
     output=[]
-    r = requests.get(base_url+'/home.aspx')
+    r = session.get(base_url+'/home.aspx')
     soup=BeautifulSoup(r.text,'lxml')
     main=soup.find('div',{"id":'accordion'}).find_all('a',{'href':re.compile("/")})
     for atag in main:
@@ -28,7 +31,7 @@ def fetch_data():
             if "/locations/" not in atag['href']:
                 url.append(base_url+atag['href'])
             else:
-                r1 = requests.get(base_url+atag['href'])
+                r1 = session.get(base_url+atag['href'])
                 soup1=BeautifulSoup(r1.text,'lxml') 
                 main1=soup1.find('span',{"id":'MainContent_locationDetails2'}).find('table').find_all('a',text=re.compile('Make this My Store'))
                 for tg in main1:
@@ -38,7 +41,7 @@ def fetch_data():
                         url.append(base_url+tg['href'])  
     for page_url in url:
         try:
-            r1 = requests.get(page_url)
+            r1 = session.get(page_url)
             soup1=BeautifulSoup(r1.text,'lxml')
             main1=list(soup1.find('div',{"class":'storeInfoDetails'}).stripped_strings)
             lt=soup1.find('div',{"class":'storeInfoMap'}).find('img')['src'].split("center=")[1].split('&')[0].split(',')

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,7 +20,7 @@ def write_output(data):
 def fetch_data():
     base_url ="https://www.beefjerkyoutlet.com"
     return_main_object=[]
-    r = requests.get(base_url+'/location-finder')
+    r = session.get(base_url+'/location-finder')
     soup=BeautifulSoup(r.text,'lxml')
     output=[]
     main=soup.find('ul',{'class':'geolocation-common-map-locations'}).find_all('li')
@@ -26,7 +29,7 @@ def fetch_data():
         name=ltag.find('span',{'class':'title'}).text.strip()
         lng=ltag['data-lng']
         link=ltag.find('a',text="Shop this store")['href']
-        r1 = requests.get(base_url+link)
+        r1 = session.get(base_url+link)
         soup1=BeautifulSoup(r1.text,'lxml')
         address=soup1.find('div',{'class':'views-field-field-address'}).find('span',{'class':'address-line1'}).text.strip()
         if soup1.find('div',{'class':'views-field-field-address'}).find('span',{'class':'address-line2'})!=None:

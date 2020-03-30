@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
     phone =[]
     for i in range(1,58):
         new_link = "https://www.canadianjewellers.com/directory/?page="+str(i)
-        r = requests.get(
+        r = session.get(
             "https://www.canadianjewellers.com/directory/?page="+str(i), headers=headers)
         soup = BeautifulSoup(r.text, "lxml")
         address_tmp = soup.find_all('div', {'class': 'conceal map_data'})

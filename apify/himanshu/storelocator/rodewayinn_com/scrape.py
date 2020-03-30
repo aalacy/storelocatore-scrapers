@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import unicodedata
 import datetime
 from sgrequests import SgRequests
+
+
+session = SgRequests()
 
 session = SgRequests()
 
@@ -27,7 +30,7 @@ def fetch_data():
         "Accept": "application/json, text/plain, */*"
     }
     addresses=[]
-    r= requests.get("https://www.choicehotels.com/webapi/hotels/brand/RW?preferredLocaleCode=en-us&siteName=us",headers= headers).json()
+    r= session.get("https://www.choicehotels.com/webapi/hotels/brand/RW?preferredLocaleCode=en-us&siteName=us",headers= headers).json()
     for value in r["hotels"]:
         store_number="<MISSING>"
         location_name= value["name"]

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', 'w') as output_file:
         writer = csv.writer(output_file, delimiter=",")
@@ -45,15 +48,15 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = '<MISSING>'
-    r = requests.get(base_url,headers = headers)
+    r = session.get(base_url,headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
     for loc_slide in soup.find('ul',class_='loc-slide').find_all('li'):
-        r_loc = requests.get("https:"+loc_slide.a['href'],headers = headers)
+        r_loc = session.get("https:"+loc_slide.a['href'],headers = headers)
         soup_loc = BeautifulSoup(r_loc.text,'lxml')
         nav = soup_loc.find('ul',{'id':'menu-mainnav-1'})
         if nav !=None:
             contact = nav.find(lambda tag: (tag.name == 'li') and "Contact" in tag.text)
-            info_loc = requests.get(contact.a['href'],headers = headers)
+            info_loc = session.get(contact.a['href'],headers = headers)
             info_soup = BeautifulSoup(info_loc.text,'lxml')
             page_url = contact.a['href']
             cont = info_soup.find('div',class_='cont-align-bottom')

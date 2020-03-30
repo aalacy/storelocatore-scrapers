@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -13,9 +13,12 @@ from random import choice
 #     options.add_argument('--disable-dev-shm-usage')
 #     options.add_argument('--window-size=1920,1080')
 #     return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+
+session = SgRequests()
+
 def get_proxy():
     url = "https://www.sslproxies.org/"
-    r = requests.get(url)
+    r = session.get(url)
     soup = BeautifulSoup(r.content, "html5lib")
     return {'https': (choice(list(map(lambda x:x[0]+':'+x[1],list(zip(map(lambda x:x.text,soup.findAll('td')[::8]),map(lambda x:x.text,soup.findAll('td')[1::8])))))))}
     
@@ -52,7 +55,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
     # soup = BeautifulSoup(driver.page_source, "lxml")
-    # r = requests.get(base_url,headers=headers)
+    # r = session.get(base_url,headers=headers)
 
     # soup = BeautifulSoup(driver.page_source, "lxml")
 
@@ -63,7 +66,7 @@ def fetch_data():
         for semi_parts in parts.find_all("h3"):
             # print(semi_parts.find("a")['href'])
             phone1 =''
-            store_request = requests.get(semi_parts.find("a")['href'])
+            store_request = session.get(semi_parts.find("a")['href'])
             store_soup = BeautifulSoup(store_request.text, "lxml")
             page_url = semi_parts.find("a")['href']
             for inner_parts in store_soup.find_all("div", {"class": "rte-content colored-links"}):

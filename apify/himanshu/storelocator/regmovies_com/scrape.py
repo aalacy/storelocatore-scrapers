@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import http as http_
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -21,13 +24,13 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.regmovies.com"
-    r = requests.get("https://www.regmovies.com/static/en/us/theatre-list",headers=headers)
+    r = session.get("https://www.regmovies.com/static/en/us/theatre-list",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     addressess = []
     return_main_object = []
     for href in soup.find_all("a",{"class":"btn-link"}):
         try:
-            r1 = requests.get("https://www.regmovies.com/"+href['href'],headers=headers)
+            r1 = session.get("https://www.regmovies.com/"+href['href'],headers=headers)
         except:
             pass
         # print("https://www.regmovies.com/"+href['href'])
@@ -41,7 +44,7 @@ def fetch_data():
             
         # print(store_data['data-telephone'])
         # location_list = json.loads(script.text.split("apiSitesList = ")[1].split("}}]")[0] + "}}]")
-        # phone_request = requests.get("https://www.regmovies.com" + location_list[0]["uri"],headers=headers)
+        # phone_request = session.get("https://www.regmovies.com" + location_list[0]["uri"],headers=headers)
         # phone_soup = BeautifulSoup(phone_request.text,"lxml")
         # phone = phone_soup.find("cinema-structured-data")["data-telephone"]
         # for store_data in location_list:

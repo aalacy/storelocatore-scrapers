@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 from datetime import datetime
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     }
 
     base_url = "https://members.cyclebar.com/api/brands/cyclebar/locations?open_status=external&geoip="
-    r_locations = requests.get(base_url, headers=headers).json()
+    r_locations = session.get(base_url, headers=headers).json()
     json_data = r_locations['locations']
     for location in json_data:
         coming_soon = location['coming_soon']
@@ -45,7 +48,7 @@ def fetch_data():
             longitude = location['lng']
             location_url = location['site_url']
             if location_url != None:
-                r = requests.get(location_url, headers=headers)
+                r = session.get(location_url, headers=headers)
                 soup = BeautifulSoup(r.text, "lxml")
                 hours = soup.find("span", {"class": "location-info-map__info"})
                 if hours != None:

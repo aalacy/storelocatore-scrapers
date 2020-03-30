@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,14 +19,14 @@ def write_output(data):
 
 def fetch_data():
     base_url = "http://4sonsstores.com"
-    r = requests.get(base_url + "/2-top-tier-fuel.html")
+    r = session.get(base_url + "/2-top-tier-fuel.html")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     stores_map = soup.find("map",{"name": "Map"})
     for area in stores_map.find_all("area"):
         store = []
         store_id = area["href"]
-        store_request = requests.get(base_url + "/" + str(store_id))
+        store_request = session.get(base_url + "/" + str(store_id))
         store_soup = BeautifulSoup(store_request.text,"lxml")
         table = store_soup.find("table",{"style": "width: 559px; height: 55px;"})
         temp_var = []

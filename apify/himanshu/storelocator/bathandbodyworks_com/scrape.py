@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -21,7 +24,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url=  "https://www.bathandbodyworks.com/north-america/global-locations-canada.html"   
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup = BeautifulSoup(r.text,"lxml")
     data = soup.find("div",{"class":"store-location-container clearfix"}).find_all("div",{"class":"store-location"})
     for i in data :
@@ -51,7 +54,7 @@ def fetch_data():
         store.append(base_url)
         yield store
     base_url = "https://www.bathandbodyworks.com"
-    r = requests.get("https://www.bathandbodyworks.com/on/demandware.store/Sites-BathAndBodyWorks-Site/en_US/Stores-GetNearestStores?latitude=40.7895453&longitude=-74.05652980000002&countryCode=US&distanceUnit=mi&maxdistance=100000&BBW=1",headers=headers)
+    r = session.get("https://www.bathandbodyworks.com/on/demandware.store/Sites-BathAndBodyWorks-Site/en_US/Stores-GetNearestStores?latitude=40.7895453&longitude=-74.05652980000002&countryCode=US&distanceUnit=mi&maxdistance=100000&BBW=1",headers=headers)
     location_data = r.json()['stores']
     addresses = []
     for key in location_data:

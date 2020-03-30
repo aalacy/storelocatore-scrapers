@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -34,7 +37,7 @@ def fetch_data():
  
    
     
-    r = requests.get(get_url, headers=headers)
+    r = session.get(get_url, headers=headers)
     # print(r)
     soup = BeautifulSoup(r.text,'lxml')
     # print(soup)         
@@ -43,7 +46,7 @@ def fetch_data():
     for i in main:
         store = []
         link = tmp_url+i.a['href']
-        r1 = requests.get(link, headers=headers)
+        r1 = session.get(link, headers=headers)
          # print(r)
         soup1 = BeautifulSoup(r1.text,'lxml')
         location_name =soup1.find('div', {'class': 'h2'}).text

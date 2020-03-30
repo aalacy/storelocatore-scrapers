@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,12 +22,12 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.millenniumhotels.com"
-    r = requests.get("https://www.millenniumhotels.com/api/data/destinations",headers=headers)
+    r = session.get("https://www.millenniumhotels.com/api/data/destinations",headers=headers)
     return_main_object = []
     for store_data in r.json():
         if "United States" not in store_data["address"]:
             continue
-        location_request = requests.get(base_url + store_data["url"],headers=headers)
+        location_request = session.get(base_url + store_data["url"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         store = []
         store.append("https://www.millenniumhotels.com")

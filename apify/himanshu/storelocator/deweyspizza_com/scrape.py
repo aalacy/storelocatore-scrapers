@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -30,7 +33,7 @@ def fetch_data():
     get_url= 'http://deweyspizza.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?t=1571049679253' 
     hour2 = []
     address_s =[]
-    r = requests.get(get_url, headers=headers)
+    r = session.get(get_url, headers=headers)
     soup = BeautifulSoup(r.text,'lxml')
     location1 = soup.find_all('location')
     address1 = soup.find_all('address')   

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.waterway.com"
-    r = requests.get(base_url+"/locations/")
+    r = session.get(base_url+"/locations/")
     soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
     output=[]
@@ -31,7 +34,7 @@ def fetch_data():
         zip=ct[1].strip().split(' ')[1].strip()
         phone=madd[-1].strip()
         link=atag.find('a',{'class':"btn-link"})['href']
-        r1 = requests.get(link)
+        r1 = session.get(link)
         soup1=BeautifulSoup(r1.text,'lxml')
         hour=''
         if soup1.find('table',{"class":"car-wash-hours"})!=None:

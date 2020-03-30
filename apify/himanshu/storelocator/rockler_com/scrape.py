@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,16 +20,16 @@ def write_output(data):
 def fetch_data():
     base_url ="https://www.rockler.com"
     return_main_object=[]
-    r = requests.get(base_url+'/retail/stores')
+    r = session.get(base_url+'/retail/stores')
     soup=BeautifulSoup(r.text,'lxml')
     output=[]
     main=soup.find('ul',{"class":'cms-menu'}).find('ul').find('ul').find_all('a')
     for dt in main:
-        r1 = requests.get(dt['href'])
+        r1 = session.get(dt['href'])
         soup1=BeautifulSoup(r1.text,'lxml')
         main1=soup1.find('ul',{"class":'cms-menu'}).find('ul').find('ul').find_all('a')
         for dt1 in main1:
-            r2 = requests.get(dt1['href'])
+            r2 = session.get(dt1['href'])
             soup2 = BeautifulSoup(r2.text, 'lxml')
             if soup2.find('h3', text="Store Hours")!=None:
                 main2 = soup2.find('h3', text="Store Hours").parent.parent

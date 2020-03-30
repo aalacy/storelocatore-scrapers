@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.ctshirts.com"
-    r = requests.get("https://liveapi.yext.com/v2/accounts/me/locations?api_key=74daf99313eb1189e461442a605c448b&v=20071001&limit=50")
+    r = session.get("https://liveapi.yext.com/v2/accounts/me/locations?api_key=74daf99313eb1189e461442a605c448b&v=20071001&limit=50")
     data = r.json()["response"]["locations"]
     return_main_object = []
     for i in range(len(data)):

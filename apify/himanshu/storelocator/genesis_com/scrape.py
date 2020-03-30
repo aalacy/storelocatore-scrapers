@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import datetime
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -26,7 +29,7 @@ def fetch_data():
             "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
         }
         base_url = "https://www.genesis.com"
-        r = requests.get("https://www.genesis.com/content/genesis/us/en/services/dealerservice.js?countryCode=en-US&servicetype=new&vehicleName=all&year=" + str(year) + "&zipCode="+ str(zip_code) + "&noOfResults=100000&refreshToken=" + str(today),headers=headers)
+        r = session.get("https://www.genesis.com/content/genesis/us/en/services/dealerservice.js?countryCode=en-US&servicetype=new&vehicleName=all&year=" + str(year) + "&zipCode="+ str(zip_code) + "&noOfResults=100000&refreshToken=" + str(today),headers=headers)
         data = r.json()["dealers"]
         for store_data in data:
             store = []

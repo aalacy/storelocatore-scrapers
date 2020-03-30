@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +31,7 @@ def fetch_data():
     for cord in cords:
         base_url = "https://lemontree.com"
         data = "action=get_stores&lat=" + str(cord[0]) + "&lng=" + str(cord[1]) + "&radius=200&categories%5B0%5D="
-        r = requests.post("https://lemontree.com/wp-admin/admin-ajax.php",headers=headers,data=data)
+        r = session.post("https://lemontree.com/wp-admin/admin-ajax.php",headers=headers,data=data)
         r_data = r.json()
         for key in r_data:
             store_data = r_data[key]

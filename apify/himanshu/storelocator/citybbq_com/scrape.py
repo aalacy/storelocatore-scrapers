@@ -1,10 +1,13 @@
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import ast
 import json
 import csv
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -26,11 +29,11 @@ def fetch_data():
         'accept': 'application/json, text/javascript, */*; q=0.01',
     }
     base_url = "https://www.citybbq.com"
-    r = requests.get("https://order.citybbq.com/locations", headers=headers)
+    r = session.get("https://order.citybbq.com/locations", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")    
     data = soup.find("ul",{"id":"ParticipatingStates"}).find_all("a")
     for links in data:
-        r1 = requests.get("https://order.citybbq.com"+links['href'], headers=headers)
+        r1 = session.get("https://order.citybbq.com"+links['href'], headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         info = soup1.find_all("li",{"class":"vcard"})
 
@@ -46,7 +49,7 @@ def fetch_data():
             longitude = location.find("span",{"class":"longitude"}).find("span")['title']
             page_url = location.find("a")['href']
 
-            r2 = requests.get(page_url, headers=headers)
+            r2 = session.get(page_url, headers=headers)
             soup2 = BeautifulSoup(r2.text, "lxml")
             json_data = json.loads(soup2.find(lambda tag: (tag.name == "script") and "OLO.Analytics.addEventProperties" in tag.text).text.split("(")[1].split(")")[0].replace("'",'"'))
             zipp = json_data['Store Postal Code']

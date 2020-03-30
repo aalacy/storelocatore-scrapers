@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     return_main_object = []
     base_url = "https://www.independent-bank.com/"
     loacation_url = "https://www.independent-bank.com/our-story/general-contact/locations-hours.html"
-    r = requests.get(loacation_url,headers = header)
+    r = session.get(loacation_url,headers = header)
     soup = BeautifulSoup(r.text,"lxml")
     ck = soup.find('ul',{'id':'locList'}).find_all('div',{'class':'branchName'})
     for target_list in ck:
@@ -27,7 +30,7 @@ def fetch_data():
         page_url='https://www.independent-bank.com'+target_list.find('a')['href']
         store_number = page_url.split('=')[1].split('&')[0]
         # print(store_number)
-        k = requests.get('https://www.independent-bank.com'+target_list.find('a')['href'],headers = header)
+        k = session.get('https://www.independent-bank.com'+target_list.find('a')['href'],headers = header)
         soup = BeautifulSoup(k.text,"lxml")
         locator_domain = base_url
         country_code = "US"

@@ -5,10 +5,13 @@
 
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -25,7 +28,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = 'https://qwenchjuice.com/locations'
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     soup.find_all("div", {"class": "address_box"})[0].find("a", {"class", "contact_call"}).text

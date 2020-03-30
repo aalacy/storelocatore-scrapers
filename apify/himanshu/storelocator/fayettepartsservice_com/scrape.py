@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
     }
     return_main_object = []
     base_url = "http://fayettepartsservice.com"
-    r = requests.get(
+    r = session.get(
         "http://fayettepartsservice.com/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find_all('a', {'title': 'View Location Details'}):
@@ -33,7 +36,7 @@ def fetch_data():
         country_code = "US"
         location_type = "<MISSING>"
         locator_domain = base_url
-        r_loc = requests.get(page_url, headers=headers)
+        r_loc = session.get(page_url, headers=headers)
         soup_loc = BeautifulSoup(r_loc.text, 'lxml')
 
         try:

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,16 +19,16 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://palmbeachtan.com"
-    r = requests.get(base_url+'/locations/states/')
+    r = session.get(base_url+'/locations/states/')
     soup=BeautifulSoup(r.text,'lxml')
     main=soup.find('div',{"class":"state-list"}).find_all('a')
     for atag in main:
-        r1 = requests.get(base_url+atag['href'])
+        r1 = session.get(base_url+atag['href'])
         soup1=BeautifulSoup(r1.text,'lxml')
         main1=soup1.find('section',{"id":"content"}).find('div',{'class':"copy"}).find_all('a')
         for atag1 in main1:
             print(atag['href'])
-            r2 = requests.get(base_url+atag['href']+atag1['href'])
+            r2 = session.get(base_url+atag['href']+atag1['href'])
             soup2=BeautifulSoup(r2.text,'lxml')
             address=''
             city=''

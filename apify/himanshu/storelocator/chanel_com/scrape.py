@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 import sgzip
 import unicodedata
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -40,7 +43,7 @@ def fetch_data():
             "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
         }
         data = r'geocodeResults=%5B%7B%22address_components%22%3A%5B%7B%22long_name%22%3A%22United+States%22%2C%22short_name%22%3A%22US%22%2C%22types%22%3A%5B%22country%22%2C%22political%22%5D%7D%5D%2C%22geometry%22%3A%7B%22location%22%3A%7B%22lat%22%3A'+ str(x) + r'%2C%22lng%22%3A'+ str(y) + r'%7D%2C%22location_type%22%3A%22APPROXIMATE%22%7D%2C%22types%22%3A%5B%22postal_code%22%5D%7D%5D&iframe=true&radius=50.00'
-        r = requests.post("https://services.chanel.com/en_US/storelocator/getStoreList",headers=headers,data=data)
+        r = session.post("https://services.chanel.com/en_US/storelocator/getStoreList",headers=headers,data=data)
         data = r.json()["stores"]
         for store_data in data:
             lat = store_data["latitude"]

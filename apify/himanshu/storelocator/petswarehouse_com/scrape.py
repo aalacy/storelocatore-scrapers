@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', 'w') as output_file:
         writer = csv.writer(output_file, delimiter=",")
@@ -44,7 +47,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = ''
-    r = requests.get('https://app.mapply.net/front-end/iframe.php?api_key=mapply.ef0d3ad63fbf8f5a3a082ddb25888456')
+    r = session.get('https://app.mapply.net/front-end/iframe.php?api_key=mapply.ef0d3ad63fbf8f5a3a082ddb25888456')
     soup = BeautifulSoup(r.text,'lxml')
     c1= []
     c2  = []

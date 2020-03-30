@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.washtrust.com"
-    r = requests.get("https://www.washtrust.com/About-Us/Locations",headers=headers)
+    r = session.get("https://www.washtrust.com/About-Us/Locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for script in soup.find_all("script"):
@@ -37,7 +40,7 @@ def fetch_data():
             if location_list[k]["url"] == location_url:
                 lat = location_list[k]["position"]["latitude"]
                 lng = location_list[k]["position"]["longitude"]
-        location_request = requests.get(location_url)
+        location_request = session.get(location_url)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         location_details = location_soup.find("article",{"class":"edn_article edn_articleDetails"}).find_all("p")
         hours = ""

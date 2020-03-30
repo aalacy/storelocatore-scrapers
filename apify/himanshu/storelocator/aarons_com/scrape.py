@@ -1,7 +1,7 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -9,6 +9,9 @@ from datetime import datetime
 import time
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -31,7 +34,7 @@ def fetch_data():
     base_url = "https://www.aarons.com/"
 
     location_url = "https://api.sweetiq.com/store-locator/public/locations/59151b8997c569e45c00e398?categories=&searchFields%5B0%5D=name"
-    r = requests.get(location_url, headers=headers)
+    r = session.get(location_url, headers=headers)
     
 
     json_data = r.json()

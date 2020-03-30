@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import  pprint
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,7 +32,7 @@ def fetch_data():
     header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5',
               'Content-type': 'application/x-www-form-urlencoded'}
     
-    k = requests.get("https://locationstogo.com/beefs/pinsNearestBeefs.ashx?lat1=27.971&lon1=-82.49&range=500000000&fullbar=%25&partyroom=%25&catering=%25&breakfast=%25&onlineordering=%25", headers=header).json()
+    k = session.get("https://locationstogo.com/beefs/pinsNearestBeefs.ashx?lat1=27.971&lon1=-82.49&range=500000000&fullbar=%25&partyroom=%25&catering=%25&breakfast=%25&onlineordering=%25", headers=header).json()
     for val in k:
         # print(val['address'])
         locator_domain = base_url

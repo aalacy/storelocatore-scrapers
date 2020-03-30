@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def get_store(country_code):
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "http://www.brunellocucinelli.com"
-    usa_request = requests.get("https://shop.brunellocucinelli.com/on/demandware.store/Sites-bc-us-Site/en_US/Stores-CalculateStores?mycountry=" + country_code + "&urlStore=",headers=headers)
+    usa_request = session.get("https://shop.brunellocucinelli.com/on/demandware.store/Sites-bc-us-Site/en_US/Stores-CalculateStores?mycountry=" + country_code + "&urlStore=",headers=headers)
     # print("https://shop.brunellocucinelli.com/on/demandware.store/Sites-bc-us-Site/en_US/Stores-CalculateStores?mycountry=" + country_code + "&urlStore=")
     usa_soup = BeautifulSoup(usa_request.text,"lxml")
     # print(usa_soup.prettify())

@@ -1,10 +1,13 @@
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import requests
+from sgrequests import SgRequests
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -27,12 +30,12 @@ def fetch_data():
     }
     base_url = "http://www.tirecenters.com/"
     location_url = "http://www.tirecenters.com/m/locations_lsh.cfc?method=getstoamount&myregion=all&returnformat=JSON"
-    r = requests.get(location_url, headers=headers).json()
+    r = session.get(location_url, headers=headers).json()
     for i in range(0,50):
         city = (r[i][0])
         url = "http://www.tirecenters.com/m/locations_lsh.cfc?method=getlocs&mystate="+str(city)+"&myregion=all&returnformat=JSON"
         # print(url)
-        r1 = requests.get(url, headers=headers).json()
+        r1 = session.get(url, headers=headers).json()
         for value in r1:
             street_address = value['addr1']
             phone = value['phone']

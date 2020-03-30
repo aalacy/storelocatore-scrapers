@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 from datetime import datetime
+
+session = SgRequests()
+
 requests.packages.urllib3.disable_warnings()
 
 
@@ -31,14 +34,14 @@ def fetch_data():
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
     
     }
-    r = requests.get("https://centurytheatres.com/full-theatre-list", headers=headers, verify=False)
+    r = session.get("https://centurytheatres.com/full-theatre-list", headers=headers, verify=False)
     soup = BeautifulSoup(r.text, "lxml")
     data = soup.find("div",{"class":"columnList wide"})
     for i in data.find_all("a"):
 
         page_url = base_url+i['href']+"#theatreInfo"
         #print(page_url)
-        r1 = requests.get(page_url, headers=headers, verify=False)
+        r1 = session.get(page_url, headers=headers, verify=False)
         soup1 = BeautifulSoup(r1.text, "lxml")
         info = soup1.find_all("script",{"type":"application/ld+json"})[-1].text
         data = json.loads(info)

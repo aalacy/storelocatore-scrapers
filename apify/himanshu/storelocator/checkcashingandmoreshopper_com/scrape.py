@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -46,7 +49,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
-    r =requests.get('http://checkcashingandmoreshopper.com/locations.html',headers = headers)
+    r =session.get('http://checkcashingandmoreshopper.com/locations.html',headers = headers)
     soup = BeautifulSoup(r.text,"lxml")
     for tr in soup.find('table').find_all('tr')[2:]:
         a = tr.find('a')

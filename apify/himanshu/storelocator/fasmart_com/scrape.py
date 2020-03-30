@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -10,6 +10,9 @@ import json
 # print countries dictionary
 # print(countries)
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,7 +34,7 @@ def fetch_data():
     return_main_object = []
     addresses = []
     base_url = "https://fasmart.com"
-    r = requests.get(
+    r = session.get(
         "https://gpminvestments.com/store-locator/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     script = soup.find_all("script",{"type":"text/javascript"})

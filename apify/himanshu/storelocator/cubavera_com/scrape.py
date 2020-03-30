@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
     base_url = "https://www.cubavera.com"
-    r = requests.get("https://api.zenlocator.com/v1/apps/app_txdmatvw/locations/search?northeast=77.064637%2C149.5221&southwest=-57.442352%2C-180",headers=headers)
+    r = session.get("https://api.zenlocator.com/v1/apps/app_txdmatvw/locations/search?northeast=77.064637%2C149.5221&southwest=-57.442352%2C-180",headers=headers)
     data = r.json()["locations"]
     return_main_object = []
     for store_data in data:

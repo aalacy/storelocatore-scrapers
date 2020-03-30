@@ -1,10 +1,13 @@
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import ast
 import json
 import csv
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -44,7 +47,7 @@ def fetch_data():
     longitude = "<MISSING>"
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
-    r = requests.get("http://jracademykids.com/ja-locations/", headers=headers)
+    r = session.get("http://jracademykids.com/ja-locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     script = json.loads(soup.find("script", text=re.compile(
         "var wpgmaps_localize_marker_data")).text.split("var wpgmaps_localize_marker_data = ")[1].split("};")[0] + "}")
@@ -87,7 +90,7 @@ def fetch_data():
         latitude = value["lat"].strip()
         longitude = value["lng"].strip()
         if "0" == latitude and "0" == longitude:
-            r_loc = requests.get(page_url, headers=headers)
+            r_loc = session.get(page_url, headers=headers)
             soup_loc = BeautifulSoup(r_loc.text, "lxml")
             latitude = soup_loc.find("iframe")["src"].split("!2d")[
                 1].split("!2m")[0].split("!3d")[-1]

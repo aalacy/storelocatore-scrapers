@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,13 +22,13 @@ def fetch_data():
     return_main_object = []
     base_url = "https://mandarinrestaurant.com/"
     get_url ='https://mandarinrestaurant.com/locations/'
-    r = requests.get(get_url,headers = header)
+    r = session.get(get_url,headers = header)
     soup = BeautifulSoup(r.text,"lxml")    
     main = soup.find_all('div',{'class':'wpsl-store-location'})
     for i in main:
         link =i.find('a')['href']
         location_name =i.find('a').text
-        r1 = requests.get(link,headers = header)
+        r1 = session.get(link,headers = header)
         soup1 = BeautifulSoup(r1.text,"lxml")
         # lat = soup1.find('iframe')['src'].split('2d')[1].split('!2d')[0] 
         lat = soup1.find('iframe')['src'].split('1d')[1].split('!2d')[0].replace('11217.998304286211','45.3387268') 

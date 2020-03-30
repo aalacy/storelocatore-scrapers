@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -32,7 +35,7 @@ def fetch_data():
     latitude = ''
     base_url = 'http://vercenterprises.com/locations.htm'
     locator_domain = 'http://vercenterprises.com'
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")   
     p_tage= soup.find_all('p', {'class': 'bodyTextL'})[0]
     p_tage1= soup.find_all('p', {'class': 'bodyTextL'})[1]

@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import io
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -40,7 +43,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     addresses = []
@@ -51,7 +54,7 @@ def fetch_data():
             page_url = data_url
             city = data.parent.findAll('li')[-1].get_text().split(',')[0].replace('\n\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t', '').strip()
             # print(city)
-            detail_url = requests.get(data_url, headers=headers)
+            detail_url = session.get(data_url, headers=headers)
             detail_soup = BeautifulSoup(detail_url.text, "lxml")
             detail_data = detail_soup.find('div', {'class', 'store_detail'})
             if detail_data:

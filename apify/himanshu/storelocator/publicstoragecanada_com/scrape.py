@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ import time
 import sgzip
 import pprint
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -63,7 +66,7 @@ def fetch_data():
         # data1 = "useCookies=1&lang=&q=A1A+1A1&searchBranch=1&searchATM=1"
         data = 'action=search_locations_ajax&location=+'+str(coord)
         try:
-            data = requests.post("https://publicstoragecanada.com/wp-admin/admin-ajax.php",headers=headers,data=data).json()
+            data = session.post("https://publicstoragecanada.com/wp-admin/admin-ajax.php",headers=headers,data=data).json()
         except:
             pass
         # except:
@@ -82,7 +85,7 @@ def fetch_data():
             page_url = loc['link']
             location_name = loc['title']
 
-            r1 = requests.get(page_url,headers=headers,data=data)
+            r1 = session.get(page_url,headers=headers,data=data)
             soup1= BeautifulSoup(r1.text,"lxml")
             
             hours = re.sub(r"\s+", " ", soup1.find("div",class_='singleLocationOfficeHours marginB30').text)

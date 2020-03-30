@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://b-bops.com"
-    r = requests.get("https://b-bops.com/locations",headers=headers)
+    r = session.get("https://b-bops.com/locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for script in soup.find_all("script"):
@@ -32,7 +35,7 @@ def fetch_data():
                 street_address = BeautifulSoup(location_details[2],"lxml").text
                 address_2 = BeautifulSoup(location_details[3],"lxml").text.strip()
                 phone = BeautifulSoup(location_details[4].split(",")[0],"lxml").text.replace("'","")
-                location_request = requests.get("https://b-bops.com/" + location_url,headers=headers)
+                location_request = session.get("https://b-bops.com/" + location_url,headers=headers)
                 location_soup = BeautifulSoup(location_request.text,"lxml")
                 hours = " ".join(list(location_soup.find("table",{'class':"table"}).stripped_strings))
                 store = []

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -30,17 +33,17 @@ def fetch_data():
     
 
     locator_domain = 'https://beallsoutlet.com/'
-    r = requests.get('https://stores.beallsoutlet.com/',headers = headers)
+    r = session.get('https://stores.beallsoutlet.com/',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
     main = soup.find('div',{'class':'no-results'}).find_all('div',{'class':'map-list-item is-single'})
     for i in main:
         link= i.find('a')['href']
-        r1 = requests.get(link,headers = headers)
+        r1 = session.get(link,headers = headers)
         soup1 = BeautifulSoup(r1.text,'lxml')
         main2 = soup1.find_all('div',{'class':'map-list-item-wrap is-single'})
         for i in main2:
             link1= i.find('a')['href']
-            r2 = requests.get(link1,headers = headers)
+            r2 = session.get(link1,headers = headers)
             soup2 = BeautifulSoup(r2.text,'lxml')
             main3 = soup2.find('div',{'class':'address'})
             lat_tmp = soup2.find('div',{'class':'directions'}).find('a')['href'].split('location&daddr=')[1]

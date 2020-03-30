@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -51,29 +54,29 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-    r = requests.get("https://stores.destinationmaternity.com/us",headers=headers)
+    r = session.get("https://stores.destinationmaternity.com/us",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for states in soup.find_all("a",{'class':"Directory-listLink"}):
         if states["href"].count("/") == 3:
-            location_request = requests.get("https://stores.destinationmaternity.com/" + states["href"].replace("../",""))
+            location_request = session.get("https://stores.destinationmaternity.com/" + states["href"].replace("../",""))
             location_soup = BeautifulSoup(location_request.text,"lxml")
             store_data = parser(location_soup,"https://stores.destinationmaternity.com/" + states["href"].replace("../",""))
             yield store_data
         else:
-            state_request = requests.get("https://stores.destinationmaternity.com/" + states["href"])
+            state_request = session.get("https://stores.destinationmaternity.com/" + states["href"])
             state_soup = BeautifulSoup(state_request.text,"lxml")
             for city in state_soup.find_all("a",{'class':"Directory-listLink"}):
                 if city["href"].count("/") == 4:
-                    location_request = requests.get("https://stores.destinationmaternity.com/" + city["href"].replace("../",""))
+                    location_request = session.get("https://stores.destinationmaternity.com/" + city["href"].replace("../",""))
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                     store_data = parser(location_soup,"https://stores.destinationmaternity.com/" + city["href"].replace("../",""))
                     yield store_data
                 else:
-                    city_request = requests.get("https://stores.destinationmaternity.com/" + city["href"].replace("../",""))
+                    city_request = session.get("https://stores.destinationmaternity.com/" + city["href"].replace("../",""))
                     city_soup = BeautifulSoup(city_request.text,"lxml")
                     for location in city_soup.find_all("a",{'class':"Directory-listLink"}):
-                        location_request = requests.get("https://stores.destinationmaternity.com/" + location["href"].replace("../",""))
+                        location_request = session.get("https://stores.destinationmaternity.com/" + location["href"].replace("../",""))
                         location_soup = BeautifulSoup(location_request.text,"lxml")
                         store_data = parser(location_soup,)
                         yield store_data

@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -42,7 +45,7 @@ def fetch_data():
 
     base_url = "https://www.daltile.com"
 
-    r_appkey = requests.get(
+    r_appkey = session.get(
         'https://hosted.where2getit.com/daltile/store-locator19.html?addressline=11576&searchradius=25%7C50%7C100%7C250&premierstatementsdealer=1&geoip=1',
         headers=headers)
     soup_appkey = BeautifulSoup(r_appkey.text, "lxml")
@@ -55,7 +58,7 @@ def fetch_data():
         #print(zip_code)
 
         # zip_code = 99655
-        r = requests.post("https://hosted.where2getit.com/daltile/rest/locatorsearch",
+        r = session.post("https://hosted.where2getit.com/daltile/rest/locatorsearch",
                           headers=headers,
                           data='{"request":{"appkey":"085E99FA-1901-11E4-966B-82C955A65BB0","formdata":{'
                                '"dynamicSearch":true,"geoip":false,"dataview":"store_default","limit":1000,'

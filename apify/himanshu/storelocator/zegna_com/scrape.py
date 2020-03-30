@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.zegna.us"
-    r = requests.get(
+    r = session.get(
         base_url + "/us-en/store-locator/view-all-stores.html", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
@@ -31,7 +34,7 @@ def fetch_data():
         link = city.find("a")["href"]
         while True:
 
-            city_request = requests.get(base_url + link, headers=headers)
+            city_request = session.get(base_url + link, headers=headers)
             city_soup = BeautifulSoup(city_request.text, "lxml")
             # print(base_url + link)
             if city_soup.find("div", {"class": "baa-list-left"}) == None:

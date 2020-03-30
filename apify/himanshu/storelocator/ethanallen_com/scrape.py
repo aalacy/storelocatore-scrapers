@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -22,14 +25,14 @@ def fetch_data():
     }
     base_url = "https://www.ethanallen.com"
     data = 'countryCode=US'
-    r = requests.post("https://www.ethanallen.com/on/demandware.store/Sites-ethanallen-us-Site/en_US/Stores-GetStatesByCountry",headers=headers,data=data)
+    r = session.post("https://www.ethanallen.com/on/demandware.store/Sites-ethanallen-us-Site/en_US/Stores-GetStatesByCountry",headers=headers,data=data)
     return_main_object = []
     state_data = r.json()["states"]
     for state in state_data:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }
-        state_request = requests.get("https://www.ethanallen.com/on/demandware.store/Sites-ethanallen-us-Site/en_US/Stores-GetStoreListByCountryAndState?countryCode=US&stateCode=" + state["code"],headers=headers)
+        state_request = session.get("https://www.ethanallen.com/on/demandware.store/Sites-ethanallen-us-Site/en_US/Stores-GetStoreListByCountryAndState?countryCode=US&stateCode=" + state["code"],headers=headers)
         state_soup = BeautifulSoup(state_request.text,"lxml")
         for location in state_soup.find_all("div",{'class':"store"}):
             name = location.find("h3").text

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,13 +25,13 @@ def fetch_data():
         'Accept': 'application/json, text/javascript, */*; q=0.01',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36',
     }
-    r = requests.get("https://www.signaturestyle.com/salon-directory.html", headers=headers)
+    r = session.get("https://www.signaturestyle.com/salon-directory.html", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     links = soup.find_all("a",{"class","btn btn-primary"})
     for link in links:
         if "/locations/pr.html" in link['href']:
             continue
-        r1 = requests.get(base_url+link['href'], headers=headers)
+        r1 = session.get(base_url+link['href'], headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         locations = soup1.find_all("tr")
         for location in locations:
@@ -37,7 +40,7 @@ def fetch_data():
             else:
                 page_url = location.find("a")['href']
 
-            r3 = requests.get(page_url, headers=headers)
+            r3 = session.get(page_url, headers=headers)
             soup3 = BeautifulSoup(r3.text, "lxml")
             if soup3.find("h2",{"class":"hidden-xs salontitle_salonlrgtxt"}):
                 location_name = soup3.find("h2",{"class":"hidden-xs salontitle_salonlrgtxt"}).text.strip()

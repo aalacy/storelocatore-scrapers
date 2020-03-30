@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
     }
     base_url = "https://sealmaster.net"
     location_url= "https://sealmaster.net/?hcs=locatoraid&hca=search%3Asearch%2F85029%2Fproduct%2F_PRODUCT_%2Flat%2F%2Flng%2F%2Flimit%2F100%2Fradius%2F250"
-    r = requests.get(location_url, headers=headers).json()
+    r = session.get(location_url, headers=headers).json()
     for i in r["results"]:
         location_name = (i['name'])
         store_number = i["id"]               

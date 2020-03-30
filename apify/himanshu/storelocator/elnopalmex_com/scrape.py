@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
     addresses = []
     base_url = "http://www.elnopalmex.com"
  
-    r = requests.post("http://elnopalmex.com/locations.html", headers=headers)
+    r = session.post("http://elnopalmex.com/locations.html", headers=headers)
    
     soup = BeautifulSoup(r.text, "lxml")
     locator_domain = base_url
@@ -49,11 +52,11 @@ def fetch_data():
         if "restaurants" in page_url:
             page_url = base_url + "/" + str(script["href"])
             location_url = page_url.replace(" ","%20")
-            r = requests.get(page_url)
+            r = session.get(page_url)
             soup = BeautifulSoup(r.text, 'lxml')
             iframe = soup.find('iframe')['src']
             try:
-                geo_request = requests.get(iframe, headers=headers)
+                geo_request = session.get(iframe, headers=headers)
                 geo_soup = BeautifulSoup(geo_request.text, "lxml")
             except Exception as e:
                 continue

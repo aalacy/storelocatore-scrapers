@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import unicodedata
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -21,7 +24,7 @@ def fetch_data():
     }
     return_main_object = []
     try:
-        r = requests.get("https://storelocator.dickssportinggoods.com/responsive/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E17E8F19C-098E-11E7-AC2C-11ACF3F4F7A7%3C%2Fappkey%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Catleast%3E6%3C%2Fatleast%3E%3Climit%3E10000%3C%2Flimit%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3Enew+york%3C%2Faddressline%3E%3Ccountry%3E%3C%2Fcountry%3E%3Clongitude%3E%3C%2Flongitude%3E%3Clatitude%3E%3C%2Flatitude%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Csearchradius%3E5000%3C%2Fsearchradius%3E%3Cwhere%3E%3Cbrandname%3E%3Ceq%3EDicks+Sporting+Goods%3C%2Feq%3E%3C%2Fbrandname%3E%3Cflag3%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fflag3%3E%3Cflag4%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fflag4%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E",headers=headers)
+        r = session.get("https://storelocator.dickssportinggoods.com/responsive/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E17E8F19C-098E-11E7-AC2C-11ACF3F4F7A7%3C%2Fappkey%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Catleast%3E6%3C%2Fatleast%3E%3Climit%3E10000%3C%2Flimit%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3Enew+york%3C%2Faddressline%3E%3Ccountry%3E%3C%2Fcountry%3E%3Clongitude%3E%3C%2Flongitude%3E%3Clatitude%3E%3C%2Flatitude%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Csearchradius%3E5000%3C%2Fsearchradius%3E%3Cwhere%3E%3Cbrandname%3E%3Ceq%3EDicks+Sporting+Goods%3C%2Feq%3E%3C%2Fbrandname%3E%3Cflag3%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fflag3%3E%3Cflag4%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fflag4%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E",headers=headers)
     except:
         pass
     soup = BeautifulSoup(r.text,"lxml")
@@ -68,7 +71,7 @@ def fetch_data():
         store.append(latitude if latitude else "<MISSING>")
         store.append(longitude if longitude else "<MISSING>")
         page_url = "https://stores.dickssportinggoods.com/" + store[4].lower() + "/" + str(store_id)
-        page_request = requests.get(page_url,headers=headers)
+        page_request = session.get(page_url,headers=headers)
         page_soup = BeautifulSoup(page_request.text,"lxml")
         hour_tmp =page_soup.find("div",{"class":"hours-wrapper"})
         # print(hour_tmp)

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -39,11 +42,11 @@ def fetch_data():
     hours_of_operation = ""
     page_url = ""
 
-    r = requests.get("https://www.graduatehotels.com/", headers=headers)
+    r = session.get("https://www.graduatehotels.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for li in soup.find("ul", class_="directory-navigation").find_all("a", class_="location-item"):
         page_url = li['href']
-        r_loc = requests.get(page_url, headers=headers)
+        r_loc = session.get(page_url, headers=headers)
         soup_loc = BeautifulSoup(r_loc.text, "lxml")
         try:
             address = list(soup_loc.find(
@@ -63,7 +66,7 @@ def fetch_data():
                 phone = "<MISSING>"
             coord = soup_loc.find(
                 "div", class_="footer-address").find("address").find("a", class_="map-link")['href']
-            r_c = requests.get(coord, headers=headers)
+            r_c = session.get(coord, headers=headers)
             soup_c = BeautifulSoup(r_c.text, 'lxml')
             latitude = soup_c.find_all(
                 "meta")[-7]["content"].split("markers=")[1].split("%2C")[0].strip()

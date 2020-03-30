@@ -1,12 +1,15 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -44,7 +47,7 @@ def fetch_data():
 
         location_url ="https://www.hobbylobby.com/store-finder?latitude="+str(lat)+"&longitude="+str(lng)+"&q="+str(search.current_zip)
         try:
-            r = requests.get(location_url, headers=headers)
+            r = session.get(location_url, headers=headers)
         except:
             pass
         soup = BeautifulSoup(r.text.replace("'",''), "xml")
@@ -66,7 +69,7 @@ def fetch_data():
                 lg = i['linkUrl'].split('=')[2]
                 href = "https://www.hobbylobby.com/"+str(i['linkUrl'].split('=')[0])+"="+str(lt[:5])+"&long="+str(lg[:6])
                 try:
-                    r1 = requests.get(href, headers=headers)
+                    r1 = session.get(href, headers=headers)
                 except:
                     pass
                 soup1 = BeautifulSoup(r1.text, "lxml")

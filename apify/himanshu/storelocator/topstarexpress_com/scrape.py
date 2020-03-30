@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -80,7 +83,7 @@ def fetch_data():
         #print(zipp)
         phone= json_data[loc]['te'].strip()
         try:
-            r1 = requests.get(page_url)
+            r1 = session.get(page_url)
             soup_r1 = BeautifulSoup(r1.text,'lxml')
             address = soup_r1.find('div',class_='store_locator_single_address')
             list_address= list(address.stripped_strings)

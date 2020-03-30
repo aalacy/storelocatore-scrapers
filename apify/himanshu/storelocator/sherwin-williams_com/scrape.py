@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
-    r = requests.get("https://www.sherwin-williams.com/store-locator",headers=headers)
+    r = session.get("https://www.sherwin-williams.com/store-locator",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     location_types = []
     for option in soup.find("select",{"id":"findstores_selectStoreType"}).find_all("option"):
@@ -49,7 +52,7 @@ def fetch_data():
             y = coord[1]
             # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
             r_data = 'sideBarType=LSTORES&latitude=' + str(x) + '&longitude=' + str(y) + '&radius=75&uom=SMI&abbrv=us&storeType=' + loc_type + '&countryCode=&requesttype=ajax&langId=&storeId=' + str(store_id)  + '&catalogId=' + str(catalogId)
-            r = requests.post("https://www.sherwin-williams.com/AjaxStoreLocatorSideBarView?langId=-1&storeId=" + str(store_id),headers=r_headers,data=r_data)
+            r = session.post("https://www.sherwin-williams.com/AjaxStoreLocatorSideBarView?langId=-1&storeId=" + str(store_id),headers=r_headers,data=r_data)
             soup = BeautifulSoup(r.text,"lxml")
             data = json.loads(soup.find("script",{'id':"storeResultsJSON"}).text)["stores"]
             for store_data in data:
@@ -78,7 +81,7 @@ def fetch_data():
                 store.append(loc_type)
                 store.append(lat)
                 store.append(lng)
-                location_request = requests.get("https://www.sherwin-williams.com" + store_data["url"],headers=headers)
+                location_request = session.get("https://www.sherwin-williams.com" + store_data["url"],headers=headers)
                 location_soup = BeautifulSoup(location_request.text,"lxml")
                 hours = " ".join(list(location_soup.find("div",{'class':"store-hours-table"}).stripped_strings))
                 store.append(hours if hours != "" else "<MISSING>")

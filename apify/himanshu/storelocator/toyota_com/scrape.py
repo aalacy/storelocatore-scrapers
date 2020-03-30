@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -36,7 +39,7 @@ def fetch_data():
         }
         base_url = "https://www.toyota.com"
         # print("https://www.toyota.com/ToyotaSite/rest/dealerRefresh/locateDealers?zipCode=" + str(zip_code))
-        r = requests.get("https://www.toyota.com/ToyotaSite/rest/dealerRefresh/locateDealers?zipCode=" + str(zip_code),headers=headers)
+        r = session.get("https://www.toyota.com/ToyotaSite/rest/dealerRefresh/locateDealers?zipCode=" + str(zip_code),headers=headers)
         if "showDealerLocatorDataArea" not in r.json():
             continue
         if "dealerLocator" not in r.json()["showDealerLocatorDataArea"]:

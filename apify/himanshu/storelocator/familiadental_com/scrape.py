@@ -1,12 +1,15 @@
 import csv
 import time
 
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
  
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -28,14 +31,14 @@ def fetch_data():
     base_url = "https://www.familiadental.com"
     addresses = []
 
-    r = requests.get("https://www.familiadental.com/locations/", headers=headers)
+    r = session.get("https://www.familiadental.com/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     for script in soup.find_all("li", {"class": re.compile("page_item page-item")}):
 
         location_url =  script.find("a")["href"]
         # print("page_url === "+ location_url)
-        r_location = requests.get(location_url, headers=headers)
+        r_location = session.get(location_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
 
         if soup_location.find("iframe",{"src":re.compile("https://www.google.com/maps")}):
@@ -57,7 +60,7 @@ def fetch_data():
 
             full_address_url = soup_location.find("iframe",{"src":re.compile("https://www.google.com/maps")})["src"]
             # print("full_address_url == "+ full_address_url)
-            geo_request = requests.get(full_address_url, headers=headers)
+            geo_request = session.get(full_address_url, headers=headers)
             geo_soup = BeautifulSoup(geo_request.text, "lxml")
             for script_geo in geo_soup.find_all("script"):
                 if "initEmbed" in script_geo.text:

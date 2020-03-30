@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
     return_main_object = []
     address1 = []
     
-    r = requests.get(
+    r = session.get(
     "https://www.centralbankonline.com/locations", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     

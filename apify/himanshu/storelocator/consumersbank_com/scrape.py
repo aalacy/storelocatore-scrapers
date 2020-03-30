@@ -1,8 +1,11 @@
-import requests
+from sgrequests import SgRequests
 import csv
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -38,7 +41,7 @@ def fetch_data():
     longitude = "<MISSING>"
     raw_address = ""
     hours_of_operation = "<MISSING>"
-    r = requests.get(
+    r = session.get(
         "https://www.consumersbank.com/about-us/contact/locations-hours.html", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     # print(soup.prettify())

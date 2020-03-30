@@ -1,12 +1,15 @@
 import csv
 import time
 
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
  
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -28,7 +31,7 @@ def fetch_data():
     base_url = "https://www.definebody.com"
     addresses = []
 
-    r = requests.get("https://definebody.com/fitness-studios/", headers=headers)
+    r = session.get("https://definebody.com/fitness-studios/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     for script in soup.find("div", {"id": "locations"}).find_all("a"):
@@ -50,7 +53,7 @@ def fetch_data():
         page_url = script["href"]
         # page_url = "http://dubai.definebody.com"
         # print("script === " + str(script["href"]))
-        r_location = requests.get(page_url, headers=headers)
+        r_location = session.get(page_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
 
         full_address = list(soup_location.find("div", {"id": "contact"}).stripped_strings)

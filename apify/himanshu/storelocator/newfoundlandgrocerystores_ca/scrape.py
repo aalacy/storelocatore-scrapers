@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -43,7 +46,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }
     base_url= "https://www.newfoundlandgrocerystores.ca/store-locator/v2/locations/all?_=1571920909554"
-    locations = requests.get(base_url,headers=headers).json()
+    locations = session.get(base_url,headers=headers).json()
     
     # soup= BeautifulSoup(r.text,"lxml")
     for loc in locations['searchResult']:
@@ -61,8 +64,8 @@ def fetch_data():
         lat = loc["lat"]
         lng = loc['lng']
         
-        # locations1 = requests.get("https://www.newfoundlandgrocerystores.ca"+loc['details']['url'],headers=headers)
-        locations1 = requests.get("https://www.newfoundlandgrocerystores.ca"+loc['details']['url'],headers=headers)
+        # locations1 = session.get("https://www.newfoundlandgrocerystores.ca"+loc['details']['url'],headers=headers)
+        locations1 = session.get("https://www.newfoundlandgrocerystores.ca"+loc['details']['url'],headers=headers)
 
         soup1= BeautifulSoup(locations1.text,"lxml")
         phone1 = soup1.find("div",{"class":"store-information__title-content"})

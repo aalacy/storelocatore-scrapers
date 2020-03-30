@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import sgzip
 import json
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -51,7 +54,7 @@ def fetch_data():
     page_url = "<MISSING>"
 
     for zip_code in zips:
-        r = requests.get(
+        r = session.get(
             'https://api.smilebrands.com/public/facility/search/zip/' + str(zip_code), headers=headers)
         try:
             json_data = r.json()
@@ -63,7 +66,7 @@ def fetch_data():
             for sid in json_data['data']:
                 if sid['id'] != None:
                     store_id = sid['id']
-                    r_loc = requests.get(
+                    r_loc = session.get(
                         'https://api.smilebrands.com/public/facility/id/' + str(store_id), headers=headers)
                     try:
                         r_loc_json = r_loc.json()

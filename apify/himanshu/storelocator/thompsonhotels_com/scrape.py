@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ import json
 # from shapely.geometry import Point
 # from shapely.geometry import mapping, shape
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -47,7 +50,7 @@ def fetch_data():
     hours_of_operation = ""
     page_url = ""
 
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for div in soup.find("div", class_="artsy-menu-columns clearfix").find_all("ul"):
         # for li in div.find_all("li"):
@@ -55,7 +58,7 @@ def fetch_data():
         #     print("~~~~~~~~~~~")
         for a in div.find_all("a"):
             page_url = a['href']
-            r_loc = requests.get(page_url, headers=headers)
+            r_loc = session.get(page_url, headers=headers)
             soup_loc = BeautifulSoup(r_loc.text, "lxml")
 
             address = soup_loc.find("section", class_="sec-1")

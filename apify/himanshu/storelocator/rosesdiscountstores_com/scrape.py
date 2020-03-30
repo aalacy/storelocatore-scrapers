@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,7 +20,7 @@ def write_output(data):
 def fetch_data():
     base_url = "https://www.rosesdiscountstores.com"
     return_main_object=[]
-    r = requests.get("https://api.zenlocator.com/v1/apps/app_vfde3mfb/locations/search?northeast=82.292271%2C90.127516&southwest=-57.393437%2C-180").json()
+    r = session.get("https://api.zenlocator.com/v1/apps/app_vfde3mfb/locations/search?northeast=82.292271%2C90.127516&southwest=-57.393437%2C-180").json()
     for loc in r['locations']:
         name=loc['name'].strip()
         addr = loc['address'].split(",")

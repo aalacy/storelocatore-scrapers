@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -51,7 +54,7 @@ def fetch_data():
 
 
 
-    r= requests.get('https://elpolloinka.com/gardena/about-us/locations/',headers = headers)
+    r= session.get('https://elpolloinka.com/gardena/about-us/locations/',headers = headers)
     soup = BeautifulSoup(r.text,'html.parser')
     loc = soup.find('div',class_='entry-content')
     for p in loc.find_all('p'):

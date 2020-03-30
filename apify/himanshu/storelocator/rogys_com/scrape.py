@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
     print("soup ===  first")
 
     base_url = "https://www.rogys.com"
-    r = requests.post("https://www.rogys.com/wp-admin/admin-ajax.php", headers=headers,
+    r = session.post("https://www.rogys.com/wp-admin/admin-ajax.php", headers=headers,
                       data="action=get_location_data&geolocation_data=&miles=5000&zip=61614")
     # soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
@@ -84,11 +87,11 @@ def fetch_data():
 
     print(str(index) + " ====== " + content_parsing)
 
-    r1 = requests.post("https://www.rogys.com/wp-admin/admin-ajax.php", headers=headers,
+    r1 = session.post("https://www.rogys.com/wp-admin/admin-ajax.php", headers=headers,
                        data=content_parsing)
 
     content_parsing = content_parsing.replace("get_brand_results_list", "get_nonbrand_results_list")
-    r2 = requests.post("https://www.rogys.com/wp-admin/admin-ajax.php", headers=headers,
+    r2 = session.post("https://www.rogys.com/wp-admin/admin-ajax.php", headers=headers,
                        data=content_parsing)
 
     soup = BeautifulSoup(r1.text + r2.text, "lxml")

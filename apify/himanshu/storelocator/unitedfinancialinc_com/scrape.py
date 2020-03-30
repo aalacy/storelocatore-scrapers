@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     return_main_object=[]
     headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36","Content-Type": "application/json;charset=UTF-8"}
     dt='{"bounds":[{"Latitude":-67.8382886748674,"Longitude":-180},{"Latitude":85.57569667044429,"Longitude":180},{"Latitude":42.106342,"Longitude":-72.622995}]}'
-    r = requests.post("https://www.bankatunited.com/DataAccess/LocationService.svc/GetLocations",headers=headers,data=dt).json()
+    r = session.post("https://www.bankatunited.com/DataAccess/LocationService.svc/GetLocations",headers=headers,data=dt).json()
     for loc in r['d']:
         cleanr = re.compile('<.*?>')
         madd=loc['Address'].split('<br />')

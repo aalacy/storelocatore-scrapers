@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -41,7 +44,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = locator_domain
-    r = requests.get('http://topsbarbq.com/locations', headers=headers)
+    r = session.get('http://topsbarbq.com/locations', headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     # for section in soup.find_all('section',class_='loc-row'):
     for loc_col in soup.find_all('div', {'class': 'loc-col'}):

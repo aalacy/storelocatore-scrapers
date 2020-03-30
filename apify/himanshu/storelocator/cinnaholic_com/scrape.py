@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 from datetime import datetime
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -50,7 +53,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }
     base_url= "https://momentfeed-prod.apigee.net/api/llp.json?auth_token=BSPFTAWDPPVBKVPC&page=1&pageSize=10000"
-    locations = requests.get(base_url,headers=headers).json()
+    locations = session.get(base_url,headers=headers).json()
     
     # soup= BeautifulSoup(r.text,"lxml")
     # print(len(locations))

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
     addresses = []
     base_url = "https://www.microsoft.com"
 
-    r = requests.get("https://www.microsoft.com/en-us/store/locations/find-a-store", headers=headers)
+    r = session.get("https://www.microsoft.com/en-us/store/locations/find-a-store", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     return_main_object = []
@@ -60,7 +63,7 @@ def fetch_data():
             location_url = base_url + script["href"]
             # print("Location URL === " + str(location_url))
 
-            r_location = requests.get(location_url, headers=headers)
+            r_location = session.get(location_url, headers=headers)
             soup_location = BeautifulSoup(r_location.text, "lxml")
 
             full_address = ",".join(list(soup_location.find("div",{"class":re.compile("store-address")}).stripped_strings)).replace("Â\xa0","").replace(",,,",",")

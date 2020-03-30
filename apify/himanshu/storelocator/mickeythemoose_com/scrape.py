@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -8,6 +8,9 @@ from selenium.webdriver.firefox.options import Options
 import time
 from selenium.webdriver.support.wait import WebDriverWait
 import platform
+
+
+session = SgRequests()
 
 system = platform.system()
 
@@ -50,14 +53,14 @@ def fetch_data():
         "x-wp-nonce": keys2,
         "x-wpgmza-action-nonce": keys1
     }
-    r = requests.post("https://mickeythemoose.com/wp-json/wpgmza/v1/marker-listing/",headers=headers,data='phpClass=WPGMZA%5CMarkerListing%5CBasicTable&start=0&length=10000&map_id=1').json()
+    r = session.post("https://mickeythemoose.com/wp-json/wpgmza/v1/marker-listing/",headers=headers,data='phpClass=WPGMZA%5CMarkerListing%5CBasicTable&start=0&length=10000&map_id=1').json()
     # print(r)
     return_main_object = []
     if "meta" in r:
         for loc in r['meta']:
             page_url = loc['link']
             # print(loc['link'])
-            r1=requests.get(loc['link'])
+            r1=session.get(loc['link'])
             name=loc['title'].strip()
             storeno=loc['id']
             lat=loc['lat']

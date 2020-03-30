@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url = "https://www.mybobs.com/stores"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     a = soup.find_all("div",{"id":"locationType0"})
     for i in a:
@@ -28,7 +31,7 @@ def fetch_data():
         for j in k:
             link1 = ("https://www.mybobs.com"+str(j['href']))
             # print(link1)
-            r1 = requests.get(link1)
+            r1 = session.get(link1)
             soup1 = BeautifulSoup(r1.text,"lxml")
             data = json.loads(soup1.find(lambda tag: (tag.name == "script") and "@context" in tag.text).text)[1]
             phone = (data['telephone'])
@@ -65,7 +68,7 @@ def fetch_data():
             url = (data['url'].lower().split("/")[-1])
             m = state.lower().replace(" ","-")
             mp = "https://www.mybobs.com/stores/"+str(m)+"/"+str(url).replace(" ","-")
-            r = requests.get(mp)
+            r = session.get(mp)
             soup= BeautifulSoup(r.text,"lxml")
             try:
                 a = soup.find("ul",{"class":"bobs-store-additional-store-content_wrapper"}).find("iframe",{"class":"bobs-store-additional-store-content_wrapper-tourimg"})

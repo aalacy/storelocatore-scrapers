@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.wundabar.com/studios"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     main_soup= BeautifulSoup(r.text,"lxml")
     data1 = main_soup.find_all('a',{"class":"image-slide-anchor content-fill"})
     return_main_object =[]
@@ -32,7 +35,7 @@ def fetch_data():
         k = []
 
         while len(k)==0:
-            r = requests.get("https://www.wundabar.com"+i['href'])
+            r = session.get("https://www.wundabar.com"+i['href'])
             soup= BeautifulSoup(r.text,"lxml")
             k = soup.find_all("div",{"class":"sqs-block html-block sqs-block-html"})
         

@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import http.client
 import sgzip
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -37,19 +40,19 @@ def fetch_data():
 
 
     location_url = "https://stores.guess.com.prod.rioseo.com/"
-    r = requests.get(location_url,headers=headers)
+    r = session.get(location_url,headers=headers)
 
     soup = BeautifulSoup(r.text,"lxml")
 
     for i in soup.find('ul',{'class':'custom-map-list'}).find_all('a'):
 
-        r1 = requests.get(i['href'], headers=headers)
+        r1 = session.get(i['href'], headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         for j in soup1.find('ul',{'class':'custom-map-list'}).find_all('a'):
-            r2 = requests.get(j['href'], headers=headers)
+            r2 = session.get(j['href'], headers=headers)
             soup2 = BeautifulSoup(r2.text, "lxml")
             for k in soup2.find('ul', {'class': 'custom-map-list'}).find_all('li'):
-                r3 = requests.get(k.find('a')['href'], headers=headers)
+                r3 = session.get(k.find('a')['href'], headers=headers)
                 soup3 = BeautifulSoup(r3.text, "lxml")
                 if soup3.find('div',{'class':'location-name-wrap'}) !=None:
                     location_name =  soup3.find('span',{'class':'location-name capitalize underline'}).text

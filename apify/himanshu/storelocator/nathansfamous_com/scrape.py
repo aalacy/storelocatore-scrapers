@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -32,7 +35,7 @@ def fetch_data():
     while zip_code:
         result_coords =[]
         try:
-            r = requests.get("https://locator.smfmsvc.com/api/v1/locations?client_id=156&brand_id=ACTP&product_id=ANY&product_type=agg&zip="+str(search.current_zip)+"&search_radius="+str(MAX_DISTANCE),headers=headers).json()
+            r = session.get("https://locator.smfmsvc.com/api/v1/locations?client_id=156&brand_id=ACTP&product_id=ANY&product_type=agg&zip="+str(search.current_zip)+"&search_radius="+str(MAX_DISTANCE),headers=headers).json()
         except:
             continue
         

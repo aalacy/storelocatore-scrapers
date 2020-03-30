@@ -1,12 +1,15 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -53,7 +56,7 @@ def fetch_data():
             lat) + "&lng=" + str(lng) + "&max_results=" + str(MAX_RESULTS) + "&search_radius=" + str(
             MAX_DISTANCE) + "&autoload=1"
         # print("location_url === " + str(location_url))
-        r = requests.get(location_url, headers=headers)
+        r = session.get(location_url, headers=headers)
         json_data = r.json()
 
         current_results_len = int(len(json_data))  # it always need to set total len of record.

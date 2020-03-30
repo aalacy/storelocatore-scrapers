@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url= "https://api.marksandspencer.com/v1/stores?apikey=aVCi8dmPbHgHrdCv9gNt6rusFK98VokK&jsonp=angular.callbacks._1&latlong=51.49919128417969,-0.09428299963474274&limit=3000&radius=5000000"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
     data = (soup.text.split(");")[0].split("callbacks._1(")[1])
     json_data = json.loads(data)

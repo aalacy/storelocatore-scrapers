@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,7 +20,7 @@ def write_output(data):
 def fetch_data():
     base_url = "https://am.boschcarservice.com"
     return_main_object = []
-    r = requests.get("https://ws12-mtp.boschwebservices.com/RB.GEOLOCATOR/GeoLocator.svc/SearchLocations/ByLocator/US/41?format=json&numResults=100000")
+    r = session.get("https://ws12-mtp.boschwebservices.com/RB.GEOLOCATOR/GeoLocator.svc/SearchLocations/ByLocator/US/41?format=json&numResults=100000")
     data = r.json()["Locations"]
     for i in range(len(data)):
         store_data = data[i]

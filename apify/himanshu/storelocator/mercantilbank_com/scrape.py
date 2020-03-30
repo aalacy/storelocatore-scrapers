@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,10 +23,10 @@ def fetch_data():
     return_main_object = []
     base_url = "https://www.amerantbank.com/"
     location_url  = 'https://www.amerantbank.com/wp-admin/admin-ajax.php?action=locations_archive_get_map_locations&data=post-type%3Dlocations%26posts-per-page%3D-1'
-    r = requests.get(location_url ,headers = header).json()
+    r = session.get(location_url ,headers = header).json()
 
     bb  = 'https://www.amerantbank.com/wp-admin/admin-ajax.php?action=load_posts&data=post-type%3Dlocations%26posts-per-page%3D-1'
-    lol = requests.get(bb ,headers = header).json()
+    lol = session.get(bb ,headers = header).json()
     
     soup = BeautifulSoup(lol['html'],"lxml")
     for idx, val in enumerate(r['locations']): 

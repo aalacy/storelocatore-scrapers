@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,13 +19,13 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.lolelife.com"
-    r = requests.get(base_url+"/pages/storelocator")
+    r = session.get(base_url+"/pages/storelocator")
     soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
     output=[]
     main=soup.find('div',{"class":'filter_locator'}).find_all('a')
     for atag in main:
-        r1 = requests.get(base_url+"/apps/proxy/getStores?country="+atag['href'].split('/')[-1].strip().upper()).json()
+        r1 = session.get(base_url+"/apps/proxy/getStores?country="+atag['href'].split('/')[-1].strip().upper()).json()
         for location in r1:
             store=[]
             hour=re.sub(r'"+', '',location['weekday'].replace('[','').replace(']',''))

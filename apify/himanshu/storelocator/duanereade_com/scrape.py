@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -47,7 +50,7 @@ def fetch_data():
     while True:
 
         try:
-            r = requests.post("https://www.walgreens.com/locator/v1/stores/search", headers=headers,
+            r = session.post("https://www.walgreens.com/locator/v1/stores/search", headers=headers,
                           data='{"zip":"11576","r":"500000","requestType":"dotcom","s":"100","p":"' + str(
                               intdex) + '"}')
         except:
@@ -85,7 +88,7 @@ def fetch_data():
 
             while True:
                 try:
-                    r_hours = requests.get(page_url, headers=headers)
+                    r_hours = session.get(page_url, headers=headers)
                     break
                 except:
                     continue

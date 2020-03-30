@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -28,7 +31,7 @@ def fetch_data():
     response = requests.request("GET", url, headers=headers)
     soup = BeautifulSoup(response.text, "lxml")
     for link in soup.find_all("a", text=re.compile("view location")):
-        r_loc = requests.get(link["href"], headers=headers)
+        r_loc = session.get(link["href"], headers=headers)
         soup_loc = BeautifulSoup(r_loc.text, "lxml")
         location_name = link["href"].split(
             "/")[-2].capitalize().replace("-", " ").strip()

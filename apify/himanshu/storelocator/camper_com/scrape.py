@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.camper.com"
-    r = requests.get(base_url+"/en_US/shops")
+    r = session.get(base_url+"/en_US/shops")
     soup=BeautifulSoup(r.text ,"lxml")
     return_main_object = []
     main=soup.find_all('script')
@@ -24,13 +27,13 @@ def fetch_data():
         if "var ciudades" in script.text:
             data=eval(script.text.split('var ciudades = ')[1].split(';')[0])
             if "USA" in data:
-                r1 = requests.get(base_url+"/en_US/shops/usa")
+                r1 = session.get(base_url+"/en_US/shops/usa")
                 soup1=BeautifulSoup(r1.text ,"lxml")
                 main1=soup1.find('div',{"id":"lista"}).find_all('div',{"class":"store_item"})
                 for atag in main1:
                     link=atag.find('a',{'class':"btn_view_store"})['href']
                     storeno=link.split('-')[-1]
-                    r2 = requests.get(base_url+link)
+                    r2 = session.get(base_url+link)
                     soup2=BeautifulSoup(r2.text ,"lxml")
                     name=soup2.find('h2',{"itemprop":"name"}).text.strip()
                     address=soup2.find('span',{"itemprop":"streetAddress"}).text.strip()
@@ -58,13 +61,13 @@ def fetch_data():
                     store.append(hour)
                     return_main_object.append(store)
             if "CANADA" in data:
-                r1 = requests.get(base_url+"/en_US/shops/canada")
+                r1 = session.get(base_url+"/en_US/shops/canada")
                 soup1=BeautifulSoup(r1.text ,"lxml")
                 main1=soup1.find('div',{"id":"lista"}).find_all('div',{"class":"store_item"})
                 for atag in main1:
                     link=atag.find('a',{'class':"btn_view_store"})['href']
                     storeno=link.split('-')[-1]
-                    r2 = requests.get(base_url+link)
+                    r2 = session.get(base_url+link)
                     soup2=BeautifulSoup(r2.text ,"lxml")
                     name=soup2.find('h2',{"itemprop":"name"}).text.strip()
                     address=soup2.find('span',{"itemprop":"streetAddress"}).text.strip()

@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 
+
+
+session = SgRequests()
 
 def get_driver():
     options = Options()
@@ -56,7 +59,7 @@ def fetch_data():
     # print("cookies_string === "+ cookies_string)
     # print("requestVerificationToken === "+ requestVerificationToken)
 
-    r_json = requests.post("https://www.applebees.com/api/sitecore/Locations/LocationSearchAsync",
+    r_json = session.post("https://www.applebees.com/api/sitecore/Locations/LocationSearchAsync",
                            headers=headers,
                            data='ResultsPage=%2Flocations%2Fresults&LocationRoot=%7B3B216C7F-CB81-4126-A2CE-33AD79B379CF'
                                 '%7D&NumberOfResults=10000&LoadResultsForCareers=False&MaxDistance=5000&UserLatitude'

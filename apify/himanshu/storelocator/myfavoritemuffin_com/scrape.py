@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -20,7 +23,7 @@ def fetch_data():
     "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "https://myfavoritemuffin.com"
-    r = requests.get("https://myfavoritemuffin.com/Umbraco/Api/LocationsApi/GetNearbyLocations?latitude=40.73&longitude=-73.5&maxResults=100000&maxDistance=1000000",headers=headers)
+    r = session.get("https://myfavoritemuffin.com/Umbraco/Api/LocationsApi/GetNearbyLocations?latitude=40.73&longitude=-73.5&maxResults=100000&maxDistance=1000000",headers=headers)
     return_main_object = []
     for store_data in r.json():
         store = []

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,20 +23,20 @@ def fetch_data():
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "https://sixflags.com"
-    r = requests.get("https://sixflags.com",headers=headers)
+    r = session.get("https://sixflags.com",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     addresses = []
     for state in soup.find_all("div",{"class":'pin'}):
         for location in state.find_all("a"):
             if location["href"][0] != "/":
                 continue
-            location_request = requests.get(base_url + location["href"],headers=headers)
+            location_request = session.get(base_url + location["href"],headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             if location_soup.find("a",text="Directions") == None:
                 continue
-            address_request = requests.get(base_url + location_soup.find("a",text="Directions")["href"],headers=headers)
+            address_request = session.get(base_url + location_soup.find("a",text="Directions")["href"],headers=headers)
             address_soup = BeautifulSoup(address_request.text,"lxml")
-            phone_request = requests.get(base_url + location_soup.find("a",text="Contact Us")["href"],headers=headers)
+            phone_request = session.get(base_url + location_soup.find("a",text="Contact Us")["href"],headers=headers)
             phone_soup = BeautifulSoup(phone_request.text,"lxml")
             phone_split = phone_soup.find(text=re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"))
             if phone_split:

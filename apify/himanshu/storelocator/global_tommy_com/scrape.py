@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -8,6 +8,9 @@ import sgzip
 from shapely.prepared import prep
 from shapely.geometry import Point
 from shapely.geometry import mapping, shape
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -22,7 +25,7 @@ def write_output(data):
 countries = {}
 
 def getcountrygeo():
-   data = requests.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
+   data = session.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
    for feature in data["features"]:
        geom = feature["geometry"]
        country = feature["properties"]["ADMIN"]
@@ -52,7 +55,7 @@ def fetch_data():
         x = coord[0]
         y = coord[1]
         #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        r = requests.get("https://global.tommy.com/en_int/api/store_finder?lat="+ str(x) + "&lng=" + str(y) + "&radius=50000000",headers=headers)
+        r = session.get("https://global.tommy.com/en_int/api/store_finder?lat="+ str(x) + "&lng=" + str(y) + "&radius=50000000",headers=headers)
         data = r.json()["data"]
         for store_data in data:
             country = store_data["title"].split(",")[0]

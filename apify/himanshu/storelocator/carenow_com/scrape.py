@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.carenow.com"
-    r = requests.get("https://core.secure.ehc.com/src/tools/services/locations-controller.dot?serviceId=&host=08d5f8fe-16dc-4326-89c5-dc78ed4d8219&facilityUrl=&pullFrom=Facility&pullFromHost=Auto&marketId=&starRatings=true&showOnly=Urgent_Care&state=&region=&division=&tag=&facilityTags=").json()
+    r = session.get("https://core.secure.ehc.com/src/tools/services/locations-controller.dot?serviceId=&host=08d5f8fe-16dc-4326-89c5-dc78ed4d8219&facilityUrl=&pullFrom=Facility&pullFromHost=Auto&marketId=&starRatings=true&showOnly=Urgent_Care&state=&region=&division=&tag=&facilityTags=").json()
     return_main_object = []
     for location in r['Locations']:
         if location['Address1']: 

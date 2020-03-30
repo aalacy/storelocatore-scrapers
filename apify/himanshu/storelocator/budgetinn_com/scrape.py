@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import sgzip
 import json
 import time
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -48,7 +51,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
-    r= requests.get("https://secure.rezserver.com/hotels/search/search_list.php?refid=5533&rooms=1&adults=2&children=0&express_deals=&query=11576&_=1570192273749",headers = headers)
+    r= session.get("https://secure.rezserver.com/hotels/search/search_list.php?refid=5533&rooms=1&adults=2&children=0&express_deals=&query=11576&_=1570192273749",headers = headers)
     soup = BeautifulSoup(r.text,"lxml")
     # print(soup.prettify())
     for ul in soup.find_all('ul'):
@@ -57,7 +60,7 @@ def fetch_data():
 
             loc_type =  a['href'].split('&')[-2].split("_")[0]
             # print(loc_type)
-            r_loc = requests.get('https://secure.rezserver.com/hotels/results_v2/list/?'+str(loc_id)+'&type='+str(loc_type)+'&rooms=1&adults=2&children=0&date_search=0&currency=USD&distance_unit=mile&search_type='+str(loc_type)+'&refid=5533',headers=headers)
+            r_loc = session.get('https://secure.rezserver.com/hotels/results_v2/list/?'+str(loc_id)+'&type='+str(loc_type)+'&rooms=1&adults=2&children=0&date_search=0&currency=USD&distance_unit=mile&search_type='+str(loc_type)+'&refid=5533',headers=headers)
             # print('https://secure.rezserver.com/hotels/results_v2/list/?'+str(loc_id)+'&type='+str(loc_type)+'&rooms=1&adults=2&children=0&date_search=0&currency=USD&distance_unit=mile&search_type='+str(loc_type)+'&refid=5533')
             try:
                 json_data = r_loc.json()

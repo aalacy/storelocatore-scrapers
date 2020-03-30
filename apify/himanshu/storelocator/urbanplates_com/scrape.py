@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,12 +19,12 @@ def fetch_data():
     base_url = "https://urbanplates.com"
     return_main_object=[]
     headers={"User-Agent": "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"}
-    r = requests.get(base_url+'/locations/',headers=headers)
+    r = session.get(base_url+'/locations/',headers=headers)
     soup=BeautifulSoup(r.text,'lxml')
     main=soup.find_all('div',{"class":"locale-thum"})
     for atag in main:
         link=atag.find('a')['href']
-        r1 = requests.get(link,headers=headers)
+        r1 = session.get(link,headers=headers)
         soup1=BeautifulSoup(r1.text,'lxml')
         main1=soup1.find('section',{"id":"main"})
         if main1!=None:

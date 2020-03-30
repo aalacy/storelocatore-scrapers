@@ -1,12 +1,15 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -32,7 +35,7 @@ def fetch_data():
     page = 0
     while True:
         location_url = "https://www.selectmedical.com//sxa/search/results/?s={648F4C3A-C9EA-4FCF-82A3-39ED2AC90A06}&itemid={94793D6A-7CC7-4A8E-AF41-2FB3EC154E1C}&v={D2D3D65E-3A18-43DD-890F-1328E992446A}&p=8&e="+str(page)
-        r = requests.get(location_url, headers=headers)
+        r = session.get(location_url, headers=headers)
         try:
             json_data = r.json()
         except:

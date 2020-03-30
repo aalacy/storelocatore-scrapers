@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,8 +31,8 @@ def fetch_data():
 
     base_url = "https://www.emoryhealthcare.org"
 
-    r = requests.post("https://www.emoryhealthcare.org/service/findPhysician/api/locations/retrieve",headers=headers,data=data,verify=False)
-    phone_request = requests.get("https://www.emoryhealthcare.org/locations/index.html?type=primary#map",verify=False)
+    r = session.post("https://www.emoryhealthcare.org/service/findPhysician/api/locations/retrieve",headers=headers,data=data,verify=False)
+    phone_request = session.get("https://www.emoryhealthcare.org/locations/index.html?type=primary#map",verify=False)
     phone_soup = BeautifulSoup(phone_request.text,"lxml")
     phone = phone_soup.find("li",{'class':"hidden-xs"}).find_all("a")[-1].text
     data = r.json()["locations"]

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
+
+session = SgRequests()
+
 requests.packages.urllib3.disable_warnings()
 
 def write_output(data):
@@ -25,7 +28,7 @@ def fetch_data():
     # print("soup ===  first")
 
     base_url = "https://www.rachellebery.ca"
-    r = requests.get("https://www.rachellebery.ca/trouver-un-magasin/", headers=headers,verify=False)
+    r = session.get("https://www.rachellebery.ca/trouver-un-magasin/", headers=headers,verify=False)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
@@ -53,7 +56,7 @@ def fetch_data():
 
     # print("datapath_url === " + datapath_url)
 
-    r1 = requests.get(datapath_url, headers=headers,verify=False)
+    r1 = session.get(datapath_url, headers=headers,verify=False)
 
     json_data = r1.json()
 

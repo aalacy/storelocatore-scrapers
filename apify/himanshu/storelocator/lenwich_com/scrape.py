@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 requests.packages.urllib3.disable_warnings()
 
 
@@ -26,7 +29,7 @@ def fetch_data():
     }
 
     base_url = "http://lenwich.com/location/"
-    r = requests.get(base_url,headers=headers,verify=False)
+    r = session.get(base_url,headers=headers,verify=False)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     store_detail = []
@@ -67,7 +70,7 @@ def fetch_data():
         a = i.find("a", class_="restaurants-buttons")['href'].strip()
         store_number = i.find(
             "a", class_="restaurants-buttons")['href'].strip().split('/')[-1].replace('store', '').strip()
-        r_loc = requests.get(a)
+        r_loc = session.get(a)
         soup_loc = BeautifulSoup(r_loc.text, "lxml")
         details = list(soup_loc.find(
             "div", class_="footer_two").stripped_strings)

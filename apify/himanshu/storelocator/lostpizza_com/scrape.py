@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def write_output(data):
 
 def fetch_data():
     base_url= "https://lostpizza.com/locations/"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -31,7 +34,7 @@ def fetch_data():
     k =  soup.find("main",{"class":"site-main"}).find_all("div",{"class":"col-md-4"})
     
     for i in k:
-        r2 = requests.get(i.a['href'])
+        r2 = session.get(i.a['href'])
         soup1= BeautifulSoup(r2.text,"lxml")
         k1 = soup1.find_all("script",{"type":"text/javascript"})
         for i in k1:

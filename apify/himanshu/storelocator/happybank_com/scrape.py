@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -11,6 +11,9 @@ from selenium.webdriver.support.wait import WebDriverWait
 import time
 import html
 import platform
+
+session = SgRequests()
+
 system = platform.system()
 
 
@@ -52,7 +55,7 @@ def fetch_data1():
         try:
             location_url = "https://www.happybank.com/Locations?bh-sl-address=" + \
                 str(zip_code) + "&locpage=search"
-            r = requests.get(location_url, headers=headers)
+            r = session.get(location_url, headers=headers)
         except:
             pass
 
@@ -104,7 +107,7 @@ def fetch_data1():
                     # print("-----------------------------",phone)
                     # print("https://www.happybank.com/Locations"+page_url)
                     try:
-                        r1 = requests.get("https://www.happybank.com/Locations" +
+                        r1 = session.get("https://www.happybank.com/Locations" +
                                           page_url.replace("/Locations", ""), headers=headers)
                     except:
                         #print("https://www.happybank.com/Locations" +
@@ -154,7 +157,7 @@ def get_driver():
 
 
 def fetch_data2():
-    r = requests.get("https://www.happybank.com/Locations/FindUs/FindanATM")
+    r = session.get("https://www.happybank.com/Locations/FindUs/FindanATM")
     soup = BeautifulSoup(r.text, "lxml")
     # div = soup.find("div",class_="Normal")
     # print(div)
@@ -162,7 +165,7 @@ def fetch_data2():
         "iframe", {"title": "Happy State Bank ATM Locations"})["src"]
     # print(iframe_link)
 
-    r = requests.get(iframe_link)
+    r = session.get(iframe_link)
     soup = BeautifulSoup(r.text, "lxml")
     # print(soup.prettify())
     # geo_location = {}

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def request_wrapper(url,method,headers,data=None):
     if method == "get":
         while True:
             try:
-                r = requests.get(url,headers=headers)
+                r = session.get(url,headers=headers)
                 return r
                 break
             except:
@@ -33,9 +36,9 @@ def request_wrapper(url,method,headers,data=None):
         while True:
             try:
                 if data:
-                    r = requests.post(url,headers=headers,data=data)
+                    r = session.post(url,headers=headers,data=data)
                 else:
-                    r = requests.post(url,headers=headers)
+                    r = session.post(url,headers=headers)
                 return r
                 break
             except:
@@ -52,7 +55,7 @@ def fetch_data():
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "https://www.hilton.com"
-    r = requests.get("https://www.hilton.com/en/locations/curio/",headers=headers)
+    r = session.get("https://www.hilton.com/en/locations/curio/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     addresses = []
     for script in soup.find_all("script"):

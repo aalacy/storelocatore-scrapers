@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -20,7 +23,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "http://trucchis.com"
-    r = requests.get("http://trucchis.com/contact/location.php",headers=headers)
+    r = session.get("http://trucchis.com/contact/location.php",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for location in soup.find_all("td",{"align":"center"}):

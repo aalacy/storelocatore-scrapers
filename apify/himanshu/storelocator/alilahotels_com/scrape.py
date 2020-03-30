@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,13 +22,13 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.alilahotels.com"
-    r = requests.get("https://www.alilahotels.com/destinations",headers=headers)
+    r = session.get("https://www.alilahotels.com/destinations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for country in soup.find("div",{'class':"destinations--box"}).find_all("div",{'class':"footer__column grid__item footer__column--destinations"}):
         if "United States" in list(country.stripped_strings):
             for location in country.find('ul',{'class':"js-list-content footer__list"}).find_all("li",{'class':"footer__list-item destinations_list-item"}):
-                location_request = requests.get(location.find("a")["href"],headers=headers)
+                location_request = session.get(location.find("a")["href"],headers=headers)
                 location_soup = BeautifulSoup(location_request.text,'lxml')
                 location_details = json.loads(location_soup.find("script",{'type':"application/ld+json"}).text)
                 store = []

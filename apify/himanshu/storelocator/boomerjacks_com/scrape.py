@@ -1,11 +1,14 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -29,7 +32,7 @@ def fetch_data():
 
     base_url = "https://boomerjacks.com"
     link = "https://boomerjacks.com/wp-json/wpgmza/v1/marker-listing/base64eJyrVirIKHDOSSwuVrJSCg9w941yjInxTSzKTi3yySwuycxLj4lxL8pMUdJRKi5JLCpRsjLQUcpJzUsvyVCyMjLVUcpNLIgHSlspGSnVAgD-Vxkm"
-    r = requests.get(link, headers=headers)
+    r = session.get(link, headers=headers)
     json_data = r.json()
     locator_domain = base_url
     location_name = ""

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,7 +35,7 @@ def fetch_data():
         y = coord[1]
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         try:
-            r = requests.get("https://www.chevronwithtechron.com/webservices/ws_getChevronTexacoNearMe_r2.aspx?lat=" + str(x) + "&lng=" + str(y) + "&oLat=" + str(x) + "&oLng=" + str(y) + "&brand=chevronTexaco&radius=" + str(MAX_DISTANCE),headers=headers)
+            r = session.get("https://www.chevronwithtechron.com/webservices/ws_getChevronTexacoNearMe_r2.aspx?lat=" + str(x) + "&lng=" + str(y) + "&oLat=" + str(x) + "&oLng=" + str(y) + "&brand=chevronTexaco&radius=" + str(MAX_DISTANCE),headers=headers)
             data = r.json()["stations"]
             for store_data in data:
                 lat = store_data["lat"]

@@ -5,11 +5,14 @@ from selenium.webdriver.firefox.options import Options
 import time
 from selenium.webdriver.support.wait import WebDriverWait
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import platform
+
+
+session = SgRequests()
 
 system = platform.system()
 
@@ -39,7 +42,7 @@ def get_driver():
 
 def fetch_data():
     base_url= "https://storelocator.asda.com/directory"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -51,7 +54,7 @@ def fetch_data():
         if link != "1)":
             city_link = "https://storelocator.asda.com/"+i.find("a")['href']
             try:
-                r1 = requests.get(city_link)
+                r1 = session.get(city_link)
             except:
                 pass
             soup1= BeautifulSoup(r1.text,"lxml")
@@ -60,11 +63,11 @@ def fetch_data():
                 link1 = c.find("a")['data-count'].split("(")[-1]
                 if link1 != "1)":
                     sublink = "https://storelocator.asda.com/"+c.find("a")['href']
-                    r2 = requests.get(sublink)
+                    r2 = session.get(sublink)
                     soup2= BeautifulSoup(r2.text,"lxml")
                     store_link = soup2.find_all("a",class_="Teaser-titleLink")
                     for st in store_link:
-                        r3 = requests.get("https://storelocator.asda.com"+st['href'].replace("..",""))
+                        r3 = session.get("https://storelocator.asda.com"+st['href'].replace("..",""))
                         page_url = "https://storelocator.asda.com"+st['href'].replace("..","")
                         soup3= BeautifulSoup(r3.text,"lxml")
                         streetAddress = soup3.find("meta",{"itemprop":"streetAddress"})['content']
@@ -99,7 +102,7 @@ def fetch_data():
                 else:
                     one_link="https://storelocator.asda.com/"+c.find("a")['href']
                     page_url = one_link
-                    r4 = requests.get(one_link)
+                    r4 = session.get(one_link)
                     soup4= BeautifulSoup(r4.text,"lxml")
 
                     streetAddress = soup4.find("meta",{"itemprop":"streetAddress"})['content']

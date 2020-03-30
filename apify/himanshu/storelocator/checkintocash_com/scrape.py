@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -52,7 +55,7 @@ def request_wrapper(url,method,headers,data=None):
     if method == "get":
         while True:
             try:
-                r = requests.get(url,headers=headers)
+                r = session.get(url,headers=headers)
                 return r
                 break
             except:
@@ -65,9 +68,9 @@ def request_wrapper(url,method,headers,data=None):
         while True:
             try:
                 if data:
-                    r = requests.post(url,headers=headers,data=data)
+                    r = session.post(url,headers=headers,data=data)
                 else:
-                    r = requests.post(url,headers=headers)
+                    r = session.post(url,headers=headers)
                 return r
                 break
             except:
@@ -84,7 +87,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://checkintocash.com"
-    r = requests.get("https://local.checkintocash.com/index.html",headers=headers)
+    r = session.get("https://local.checkintocash.com/index.html",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for states in soup.find_all("a",{'class':"c-directory-list-content-item-link"}):

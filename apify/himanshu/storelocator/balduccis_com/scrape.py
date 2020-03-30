@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
     # print("soup ===  first")
 
     base_url = "https://www.balduccis.com"
-    r = requests.get("https://www.balduccis.com/locations", headers=headers)
+    r = session.get("https://www.balduccis.com/locations", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
@@ -59,7 +62,7 @@ def fetch_data():
         location_url_list.append(location_url)
         # print("location_url === " + str(location_url))
 
-        r_location = requests.get(location_url, headers=headers)
+        r_location = session.get(location_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
 
         try:
@@ -76,7 +79,7 @@ def fetch_data():
         full_address_url = soup_location.find('div',{'class':'field field--name-field-full-address field--type-string field--label-hidden field__item'}).find('iframe')['src']
         # print("hourse === "+str(full_address_url))
 
-        geo_request = requests.get(full_address_url,headers=headers)
+        geo_request = session.get(full_address_url,headers=headers)
         geo_soup = BeautifulSoup(geo_request.text,"lxml")
         for script in geo_soup.find_all("script"):
             if "initEmbed" in script.text:

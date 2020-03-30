@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import phonenumbers
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -33,7 +36,7 @@ def fetch_data():
         base_url = "https://www.owensmarket.com"
         location_url= "https://www.owensmarket.com/stores/search?searchText="+str(zip_code)
         try:
-            r = requests.get(location_url, headers=headers)
+            r = session.get(location_url, headers=headers)
         except:
             pass
         soup= BeautifulSoup(r.text,"lxml")
@@ -84,7 +87,7 @@ def fetch_data():
                 addresses.append(store[2])
                 yield store
         try:
-            r1 = requests.get(location_url, headers=headers)
+            r1 = session.get(location_url, headers=headers)
         except:
             pass
         soup1= BeautifulSoup(r1.text,"lxml")

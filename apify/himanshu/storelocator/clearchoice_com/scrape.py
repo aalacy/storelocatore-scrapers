@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
  
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -49,11 +52,11 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
 
-    r = requests.get('https://www.clearchoice.com/locations/',headers = headers)
+    r = session.get('https://www.clearchoice.com/locations/',headers = headers)
     soup = BeautifulSoup(r.text,"lxml")
     for item in soup.find_all('div',class_="item-list")[1:]:
         for a in item.find_all('a'):
-            r_loc = requests.get(a['href'],headers = headers)
+            r_loc = session.get(a['href'],headers = headers)
             soup_loc = BeautifulSoup(r_loc.text,"lxml")
             page_url = a['href']
             latitude = soup_loc.find('meta',{'itemprop':'latitude'})['content']

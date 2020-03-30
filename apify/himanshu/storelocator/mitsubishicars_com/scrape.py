@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -29,7 +32,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
         try:
-            r=requests.get('https://www.mitsubishicars.com/rs/dealers?bust=1569242590201&zipCode='+str(zip_code)+'&idealer=false&ecommerce=false').json()
+            r=session.get('https://www.mitsubishicars.com/rs/dealers?bust=1569242590201&zipCode='+str(zip_code)+'&idealer=false&ecommerce=false').json()
         except:
             continue
         hours_of_operation = '' 
@@ -40,7 +43,7 @@ def fetch_data():
                 if link != None:
                     page_url = "http://"+link.lower()
                     try:
-                        r=requests.get(page_url)
+                        r=session.get(page_url)
                     except:
                         continue
                     soup = BeautifulSoup(r.text, "lxml")

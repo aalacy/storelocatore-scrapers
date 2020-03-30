@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,11 +22,11 @@ def fetch_data():
     "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "https://www.bmw.ca"
-    r = requests.get("https://www.bmw.ca/en/fastlane/dealer-locator.html#/dlo/CA/en/BMW_BMWM",headers=headers)
+    r = session.get("https://www.bmw.ca/en/fastlane/dealer-locator.html#/dlo/CA/en/BMW_BMWM",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     apiUrl = json.loads(soup.find("div",{"class":"dealerLocatorView"})["data-dlo-config"])["dlo"]["apiUrl"]
-    api_request = requests.get(apiUrl + "/pois?brand=BMW_BMWM&cached=off&callback=angular.callbacks._0&category=BM&country=CA&language=en&lat=0&lng=0&maxResults=700&showAll=true&unit=km")
+    api_request = session.get(apiUrl + "/pois?brand=BMW_BMWM&cached=off&callback=angular.callbacks._0&category=BM&country=CA&language=en&lat=0&lng=0&maxResults=700&showAll=true&unit=km")
     location_data = json.loads(api_request.text.split("angular.callbacks._0(")[1].split("})")[0] + "}")["data"]["pois"]
     for store_data in location_data:
         store = []

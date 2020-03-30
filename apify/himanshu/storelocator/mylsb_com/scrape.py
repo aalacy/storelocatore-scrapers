@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.mylsb.com"
-    r = requests.get("https://www.mylsb.com/locations/default.aspx",headers=headers)
+    r = session.get("https://www.mylsb.com/locations/default.aspx",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     links = []
@@ -27,7 +30,7 @@ def fetch_data():
         if location["href"] in links:
             continue
         links.append(location["href"])
-        location_reqeust = requests.get(base_url + location["href"])
+        location_reqeust = session.get(base_url + location["href"])
         location_soup = BeautifulSoup(location_reqeust.text,"lxml")
         name = location_soup.find("h1").text.strip()
         street_address = location_soup.find("span",{'itemprop':"streetAddress"}).text.strip()

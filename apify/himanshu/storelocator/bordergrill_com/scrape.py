@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,20 +22,20 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "http://www.bordergrill.com"
-    r = requests.get("http://www.bordergrill.com/locations/",headers=headers)
+    r = session.get("http://www.bordergrill.com/locations/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for location in soup.find("li",{"id":"menu-item-501"}).find_all("a"):
         if "#" in location["href"]:
             continue
-        location_request = requests.get(location["href"],headers=headers)
+        location_request = session.get(location["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         if location_soup.find("a",{"title":"Hours & Directions"}) == None:
             continue
         details_url = location_soup.find("a",{"title":"Hours & Directions"})["href"]
         if "www.bordergrill.com" not in details_url:
             continue
-        details_request = requests.get(details_url,headers=headers)
+        details_request = session.get(details_url,headers=headers)
         details_soup = BeautifulSoup(details_request.text,"lxml")
         for script in details_soup.find_all("script"):
             if 'pois' in script.text:

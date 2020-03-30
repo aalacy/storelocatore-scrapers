@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.nissanusa.com"
-    r = requests.get("https://www.nissanusa.com/dealer-locator.html",headers=headers)
+    r = session.get("https://www.nissanusa.com/dealer-locator.html",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     for script in soup.find_all('script'):
         if "apigee" in script.text:
@@ -33,7 +36,7 @@ def fetch_data():
         "clientKey":clientKey,
         "apiKey":api_key
     }
-    r = requests.get("https://us.nissan-api.net/v2/dealers?size=10000000&serviceFilterType=AND&include=openingHours",headers=api_headers)
+    r = session.get("https://us.nissan-api.net/v2/dealers?size=10000000&serviceFilterType=AND&include=openingHours",headers=api_headers)
     return_main_object = []
     location_list = r.json()["dealers"]
     for i in range(len(location_list)):

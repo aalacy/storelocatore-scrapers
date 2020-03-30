@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "http://cashtyme.com"
-    r = requests.get(base_url+"/side.htm")
+    r = session.get(base_url+"/side.htm")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     main = soup.find('select',{'name':"state"}).find_all('option')
@@ -25,7 +28,7 @@ def fetch_data():
     hour=' '.join(hour)+' , '+' '.join(soup.find_all('font')[1].stripped_strings)
     del main[0]
     for dt in main:
-        r1 = requests.get(base_url+"/locations/"+dt['value']+".htm")
+        r1 = session.get(base_url+"/locations/"+dt['value']+".htm")
         soup1 = BeautifulSoup(r1.text,"lxml")
         main1 = soup1.find('table').find('table').find('table').find('table').find_all('tr')
         del main1[0]

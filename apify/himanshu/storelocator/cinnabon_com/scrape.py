@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -12,7 +12,7 @@ import time
 #     if method == "get":
 #         while True:
 #             try:
-#                 r = requests.get(url, headers=headers)
+#                 r = session.get(url, headers=headers)
 #                 return r
 #                 break
 #             except:
@@ -25,9 +25,9 @@ import time
 #         while True:
 #             try:
 #                 if data:
-#                     r = requests.post(url, headers=headers, data=data)
+#                     r = session.post(url, headers=headers, data=data)
 #                 else:
-#                     r = requests.post(url, headers=headers)
+#                     r = session.post(url, headers=headers)
 #                 return r
 #                 break
 #             except:
@@ -39,6 +39,9 @@ import time
 #     else:
 #         return None
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -93,7 +96,7 @@ def fetch_data():
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         # time.sleep(5)
         try:
-            r = requests.get('https://www.cinnabon.com/Location/Map/Get?brand={A019D0E8-A707-40CC-B647-F3A4670AE0AB}&ZipOrCity='+str(zip_code)+'&userfilters=8c753773-7ff5-4f6f-a550-822523cbafad&userfilters=3431a520-d000-46bb-9058-b000edc96867&userfilters=43ba8d22-b606-4d69-8b91-437e5d6264fd', headers=headers)
+            r = session.get('https://www.cinnabon.com/Location/Map/Get?brand={A019D0E8-A707-40CC-B647-F3A4670AE0AB}&ZipOrCity='+str(zip_code)+'&userfilters=8c753773-7ff5-4f6f-a550-822523cbafad&userfilters=3431a520-d000-46bb-9058-b000edc96867&userfilters=43ba8d22-b606-4d69-8b91-437e5d6264fd', headers=headers)
         except:
             pass
         json_data = r.json()

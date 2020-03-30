@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.townfairtire.com"
-    r = requests.get(base_url+'/store/tires/connecticut/branford/')
+    r = session.get(base_url+'/store/tires/connecticut/branford/')
     soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
     output=[]
@@ -24,7 +27,7 @@ def fetch_data():
     for atag in main:
         if len(atag['href'].split('/'))>5:
             print(atag['href'])
-            r1 = requests.get(base_url+atag['href'])
+            r1 = session.get(base_url+atag['href'])
             soup1=BeautifulSoup(r1.text,'lxml')
             main1=list(soup1.find('div',{'class':"storeInfo"}).stripped_strings)
             address=main1[0].strip()

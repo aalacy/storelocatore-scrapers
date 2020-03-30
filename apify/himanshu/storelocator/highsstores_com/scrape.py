@@ -1,12 +1,15 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import http.client
+
+session = SgRequests()
+
 http.client._MAXHEADERS = 1000
 
 
@@ -49,7 +52,7 @@ def fetch_data():
             location_url = "https://www.highs.com/wp-admin/admin-ajax.php?action=store_search&lat="+str(lat)+"&lng="+str(lng)+"&max_results=25&search_radius=50&autoload=1"
         except:
             continue
-        r = requests.get(location_url, headers=headers)
+        r = session.get(location_url, headers=headers)
         json_data = r.json()
        
         current_results_len = len(json_data)

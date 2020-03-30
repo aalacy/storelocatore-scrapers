@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ from shapely.prepared import prep
 from shapely.geometry import Point
 from shapely.geometry import mapping, shape
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -29,7 +32,7 @@ countries = {}
 
 
 def getcountrygeo():
-    data = requests.get(
+    data = session.get(
         "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
 
     for feature in data["features"]:
@@ -75,7 +78,7 @@ def fetch_data():
     hours_of_operation = ""
     page_url = "https://www.verawang.com/wp-admin/admin-ajax.php/"
 
-    r = requests.post(page_url, headers=headers,
+    r = session.post(page_url, headers=headers,
                       data="action=load_search_results&query=&type%5B%5D=13&type%5B%5D=14&type%5B%5D=15&type%5B%5D=16&type%5B%5D=57")
     json_data = r.json()
     # print("rtext === " + str(json_data))
@@ -197,7 +200,7 @@ def fetch_data():
             zipp = ca_zip_list[-1].strip()
         else:
             # zipp = ''
-            req = requests.post(
+            req = session.post(
                 "https://www.verawang.com/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=42170ab7d4&load_all=1&layout=1", headers=headers).json()
             z = []
             for loc in req:

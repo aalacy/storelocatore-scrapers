@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
     base_url= "https://www.ebgames.ca/StoreLocator/GetStoresForStoreLocatorByProduct?value=&skuType=0&language=en-CA"
-    r = requests.get(base_url,headers=headers)
+    r = session.get(base_url,headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
 
     name_store=[]

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.cslplasma.com"
-    r = requests.get(base_url + "/locations/search-results-state")
+    r = session.get(base_url + "/locations/search-results-state")
     soup = BeautifulSoup(r.text, "lxml")
     # print(soup.prettify())
     return_main_object = []
@@ -28,7 +31,7 @@ def fetch_data():
     for option in soup.find('select', {"name": "SelectedState"}).find_all("option"):
         if option['value'] == "":
             continue
-        location_request = requests.get(base_url + option['value'])
+        location_request = session.get(base_url + option['value'])
         lcoation_soup = BeautifulSoup(location_request.text, 'lxml')
         for location in lcoation_soup.find_all("div", {"class": "center-search-item"}):
             store = []
@@ -58,11 +61,11 @@ def fetch_data():
                     phone = "<MISSING>"
                 # print(phone)
                 page_url = base_url + location.find_all("a")[-1]['href']
-                # r_loc = requests.get(page_url)
+                # r_loc = session.get(page_url)
                 # soup_loc = BeautifulSoup(r_loc.text, "lxml")
                 # iframe = soup_loc.find(
                 #     "iframe", {"id": "centermap_frame"})['src']
-                # cr = requests.get(iframe)
+                # cr = session.get(iframe)
                 # soup_cr = BeautifulSoup(cr.text, "lxml")
                 # script = soup_cr.find("script", text=re.compile(
                 #     "initEmbed")).text.split("initEmbed(")[1].split(");")[0].split(",")[55:60]

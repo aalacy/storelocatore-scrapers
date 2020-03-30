@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 # import sgzip
 import json
 # import time
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -52,7 +55,7 @@ def fetch_data():
     page_url = "<MISSING>"
 
 
-    r = requests.get('https://www.dilworthcoffee.com/wordpress1/wp-admin/admin-ajax.php?address=&formdata=addressInput%3D&lat=35.2270869&lng=-80.84312669999997&name=&options%5Bdistance_unit%5D=miles&options%5Bdropdown_style%5D=base&options%5Bignore_radius%5D=0&options%5Bimmediately_show_locations%5D=1&options%5Binitial_radius%5D=&options%5Blabel_directions%5D=Directions&options%5Blabel_email%5D=Email&options%5Blabel_fax%5D=Fax&options%5Blabel_phone%5D=Phone&options%5Blabel_website%5D=Website&options%5Bloading_indicator%5D=&options%5Bmap_center%5D=Charlotte%2C+NC&options%5Bmap_center_lat%5D=35.2270869&options%5Bmap_center_lng%5D=-80.8431267&options%5Bmap_domain%5D=maps.google.com&options%5Bmap_end_icon%5D=https%3A%2F%2Fwww.dilworthcoffee.com%2Fwordpress1%2Fwp-content%2Fplugins%2Fstore-locator-le%2Fimages%2Ficons%2Fpin_chartreuse.png&options%5Bmap_home_icon%5D=https%3A%2F%2Fwww.dilworthcoffee.com%2Fwordpress1%2Fwp-content%2Fplugins%2Fstore-locator-le%2Fimages%2Ficons%2Fbulb_chartreuse.png&options%5Bmap_region%5D=us&options%5Bmap_type%5D=roadmap&options%5Bmessage_bad_address%5D=Could+not+locate+this+address.+Please+try+a+different+location.&options%5Bmessage_no_results%5D=No+locations+found.&options%5Bno_autozoom%5D=0&options%5Buse_sensor%5D=false&options%5Bzoom_level%5D=12&options%5Bzoom_tweak%5D=0&radius=500&tags=&action=csl_ajax_onload',headers = headers).json()
+    r = session.get('https://www.dilworthcoffee.com/wordpress1/wp-admin/admin-ajax.php?address=&formdata=addressInput%3D&lat=35.2270869&lng=-80.84312669999997&name=&options%5Bdistance_unit%5D=miles&options%5Bdropdown_style%5D=base&options%5Bignore_radius%5D=0&options%5Bimmediately_show_locations%5D=1&options%5Binitial_radius%5D=&options%5Blabel_directions%5D=Directions&options%5Blabel_email%5D=Email&options%5Blabel_fax%5D=Fax&options%5Blabel_phone%5D=Phone&options%5Blabel_website%5D=Website&options%5Bloading_indicator%5D=&options%5Bmap_center%5D=Charlotte%2C+NC&options%5Bmap_center_lat%5D=35.2270869&options%5Bmap_center_lng%5D=-80.8431267&options%5Bmap_domain%5D=maps.google.com&options%5Bmap_end_icon%5D=https%3A%2F%2Fwww.dilworthcoffee.com%2Fwordpress1%2Fwp-content%2Fplugins%2Fstore-locator-le%2Fimages%2Ficons%2Fpin_chartreuse.png&options%5Bmap_home_icon%5D=https%3A%2F%2Fwww.dilworthcoffee.com%2Fwordpress1%2Fwp-content%2Fplugins%2Fstore-locator-le%2Fimages%2Ficons%2Fbulb_chartreuse.png&options%5Bmap_region%5D=us&options%5Bmap_type%5D=roadmap&options%5Bmessage_bad_address%5D=Could+not+locate+this+address.+Please+try+a+different+location.&options%5Bmessage_no_results%5D=No+locations+found.&options%5Bno_autozoom%5D=0&options%5Buse_sensor%5D=false&options%5Bzoom_level%5D=12&options%5Bzoom_tweak%5D=0&radius=500&tags=&action=csl_ajax_onload',headers = headers).json()
     for loc_list in r['response']:
         try:
             country = loc_list['country'].strip()

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def request_wrapper(url,method,headers,data=None):
     if method == "get":
         while True:
             try:
-                r = requests.get(url,headers=headers)
+                r = session.get(url,headers=headers)
                 return r
                 break
             except:
@@ -33,9 +36,9 @@ def request_wrapper(url,method,headers,data=None):
         while True:
             try:
                 if data:
-                    r = requests.post(url,headers=headers,data=data)
+                    r = session.post(url,headers=headers,data=data)
                 else:
-                    r = requests.post(url,headers=headers)
+                    r = session.post(url,headers=headers)
                 return r
                 break
             except:
@@ -59,7 +62,7 @@ def fetch_data():
     base_url = "https://www.wyndhamhotels.com"
     location_url1 = "https://www.wyndhamhotels.com/en-ca/days-inn/locations"
     try:
-        r = requests.get(location_url1, headers=headers,  allow_redirects=False)
+        r = session.get(location_url1, headers=headers,  allow_redirects=False)
     except Exception as e :
         # print(e)
         pass
@@ -71,7 +74,7 @@ def fetch_data():
             k = (b.find('a')['href'])
             location_url = base_url+k
             try:
-                r1 = requests.get(location_url, headers=headers,  allow_redirects=False)
+                r1 = session.get(location_url, headers=headers,  allow_redirects=False)
             except Exception as e:
                 # print(e)
                 pass
@@ -131,7 +134,7 @@ def fetch_data():
             k1 = (b1.find('a')['href'])
             location_url = base_url+k1
             try:
-                r2 = requests.get(location_url, headers=headers,  allow_redirects=False)
+                r2 = session.get(location_url, headers=headers,  allow_redirects=False)
             except Exception as e:
                 pass
                 # print(e)

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -24,13 +27,13 @@ def fetch_data():
     }
     base_url = "https://www.vancleefarpels.com"
     data = "actionName=StoreSearchAction&currentPagePath=%2Fcontent%2Fvca%2Fus%2Fusa%2Fen%2Fhome%2Fstore-locator&dataType=default"
-    r = requests.post("https://www.vancleefarpels.com/cms-base/richemont/form/actionController",headers=headers,data=data)
+    r = session.post("https://www.vancleefarpels.com/cms-base/richemont/form/actionController",headers=headers,data=data)
     data = r.json()["content"]
     return_main_object = []
     for store_data in data:
         if store_data["country"] != "USA" and store_data["country"] != "Canada":
             continue
-        location_request = requests.get(base_url + store_data["url"])
+        location_request = session.get(base_url + store_data["url"])
         location_soup = BeautifulSoup(location_request.text,"lxml")
         hours = " ".join(list(location_soup.find("strong",text="Opening Hours").parent.stripped_strings)).replace("\n"," ").replace("\r"," ").replace("\t"," ").replace("  ","")
         store = []

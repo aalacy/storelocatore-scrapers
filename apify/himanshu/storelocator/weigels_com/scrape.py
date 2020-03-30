@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +25,7 @@ def fetch_data():
 
     warnings.simplefilter('ignore',InsecureRequestWarning)
     base_url = "https://weigels.com"
-    r = requests.get(base_url+"/location/",verify =False)
+    r = session.get(base_url+"/location/",verify =False)
     soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
     main=soup.find('div',{"class":"location-list"}).find_all('div',{'class':"location"})

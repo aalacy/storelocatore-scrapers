@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
-    r = requests.get("https://www.caesars.com/harrahs", headers=headers)
+    r = session.get("https://www.caesars.com/harrahs", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     add = []
     lat = []
@@ -33,7 +36,7 @@ def fetch_data():
         # print(location.prettify())
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         try:
-            location_request = requests.get(
+            location_request = session.get(
                 "https://www.caesars.com/api/v1/properties/" + location["data-propcode"], headers=headers)
             # print("https://www.caesars.com/api/v1/properties/" +
             #       location["data-propcode"])
@@ -73,7 +76,7 @@ def fetch_data():
     #     print("data == " + str(store))
     #     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
     #     yield store
-    r = requests.get(
+    r = session.get(
         "https://www.caesars.com/myrewards/casino-directory", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     p = []
@@ -93,7 +96,7 @@ def fetch_data():
         p.append(page_url)
         # print(page_url)
         try:
-            r_loc = requests.get(page_url, headers=headers)
+            r_loc = session.get(page_url, headers=headers)
 
             # print(page_url)
             soup_loc = BeautifulSoup(r_loc.text, "lxml")

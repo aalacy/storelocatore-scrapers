@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,12 +22,12 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "http://findvistaoptical.com"
-    r = requests.get("https://maps.findvistaoptical.com",headers=headers)
+    r = session.get("https://maps.findvistaoptical.com",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     app_key = soup.find("appkey").text
 
-    location_request = requests.get("https://maps.findvistaoptical.com/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E" + app_key + "%3C%2Fappkey%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Climit%3E250%3C%2Flimit%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3EAK%3C%2Faddressline%3E%3Clongitude%3E%3C%2Flongitude%3E%3Clatitude%3E%3C%2Flatitude%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Cwhere%3E%3Cand%3E%3Centityid%3E%3Ceq%3E17%3C%2Feq%3E%3C%2Fentityid%3E%3Cshowinlocatoryn%3E%3Ceq%3EY%3C%2Feq%3E%3C%2Fshowinlocatoryn%3E%3C%2Fand%3E%3C%2Fwhere%3E%3Csearchradius%3E50%7C100%7C5000%3C%2Fsearchradius%3E%3C%2Fformdata%3E%3C%2Frequest%3E")
+    location_request = session.get("https://maps.findvistaoptical.com/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E" + app_key + "%3C%2Fappkey%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Climit%3E250%3C%2Flimit%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3EAK%3C%2Faddressline%3E%3Clongitude%3E%3C%2Flongitude%3E%3Clatitude%3E%3C%2Flatitude%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Cwhere%3E%3Cand%3E%3Centityid%3E%3Ceq%3E17%3C%2Feq%3E%3C%2Fentityid%3E%3Cshowinlocatoryn%3E%3Ceq%3EY%3C%2Feq%3E%3C%2Fshowinlocatoryn%3E%3C%2Fand%3E%3C%2Fwhere%3E%3Csearchradius%3E50%7C100%7C5000%3C%2Fsearchradius%3E%3C%2Fformdata%3E%3C%2Frequest%3E")
     location_soup = BeautifulSoup(location_request.text,"lxml")
 
     for location in location_soup.find_all("poi"):

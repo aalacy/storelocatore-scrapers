@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -8,6 +8,9 @@ import json
 
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -149,13 +152,13 @@ def fetch_data():
 
     us_response = requests.request("GET", us_url, headers=us_headers, params=us_querystring)
     us_soup = BeautifulSoup(us_response.text,'lxml')
-    p_url = requests.get('https://www.extremepitaus.com/locator/index.php?brand=27&mode=desktop&pagesize=5&q=11576')
+    p_url = session.get('https://www.extremepitaus.com/locator/index.php?brand=27&mode=desktop&pagesize=5&q=11576')
     url_soup = BeautifulSoup(p_url.text,'lxml')
     u =[]
     h = []
     for loc_url in url_soup.find_all(lambda tag: (tag.name == 'a') and "Learn More" in tag.text):
         data_url = "https://www.extremepitaus.com"+loc_url['href']
-        loc = requests.get(data_url)
+        loc = session.get(data_url)
         soup_loc =BeautifulSoup(loc.text,'lxml')
         hours = soup_loc.find('div',class_='group hours').text.strip().replace('Store Hours','').strip()
         u.append(data_url)

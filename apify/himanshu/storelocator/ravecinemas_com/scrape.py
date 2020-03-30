@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 from urllib3.exceptions import InsecureRequestWarning
 import unicodedata
+
+
+session = SgRequests()
 
 requests.packages.urllib3.disable_warnings()
 
@@ -25,11 +28,11 @@ def fetch_data():
     }
     return_main_object = []
     base_url = "https://ravecinemas.com"
-    r = requests.get("https://ravecinemas.com/full-theatre-list",headers=headers,verify=False)
+    r = session.get("https://ravecinemas.com/full-theatre-list",headers=headers,verify=False)
     soup = BeautifulSoup(r.text,"lxml")
     for location in soup.find("div",{"class":"columnList wide"}).find_all("a"):
         # print(base_url + location["href"])
-        location_request = requests.get(base_url + location["href"],headers=headers,verify=False)
+        location_request = session.get(base_url + location["href"],headers=headers,verify=False)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         if location_soup.find("div",{"class":"theatreMap"}) == None:
             continue

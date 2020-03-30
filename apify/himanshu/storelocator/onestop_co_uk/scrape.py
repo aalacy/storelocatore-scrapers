@@ -2,8 +2,11 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import sgzip
+
 session = SgRequests()
-import requests
+
+session = SgRequests()
+from sgrequests import SgRequests
  
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,7 +30,7 @@ def fetch_data():
         
         result_coords = []
         page_url = "https://www.onestop.co.uk/store/?store="+str(zip_code)
-        r = requests.get("https://www.onestop.co.uk/store/?store="+str(zip_code))
+        r = session.get("https://www.onestop.co.uk/store/?store="+str(zip_code))
         soup = BeautifulSoup(r.text, "lxml")
         location_name = soup.find("div",{"class":"col col3"}).find("h3").text.strip()
         addr = list(soup.find("div",{"class":"col col3"}).find_all("p")[0].stripped_strings)

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 requests.packages.urllib3.disable_warnings()
 
 def write_output(data):
@@ -18,7 +21,7 @@ def write_output(data):
 
 def fetch_data():
     base_url= "https://schema.milestoneinternet.com/schema/locations.usbank.com/index.html/schema.json"
-    loc = requests.get(base_url).json()
+    loc = session.get(base_url).json()
     store_name=[]
     store_detail=[]
     addressess =[]
@@ -30,7 +33,7 @@ def fetch_data():
                 link = "https://schema.milestoneinternet.com/schema/locations.usbank.com/index/"+states.lower().replace(" ",'-')+".html"+"/schema.json"
                 try:
                     # print('-link----',link)
-                    all_state = requests.get(link).json()
+                    all_state = session.get(link).json()
                 except:
                     pass
                 for st in all_state:
@@ -39,16 +42,16 @@ def fetch_data():
                             store_link ="https://schema.milestoneinternet.com/schema/locations.usbank.com/index/"+str(states.lower().replace(" ",'-'))+"/"+str(loc1.lower().replace(" ",'-'))+".html/schema.json"
                             try:
                                 # print('-----store_link------',store_link)
-                                new_request = requests.get(store_link).json()
+                                new_request = session.get(store_link).json()
                             except:
                                 pass
                             for q in new_request:
                                 if "" in q:
                                     for add in q[""]:
-                                        # loc1 = requests.get()
+                                        # loc1 = session.get()
                                         # print(add['url'],"==============================")
                                         page_url = add['url']
-                                        new_request1 = requests.get(add['url'],verify=False)
+                                        new_request1 = session.get(add['url'],verify=False)
                                         soup1= BeautifulSoup(new_request1.text,"lxml")
                                         try:
                                             json_data = json.loads(soup1.find("script",{"type":"application/ld+json"}).text)

@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 # import json
 # import sgzip
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -51,13 +54,13 @@ def fetch_data():
 
 
 
-    r= requests.get('https://www.sparklemarkets.com/locations',headers = headers)
+    r= session.get('https://www.sparklemarkets.com/locations',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
 
     for a  in soup.find_all(lambda tag: (tag.name == "a") and "Details" in tag.text):
         if a['href'].split('/')[-1]:
             # print(a['href'])
-            r_soup = requests.get(a['href'],headers = headers)
+            r_soup = session.get(a['href'],headers = headers)
             soup_loc = BeautifulSoup(r_soup.text,'lxml')
             location_name = soup_loc.h1.text.encode('ascii', 'ignore').decode('ascii').strip().capitalize()
 

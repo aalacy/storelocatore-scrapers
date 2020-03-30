@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -18,7 +21,7 @@ def fetch_data():
     base_url = "https://soldierfit.com/"
     return_main_object=[]
     headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"}
-    r = requests.get(base_url+"/locations/",headers=headers)
+    r = session.get(base_url+"/locations/",headers=headers)
     soup=BeautifulSoup(r.text,'lxml')
     main=soup.find_all('div',{"class":"soldierfit_address"})
     for dt in main:
@@ -31,7 +34,7 @@ def fetch_data():
         state=ct[1].strip().split(' ')[0].strip()
         zip=ct[1].strip().split(' ')[1].strip()
         phone=madd[-2].strip()
-        r1 = requests.get(base_url+link,headers=headers)
+        r1 = session.get(base_url+link,headers=headers)
         soup1=BeautifulSoup(r1.text,'lxml')
         if "Schedule Coming Soon!" not in soup1.text:
             hour=''

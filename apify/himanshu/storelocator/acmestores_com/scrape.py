@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -15,7 +18,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.acmestores.com"
-    r = requests.get(base_url + "/page/129")
+    r = session.get(base_url + "/page/129")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for tr in soup.find("table",{"class": "table-striped"}).find("tbody").find_all("tr"):

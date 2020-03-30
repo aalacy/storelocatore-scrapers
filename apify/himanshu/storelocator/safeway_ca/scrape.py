@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 from datetime import datetime
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -33,7 +36,7 @@ def fetch_data():
     
     location_url = "https://www.safeway.ca/find-a-store/"
 
-    r = requests.get(location_url, headers=headers)
+    r = session.get(location_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     data = soup.find_all("div",{"class":"store-result"})
     for location in data:
@@ -47,7 +50,7 @@ def fetch_data():
         street_address = location.find("span",{"class":"location_address1"}).text
         phone = location.find("span",{"class":"phone"}).text
         page_url = location.find("a")['href']
-        r1 = requests.get(page_url, headers=headers)
+        r1 = session.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         hours = ' '.join(list(soup1.find("table",{"class":"holiday_hours_tbl"}).find("tbody").stripped_strings))
         location_type = "<MISSING>"

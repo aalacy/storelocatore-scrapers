@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,12 +22,12 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.thesource.ca"
-    r = requests.get("https://www.thesource.ca/en-ca/store-finder?latitude=43.0&longitude=-79.0&q=&popupMode=false&show=All",headers=headers)
+    r = session.get("https://www.thesource.ca/en-ca/store-finder?latitude=43.0&longitude=-79.0&q=&popupMode=false&show=All",headers=headers)
     return_main_object = []
     soup = BeautifulSoup(r.text,"lxml")
     number_page = int(soup.find("span",{"class":"maxNumberOfPages"}).text)
     for i in range(number_page):
-        page_request = requests.get("https://www.thesource.ca/en-ca/store-finder?latitude=43.0&longitude=-79.0&q=&popupMode=false&page=" + str(i) + "&show=All",headers=headers)
+        page_request = session.get("https://www.thesource.ca/en-ca/store-finder?latitude=43.0&longitude=-79.0&q=&popupMode=false&page=" + str(i) + "&show=All",headers=headers)
         page_soup = BeautifulSoup(page_request.text,"lxml")
         geo_locations = page_soup.find("div",{"id":"map_canvas"})["data-stores"]
         location_list = json.loads(geo_locations)

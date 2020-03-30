@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,12 +23,12 @@ def fetch_data():
     hour = []
     for i in range(4):
             base_url = "https://www.foodland.com/store-locations?distance%5Bpostal_code%5D=&distance%5Bsearch_distance%5D=10&distance%5Bsearch_units%5D=mile&field_store_island_value=All&&page="+str(i)
-            r = requests.get(base_url)
+            r = session.get(base_url)
             soup = BeautifulSoup(r.text,"lxml")
             k = soup.find("div",{"class":"item-list"})
             for tr in k.find_all('h3'):
                     url  = "https://www.foodland.com" + tr.a['href'] 
-                    r = requests.get(url)
+                    r = session.get(url)
                     soup1 = BeautifulSoup(r.text,"lxml")
                     ds = soup1.find_all("div",{"class":"col-xs-12 col-sm"})
                     for i in ds:

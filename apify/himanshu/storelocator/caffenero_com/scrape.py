@@ -1,10 +1,13 @@
 import csv
 #import sys
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -42,7 +45,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = ""
     page_url = ""
-    r = requests.get(
+    r = session.get(
         "https://caffenero.com/uk/stores/?country-code=gb&place=W1A&search-region=W1A")
     soup = BeautifulSoup(r.text, "lxml")
     script = soup.find(lambda tag: (
@@ -62,7 +65,7 @@ def fetch_data():
             zipp = loc["address"].split(',')[-1].strip()
             page_url = "https://caffenero.com" + loc["permalink"]
 
-            r_loc = requests.get(page_url)
+            r_loc = session.get(page_url)
             soup_loc = BeautifulSoup(r_loc.text, "lxml")
             try:
                 phone = soup_loc.find(
@@ -100,7 +103,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = ""
     page_url = ""
-    r1 = requests.get("https://caffenero.com/us/stores/?country-code=us&search-region=&useLocation=true")
+    r1 = session.get("https://caffenero.com/us/stores/?country-code=us&search-region=&useLocation=true")
     soup1 = BeautifulSoup(r1.text, "lxml")
     script = soup1.find(lambda tag: (
         tag.name == 'script') and "storesData" in tag.text).text.split("storesData =")[1].split(';')[0].strip()
@@ -127,7 +130,7 @@ def fetch_data():
 
             page_url = "https://caffenero.com" + loc["permalink"]
 
-            r_loc = requests.get(page_url)
+            r_loc = session.get(page_url)
             soup_loc = BeautifulSoup(r_loc.text, "lxml")
             try:
                 phone = soup_loc.find(

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def write_output(data):
 
 def fetch_data():
     base_url= "https://agents.allstate.com/"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     # print(soup)
     store_name=[]
@@ -34,7 +37,7 @@ def fetch_data():
     for i in k:
         try:
 
-            r1 = requests.get("https://agents.allstate.com/"+i['href'])
+            r1 = session.get("https://agents.allstate.com/"+i['href'])
         except:
             continue
         soup1= BeautifulSoup(r1.text,"lxml")
@@ -43,7 +46,7 @@ def fetch_data():
             
             #print("city========================","https://agents.allstate.com"+link['href'].replace("..",""))
 
-            r2 = requests.get("https://agents.allstate.com"+link['href'].replace("..",""))
+            r2 = session.get("https://agents.allstate.com"+link['href'].replace("..",""))
             soup2= BeautifulSoup(r2.text,"lxml")
             st = soup2.find_all("span",{"class":"c-address-street-1"})
             st1 = soup2.find_all("span",{"class":"c-address-street-2"})
@@ -58,7 +61,7 @@ def fetch_data():
                 for loc in range(len(st)):
                     tem_var =[]
                     store_link = "https://agents.allstate.com/"+a[loc]['href'].replace("../../","")
-                    r3 = requests.get(store_link)
+                    r3 = session.get(store_link)
                     soup3= BeautifulSoup(r3.text,"lxml")
                     lat = soup3.find("meta",{"itemprop":"latitude"}).attrs['content']
                     lng = soup3.find("meta",{"itemprop":"longitude"}).attrs['content']

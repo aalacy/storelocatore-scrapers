@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -22,7 +25,7 @@ def fetch_data():
     zps=sgzip.for_radius(100)
     for zp in zps:
         try:
-            r = requests.get(base_url+"/on/demandware.store/Sites-EMS-Site/default/Stores-GetNearestStores?lat=&long=&countryCode=US&distanceUnit=mi&maxdistance=100&zipCode="+zp).json()
+            r = session.get(base_url+"/on/demandware.store/Sites-EMS-Site/default/Stores-GetNearestStores?lat=&long=&countryCode=US&distanceUnit=mi&maxdistance=100&zipCode="+zp).json()
         except:
             continue
 
@@ -32,7 +35,7 @@ def fetch_data():
                 address+=' '+r['stores'][i]['address2'].strip()
             page_url = "https://www.ems.com/store-details?StoreID="+str([i][-1])
             # print(page_url)
-            r1 = requests.get(page_url)
+            r1 = session.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
             h1 = soup1.find("div",{"class":"store-info clearfix"}).find("div",{"class":"right"})
             hours_of_operation = re.sub(r"\s+", " ", h1.text)

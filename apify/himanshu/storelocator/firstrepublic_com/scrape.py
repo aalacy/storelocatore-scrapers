@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.firstrepublic.com"
-    r = requests.get( base_url + "/Location/GetOfficeJsonSitecore")
+    r = session.get( base_url + "/Location/GetOfficeJsonSitecore")
     data = r.json()
     return_main_object = []
     for i in range(len(data)):
@@ -34,7 +37,7 @@ def fetch_data():
         store.append("first public")
         store.append(store_data["Latitude"])
         store.append(store_data["Longitude"])
-        location_reqeust = requests.get(base_url + store_data["FriendlyUrl"])
+        location_reqeust = session.get(base_url + store_data["FriendlyUrl"])
         location_soup = BeautifulSoup(location_reqeust.text,"lxml")
         store.append(" ".join(list(location_soup.find("div",{"class":'location-detail--section location-detail__hours'}).stripped_strings)))
         return_main_object.append(store)

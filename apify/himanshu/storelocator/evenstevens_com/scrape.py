@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,10 +23,10 @@ def fetch_data():
     }
     return_main_object = []
     base_url = "https://evenstevens.com"
-    r = requests.get("https://evenstevens.com",headers=headers)
+    r = session.get("https://evenstevens.com",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     for state in soup.find("ul",{'class':"w-nav-list level_2"}).find_all("a"):
-        state_request = requests.get(state["href"],headers=headers)
+        state_request = session.get(state["href"],headers=headers)
         state_soup = BeautifulSoup(state_request.text,"lxml")
         name = list(state_soup.find("div",{'class':"w-tabs-list-h"}).stripped_strings)
         for location in state_soup.find("div",{'class':"w-tabs-sections"}).find_all("div",{"class":"w-tabs-section"}):

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
     return_main_object = []
 
     base_url = "http://www.lionschoice.com"
-    r = requests.get("https://lionschoice.com/wp-admin/admin-ajax.php?action=store_search&lat=38.64466&lng=-90.33013&max_results=25&search_radius=10&autoload=1", headers=headers).json()
+    r = session.get("https://lionschoice.com/wp-admin/admin-ajax.php?action=store_search&lat=38.64466&lng=-90.33013&max_results=25&search_radius=10&autoload=1", headers=headers).json()
     # soup = BeautifulSoup(r.text, "lxml")
 
     for i in r:

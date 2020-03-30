@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.jabzboxing.com"
-    r = requests.get("https://www.jabzboxing.com/find-a-jabz/",headers=headers)
+    r = session.get("https://www.jabzboxing.com/find-a-jabz/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for location in soup.find_all("div",{'class':"locations-page-one column white-text rel"}):
@@ -63,7 +66,7 @@ def fetch_data():
         store.append(location_details[0].split(",")[-1].split("–")[0])
         store.append(location_details[3].split(" ")[-1] if len(location_details[3].split(" ")[-1]) == 5 else "<MISSING>")
         if store[-1] == "<MISSING>":
-            location_request = requests.get(location.find("a",text=re.compile("Visit Website"))["href"],headers=headers)
+            location_request = session.get(location.find("a",text=re.compile("Visit Website"))["href"],headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             store[-1] = location_soup.find("span",{"itemprop":"postalCode"}).text
         store.append("US")

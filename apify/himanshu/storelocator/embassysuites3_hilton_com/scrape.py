@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,12 +19,12 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://embassysuites3.hilton.com/en_US/es/ajax/cache/regions.json"
-    r = requests.get(base_url).json()
+    r = session.get(base_url).json()
     return_main_object = []
     output=[]
     for region in r['region']:
         base_url1 = "https://embassysuites3.hilton.com/en_US/es/ajax/cache/regionHotels.json?regionId="+str(region['id'])+"&subregionId=null&hotelStatus=null"
-        r1 = requests.get(base_url1).json()
+        r1 = session.get(base_url1).json()
         for hotel in r1['hotels']:
             store = []
             store.append("https://embassysuites3.hilton.com")

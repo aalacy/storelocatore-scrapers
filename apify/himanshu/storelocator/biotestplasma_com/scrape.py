@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def write_output(data):
 
 def fetch_data():
     base_url= "https://biotestplasma.com/find-plasma-center-near/"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -37,7 +40,7 @@ def fetch_data():
                 pass
             else:
                 # print(j.a['href'])
-                r = requests.get(j.a['href'])
+                r = session.get(j.a['href'])
                 soup1= BeautifulSoup(r.text,"lxml")
                 lat = soup1.find("section",{'class':"entry-content"}).find("div",{"class":"marker"}).attrs['data-lat']
                 lng = soup1.find("section",{'class':"entry-content"}).find("div",{"class":"marker"}).attrs['data-lng']

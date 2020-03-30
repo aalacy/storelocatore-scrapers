@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,15 +19,15 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://chaisefitness.com"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup=BeautifulSoup(r.text ,"lxml")
     return_main_object = []
     main=soup.find('ul',{"class":"versions"}).find_all('li')
     for ltag in main:
         if ltag.find('a')['href']:
-            r1 = requests.get(ltag.find('a')['href'])
+            r1 = session.get(ltag.find('a')['href'])
             soup1=BeautifulSoup(r1.text ,"lxml")
-            r2 = requests.get(soup1.find('a',text="Locations")['href'])
+            r2 = session.get(soup1.find('a',text="Locations")['href'])
             soup2=BeautifulSoup(r2.text ,"lxml")
             atag=soup2.find('div',{"class":'page'}).find_all('a',text="More Info")
             if len(atag)>0:
@@ -32,7 +35,7 @@ def fetch_data():
                 for val in atag:
                      if val['href'] not in output:
                         output.append(val['href'])
-                        r3 = requests.get(val['href'])
+                        r3 = session.get(val['href'])
                         soup3=BeautifulSoup(r3.text ,"lxml")
                         at=soup3.find('a',text="Get Directions")['href'].split('@')[1].split(',')
                         lat=at[0]

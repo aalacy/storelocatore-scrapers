@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -15,7 +18,7 @@ def write_output(data):
 def fetch_data():
     base_url = "http://perkos.com"
     return_main_object=[]
-    r = requests.get(base_url+'/locations.html')
+    r = session.get(base_url+'/locations.html')
     soup=BeautifulSoup(r.text,'lxml')
     output=[]
     main=soup.find('div',{"class":"wrapper_bg01"}).find_all('div',{'class':"box_8"})

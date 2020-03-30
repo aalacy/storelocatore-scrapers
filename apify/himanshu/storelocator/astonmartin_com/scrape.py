@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import shapely
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
     for cd in cord:
         print(cd)
         try:
-            r = requests.get("https://www.astonmartin.com/api/enquire/findDealers?latitude="+cd[0]+"&longitude="+cd[1]+"&cultureName=en-US&take=15000").json()
+            r = session.get("https://www.astonmartin.com/api/enquire/findDealers?latitude="+cd[0]+"&longitude="+cd[1]+"&cultureName=en-US&take=15000").json()
             for loc in r:
                 name=loc['Name'].encode('ascii', 'ignore').decode('ascii').strip()
                 address=loc['Address']['Street'].encode('ascii', 'ignore').decode('ascii').strip()

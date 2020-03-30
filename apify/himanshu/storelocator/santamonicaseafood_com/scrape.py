@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +25,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
     base_url= "https://santamonicaseafood.com/contact"
-    r = requests.get(base_url,headers=headers)
+    r = session.get(base_url,headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
   
     store_name=[]
@@ -34,7 +37,7 @@ def fetch_data():
     k = soup.find_all("div",{"class":"x-column x-sm vc x-1-2"})
 
     base_url1= "http://www.smseafoodmarket.com/santa-monica-seafood-market-and-cafe/"
-    r = requests.get(base_url1,headers=headers)
+    r = session.get(base_url1,headers=headers)
     soup1= BeautifulSoup(r.text,"lxml")
 
     k1 = soup1.find("div",{"class":"x-column x-sm vc x-1-2"}).find("p")
@@ -48,7 +51,7 @@ def fetch_data():
 
 
     base_url2= "http://www.smseafoodmarket.com/costa-mesa-seafood-market-and-cafe/"
-    r = requests.get(base_url2,headers=headers)
+    r = session.get(base_url2,headers=headers)
     soup2= BeautifulSoup(r.text,"lxml")
 
     k2 = soup2.find("div",{"class":"wpb_wrapper"})

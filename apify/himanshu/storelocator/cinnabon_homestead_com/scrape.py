@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,15 +17,15 @@ def write_output(data):
             writer.writerow(row)
 def fetch_data():
     base_url= "http://cinnabon.homestead.com/Locations.html"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     link = soup.find_all("div",{"id":"element496"})
     city1 = list(link[0].stripped_strings)[1:]
-    r1 = requests.get(base_url)
+    r1 = session.get(base_url)
     soup1 = BeautifulSoup(r1.text, "lxml")
     link1 = soup1.find_all("div", {"id": "element497"})
     location_name1 = list(link1[0].stripped_strings)
-    r2 = requests.get(base_url)
+    r2 = session.get(base_url)
     soup2 = BeautifulSoup(r2.text, "lxml")
     link2 = soup2.find_all("div", {"id": "element499"})
     phone1 = list(link2[0].stripped_strings)[0:]

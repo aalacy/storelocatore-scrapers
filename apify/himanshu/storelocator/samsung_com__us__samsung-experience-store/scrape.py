@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.samsung.com/us/samsung-experience-store"
-    r = requests.get(base_url+"/locations/")
+    r = session.get(base_url+"/locations/")
     soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
     main=soup.find_all('div',{"class":"container info-component"})

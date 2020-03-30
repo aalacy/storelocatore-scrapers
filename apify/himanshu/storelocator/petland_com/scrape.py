@@ -3,8 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
 session = SgRequests()
-import requests
+
+session = SgRequests()
+from sgrequests import SgRequests
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
         "Accept": "application/xml, text/xml, */*; q=0.01",
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36',
     }
-    r = requests.get("https://petland.com/stores/map/locations.xml", headers=headers)
+    r = session.get("https://petland.com/stores/map/locations.xml", headers=headers)
     soup = BeautifulSoup(r.text , "lxml")
     for data in soup.find_all("marker"):
         location_name = data['name']
@@ -39,7 +42,7 @@ def fetch_data():
         longitude = data['lng']
         page_url = data['web']
         try:
-            r1 = requests.get(page_url, headers=headers)
+            r1 = session.get(page_url, headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
         except:
             pass

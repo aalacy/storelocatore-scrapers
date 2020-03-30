@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def fetch_data():
     }
 
     base_url = "https://www.tacodeli.com"
-    r = requests.get("https://www.tacodeli.com/locations/",headers=headers)
+    r = session.get("https://www.tacodeli.com/locations/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for script in soup.find_all("script"):
@@ -57,7 +60,7 @@ def fetch_data():
                 store.append("tacodeli")
                 store.append(store_data["lat"])
                 store.append(store_data["lng"])
-                location_request = requests.get(store_data["link"],headers=headers)
+                location_request = session.get(store_data["link"],headers=headers)
                 location_soup = BeautifulSoup(location_request.text,"lxml")
                 store_hours = location_soup.find_all("div",{"class":"weekdays"})
                 hours = ""

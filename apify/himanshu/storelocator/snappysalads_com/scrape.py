@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def fetch_data():
     data_url = "https://www.snappysalads.com/hours-and-locations"
     
 
-    r = requests.get(data_url)
+    r = session.get(data_url)
     soup=BeautifulSoup(r.text,'lxml')
     main = soup.find('main',class_='site-content__main').find_all('script')[-1].text.split('locations:')[-1].split('}}]')[0] + '}}]'
     json_data = json.loads(main)

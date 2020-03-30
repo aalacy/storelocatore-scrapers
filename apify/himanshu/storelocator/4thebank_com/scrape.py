@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import unicodedata
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -35,7 +38,7 @@ def fetch_data():
         x = coord[0]
         y = coord[1]
         #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        r = requests.get("https://www.busey.com/_/api/branches/" + str(x) + "/" + str(y) + "/500",headers=headers)
+        r = session.get("https://www.busey.com/_/api/branches/" + str(x) + "/" + str(y) + "/500",headers=headers)
         data = r.json()["branches"]
         for store_data in data:
             lat = store_data["lat"]

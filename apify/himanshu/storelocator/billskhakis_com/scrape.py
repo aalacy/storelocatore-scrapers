@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -8,6 +8,9 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
 import time
 import platform
+
+
+session = SgRequests()
 
 system = platform.system()
 
@@ -49,7 +52,7 @@ def fetch_data():
                 temp_soup = BeautifulSoup(driver.page_source,"lxml")
                 time.sleep(2)
                 # print("https://www.billskhakis.com/store-locator/" + temp_soup.find_all("script",src=re.compile("_,"))[-1]["src"])
-                geo_request = requests.get("https://www.billskhakis.com/store-locator/" + temp_soup.find_all("script",src=re.compile("_,"))[-1]["src"])
+                geo_request = session.get("https://www.billskhakis.com/store-locator/" + temp_soup.find_all("script",src=re.compile("_,"))[-1]["src"])
                 for geo_details in geo_request.text.split("createMarker(")[1:]:
                     lat = geo_details.split("lat:")[1].split(",")[0].replace('"',"")
                     lng = geo_details.split("lng:")[1].split(",")[0].replace('"',"")

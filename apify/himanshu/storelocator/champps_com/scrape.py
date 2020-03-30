@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -18,7 +21,7 @@ def fetch_data():
     }
     address =[]
     base_url= "https://champps.com/location-search/"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     a1 = soup.find("script",{"type":"text/javascript"})
     p1 = a1.text.replace("\/","").split('var mapdata = ')[1].split("var layout =")[0].replace(";","")
@@ -36,7 +39,7 @@ def fetch_data():
             longitude = p['markers'][o]['long']
             link1 = p['markers'][o]['path']
             page_url = "https://champps.com/"+str(link1)
-            r1 = requests.get(page_url)
+            r1 = session.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
             hour = list(soup1.find("h4", text=re.compile(
                 "HOURS OF OPERATION")).parent.stripped_strings)

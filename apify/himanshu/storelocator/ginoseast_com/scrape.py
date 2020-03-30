@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,11 +22,11 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.ginoseast.com"
-    r = requests.get("https://www.ginoseast.com/all-locations",headers=headers)
+    r = session.get("https://www.ginoseast.com/all-locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     main_link = "https:" + soup.find_all("iframe")[-1]["src"]
     api_key = main_link.split("api_key=")[1].split("&")[0]
-    main_request  = requests.get("https://app.mapply.net/front-end//get_surrounding_stores.php?api_key=" + api_key + "&latitude=40.627687485975684&longitude=-85.975110686635&max_distance=0&limit=10000&calc_distance=0",headers=headers)
+    main_request  = session.get("https://app.mapply.net/front-end//get_surrounding_stores.php?api_key=" + api_key + "&latitude=40.627687485975684&longitude=-85.975110686635&max_distance=0&limit=10000&calc_distance=0",headers=headers)
     return_main_object = []
     data = main_request.json()["stores"]
     for i in range(len(data)):
@@ -45,7 +48,7 @@ def fetch_data():
         if location_url["href"] == "":
             pass
         else:
-            location_request = requests.get(location_url["href"],headers=headers)
+            location_request = session.get(location_url["href"],headers=headers)
             lcoation_soup = BeautifulSoup(location_request.text,"lxml")
             store_hours = list(lcoation_soup.find("div",{"id":"ctl01_rptSpan_ctl01_pText"}).stripped_strings)[:-1]
             for k in range(len(store_hours)):

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,17 +19,17 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.doubledaves.com"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     main = soup.find('div',{'class':"dropdown location-dropdown"}).find_all('a')
     del main[-1]
     for atag in main:
-        r1 = requests.get(base_url+atag['href'])
+        r1 = session.get(base_url+atag['href'])
         soup1 = BeautifulSoup(r1.text,"lxml")
         main1 = soup1.find('div',{'class':"location-grid"}).find_all('a',text="Website")
         for weblink in main1:
-            r2 = requests.get(base_url+weblink['href'])
+            r2 = session.get(base_url+weblink['href'])
             soup2 = BeautifulSoup(r2.text,"lxml")
             main2 = soup2.find('div',{'class':"location-hours"}).find_all('p')
             if len(main2)==2:

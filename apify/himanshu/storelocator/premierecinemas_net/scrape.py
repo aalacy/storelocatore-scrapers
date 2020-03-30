@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -20,14 +23,14 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "http://premierecinemas.net"
-    r = requests.get("http://premierecinemas.net/contact",headers=headers)
+    r = session.get("http://premierecinemas.net/contact",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     count = 0
     for location in soup.find_all("div",{'class':"twocol"}):
         location_details = list(location.stripped_strings)
         soup.find_all("iframe")[count]["src"]
-        geo_request = requests.get(soup.find_all("iframe")[count]["src"],headers=headers)
+        geo_request = session.get(soup.find_all("iframe")[count]["src"],headers=headers)
         count = count + 1
         geo_soup = BeautifulSoup(geo_request.text,"lxml")
         for script in geo_soup.find_all("script"):

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "http://totalpet.ca"
-    r = requests.get("http://totalpet.ca/store-locator/",headers=headers)
+    r = session.get("http://totalpet.ca/store-locator/",headers=headers)
     return_main_object = []
     soup = BeautifulSoup(r.text,"lxml")
     hours_object = {}
@@ -33,7 +36,7 @@ def fetch_data():
                 hours = " ".join(location_details[k+1:])
                 hours_object[location_details[0].lower()] = hours
                 phone_object[location_details[0].lower()] = location_details[3]
-    data_request = requests.get("http://totalpet.ca/wp-admin/admin-ajax.php?action=store_search&lat=56.130366&lng=-106.34677099999999&max_results=50&search_radius=1000000&autoload=1",headers=headers)
+    data_request = session.get("http://totalpet.ca/wp-admin/admin-ajax.php?action=store_search&lat=56.130366&lng=-106.34677099999999&max_results=50&search_radius=1000000&autoload=1",headers=headers)
     data = data_request.json()
     for i in range(len(data)):
         store_data = data[i]

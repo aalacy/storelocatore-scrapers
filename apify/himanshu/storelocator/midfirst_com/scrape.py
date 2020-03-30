@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import sgzip
 
+
+
+session = SgRequests()
 
 def get_driver():
     options = Options()
@@ -54,7 +57,7 @@ def fetch_data():
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
     }
 
-    r_token = requests.get("https://www.midfirst.com/api/Token/get", headers=headers)
+    r_token = session.get("https://www.midfirst.com/api/Token/get", headers=headers)
     token_for_post = r_token.json()["Token"]
     token_for_cookie = r_token.headers["Set-Cookie"].split(";")[0] + ";"
     # -----------------------------token and cookies----------------------------------------
@@ -100,7 +103,7 @@ def fetch_data():
         # print("remaining zipcodes: " + str(len(search.zipcodes)))
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
-        r_location = requests.post("https://www.midfirst.com/api/Locations", headers=headers,
+        r_location = session.post("https://www.midfirst.com/api/Locations", headers=headers,
                                    data="location-banking-center=on&location-atm=on&location-distance=" + str(
                                        MAX_DISTANCE) + "&location-count=" + str(MAX_RESULTS) + "&location-lat=" + str(
                                        lat) + "&location-long=" + str(

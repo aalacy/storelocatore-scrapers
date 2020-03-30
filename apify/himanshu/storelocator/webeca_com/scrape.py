@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
 import re
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,13 +26,13 @@ def fetch_data():
     base_url = "https://www.webeca.com/"
     loacation_url = 'https://www.webeca.com/our-eye-doctors/'
     addresses= []
-    r = requests.get(loacation_url, headers=header)
+    r = session.get(loacation_url, headers=header)
     soup = BeautifulSoup(r.text, "html.parser")
 
     vk = soup.find_all('td', {'valign': 'top'})
     for x in vk:
         for z in x.find_all('a'):
-            r = requests.get(z['href'], headers=header)
+            r = session.get(z['href'], headers=header)
             soup = BeautifulSoup(r.text, "html.parser")
             if soup.find('address') != None:
                 locator_domain =base_url

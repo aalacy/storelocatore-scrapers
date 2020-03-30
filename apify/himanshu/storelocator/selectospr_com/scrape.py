@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "http://selectospr.com"
-    r = requests.get(base_url+"/main/wp-admin/admin-ajax.php?action=store_search&lat=18.46633&lng=-66.10572&max_results=5000000&search_radius=10&autoload=1").json()
+    r = session.get(base_url+"/main/wp-admin/admin-ajax.php?action=store_search&lat=18.46633&lng=-66.10572&max_results=5000000&search_radius=10&autoload=1").json()
     return_main_object = []
     for loc in r:
         name=loc['store'].strip()

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -51,7 +54,7 @@ def fetch_data():
 
         location_url = "https://order.papamurphys.com/vendor/search?StreetAddress="+str(zip_code)
          
-        r = requests.get(location_url, headers=headers)      
+        r = session.get(location_url, headers=headers)      
     
         soup = BeautifulSoup(r.text, "lxml")
         data = soup.find(lambda tag: (tag.name == "script") and "$(document).ready(function()" in tag.text).text
@@ -72,7 +75,7 @@ def fetch_data():
                 longitude = i['Longitude']
                 page_url = i['Url']
                 try:
-                    r1 = requests.get(page_url, headers=headers)
+                    r1 = session.get(page_url, headers=headers)
                 except:
                     pass
 

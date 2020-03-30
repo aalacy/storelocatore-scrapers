@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,13 +22,13 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.sees.com"
-    r = requests.get("https://maps.sees.com/api/getAsyncLocations?template=search&level=search&radius=500000&search=11756",headers=headers)
+    r = session.get("https://maps.sees.com/api/getAsyncLocations?template=search&level=search&radius=500000&search=11756",headers=headers)
     data = r.json()["markers"]
     return_main_object = []
     for store_data in data:
         store_soup = BeautifulSoup(store_data["info"],"lxml")
         page_url = json.loads(store_soup.find("div").text)["url"]
-        location_request = requests.get(page_url,headers=headers)
+        location_request = session.get(page_url,headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         for script in location_soup.find_all("script"):
             if "dataLayer.push" in script.text:

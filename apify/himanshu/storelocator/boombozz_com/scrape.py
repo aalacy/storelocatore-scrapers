@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+
+session = SgRequests()
+
 requests.packages.urllib3.disable_warnings()
 
 def write_output(data):
@@ -21,7 +24,7 @@ def fetch_data():
     return_main_object = []
     base_url = "https://boombozz.com/"
     loacation_url = 'https://boombozz.com/locations/'
-    r = requests.get(loacation_url, headers=header,verify=False)
+    r = session.get(loacation_url, headers=header,verify=False)
     soup = BeautifulSoup(r.text, "lxml")
     r = soup.find('div', {'id': 'allLocations'}).find_all('div', {'class': 'x-container'})
 

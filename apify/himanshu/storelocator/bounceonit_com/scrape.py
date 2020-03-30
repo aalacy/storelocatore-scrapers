@@ -1,8 +1,11 @@
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -18,7 +21,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.bounceonit.com/"
-    req = requests.get(base_url)
+    req = session.get(base_url)
     soup = BeautifulSoup(req.text, "lxml")
     title = soup.title.text
     #locator_domain
@@ -56,7 +59,7 @@ def fetch_data():
             row.append(location_type)
             hours_of_operation = "<INACCESSIBLE>"
 
-            req2 = requests.get(location_link)
+            req2 = session.get(location_link)
             soup2 = BeautifulSoup(req2.text, "lxml")
             maplink = ""
             if city != "syosset":

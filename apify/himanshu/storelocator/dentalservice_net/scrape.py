@@ -1,10 +1,13 @@
 import csv
 import time
 
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 requests.packages.urllib3.disable_warnings()
  
 
@@ -28,7 +31,7 @@ def fetch_data():
     base_url = "https://www.dentalservice.net"
     addresses = []
 
-    r = requests.get("https://www.dentalservice.net/contact-us/find-your-office/", headers=headers,verify=False)
+    r = session.get("https://www.dentalservice.net/contact-us/find-your-office/", headers=headers,verify=False)
     soup = BeautifulSoup(r.text, "lxml")
     data_id = soup.find("script", {"data-id": re.compile("")})["data-id"]
     # print("data_id === " + str(data_id))
@@ -36,7 +39,7 @@ def fetch_data():
     page_count = 0
 
     while True:
-        r = requests.get(
+        r = session.get(
             "https://locator-api.localsearchprofiles.com/api/LocationSearchResults/?configuration=" + data_id + "&start=" + str(
                 page_count), headers=headers,verify=False)
         json_data = r.json()

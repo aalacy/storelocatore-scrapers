@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -51,7 +54,7 @@ def fetch_data():
     for zip_code in zips:
 
         # print("zip_code == " + zip_code)
-        r = requests.get(
+        r = session.get(
             'https://www.shoeshowmega.com/on/demandware.store/Sites-shoe-show-Site/default/Stores-FindStores?showMap=true&radius=200&postalCode=' + str(zip_code), headers=headers)
         # print('https://www.shoeshowmega.com/on/demandware.store/Sites-shoe-show-Site/default/Stores-FindStores?showMap=true&radius=200&postalCode='+str(zip_code))
 

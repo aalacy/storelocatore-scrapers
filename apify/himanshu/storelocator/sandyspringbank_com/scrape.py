@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -23,7 +26,7 @@ def fetch_data():
     for cr in cord:
         try:
             data="lat="+cr[0]+"&lng="+cr[1]+"&searchby=FCS%7C&SearchKey=&rnd=1568716953234"
-            r = requests.post("https://sandyspringbankv2.locatorsearch.com/GetItems.aspx",headers=headers,data=data)
+            r = session.post("https://sandyspringbankv2.locatorsearch.com/GetItems.aspx",headers=headers,data=data)
             r1=re.sub(r'\<\!\[CDATA\[',' ',r.text)
             r1=re.sub(r'\]\]\>',' ',r1)
             soup=BeautifulSoup(r1,'lxml')

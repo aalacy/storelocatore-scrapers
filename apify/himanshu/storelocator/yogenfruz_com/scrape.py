@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
     print("soup ===  first")
 
     base_url = "https://www.yogenfruz.com"
-    r = requests.get("https://www.yogenfruz.com/storelocator/frozen-yogurt", headers=headers)
+    r = session.get("https://www.yogenfruz.com/storelocator/frozen-yogurt", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
@@ -49,19 +52,19 @@ def fetch_data():
     for script in soup.find_all("a"):
         if "canada" in script.text.lower() or "usa" in script.text.lower():
             country_code = script.text[:2].upper()
-            r_country = requests.get(script.get("href"), headers=headers)
+            r_country = session.get(script.get("href"), headers=headers)
             soup_country = BeautifulSoup(r_country.text, "lxml")
             # print(script.text+" = Country = "+script.get("href"))
 
             for script_country in soup_country.find_all("div", "blocks block-r-half alllocations"):
                 # print(script_country.text +" = region = "+script_country.find("a").get("href"))
-                r_region = requests.get(script_country.find("a").get("href"), headers=headers)
+                r_region = session.get(script_country.find("a").get("href"), headers=headers)
                 soup_region = BeautifulSoup(r_region.text, "lxml")
 
                 for script_region in soup_region.find_all("div", "blocks block-r-half alllocations"):
                     # print(script_region.text +" = Brooks = "+script_region.find("a").get("href"))
-                    r_brooks = requests.get(script_region.find("a").get("href"),headers=headers)
-                    #r_brooks = requests.get("https://www.yogenfruz.com/storelocator/city/whitby/ontario/canada",headers=headers)
+                    r_brooks = session.get(script_region.find("a").get("href"),headers=headers)
+                    #r_brooks = session.get("https://www.yogenfruz.com/storelocator/city/whitby/ontario/canada",headers=headers)
 
                     soup_brooks = BeautifulSoup(r_brooks.text, "lxml")
 
@@ -70,9 +73,9 @@ def fetch_data():
                         if location_name == "":
                             location_name = "<MISSING>"
                         # print(script_brooks.find("a").text +" = Locations = "+script_brooks.find("a").get("href"))
-                        # r_location = requests.get(script_brooks.find("a",text="location details").get("href"),
+                        # r_location = session.get(script_brooks.find("a",text="location details").get("href"),
                         # headers=headers)
-                        r_location = requests.get(script_brooks.find("a").get("href"), headers=headers)
+                        r_location = session.get(script_brooks.find("a").get("href"), headers=headers)
                         soup_location = BeautifulSoup(r_location.text, "lxml")
 
                         temp_flag = ""

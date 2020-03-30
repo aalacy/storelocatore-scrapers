@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -37,7 +40,7 @@ def fetch_data():
         result_coords = []
         # print("zips === " + str(zip_code))
         try:
-            r = requests.get("https://www.drmartens.com/us/en/store-finder?q="+str(zip_code), headers=headers)
+            r = session.get("https://www.drmartens.com/us/en/store-finder?q="+str(zip_code), headers=headers)
         except:
             pass
             raise Exception(r)

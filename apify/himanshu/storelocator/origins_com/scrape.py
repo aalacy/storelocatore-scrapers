@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +25,7 @@ def fetch_data():
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
     data = 'JSONRPC=%5B%7B%22method%22%3A%22locator.doorsandevents%22%2C%22id%22%3A5%2C%22params%22%3A%5B%7B%22fields%22%3A%22DOOR_ID%2C+DOORNAME%2C+EVENT_NAME%2C+EVENT_START_DATE%2C+EVENT_END_DATE%2C+EVENT_IMAGE%2C+EVENT_FEATURES%2C+EVENT_TIMES%2C+SERVICES%2C+STORE_HOURS%2C+ADDRESS%2C+ADDRESS2%2C+STATE_OR_PROVINCE%2C+CITY%2C+REGION%2C+COUNTRY%2C+ZIP_OR_POSTAL%2C+PHONE1%2C+STORE_TYPE%2C+LONGITUDE%2C+LATITUDE%2C+SUB_HEADING%22%2C%22radius%22%3A%2210000000000%22%2C%22country%22%3A%22%22%2C%22region_id%22%3A%220%22%2C%22latitude%22%3A33.755711%2C%22longitude%22%3A-84.3883717%2C%22uom%22%3A%22mile%22%7D%5D%7D%5D'
-    r = requests.post("https://www.origins.com/rpc/jsonrpc.tmpl?dbgmethod=locator.doorsandevents",headers=headers,data=data)
+    r = session.post("https://www.origins.com/rpc/jsonrpc.tmpl?dbgmethod=locator.doorsandevents",headers=headers,data=data)
     data = r.json()[0]["result"]["value"]["results"]
     return_main_object = []
     for key in data:

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -26,14 +29,14 @@ def fetch_data():
     return_main_object = []
     address1 = []
     
-    r = requests.get(
+    r = session.get(
     "https://www.firstunited.bank/company/banking-center-atm-itm-locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     k  = soup.find_all('a', {'class': 'location-title'})
     for i in k:
         tem_var = []
         link = i['href']
-        r1 = requests.get(link, headers=headers)
+        r1 = session.get(link, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         address_tmp = soup1.find('div', {'class': 'location-details'})
         location_name =  list(address_tmp.stripped_strings)[0]

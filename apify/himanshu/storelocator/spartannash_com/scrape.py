@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +25,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
     base_url= "https://www.mdvnf.com/Locations.aspx"
-    r = requests.get(base_url,headers=headers)
+    r = session.get(base_url,headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
     
     data = soup.find_all("div",{"class":"hentry","data-sync":"textbox_content"})
@@ -64,7 +67,7 @@ def fetch_data():
             tem_var.append("<MISSING>")
             store_detail.append(tem_var) 
     
-            r = requests.get("https://www.mdvnf.com/"+j.a['href'],headers=headers)
+            r = session.get("https://www.mdvnf.com/"+j.a['href'],headers=headers)
             soup1= BeautifulSoup(r.text,"lxml")
             k2 = soup1.find_all("table",{"cellspacing":"5"})
 

@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
 import unicodedata
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding='utf8') as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
     }
 
     base_url = "http://superlofoods.com"
-    r = requests.get("https://api.freshop.com/1/stores?app_key=superlo", headers=headers)
+    r = session.get("https://api.freshop.com/1/stores?app_key=superlo", headers=headers)
     data = r.json()['items']
 
     for store_data in data:

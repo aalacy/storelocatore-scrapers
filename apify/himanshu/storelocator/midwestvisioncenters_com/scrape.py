@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,13 +22,13 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.midwestvisioncenters.com"
-    r = requests.get("https://www.midwestvisioncenters.com/",headers=headers)
+    r = session.get("https://www.midwestvisioncenters.com/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for sub_menu in soup.find("span",text="Locations").parent.parent.find("ul",{"class":"sub-menu"}).find_all("li",recursive=False):
         for link in sub_menu.find("ul",{"class":"sub-menu"}).find_all("a"):
             # print(link["href"])
-            location_reqeust = requests.get(link["href"],headers=headers)
+            location_reqeust = session.get(link["href"],headers=headers)
             location_soup = BeautifulSoup(location_reqeust.text,"lxml")
             location_details = []
             for k in range(len(location_soup.find_all("h5",{'style':"text-align: center;"}))):
@@ -47,7 +50,7 @@ def fetch_data():
                     if location_soup.find("h4",text=re.compile("Hours of Operation:")):
                         hours = " ".join(list(location_soup.find("h4",text=re.compile("Hours of Operation:")).parent.stripped_strings))
                     if len(address) < 2:
-                        geo_request = requests.get(location_soup.find_all("iframe")[-1]["src"],headers=headers)
+                        geo_request = session.get(location_soup.find_all("iframe")[-1]["src"],headers=headers)
                         geo_soup = BeautifulSoup(geo_request.text,"lxml")
                         for script in geo_soup.find_all("script"):
                             if "initEmbed" in script.text:

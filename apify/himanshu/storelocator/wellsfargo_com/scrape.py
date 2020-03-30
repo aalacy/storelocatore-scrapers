@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import time
 import time
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -56,7 +59,7 @@ def fetch_data():
         # y = coord[1]
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         try:
-            r = requests.get('https://www.wellsfargo.com/locator/search/?searchTxt='+str(zip_code)+'&mlflg=N&sgindex=99&chflg=N&_bo=on&_wl=on&_os=on&_bdu=on&_adu=on&_ah=on&_sdb=on&_aa=on&_nt=on&_fe=on')
+            r = session.get('https://www.wellsfargo.com/locator/search/?searchTxt='+str(zip_code)+'&mlflg=N&sgindex=99&chflg=N&_bo=on&_wl=on&_os=on&_bdu=on&_adu=on&_ah=on&_sdb=on&_aa=on&_nt=on&_fe=on')
                                 
         
             

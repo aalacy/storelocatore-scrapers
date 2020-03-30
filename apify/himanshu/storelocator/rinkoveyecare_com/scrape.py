@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ import sgzip
 # from urllib3.exceptions import InsecureRequestWarning
 import time
 # requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+
+session = SgRequests()
+
 requests.packages.urllib3.disable_warnings()
 
 def write_output(data):
@@ -29,7 +32,7 @@ def fetch_data():
         while True:
             cord_count = 0
             try:
-                r = requests.get("https://www.rinkoveyecare.com/wp-json/352inc/v1/locations/coordinates?lat=" + str(cord[0]) + "&lng=" + str(cord[1]),headers=headers,verify=False)
+                r = session.get("https://www.rinkoveyecare.com/wp-json/352inc/v1/locations/coordinates?lat=" + str(cord[0]) + "&lng=" + str(cord[1]),headers=headers,verify=False)
                 break
             except:
                 time.sleep(2)
@@ -61,7 +64,7 @@ def fetch_data():
                 location_count = 0
                 while True:
                     try:
-                        location_request = requests.get(store_data["permalink"],headers=headers,verify=False)
+                        location_request = session.get(store_data["permalink"],headers=headers,verify=False)
                         location_soup = BeautifulSoup(location_request.text,"lxml")
                         hours = " ".join(list(location_soup.find("div",{"class":"col-lg-4 times"}).stripped_strings))
                         store.append(hours if hours != "" else "<MISSING>")

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
-    r = requests.get("https://stores.jcrew.com/en/api/v2/stores.json",headers=headers)
+    r = session.get("https://stores.jcrew.com/en/api/v2/stores.json",headers=headers)
     data = r.json()['stores']
     for store_data in data:
         if store_data["country_code"] not in ("US","CA"):

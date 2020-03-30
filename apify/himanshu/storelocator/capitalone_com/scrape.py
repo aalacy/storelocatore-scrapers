@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',newline="") as output_file:
@@ -37,7 +40,7 @@ def fetch_data():
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         r_data = '{"lat":' + str(x) + ',"lng":' + str(y) + ',"radius":50,"services":[],"resType":["BRANCHLOC","CAFELOC"]}'
         try:
-            r = requests.post("https://locations.capitalone.com/resourcelocator/location/resources/",headers=headers,data=r_data)
+            r = session.post("https://locations.capitalone.com/resourcelocator/location/resources/",headers=headers,data=r_data)
         except:
             pass
         data = r.json()["resourceList"]
@@ -106,7 +109,7 @@ def fetch_data():
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         r_data = '{"lat":' + str(x) + ',"lng":' + str(y) + ',"radius":50,"services":[],"resType":["ATMLOC"]}'
         try:
-            r = requests.post("https://locations.capitalone.com/resourcelocator/location/resources/",headers=headers,data=r_data)
+            r = session.post("https://locations.capitalone.com/resourcelocator/location/resources/",headers=headers,data=r_data)
         except:
             pass
         data = r.json()["resourceList"]
@@ -173,7 +176,7 @@ def fetch_data():
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         r_data = '{"lat":' + str(x) + ',"lng":' + str(y) + ',"radius":50,"services":[],"resType":["ALLPOINTATMLOC"]}'
         try:
-            r = requests.post("https://locations.capitalone.com/resourcelocator/location/resources/",headers=headers,data=r_data)
+            r = session.post("https://locations.capitalone.com/resourcelocator/location/resources/",headers=headers,data=r_data)
         except:
             pass
         data = r.json()["resourceList"]

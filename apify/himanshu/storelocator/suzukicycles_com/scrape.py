@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import http.client
@@ -7,6 +7,9 @@ import sgzip
 import json
 import  pprint
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -36,7 +39,7 @@ def fetch_data():
         result_coords = []
         
         page_url ="http://suzukicycles.com/DealerSearchHandler.ashx?zip="+str(search.current_zip)+"&hasAuto=false&hasCycles=true&hasAtvs=true&hasScooters=true&hasMarine=false&maxResults=3&country=en"
-        r = requests.get(page_url, headers=header)
+        r = session.get(page_url, headers=header)
         soup = BeautifulSoup(r.text, "lxml")
         kk = soup.find_all('dealerinfo')
         for val in kk:

@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -51,7 +54,7 @@ def fetch_data():
 
 
 
-    r= requests.get('https://stores.boldapps.net/front-end/get_surrounding_stores.php?shop=black-dog-4.myshopify.com&latitude=40.7987048&longitude=-73.6506776&max_distance=50&limit=&calc_distance=',headers = headers)
+    r= session.get('https://stores.boldapps.net/front-end/get_surrounding_stores.php?shop=black-dog-4.myshopify.com&latitude=40.7987048&longitude=-73.6506776&max_distance=50&limit=&calc_distance=',headers = headers)
     json_data = r.json()
 
 

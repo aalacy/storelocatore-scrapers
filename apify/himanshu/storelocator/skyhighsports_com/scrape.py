@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import io
 import json
 import unicodedata
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://skyhighsports.com/locations/"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     exists = soup.find('div', {'class', 'state'})
@@ -34,7 +37,7 @@ def fetch_data():
             for links in states.find_next('ul').findAll('a'):
                 if "http" in links.get('href'):
                     data_url = links.get('href')
-                    detail_url = requests.get(data_url, headers=headers)
+                    detail_url = session.get(data_url, headers=headers)
                     detail_soup = BeautifulSoup(detail_url.text, "lxml")
                     if detail_soup.select('#hours'):
                         if detail_soup.select('.phone_number'):

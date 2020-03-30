@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     address1 = []
     phone = ''
     
-    r = requests.get(
+    r = session.get(
     "https://fit4lifehealthclubs.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     k  = soup.find('li', {'id': 'menu-item-864'}).find_all('ul',{'class':'sub-menu'})
@@ -39,7 +42,7 @@ def fetch_data():
                 location_name= i.text
                  
                 
-                r1 = requests.get(link, headers=headers)
+                r1 = session.get(link, headers=headers)
                 soup1 = BeautifulSoup(r1.text, "lxml")
                 if soup1.find("span",text=re.compile(" OPENING ")):
                         continue

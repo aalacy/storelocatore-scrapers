@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,12 +31,12 @@ def fetch_data():
     
         
     get_url= "http://shadehotel.com/"
-    r = requests.get(get_url,headers=headers)
+    r = session.get(get_url,headers=headers)
     soup= BeautifulSoup(r.text,"lxml")    
     main= soup.find_all("div",{"class":"shade-property"})
     for i in main:
         link = i.attrs['onclick'].split("('parent','")[1].split("/');")[0]
-        r1 = requests.get(link,headers=headers)
+        r1 = session.get(link,headers=headers)
         soup1= BeautifulSoup(r1.text,"lxml")
         location_name= soup1.find("h1",{"home-headline"}).text            
         main1= soup1.find("div",{"class":"c2"})

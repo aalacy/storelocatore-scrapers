@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -18,12 +21,12 @@ def fetch_data():
     return_main_object = []
     base_url = "https://theeggandirestaurants.com/"
     loacation_url = base_url+'wp-admin/admin-ajax.php?action=crb_location'
-    r = requests.get(loacation_url,headers = header).json()
+    r = session.get(loacation_url,headers = header).json()
     
     for idx, val in enumerate(r['locations']):
         latitude = val['lat'].strip()
         longitude = val['lng'].strip()
-        r = requests.get(val['url'],headers = header)
+        r = session.get(val['url'],headers = header)
         soup = BeautifulSoup(r.text,"lxml")
         locator_domain = base_url
         location_name = soup.find('div',{'class':'contact-box'}).find('div',{'class':'entry'}).find('h1').text.strip()

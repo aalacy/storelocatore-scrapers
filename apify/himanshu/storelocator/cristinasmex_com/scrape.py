@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding='utf8') as output_file:
@@ -25,12 +28,12 @@ def fetch_data():
     }
 
     base_url = "http://cristinasmex.com"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     parts = soup.find("li", {"class": "dropdown"})
     for semi_parts in parts.find_all("ul", {"class": "dropdown-menu"}):
         for semi_in_parts in parts.find_all("li"):
-            store_request = requests.get(base_url + semi_in_parts.find("a")['href'])
+            store_request = session.get(base_url + semi_in_parts.find("a")['href'])
             store_soup = BeautifulSoup(store_request.text, "lxml")
             for inner_part in store_soup.find_all("div", {"id": "course-contact"}):
                 temp_storeaddresss = list(inner_part.stripped_strings)

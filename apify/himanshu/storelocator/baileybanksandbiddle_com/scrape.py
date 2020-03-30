@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def write_output(data):
 
 def fetch_data():
     base_url= "https://baileybanksandbiddle.com"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -28,7 +31,7 @@ def fetch_data():
     k= soup.find_all("li",{"class":"navPages-sub-item li-sub-mega"})[-3:]
     
     # base1 = "https://baileybanksandbiddle.com/pages/houston-jewelry-store-at-town-country-village"
-    # r1 = requests.get(base1)
+    # r1 = session.get(base1)
     # soup2= BeautifulSoup(r1.text,"lxml")
     # script  = soup2.find("script",{"type":"application/ld+json"})
     # data = json.loads(script.text.replace("// ]]>","").replace("// <![CDATA[",""))
@@ -39,7 +42,7 @@ def fetch_data():
     for i in k:
         # print(i.a['href'])
         tem_var =[]
-        r = requests.get("https://baileybanksandbiddle.com"+i.a['href'])
+        r = session.get("https://baileybanksandbiddle.com"+i.a['href'])
         soup1= BeautifulSoup(r.text,"lxml")
 
 

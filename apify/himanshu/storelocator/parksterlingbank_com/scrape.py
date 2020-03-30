@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
     }
     data = "action=location_search&search=all&filter="
     base_url = "https://parksterlingbank.com"
-    r = requests.post("https://www.southstatebank.com/internet/wp-admin/admin-ajax.php",headers=headers,data=data)
+    r = session.post("https://www.southstatebank.com/internet/wp-admin/admin-ajax.php",headers=headers,data=data)
     data = r.json()["branches"]
     return_main_object = []
     for i in range(len(data)):

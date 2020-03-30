@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -32,12 +35,12 @@ def fetch_data():
     
 
     
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     main =  soup.find_all('ul', {'class': 'dropdown-menu'})[1].find_all('li')
     for i in main:
         link = i.find('a')['href']
-        r1 = requests.get(link, headers=headers)
+        r1 = session.get(link, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         main1 =  soup1.find_all('div', {'class': 'span6'})[1]
               

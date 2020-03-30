@@ -1,10 +1,13 @@
 # coding=UTF-8
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import requests
+from sgrequests import SgRequests
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -32,7 +35,7 @@ def fetch_data():
     }
     base_url = "https://www.cartersoshkosh.ca/"
     location_url = "https://www.cartersoshkosh.ca/on/demandware.store/Sites-CartersCA-Site/en_CA/Stores-GetNearestStores?&countryCode=CA&distanceUnit=imperial&maxdistance=1000000&lat=43.7215756&lng=-79.34935129999997"
-    r = requests.get(location_url, headers=headers)
+    r = session.get(location_url, headers=headers)
     json_data = r.json()
     for key,value in json_data['stores'].items():
         # print(value.keys())

@@ -1,12 +1,15 @@
 import csv
 import time
 
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -29,7 +32,7 @@ def fetch_data():
     base_url = "https://www.knightsinn.com"
     addresses = []
 
-    r = requests.get("https://www.redlion.com/api/properties/all.js", headers=headers)
+    r = session.get("https://www.redlion.com/api/properties/all.js", headers=headers)
     soup_state = BeautifulSoup(r.text, "lxml")
     json_str_ids = r.text.replace("var hotelsData = ", "").replace(";", "")
     json_hotel_data = json.loads(json_str_ids)
@@ -50,7 +53,7 @@ def fetch_data():
     for param in list_str_id_data:
         location_url = "https://www.redlion.com/api/hotels?_format=json" + param
         # print("location_url === " + location_url)
-        r_locations = requests.get(location_url, headers=headers)
+        r_locations = session.get(location_url, headers=headers)
         json_locations = r_locations.json()
 
         for location in json_locations:

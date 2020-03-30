@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://stores.petco.com"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup = BeautifulSoup(r.text, "lxml")
     store_name = []
     store_detail = []
@@ -36,21 +39,21 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     for index, i in enumerate(link):
-        r1 = requests.get(i['href'])
+        r1 = session.get(i['href'])
         soup1 = BeautifulSoup(r1.text, "lxml")
         link1 = soup1.find_all(
             "a", {"class": "gaq-link", "data-gaq": "List, City"})
         
         for j in link1:
             
-            r2 = requests.get(j['href'], headers=headers)
+            r2 = session.get(j['href'], headers=headers)
             soup2 = BeautifulSoup(r2.text, "lxml")
             details = soup2.find_all(
                 "a", {"class": "btn btn-primary store-info gaq-link"})
             for q in details:
                 tem_var = [] 
                 page_url = q['href']
-                r3 = requests.get(q['href'], headers=headers)
+                r3 = session.get(q['href'], headers=headers)
                 soup3 = BeautifulSoup(r3.text, "lxml")
                 json1 = json.loads(soup3.find(
                     "script", {"type": "application/ld+json"}).text)

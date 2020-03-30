@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -15,7 +18,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.avalon-hotel.com/"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     store_listing = soup.find("li",{"id": "menu-item-1347"}).find('ul')
@@ -23,10 +26,10 @@ def fetch_data():
     for i in range(len(alla)):
         store_no=alla[i]['id'].split('-')[-1]
         link=alla[i].find('a')['href']
-        r1 = requests.get(link)
+        r1 = session.get(link)
         soup1 = BeautifulSoup(r1.text,"lxml")
         link1 = soup1.find("ul",{"class":"topnav-menu"}).find('li').find("ul",{"class":"sub-menu"}).find('a')['href']
-        r2 = requests.get(link1)
+        r2 = session.get(link1)
         soup2 = BeautifulSoup(r2.text,"lxml")
         store_name=soup2.find("h2",{"class":"feattitlebox-subtitle"}).text.strip()
         mainaddress=soup2.find('div',{'class':"ftr-address left"}).text.split(",")

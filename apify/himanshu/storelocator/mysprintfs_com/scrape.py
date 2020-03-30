@@ -1,11 +1,14 @@
 from bs4 import BeautifulSoup
-import requests
+from sgrequests import SgRequests
 import csv
 # from selenium import webdriver
 # from selenium.webdriver.chrome.options import Options
 # from selenium.webdriver.common.proxy import Proxy,ProxyType
 import time
 import re #for regular expression
+
+
+session = SgRequests()
 
 hed=["locator_domain","location_name","street_address","city","state","zip","country_code","store_number","phone","location_type","latitude",
            "longitude","hours_of_operation","page_url"]
@@ -19,7 +22,7 @@ url = "https://mysprintfs.com/locations"
 
 
 time.sleep(3)
-html = requests.get(url)
+html = session.get(url)
 soup = BeautifulSoup(html.text,"html.parser")
 all_rec = soup.find_all("div",attrs={"class":"all-results"})
 main_url = "https://mysprintfs.com"
@@ -67,7 +70,7 @@ with open("data.csv",mode="w") as file:
             page_url = "https://mysprintfs.com"+record.find("h5").find("a")['href']
             # print(page_url)
 
-            html1 = requests.get(page_url)
+            html1 = session.get(page_url)
             soup1 = BeautifulSoup(html1.text,"html.parser")
             data = soup1.find(name="div", attrs={"class":"location-text"})
             location_name1 = (data.find("h1").text)
@@ -86,7 +89,7 @@ with open("data.csv",mode="w") as file:
             street_address = street_address.replace(",","'")
             city = city.replace(",","'")
             state = state.replace(",","'")
-            extended_html = requests.get(urll)
+            extended_html = session.get(urll)
             dt = BeautifulSoup(extended_html.text,"html.parser")
             location = dt.find_all(name="div", attrs={"class":"location-button"})
             for lloc in location:

@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 from datetime import datetime
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -35,7 +38,7 @@ def fetch_data():
                 x = coord[0]
                 y = coord[1]
                 # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-                r = requests.get("https://www.navyfederal.org/branches-atms/location_search.php?lat="+ str(x) + "&lon=" + str(y) + "&dist=25&loc=50",headers=headers)
+                r = session.get("https://www.navyfederal.org/branches-atms/location_search.php?lat="+ str(x) + "&lon=" + str(y) + "&dist=25&loc=50",headers=headers)
                 data = r.json()["coordLocation"]["data"]["locations"]
                 for store_data in data:
                     if store_data["country"] != "USA":

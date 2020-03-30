@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,16 +18,16 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url= "https://www.cocodimama.co.uk/locations/"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
     link = soup.find_all("div",{"class":"js-locations"})
     for i in link:
-        r1 = requests.get(base_url, headers=headers)
+        r1 = session.get(base_url, headers=headers)
         soup1 = BeautifulSoup(r1.text,"lxml")
         link1 = soup1.find_all("div",{"class":"c-location__inner"})
         for j in link1:
             k=(j.find("a")['href'])
-            r2 = requests.get(k,headers=headers)
+            r2 = session.get(k,headers=headers)
             soup2 = BeautifulSoup(r2.text,"lxml")
             link2 = soup2.find("address",{"class":"u-mb-20"})
             if "London" in list(link2.stripped_strings) or  "London," in list(link2.stripped_strings):

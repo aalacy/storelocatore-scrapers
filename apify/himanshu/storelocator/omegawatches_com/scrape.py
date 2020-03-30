@@ -1,11 +1,14 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -30,7 +33,7 @@ def fetch_data():
     base_url = "https://www.omegawatches.com/"
 
     location_url = "https://www.omegawatches.com/store/"
-    r = requests.get(location_url, headers=headers)
+    r = session.get(location_url, headers=headers)
 
     soup = BeautifulSoup(r.text, "lxml")
     data = soup.find("script", text=re.compile("var stores =")).text.split(
@@ -58,7 +61,7 @@ def fetch_data():
                 latitude = i['latitude'].replace("0.0000000000", "<MISSING>")
                 longitude = i['longitude'].replace("0.0000000000", "<MISSING>")
                 href = "https://www.omegawatches.com/" + str(i['websiteUrl'])
-                r1 = requests.get(href, headers=headers)
+                r1 = session.get(href, headers=headers)
                 soup1 = BeautifulSoup(r1.text, "lxml")
                 hours = soup1.find("ul", {"class": "pm-store-opening"})
                 if hours != [] and hours != None:
@@ -79,7 +82,7 @@ def fetch_data():
                 latitude = i['latitude'].replace("0.0000000000", "<MISSING>")
                 longitude = i['longitude'].replace("0.0000000000", "<MISSING>")
                 href = "https://www.omegawatches.com/" + str(i['websiteUrl'])
-                r2 = requests.get(href, headers=headers)
+                r2 = session.get(href, headers=headers)
                 soup2 = BeautifulSoup(r2.text, "lxml")
                 hours = soup2.find("ul", {"class": "pm-store-opening"})
                 if hours != [] and hours != None:

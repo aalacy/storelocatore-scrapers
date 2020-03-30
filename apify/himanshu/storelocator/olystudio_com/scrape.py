@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
     }
     base_url = "https://www.olystudio.com"
     data = "search%5Bstreet%5D=city+%26+state+or+zip+code&search%5Bradius%5D=100000&search%5Bmeasurement%5D=mi&search%5Blatitude%5D=&search%5Blongitude%5D=&search%5Btab%5D=0"
-    r = requests.post("https://www.olystudio.com/store-locator",headers=headers,data=data)
+    r = session.post("https://www.olystudio.com/store-locator",headers=headers,data=data)
     soup = BeautifulSoup(r.text,"lxml")
     # getting the data from script tag
     for script in soup.find_all("script"):

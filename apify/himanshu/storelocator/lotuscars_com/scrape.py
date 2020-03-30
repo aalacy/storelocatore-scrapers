@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 import json
 import re
 from bs4 import BeautifulSoup
 
+
+
+session = SgRequests()
 
 COMPANY_URL = "https://www.lotuscars.com"
 
@@ -54,7 +57,7 @@ def fetch_data():
     data = []
     page_urls = []
 
-    dealers = json.loads(requests.get(
+    dealers = json.loads(session.get(
         "https://www.lotuscars.com/app/wp-admin/admin-ajax.php?action=dealer_map_load").content)
 
     for dealer in dealers:

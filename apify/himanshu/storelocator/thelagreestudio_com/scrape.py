@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,12 +19,12 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.thelagreestudio.com"
-    r = requests.get(base_url+"/locations.html")
+    r = session.get(base_url+"/locations.html")
     soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
     main=soup.find('li',{"class":'menu-locations'}).find('ul',{"class":"dropdown-menu"}).find_all('a')
     for atag in main:
-        r1 = requests.get(atag['href'])
+        r1 = session.get(atag['href'])
         soup1=BeautifulSoup(r1.text,'lxml')
         main1=soup1.find('main',{"id":"main-content"}).find("div",{"class":"editor-content"}).find('div',{"class":"grid-desk-4"}).find_all('p')
         mn=list(soup1.find('main',{"id":"main-content"}).find("div",{"class":"editor-content"}).find('div',{"class":"grid-desk-4"}).stripped_strings)

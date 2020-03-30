@@ -1,13 +1,16 @@
 import csv
 import sys
 
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import pprint
 # pp = pprint.PrettyPrinter(indent=4)
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -44,12 +47,12 @@ def fetch_data():
     hours_of_operation = ""
   
     location_url = "https://www.towncaredental.com/locations/"
-    r = requests.get(location_url, headers=headers)
+    r = session.get(location_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     link = soup.find_all("p",{"class":"website"})
     for i in link:
         location_url1 = i.a['href']
-        r1 = requests.get(location_url1, headers=headers)
+        r1 = session.get(location_url1, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         json1 = json.loads(soup1.find("script",{"type":"application/ld+json"}).text)
         street_address = json1['address']['streetAddress']

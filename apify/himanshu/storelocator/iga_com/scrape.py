@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 # import html5lib
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -49,10 +52,10 @@ def fetch_data():
     page_no = 0
     isFinish = False
     while isFinish is not True:
-        # r = requests.get("https://www.iga.com/find-a-store?page=" + str(page_no) +
+        # r = session.get("https://www.iga.com/find-a-store?page=" + str(page_no) +
         #                  "&locationLat=" + str(lat) + "&locationLng=" + str(lng), headers=headers)
 
-        r = requests.get("https://www.iga.com/find-a-store?page=" + str(page_no) +
+        r = session.get("https://www.iga.com/find-a-store?page=" + str(page_no) +
                          "&locationLat=38.65818091399883&locationLng=-115.09908940607174", headers=headers);
         # r1 = "https://www.iga.com/find-a-store?page=" + str(page_no) +"&locationLat=38.65818091399883&locationLng=-115.09908940607174"
         # print(r1)

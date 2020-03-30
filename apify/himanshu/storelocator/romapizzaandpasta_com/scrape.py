@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +25,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
     base_url= "https://romapizzaandpasta.com/locations/"
-    r = requests.get(base_url,headers=headers)
+    r = session.get(base_url,headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -39,7 +42,7 @@ def fetch_data():
 
         for a1 in a[:-1]:
             if "https:" in a1['href']:
-                r = requests.get(a1['href'],headers=headers)
+                r = session.get(a1['href'],headers=headers)
                 soup1= BeautifulSoup(r.text,"lxml")
                 k = soup1.find_all("div",{"class":"col-lg-3"})
                 for i in k:
@@ -80,7 +83,7 @@ def fetch_data():
     arr=["https://www.opendining.net/menu/5bec37d9515ee9202e15a752#ordering-for-prompt","https://www.opendining.net/menu/5bcf1d1b505ee9035f2a106d"]
     for arr1 in arr:
         tem_var=[]
-        r = requests.get(arr1,headers=headers)
+        r = session.get(arr1,headers=headers)
         soup2= BeautifulSoup(r.text,"lxml")
         v2=soup2.find("div",{"class":"restaurant-info"})
 

@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import sgzip
 import json
 import unicodedata
+
+
+session = SgRequests()
 
 def hour_split(s, chunk_size):
     a = zip(*[s[i::chunk_size] for i in range(chunk_size)])
@@ -60,7 +63,7 @@ def fetch_data():
         # print(zip_code)
 
 
-        r = requests.get('https://www.superdry.com/index.php?option=com_store_collect&lng='+str(zip_code[1])+'&lat='+str(zip_code[0])+'&format=raw&task=nearest',headers = headers)
+        r = session.get('https://www.superdry.com/index.php?option=com_store_collect&lng='+str(zip_code[1])+'&lat='+str(zip_code[0])+'&format=raw&task=nearest',headers = headers)
 
         try:
             json_data = r.json()

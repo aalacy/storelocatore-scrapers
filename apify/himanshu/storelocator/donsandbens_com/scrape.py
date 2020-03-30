@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,7 +20,7 @@ def write_output(data):
 def fetch_data():
     base_url = "https://donsandbens.com"
 
-    r = requests.get(base_url)
+    r = session.get(base_url)
 
     soup = BeautifulSoup(r.text,"lxml")
 

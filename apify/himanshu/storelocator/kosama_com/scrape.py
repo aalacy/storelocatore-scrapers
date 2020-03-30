@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 # import json
@@ -8,6 +8,9 @@ import re
 
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -58,7 +61,7 @@ def fetch_data():
         'content-type': "application/json",
         'cache-control': "no-cache"}
 
-    r = requests.get(url, headers=headers)
+    r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text,'lxml')
     content = soup.find('div',class_='content').find('div',{'id':'accordion'})
     for loc in content.find_all('ul',class_='state'):
@@ -80,7 +83,7 @@ def fetch_data():
                     state = list_address[2].split(',')[-1].split()[0].strip()
                     zipp = list_address[2].split(',')[-1].split()[-1].strip()
                     phone = list_address[-1].strip()
-                coords = requests.get(page_url,headers = headers)
+                coords = session.get(page_url,headers = headers)
                 soup_coords = BeautifulSoup(coords.text,'lxml')
                 c1 = []
                 c2 = []

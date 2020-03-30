@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,11 +20,11 @@ def write_output(data):
 def fetch_data():
     base_url = "https://zipcityusa.com"
     return_main_object=[]
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup=BeautifulSoup(r.text,'lxml')
     main=soup.find('section',{"id":"presscore-custom-menu-one-2"}).find_all('a')
     for atag in main:
-        r1 = requests.get(atag['href'])
+        r1 = session.get(atag['href'])
         soup1=BeautifulSoup(r1.text,'lxml')
         madd=list(soup1.find('p',{'id':'fa-address'}).stripped_strings)
         address=madd[0].strip()

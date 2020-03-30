@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -52,7 +55,7 @@ def fetch_data():
 
         lat = coord[0]
         lng = coord[1]
-        r = requests.get(
+        r = session.get(
             'https://gyfleethqservices.com/api/Dealer/DealerSearch?dealerSearchParameters.milesRadius='+str(MAX_DISTANCE)+'&dealerSearchParameters.latitude='+str(lat)+'&dealerSearchParameters.longitude='+str(lng)+'&api_key=vdUHnhNUY95w3OiVgugndw7Z2VGwBkUgTaQuLozc35gj2alKoaKbk3yKWFm5Edjy8tTJSYXO94K+9UnjaJBUnw==',
             headers=headers,
         )

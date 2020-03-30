@@ -2,9 +2,12 @@ import csv
 from bs4 import BeautifulSoup
 import re
 import json
-import requests
+from sgrequests import SgRequests
 from sgrequests import SgRequests
 import phonenumbers
+
+
+session = SgRequests()
 
 session = SgRequests()
 def write_output(data):
@@ -24,7 +27,7 @@ def fetch_data():
     }
 
     base_url = "https://www.lesliespool.com"
-    r =  requests.get("https://www.lesliespool.com/directory/stores.htm", headers=headers)
+    r =  session.get("https://www.lesliespool.com/directory/stores.htm", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find("table").find_all("a"):
         
@@ -34,7 +37,7 @@ def fetch_data():
             if "https://www.lesliespool.com/san-antonio-texas/san-antonio-2/stores.htm" in page_url:
                 continue
 
-            r1 = requests.get(page_url)
+            r1 = session.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
             location_name = soup1.find("div",{"class":"name"}).text.strip()
             addr = list(soup1.find("div",{"class":"location"}).stripped_strings)

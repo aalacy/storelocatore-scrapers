@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import sgzip
 import json
 import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -41,7 +44,7 @@ def fetch_data():
         url = 'https://bylinebank.locatorsearch.com/GetItems.aspx'
        
         data = "address="+str(search.current_zip)+"&lat="+str(coords[0])+"&lng="+str(coords[1])+"&searchby=ATMSF%7C&SearchKey=&rnd=1569844320549"
-        pagereq = requests.post(url,data=data, headers=header)
+        pagereq = session.post(url,data=data, headers=header)
         soup = BeautifulSoup(pagereq.text, 'html.parser')
         add2 = soup.find_all("add2")
         address1 = soup.find_all("add1")
@@ -128,7 +131,7 @@ def fetch_data():
 
     # BRANCH LOCATIONS ##
     data = 'lat=41.828699&lng=-87.771381&searchby=FCS%7C&SearchKey=&rnd=1585207554632'
-    pagereq = requests.post("https://bylinebank.locatorsearch.com/GetItems.aspx", data=data, headers=header)
+    pagereq = session.post("https://bylinebank.locatorsearch.com/GetItems.aspx", data=data, headers=header)
     soup = BeautifulSoup(pagereq.text, 'html.parser')
     add2 = soup.find_all("add2")
     address1 = soup.find_all("add1")
@@ -195,7 +198,7 @@ def fetch_data():
 
     # OFFICE LOCATIONS
     data = 'lat=41.828699&lng=-87.771381&searchby=OFC%7C&SearchKey=&rnd=1585212256530'
-    pagereq = requests.post("https://bylinebank.locatorsearch.com/GetItems.aspx", data=data, headers=header)
+    pagereq = session.post("https://bylinebank.locatorsearch.com/GetItems.aspx", data=data, headers=header)
     soup = BeautifulSoup(pagereq.text, 'html.parser')
     add2 = soup.find_all("add2")
     address1 = soup.find_all("add1")

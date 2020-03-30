@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -9,6 +9,9 @@ from selenium.webdriver.support.wait import WebDriverWait
 import time
 import html
 import platform
+
+session = SgRequests()
+
 system = platform.system()
 # 816 Bayshore Drive
 
@@ -41,7 +44,7 @@ def get_driver():
 
 def fetch_data():
     # pass
-    r = requests.get("http://www.wagner-oil.com/store-locator/")
+    r = session.get("http://www.wagner-oil.com/store-locator/")
     soup = BeautifulSoup(r.text, "lxml")
     # print(soup.prettify())
     # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`')
@@ -83,7 +86,7 @@ def fetch_data():
         yield store
 
     # iframe_link = soup.find("iframe")["src"]
-    # r = requests.get(iframe_link)
+    # r = session.get(iframe_link)
     # soup = BeautifulSoup(r.text, "lxml")
     # geo_location = {}
     # for script in soup.find_all("script"):

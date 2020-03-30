@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     }
     addresses = []
     base_url = "http://samssoutherneatery.com"
-    r = requests.get(
+    r = session.get(
         "https://samssoutherneatery.com/locations-list", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
@@ -35,7 +38,7 @@ def fetch_data():
         if "/locations-list" not in page_url:
             # print(page_url)
 
-            r_loc = requests.get(page_url, headers=headers)
+            r_loc = session.get(page_url, headers=headers)
             soup_loc = BeautifulSoup(r_loc.text, 'lxml')
             locator_domain = base_url
             location_type = "<MISSING>"

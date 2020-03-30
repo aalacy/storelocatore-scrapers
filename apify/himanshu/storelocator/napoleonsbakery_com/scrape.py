@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     }
     base_url = locator_domain= 'http://napoleonsbakery.com/'
     page_url= "http://napoleonsbakery.com/locations.php"
-    r = requests.get(page_url,headers=headers)
+    r = session.get(page_url,headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
 
     for loc in soup.find('div',{'id':'location'}).find_all('div',{'id':'single'}):

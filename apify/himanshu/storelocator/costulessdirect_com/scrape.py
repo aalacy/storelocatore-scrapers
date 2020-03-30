@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
 
     base_url= "https://www.costulessdirect.com/resources/locations/"
     data ="page=1&rows=10000000&search=search&address=&radius=200"
-    r = requests.post(base_url,headers=headers,data=data)
+    r = session.post(base_url,headers=headers,data=data)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -34,7 +37,7 @@ def fetch_data():
     longitude=[]
     latitude=[]
     hours1=[]
-    r1 = requests.post(base_url,headers=headers)
+    r1 = session.post(base_url,headers=headers)
     soup2= BeautifulSoup(r.text,"lxml")
     script = soup2.find_all("script",{"type":"text/javascript"})
     for j in script:
@@ -53,7 +56,7 @@ def fetch_data():
             tem_var=[]
             name=(n.text.replace('\n',"").replace("\t","").strip())
             base_url1= n.a['href']
-            r = requests.get(base_url1,headers=headers)
+            r = session.get(base_url1,headers=headers)
             soup1= BeautifulSoup(r.text,"lxml")
             k1=soup1.find("div",{"class":"content_profile"})
 

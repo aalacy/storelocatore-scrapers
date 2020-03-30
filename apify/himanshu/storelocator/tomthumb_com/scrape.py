@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
+
+
+session = SgRequests()
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
@@ -47,7 +50,7 @@ def parser(location_soup,url):
     hours = hours + " " + location_soup.find("h2",{"class":"LocationInfo-hoursTitle"}).text.strip() + " " + " ".join(list(location_soup.find("table",{'class':"c-location-hours-details"}).stripped_strings))
     if location_soup.find("div",{'data-analytics-type':"nap"}):
         pharmacy_id = location_soup.find("div",{'data-analytics-type':"nap"})["data-pharmacy-id"]
-        hours_request = requests.get("https://local.tomthumb.com/pharmacydata/" + str(pharmacy_id).lower() + ".json",headers=headers)
+        hours_request = session.get("https://local.tomthumb.com/pharmacydata/" + str(pharmacy_id).lower() + ".json",headers=headers)
         hour_data = hours_request.json()["hours"]["days"]
         hours = hours + " Pharmacy Hours "
         for hour in hour_data:
@@ -76,33 +79,33 @@ def parser(location_soup,url):
 
 def fetch_data():
     base_url = "https://tomthumb.com"
-    r = requests.get("https://local.tomthumb.com/index.html",headers=headers)
+    r = session.get("https://local.tomthumb.com/index.html",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for states in soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
         if states["href"].count("/") == 2:
             # print("https://local.tomthumb.com/" + states["href"].replace("../",""))
-            location_request = requests.get("https://local.tomthumb.com/" + states["href"].replace("../",""))
+            location_request = session.get("https://local.tomthumb.com/" + states["href"].replace("../",""))
             location_soup = BeautifulSoup(location_request.text,"lxml")
             store_data = parser(location_soup,"https://local.tomthumb.com/" + states["href"].replace("../",""))
             yield store_data
         else:
-            state_request = requests.get("https://local.tomthumb.com/" + states["href"])
+            state_request = session.get("https://local.tomthumb.com/" + states["href"])
             state_soup = BeautifulSoup(state_request.text,"lxml")
             for city in state_soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
                 if city["href"].count("/") == 2:
                     # print("states" +"https://local.tomthumb.com/" + city["href"].replace("../",""))
-                    location_request = requests.get("https://local.tomthumb.com/" + city["href"].replace("../",""))
+                    location_request = session.get("https://local.tomthumb.com/" + city["href"].replace("../",""))
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                     store_data = parser(location_soup,"https://local.tomthumb.com/" + city["href"].replace("../",""))
                     yield store_data
                 else:
                     # print("https://local.tomthumb.com/" + city["href"].replace("../",""))
-                    city_request = requests.get("https://local.tomthumb.com/" + city["href"].replace("../",""))
+                    city_request = session.get("https://local.tomthumb.com/" + city["href"].replace("../",""))
                     city_soup = BeautifulSoup(city_request.text,"lxml")
                     for location in city_soup.find_all("a",{'class':"Teaser-nameLink"}):
                         # print("city" + "https://local.tomthumb.com/" + location["href"].replace("../",""))
-                        location_request = requests.get("https://local.tomthumb.com/" + location["href"].replace("../",""))
+                        location_request = session.get("https://local.tomthumb.com/" + location["href"].replace("../",""))
                         location_soup = BeautifulSoup(location_request.text,"lxml")
                         store_data = parser(location_soup,"https://local.tomthumb.com/" + location["href"].replace("../",""))
                         yield store_data

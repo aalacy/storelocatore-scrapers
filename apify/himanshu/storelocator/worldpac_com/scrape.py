@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ import platform
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import time
+
+session = SgRequests()
+
 system = platform.system()
 
 def write_output(data):
@@ -35,7 +38,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "http://www.worldpac.com"
-    r = requests.get("http://www.worldpac.com/js-css/locations.js?v=20150409.111800",headers=headers)
+    r = session.get("http://www.worldpac.com/js-css/locations.js?v=20150409.111800",headers=headers)
     return_main_object = []
     location_list = r.text.split("locations.push(")
     for i in range(2,len(location_list)-1):

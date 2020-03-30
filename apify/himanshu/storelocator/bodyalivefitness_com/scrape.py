@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,13 +23,13 @@ def fetch_data():
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
     }
     base_url = "https://bodyalivefitness.com"
-    r = requests.get(base_url,headers=header)
+    r = session.get(base_url,headers=header)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     menu = soup.find("ul",{"id":"top-menu"}).find("ul",{"class":"sub-menu"})
     for location in menu.find_all("li",{"id":re.compile("menu-item-")}):
         link = location.find("a")["href"]
-        location_request = requests.get(link,headers=header)
+        location_request = session.get(link,headers=header)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         location_details = list(location_soup.find("div",{"class":"et_pb_text_inner"}).stripped_strings)
         store = []

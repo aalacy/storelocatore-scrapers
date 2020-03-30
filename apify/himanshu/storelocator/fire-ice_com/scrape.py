@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -18,7 +21,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://fire-ice.com"
-    req = requests.get(base_url, headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"})
+    req = session.get(base_url, headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"})
     soup = BeautifulSoup(req.text, "lxml")
     locationMenu = soup.find("li", {"id": "menu-item-5881"})
     locations = locationMenu.find("ul").findAll("li")
@@ -29,7 +32,7 @@ def fetch_data():
     for location in locations:
         row = []
         link_location = location.find("a")["href"]
-        req2  = requests.get(link_location, headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"})
+        req2  = session.get(link_location, headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"})
         soup2 = BeautifulSoup(req2.text, "lxml")
         city = soup2.title.text.split("-")[0]
         phoneNo = soup2.findAll("a", href=re.compile('tel'))[0]["href"].strip().split("tel:")[1]
