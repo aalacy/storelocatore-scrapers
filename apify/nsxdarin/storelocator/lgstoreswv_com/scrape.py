@@ -1,9 +1,9 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import json
 
-session = requests.Session()
+session = SgRequests()
 headers = {'authority': 'lgstoreswv.com',
            'method': 'POST',
            'scheme': 'https',

@@ -1,6 +1,6 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import json
 import sgzip
 
@@ -9,7 +9,7 @@ search.initialize()
 
 requests.packages.urllib3.disable_warnings()
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 

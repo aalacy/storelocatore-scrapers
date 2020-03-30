@@ -1,10 +1,10 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import json
 import ast
 
-session = requests.Session()
+session = SgRequests()
 headers = {'Access-Token': '$/+8KDDU334$4a<C2M(6/<bhGyneX.e8i:6?&[57#n3h8=}z?*5Kc4W62;$BMLS#?P2Q7_PD~zxLK4x4_nPa8^HQ5H@4yMBLWev7y9iw754/k,biG6VxT33;tvg=}bcV',
            'Authorization': 'Basic aGVybWVzOndwSEt3ZldM',
            'Content-Type': 'application/json',

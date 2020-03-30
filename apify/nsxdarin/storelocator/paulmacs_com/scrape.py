@@ -1,8 +1,8 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
            'cookie': '_ga=GA1.2.106458393.1575045458; incap_ses_678_2192629=3OHGJri4GR6CiCOYd9xoCSM1Bl4AAAAAbVS29GeDUW0oCtvQXTLzHQ==; visid_incap_2192629=AswTebp/SjiRWaJU7I5hj1dJ4V0AAAAAQkIPAAAAAACAjSuRAUPcCqa1gZtjwlA1ZikzPTMxfN3/; _gid=GA1.2.246621817.1577465130; _gat_UA-12821136-3=1'
            }

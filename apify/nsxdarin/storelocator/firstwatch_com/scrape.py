@@ -1,6 +1,6 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import json
 import time
 import sgzip 
@@ -9,7 +9,7 @@ import os
 search = sgzip.ClosestNSearch()
 search.initialize()
 
-session = requests.Session()
+session = SgRequests()
 proxy_password = os.environ["PROXY_PASSWORD"]
 proxy_url = "http://auto:{}@proxy.apify.com:8000/".format(proxy_password)
 proxies = {

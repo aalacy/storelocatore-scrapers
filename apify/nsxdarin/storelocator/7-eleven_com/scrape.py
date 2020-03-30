@@ -2,7 +2,10 @@ import csv
 import urllib2
 from sgrequests import SgRequests
 import collections
-import requests
+from sgrequests import SgRequests
+
+
+session = SgRequests()
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -16,7 +19,7 @@ def write_output(data):
             writer.writerow(row)
 
 def broken_page(loc):
-    response = requests.get(loc, headers=headers)
+    response = session.get(loc, headers=headers)
     return 'something went wrong' in response.content.lower()
 
 def fetch_store_urls():

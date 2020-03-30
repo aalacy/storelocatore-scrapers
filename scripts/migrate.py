@@ -77,4 +77,4 @@ def run(root):
     for dir in dirs:
         process('{}/{}'.format(root, dir))
 
-run('/Users/tenzing/code/crawl-service/apify/ggrahambaker/storelocator')
+run('/Users/tenzing/code/crawl-service/apify/nsxdarin/storelocator')

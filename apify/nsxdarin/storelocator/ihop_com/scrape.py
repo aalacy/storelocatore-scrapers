@@ -1,9 +1,9 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import json
 
-session = requests.Session()
+session = SgRequests()
 headers = {'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
            'authority': 'www.ihop.com',
            'method': 'POST',
