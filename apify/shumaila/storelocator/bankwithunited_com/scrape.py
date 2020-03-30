@@ -83,13 +83,22 @@ def fetch_data():
        
         link = 'https://www.bankwithunited.com/contact-us?geolocation_geocoder_google_places_api='+pcode+'&geolocation_geocoder_google_places_api_state=0&field_geolocation_proximity-lat=&field_geolocation_proximity-lng=&field_geolocation_proximity=25&name=Apply#location'        
         #print(pcode, link)
-        r = session.get(link, headers=headers, verify=False)  
+        r = session.get(link, headers=headers, verify=False)
+        
         soup =BeautifulSoup(r.text, "html.parser")
         divlist = soup.findAll('div',{'class':'adrs'})
+
+        #print(len(divlist))
         hours = "<MISSING>"
-        for div in divlist:
-            addr = div.find('div',{'class':'views-field-address'})
-            if addr.text.find(pcode) > -1:
+        for div in divlist:            
+            try:
+               addr = div.find('div',{'class':'views-field-address'}).text
+            except:
+                try:
+                    addr = div.find('span',{'class':'postal-code'}).text
+                except:
+                    addr = 'None'
+            if addr.find(pcode) > -1 and addr != 'None':
                 try:
                     hours = div.find('div',{'class':'views-field views-field-field-location-service-hour'}).text
                     if hours.find("Drive") > -1:
