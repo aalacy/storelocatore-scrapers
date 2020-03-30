@@ -33,6 +33,7 @@ def fetch_data():
         # link = "https://www.sephora.com/happening/stores/silverdale-jcpenney-at-kitsap-mall"
         #print(link)
         #link ='https://www.sephora.com/happening/stores/farmington-jcpenney-at-westfarms-mall'
+        #link = 'https://www.sephora.com/happening/stores/woodbury'
         page = requests.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
         detail = soup.find('script', {'type': 'application/ld+json'})
@@ -41,15 +42,18 @@ def fetch_data():
         if detail == "None":
             detail = str(soup)
         start = detail.find("streetAddress")
-        start = detail.find(":", start) + 2
-        end = detail.find(",", start) - 1
+        start = detail.find(":", start)
+        start = detail.find('"', start) + 1
+        end = detail.find('"', start)
+        
         street = detail[start:end]
         start = street.find('\\')
         if start != -1:
             street = street.replace("\\", "!")
             street = street.replace("!n"," ")
         street = street.replace("\n", " ")
-
+        street = street.replace("!r", "")
+        #print(street)
         start = detail.find("postalCode")
         start = detail.find(":", start) + 2
         end = detail.find(",", start) - 1
