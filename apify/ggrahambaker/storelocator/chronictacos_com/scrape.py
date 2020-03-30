@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +31,7 @@ def fetch_data():
     locator_domain = 'https://www.chronictacos.com/'
     ext_arr = ['locations', 'canada-locations']
 
-    page = requests.get(locator_domain + ext_arr[0])
+    page = session.get(locator_domain + ext_arr[0])
     assert page.status_code == 200
 
     soup = BeautifulSoup(page.content, 'html.parser')
@@ -185,7 +188,7 @@ def fetch_data():
             location_type = '<MISSING>'
             lat = '<MISSING>'
             longit = '<MISSING>'
-            page = requests.get('http:' + div.find('a', {'class': 'btn'})['href'])
+            page = session.get('http:' + div.find('a', {'class': 'btn'})['href'])
             assert page.status_code == 200
             soup = BeautifulSoup(page.content, 'html.parser')
 
@@ -220,7 +223,7 @@ def fetch_data():
 
 
     # canada now!
-    page = requests.get(locator_domain + ext_arr[1])
+    page = session.get(locator_domain + ext_arr[1])
     assert page.status_code == 200
 
     soup = BeautifulSoup(page.content, 'html.parser')
@@ -277,7 +280,7 @@ def fetch_data():
             location_type = '<MISSING>'
             lat = '<MISSING>'
             longit = '<MISSING>'
-            page = requests.get('http:' + div.find('a', {'class': 'btn'})['href'])
+            page = session.get('http:' + div.find('a', {'class': 'btn'})['href'])
             assert page.status_code == 200
             soup = BeautifulSoup(page.content, 'html.parser')
 

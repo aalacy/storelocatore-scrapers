@@ -1,8 +1,11 @@
 import csv
 import os
-import requests
+from sgrequests import SgRequests
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     ext = 'locations.json'
 
     to_scrape = locator_domain + ext
-    page = requests.get(to_scrape)
+    page = session.get(to_scrape)
     assert page.status_code == 200
 
     store_data = json.loads(page.content)['serviceAreas']['serviceArea']

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
 
 
     url = 'https://code3er.com/wp-admin/admin-ajax.php?action=store_search&lat=33.179969&lng=-96.69589400000001&max_results=25&search_radius=500&autoload=1'
-    page = requests.get(url)
+    page = session.get(url)
     assert page.status_code == 200
     loc_json = json.loads(page.content)
 

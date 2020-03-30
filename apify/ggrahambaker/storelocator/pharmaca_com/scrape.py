@@ -1,6 +1,9 @@
 import csv
-import requests
+from sgrequests import SgRequests
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +26,7 @@ def hours_maker(obj):
 def fetch_data():
     locator_domain_json = 'https://www.pharmaca.com/amlocator/index/ajax/'
 
-    an_obj = requests.get(locator_domain_json)
+    an_obj = session.get(locator_domain_json)
     # driver = get_driver()
     # driver.get(locator_domain + ext)
     json_ob = json.loads(an_obj.content)

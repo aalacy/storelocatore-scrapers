@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://www.pepboys.com/'
     to_scrape = 'https://stores.pepboys.com/'
-    page = requests.get(to_scrape)
+    page = session.get(to_scrape)
     assert page.status_code == 200
     soup = BeautifulSoup(page.content, 'html.parser')
     main = soup.find('div', {'class': 'c-directory-list'})
@@ -33,7 +36,7 @@ def fetch_data():
             state_list.append(link)
 
     for state in state_list:
-        page = requests.get(state)
+        page = session.get(state)
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, 'html.parser')
         main = soup.find('div', {'class': 'c-directory-list'})
@@ -48,7 +51,7 @@ def fetch_data():
 
 
     for city in city_list:
-        page = requests.get(city)
+        page = session.get(city)
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, 'html.parser')
         
@@ -63,7 +66,7 @@ def fetch_data():
     for i, link in enumerate(link_list):
         if '..' in link:
             link = link.replace('../', to_scrape)
-        page = requests.get(link)
+        page = session.get(link)
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, 'html.parser')
         lat = soup.find('meta', itemprop="latitude")['content']

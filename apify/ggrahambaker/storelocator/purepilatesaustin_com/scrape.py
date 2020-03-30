@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -18,7 +21,7 @@ def fetch_data():
     ext = 'locations'
 
     to_scrape = locator_domain + ext
-    page = requests.get(to_scrape)
+    page = session.get(to_scrape)
     assert page.status_code == 200
 
 

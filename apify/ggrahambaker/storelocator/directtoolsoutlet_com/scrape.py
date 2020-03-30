@@ -1,6 +1,9 @@
 import csv
-import requests
+from sgrequests import SgRequests
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
         url = locator_domain + ext + str(i) + ext2
      
 
-        page = requests.get(url)
+        page = session.get(url)
         assert page.status_code == 200
 
         if '</html>' in str(page.content):

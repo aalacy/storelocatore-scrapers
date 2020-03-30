@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 def fetch_data():
     url = 'https://amnesiashop.com/apps/api/v1/stores?&_=1575844123335'
     locator_domain = 'https://amnesiashop.com'
-    page = requests.get(url)
+    page = session.get(url)
     assert page.status_code == 200
 
     stores = json.loads(page.content)['stores']

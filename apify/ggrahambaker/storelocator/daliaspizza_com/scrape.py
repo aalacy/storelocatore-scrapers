@@ -1,6 +1,9 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+
+
+session = SgRequests()
 
 def addy_ext(addy):
     address = addy.split(',')
@@ -24,7 +27,7 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://www.daliaspizza.com/'
 
-    page = requests.get(locator_domain)
+    page = session.get(locator_domain)
     soup = BeautifulSoup(page.content, 'html.parser')
     main = soup.find('div', {'id': 'seed-csp4-description'})
 

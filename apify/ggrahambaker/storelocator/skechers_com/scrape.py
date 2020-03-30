@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,10 +22,10 @@ def fetch_data():
 
     url_arr = [us_url, can_url]
     locator_domain = 'https://www.skechers.com/'
-    xml_cont = requests.get(can_url)
+    xml_cont = session.get(can_url)
     all_store_data = []
     for url in url_arr:
-        xml_cont = requests.get(url)
+        xml_cont = session.get(url)
         xml_tree = BeautifulSoup(xml_cont.content, features='lxml')
 
         locs = xml_tree.find_all('poi')

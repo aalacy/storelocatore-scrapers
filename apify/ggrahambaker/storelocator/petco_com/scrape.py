@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -18,7 +21,7 @@ def fetch_data():
     locator_domain = 'https://www.petco.com/'
     url = 'https://stores.petco.com/'
 
-    page = requests.get(url)
+    page = session.get(url)
     assert page.status_code == 200
     soup = BeautifulSoup(page.content, 'html.parser')
 
@@ -37,7 +40,7 @@ def fetch_data():
 
     for link in state_list:
         
-        page = requests.get(link)
+        page = session.get(link)
         soup = BeautifulSoup(page.content, 'html.parser')
         main = soup.find('div', {'class':'map-list'})
         cities = main.find_all('a', {'class', 'gaq-link'})
@@ -49,7 +52,7 @@ def fetch_data():
 
     link_list = []
     for link in city_list:
-        page = requests.get(link)
+        page = session.get(link)
         soup = BeautifulSoup(page.content, 'html.parser')
         locs = soup.find_all('div', {'class':'map-list-item'})
         for loc in locs:
@@ -59,7 +62,7 @@ def fetch_data():
 
     all_store_data = []
     for i, link in enumerate(link_list):
-        page = requests.get(link)
+        page = session.get(link)
         soup = BeautifulSoup(page.content, 'html.parser')
         loc_jsons = soup.find_all('script')
         for loc in loc_jsons:

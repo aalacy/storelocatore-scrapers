@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 import xml.etree.ElementTree as ET
 import usaddress
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://yumyumdonuts.com/'
     dest = 'https://yumyumdonuts.com/maps_xml'
-    page = requests.get(dest)
+    page = session.get(dest)
     assert page.status_code == 200
 
     tree = ET.fromstring(page.content)

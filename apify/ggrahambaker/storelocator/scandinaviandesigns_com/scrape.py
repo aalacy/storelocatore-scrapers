@@ -1,6 +1,9 @@
 import csv
-import requests
+from sgrequests import SgRequests
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -15,7 +18,7 @@ def write_output(data):
 def fetch_data():
     url = 'https://cdn.shopify.com/s/files/1/1921/1117/t/324/assets/sca.storelocatordata.json'
     locator_domain = 'https://scandinaviandesigns.com/'
-    page = requests.get(url)
+    page = session.get(url)
     assert page.status_code == 200
     
     locs = json.loads(page.content)

@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +31,7 @@ def addy_extractor(src):
 def fetch_data():
     locator_domain = 'https://catchairparty.com/'
     ext = 'locations/'
-    page = requests.get(locator_domain + ext)
+    page = session.get(locator_domain + ext)
     assert page.status_code == 200
 
     soup = BeautifulSoup(page.content, 'html.parser')
@@ -41,7 +44,7 @@ def fetch_data():
 
         link = div.find('a')['href']
 
-        sub_page = requests.get(link)
+        sub_page = session.get(link)
         assert sub_page.status_code == 200
 
         new_soup = BeautifulSoup(sub_page.content, 'html.parser')

@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
 
 
     to_scrape = locator_domain
-    page = requests.get(to_scrape)
+    page = session.get(to_scrape)
     soup = BeautifulSoup(page.content, 'html.parser')
     div = soup.find('div', {"id": "pl-w5cfeac7473594"})
     panel = div.find_all('div', {'class': 'panel-grid-cell'})

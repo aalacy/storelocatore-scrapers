@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,7 +34,7 @@ def fetch_data():
     locator_domain = 'https://costlessfoods.com/'
     ext = 'locations/'
 
-    page = requests.get(locator_domain + ext)
+    page = session.get(locator_domain + ext)
     assert page.status_code == 200
 
     soup = BeautifulSoup(page.content, 'html.parser')

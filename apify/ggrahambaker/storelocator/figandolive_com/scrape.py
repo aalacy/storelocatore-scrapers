@@ -2,8 +2,11 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+
+
+session = SgRequests()
 
 def get_driver():
     options = Options()
@@ -48,7 +51,7 @@ def fetch_data():
         phone_number = driver.find_element_by_xpath('//a[@data-bb-track-category="Phone Number"]').get_attribute(
             'href').replace('tel:', '')
         address = driver.find_element_by_css_selector('div.gmaps').get_attribute('data-gmaps-address').split(',')
-        page = requests.get(link)
+        page = session.get(link)
         assert page.status_code == 200
 
         soup = BeautifulSoup(page.content, 'html.parser')

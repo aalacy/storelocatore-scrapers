@@ -3,9 +3,12 @@ import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
-import requests
+from sgrequests import SgRequests
 import json
 
+
+
+session = SgRequests()
 
 def get_driver():
     options = Options()
@@ -74,7 +77,7 @@ def fetch_data():
         print(str(i) + '/' + str(len(loc_list)))
         print(link)   
         
-        page = requests.get(link)
+        page = session.get(link)
         assert page.status_code == 200
         soup = BeautifulSoup(page.content, 'html.parser')
         lat = soup.find('meta', itemprop="latitude")['content']

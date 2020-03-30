@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def fetch_data():
     init_search_url = 'near_lat=47.600392&near_lon=-122.3353602&threshold=4000&services__in=&within_business=true&limit=2000'
     base_url = 'https://savealot.com/grocery-stores/locationfinder/modules/multilocation/?'
     print(base_url + init_search_url)
-    page = requests.get(base_url + init_search_url)
+    page = session.get(base_url + init_search_url)
     loc_json = json.loads(page.content)
     rest_url = loc_json['meta']['next']
     
@@ -65,7 +68,7 @@ def fetch_data():
 
         if rest_url != None:
             rest_url_temp = rest_url.split('?')[1]
-            page = requests.get(base_url + rest_url_temp)
+            page = session.get(base_url + rest_url_temp)
 
             loc_json = json.loads(page.content)
         else:

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -35,7 +38,7 @@ def fetch_data():
     ext2 = 'salonlocator/default.asp?state=all&city=CORPUS CHRISTI'
 
     to_scrape1 = locator_domain + ext
-    page1 = requests.get(to_scrape1)
+    page1 = session.get(to_scrape1)
     assert page1.status_code == 200
 
     soup = BeautifulSoup(page1.content, 'html.parser')
@@ -64,7 +67,7 @@ def fetch_data():
 
 
     to_scrape2 = locator_domain + ext2
-    page2 = requests.get(to_scrape2)
+    page2 = session.get(to_scrape2)
     assert page2.status_code == 200
 
     soup = BeautifulSoup(page2.content, 'html.parser')

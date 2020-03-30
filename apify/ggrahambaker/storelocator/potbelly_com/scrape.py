@@ -1,6 +1,9 @@
 import csv
-import requests
+from sgrequests import SgRequests
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def fetch_data():
     locator_domain = 'https://www.potbelly.com/'
     
     to_scrape = 'https://api-potbelly-production.fuzzstaging.com/proxy/all-locations'
-    page = requests.get(to_scrape)
+    page = session.get(to_scrape)
 
     locs = json.loads(page.content)
     all_store_data = []

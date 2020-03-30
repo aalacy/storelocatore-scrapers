@@ -2,9 +2,12 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import requests
+from sgrequests import SgRequests
 import json
 import time
+
+
+session = SgRequests()
 
 def get_driver():
     options = Options()
@@ -46,7 +49,7 @@ def fetch_data():
     api_base = 'https://locations.in-n-out.com/api/finder/get/'
     all_store_data = []
     for store_number in store_numbers:
-        response = requests.get(api_base + store_number).content
+        response = session.get(api_base + store_number).content
         cont = json.loads(response)
         
         store_number = cont['StoreNumber']
