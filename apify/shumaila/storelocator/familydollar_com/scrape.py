@@ -94,6 +94,22 @@ def fetch_data():
                 pass
             if len(hours) < 3:
                 hours = "<MISSING>"
+            if len(phone) < 3:
+                phone = "<MISSING>"
+            if len(street) < 3:
+                street = "<MISSING>"
+            if len(city) < 3:
+                city = "<MISSING>"
+            if len(state) < 2:
+                state = "<MISSING>"
+            if len(pcode) < 3:
+                pcode = "<MISSING>"
+            if len(store) < 3:
+                store = "<MISSING>"
+            if len(lat) < 3:
+                lat = "<MISSING>"
+            if len(longt) < 3:
+                longt = "<MISSING>"
             
             data.append(['https://www.familydollar.com/',url,title,street,city,state,pcode,'US',store,phone,"<MISSING>",lat,longt,hours])
             #print(p,data[p])
