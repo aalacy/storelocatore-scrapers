@@ -1,7 +1,7 @@
 import requests
 import sgzip
 from Scraper import Scrape
-
+import json
 
 URL = "https://pharmacy.kmart.com"
 
@@ -25,6 +25,7 @@ class Scraper(Scrape):
         hours = []
         countries = []
         stores = []
+        page_urls = []
         seen = []
 
         cookies = {
@@ -120,8 +121,8 @@ class Scraper(Scrape):
                 phone = store["storePhoneNumber"]
 
                 # hour
-                hour = store["pharmacyHours"]
-
+                hour_raw = store["pharmacyHours"].replace('<li>', ' ').replace('</li>', ' ')
+                hour = ' '.join(hour_raw.split())
                 # Store data
                 locations_ids.append(location_id)
                 locations_titles.append(location_title)
@@ -134,6 +135,8 @@ class Scraper(Scrape):
                 phone_numbers.append(phone)
                 cities.append(city)
                 countries.append(country)
+                page_urls.append('<MISSING>')
+
                 seen.append(store["unitNumber"])
 
         for (
@@ -148,6 +151,7 @@ class Scraper(Scrape):
             hour,
             location_id,
             country,
+            page_url
         ) in zip(
             locations_titles,
             street_addresses,
@@ -160,6 +164,7 @@ class Scraper(Scrape):
             hours,
             locations_ids,
             countries,
+            page_urls
         ):
             self.data.append(
                 [
@@ -176,6 +181,7 @@ class Scraper(Scrape):
                     latitude,
                     longitude,
                     hour,
+                    page_url
                 ]
             )
 

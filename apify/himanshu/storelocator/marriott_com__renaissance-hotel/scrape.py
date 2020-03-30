@@ -1,10 +1,9 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
-import time 
+session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,79 +14,63 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-def request_wrapper(url,method,headers,data=None):
-   request_counter = 0
-   if method == "get":
-       while True:
-           try:
-               r = requests.get(url,headers=headers)
-               return r
-               break
-           except:
-               time.sleep(2)
-               request_counter = request_counter + 1
-               if request_counter > 10:
-                   return None
-                   break
-   elif method == "post":
-       while True:
-           try:
-               if data:
-                   r = requests.post(url,headers=headers,data=data)
-               else:
-                   r = requests.post(url,headers=headers)
-               return r
-               break
-           except:
-               time.sleep(2)
-               request_counter = request_counter + 1
-               if request_counter > 10:
-                   return None
-                   break
-   else:
-       return None
 def fetch_data():
     address = []
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
     base_url = "https://renaissance-hotels.marriott.com"
     location_url = "https://renaissance-hotels.marriott.com/locations-list-view"
-    r = request_wrapper(location_url,"get",headers=headers)
+    r = session.get(location_url,headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    data = soup.find_all("script",{"type":"text/javascript"})[7]
-    k = (data.text.split('renaissance":{"locations":')[1].split('},"js":{"tokens"')[0])
-    json_data = json.loads(k)
-    for i in json_data:
-        mp = (i['url'])
-        r1 = request_wrapper(mp,"get",headers=headers)
-        soup1 = BeautifulSoup(r1.text,"lxml")
-        data = soup1.find(lambda tag : (tag.name == "script") and "addressLocality" in tag.text).text.replace("\r\n",'')
-        fdata  = (json.loads(re.sub(r'\s+'," ",data)))
-        for h in fdata['contactPoint']:
-            if 'telephone' in h:
-                phone = (h['telephone'])
-                zipp = fdata['address']['postalCode'].replace("OK ","").replace("NY ","")
-                store = []
-                store.append(base_url if base_url else "<MISSING>")
-                store.append(fdata['name'] if fdata['name'] else "<MISSING>") 
-                store.append(fdata['address']['streetAddress'] if fdata['address']['streetAddress'] else "<MISSING>")
-                store.append(fdata['address']['addressLocality'] if fdata['address']['addressLocality'] else "<MISSING>")
-                store.append(fdata['address']['addressRegion'] if fdata['address']['addressRegion'] else "<MISSING>")
-                store.append( zipp if zipp else "<MISSING>")
-                store.append(fdata['address']['addressCountry'] if fdata['address']['addressCountry'] else "<MISSING>")
-                store.append("<MISSING>") 
-                store.append(phone if phone else "<MISSING>")
-                store.append(fdata['branchOf']['name'] if fdata['branchOf']['name'] else "<MISSING>")
-                store.append(fdata['geo']['latitude'] if fdata['geo']['latitude'] else "<MISSING>")
-                store.append(fdata['geo']['longitude'] if fdata['geo']['longitude'] else "<MISSING>")
-                store.append("<MISSING>")
-                store.append(fdata['url'] if fdata['url'] else "<MISSING>")
-                store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                if store[2] in address :
-                    continue
-                address.append(store[2])
-                if fdata['address']['addressCountry'] == 'United States' or fdata['address']['addressCountry'] == 'USA' or fdata['address']['addressCountry'] =='Canada' or fdata['address']['addressCountry'] =='' or fdata['address']['addressCountry'] =='United States Virgin Islands':
-                    yield store 
+    data = json.loads(soup.find(lambda tag: (tag.name == "script") and 'renaissance":{"locations":' in tag.text).text.split('(Drupal.settings,')[1].split(");")[0])['renaissance']['locations']
+    for link in data:
+        page_url = link['url']
+        
+        r1 = session.get(page_url, headers=headers)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        location = json.loads(re.sub(r'\s+'," ",soup1.find(lambda tag:(tag.name == "script") and "addressLocality" in tag.text).text))
+        location_name = location['name']
+        street_address = location['address']['streetAddress'].strip()
+        city = location['address']['addressLocality'].strip()
+        state = location['address']['addressRegion'].strip()
+        zipp = location['address']['postalCode'].strip()
+        if page_url == "https://renaissance-hotels.marriott.com/new-york-flushing-hotel" or page_url == "https://renaissance-hotels.marriott.com/renaissance-new-york-chelsea-hotel" or page_url == "https://renaissance-hotels.marriott.com/renaissance-newport-beach-hotel" or page_url == "https://renaissance-hotels.marriott.com/renaissance-reno-downtown-hotel" or page_url == "https://renaissance-hotels.marriott.com/renaissance-toledo-downtown-hotel":
+            country_code = "US"
+        country_code = location['address']['addressCountry'].replace("United States","US").replace("Canada","CA").replace("USA","US")
+        # if country_code == "CA":
+        #     state = state
+        #     zipp = zipp
+        if country_code =='US' and len(zipp.strip().split(" ")) == 2:
+            state = zipp.split(" ")[0]
+            zipp = zipp.split(" ")[1].strip()
+        
+        
 
+        if country_code not in ['US','CA']:
+            continue
+        store_number = link['value']
+        phone = location['contactPoint'][0]['telephone']
+        location_type = location['@type']
+        latitude = location['geo']['latitude']
+        longitude = location['geo']['longitude']
+        
+        store = []
+        store.append(base_url)
+        store.append(location_name if location_name else '<MISSING>')
+        store.append(street_address if street_address else '<MISSING>')
+        store.append(city if city else '<MISSING>')
+        store.append(state if state else '<MISSING>')
+        store.append(zipp if zipp else '<MISSING>')
+        store.append(country_code if country_code else '<MISSING>')
+        store.append(store_number if store_number else '<MISSING>')
+        store.append(phone if phone else '<MISSING>')
+        store.append(location_type if location_type else '<MISSING>')
+        store.append(latitude if latitude else '<MISSING>')
+        store.append(longitude if longitude else '<MISSING>')
+        store.append('<MISSING>')
+        store.append(page_url if page_url else '<MISSING>')
+        # print("data=====", str(store))
+        yield store
+    
 def scrape():
     data = fetch_data()
     write_output(data)

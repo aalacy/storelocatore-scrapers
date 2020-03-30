@@ -7,7 +7,7 @@ import time
 from urllib3.exceptions import InsecureRequestWarning
 import unicodedata
 
-requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
+requests.packages.urllib3.disable_warnings()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:

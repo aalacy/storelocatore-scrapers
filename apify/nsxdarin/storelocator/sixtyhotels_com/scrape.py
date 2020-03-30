@@ -11,40 +11,39 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://www.sixtyhotels.com/'
+    url = 'https://www.sixtyhotels.com/api/slides'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if '<li id="menu-item-' in line and 'Explore More</span><span>' in line:
-            hotel = line.split('href="')[1].split('"')[0]
-            r2 = session.get(hotel, headers=headers)
-            website = 'sixtyhotels.com'
-            hours = '<MISSING>'
-            store = '<MISSING>'
-            country = 'US'
-            typ = 'Hotel'
-            name = '<MISSING>'
-            add = '<MISSING>'
-            city = '<MISSING>'
-            state = '<MISSING>'
-            zc = '<MISSING>'
-            phone = '<MISSING>'
-            for line2 in r2.iter_lines():
-                if '<a class="hotelinfo-phone" href="tel:+' in line2:
-                    phone = line2.split('<a class="hotelinfo-phone" href="tel:+')[1].split('"')[0].replace('.','-')
-                if '<title>' in line2 and '</title>' in line2:
-                    name = line2.split('<title>')[1].split(' |')[0]
-                if '<a class="hotelinfo-address"' in line2:
-                    add = line2.split('<a class="hotelinfo-address"')[1].split('">')[1].split(',')[0]
-                    state = line2.split('<a class="hotelinfo-address"')[1].split('">')[1].split(',')[1].split('<')[0]
-                if 'jmappingAPI_map.setCenter({ lat: ' in line2:
-                    lat = line2.split('jmappingAPI_map.setCenter({ lat: ')[1].split(',')[0]
-                    lng = line2.split('lng: ')[1].split('}')[0].strip()
-            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if '"fieldgroup":"fieldgroup1","fieldgroup_label":null,"fieldgroupsub":null,"areaid":2,"parentid":2,"title":null,"active":true,"h1":"' in line:
+            items = line.split('"fieldgroup":"fieldgroup1","fieldgroup_label":null,"fieldgroupsub":null,"areaid":2,"parentid":2,"title":null,"active":true,"h1":"')
+            for item in items:
+                if '{"code":"GET_SUCCESS",' not in item:
+                    name = item.split('"')[0]
+                    loc = '<MISSING>'
+                    add = item.split('"h2":"')[1].split('"')[0]
+                    csz = item.split('"h3":"')[1].split('"')[0]
+                    zc = csz.rsplit(' ',1)[1].strip()
+                    if 'new york' in csz:
+                        city = 'New York'
+                        state = 'NY'
+                    if 'beverly' in csz:
+                        city = 'Beverly Hills'
+                        state = 'CA'
+                    phone = item.split('"phone":"')[1].split('"')[0]
+                    website = 'sixtyhotels.com'
+                    hours = '<MISSING>'
+                    store = '<MISSING>'
+                    country = 'US'
+                    typ = 'Hotel'
+                    phone = '<MISSING>'
+                    lat = item.split('!3d')[1].split('!')[0]
+                    lng = item.split('!4d')[1].split('"')[0]
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()

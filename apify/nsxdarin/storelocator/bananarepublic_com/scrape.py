@@ -34,13 +34,13 @@ def fetch_data():
             if '<a href="/stores/' in line2:
                 cities.append('https://bananarepublic.gap.com' + line2.split('href="')[1].split('"')[0])
         for city in cities:
-            print('Pulling City %s...' % city)
+            #print('Pulling City %s...' % city)
             r3 = session.get(city, headers=headers)
             for line3 in r3.iter_lines():
                 if 'View Store Details</a>' in line3:
                     locs.append('https://bananarepublic.gap.com' + line3.split('href="')[1].split('"')[0])
             for loc in locs:
-                print('Pulling Location %s...' % loc)
+                #print('Pulling Location %s...' % loc)
                 website = 'bananarepublic.com'
                 typ = '<MISSING>'
                 store = loc.rsplit('-',1)[1].replace('.html','')

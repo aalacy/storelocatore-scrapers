@@ -10,4 +10,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-address hard to parese so i have add raw_address column in this website
+zipcode not in state and i checked all data is true this website 

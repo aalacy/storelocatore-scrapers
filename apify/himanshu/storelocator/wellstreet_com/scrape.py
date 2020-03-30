@@ -5,11 +5,11 @@ import re
 import json
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w',encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -21,7 +21,6 @@ def fetch_data():
     base_url = "https://www.wellstreet.com"
     r = requests.get("https://www.wellstreet.com/region/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
     region_links = []
     for url in soup.find("main",{"id":'main'}).find_all("a"):
         if url['href'] not in region_links:
@@ -39,37 +38,46 @@ def fetch_data():
             store_name.append(title)
             phone = location.find("div",{"class":'phone-line'}).text
             location_url = location.find("a")["href"]
-            print(location_url)
             location_request = requests.get(location_url,headers=headers)
             location_soup = BeautifulSoup(location_request.text.replace("</html>"," "),"lxml")
-            hours = " ".join(list(location_soup.find('div',{"class":"hours"}).stripped_strings))
+            try:
+                hours = " ".join(list(location_soup.find('div',{"class":"hours"}).stripped_strings))
+            except:
+                # print(location_url)
+                continue
+            if "This facility" in hours:
+                hours = "<MISSING>"
             address = list(location_soup.find("span",{"class":"address-text"}).stripped_strings)
-            print(address)
+            if "Get Directions" in address[-1]:
+                del address[-1]
+            street_address = " ".join(address[:-1])
+            city = " ".join(address[-1].split(" ")[:-2])
+            state = address[-1].split(" ")[-2]
+            zipp = address[-1].split(" ")[-1]
+
             lat = ""
             lng = ""
             for script in location_soup.find_all("script"):
                 if "map =" in script.text:
                     lat = script.text.split("new google.maps.LatLng(")[1].split(",")[0]
                     lng = script.text.split("new google.maps.LatLng(")[1].split(",")[1].split(")")[0]
+
             store = []
             store.append("https://www.wellstreet.com")
             store.append(title)
-            if len(address[1].split(" ")) != 3:
-                store.append(" ".join(address[0:-2]))
-            else:
-                store.append(address[0])
-            store.append(" ".join(address[-2].split(" ")[0:-2]))
-            store.append(address[-2].split(" ")[-2])
-            store.append(address[-2].split(" ")[-1])
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
             store.append("US")
             store.append("<MISSING>")
             store.append(phone)
-            store.append("well street urgent care")
+            store.append("<MISSING>")
             store.append(lat if lat != "" else "<MISSING>")
             store.append(lng if lng != "" else "<MISSING>")
             store.append(hours)
-            return_main_object.append(store)
-    return return_main_object
+            store.append(location_url)
+            yield store
 
 def scrape():
     data = fetch_data()

@@ -14,7 +14,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    urls = ['https://www.wholefoodsmarket.com/sitemap.xml?page=1','https://www.wholefoodsmarket.com/sitemap.xml?page=2']
+    urls = ['https://www.wholefoodsmarket.com/sitemap/stores-sitemap.xml']
     locs = []
     for url in urls:
         r = session.get(url, headers=headers)

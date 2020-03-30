@@ -61,7 +61,16 @@ def fetch_data():
             try:
                 hours = div.find('div', {'class': 'large-6 small-6 columns'}).text
             except:
-                hours = "<MISSING>"
+                try:
+                    hours=div.find('span', {'class': 'branch-dot'}).text
+                    #print(hours)
+                    if hours.lower().find('open') > -1:
+                        hours = hours.replace("OPEN ",'')
+                    else:
+                        hours  = "<MISSING>"
+                except:
+                    hours  = "<MISSING>"
+                
             stored = div.find('div', {'class': 'links fw-light'})
             stored = stored.findAll('a')
             store = stored[1]['data-locationid']
@@ -110,6 +119,7 @@ def fetch_data():
             if len(pcode)<5:
                 pcode = '0' + pcode
 
+            #print(title,hours)
 
             #print(url)
             #print(title)

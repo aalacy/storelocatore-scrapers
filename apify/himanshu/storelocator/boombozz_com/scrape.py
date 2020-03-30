@@ -2,7 +2,7 @@ import csv
 import requests
 from bs4 import BeautifulSoup
 import re
-
+requests.packages.urllib3.disable_warnings()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,7 +21,7 @@ def fetch_data():
     return_main_object = []
     base_url = "https://boombozz.com/"
     loacation_url = 'https://boombozz.com/locations/'
-    r = requests.get(loacation_url, headers=header)
+    r = requests.get(loacation_url, headers=header,verify=False)
     soup = BeautifulSoup(r.text, "lxml")
     r = soup.find('div', {'id': 'allLocations'}).find_all('div', {'class': 'x-container'})
 
@@ -77,7 +77,7 @@ def fetch_data():
                     store.append(longitude if longitude else '<MISSING>')
                     store.append(hours_of_operation if hours_of_operation else '<MISSING>')
                     return_main_object.append(store)
-                    print("data === " + str(store))
+                   # print("data === " + str(store))
     return return_main_object
 
 

@@ -32,6 +32,8 @@ def fetch_data():
         link = "https://www.sephora.com" + repo['href']
         # link = "https://www.sephora.com/happening/stores/silverdale-jcpenney-at-kitsap-mall"
         #print(link)
+        #link ='https://www.sephora.com/happening/stores/farmington-jcpenney-at-westfarms-mall'
+        #link = 'https://www.sephora.com/happening/stores/woodbury'
         page = requests.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
         detail = soup.find('script', {'type': 'application/ld+json'})
@@ -40,15 +42,18 @@ def fetch_data():
         if detail == "None":
             detail = str(soup)
         start = detail.find("streetAddress")
-        start = detail.find(":", start) + 2
-        end = detail.find(",", start) - 1
+        start = detail.find(":", start)
+        start = detail.find('"', start) + 1
+        end = detail.find('"', start)
+        
         street = detail[start:end]
         start = street.find('\\')
         if start != -1:
             street = street.replace("\\", "!")
             street = street.replace("!n"," ")
         street = street.replace("\n", " ")
-
+        street = street.replace("!r", "")
+        #print(street)
         start = detail.find("postalCode")
         start = detail.find(":", start) + 2
         end = detail.find(",", start) - 1
@@ -115,7 +120,10 @@ def fetch_data():
             city = "<MISSING>"
         if len(ccode) < 2:
             ccode = "<MISSING>"
-        if len(pcode) < 5:
+        
+        if len(pcode) == 4:
+            pcode = '0' + pcode
+        if len(pcode) < 3:
             pcode = "<MISSING>"
         if len(store) < 2:
             store = "<MISSING>"
@@ -146,7 +154,9 @@ def fetch_data():
                 flag = 1
                 #print("Already exist")
                 break
-
+        if flag == 0:
+            if street.find('html') > -1 and title.find('html') > -1:
+                flag = 1
         if flag == 0:
             data.append([
                 'https://www.sephora.com/',

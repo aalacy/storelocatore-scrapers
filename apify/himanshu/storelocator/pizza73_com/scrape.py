@@ -4,6 +4,39 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+import time
+
+def request_wrapper(url,method,headers,data=None):
+    request_counter = 0
+    if method == "get":
+        while True:
+            try:
+                r = requests.get(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    elif method == "post":
+        while True:
+            try:
+                if data:
+                    r = requests.post(url,headers=headers,data=data)
+                else:
+                    r = requests.post(url,headers=headers)
+                return r
+                break
+            except:
+                time.sleep(2)
+                request_counter = request_counter + 1
+                if request_counter > 10:
+                    return None
+                    break
+    else:
+        return None
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -32,10 +65,8 @@ def fetch_data():
         lat = coord[0]
         lng = coord[1]
         base_url="https://www.pizza73.com/Pizza73/proxy.php?lng="+str(lng)+"&lat="+str(lat)
-        try:
-            r = requests.get(base_url)
-        except:
-            pass
+        r = request_wrapper(base_url,'get',headers=headers)
+        
         json_data = r.json()
         # print(json_data)
         current_results_len =len(json_data['data'])
@@ -46,7 +77,7 @@ def fetch_data():
                 # print(b)
                 soup= BeautifulSoup(b,"lxml")
                 hours_of_operation = (soup.text.replace('AM','AM ').replace(',',' , ').replace('PM','PM '))
-                print(hours_of_operation)
+                # print(hours_of_operation)
 
                 street_address = i["streetNumber"]+' '+i["ADDRESS_LINE_1"]
                 city = i["CITY"]

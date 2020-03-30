@@ -53,122 +53,39 @@ def fetch_data():
 
     r= requests.get('https://www.northernlightspizza.com/locations/',headers = headers)
     soup = BeautifulSoup(r.text,'html.parser')
-    l_title = soup.find('div',class_ = 'locations__title').find_next('div',class_='row flex-container').find_all('div',class_='col-xl-4')
-    h1 = l_title[1]
-    hh1 = BeautifulSoup(h1.text,'lxml')
-    list_h1 = list(hh1.stripped_strings)
-    hours1  = list_h1[0].split('Hours')[-1].strip().replace('\n','\t')
-    h2 = l_title[3]
-    hh2= BeautifulSoup(h2.text,'lxml')
-    list_h2 = list(hh2.stripped_strings)
-    hours2  = list_h2[0].split('Hours')[-1].strip().replace('\n','\t')
-    h = []
-    h.append(hours1)
-    h.append(hours2)
-    # print(h.pop(0))
-    # print(h.pop(0))
+    json_data = json.loads(soup.find(lambda tag: (tag.name == "script") and "var wpgmaps_localize_marker_data" in tag.text).text.split("var wpgmaps_localize_marker_data =")[1].split(";")[0])
+    for key,value in json_data.items():
+        for key1,value1 in json_data[key].items():
+            data = json_data[key][key1]
+            location_name = data['title']
+            street_address = data['address'].split(",")[0]
+            city = data['address'].split(",")[1]
+            state = data['address'].split(",")[2].split(" ")[1]
+            try:
+                zipp = data['address'].split(",")[2].split(" ")[2]
+            except:
+                zipp = "<MISSING>"
+            # print(data['desc'].split("\n"))
+            if "Hours" in data['desc'].split("\n"):
+                phone = data['desc'].split("\n")[0]
+                hours_of_operation = " ".join(data['desc'].split("\n")[2:])
+            else:
+                phone = data['desc'].split("\n")[1].replace("OPENING IN JUNE!!","515-967-4300")
+                hours_of_operation = "<MISSING>"
+           
+   
+            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                        store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+            store = ["<MISSING>" if x == "" else x for x in store]
 
-
-
-
-
-
-    script = soup.find_all('script')[-7]
-    script_text = script.text.split('var wpgmaps_localize_marker_data = ')[-1].split(';')[0]
-    json_data = eval(script_text)
-    for x in json_data['2']:
-        # print(json_data['2'][x])
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~`')
-        location_name = json_data['2'][x]['title']
-        street_address = json_data['2'][x]['address'].split(',')[0]
-        # print(street_address)
-
-        city =  json_data['2'][x]['address'].split(',')[1]
-        state_zipp = json_data['2'][x]['address'].split(',')[2].split()
-        if len(state_zipp) ==2:
-            state = json_data['2'][x]['address'].split(',')[2].split()[0]
-            zipp = json_data['2'][x]['address'].split(',')[2].split()[-1]
-        else:
-            state = "".join(state_zipp)
-            zipp ="<MISSING>"
-        latitude = json_data['2'][x]['lat']
-        longitude = json_data['2'][x]['lng']
-        other = json_data['2'][x]['desc'].split('\n')
-        # print(other)
-        # print('~~~~~~~~~~~~~~~~~')
-        phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), " ".join(other))
-        phone = phone_list[0]
-        if len(other)  > 3 and "3306 Indianola Ave" not in street_address and '1237 Grand Ave' not in street_address:
-            hours_of_operation = " ".join(other[2:])
-            # print(street_address +" | " +hours_of_operation)
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        elif len(other)  > 3 and "3306 Indianola Ave"  in street_address or '1237 Grand Ave'  in street_address:
-            hours_of_operation = h.pop(0)
-
-
-        else:
-            hours_of_operation = "<MISSING>"
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-        store = ["<MISSING>" if x == "" else x for x in store]
-        # print(street_address +"   |  "+ hours_of_operation)
-
-        # print("data = " + str(store))
-        # print(
-        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        store = [x.replace("–","-") for x in store]
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-        return_main_object.append(store)
-
-
-
-    z= []
-    for zip in soup.find_all('div',class_='row flex-container')[-1].find_all('div',class_='col-xl-2')[0:2]:
-        zip_list  = list(zip.stripped_strings)
-        zi = zip_list[5].split()[-1]
-        z.append(zi)
-    z.reverse()
-
-    for x in json_data['3']:
-        # print(json_data['3'][x])
-        # print('~~~~~~~~~~~~~~')
-        location_name = json_data['3'][x]['title']
-        street_address = address = json_data['3'][x]['address'].split(',')[0]
-        city = json_data['3'][x]['address'].split(',')[1]
-        state_zipp =  json_data['3'][x]['address'].split(',')[2].split()
-        if len(state_zipp) ==2:
-            state = json_data['3'][x]['address'].split(',')[2].split()[0]
-            zipp = json_data['3'][x]['address'].split(',')[2].split()[-1]
-            # print(street_address,zipp)
-        else:
-            state = "".join(state_zipp)
-            zipp = z.pop(0)
-
-            # print(street_address,zipp)
-
-
-        latitude = json_data['3'][x]['lat']
-        longitude = json_data['3'][x]['lng']
-        other = json_data['3'][x]['desc'].split('\n')
-        phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), " ".join(other))
-        phone = phone_list[0]
-
-        if len(other) >3:
-             hours_of_operation = " ".join(other[2:])
-        else:
-            hours_of_operation = "<MISSING>"
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
-        store = ["<MISSING>" if x == "" else x for x in store]
-
-        # print("data = " + str(store))
-        # print(
-        #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        store = [x.replace("–","-") for x in store]
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-        return_main_object.append(store)
+            # print("data = " + str(store))
+            # print(
+            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            store = [x.replace("–","-") for x in store]
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            yield store
     
-    return return_main_object
+    # return return_main_object
 
 
 

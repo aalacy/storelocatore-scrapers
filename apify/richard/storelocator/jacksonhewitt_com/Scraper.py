@@ -28,6 +28,7 @@ class Scrape:
                     "latitude",
                     "longitude",
                     "hours_of_operation",
+                    "page_url"
                 ]
             )
             # Body

@@ -1,6 +1,5 @@
 # Import libraries
-import xml
-import lxml
+
 import requests
 from bs4 import BeautifulSoup
 import csv
@@ -29,15 +28,15 @@ def fetch_data():
     repo_list = soup.findAll('div',{'class': 'column'})
     cleanr = re.compile('<.*?>')
     phoner = re.compile('(.*?)')
-    print(len(repo_list))
+    #print(len(repo_list))
     for repo in repo_list:
         link = repo.find('a')
         link = link['href']
-        print('state=',link)
+        #print('state=',link)
         page = requests.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
         nextlist = soup.findAll('a',{'class':'btn-blue'})
-        print("CITY COUNT =",len(nextlist))
+        #print("CITY COUNT =",len(nextlist))
         for nextlink in nextlist:
             
             link = nextlink['href']

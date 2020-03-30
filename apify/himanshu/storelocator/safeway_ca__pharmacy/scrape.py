@@ -48,20 +48,9 @@ def fetch_data():
         page_url = location.find("a")['href']
         r1 = requests.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
-        # hours = ' '.join(list(soup1.find("table",{"class":"holiday_hours_tbl"}).find("tbody").stripped_strings))
         location_type = "Pharmacy"
-        services = soup1.find("div",{"class":"single_store_info services"}).text
-        if "PharmacyGet" in services:
-            hours = ' '.join(list(soup1.find("table",{"class":"table"}).stripped_strings)).replace("Day Hours","").replace("pm","pm ;")
-           
-            if len(list(soup1.find("div",{"class":"store_mngr_dt"}).stripped_strings)) == 11:
-                phone = list(soup1.find("div",{"class":"store_mngr_dt"}).stripped_strings)[-3]
-            else:
-                phone = phone = list(soup1.find("div",{"class":"store_mngr_dt"}).stripped_strings)[-1]
-
-        else:
-            continue
-
+        hours = ' '.join(list(soup1.find("div",{"class":"hours"}).stripped_strings)).replace("Day Hours","")
+        phone = soup1.find("span",{"class":"phone"}).text.strip()
                
         store = []
         store.append(base_url)

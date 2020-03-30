@@ -43,6 +43,8 @@ def fetch_data():
                 if phone == '':
                     phone = '<MISSING>'
                 hours = hours.replace('"','').replace('[','').replace(']','').replace('{','').replace('}','').replace(',','; ').replace(' ;',';')
+                if '0' not in store:
+                    store = '<MISSING>'
                 if add not in locs:
                     locs.append(add)
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]

@@ -20,10 +20,12 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
+    
 
     data = []
     links = []
     p = 1
+    k =0
     pattern = re.compile(r'\s\s+')
     url = "https://www.sears.com/stores.html"
     page = requests.get(url)
@@ -114,20 +116,12 @@ def fetch_data():
                                     hours = hours.replace("\n"," ")
                                     hours = hours.strip()
                                     title = title.lstrip()
-
-                                    #print(link)
-                                    #print(title)
-                                    #print(store)
-                                    #print(street)
-                                    #print(city)
-                                    #print(state)
-                                    #print(pcode)
-                                    #print(phone)
-                                    #print(hours)
-                                    #print(lat)
-                                    #print(longt)
-
-                                    data.append([
+                                    title = title.encode('ascii', 'ignore').decode('ascii')
+                                    title = title.replace('Sears','Sears ')
+                                    title = title.replace('  ',' ')
+                                    
+                                    if title.find('Find Your Next Closest Store') == -1:
+                                        data.append([
                                         'https://www.sears.com/',
                                         link,
                                         title,
@@ -143,7 +137,9 @@ def fetch_data():
                                         longt,
                                         hours
                                     ])
-                                    flag = False
+                                        #print(k,data[k])
+                                        k += 1
+                                        flag = False
                                 except:
                                     pass
 

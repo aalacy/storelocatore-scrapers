@@ -1,16 +1,6 @@
 import csv
-import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
 
 
 def write_output(data):
@@ -18,10 +8,11 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
+
 
 def addy_ext(addy):
     address = addy.split(',')
@@ -33,22 +24,29 @@ def addy_ext(addy):
 
 
 def fetch_data():
+    session = SgRequests()
+    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
+
     locator_domain = 'http://www.jgsubs.com/'
     ext = '/locations'
-    driver = get_driver()
-    driver.get(locator_domain + ext)
+    r = session.get(locator_domain + ext, headers = HEADERS)
+    soup = BeautifulSoup(r.content, 'html.parser')
 
-    locs = driver.find_elements_by_css_selector('div.custom-location-teaser')
+    locs = soup.find_all('div', {'class': 'custom-location-teaser'})
+
     all_store_data = []
     for loc in locs:
-        location_name = loc.find_element_by_css_selector('div.teaser-title').text
-        addy = loc.find_element_by_css_selector('div.teaser-address').text.split('\n')
-
-        street_address = addy[0]
-        city, state, zip_code = addy_ext(addy[1])
-
-        phone_number = loc.find_element_by_css_selector('div.teaser-phone').text
-
+        location_name = loc.find('div', {'class': 'teaser-title'}).text
+        
+        addy = loc.find('div', {'class': 'teaser-address'}).prettify().split('\n')
+        clean_addy = [a.strip() for a in addy if '<' not in a]
+        
+        street_address = clean_addy[0]
+        city, state, zip_code = addy_ext(clean_addy[1])
+        
+        
+        phone_number = clean_addy[3]
+        
         hours = '<MISSING>'
 
         lat = '<MISSING>'
@@ -59,10 +57,12 @@ def fetch_data():
         store_number = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours]
-        all_store_data.append(store_data)
+                    store_number, phone_number, location_type, lat, longit, hours, '<MISSING>']
 
-    driver.quit()
+        
+        all_store_data.append(store_data)
+        
+        
     return all_store_data
 
 def scrape():

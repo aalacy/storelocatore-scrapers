@@ -19,6 +19,8 @@ https://www.signaturestyle.com/brands/tgf.html - 22
 Chicago Hair - 58
 Cost Cutters - 5
 First Choice - 7
+Head Start - 24
+Style America - 14
 
 
 we-care-hair only has a partial set in the api. i scrape directly from 

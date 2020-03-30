@@ -64,8 +64,32 @@ def fetch_data():
                 if add == '':
                     add = '<MISSING>'
                 if city == '':
+                    city = item['storeAddress']['addressLine3'].encode('utf-8')
+                if city == '':
                     city = '<MISSING>'
                 loc = '<MISSING>'
+                if city == '<MISSING>':
+                    city = name
+                    if 'Belfast' in name:
+                        city = 'Belfast'
+                    if 'Knightswick' in name:
+                        city = 'Knightswick'
+                    if 'Lewes' in name:
+                        city = 'Lewes'
+                    if 'Belper' in name:
+                        city = 'Belper'
+                    if 'Barrow in Furness' in name:
+                        city = 'Barrow in Furness'
+                    if 'Washington' in name:
+                        city = 'Washington'
+                    if 'Purfleet' in add:
+                        city = 'Purfleet'
+                    if 'Taunton' in name:
+                        city = 'Taunton'
+                    if 'Hempstead Valley' in name:
+                        city = 'Hempstead Valley'
+                    if 'Belfast' in add:
+                        city = 'Belfast'
                 addinfo = add + city + zc
                 if 'Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -' in hours:
                     hours = '<MISSING>'

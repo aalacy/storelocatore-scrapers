@@ -14,7 +14,7 @@ session = SgRequests()
 system = platform.system()
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -47,8 +47,6 @@ def fetch_data():
     for link in soup.find("select",{"id":"locationid"}).find_all("option"):
         url = link['value']
         driver.get(url)
-        time.sleep(3)
-
         soup1 = BeautifulSoup(driver.page_source, "lxml")
         for page in soup1.find_all("a",{"class":"btn-xlg btn-danger btn-block c-btn-uppercase c-btn-bold"}):
             page_url = page['href']
@@ -56,7 +54,6 @@ def fetch_data():
             soup2 = BeautifulSoup(driver.page_source, "lxml")
             location_name = soup2.find("div",{"class":"c-contact-title-1"}).find("h3").text.strip()
             street_address = soup2.find_all("span",{"class":"bs-glyphicon-class"})[0].text.split(",")[0].strip()
-            # print(street_address)
             try:
                 city = soup2.find_all("span",{"class":"bs-glyphicon-class"})[0].text.split(",")[1].strip()
             except:
@@ -73,7 +70,7 @@ def fetch_data():
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
             if len(soup2.find_all("p")) == 4:
-                hours = " ".join(list(soup2.find_all("p")[-1].stripped_strings))
+                hours = re.sub(r'\s+'," "," ".join(list(soup2.find_all("p")[-1].stripped_strings)))
             else:
                 hours = "<MISSING>"
 
@@ -90,7 +87,7 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(latitude if latitude else "<MISSING>")
             store.append(longitude if longitude else "<MISSING>")
-            store.append(hours)
+            store.append(hours.replace('- - - - - - - -','<MISSING>'))
             store.append(page_url if page_url else "<MISSING>")
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store 
@@ -134,7 +131,7 @@ def fetch_data():
     store.append("<MISSING>")
     store.append(latitude if latitude else "<MISSING>")
     store.append(longitude if longitude else "<MISSING>")
-    store.append(hours)
+    store.append(hours.replace('- - - - - - - -','<MISSING>'))
     store.append(page_url if page_url else "<MISSING>")
     store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
     yield store 

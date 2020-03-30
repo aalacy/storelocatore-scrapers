@@ -166,39 +166,53 @@ def fetch_data():
 
             if '1729 H Street Northwest' in addy:
                 addy = '1729 H Street Northwest, Washington, DC 20006'
+
+            if '902 Quentin Rd' in addy:
+                addy = '902 Quentin Rd, Brooklyn, NY 11223'
+
+            if '600 Columbus Avenue' in addy:
+                addy = '600 Columbus Avenue, New York, New York 10024'
+
+            if '840 Stelzer Rd' in addy:
+                addy = '840 Stelzer Rd, Columbus, Ohio 43219'
             
            
 
             addy = addy.split(',')
-            if len(addy) == 4:
-                street_address = addy[0].strip() + ' ' + addy[1].strip()
-                off = 1
-            else:
-                street_address = addy[0].strip()
-                off = 0
-
-            city = addy[1 + off].strip()
-
-            if street_address not in dup_tracker:
-                dup_tracker.append(street_address)
-            else:
-                continue
-            
-            state_zip = ' '.join(addy[2 + off].strip().split()).split(' ')
-            if len(state_zip) == 1:
-                if len(state_zip[0]) == 2:
-                    state = state_zip[0]
-                    zip_code = '<MISSING>'
+            if len(addy) > 1:
+                if len(addy) == 4:
+                    street_address = addy[0].strip() + ' ' + addy[1].strip()
+                    off = 1
                 else:
-                    zip_code = state_zip[0]
-                    state = '<MISSING>'
-            elif len(state_zip) == 3:
-                state = state_zip[0] + ' ' + state_zip[1]
-                zip_code = state_zip[2]
-            else:
-                state = state_zip[0]
-                zip_code = state_zip[1]
+                    street_address = addy[0].strip()
+                    off = 0
 
+                city = addy[1 + off].strip()
+
+                if street_address not in dup_tracker:
+                    dup_tracker.append(street_address)
+                else:
+                    continue
+                
+                state_zip = ' '.join(addy[2 + off].strip().split()).split(' ')
+                if len(state_zip) == 1:
+                    if len(state_zip[0]) == 2:
+                        state = state_zip[0]
+                        zip_code = '<MISSING>'
+                    else:
+                        zip_code = state_zip[0]
+                        state = '<MISSING>'
+                elif len(state_zip) == 3:
+                    state = state_zip[0] + ' ' + state_zip[1]
+                    zip_code = state_zip[2]
+                else:
+                    state = state_zip[0]
+                    zip_code = state_zip[1]
+            else:
+                street_address = addy[0]
+                city = '<MISSING>'
+                state = '<MISSING>'
+                zip_code = '<MISSING>'
 
         if len(zip_code) == 4:
             zip_code = '<MISSING>'

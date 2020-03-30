@@ -3,7 +3,7 @@ import json
 import requests
 import sgzip
 from Scraper import Scrape
-
+import time
 
 URL = "https://www.jacksonhewitt.com"
 
@@ -28,6 +28,7 @@ class Scraper(Scrape):
         countries = []
         location_types = []
         stores = []
+        urls = []
         seen = []
 
         cookies = {
@@ -78,12 +79,25 @@ class Scraper(Scrape):
                 headers=headers,
                 cookies=cookies,
             )
-            data = json.loads(response.content)["Offices"]
+            try:
+                data = json.loads(response.content)["Offices"]
+            except:
+                print('sleeeeeping..............\n\n\n\n\n\n\n\n\n')
+                time.sleep(60)
+                response = requests.get(
+                    f"https://www.jacksonhewitt.com/api/offices/search/{zipcode}",
+                    headers=headers,
+                    cookies=cookies,
+                )
+                data = json.loads(response.content)["Offices"]
+
             stores.extend(data)
             print(f"{len(data)} of locations scraped for zipcode: {zipcode}")
 
         for store in stores:
             if store["OfficeNumber"] not in seen:
+
+                print(store)
                 # Store ID
                 location_id = store["OfficeNumber"]
 
@@ -91,7 +105,10 @@ class Scraper(Scrape):
                 location_title = "Hackson Hewitt" + " " + store["City"]
 
                 # Type
-                location_type = store["Location"]
+                location_type = store["Location"].strip()
+
+                if location_type == '':
+                    location_type = '<MISSING>'
 
                 # Street
                 street_address = store["Address1"] + store["Address2"]
@@ -118,7 +135,15 @@ class Scraper(Scrape):
                 phone = store["Phone"]
 
                 # hour
-                hour = store["OfficeHours"]
+                hour_arr = store["OfficeHours"]
+                hour = ''
+                for h in hour_arr:
+                    hour += h['DayOfWeek'] + ' ' + h['Hours'] + ' '
+
+                hour = hour.strip()
+
+
+                url = 'https://www.jacksonhewitt.com/' + store['DetailsUrl']
 
                 # Store data
                 locations_ids.append(location_id)
@@ -133,6 +158,7 @@ class Scraper(Scrape):
                 cities.append(city)
                 countries.append(country)
                 location_types.append(location_type)
+                urls.append(url)
                 seen.append(location_id)
 
         for (
@@ -148,6 +174,7 @@ class Scraper(Scrape):
             location_id,
             country,
             location_type,
+            url
         ) in zip(
             locations_titles,
             street_addresses,
@@ -161,6 +188,7 @@ class Scraper(Scrape):
             locations_ids,
             countries,
             location_types,
+            urls
         ):
             self.data.append(
                 [
@@ -177,6 +205,7 @@ class Scraper(Scrape):
                     latitude,
                     longitude,
                     hour,
+                    url
                 ]
             )
 

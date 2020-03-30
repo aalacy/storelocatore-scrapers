@@ -1,70 +1,80 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
     base_url = "https://www.truereligion.com"
-    r = requests.get('https://hosted.where2getit.com/truereligion/ajax?&xml_request=%3Crequest%3E%3Cappkey%3E1C4F6E2A-C3CC-11E2-A252-16BE05D25870%3C%2Fappkey%3E%3Cgeoip%3E1%3C%2Fgeoip%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Climit%3E250%3C%2Flimit%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3EEnter+address%2C+city+%26+state+or+postalcode%3C%2Faddressline%3E%3Clongitude%3E%3C%2Flongitude%3E%3Clatitude%3E%3C%2Flatitude%3E%3Ccountry%3E%3C%2Fcountry%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Csearchradius%3E50%7C100%7C250%7C500%3C%2Fsearchradius%3E%3Cwhere%3E%3Cor%3E%3Coutlet%3E%3Ceq%3E%3C%2Feq%3E%3C%2Foutlet%3E%3Cfullprice%3E%3Ceq%3E%3C%2Feq%3E%3C%2Ffullprice%3E%3Cbespoke%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fbespoke%3E%3Cinternationalwholesale%3E%3Ceq%3E%3C%2Feq%3E%3C%2Finternationalwholesale%3E%3C%2For%3E%3Cclientkey%3E%3Cnotin%3ETRHB-2262EVAVC%2CTRHB-5233AAVC%3C%2Fnotin%3E%3C%2Fclientkey%3E%3C%2Fwhere%3E%3Cstateonly%3E1%3C%2Fstateonly%3E%3C%2Fformdata%3E%3C%2Frequest%3E')
-    soup=BeautifulSoup(r.text,'lxml')
-    return_main_object = []
-    output=[]
-    main=soup.find_all('poi')
-    for poi in main:
-        name=poi.find('name').text.strip()
-        address=poi.find('address1').text.strip()
-        storeno=poi.find('address2').text.strip()
-        city=poi.find('city').text.strip()
-        country=poi.find('country').text.strip()
-        state=poi.find('state').text.strip()
-        lat=poi.find('latitude').text.strip()
-        lng=poi.find('longitude').text.strip()
-        phone=poi.find('phone').text.strip()
-        zip=poi.find('postalcode').text.strip()
+    data = '{"request":{"appkey":"1C4F6E2A-C3CC-11E2-A252-16BE05D25870","formdata":{"geoip":false,"dataview":"store_default","limit":500,"geolocs":{"geoloc":[{"addressline":"","country":"US","latitude":"","longitude":"","state":"","province":"","city":"","address1":"","postalcode":""}]},"searchradius":"5000","stateonly":"","where":{"or":{"fullprice":{"eq":""},"outlet":{"eq":""},"factory":{"eq":""},"internationalwholesale":{"eq":""}}},"false":"0"}}}'
+    json_data = session.post('https://hosted.where2getit.com/truereligion/rest/locatorsearch?like=0.09181422211445356', data=data).json()['response']['collection']
+    # print(json_data)
+    addressess = []
+    
+    for poi in json_data:
+        location_type = poi['icon']
+        if location_type == "True_International":
+            continue
+        name = poi['name']
+        address = (poi['address1'] +" "+ str(poi['address2'])).replace("None","").strip()
+        storeno = poi['clientkey']
+        city = poi['city']
+        country = poi['country']
+        if country not in ['CA',"US"]:
+            continue
+        state = poi['state']
+        lat = poi['latitude']
+        lng = poi['longitude']
+        phone = poi['phone']
+        zipp = poi['postalcode']
         hour=''
-        if poi.find('monopen').text.strip():
-            hour+=" Monday : "+poi.find('monopen').text.strip()+poi.find('monclose').text.strip()
-        if poi.find('tueopen').text.strip():
-            hour+=" Tuesday : "+poi.find('tueopen').text.strip()+poi.find('tueclose').text.strip()
-        if poi.find('wedopen').text.strip():
-            hour+=" Wednesday : "+poi.find('wedopen').text.strip()+poi.find('wedclose').text.strip()
-        if poi.find('thropen').text.strip():
-            hour+=" Thursday : "+poi.find('thropen').text.strip()+poi.find('thrclose').text.strip()
-        if poi.find('friopen').text.strip():
-            hour+=" Friday : "+poi.find('friopen').text.strip()+poi.find('friclose').text.strip()
-        if poi.find('satopen').text.strip():
-            hour+=" Saturday : "+poi.find('satopen').text.strip()+poi.find('satclose').text.strip()
-        if poi.find('sunopen').text.strip():
-            hour+=" Sunday : "+poi.find('sunopen').text.strip()+poi.find('sunclose').text.strip()
+        if poi['monopen']:
+            hour+=" Monday : "+poi['monopen']+" "+poi['monclose']
+        if poi['tueopen']:
+            hour+=" Tuesday : "+poi['tueopen']+" "+poi['tueclose']
+        if poi['wedopen']:
+            hour+=" Wednesday : "+poi['wedopen']+" "+poi['wedclose']
+        if poi['thropen']:
+            hour+=" Thursday : "+poi['thropen']+" "+poi['thrclose']
+        if poi['friopen']:
+            hour+=" Friday : "+poi['friopen']+" "+poi['friclose']
+        if poi['satopen']:
+            hour+=" Saturday : "+poi['satopen']+" "+poi['satclose']
+        if poi['sunopen']:
+            hour+=" Sunday : "+poi['sunopen']+" "+poi['sunclose']
+        page_url = "http://locations.truereligion.com/ny/elmhurst/"+str(storeno)+"/?utm_source=true%20religion&utm_medium=Store%20Locator&utm_campaign=true%20religion%20Store%20Locator"
+
         store=[]
         store.append(base_url)
         store.append(name if name else "<MISSING>")
         store.append(address if address else "<MISSING>")
         store.append(city if city else "<MISSING>")
         store.append(state if state else "<MISSING>")
-        store.append(zip if zip else "<MISSING>")
+        store.append(zipp if zipp else "<MISSING>")
         store.append(country if country else "<MISSING>")
         store.append(storeno if storeno else "<MISSING>")
         store.append(phone if phone else "<MISSING>")
-        store.append("truereligion")
+        store.append(location_type)
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
         store.append(hour if hour else "<MISSING>")
-        if zip not in output:
-            output.append(zip)
-            return_main_object.append(store)
-    return return_main_object
+        store.append(page_url)
+        if store[2] in addressess:
+            continue
+        addressess.append(store[2])
+        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        yield store 
 
 def scrape():
     data = fetch_data()

@@ -1,9 +1,10 @@
 import csv
 import time
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+session = SgRequests()
 
 
 def write_output(data):
@@ -28,16 +29,15 @@ def fetch_data():
     base_url = "https://www.searshomeservices.com"
     addresses = []
    
-    r = requests.get("https://www.searshomeservices.com/locations/", headers=headers)
+    r = session.get("https://www.searshomeservices.com/locations/", headers=headers)
     
     soup= BeautifulSoup(r.text,"lxml")
     links = soup.find_all('a', class_='state')
 
     for link in links:
-        try:
-            r1 = requests.get(base_url+link['href'], headers=headers)
-        except:
-            continue
+        
+        r1 = session.get(base_url+link['href'], headers=headers)
+        
         soup1 = BeautifulSoup(r1.text, "lxml")
         loc_links = soup1.find_all('a', class_='see-more')
 
@@ -45,10 +45,9 @@ def fetch_data():
 
             if "http" not in loc_link['href']:
                 page_url = base_url+loc_link['href']
-                try:
-                    r4 = requests.get(page_url, headers=headers)
-                except:
-                    pass                    
+               
+                r4 = session.get(page_url, headers=headers)
+                       
                 soup4 = BeautifulSoup(r4.text, "lxml")
                 json_str = (soup4.text.split("config.currentStore = ")[1]+"{").split("}]};")[0]+"}]}"
                 json_data = json.loads(json_str)
@@ -78,10 +77,9 @@ def fetch_data():
             else:
                 page_url = loc_link['href'].lower()
                 # print(page_url)
-                try:
-                    r3 = requests.get(page_url, headers=headers)
-                except:
-                    pass
+
+                r3 = session.get(page_url, headers=headers)
+            
                 soup3 = BeautifulSoup(r3.text, "lxml")
                 head= soup3.find('div',class_='headerMain-utilZone03')
 
@@ -132,10 +130,9 @@ def fetch_data():
                         #page not found
                         pass
 
-            try:
-                loc_r = requests.get(page_url, headers=headers)
-            except:
-                continue
+           
+            loc_r = session.get(page_url, headers=headers)
+            
 
             loc_soup = BeautifulSoup(loc_r.text, "lxml")
 
@@ -143,7 +140,7 @@ def fetch_data():
             
                 hours_of_operation = " ".join(list(loc_soup.find("span",{"class":"store-hours"}).stripped_strings)).replace('Hours','').strip()
             else:
-                hours_of_operation = "<MISSINGH>"
+                hours_of_operation = "<MISSING>"
         
                 
                
@@ -166,7 +163,8 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # print(store)
+            # print("data ==== "+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
 
 def scrape():

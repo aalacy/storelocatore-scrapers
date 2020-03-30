@@ -24,12 +24,14 @@ def fetch_data():
 
 
     coord = search.next_coord()
+    dup_tracker = set()
+
     all_store_data = []
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
-        print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
+        #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://newbalance.locally.com/stores/conversion_data?has_data=true&company_id=41&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=' + str(x) + '&map_center_lng=' + str(y) + '&map_distance_diag=100&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=&zoom_level=10'
         r = session.get(url, headers=HEADERS)
         
@@ -42,7 +44,13 @@ def fetch_data():
             longit = loc['lng']
             if 'New Balance' in loc['name']:
                 location_name = loc['name']
-                
+                if 'Achieve' in location_name:
+                    continue
+                if location_name not in dup_tracker:
+                    dup_tracker.add(location_name)
+                else:
+                    continue
+
                 street_address = loc['address']
                 city = loc['city']
                 state = loc['state']
@@ -56,11 +64,16 @@ def fetch_data():
                 
                 slug = loc['slug']
                 if slug == '':
-                    page_url = 'https://stores.newbalance.com/shop/' + str(loc['id']) + '/' + location_name.lower().replace(' ', '-')
+                    page_url = 'https://stores.newbalance.com/shop/' + str(loc['id']) + '/' + location_name.lower().split('|')[0].replace(' ', '-')
                 else:
                     page_url = 'https://stores.newbalance.com/shop/' + slug
-                r = session.get(page_url, headers=HEADERS)
                 
+
+                cat = str(loc['enhanced_categories']).split(':')[0].replace('{', '').replace("'", '')
+  
+                location_type = loc['enhanced_categories'][cat]['value']
+
+                r = session.get(page_url, headers=HEADERS)
                 soup = BeautifulSoup(r.content, 'html.parser')
                 
                 app_json_html = soup.find('script', {'type': "application/ld+json"})
@@ -77,10 +90,9 @@ def fetch_data():
 
                     hours = hours.strip()
                 
-                
-                
+    
                 store_number = '<MISSING>'
-                location_type = '<MISSING>'
+          
                 
                 
                 store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 

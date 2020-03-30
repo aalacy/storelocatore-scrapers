@@ -23,7 +23,8 @@ class Scrape:
                 "location_type",
                 "latitude",
                 "longitude",
-                "hours_of_operation"
+                "hours_of_operation", 
+                "page_url"
             ])
             # Body
             for row in data:

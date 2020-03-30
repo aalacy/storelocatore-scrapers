@@ -50,16 +50,27 @@ def fetch_data():
                                     name = sitem.split('"')[0]
                                     hours = ''
                                     website = 'coach.com'
-                                    add = sitem.split('<span itemprop="streetAddress">')[1].split('<')[0].strip()
-                                    city = sitem.split('<span itemprop="addressLocality">')[1].split('<')[0]
-                                    state = sitem.split('<span itemprop="addressRegion">')[1].split('<')[0]
+                                    try:
+                                        add = sitem.split('<span itemprop="streetAddress">')[1].split('<')[0].strip()
+                                        city = sitem.split('<span itemprop="addressLocality">')[1].split('<')[0]
+                                        state = sitem.split('<span itemprop="addressRegion">')[1].split('<')[0]
+                                    except:
+                                        add = ''
+                                        city = ''
+                                        state = ''
                                     country = 'US'
                                     try:
                                         hours = sitem.split('<span itemprop="openingHours">')[1].split('<br/> </span>')[0].replace('<br/>','; ').replace('\t','').replace('  ',' ').replace('  ',' ')
                                     except:
                                         hours = ''
-                                    zc = sitem.split('emprop="postalCode">')[1].split('<')[0]
-                                    phone = sitem.split('itemprop="telephone">')[1].split('<')[0].replace('&#40;','(').replace('&#41;',')')
+                                    try:
+                                        zc = sitem.split('emprop="postalCode">')[1].split('<')[0]
+                                    except:
+                                        zc = ''
+                                    try:
+                                        phone = sitem.split('itemprop="telephone">')[1].split('<')[0].replace('&#40;','(').replace('&#41;',')')
+                                    except:
+                                        phone = ''
                                     typ = stype
                                     store = '<MISSING>'
                                     lat = '<MISSING>'
@@ -82,7 +93,7 @@ def fetch_data():
                                     if zc == '':
                                         zc = '<MISSING>'
                                     stinfo = add + '|' + city + '|' + state
-                                    if stinfo not in alllocs:
+                                    if stinfo not in alllocs and add != '':
                                         alllocs.append(stinfo)
                                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     storetypes = ['storeType-R','storeType-F','storeType-D','womenFootwear-true','Capability9-true']
@@ -109,16 +120,27 @@ def fetch_data():
                                 name = sitem.split('"')[0]
                                 hours = ''
                                 website = 'coach.com'
-                                add = sitem.split('<span itemprop="streetAddress">')[1].split('<')[0].strip()
-                                city = sitem.split('<span itemprop="addressLocality">')[1].split('<')[0]
-                                state = sitem.split('<span itemprop="addressRegion">')[1].split('<')[0]
-                                country = 'CA'
+                                try:
+                                    add = sitem.split('<span itemprop="streetAddress">')[1].split('<')[0].strip()
+                                    city = sitem.split('<span itemprop="addressLocality">')[1].split('<')[0]
+                                    state = sitem.split('<span itemprop="addressRegion">')[1].split('<')[0]
+                                except:
+                                    add = ''
+                                    city = ''
+                                    state = ''
+                                country = 'US'
                                 try:
                                     hours = sitem.split('<span itemprop="openingHours">')[1].split('<br/> </span>')[0].replace('<br/>','; ').replace('\t','').replace('  ',' ').replace('  ',' ')
                                 except:
                                     hours = ''
-                                zc = sitem.split('emprop="postalCode">')[1].split('<')[0]
-                                phone = sitem.split('itemprop="telephone">')[1].split('<')[0].replace('&#40;','(').replace('&#41;',')')
+                                try:
+                                    zc = sitem.split('emprop="postalCode">')[1].split('<')[0]
+                                except:
+                                    zc = ''
+                                try:
+                                    phone = sitem.split('itemprop="telephone">')[1].split('<')[0].replace('&#40;','(').replace('&#41;',')')
+                                except:
+                                    phone = ''
                                 typ = stype
                                 store = '<MISSING>'
                                 lat = '<MISSING>'

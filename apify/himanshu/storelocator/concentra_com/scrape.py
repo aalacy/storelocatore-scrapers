@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import phonenumbers
+import requests
 
 session = SgRequests()
 def write_output(data):
@@ -33,7 +34,7 @@ def fetch_data():
         soup = BeautifulSoup(location_r.text, "lxml")
         try:
             location_name = soup.find("h1",{"class":"field-centername"}).text.strip()
-            location_type = location_name.split("-")[1]
+            location_type = location_name.split("-")[-1].strip()
         except:
             location_name = "<MISSING>"
             location_type = "<MISSING>"

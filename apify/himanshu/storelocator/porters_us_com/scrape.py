@@ -13,7 +13,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "raw_address", 
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", 
                          "page_url"])
         # Body
         for row in data:
@@ -40,30 +40,38 @@ def fetch_data():
                 zipp = zipp_list[-1]
             else:
                 zipp = "<MISSING>"
-            raw_address = re.sub(r'\s+'," ",addr.split(",")[2].replace('"','').replace("\t","").strip())
+            if "\t" in addr.split(",")[2]:
+                street_address = addr.split(",")[2].replace('"','').replace("\r\n","").split("\t")[0].strip()
+                city = addr.split(",")[2].replace('"','').replace("\r\n","").split("\t")[1].strip()
+                raw_address = "<MISSING>"
+            else:
+                street_address = "<INACCESSIBLE>"
+                city = "<INACCESSIBLE>"
+                
+                raw_address = re.sub(r'\s+'," ",addr.split(",")[2].replace('"','').replace("\t"," ").replace(state,"").replace(zipp,"").strip())
+                if len(raw_address.split(" ")) == 4:
+                    street_address = " ".join(raw_address.split(" ")[:-1]).strip()
+                    city = raw_address.split(" ")[-1]
+                elif len(raw_address.split(" ")) == 5:
+                    street_address = " ".join(raw_address.split(" ")[:-1]).replace("San","").strip()
+                    city = raw_address.split(" ")[-1].replace("Diego","San Diego")
+                elif len(raw_address.split(" ")) == 6:
+                    
+                    street_address = " ".join(raw_address.split(" ")[:-2]).replace("233-G So. New York","233-G So. New York Ave.").replace("7746 South Union Park","7746 South Union Park Ave").strip()
+                    city = " ".join(raw_address.split(" ")[-2:]).replace("Ave","").replace(".","").strip()
+                elif len(raw_address.split(" ")) == 7:
+                    street_address = " ".join(raw_address.split(" ")[:-2]).strip()
+                    city = " ".join(raw_address.split(" ")[-2:]).strip()
             
-
-            
-            # if "\t" in addr:
-            #     street_address = addr.split(",")[2].split("\t")[0].replace('"',"").strip()
-            #     city = addr.split(",")[2].split("\t")[1].strip()
-            # else:
-            #     raw1 = re.sub(r'\s+'," ",addr)
-            #     raw = (raw1.split(",")[2].split(" "))
-            #     if raw[-1].isdigit():
-            #         del raw[-1]
-            #     if len(raw[-1]) == 2:
-            #         del raw[-1]
-                # street_address = " ".join(raw[:-1])
-                # city = raw[-1]
         else:
             continue
+   
    
         store = []
         store.append(base_url)
         store.append("<MISSING>")
-        store.append("<INACCESSIBLE>")
-        store.append("<INACCESSIBLE>")
+        store.append(street_address)
+        store.append(city)
         store.append(state)
         store.append(zipp)
         store.append("US")
@@ -73,7 +81,6 @@ def fetch_data():
         store.append(latitude)
         store.append(longitude)
         store.append("<MISSING>")
-        store.append(raw_address)
         store.append("<MISSING>")
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         # print("data===="+str(store))
