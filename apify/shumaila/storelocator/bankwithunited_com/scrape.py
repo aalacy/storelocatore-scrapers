@@ -111,7 +111,8 @@ def fetch_data():
         if len(hours) < 3:
             hours = "<MISSING>"
         #print(hours)
-        
+        hours = bours.replace('Lobby: ','')        
+        hours = hours.lstrip()
            
         data.append([
                         'https://www.bankwithunited.com/',
