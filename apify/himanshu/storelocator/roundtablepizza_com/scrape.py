@@ -1,15 +1,14 @@
 # coding=UTF-8
-
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 session = SgRequests()
-import requests 
+
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -26,44 +25,53 @@ def fetch_data():
     }
 
     base_url = "https://www.roundtablepizza.com/"
-    r = requests.get("https://orders.roundtablepizza.com/locations", headers=headers)
-    soup = BeautifulSoup(r.text, "lxml") 
-    for link in soup.find("ul",{'id':'ParticipatingStates'}).find_all("a"):
-        state_link = "https://orders.roundtablepizza.com"+link['href']
-        city_r = requests.get(state_link)
-        city_soup = BeautifulSoup(city_r.text, "lxml")
-        for url in city_soup.find("ul",{'id':'ParticipatingRestaurants'}).find_all("a"):
-            page_url = url['href']
-            location_r = requests.get(page_url)
-            location_soup = BeautifulSoup(location_r.text, "lxml")
+    data = {"action":"get_locations",
+            "geo": "true",
+            "zip":"9"}
+    r = session.post("https://www.roundtablepizza.com/wp-admin/admin-ajax.php", data=data, headers=headers).json()
+    soup = BeautifulSoup(r['markup'], "lxml")
+    for data in soup.find_all("div")[7].find_all("div",{"class":"location-list__item js-location clear-inner-divs"}):
+        latitude = data['data-lat']
+        longitude = data['data-lng']
+        addr = list(data.find("address",{"class":"js-location-address"}).stripped_strings)
+        street_address = addr[0]
+        if "\t\t\t\t\t\t\t\t\t\t" in addr[-1]:
+            street_address+=" "+ addr[-1].split("\t\t\t\t\t\t\t\t\t\t")[0]
+            city =  addr[-1].split("\t\t\t\t\t\t\t\t\t\t")[1].split(",")[0]
+            state = addr[-1].split("\t\t\t\t\t\t\t\t\t\t")[1].split(",")[1].split(" ")[1]
+            zipp = addr[-1].split("\t\t\t\t\t\t\t\t\t\t")[1].split(",")[1].split(" ")[2]
+        else:
+            city = addr[-1].split(",")[0]
+            state = addr[-1].split(",")[1].split(" ")[1]
+            zipp = addr[-1].split(",")[1].split(" ")[2]
+        if "TEMPORARILY CLOSED" in street_address:
+            continue
+        phone = data.find("div",{"class":"location-list__phone"}).text.replace("\t","").replace("\n","").replace("// Store Hours: Thursday, Friday & Saturday, 11:00am - 2:00pm, 5:00pm - 8:00pm","").strip()
+        try:
+            hours = " ".join(list(data.find("div",{"class":re.compile("js-location-hours")}).stripped_strings))
+        except:
+            hours = "<MISSING>"
+        try:
+            page_url = data.find("div",{"class":"location-list__action--wrap"}).find("a")['href']
+        except:
+            page_url = "<MISSING>"
 
-            location_name = location_soup.find("div",{'class':"fn org"}).text.strip()
-            street_address = location_soup.find("span",{"class":"street-address"}).text.strip()
-            city = location_soup.find("span",{"class":"locality"}).text.strip()
-            state = location_soup.find("span",{"class":"region"}).text.strip()
-            zipp = location_soup.find("span",{"class":"postal-code"}).text.strip()
-            phone = location_soup.find("span",{"class":"tel"}).text.strip()
-            store_number = location_soup.find("script",{"id":"registerVendorAnalytics"}).text.split("'Store Number': '")[1].split("',")[0]
-            latitude = location_soup.find("meta", {"property":"og:latitude"})['content']
-            longitude = location_soup.find("meta", {"property":"og:longitude"})['content']
-            hours = " ".join(list(location_soup.find("dl",{"id":"available-business-hours-popover"}).stripped_strings))
-
-            store = []
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
-            store.append("US")
-            store.append(store_number) 
-            store.append(phone)
-            store.append("<MISSING>")
-            store.append(latitude)
-            store.append(longitude)
-            store.append(hours)
-            store.append(page_url)
-            yield store
+        store = []
+        store.append(base_url)
+        store.append("<MISSING>")
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp.replace("953636","95363"))
+        store.append("US")
+        store.append("<MISSING>") 
+        store.append(phone)
+        store.append("Restaurant")
+        store.append(latitude)
+        store.append(longitude)
+        store.append(hours)
+        store.append(page_url)
+        yield store
 
     
 

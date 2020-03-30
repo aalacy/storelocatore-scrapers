@@ -4,16 +4,18 @@ from bs4 import BeautifulSoup
 import re
 import json
 import datetime
+import unicodedata
 from datetime import datetime
 session = SgRequests()
+import requests
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "raw_address", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -42,42 +44,39 @@ def fetch_data():
             addr = json.loads(soup1.find(lambda tag : (tag.name == "script") and "latitude" in tag.text).text)
             location_name = addr['name']
             raw_address = re.sub(r'\s+'," "," ".join(list(soup1.find("div",{"class":"store-details__contact"}).find_all("p")[-1].stripped_strings)))
+            
             data = raw_address.split(",")
             if len(data) == 1:
-                street_address = data[0]
-                city = "<MISSING>"
-                state = "<MISSING>"
-                zipp = "<MISSING>"
-            elif len(data) == 2:
-                street_address = data[0]
-                city = "<MISSING>"
-                state = "<MISSING>"
-                zipp = data[1]
-            elif len(data) == 3:
-                street_address = data[0].strip()
-                city = data[1].strip()
-                state = "<MISSING>"
-                zipp = data[-1].strip()
-            elif len(data) == 4:
-                street_address = data[0].strip()
-                city = data[1].strip()
-                state = data[2].strip()
-                zipp = data[3].strip()
-            # elif len(data) == 5:
-            #     street_address = " ".join(data[:-3]).strip()
-            #     city = data[-3].strip()
-            #     state = data[-2].strip()
-            #     zipp = data[-1].strip()
-            # elif len(data) == 6:
-            #     street_address = " ".join(data[:-3]).strip()
-            #     city = data[-3].strip()
-            #     state = data[-2].strip()
-            #     zipp = data[-1].strip()
+                zipp = "<MISSING"
             else:
-                street_address = re.sub(r'\s+'," "," ".join(data[:-3]).strip())
-                city = data[-3].strip()
-                state = data[-2].strip()
                 zipp = data[-1].strip()
+        
+            raw_address = re.sub(r'\s+'," ",raw_address.replace(zipp,"").strip())
+            # if len(data) == 1:
+            #     street_address = data[0]
+            #     city = "<MISSING>"
+            #     state = "<MISSING>"
+            #     zipp = "<MISSING>"
+            # elif len(data) == 2:
+            #     street_address = data[0]
+            #     city = "<MISSING>"
+            #     state = "<MISSING>"
+            #     zipp = data[1]
+            # elif len(data) == 3:
+            #     street_address = data[0].strip()
+            #     city = data[1].strip()
+            #     state = "<MISSING>"
+            #     zipp = data[-1].strip()
+            # elif len(data) == 4:
+            #     street_address = data[0].strip()
+            #     city = data[1].strip()
+            #     state = data[2].strip()
+            #     zipp = data[3].strip()
+            # else:
+            #     street_address = re.sub(r'\s+'," "," ".join(data[:-3]).strip())
+            #     city = data[-3].strip()
+            #     state = data[-2].strip()
+            #     zipp = data[-1].strip()
             try:
                 phone = addr['telephone']
             except:
@@ -112,9 +111,9 @@ def fetch_data():
             result_coords.append((latitude,longitude))
             store.append(base_url)
             store.append(location_name if location_name else "<MISSING>")
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state if state else "<MISSING>")
+            store.append("<INACCESSIBLE>")
+            store.append("<INACCESSIBLE>")
+            store.append("<INACCESSIBLE>")
             store.append(zipp if zipp else "<MISSING>")   
             store.append("UK")
             store.append(store_number)
@@ -123,9 +122,11 @@ def fetch_data():
             store.append(latitude)
             store.append(longitude)
             store.append(hours)
+            store.append(raw_address if raw_address else "<MISSING>")
             store.append(page_url)
             # print("data==="+str(store))
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
                 
        

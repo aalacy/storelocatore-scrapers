@@ -102,10 +102,10 @@ def fetch_data():
         for h1 in dictionary:
             hours_of_operation = hours_of_operation+ ' ' +h1 + ' '+ dictionary[h1]
         
-        if loc['phone_number_data'] != []:
-            phone = loc['phone_number_data'][-1]["phone_number"]
+        
+        phone = loc['phone']
         name = loc['storeName'].replace("-","").replace(".","")
-        page_url = "https://www.smartandfinal.com/stores/"+str(name)+"-"+str(store_number)+"/"+str(loc['locationID'])
+        page_url = "https://www.smartandfinal.com/stores/"+str(name.replace(" ","-").lower())+"-"+str(store_number)+"/"+str(loc['locationID'])
 
 
         store = [locator_domain, loc['storeName'].capitalize(), loc['address'].capitalize(), loc['city'].capitalize(), loc['state'].capitalize(), loc['zip'], country_code,

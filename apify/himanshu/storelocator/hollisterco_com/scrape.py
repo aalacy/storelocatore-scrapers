@@ -35,6 +35,7 @@ def fetch_data():
         
         if "/shop/wd/clothing-stores/CA/" in link.find("a")['href'] or "/shop/wd/clothing-stores/US/"in link.find("a")['href']:
             page_url = base_url+link.find("a")['href']
+            # print(page_url)
             r = requests.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "lxml")
             if soup.find(lambda tag: (tag.name == "script") and "geoNodeUniqueId" in tag.text) == None:
@@ -58,9 +59,9 @@ def fetch_data():
                     for l in range(0,7):
                         start = datetime.strptime(str(j['value'].split(',')[l].split("|")[0]), "%H:%M")
                         start_value=start.strftime("%I:%M %p")
-                        end = datetime.strptime(str(j['value'].split(',')[l].split("|")[1]), "%H:%M")
+                        end = datetime.strptime(str(j['value'].split(',')[l].split("|")[1].replace("M","")), "%H:%M")
                         end_value = end.strftime("%I:%M %p")
-                        hours+= " "+day[l]+" "+start_value+"-"+end_value
+                        hours+= " "+day[l]+" "+start_value+" - "+end_value
                     hours_of_operation = hours
             store = []
             store.append(base_url)
@@ -80,8 +81,8 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            #print("data =="+str(store))
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # print("data =="+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
         else:
             pass # another country location

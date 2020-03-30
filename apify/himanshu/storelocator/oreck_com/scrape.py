@@ -5,7 +5,6 @@ import re
 import json
 import phonenumbers
 import requests
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,42 +29,55 @@ def fetch_data():
         
     }
     base_url = "https://www.oreck.com/"
-    data = {"dwfrm_storelocator_countryCode": "US",
+    r = session.get("https://www.oreck.com/stores/", headers=headers)
+    soup = BeautifulSoup(r.text, "lxml")
+    for value in soup.find_all("option",{"class":"select-option"}):
+        # print(value['value'].isdigit())
+        if len(value['value']) != 2 or value['value'].isdigit():
+            continue
+        data = {"dwfrm_storelocator_state":str(value['value']),
+                "dwfrm_storelocator_findbystate": "Search by State"}
+        r1 = session.post("https://www.oreck.com/stores-results/", data=data, headers=headers)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        try:
+            for loc in soup1.find("div",{"class":"store-location-results"}).find_all("tr"):
+                location_name = loc.find("td",{"class":"quarter dealer-name"}).text.strip()
+                addr = list(loc.find_all("td")[1].stripped_strings)
+                street_address = " ".join(addr[0].split("\n")[:-3])
+                city = addr[0].split("\n")[-3].replace(",","").strip()
+                state = addr[0].split("\n")[-2]
+                zipp = addr[0].split("\n")[-1]
+                phone = loc.find_all("td")[-1].text.strip()
+                location_type = "Authorized Dealers & Distributors"
+                store = []
+                store.append(base_url)
+                store.append(location_name)
+                store.append(street_address)
+                store.append(city)
+                store.append(state)
+                store.append(zipp)
+                store.append("US")
+                store.append("<MISSING>")
+                store.append(phone)
+                store.append(location_type)
+                store.append("<MISSING>")
+                store.append("<MISSING>")
+                store.append("<MISSING>")
+                store.append("<MISSING>")
+                # print("data ==="+str(store))
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
+                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                yield store
+        except:
+            pass
+    data1 = {"dwfrm_storelocator_countryCode": "US",
             "dwfrm_storelocator_distanceUnit": "mi",
             "dwfrm_storelocator_postalCode": "85029",
             "dwfrm_storelocator_maxdistance": "999999",
             "dwfrm_storelocator_findbyzip": "Search by Zip"}
-    r = requests.post("https://www.oreck.com/stores-results/", data=data, headers=headers)
-    soup = BeautifulSoup(r.text, "lxml")
-    for loc in soup.find("div",{"class":"store-location-results"}).find_all("tr"):
-        location_name = loc.find("td",{"class":"quarter dealer-name"}).text.strip()
-        addr = list(loc.find_all("td")[1].stripped_strings)
-        street_address = " ".join(addr[0].split("\n")[:-3])
-        city = addr[0].split("\n")[-3].replace(",","").strip()
-        state = addr[0].split("\n")[-2]
-        zipp = addr[0].split("\n")[-1]
-        phone = loc.find_all("td")[-1].text.strip()
-        location_type = "Authorized Dealers & Distributors"
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append("US")
-        store.append("<MISSING>")
-        store.append(phone)
-        store.append(location_type)
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        store.append("<MISSING>")
-        # print("data ==="+str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
-        yield store
-
-    for data in json.loads(soup.find("div",{"class":"store-map-embed js-map-results-container"})['data-stores']):
+    r2 = session.post("https://www.oreck.com/stores-results/", data=data1, headers=headers)
+    soup2 = BeautifulSoup(r2.text, "lxml")
+    for data in json.loads(soup2.find("div",{"class":"store-map-embed js-map-results-container"})['data-stores']):
         
         location_name = data['name']
         street_address = (data['address1'] +" "+ str(data['address2'])).strip()
@@ -77,7 +89,7 @@ def fetch_data():
         longitude = data['longitude']
         location_type = "Exclusive Oreck Dealers"
         page_url = "https://www.oreck.com/stores-details/?StoreID="+str(data['id'])
-        r1 = requests.get(page_url)
+        r1 = session.get(page_url)
         soup1 = BeautifulSoup(r1.text, "lxml")
         # print(page_url)
         try:
@@ -103,8 +115,9 @@ def fetch_data():
         store.append(page_url)
         # print("data ==="+str(store))
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
+        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         yield store
-    
+
 def scrape():
     data = fetch_data()
     write_output(data)

@@ -10,7 +10,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -31,11 +31,8 @@ def fetch_data():
                     continue
                 page_url = link.find("a")['href']
                 try:
-                
                     r1 = session.get(page_url)
                     soup1 = BeautifulSoup(r1.text, "lxml")
-
-                
                     data = json.loads(soup1.find(lambda tag: (tag.name == "script") and '"address"' in tag.text).text)['@graph'][-1]
                     location_name = data['name']
                     addr = data['address']['streetAddress'].split(",")
@@ -51,7 +48,7 @@ def fetch_data():
                         phone = data['telephone']
                     except:
                         phone = "<MISSING>"
-                    location_type = "MedicalClinic"
+                    location_type = "UW Medicine"
                     try:
                         hours = " ".join(list(soup1.find("table",{"class":"clinic-page__hours-table"}).find("tbody").stripped_strings))
                     except:
@@ -62,7 +59,7 @@ def fetch_data():
                     store = []
                     store.append(base_url)
                     store.append(location_name)
-                    store.append(street_address)
+                    store.append(street_address.replace("Main Hospital,","").replace("West Clinic","").replace("East Clinic,","").replace("Emergency Department","").replace("McMurray Medical Building,","").replace("Center on Human Development and Disability Center,","").strip())
                     store.append(city)
                     store.append(state)
                     store.append(zipp)
@@ -75,9 +72,9 @@ def fetch_data():
                     store.append(hours)
                     store.append(page_url)
                     store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-                    if store[2] in addresses:
+                    if str(store[2])+str(store[1]) in addresses:
                         continue
-                    addresses.append(store[2])
+                    addresses.append(str(store[2])+str(store[1]))
                     # print("data===="+str(store))
                     # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                     yield store
