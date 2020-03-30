@@ -78,7 +78,6 @@ def fetch_data():
         for h in content[11:]:
             hours += h + ' '
 
-        # print(main.find_elements_by_css_selector('a')[1].get_attribute('href'))
         if 'ellsworth' in street_address or 'potomac' in street_address:
             href = main.find_elements_by_css_selector('a')[0].get_attribute('href')
 

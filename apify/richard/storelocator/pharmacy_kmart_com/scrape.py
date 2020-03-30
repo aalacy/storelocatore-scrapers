@@ -90,6 +90,10 @@ class Scraper(Scrape):
 
         for store in stores:
             if store["unitNumber"] not in seen:
+                print(store)
+                print()
+                print()
+                print()
                 # Store ID
                 location_id = store["unitNumber"]
 
