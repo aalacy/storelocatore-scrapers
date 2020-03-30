@@ -55,6 +55,9 @@ def fetch_data():
 
 
         phone_number = loc.find('p', {'class': 'phone-number'}).find('a').text
+        if 'Bryant, AR' in location_name:
+            phone_number = '(501) 651-0778'
+        
         
         
         hours_div = loc.find_all('div', {'class': 'ffo-store-hours'})
