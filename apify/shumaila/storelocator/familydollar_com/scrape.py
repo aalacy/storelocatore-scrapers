@@ -4,7 +4,11 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
+from sgrequests import SgRequests
 
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 
 def write_output(data):
@@ -24,110 +28,78 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-
+    states = ["AL", "AK", "AZ", "AR", "CA", "CO",
+    "CT","DC","DE", "FL", "GA","HI", "ID", "IL",
+    "IN", "IA", "KS", "KY", "LA", "ME", "MD", 
+    "MA", "MI", "MN", "MS", "MO",
+    "MT","NE","NV", "NH", "NJ", "NM", "NY",
+    "NC", "ND", "OH", "OK", "OR", "PA",
+    "RI", "SC","SD", "TN", "TX", "UT",
+    "VT", "VA", "WA", "WV", "WI", "WY"] 
     data = []
 
     pattern = re.compile(r'\s\s+')
 
     p = 0
-    url = 'https://www.familydollar.com/locations/'
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text,"html.parser")
-    repo_list = soup.findAll("div",{'class':'itemlist'})
-    for repo in repo_list:
-        try:
-            repo = repo.find('a')
-            #print(repo.text)
-            statelink = repo['href']
-            page1 = requests.get(statelink)
-            soup1 = BeautifulSoup(page1.text,"html.parser")
-            city_list = soup1.findAll("div",{'class':'itemlist'})
-            for clink in city_list:
-                try:
-                    clink = clink.find('a')
-                    #print("city = ", clink.text)
-                    clink = clink['href']
+    for i in range(0,len(states)):
+        print(states[i])          
+        url = 'https://locations.familydollar.com/ajax?&xml_request=%3Crequest%3E%20%3Cappkey%3ED2F68B64-7E11-11E7-B734-190193322438%3C/appkey%3E%20%3Cgeoip%3E1%3C/geoip%3E%20%3Cformdata%20id=%22getlist%22%3E%20%3Cobjectname%3ELocator::Store%3C/objectname%3E%20%3Cwhere%3E%20%3Ccity%3E%3Ceq%3E%3C/eq%3E%3C/city%3E%20%3Cstate%3E%3Ceq%3E'+states[i]+'%3C/eq%3E%3C/state%3E%20%3C/where%3E%20%3C/formdata%3E%20%3C/request'
+        
+        page = session.get(url, headers=headers, verify=False)
+        soup = BeautifulSoup(page.text,"html.parser")
+        #print(soup)
+        
+        repo_list = soup.findAll('poi')
+        print(len(repo_list))
+      
+        for repo in repo_list:
 
-                    page2 = requests.get(clink)
-                    soup2 = BeautifulSoup(page2.text, "html.parser")
-                    link_list = soup2.findAll("span", {'itemprop': 'streetAddress'})
-                    for link in link_list:
-                       
-                        try:
-                            flag = True
-                            m = 0
-                            while m < len(data) and flag:
-                                if link.text == data[m][3]:
-                                    flag = False
-                                    break
-                                else:
-                                    m += 1
-                            if flag:        
-                                link = link.find('a')
-                                link = link['href']
-                                #print(link)
-                                
-                                    
-                                page3 = requests.get(link)
-                                soup3 = BeautifulSoup(page3.text, "html.parser")
-                                #print('enter')
-                                title = soup3.find('meta',{'property':'og:title'})
-                                title = title['content']
-                                street = soup3.find('meta', {'property': 'business:contact_data:street_address'})
-                                street = street['content']
-                                city = soup3.find('meta', {'property': 'business:contact_data:locality'})
-                                city = city['content']
-                                state = soup3.find('meta', {'property': 'business:contact_data:region'})
-                                state = state['content']
-                                pcode = soup3.find('meta', {'property': 'business:contact_data:postal_code'})
-                                pcode = pcode['content']
-                                ccode = soup3.find('meta', {'property': 'business:contact_data:country_name'})
-                                ccode = ccode['content']
-                                phone = soup3.find('meta', {'property': 'business:contact_data:phone_number'})
-                                phone = phone['content']
-                                lat = soup3.find('meta', {'property': 'place:location:latitude'})
-                                lat = lat['content']
-                                longt = soup3.find('meta', {'property': 'place:location:longitude'})
-                                longt = longt['content']
-                                try:
-                                    hours = soup3.find('div',{'class':'allhours'}).text
-                                except:
-                                    hours = "<MISSING>"
-                                start = title.find("#")
-                                store = title[start+1:len(title)]
-                                hours  = hours.replace("\n"," ")
-
-                                if len(hours) < 5:
-                                    hours = "<MISSING>"
-                                if len(phone) < 4:
-                                    phone = "<MISSING>"
-
-                                data.append([
-                                        'https://www.familydollar.com/',
-                                        link,
-                                        title,
-                                        street,
-                                        city,
-                                        state,
-                                        pcode,
-                                        ccode,
-                                        store,
-                                        phone,
-                                        "<MISSING>",
-                                        lat,
-                                        longt,
-                                        hours
-                                    ])
-                                
-                        except:
-                                
-                            pass
-                except:
-                    pass
-        except:
-            pass
-
-    print(len(data))
+            title = repo.find('name').text
+            street = repo.find('address1').text
+            city = repo.find('city').text
+            lat = repo.find('latitude').text
+            longt =  repo.find('longitude').text
+            phone=  repo.find('phone').text
+            store = repo.find('store').text
+            state = repo.find('state').text
+            pcode = repo.find('postalcode').text
+            hours = ''
+            try :
+                hours = hours + "Monday : "+repo.find('monopen').text +' - '+ repo.find('monclose').text +', '
+            except:
+                pass
+            try :
+                hours = hours + "Tuesday : "+repo.find('tueopen').text +' - '+ repo.find('tueclose').text +', '
+            except:
+                pass
+            try :
+                hours = hours + "Wednesday : "+repo.find('wedopen').text +' - '+ repo.find('wedclose').text +', '
+            except:
+                pass
+            try :
+                hours = hours + "Thursday : "+repo.find('thuopen').text +' - '+ repo.find('thuclose').text +', '
+            except:
+                pass
+            try :
+                hours = hours + "Friday : "+repo.find('friopen').text +' - '+ repo.find('friclose').text +', '
+            except:
+                pass
+            try :
+                hours = hours + "Saturday : "+repo.find('satopen').text +' - '+ repo.find('satclose').text +', '
+            except:
+                pass
+            try :
+                hours = hours + "Sunday : "+repo.find('sunopen').text +' - '+ repo.find('sunclose').text +', '
+            except:
+                pass
+            if len(hours) < 3:
+                hours = "<MISSING>"
+            
+            data.append(['https://www.familydollar.com/',url,title,street,city,state,pcode,'US',store,phone,"<MISSING>",lat,longt,hours])
+            #print(p,data[p])
+            p += 1
+            
+            
     return data
 
 def scrape():
