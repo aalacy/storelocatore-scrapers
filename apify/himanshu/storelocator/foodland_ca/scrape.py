@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +26,7 @@ def return_header(host):
     
 def fetch_data():
     data="action=call_endpoint_api"
-    r = requests.post("https://ontario.foodland.ca/wp-admin/admin-ajax.php",data=data,headers=return_header('foodland.ca'))
+    r = session.post("https://ontario.foodland.ca/wp-admin/admin-ajax.php",data=data,headers=return_header('foodland.ca'))
     data = r.json()["data"]["stores"]
     return_main_object = []
     for key in data:
@@ -33,7 +36,7 @@ def fetch_data():
             for store in location:
                 location_url = location[store]
                 location_header = location_url.split("https://")[1].split("/")[0]
-                location_request = requests.get(location_url,headers=return_header(location_header))
+                location_request = session.get(location_url,headers=return_header(location_header))
                 location_soup = BeautifulSoup(location_request.text,"lxml")
                 name = location_soup.find("div",{"class": "store-info"}).find("h2").text
                 store_details = list(location_soup.find("div",{"class":"store-info"}).stripped_strings)

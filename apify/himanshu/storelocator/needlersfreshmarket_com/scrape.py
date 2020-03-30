@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -43,7 +46,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }
     base_url= "https://api.freshop.com/1/stores?app_key=needle&has_address=true&limit=-1&token=295a9cc3d9b6e0f918a73dd88361b312"
-    locations = requests.get(base_url,headers=headers).json()
+    locations = session.get(base_url,headers=headers).json()
     # print(locations)
     # soup= BeautifulSoup(r.text,"lxml")
     return_main_object=[]

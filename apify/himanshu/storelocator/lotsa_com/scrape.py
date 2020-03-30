@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 # import json
 # import sgzip
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -52,13 +55,13 @@ def fetch_data():
 
 
 
-    r= requests.get('https://lotsa.com/locations/',headers = headers)
+    r= session.get('https://lotsa.com/locations/',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
     # tag_address = soup_location.find(
     #             lambda tag: (tag.name == "a" ) and "View Location" in tag.text)
     for a in soup.find_all('a',class_='et_pb_custom_button_icon'):
         # print(a['href'])
-        r_loc = requests.get(base_url + a['href'],headers = headers)
+        r_loc = session.get(base_url + a['href'],headers = headers)
         soup_loc= BeautifulSoup(r_loc.text,'lxml')
         page_url = base_url + a['href']
         div = soup_loc.find('div',class_="et_pb_row_3").find('div',class_='et_pb_text_inner')

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -21,7 +24,7 @@ def fetch_data():
     base_url = locator_domain = "https://www.genisyscu.org"
     country_code = "US"
     store_number = "<MISSING>"
-    r = requests.get("https://www.genisyscu.org/locations",headers=headers)
+    r = session.get("https://www.genisyscu.org/locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     # print(soup.prettify())
     return_main_object = []
@@ -46,7 +49,7 @@ def fetch_data():
                 phone_tag = li.find('span',{'itemprop':'telephone'}).text.strip()
                 phone = "(" +re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))[0].replace('\xa0','').strip()
 
-                r_loc = requests.get(page_url,headers = headers)
+                r_loc = session.get(page_url,headers = headers)
                 soup_loc = BeautifulSoup(r_loc.text,'lxml')
                 section = soup_loc.find('section',{'class':'inside'}).find('article')
                 table = section .find('table')

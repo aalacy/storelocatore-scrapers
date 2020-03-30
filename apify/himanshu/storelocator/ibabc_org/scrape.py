@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup, Comment
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def hasNumbers(inputString):
     return any(char.isdigit() for char in inputString)
@@ -48,7 +51,7 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
 
-    r = requests.get("https://ibabc.org/index.php?option=com_storelocator&view=map&format=raw&searchall=0&Itemid=511&lat=49.2843731&lng=-123.11644030000002&radius=1000000&catid=-1&tagid=-1&featstate=0&name_search=", headers=headers)
+    r = session.get("https://ibabc.org/index.php?option=com_storelocator&view=map&format=raw&searchall=0&Itemid=511&lat=49.2843731&lng=-123.11644030000002&radius=1000000&catid=-1&tagid=-1&featstate=0&name_search=", headers=headers)
     soup = BeautifulSoup(r.text, 'html.parser')
 
     for x in soup.find_all("marker"):

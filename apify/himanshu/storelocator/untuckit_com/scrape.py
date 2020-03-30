@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.untuckit.com"
-    r = requests.get("https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/5048/stores.js")
+    r = session.get("https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/5048/stores.js")
     data = r.json()["stores"]
     return_main_object = []
     for i in range(len(data)):
@@ -24,7 +27,7 @@ def fetch_data():
         store = []
         store.append("https://www.untuckit.com")
         store.append(store_data['name'])
-        location_request = requests.get(store_data["url"])
+        location_request = session.get(store_data["url"])
         location_soup = BeautifulSoup(location_request.text,"lxml")
         address = list(location_soup.find("p",{"class":"store_info--copy"}).stripped_strings)
         ca_zip_split = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}',address[-1])

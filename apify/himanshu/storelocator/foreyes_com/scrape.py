@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
     }
 
-    r = requests.post(base_url + "/wp-admin/admin-ajax.php",data=data,headers=headers)
+    r = session.post(base_url + "/wp-admin/admin-ajax.php",data=data,headers=headers)
     data = r.json()['properties']
     return_main_object = []
     for i in range(len(data)):

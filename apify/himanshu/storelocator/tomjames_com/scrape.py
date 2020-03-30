@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.tomjames.com"
-    r = requests.get("https://www.tomjames.com/locations/", headers=headers)
+    r = session.get("https://www.tomjames.com/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     usa_part = BeautifulSoup(soup.find(
@@ -36,12 +39,12 @@ def fetch_data():
         # print(location["href"])
         page_url = location["href"].strip()
         #print(page_url)
-        location_request = requests.get(
+        location_request = session.get(
             location["href"].strip(), headers=headers)
         location_soup = BeautifulSoup(location_request.text, "lxml")
         try:
             iframe = location_soup.find('iframe')['src']
-            r_coord = requests.get(iframe, headers=headers)
+            r_coord = session.get(iframe, headers=headers)
             soup_coord = BeautifulSoup(r_coord.text, 'lxml')
             script = soup_coord.find(lambda tag: (
                 tag.name == "script") and "initEmbed" in tag.text)
@@ -86,12 +89,12 @@ def fetch_data():
         return_main_object.append(store)
     for location in soup.find_all("div", {"class": "button-link-white white middle"}):
         if "Canada" in location.find("h6").text:
-            location_request = requests.get(
+            location_request = session.get(
                 location.find("a")["href"].strip(), headers=headers)
             location_soup = BeautifulSoup(location_request.text, "lxml")
             try:
                 iframe = location_soup.find('iframe')['src']
-                r_coord = requests.get(iframe, headers=headers)
+                r_coord = session.get(iframe, headers=headers)
                 soup_coord = BeautifulSoup(r_coord.text, 'lxml')
                 script = soup_coord.find(lambda tag: (
                     tag.name == "script") and "initEmbed" in tag.text)

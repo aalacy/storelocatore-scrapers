@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "http://salonrepublic.com"
-    r = requests.get("http://salonrepublic.com/locations/", headers=headers)
+    r = session.get("http://salonrepublic.com/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     addresses = []
@@ -47,7 +50,7 @@ def fetch_data():
         country_code = "US"
         location_type = "<MISSING>"
         # print(page_url)
-        r_loc = requests.get(page_url, headers=headers)
+        r_loc = session.get(page_url, headers=headers)
         soup_loc = BeautifulSoup(r_loc.text, 'lxml')
         try:
             try:

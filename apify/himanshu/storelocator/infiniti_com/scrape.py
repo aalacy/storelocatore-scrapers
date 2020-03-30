@@ -6,8 +6,11 @@ import json
 import sgzip
 import time
 from datetime import datetime
+
 session = SgRequests()
-import requests
+
+session = SgRequests()
+from sgrequests import SgRequests
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -46,7 +49,7 @@ def fetch_data():
         # print("remaining zipcodes: " + str(len(search.zipcodes)))
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
     
-        json_data = requests.get("https://us.nissan-api.net/v2/dealers?size="+str(MAX_RESULTS)+"&lat="+str(lat)+"&long="+str(lng)+"&serviceFilterType=AND&include=openingHours", headers=headers).json()['dealers']
+        json_data = session.get("https://us.nissan-api.net/v2/dealers?size="+str(MAX_RESULTS)+"&lat="+str(lat)+"&long="+str(lng)+"&serviceFilterType=AND&include=openingHours", headers=headers).json()['dealers']
         current_results_len = len(json_data)
         for data in json_data:
             location_name = data['name']    

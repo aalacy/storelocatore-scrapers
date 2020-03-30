@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -46,7 +49,7 @@ def fetch_data():
     # skip = 0
     # while True:
     #     print(skip)
-    r = requests.get(
+    r = session.get(
         "https://www.iga.net/api/en/Store/get?Latitude=45.489599&Longitude=-73.585324&Skip=0&Max=500", headers=headers);
 
     json_data = r.json()
@@ -65,7 +68,7 @@ def fetch_data():
         raw_address = x['RawName']
         store_number = x['Number']
         page_url = "https://www.iga.net" + x["StoreDetailPageUrl"]
-        r_loc = requests.get(page_url, headers=headers)
+        r_loc = session.get(page_url, headers=headers)
         soup_loc = BeautifulSoup(r_loc.text, "lxml")
         div = soup_loc.find("div", {"id": "body_0_main_0_PnlOpenHours"})
         if div == None:

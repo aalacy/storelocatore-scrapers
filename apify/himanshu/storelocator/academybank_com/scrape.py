@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -15,16 +18,16 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.academybank.com"
-    r = requests.get(base_url + "/locations")
+    r = session.get(base_url + "/locations")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for states in soup.find_all("div",{"class": "views-summary views-summary-unformatted"}):
         link = states.find("a")['href']
-        state_request = requests.get(base_url + link)
+        state_request = session.get(base_url + link)
         state_soup = BeautifulSoup(state_request.text,"lxml")
         for locations in state_soup.find_all("div",{"class": "views-summary views-summary-unformatted"}):
             location_link = locations.find("a")['href']
-            location_request = requests.get(base_url + location_link)
+            location_request = session.get(base_url + location_link)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             for li in location_soup.find("ol").find_all("li",recusive=False):
                 store = []

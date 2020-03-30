@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,12 +19,12 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://elevatetrampolinepark.com/"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for location in soup.find_all("div",{"class":"hover_box"}):
         link = location.find("a")['href']
-        location_request = requests.get(link)
+        location_request = session.get(link)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         if location_soup.find("h4") == None:
             continue

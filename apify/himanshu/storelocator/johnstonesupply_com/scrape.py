@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,13 +19,13 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.johnstonesupply.com/storefront/static/findAStore.ep"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
     main=soup.find('select',{"id":"selectStoreStates"}).find_all('option')
     for atag in main:
         link="https://www.johnstonesupply.com/storefront/findByStateOrZip.ep?state="+atag['value']+"&sortBy=undefined"
-        r1 = requests.get(link)
+        r1 = session.get(link)
         soup1=BeautifulSoup(r1.text,'lxml')
         for val in soup1.find_all('div',{"class":"floatLeft width400"}):
             loc=list(val.stripped_strings)

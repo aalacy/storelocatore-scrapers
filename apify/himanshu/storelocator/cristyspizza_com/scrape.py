@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 # import http.client
 import json
 # import  pprint
 import time
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,7 +35,7 @@ def fetch_data():
      
        
      
-    r= requests.get(get_url,headers=header)
+    r= session.get(get_url,headers=header)
     soup = BeautifulSoup(r.text,"lxml")
     main = soup.find_all("div",{'class':"fl-html"})
    
@@ -60,7 +63,7 @@ def fetch_data():
                 link1 = i.find('a')['href']
                 link2 = base_url+link1
                 link = link2.replace('https://cristyspizza.comhttp://www.papaboos.com','http://www.papaboos.com')               
-                r1= requests.get(link,headers=header)
+                r1= session.get(link,headers=header)
                 soup1 = BeautifulSoup(r1.text,"lxml")            
                 lat_tmp= soup1.find_all('iframe')[1]['src'].split('!2d')
                 lng = lat_tmp[1].split('!3d')[0]

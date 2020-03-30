@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def fetch_data():
     return_main_object = []
     output=[]
     while i>0:
-        r = requests.get(base_url+'/us/selfservice/FindStore?zip=&address=&city=&state=&curpage='+str(i))
+        r = session.get(base_url+'/us/selfservice/FindStore?zip=&address=&city=&state=&curpage='+str(i))
         soup=BeautifulSoup(r.text,'lxml')
         print(i)
         if soup.find('div',{'class':"storefinder-results"})==None:

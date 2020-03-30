@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import urllib3
+
+session = SgRequests()
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def write_output(data):
@@ -270,7 +273,7 @@ def fetch_data():
         'Åland Islands': 'AX'
     }
     base_url = "https://juanvaldezcafe.com"
-    r = requests.get(base_url + "/en-us/stores",verify=False)
+    r = session.get(base_url + "/en-us/stores",verify=False)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
 

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     cords = sgzip.coords_for_radius(100)
     for cord in cords:
         base_url = "https://www.chevronlubricants.com"
-        r = requests.get("https://locators.deloperformance.com/api/ws_marketerLocator-search-geo.aspx?lat=" + str(cord[0]) + "&lng=" + str(cord[1]) + "&radius=100&output=json&zoom=12&region=us&v=2",headers=headers,verify=False)
+        r = session.get("https://locators.deloperformance.com/api/ws_marketerLocator-search-geo.aspx?lat=" + str(cord[0]) + "&lng=" + str(cord[1]) + "&radius=100&output=json&zoom=12&region=us&v=2",headers=headers,verify=False)
         data = r.json()["marketers"]
         for store_data in data:
             store = []

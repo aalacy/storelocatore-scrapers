@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -58,7 +61,7 @@ def fetch_data():
         j =0
         result_coords = []
         while j!=-1:
-            r = requests.get("https://www.tumi.com/store-finder?q="+str(zip_code)+"&searchRadius="+str(MAX_DISTANCE)+"&page="+str(j),
+            r = session.get("https://www.tumi.com/store-finder?q="+str(zip_code)+"&searchRadius="+str(MAX_DISTANCE)+"&page="+str(j),
                 headers=headers)
             soup1= BeautifulSoup(r.text,"lxml")
             id1 = soup1.find("form",{"id":"myStoreForm"})

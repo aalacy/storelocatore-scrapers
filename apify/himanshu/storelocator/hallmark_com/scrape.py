@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import http.client
@@ -7,6 +7,9 @@ import sgzip
 import json
 import pprint
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -54,7 +57,7 @@ def fetch_data():
         page_url = ''
         # print("remaining zipcodes: " + str(len(search.zipcodes)))
         try:
-            r = requests.get("https://maps.hallmark.com/api/getAsyncLocations?template=searchResultsMap&level=search&radius=" + str(MAX_DISTANCE) + "&search=" + str(search.current_zip),
+            r = session.get("https://maps.hallmark.com/api/getAsyncLocations?template=searchResultsMap&level=search&radius=" + str(MAX_DISTANCE) + "&search=" + str(search.current_zip),
                              headers).json()
         except:
             continue
@@ -95,7 +98,7 @@ def fetch_data():
                 latitude = x['lat']
                 longitude = x['lng']
                 kk = soup.find('a', {'class': 'gaq-link'})['href']
-                r1 = requests.get(
+                r1 = session.get(
                     soup.find('a', {'class': 'gaq-link'})['href'])
                 soup1 = BeautifulSoup(r1.text, "lxml")
                 location_name = soup1.find(

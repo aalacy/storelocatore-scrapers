@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding='utf8') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     }
 
     base_url = "http://cohoesfashions.com"
-    r = requests.get(base_url+ "/pg_stores.html", headers=headers)
+    r = session.get(base_url+ "/pg_stores.html", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for parts in soup.find_all("td", {"class": "small"}):
         if(parts.find("div", {"class": "smallbold"})):

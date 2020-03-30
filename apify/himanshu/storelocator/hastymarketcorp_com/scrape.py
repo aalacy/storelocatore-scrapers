@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,12 +28,12 @@ def fetch_data():
     zips = sgzip.for_radius(100)
     addresses= []
 
-    r = requests.get("http://hastymarketcorp.com/locations-for-sale/browse-listings/?results=500", headers=header)
+    r = session.get("http://hastymarketcorp.com/locations-for-sale/browse-listings/?results=500", headers=header)
     soup = BeautifulSoup(r.text, "lxml")
     vk = soup.find_all('h4',{'class':'awpcp-listing-title'})
     for x in vk:
 
-        r = requests.get(x.find('a')['href'], headers=header)
+        r = session.get(x.find('a')['href'], headers=header)
 
         soup = BeautifulSoup(r.text, "lxml")
 

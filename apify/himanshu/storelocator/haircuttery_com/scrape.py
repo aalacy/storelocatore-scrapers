@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -47,12 +50,12 @@ def fetch_data():
     # skip = 0
     # while True:
     #     print(skip)
-    r = requests.get("https://locations.haircuttery.com/", headers=headers)
+    r = session.get("https://locations.haircuttery.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for li in soup.find_all("li", class_="c-directory-list-content-item"):
         if "/" not in li.a["href"]:
             link1 = "https://locations.haircuttery.com/" + li.a["href"]
-            r_loc = requests.get(link1, headers=headers)
+            r_loc = session.get(link1, headers=headers)
             soup_loc = BeautifulSoup(r_loc.text, "lxml")
             for li in soup_loc.find_all("li", class_="c-directory-list-content-item"):
                 link2 = li.a["href"].split("/")
@@ -60,7 +63,7 @@ def fetch_data():
                     link2 = "https://locations.haircuttery.com/" + \
                         li.a["href"]
                     # print(link2)
-                    r_loc1 = requests.get(link2, headers=headers)
+                    r_loc1 = session.get(link2, headers=headers)
                     soup_loc1 = BeautifulSoup(r_loc1.text, "lxml")
                     if soup_loc1.find_all(
                             "h5", class_="c-location-grid-item-title") != []:
@@ -68,7 +71,7 @@ def fetch_data():
                             page_url = "https://locations.haircuttery.com" + \
                                 h5.a["href"].replace("..", "").strip()
                             # print(page_url)
-                            details_r = requests.get(page_url, headers=headers)
+                            details_r = session.get(page_url, headers=headers)
                             details_soup = BeautifulSoup(
                                 details_r.text, "lxml")
                             try:
@@ -136,7 +139,7 @@ def fetch_data():
                     page_url = "https://locations.haircuttery.com/" + \
                         li.a["href"]
                     # print(link2)
-                    r_loc2 = requests.get(page_url, headers=headers)
+                    r_loc2 = session.get(page_url, headers=headers)
                     soup_loc2 = BeautifulSoup(r_loc2.text, "lxml")
 
                     try:
@@ -203,7 +206,7 @@ def fetch_data():
             pass
             page_url = "https://locations.haircuttery.com/" + li.a["href"]
 
-            r_loc3 = requests.get(page_url, headers=headers)
+            r_loc3 = session.get(page_url, headers=headers)
             soup_loc3 = BeautifulSoup(r_loc3.text, "lxml")
 
             try:

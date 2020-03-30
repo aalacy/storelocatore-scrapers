@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def hasNumbers(inputString):
     return any(char.isdigit() for char in inputString)
@@ -29,7 +32,7 @@ def fetch_data():
 
     addresses = []
 
-    r = requests.get(
+    r = session.get(
         "https://retailers.rolex.com/app/establishments/light/jsFront?establishmentType=STORE&langCode=en&brand=RLX&countryCodeGeofencing=US").json()
 
     for vj in r:
@@ -103,7 +106,7 @@ def fetch_data():
                 location_type = ''
                 latitude = vj['lat']
                 longitude = vj['lng']
-                k = requests.get(
+                k = session.get(
                     'https://www.rolex.com/rolex-dealers/dealer-locator/retailers-details/' + str(vj['urlRolex']))
 
                 soup1 = BeautifulSoup(k.text, "lxml")

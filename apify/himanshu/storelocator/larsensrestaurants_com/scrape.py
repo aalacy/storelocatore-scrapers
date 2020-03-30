@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w')as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     link_append=[]
     get_url = "https://www.larsensrestaurants.com/locations-and-menus"
     base_url = "https://larsensrestaurants.com/"
-    r1 = requests.get(base_url,headers= headers)
+    r1 = session.get(base_url,headers= headers)
     soup1 = BeautifulSoup(r1.text,"lxml")
     hours_list = []
     l_name = []
@@ -42,7 +45,7 @@ def fetch_data():
         
 
     
-    r = requests.get(get_url, headers=headers)    
+    r = session.get(get_url, headers=headers)    
     soup = BeautifulSoup(r.text, "lxml")
     main =soup.find("script",{"class":"js-react-on-rails-component"}).text
     js = json.loads(main)

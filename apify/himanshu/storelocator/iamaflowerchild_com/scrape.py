@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -41,11 +44,11 @@ def fetch_data():
     "Accept":"*/*",
     }
     base_url= "https://www.iamaflowerchild.com/api/?action=get-all-locations"
-    r = requests.get(base_url,headers=headers)
+    r = session.get(base_url,headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
     k =(json.loads(soup.text))
     for i in k['data']:
-        r1 = requests.get(i['permalink'],headers=headers)
+        r1 = session.get(i['permalink'],headers=headers)
         soup1= BeautifulSoup(r1.text,"lxml")
        
         if "statusIndicationMessageFriendly" in i['location'] and  i['location']['statusIndicationMessageFriendly'] == "Opening Soon": 
@@ -72,7 +75,7 @@ def fetch_data():
             else:
                 phone = "<MISSING>"
            
-            r1 = requests.get(i['permalink'],headers=headers)
+            r1 = session.get(i['permalink'],headers=headers)
             soup1= BeautifulSoup(r1.text,"lxml")
             json1 = json.loads(soup1.find("script",{'type':"application/ld+json"}).text)
             lat = json1['geo']['latitude']

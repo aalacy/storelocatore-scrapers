@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     return_main_object = []
     base_url = "https://www.fredericmalle.com"
     get_url = "https://www.fredericmalle.com/about#stores"
-    r = requests.get(get_url, headers=headers)
+    r = session.get(get_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     data = soup.find_all("ul", {"class":"accordions accordions--countries js-accordion--countries"})[:18]
     for i in data:

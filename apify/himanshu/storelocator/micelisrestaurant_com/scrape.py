@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     }
 
     base_url = "https://www.micelisrestaurant.com"
-    r = requests.get('https://www.micelis.restaurant/contact', headers=headers)
+    r = session.get('https://www.micelis.restaurant/contact', headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_con = []
     for parts in soup.find_all("div", {"id": "content"}):
@@ -51,12 +54,12 @@ def fetch_data():
                 return_object.append(phone)
                 return_object.append(hours_of_operation)
                 return_con.append(return_object)
-        rs = requests.get('https://www.micelis.restaurant/map-directions', headers=headers)
+        rs = session.get('https://www.micelis.restaurant/map-directions', headers=headers)
         soups = BeautifulSoup(rs.text, "lxml")
         i = 0
         for parts in soups.find_all("div", {"class": "wpb_animate_when_almost_visible"}):
             full_address_url = parts.find("iframe", {"width": "600"})["src"]
-            geo_request = requests.get(full_address_url, headers=headers)
+            geo_request = session.get(full_address_url, headers=headers)
             geo_soup = BeautifulSoup(geo_request.text, "lxml")
             for script_geo in geo_soup.find_all("script"):
                 if "initEmbed" in script_geo.text:

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,11 +23,11 @@ def fetch_data():
     return_main_object = []
     base_url = "https://www.innsuites.com"
     
-    r = requests.get(base_url ,headers = header)
+    r = session.get(base_url ,headers = header)
     soup = BeautifulSoup(r.text,"html.parser")
     
     for val in  soup.find('ul',{'class':'hotel-url'}).find_all('a'):
-            r = requests.get(val['href'] ,headers = header)
+            r = session.get(val['href'] ,headers = header)
             soup = BeautifulSoup(r.text,"html.parser")
             locator_domain = base_url
             vk = soup.find('section',{'id':'description'})

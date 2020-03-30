@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -68,7 +71,7 @@ def fetch_data():
     for zip_code in zips:
 
         try:
-            r = requests.get(
+            r = session.get(
                 'https://native.healthmart.com/HmNativeSvc/SearchByGpsAllNoState/'+ str(zip_code[0]) + '/' + zip_code[1] + '?apikey=180A0FF6-6659-44EA-8E03-2BE22C2B27A3',
                 headers=headers,
         

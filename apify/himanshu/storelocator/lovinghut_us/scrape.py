@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
     address = []
     
     base_url= "https://lovinghut.us/locations/"
-    r= requests.get(base_url, headers=headers)
+    r= session.get(base_url, headers=headers)
     soup=BeautifulSoup(r.text, "lxml")
     links=soup.find_all("td",{"class":"tg-citi"})
    
@@ -32,7 +35,7 @@ def fetch_data():
     for link in links:
         href = (link.a["href"])
         
-        r1 = requests.get(href, headers=headers)
+        r1 = session.get(href, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         data = soup1.find("p",{"class":"section_text dark"})  
         if data != None:
@@ -57,7 +60,7 @@ def fetch_data():
                     name = list(link.stripped_strings)
                     location_name = " ".join(name)
                     src = iframe.attrs["src"]
-                    geo_request = requests.get(src, headers=headers)
+                    geo_request = session.get(src, headers=headers)
                     geo_soup = BeautifulSoup(geo_request.text, "lxml")
 
                     for script_geo in geo_soup.find_all("script"):

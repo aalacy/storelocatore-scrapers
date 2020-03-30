@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
         count = 1
         while True:
             base_url = "https://www.ramtrucks.com"
-            r = requests.get("https://www.ramtrucks.com/bdlws/MDLSDealerLocator?brandCode=R&func=SALES&radius=200&resultsPage=" +  str(count) + "&resultsPerPage=200&zipCode=" + str(zip_code),headers=headers)
+            r = session.get("https://www.ramtrucks.com/bdlws/MDLSDealerLocator?brandCode=R&func=SALES&radius=200&resultsPage=" +  str(count) + "&resultsPerPage=200&zipCode=" + str(zip_code),headers=headers)
     
             data = r.json()
             if "dealer" not in data:
@@ -52,7 +55,7 @@ def fetch_data():
                 store.append(store_data["phoneNumber"] if store_data["phoneNumber"] else "<MISSING>")
                 if store[-1] != "<MISSING>":
                     # print("https://rw.marchex.io/phone/Ch4NmVi5xREg6wEE/%7B%221%22%3A%22" + str(store[-1].replace(" ","").replace("-","")) + "%22%7D?url=https%3A%2F%2Fwww.ramtrucks.com%2Ffind-dealer.html")
-                    phone_request = requests.get("https://rw.marchex.io/phone/Ch4NmVi5xREg6wEE/%7B%221%22%3A%22" + str(store[-1].replace(" ","").replace("-","")) + "%22%7D?url=https%3A%2F%2Fwww.ramtrucks.com%2Ffind-dealer.html",headers=headers)
+                    phone_request = session.get("https://rw.marchex.io/phone/Ch4NmVi5xREg6wEE/%7B%221%22%3A%22" + str(store[-1].replace(" ","").replace("-","")) + "%22%7D?url=https%3A%2F%2Fwww.ramtrucks.com%2Ffind-dealer.html",headers=headers)
                     if '"ctn"' in phone_request.text:
                         phone = phone_request.text.split('"ctn"')[1].split("}")[0].replace(":","").replace('"','')
                         store[-1] = phone

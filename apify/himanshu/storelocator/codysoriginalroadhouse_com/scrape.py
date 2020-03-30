@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,13 +22,13 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://codysoriginalroadhouse.com"
-    r = requests.get("https://codysoriginalroadhouse.com/locations.html",headers=headers)
+    r = session.get("https://codysoriginalroadhouse.com/locations.html",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for location in soup.find("div",{"class":"clearfix grpelem"}).find_all("a",{'class':'nonblock nontext grpelem'}):
         if "/" in location["href"]:
             continue
-        location_request = requests.get(base_url + "/" +  location["href"],headers=headers)
+        location_request = session.get(base_url + "/" +  location["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         if location_soup.find("div",{'class':"clearfix colelem","id":re.compile("-")}) == None:
             continue

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,21 +19,21 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.cnb.com/"
-    r = requests.get("https://locations.cnb.com/")
+    r = session.get("https://locations.cnb.com/")
     soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
     output=[]
     main=soup.find('div',{"id":'mapList'}).find_all('a',{"class":'ga-link'})
     for atag in main:
-        r1 = requests.get(atag['href'])
+        r1 = session.get(atag['href'])
         soup1=BeautifulSoup(r1.text,'lxml')
         main1=soup1.find('div',{"id":'mapList'}).find_all('a',{"class":'ga-link'})
         for atag1 in main1:
-            r2 = requests.get(atag1['href'])
+            r2 = session.get(atag1['href'])
             soup2=BeautifulSoup(r2.text,'lxml')
             main2=soup2.find_all('div',{"class":'locationName'})
             for atag2 in main2:
-                r3 = requests.get(atag2.find('a')['href'])
+                r3 = session.get(atag2.find('a')['href'])
                 soup3=BeautifulSoup(r3.text,'lxml')
                 loc=json.loads(soup3.find('script',{"type":"application/ld+json"}).text, strict=False)
                 name=loc[0]['name'].replace('The City National Difference - ','').strip()

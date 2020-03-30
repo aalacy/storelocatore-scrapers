@@ -1,13 +1,16 @@
 
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -38,7 +41,7 @@ def fetch_data():
 
     location_url = "https://www.runnings.com/"
 
-    r = requests.get(location_url, headers=headers)
+    r = session.get(location_url, headers=headers)
     # r_utf = r.text.encode('ascii', 'ignore').decode('ascii')
     soup = BeautifulSoup(r.text, "lxml")
 
@@ -46,7 +49,7 @@ def fetch_data():
     for x in soup.find('select',{'class':'runnings-store'}).find_all('option'):
 
         # data = 'id='+str(x['value'])
-        location = requests.get('https://www.runnings.com//storelocator/storedetails/post?id='+str(x['value'])).json()
+        location = session.get('https://www.runnings.com//storelocator/storedetails/post?id='+str(x['value'])).json()
 
         locator_domain =   base_url
 

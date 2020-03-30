@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import io
 import json
 import time
+
+session = SgRequests()
+
 def remove(string):
     pattern = re.compile(r'\s+')
     return re.sub(pattern, ' ', string)
@@ -24,13 +27,13 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.sylvanlearning.com/locations"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     addresses = []
 
 
     base_url = 'https://www.sylvanlearning.com/'
     location_url = 'https://www.sylvanlearning.com/locations/'
-    r = requests.get(location_url)
+    r = session.get(location_url)
     soup = BeautifulSoup(r.text,"lxml")
     # us canada url fetch
     location  = []
@@ -51,7 +54,7 @@ def fetch_data():
                 if y in vb:
                     country_code = vb[y][0]
 
-                r = requests.get(base_url+y['href'])
+                r = session.get(base_url+y['href'])
                 soup = BeautifulSoup(r.text,"lxml")
                 for j in soup.find_all('div',{'class':'locationResults'}):
                     locator_domain = base_url
@@ -65,7 +68,7 @@ def fetch_data():
                     phone =  j.find('span',{'itemprop':'telephone'}).text
                     gethour = j.find('h2', {'itemprop':'name'}).find('a')['href']
 
-                    r = requests.get(gethour)
+                    r = session.get(gethour)
                     location_type = ''
                     store_number = ''
                     soup = BeautifulSoup(r.text,"lxml")

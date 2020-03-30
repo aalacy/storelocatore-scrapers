@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -20,7 +23,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.onewestbank.com"
-    r = requests.get("https://www.onewestbank.com/handlers/StoreLocationsHandler.ashx?BranchLocationsId=23622321295",headers=headers)
+    r = session.get("https://www.onewestbank.com/handlers/StoreLocationsHandler.ashx?BranchLocationsId=23622321295",headers=headers)
     return_main_object = []
     for location in r.text.split("\n")[1:]:
         location_details = location.split('",')

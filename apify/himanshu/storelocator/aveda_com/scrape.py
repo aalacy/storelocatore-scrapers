@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -27,7 +30,7 @@ def fetch_data():
     for cord in cords:
         base_url = "https://www.aveda.com"
         data = 'JSONRPC=%5B%7B%22method%22%3A%22locator.doorsandevents%22%2C%22id%22%3A7%2C%22params%22%3A%5B%7B%22fields%22%3A%22DOOR_ID%2C+SALON_ID%2C+ACTUAL_DOORNAME%2C+ACTUAL_ADDRESS%2C+ACTUAL_ADDRESS2%2C+ACTUAL_CITY%2C+STORE_TYPE%2C+STATE%2C+ZIP%2C+DOORNAME%2C+ADDRESS%2C+ADDRESS2%2C+CITY%2C+STATE_OR_PROVINCE%2C+ZIP_OR_POSTAL%2C+COUNTRY%2C+PHONE1%2C+CLASSIFICATION%2C+IS_SALON%2C+IS_LIFESTYLE_SALON%2C+IS_INSTITUTE%2C+IS_FAMILY_SALON%2C+IS_CONCEPT_SALON%2C+IS_STORE%2C+HAS_EXCLUSIVE_HAIR_COLOR%2C+HAS_PURE_PRIVILEGE%2C+HAS_PERSONAL_BLENDS%2C+HAS_GIFT_CARDS%2C+HAS_PAGE%2C+HAS_SPA_SERVICES%2C+IS_GREEN_SALON%2C+HAS_RITUALS%2C+DO_NOT_REFER%2C+HAS_EVENTS%2C+LONGITUDE%2C+LATITUDE%2C+LOCATION%2C+WEBURL%2C+EMAILADDRESS%2C+APPT_URL%22%2C%22radius%22%3A%22100%22%2C%22country%22%3A%22USA%22%2C%22city%22%3A%22USA%22%2C%22region_id%22%3A%220%22%2C%22language_id%22%3A%22%22%2C%22latitude%22%3A' + str(cord[0]) + '%2C%22longitude%22%3A' + str(cord[1]) + '%2C%22uom%22%3A%22miles%22%2C%22primary_filter%22%3A%22filter_salon_spa_store%22%2C%22filter_HC%22%3A0%2C%22filter_PP%22%3A0%2C%22filter_SS%22%3A0%2C%22filter_SR%22%3A0%2C%22filter_EM%22%3A0%7D%5D%7D%5D'
-        r = requests.post("https://www.aveda.com/rpc/jsonrpc.tmpl?dbgmethod=locator.doorsandevents",headers=headers,data=data)
+        r = session.post("https://www.aveda.com/rpc/jsonrpc.tmpl?dbgmethod=locator.doorsandevents",headers=headers,data=data)
         data = r.json()[0]["result"]["value"]["results"]
         for key in data:
             store_data = data[key]

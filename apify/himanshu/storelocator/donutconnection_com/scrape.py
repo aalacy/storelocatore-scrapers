@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://donutconnection.com"
-    r = requests.post(base_url + "/wp-content/plugins/store-locator/sl-xml.php")
+    r = session.post(base_url + "/wp-content/plugins/store-locator/sl-xml.php")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for store_data in soup.find_all("marker"):

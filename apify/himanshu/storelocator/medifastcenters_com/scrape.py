@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,14 +19,14 @@ def write_output(data):
 
 def fetch_data():
     base_url = "http://medifastcenters.com"
-    r = requests.get(base_url+'/findaCenter/')
+    r = session.get(base_url+'/findaCenter/')
     soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
     output=[]
     main=soup.find('select',{'id':"ddlStates"}).find_all('option')
     del main[0]
     for opt in main:
-        r1 = requests.get(base_url+'/findaCenter/results.aspx?state='+opt['value'])
+        r1 = session.get(base_url+'/findaCenter/results.aspx?state='+opt['value'])
         soup1=BeautifulSoup(r1.text,'lxml')
         main1=soup1.find_all('div',{"class":"block_services_type_1"})
         scr=''

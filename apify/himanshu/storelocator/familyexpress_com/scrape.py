@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://familyexpress.com/api/locations/place"
-    r = requests.get(base_url).json()['places']
+    r = session.get(base_url).json()['places']
     return_main_object = []
     for location in r:
         if location['yextData']:

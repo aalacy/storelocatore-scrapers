@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,11 +22,11 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://chcarolinaherrera.com"
-    r = requests.post("https://chcarolinaherrera.com/00/en/storelocator",headers=headers)
+    r = session.post("https://chcarolinaherrera.com/00/en/storelocator",headers=headers)
     return_main_object = []
     soup = BeautifulSoup(r.text,"lxml")
     for location in soup.find("datalist",{"data-country-id":"US"}).find_all("option"):
-        state_request = requests.get("https://chcarolinaherrera.com/STLStoreLocatorJSONDisplayView?catalogId=3074457345616676668&langId=-1002&storeId=715838508&country=US&state=" + str(location["value"]) + "&searchTerm=" ,headers=headers)
+        state_request = session.get("https://chcarolinaherrera.com/STLStoreLocatorJSONDisplayView?catalogId=3074457345616676668&langId=-1002&storeId=715838508&country=US&state=" + str(location["value"]) + "&searchTerm=" ,headers=headers)
         state_soup = BeautifulSoup(state_request.text,"lxml")
         file1 = open("myfile1.txt","w")
         file1.write(state_soup.find("script").text.split("STL.storeArray = ")[1].split("];")[0] + "]")

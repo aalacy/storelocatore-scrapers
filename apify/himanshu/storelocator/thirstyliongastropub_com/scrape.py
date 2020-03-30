@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -33,7 +36,7 @@ def fetch_data():
     hours1 =[]
     for p in arr:
         base_url= "https://www.thirstyliongastropub.com/"+str(p)
-        r = requests.get(base_url)
+        r = session.get(base_url)
         soup= BeautifulSoup(r.text,"lxml")
         new_name = str(p)
         k=(soup.find_all("div",{"class":"sqs-block html-block sqs-block-html"}))

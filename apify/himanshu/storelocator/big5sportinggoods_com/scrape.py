@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -39,7 +42,7 @@ def fetch_data():
         # print("zip_code === ",lat)
         base_url= "http://big5sportinggoods.com/store/integration/find_a_store.jsp?storeLocatorAddressField="+str(search.current_zip)+"&miles=100&lat="+str(lat)+"&lng="+str(lng)+"&showmap=yes"
         try:
-            r = requests.get(base_url)
+            r = session.get(base_url)
         except:
             pass
         soup= BeautifulSoup(r.text,"lxml")

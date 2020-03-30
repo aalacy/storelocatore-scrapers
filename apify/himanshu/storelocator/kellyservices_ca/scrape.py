@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ import time
 import sgzip
 import urllib.parse
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +28,7 @@ def request_wrapper(url,method,headers,data=None):
     if method == "get":
         while True:
             try:
-                r = requests.get(url,headers=headers)
+                r = session.get(url,headers=headers)
                 return r
                 break
             except:
@@ -38,9 +41,9 @@ def request_wrapper(url,method,headers,data=None):
         while True:
             try:
                 if data:
-                    r = requests.post(url,headers=headers,data=data)
+                    r = session.post(url,headers=headers,data=data)
                 else:
-                    r = requests.post(url,headers=headers)
+                    r = session.post(url,headers=headers)
                 return r
                 break
             except:
@@ -71,7 +74,7 @@ def fetch_data():
     base_url = "https://www.kellyservices.ca"
 
     loc_search_url = 'https://branchlocator.kellyservices.com/default.aspx?s=&l='
-    r_loc_search = requests.get(loc_search_url, headers=headers)
+    r_loc_search = session.get(loc_search_url, headers=headers)
     # print("r_loc_search === "+ str(r_loc_search.text))
     soup_loc_search = BeautifulSoup(r_loc_search.text, "lxml")
     view_state = urllib.parse.quote(soup_loc_search.find("input", {"id": "__VIEWSTATE"})["value"])
@@ -88,7 +91,7 @@ def fetch_data():
             zip_code) + '&btnSearch=+Search'
 
         # print("data == "+ data)
-        # r_locations = requests.post("https://branchlocator.kellyservices.com/default.aspx", headers=headers, data=data)
+        # r_locations = session.post("https://branchlocator.kellyservices.com/default.aspx", headers=headers, data=data)
 
         r_locations = request_wrapper("https://branchlocator.kellyservices.com/default.aspx","post", headers=headers,data=data)
 

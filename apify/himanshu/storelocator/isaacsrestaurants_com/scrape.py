@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url= "https://www.isaacsrestaurants.com/locations/"
-    r = requests.get(base_url,headers=headers)
+    r = session.get(base_url,headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -33,7 +36,7 @@ def fetch_data():
     for i in k:
         tem_var=[]
         base_url= i['href']
-        r = requests.get(base_url,headers=headers)
+        r = session.get(base_url,headers=headers)
         soup1= BeautifulSoup(r.text,"lxml")
         v = list(soup1.find("address").stripped_strings)
         v1 = list(soup1.find("div",{"class":"phones"}).stripped_strings)

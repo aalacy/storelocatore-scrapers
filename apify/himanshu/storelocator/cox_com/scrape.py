@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     addresses = []
 
     base_url = "https://www.cox.com"
-    r = requests.get("https://www.cox.com/webapi/aem/coxretaillocations", headers=headers)
+    r = session.get("https://www.cox.com/webapi/aem/coxretaillocations", headers=headers)
     # soup = BeautifulSoup(r.text, "lxml")
     json_data = r.json()
 

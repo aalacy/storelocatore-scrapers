@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding='utf8') as output_file:
@@ -27,13 +30,13 @@ def fetch_data():
     }
 
     base_url = "https://www.fourseasons.com"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for parts in soup.find_all("ul", {"class": "Navigation-mainLinks"}):
         semi_part = parts.find_all("li", {"class": "Navigation-item"})[0]
         # print(base_url + semi_part.find("a")['href'])
         # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        store_request = requests.get(base_url + semi_part.find("a")['href'])
+        store_request = session.get(base_url + semi_part.find("a")['href'])
         store_soup = BeautifulSoup(store_request.text, "lxml")
         dl = store_soup.find('dl', class_='Accordion')
         accordion = dl.find('div', class_='Accordion-item')
@@ -44,7 +47,7 @@ def fetch_data():
             city = in_semi_part.find("a").text.split(
                 ',')[-1].strip()
             city = city.split('(')[0].strip()
-            store_re = requests.get(
+            store_re = session.get(
                 base_url + in_semi_part.find("a")['href'])
             main_store_soup = BeautifulSoup(store_re.text, "lxml")
 

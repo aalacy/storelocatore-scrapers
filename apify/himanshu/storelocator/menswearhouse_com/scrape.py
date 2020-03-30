@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -43,7 +46,7 @@ def fetch_data():
         
         location_url = "https://www.menswearhouse.com/sr/search/resources/store/12751/storelocator/byProximity?radius="+str(MAX_DISTANCE)+"&zip="+str(zip_code)+"&city=&state=&brand=TMW&profileName=X_findStoreLocatorWithExtraFields"
         try:
-            loc = requests.get(location_url,headers=headers).json()
+            loc = session.get(location_url,headers=headers).json()
         except:
             continue
         # soup1 = BeautifulSoup(loc.text, "html.parser")

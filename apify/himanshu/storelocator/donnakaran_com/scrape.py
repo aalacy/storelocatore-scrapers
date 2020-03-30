@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.donnakaran.com"
-    r = requests.get(base_url + "/store-locator/all-stores.do")
+    r = session.get(base_url + "/store-locator/all-stores.do")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for location in soup.find_all("div",{"class":"ml-storelocator-item-wrapper"}):
@@ -42,7 +45,7 @@ def fetch_data():
         store.append(phone)
         store.append("donna karan")
         url = location.find("div",{"class":"eslStore ml-storelocator-headertext"}).find("a")["href"]
-        location_request = requests.get(base_url + url)
+        location_request = session.get(base_url + url)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         for script in location_soup.find_all("script"):
             if 'location":' in script.text:

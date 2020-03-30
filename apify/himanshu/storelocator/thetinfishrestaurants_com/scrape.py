@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +31,7 @@ def fetch_data():
     data = 'address=&formdata=addressInput%3D&lat=37.09024&lng=-95.71289100000001&name=&options%5Bdistance_unit%5D=miles&options%5Bdropdown_style%5D=none&options%5Bignore_radius%5D=0&options%5Bimmediately_show_locations%5D=1&options%5Binitial_radius%5D=10000&options%5Blabel_directions%5D=Directions&options%5Blabel_email%5D=Email&options%5Blabel_fax%5D=Fax%3A+&options%5Blabel_phone%5D=Phone%3A+&options%5Blabel_website%5D=http%3A%2F%2Fwww.thetinfishrestaurants.com&options%5Bloading_indicator%5D=&options%5Bmap_center%5D=United+States&options%5Bmap_center_lat%5D=37.09024&options%5Bmap_center_lng%5D=-95.712891&options%5Bmap_domain%5D=maps.google.com&options%5Bmap_end_icon%5D=http%3A%2F%2Fwww.thetinfishrestaurants.com%2Fwp-content%2Fuploads%2F2013%2F01%2FTF-Marker.png&options%5Bmap_home_icon%5D=http%3A%2F%2Fwww.thetinfishrestaurants.com%2Fwp-content%2Fplugins%2Fstore-locator-le%2Fimages%2Ficons%2Fbox_yellow_home.png&options%5Bmap_region%5D=us&options%5Bmap_type%5D=roadmap&options%5Bmessage_bad_address%5D=Could+not+locate+this+address.+Please+try+a+different+location.&options%5Bmessage_no_results%5D=No+locations+found.&options%5Bno_autozoom%5D=0&options%5Buse_sensor%5D=false&options%5Bzoom_level%5D=4&options%5Bzoom_tweak%5D=1&radius=10000&tags=&action=csl_ajax_onload'
 
     base_url= "https://www.thetinfishrestaurants.com/wp-admin/admin-ajax.php"
-    loc = requests.post(base_url,data=data,headers=headers).json()
+    loc = session.post(base_url,data=data,headers=headers).json()
     
     store_name=[]
     store_detail=[]

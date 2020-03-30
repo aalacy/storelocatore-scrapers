@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -50,7 +53,7 @@ def fetch_data():
 
 
     get_data_url = 'https://www.chopard.com/intl/storelocator'
-    r = requests.get(get_data_url, headers=headers)
+    r = session.get(get_data_url, headers=headers)
 
     soup = BeautifulSoup(r.text, "lxml")
     json_data = json.loads(soup.find('select', {'class': 'country-field'}).find_previous('script').text.replace(
@@ -78,7 +81,7 @@ def fetch_data():
                     phone = "<MISSING>"
                 country_code = x['country_id']
                 page_url = x['details_url']
-                r_loc = requests.get(page_url,headers = headers)
+                r_loc = session.get(page_url,headers = headers)
                 soup_loc = BeautifulSoup(r_loc.text,'lxml')
                 col = soup_loc.find('div',class_='columns').find('div',class_='info-column').find('div',class_='shop-details')
                 hours = col.find('p',class_ = 'opening')

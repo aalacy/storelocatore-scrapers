@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import ast
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,23 +18,23 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.athletico.com"
-    r = requests.get(base_url + "/locations")
+    r = session.get(base_url + "/locations")
     print("1")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for states in soup.find_all("div",{"class": "four columns serviceCard"}):
         state_link = states.find("a")["href"]
-        state_request = requests.get(base_url + state_link)
+        state_request = session.get(base_url + state_link)
         state_soup = BeautifulSoup(state_request.text,"lxml")
         for table in state_soup.find_all("tbody"):
             for link in table.find_all("a"):
                 if link["href"][0] == "/":
                     print(base_url + link["href"])
-                    location_request = requests.get(base_url + link["href"])
+                    location_request = session.get(base_url + link["href"])
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                 else:
                     print(link["href"])
-                    location_request = requests.get(link["href"])
+                    location_request = session.get(link["href"])
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                 contact_information = list(location_soup.find("div",{"id": "contactInfo"}).stripped_strings)
                 location_address = list(location_soup.find("div",{"id": "geographicInfo"}).stripped_strings)

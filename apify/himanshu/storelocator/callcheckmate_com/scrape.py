@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,14 +20,14 @@ def write_output(data):
 def fetch_data():
     base_url = "https://www.callcheckmate.com"
     headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"}
-    r = requests.get(base_url+"/all_locations.php",headers=headers)
+    r = session.get(base_url+"/all_locations.php",headers=headers)
     soup=BeautifulSoup(r.text ,"lxml")
     return_main_object = []
     op=soup.find('select',{"class":"lcation_stats"}).find_all('option')
 
     for atag in op:
         if atag['value']:
-            r1 = requests.get(base_url+"/"+atag['value'].lower()+"/all_locations.php",headers=headers)
+            r1 = session.get(base_url+"/"+atag['value'].lower()+"/all_locations.php",headers=headers)
             soup1=BeautifulSoup(r1.text ,"lxml")
             main=soup1.find('div',{"id":'locationSelect'}).find_all('div',{"class":"add_box"})
             for script in soup1.find_all('script', type="text/javascript"):

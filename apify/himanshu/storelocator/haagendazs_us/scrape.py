@@ -1,5 +1,5 @@
 import urllib.parse
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ import csv
 import sgzip
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -58,7 +61,7 @@ def fetch_data():
         hours_of_operation = "<MISSING>"
         page_url = "<MISSING>"
         try:
-            json_data = requests.get("https://www.haagendazs.us/locator/ws/"+str(search.current_zip)+"/"+lat+"/"+lng+"/25/0/2452?lat="+lat+"&lon="+lng+"&radius="+str(MAX_DISTANCE)+"&zipcode="+str(search.current_zip)+"&BrandFlavorID=2452&targetsearch=3").json()
+            json_data = session.get("https://www.haagendazs.us/locator/ws/"+str(search.current_zip)+"/"+lat+"/"+lng+"/25/0/2452?lat="+lat+"&lon="+lng+"&radius="+str(MAX_DISTANCE)+"&zipcode="+str(search.current_zip)+"&BrandFlavorID=2452&targetsearch=3").json()
         except:
             pass
         current_results_len = len(json_data)
@@ -66,7 +69,7 @@ def fetch_data():
             url = data['URL'].strip()
             if url:
                 page_url ="https://www.haagendazs.us"+ url
-                html = requests.get(page_url)
+                html = session.get(page_url)
                 soup = BeautifulSoup(html.text,"html.parser")
                 try:
                     hours_of_operation = " ".join(list(soup.find("div",attrs={"class":"office-hours"}).stripped_strings))
@@ -103,12 +106,12 @@ def fetch_data():
         coord = search.next_coord()
 
     ## FOR SHOP 
-    r = requests.get("https://www.haagendazs.us/all-shops")
+    r = session.get("https://www.haagendazs.us/all-shops")
     soup = BeautifulSoup(r.text, "lxml")
     links= soup.find("div",{"class":"view-content"}).find_all("a")
     for link in links:
         page_url = "https://www.haagendazs.us/"+link['href']
-        r1 = requests.get(page_url)
+        r1 = session.get(page_url)
         soup1 = BeautifulSoup(r1.text, "lxml")
         location_name = soup1.find("h1",{"itemprop":"name"}).text.strip()
         street_address = soup1.find("p",{"itemprop":"streetAddress"}).text.strip()

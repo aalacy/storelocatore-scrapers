@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 from datetime import datetime
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     }
     for zip_code in zips:
         base_url = "https://www.bmwusa.com"
-        r = requests.get("https://www.bmwusa.com/api/dealers/" + str(zip_code) + "/1000",headers=headers)
+        r = session.get("https://www.bmwusa.com/api/dealers/" + str(zip_code) + "/1000",headers=headers)
         for store_data in r.json()["Dealers"]:
             store = []
             store.append("https://www.bmwusa.com")

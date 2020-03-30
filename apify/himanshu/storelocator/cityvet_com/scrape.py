@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import http.client
 import json
 import  pprint
 import time
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -35,7 +38,7 @@ def fetch_data():
     zipcode = [80209,75201]
     for zipcode in zipcode:
         page_url = 'https://www.cityvet.com/find-a-location.php?zip='+str(zipcode)
-        r = requests.get(page_url,"get", headers=headers)
+        r = session.get(page_url,"get", headers=headers)
         soup = BeautifulSoup(r.text,"lxml")
         js_text = soup.find_all("script", {"type":"text/javascript"})[1].text.split("0,0,0,0,0,0,0];")[1].split("for (e = 0; e < locArray")[0].split("locArray")
         for i in js_text:

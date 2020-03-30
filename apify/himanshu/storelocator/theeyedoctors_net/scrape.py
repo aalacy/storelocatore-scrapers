@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }
-        r = requests.get("https://www.theeyedoctors.net/wp-json/352inc/v1/locations/coordinates?lat=" + str(cord[0]) + "&lng=" + str(cord[1]),headers=headers)
+        r = session.get("https://www.theeyedoctors.net/wp-json/352inc/v1/locations/coordinates?lat=" + str(cord[0]) + "&lng=" + str(cord[1]),headers=headers)
         if r.text == "null":
             continue
         else:
@@ -45,7 +48,7 @@ def fetch_data():
                 store.append("the eye doctors")
                 store.append(store_data["lat"])
                 store.append(store_data["lng"])
-                location_request = requests.get(store_data["permalink"],headers=headers)
+                location_request = session.get(store_data["permalink"],headers=headers)
                 location_soup = BeautifulSoup(location_request.text,"lxml")
                 hours = " ".join(list(location_soup.find("div",{"class":"col-lg-4 times"}).stripped_strings))
                 store.append(hours if hours != "" else "<MISSING>")

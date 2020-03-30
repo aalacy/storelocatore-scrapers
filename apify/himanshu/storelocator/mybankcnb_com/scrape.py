@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def write_output(data):
 
 def fetch_data():
     base_url= "https://www.mybankcnb.com/Locations"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -43,7 +46,7 @@ def fetch_data():
             lat.append(list(i.stripped_strings)[-1])
             lng.append(list(i.stripped_strings)[-1])
 
-            r = requests.get(list(i.stripped_strings)[-3])
+            r = session.get(list(i.stripped_strings)[-3])
             soup1= BeautifulSoup(r.text,"lxml")
             hours.append(" ".join(list(soup1.find("td",{"width":"50%"}).stripped_strings)[-3:]))
 
@@ -65,7 +68,7 @@ def fetch_data():
             city = " ".join(i.text.replace("\n"," ").split("   ")[0].split("Branch",1)[1].split('  ')[1].split( )[:-4])
 
             
-            r = requests.get(list(i.stripped_strings)[-3])
+            r = session.get(list(i.stripped_strings)[-3])
             soup3= BeautifulSoup(r.text,"lxml")
             h2 = soup3.find("td",{"width":"50%"})
             h3 = soup3.find("td",{"style":"width: 50%;"})

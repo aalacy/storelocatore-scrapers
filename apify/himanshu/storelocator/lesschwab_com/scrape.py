@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,12 +19,12 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.lesschwab.com"
-    r = requests.get(base_url+"/stores/")
+    r = session.get(base_url+"/stores/")
     soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
     main=soup.find('div',{"class":'footer__container__item'}).find_all('a')
     for atag in main:
-        r1 = requests.get(atag['href'])
+        r1 = session.get(atag['href'])
         soup1=BeautifulSoup(r1.text,'lxml')
         main1=soup1.find('div',{"class":'storeSearch__resultsSection'}).find('div',{"class":"render"})
         for location in json.loads(main1['data-json'],strict=False)['storeList']:

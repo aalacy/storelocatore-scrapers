@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,12 +24,12 @@ def fetch_data():
     base_url = "https://salonlofts.com/"
 
 
-    r = requests.get(base_url+'salons/',headers = header)
+    r = session.get(base_url+'salons/',headers = header)
     soup = BeautifulSoup(r.text,"lxml")
     v  = soup.find('select',{'id':'market_id'}).find_all('option')
     for idx, val in enumerate(v):
         if idx > 0:
-            r = requests.get(val['value'],headers = header)
+            r = session.get(val['value'],headers = header)
             soup = BeautifulSoup(r.text,"lxml")
             vk = soup.find('ul',{'class':'stores'}).find_all('div',{'class':'store'})
             

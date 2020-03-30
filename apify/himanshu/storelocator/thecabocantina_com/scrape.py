@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -39,13 +42,13 @@ def fetch_data():
     hours_of_operation = ""
     page_url = ""
 
-    r = requests.get("http://cabocantina.com/about/", headers=headers)
+    r = session.get("http://cabocantina.com/about/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find_all('div', class_='elementor-image'):
         page_url = link.a['href']
         location_name = link.a.find("img")["alt"]
 
-        r_loc = requests.get(page_url, headers=headers)
+        r_loc = session.get(page_url, headers=headers)
         soup_loc = BeautifulSoup(r_loc.text, 'lxml')
         try:
             row = soup_loc.find('div', class_='site-content')
@@ -78,7 +81,7 @@ def fetch_data():
                 zipp = address[1].split(',')[1].split()[-1].strip()
                 phone = address[-1].strip()
             iframe = soup_loc.find('iframe')['src']
-            r_coords = requests.get(iframe, headers=headers)
+            r_coords = session.get(iframe, headers=headers)
             soup_coord = BeautifulSoup(r_coords.text, 'lxml')
             script = soup_coord.find(lambda tag: (
                 tag.name == "script") and "initEmbed" in tag.text)

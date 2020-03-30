@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 requests.packages.urllib3.disable_warnings()
 
 def write_output(data):
@@ -23,7 +26,7 @@ def fetch_data():
     }
     data = 'ajax=1&action=get_nearby_stores&distance=100000&suzukitype=matv&storetype=undefined&lat=43.7086666&lng=-79.30808809999996'
     base_url = "https://www.suzuki.ca"
-    r = requests.post("https://www.suzuki.ca/mapsearch/index_matvmarine.php",headers=headers,data=data,verify=False)
+    r = session.post("https://www.suzuki.ca/mapsearch/index_matvmarine.php",headers=headers,data=data,verify=False)
     return_main_object = []
     location_data = r.json()['stores']
     for store_data in location_data:

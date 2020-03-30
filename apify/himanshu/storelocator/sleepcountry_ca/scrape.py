@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -51,7 +54,7 @@ def fetch_data():
 
 
 
-    r= requests.get('https://www.sleepcountry.ca/find-a-store',headers = headers)
+    r= session.get('https://www.sleepcountry.ca/find-a-store',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
     script = soup.find_all('script',{'type':'text/javascript'})[-2]
     # print(script)

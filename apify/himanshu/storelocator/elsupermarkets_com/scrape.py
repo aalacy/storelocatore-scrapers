@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     return_main_object = []
-    r = requests.post("https://mallmotion.com:3033/api/v1/searchmall?checking=true&device_type=web&lang_id=en&latitude=33.89777370000001&longitude=-118.1649291&radius=100&wuid=4934ffb38c447169747548a2dcb7e397",verify=False)
+    r = session.post("https://mallmotion.com:3033/api/v1/searchmall?checking=true&device_type=web&lang_id=en&latitude=33.89777370000001&longitude=-118.1649291&radius=100&wuid=4934ffb38c447169747548a2dcb7e397",verify=False)
     data = r.json()
     for i in range(len(data)):
         store_data = data[i]

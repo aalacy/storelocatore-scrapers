@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://vitalitybowls.com"
-    r = requests.get("https://vitalitybowls.com/locations/",headers=headers)
+    r = session.get("https://vitalitybowls.com/locations/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     location_links = []
@@ -29,7 +32,7 @@ def fetch_data():
             if link["href"] in location_links:
                 continue
             location_links.append(link["href"])
-            location_request = requests.get(link["href"],headers=headers)
+            location_request = session.get(link["href"],headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             name = location_soup.find("h2",{"class":"et_pb_slide_title"}).text
             address = list(location_soup.find("div",{"class":'et_pb_column et_pb_column_1_4 et_pb_column_inner et_pb_column_inner_0'}).find("div",{"class":"et_pb_text_inner"}).stripped_strings)

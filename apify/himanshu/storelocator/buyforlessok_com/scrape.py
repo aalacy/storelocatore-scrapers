@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -44,7 +47,7 @@ def fetch_data():
     hours_of_operation = ""
     page_url = "https://buyforlessok.com/locations"
 
-    r = requests.get(page_url, headers=headers)
+    r = session.get(page_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     # print("soup === "+ str(soup))

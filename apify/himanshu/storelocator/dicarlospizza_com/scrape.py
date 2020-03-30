@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import phonenumbers
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
     headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
     }
     base_url = "https://www.dicarlospizza.com"
-    r =  requests.get("https://www.dicarlospizza.com/locations", headers=headers)
+    r =  session.get("https://www.dicarlospizza.com/locations", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")    
     data = json.loads(soup.find(lambda tag: (tag.name == "script") and "window.siteData =" in tag.text).text.split("window.siteData = ")[1].split(";")[0])
     h = []

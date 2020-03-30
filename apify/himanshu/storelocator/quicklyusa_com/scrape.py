@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,17 +22,17 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "http://quicklyusa.com"
-    r = requests.get("http://quicklyusa.com/quicklystores.html",headers=headers)
+    r = session.get("http://quicklyusa.com/quicklystores.html",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     addresses = []
     for location in soup.find_all("table")[2].find_all("a")[:-1]:
         if location.text == "":
             continue
-        location_request = requests.get(base_url + "/" + location["href"])
+        location_request = session.get(base_url + "/" + location["href"])
         location_soup = BeautifulSoup(location_request.text,"lxml")
         iframe = location_soup.find("iframe")["src"]
-        geo_request = requests.get(iframe,headers=headers)
+        geo_request = session.get(iframe,headers=headers)
         geo_soup = BeautifulSoup(geo_request.text,"lxml")
         for script in geo_soup.find_all("script"):
             if "initEmbed" in script.text:
@@ -65,15 +68,15 @@ def fetch_data():
         store.append(lng)
         store.append("<MISSING>")
         return_main_object.append(store)
-    r = requests.get("http://quicklyusa.com/otqulo.html",headers=headers)
+    r = session.get("http://quicklyusa.com/otqulo.html",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     for location in soup.find_all("table")[2].find_all("a")[:-1]:
         if location.text == "":
             continue
-        location_request = requests.get(base_url + "/" + location["href"])
+        location_request = session.get(base_url + "/" + location["href"])
         location_soup = BeautifulSoup(location_request.text,"lxml")
         iframe = location_soup.find("iframe")["src"]
-        geo_request = requests.get(iframe,headers=headers)
+        geo_request = session.get(iframe,headers=headers)
         geo_soup = BeautifulSoup(geo_request.text,"lxml")
         for script in geo_soup.find_all("script"):
             if "initEmbed" in script.text:

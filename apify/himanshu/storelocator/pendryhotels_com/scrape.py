@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -49,12 +52,12 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
 
-    r = requests.get('https://www.pendry.com/',headers = headers)
+    r = session.get('https://www.pendry.com/',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
     info = soup.find('div',{'class':'menu-pendry'}).find('div',class_='col-md-4 order-md-5 menu-pendry__column-outer')
     for a in info.find_all('a'):
         # print(a['href'])
-        r_loc = requests.get(a['href'],headers = headers)
+        r_loc = session.get(a['href'],headers = headers)
         soup_loc =BeautifulSoup(r_loc.text,'lxml')
         loc = soup_loc.find('span',class_= 'page-footer__address page-footer__address--small')
         list_loc = list(loc.stripped_strings)

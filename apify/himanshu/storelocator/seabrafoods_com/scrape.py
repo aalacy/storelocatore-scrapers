@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -44,7 +47,7 @@ def fetch_data():
         }
     base_url= "https://www.powr.io/plugins/map/wix_view.json?cacheKiller=1571909457810&compId=comp-igjuritt&deviceType=desktop&height=660&instance=rcz7n1lIMmlfZ_wr1zJ6ADAlm_cOdZKFwO94_73Xy34.eyJpbnN0YW5jZUlkIjoiZWFkMzc4MTEtY2ExYy00MGEwLThjODQtMzAzMzg0MjM3ZmVhIiwiYXBwRGVmSWQiOiIxMzQwYzVlZC1hYWM1LTIzZWYtNjkzYy1lZDIyMTY1Y2ZkODQiLCJzaWduRGF0ZSI6IjIwMTktMTAtMjRUMTE6MDE6NDEuNzAyWiIsInVpZCI6bnVsbCwiaXBBbmRQb3J0IjoiNDUuNTYuMTQ4Ljk1LzMyODI0IiwidmVuZG9yUHJvZHVjdElkIjoicHJlbWl1bSIsImRlbW9Nb2RlIjpmYWxzZSwiYWlkIjoiNjAzMDRiZmQtNDliMy00OGI4LTljNjQtMjAwZDJkMGM4ZjhlIiwic2l0ZU93bmVySWQiOiJjNjM1MWYzNC01MDBkLTRkYzktOTc0MS0xN2FjOWQxNmRkNDIifQ&locale=en&pageId=dmwpr&siteRevision=1069&viewMode=site&width=978"
 
-    locations = requests.get(base_url,headers=headers).json()
+    locations = session.get(base_url,headers=headers).json()
     # print(locations['content']['locations'])
     # soup= BeautifulSoup(r.text,"lxml")
     # return_main_object=[]

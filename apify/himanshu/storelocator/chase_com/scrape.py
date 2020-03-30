@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import time
 from datetime import datetime
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -45,7 +48,7 @@ def fetch_data():
         print("~~~~~~~~~~~~~~~~~~~~~~~~~"+str(offset[data]))
         location_url = "https://locator.chase.com/search?offset="+str(offset[data])
     
-        r = requests.get(location_url, headers=headers).json()
+        r = session.get(location_url, headers=headers).json()
         current_results_len = len(r['response']['entities'])
 
         for i in r['response']['entities']:

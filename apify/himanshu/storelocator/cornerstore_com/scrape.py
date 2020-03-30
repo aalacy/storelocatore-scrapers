@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -8,6 +8,9 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
 import unicodedata
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,7 +27,7 @@ def request_wrapper(url,method,headers,data=None):
     if method == "get":
         while True:
             try:
-                r = requests.get(url,headers=headers)
+                r = session.get(url,headers=headers)
                 return r
                 break
             except:
@@ -37,9 +40,9 @@ def request_wrapper(url,method,headers,data=None):
         while True:
             try:
                 if data:
-                    r = requests.post(url,headers=headers,data=data)
+                    r = session.post(url,headers=headers,data=data)
                 else:
-                    r = requests.post(url,headers=headers)
+                    r = session.post(url,headers=headers)
                 return r
                 break
             except:
@@ -67,7 +70,7 @@ def store_handler(store_data,key):
     #print("https://www.circlek.com" + store_data["url"])
     #print("~~~~~~~~~~~~~~~~~~~~~~~~~~  ",store_data)
     # exit()
-    location_request = requests.get("https://www.circlek.com" + store_data["url"],headers=headers)
+    location_request = session.get("https://www.circlek.com" + store_data["url"],headers=headers)
     location_soup = BeautifulSoup(location_request.text,"lxml")
     if location_soup.find("a",{'href':re.compile("tel:")}):
         phone = location_soup.find("a",{'href':re.compile("tel:")}).text.strip()
@@ -134,7 +137,7 @@ def store_handler(store_data,key):
 
 def fetch_data():
     #print("start")
-    r = requests.get("https://www.circlek.com/stores_new.php?lat=40.73&lng=-73.5&distance=10000000.00&services=&region=global",headers=headers)
+    r = session.get("https://www.circlek.com/stores_new.php?lat=40.73&lng=-73.5&distance=10000000.00&services=&region=global",headers=headers)
     data = r.json()["stores"]
     #print("start1")
     executor = ThreadPoolExecutor(max_workers=10)

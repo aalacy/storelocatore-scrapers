@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,10 +19,10 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.thriftyfoods.com"
-    r = requests.get("https://www.thriftyfoods.com/api/en/Store/get?Latitude=48.45423&Longitude=-123.359205&Skip=0&Max=60000000").json()
+    r = session.get("https://www.thriftyfoods.com/api/en/Store/get?Latitude=48.45423&Longitude=-123.359205&Skip=0&Max=60000000").json()
     return_main_object = []
     for loc in r['Data']:
-        r1=requests.get(base_url+loc['StoreDetailPageUrl'])
+        r1=session.get(base_url+loc['StoreDetailPageUrl'])
         soup=BeautifulSoup(r1.text,'lxml')
         hour=''
         hour=' '.join(soup.find('div',{'id':"body_0_main_0_PnlOpenHours"}).stripped_strings)

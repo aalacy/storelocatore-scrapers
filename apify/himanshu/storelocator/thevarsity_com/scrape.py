@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,14 +22,14 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://thevarsity.com"
-    r = requests.get("https://thevarsity.com/locations",headers=headers)
+    r = session.get("https://thevarsity.com/locations",headers=headers)
     return_main_object = []
     soup = BeautifulSoup(r.text,"lxml")
     for location in soup.find_all("div",{"class":"store-listing"}):
         name = location.find("div",{"class":"store-listing-name"}).find("a").text.strip()
         address = list(location.find("div",{"class":"store-listing-address"}).stripped_strings)
         phone = location.find("div",{"class":"store-listing-phone"}).text
-        location_request = requests.get(base_url + location.find("a")["href"],headers=headers)
+        location_request = session.get(base_url + location.find("a")["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         location_hours = list(location_soup.find("div",{"class":'col-xs-12 col-sm-8 col-md-6'}).stripped_strings)
         hours = ""

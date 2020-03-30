@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     headers = {
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
-    credentials_request = requests.get("https://www.76.com/bin/stationfinderservlet?s=psx_76",headers=headers)
+    credentials_request = session.get("https://www.76.com/bin/stationfinderservlet?s=psx_76",headers=headers)
     credential = credentials_request.json()["credentials"]
     return_main_object = []
     addresses = []
@@ -35,7 +38,7 @@ def fetch_data():
         y = coord[1]
         print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
        # print("https://spatial.virtualearth.net/REST/v1/data/a1ed23772f5f4994a096eaa782d07cfb/US_BrandedSites/Sites?spatialFilter=nearby(" + str(x) + ","+ str(y) + ",250.00)&$filter=Brand%20eq%20%27U76%27&$format=json&$inlinecount=allpages&$select=*,__Distance&key=" + credential + "&$top=250")
-        r = requests.get("https://spatial.virtualearth.net/REST/v1/data/a1ed23772f5f4994a096eaa782d07cfb/US_BrandedSites/Sites?spatialFilter=nearby(" + str(x) + ","+ str(y) + ",250.00)&$filter=Brand%20eq%20%27U76%27&$format=json&$inlinecount=allpages&$select=*,__Distance&key=" + credential + "&$top=250",headers=headers)
+        r = session.get("https://spatial.virtualearth.net/REST/v1/data/a1ed23772f5f4994a096eaa782d07cfb/US_BrandedSites/Sites?spatialFilter=nearby(" + str(x) + ","+ str(y) + ",250.00)&$filter=Brand%20eq%20%27U76%27&$format=json&$inlinecount=allpages&$select=*,__Distance&key=" + credential + "&$top=250",headers=headers)
         data = r.json()["d"]["results"]
         for store_data in data:
             store = []

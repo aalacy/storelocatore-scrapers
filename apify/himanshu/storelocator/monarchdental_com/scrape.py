@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
     base_url = "https://www.monarchdental.com"
     return_main_object = []
     for i in range(len(states)):
-        state_request = requests.get("https://api.smilebrands.com/public/facility/search/state/" + states[i],headers=headers)
+        state_request = session.get("https://api.smilebrands.com/public/facility/search/state/" + states[i],headers=headers)
         if state_request.json()["success"] == True:
             data = state_request.json()["data"]
             for k in range(len(data)):
@@ -45,7 +48,7 @@ def fetch_data():
                 store.append(store_data["latitude"])
                 store.append(store_data["longitude"])
                 print(store_data["id"])
-                location_request = requests.get("https://api.smilebrands.com/public/facility/id/" + str(store_data["id"]),headers=headers)
+                location_request = session.get("https://api.smilebrands.com/public/facility/id/" + str(store_data["id"]),headers=headers)
                 if location_request.json()["success"] == False:
                     continue
                 store_hours = location_request.json()["data"]

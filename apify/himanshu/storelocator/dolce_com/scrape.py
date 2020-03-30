@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json 
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +18,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.wyndhamhotels.com/bin/propertypages.json?locale=en-us&brandId=DX"
-    r = requests.get(base_url).json()['subcategory']
+    r = session.get(base_url).json()['subcategory']
     return_main_object = []
     for i in range(len(r)):
         country=r[i]['name']
@@ -29,7 +32,7 @@ def fetch_data():
                     state=data['state']
                     city=data['city']
                     link=data['path']
-                    r1 = requests.get(link)
+                    r1 = session.get(link)
                     soup = BeautifulSoup(r1.text,"lxml")
                     mainadd = json.loads(soup.find('script',{"type":"application/ld+json"}).text)
                     script=soup.find_all('script')
@@ -37,7 +40,7 @@ def fetch_data():
                     for scr in script:
                         if "var overview_lat" in scr.text:
                             link1="https://www.wyndhamhotels.com/BWSServices/services/search/property/search?propertyId="+scr.text.split('"')[1]+"&isOverviewNeeded=true&isAmenitiesNeeded=true&channelId=tab&language=en-us"
-                            r1 = requests.get(link1).json()
+                            r1 = session.get(link1).json()
                             if "properties" in r1:
                                 for d in r1['properties']:
                                     hour=d['checkInTime']+'-'+d['checkOutTime']
@@ -74,7 +77,7 @@ def fetch_data():
                 state=data['state']
                 city=data['city']
                 link=data['path']
-                r1 = requests.get(link)
+                r1 = session.get(link)
                 soup = BeautifulSoup(r1.text,"lxml")
                 hour=""
                 mainadd = json.loads(soup.find('script',{"type":"application/ld+json"}).text)
@@ -82,7 +85,7 @@ def fetch_data():
                 for scr in script:
                     if "var overview_lat" in scr.text:
                         link1="https://www.wyndhamhotels.com/BWSServices/services/search/property/search?propertyId="+scr.text.split('"')[1]+"&isOverviewNeeded=true&isAmenitiesNeeded=true&channelId=tab&language=en-us"
-                        r1 = requests.get(link1).json()
+                        r1 = session.get(link1).json()
                         if "properties" in r1:
                             for d in r1['properties']:
                                 hour=d['checkInTime']+'-'+d['checkOutTime']

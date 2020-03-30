@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ import time
 from datetime import datetime
 import phonenumbers
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +31,7 @@ def fetch_data():
     'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
     }
 
-    r = requests.get("https://www.biggby.com/locations/", headers=headers)
+    r = session.get("https://www.biggby.com/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     data = soup.find_all("marker")
     for i in data:
@@ -125,7 +128,7 @@ def fetch_data():
             sun_close = "close"
         hours = "mon thurs open hour"+"-"+str(mon_open)+" "+"mon thurs close hour"+"-"+str(mon_close)+" "+"fri open hour"+"-"+str(fri_open)+" "+"fri close hour"+"-"+str(fri_close)+" "+"sat open hour"+"-"+str(sat_open)+" "+"sat close hour"+"-"+str(sat_close)+" "+"sun open hour"+"-"+str(sun_open)+" "+"sun close hour"+"-"+str(sun_close)
 
-        r1 = requests.post("https://www.biggby.com/wp-admin/admin-ajax.php", headers=headers, data="action=biggby_get_location_data&security=42e14be750&post_id="+str(i['pid'])).json()
+        r1 = session.post("https://www.biggby.com/wp-admin/admin-ajax.php", headers=headers, data="action=biggby_get_location_data&security=42e14be750&post_id="+str(i['pid'])).json()
         number = r1['phone-number'].replace("not available",'').replace("unavailable",'').replace("TBD","")
         if number:
             phone = phonenumbers.format_number(phonenumbers.parse(str(number), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import io
 import json
+
+session = SgRequests()
+
 requests.packages.urllib3.disable_warnings()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -20,14 +23,14 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://piezonis.com/locations/"
-    r = requests.get(base_url, headers=headers,verify=False)
+    r = session.get(base_url, headers=headers,verify=False)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     address = []
     soup.findAll('div', {'class', 'location-container'})[-1]
     for state in soup.findAll('div', {'class', 'location-container'}):
         if state.find('a'):
-            state_request = requests.get(state.find('a').get('href'), headers=headers,verify=False)
+            state_request = session.get(state.find('a').get('href'), headers=headers,verify=False)
             state_soup = BeautifulSoup(state_request.text,'lxml')
             store = []
             name_statcode = state_soup.select('div#location-box')[0].find('h1').get_text().strip().split(',')

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import urllib3
+
+
+session = SgRequests()
 
 requests.packages.urllib3.disable_warnings()
 
@@ -27,7 +30,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url= "https://eat.co.uk/our-locations"
-    r = requests.get(base_url,verify=False, headers =headers)
+    r = session.get(base_url,verify=False, headers =headers)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     loc = soup.find_all("a",{"class":"platopusLink"})
@@ -47,7 +50,7 @@ def fetch_data():
                 state =  "<MISSING>"
             page_url = "https://eat.co.uk/"+data['href']
             # print("https://eat.co.uk/"+data['href'])
-            r1 = requests.get("https://eat.co.uk"+data['href'],verify=False, headers =headers)
+            r1 = session.get("https://eat.co.uk"+data['href'],verify=False, headers =headers)
             soup1= BeautifulSoup(r1.text,"lxml")
             hours = " ".join(list(soup1.find("table",{"class":"platopusOpeningHoursTable"}).stripped_strings))
             lat = soup1.find("a",{"class":"align-center dmButtonLink dmWidget dmWwr default dmOnlyButton dmDefaultGradient u_1454164222"})['href'].split("=")[-1].split(",")[0]

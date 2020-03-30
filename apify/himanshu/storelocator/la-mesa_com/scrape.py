@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 # import json
 # import sgzip
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', 'w') as output_file:
         writer = csv.writer(output_file, delimiter=",")
@@ -46,7 +49,7 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = ''
 
-    coords = requests.get('https://la-mesa.com/locations/',headers = headers)
+    coords = session.get('https://la-mesa.com/locations/',headers = headers)
     c_soup = BeautifulSoup(coords.text,'lxml')
     c1 = []
     c2 = []
@@ -57,13 +60,13 @@ def fetch_data():
         c2.append(lng)
 
 
-    r = requests.get('https://la-mesa.com/',headers = headers)
+    r = session.get('https://la-mesa.com/',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
     ul= soup.find('ul',{'id':'top-menu'})
     li = soup.find(lambda tag: (tag.name == "li") and "Locations" in tag.text).find('ul',class_='sub-menu')
     for a in li.find_all('a'):
         page_url = a['href']
-        r_loc = requests.get(a['href'],headers = headers)
+        r_loc = session.get(a['href'],headers = headers)
         soup_loc = BeautifulSoup(r_loc.text,'lxml')
         div = soup_loc.find('div',class_='et_pb_row et_pb_row_0')
         address= div.find('div',class_='et_pb_blurb_description')

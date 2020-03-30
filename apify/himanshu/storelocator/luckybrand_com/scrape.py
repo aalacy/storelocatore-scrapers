@@ -8,8 +8,11 @@ import sgzip
 from random import randint
 from time import sleep
 from datetime import datetime
-import requests
+from sgrequests import SgRequests
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -56,7 +59,7 @@ def fetch_data():
         query_lat, query_lng = coord[0], coord[1]
         session = SgRequests()
         sleep(randint(10, 100))       
-        r = requests.get("https://luckybrand.radius8.com/api/v1/streams/stores?lat={}&lng={}&radius=1000&units=MI&limit=50&_ts={}".format(
+        r = session.get("https://luckybrand.radius8.com/api/v1/streams/stores?lat={}&lng={}&radius=1000&units=MI&limit=50&_ts={}".format(
             query_lat, query_lng, ts), headers=HEADERS)
         
         parsed = r.json()

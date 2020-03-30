@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 import unicodedata
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,13 +24,13 @@ def fetch_data():
     headers = {
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
-    r = requests.get("https://www.bentleymotors.com/en/apps/dealer-locator/_jcr_content.api.jsonx",headers=headers)
+    r = session.get("https://www.bentleymotors.com/en/apps/dealer-locator/_jcr_content.api.jsonx",headers=headers)
     api_id = r.url.split("api.")[1].split(".json")[0]
     location_list = r.json()["dealers"]
     for location in location_list:
         if location["countryId"] not in ["US","CA"]:
             continue
-        location_request = requests.get("https://www.bentleymotors.com/content/brandmaster/global/bentleymotors/en/apps/dealer-locator/jcr:content.dealersinfo.api.suffix." + api_id + ".json/" + location["dealerId"] + "/dlr.json?ak=1")
+        location_request = session.get("https://www.bentleymotors.com/content/brandmaster/global/bentleymotors/en/apps/dealer-locator/jcr:content.dealersinfo.api.suffix." + api_id + ".json/" + location["dealerId"] + "/dlr.json?ak=1")
         store_data = location_request.json()
         addresses = store_data["addresses"]
         for address in addresses:

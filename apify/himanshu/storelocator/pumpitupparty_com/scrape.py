@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -23,7 +26,7 @@ def fetch_data():
     for zp in zps:
         data="action=bu-search&current-page=https%3A%2F%2Fwww.pumpitupparty.com%2F&redirect=&bu-zipcode="+str(zp)
         try:
-            r = requests.post(base_url+"/wp-admin/admin-ajax.php",headers=headers,data=data)
+            r = session.post(base_url+"/wp-admin/admin-ajax.php",headers=headers,data=data)
             soup=BeautifulSoup(r.text,'lxml')
             if soup.find('script',{"type":"text/javascript"})!=None:
                 main=json.loads(soup.find('script',{"type":"text/javascript"}).text.split('var locations = ')[1].split('];')[0]+']'.strip())

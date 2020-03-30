@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
     print("soup ===  first")
 
     base_url = "https://www.vim.com"
-    r = requests.get("https://www.vim.com/apps/store-locator", headers=headers)
+    r = session.get("https://www.vim.com/apps/store-locator", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
@@ -82,7 +85,7 @@ def fetch_data():
 
         country_code = "US"
 
-        r_phone_hour = requests.get("https://stores.boldapps.net/front-end/get_store_info.php?shop=vimstores.myshopify.com&data=detailed&store_id="+store_number, headers=headers)
+        r_phone_hour = session.get("https://stores.boldapps.net/front-end/get_store_info.php?shop=vimstores.myshopify.com&data=detailed&store_id="+store_number, headers=headers)
         soup_phone_hour = BeautifulSoup(r_phone_hour.text, "lxml")
 
         phone = soup_phone_hour.find('span',{"class":"phone"}).text.split("Fax:")[0]

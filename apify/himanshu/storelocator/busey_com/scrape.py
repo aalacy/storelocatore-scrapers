@@ -1,7 +1,7 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -9,6 +9,9 @@ import sgzip
 import warnings
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -62,7 +65,7 @@ def fetch_data():
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
         try:
             location_url = "https://www.busey.com/_/api/branches/"+str(lat)+"/"+str(lng)+"/500"
-            r = requests.get(location_url, headers=headers)
+            r = session.get(location_url, headers=headers)
             json_data = r.json()
         except:
             pass
@@ -86,7 +89,7 @@ def fetch_data():
     
         try:
             location_url1 = "https://www.busey.com/_/api/atms/"+str(lat)+"/"+str(lng)+"/500"
-            r1 = requests.get(location_url1, headers=headers)
+            r1 = session.get(location_url1, headers=headers)
             json_data1 = r1.json()
         except:
             pass

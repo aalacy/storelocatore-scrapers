@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import html
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -21,7 +24,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.paliospizzacafe.com"
-    r = requests.get("https://www.paliospizzacafe.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php",headers=headers)
+    r = session.get("https://www.paliospizzacafe.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for location in soup.find("store").find_all("item"):
@@ -36,7 +39,7 @@ def fetch_data():
         lng = location.find("longitude").text
         store_id = location.find("storeid").text
         location_url = BeautifulSoup(location.find("description").text,"lxml").find("a",text="More Info")["href"]
-        location_request = requests.get(location_url,headers=headers)
+        location_request = session.get(location_url,headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         hours = " ".join(list(location_soup.find("span",text=re.compile("HOURS")).parent.parent.parent.find_next_sibling('div').stripped_strings))
         store = []

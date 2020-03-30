@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 import unicodedata
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -25,14 +28,14 @@ def fetch_data():
     }
     base_url = "https://rosebudrestaurants.com/"
     location_url1 = "https://rosebudrestaurants.com/"
-    r = requests.get(location_url1, headers=headers)
+    r = session.get(location_url1, headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
     a = soup.find("ul",{"class":"0 sub-menu raven-submenu"})
     k = (a.find_all("a"))
     for i in k :
         location_name = (i.text)
         link = (i['href'])
-        r1 = requests.get(link, headers=headers)
+        r1 = session.get(link, headers=headers)
         soup1= BeautifulSoup(r1.text,"lxml")
         a1 = soup1.find("div",{"class":"elementor-text-editor elementor-clearfix"})
         state = (a1.text.split("PHONE")[0].split(" ")[-1])

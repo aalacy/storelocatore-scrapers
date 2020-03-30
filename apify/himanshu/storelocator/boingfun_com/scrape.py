@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,13 +23,13 @@ def fetch_data():
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
     }
     base_url = "https://www.boingfun.com/"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for link in soup.find("div",{"class":"xr_ap xr_xri_ xr_xrc"}).find_all("a"):
         if link['href'] == "":
             continue
-        location_reqeust = requests.get(link['href'],headers=header)
+        location_reqeust = session.get(link['href'],headers=header)
         location_soup = BeautifulSoup(location_reqeust.text,"lxml")
         location_details = list(location_soup.find("div",{"class":"textwidget custom-html-widget"}).stripped_strings)
         store = []

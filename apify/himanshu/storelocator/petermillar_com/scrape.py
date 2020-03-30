@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -12,6 +12,9 @@ from selenium.webdriver.firefox.options import Options
 import time
 from selenium.webdriver.support.wait import WebDriverWait
 import platform
+
+
+session = SgRequests()
 
 system = platform.system()
 
@@ -47,7 +50,7 @@ countries = {}
 
 
 def getcountrygeo():
-    data = requests.get(
+    data = session.get(
         "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
 
     for feature in data["features"]:
@@ -88,7 +91,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
 
-    # r1 = requests.get('https://www.petermillar.com/f/about-us/our-stores.html', headers=headers)
+    # r1 = session.get('https://www.petermillar.com/f/about-us/our-stores.html', headers=headers)
     # soup1 = BeautifulSoup(r1.text, "lxml")
     # driver.get("https://www.petermillar.com/f/about-us/our-stores.html")
     # soup = BeautifulSoup(driver.page_source, "lxml")
@@ -150,7 +153,7 @@ def fetch_data():
     # print("----------------hours-----",hours)
     # print("---------------add------",add)
     # exit()
-    r = requests.get(
+    r = session.get(
         'https://storemapper-herokuapp-com.global.ssl.fastly.net/api/users/2295/stores.js?callback=SMcallback2', headers=headers)
     # .text.strip().replace("(","").replace(")","").replace(" ","-")
     script = "".join(r.text.split('SMcallback2(')[1].split(')'))

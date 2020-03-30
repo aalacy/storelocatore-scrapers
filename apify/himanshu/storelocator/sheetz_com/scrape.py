@@ -1,11 +1,14 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -28,7 +31,7 @@ def fetch_data():
 
     location_url ="https://orderz.sheetz.com/sas/store?fuelPrice=true"
         
-    r = requests.get(location_url, headers=headers)
+    r = session.get(location_url, headers=headers)
     json_data = r.json()
     for i in json_data:
         store_number = i['storeNumber']

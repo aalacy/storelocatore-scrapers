@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -9,6 +9,9 @@ import time
 import sgzip
 import pprint
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,7 +30,7 @@ def request_wrapper(url,method,headers,data=None):
     if method == "get":
         while True:
             try:
-                r = requests.get(url,headers=headers)
+                r = session.get(url,headers=headers)
                 return r
                 break
             except:
@@ -40,9 +43,9 @@ def request_wrapper(url,method,headers,data=None):
         while True:
             try:
                 if data:
-                    r = requests.post(url,headers=headers,data=data)
+                    r = session.post(url,headers=headers,data=data)
                 else:
-                    r = requests.post(url,headers=headers)
+                    r = session.post(url,headers=headers)
                 return r
                 break
             except:
@@ -98,7 +101,7 @@ def fetch_data():
         # data1 = "useCookies=1&lang=&q=A1A+1A1&searchBranch=1&searchATM=1"
         data = 'useCookies=1&lang=&q='+str(search.current_zip)+'&searchBranch=1&searchATM=1'
         try:
-            r = requests.post("https://maps.rbcroyalbank.com/index.php",headers=headers,data=data)
+            r = session.post("https://maps.rbcroyalbank.com/index.php",headers=headers,data=data)
         except:
             continue
         soup= BeautifulSoup(r.text,"lxml")

@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import sgzip
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data1, data2):
     with open('data.csv', mode='w') as output_file:
@@ -50,7 +53,7 @@ def fetch_data1():
                 "&searchby=FCS%7C&SearchKey=&rnd=1569844320549"
             # print(coords)
             s = requests.Session()
-            r = requests.post(
+            r = session.post(
                 'https://midlandsb.locatorsearch.com/GetItems.aspx',
                 headers=header, data=data,
             )
@@ -178,7 +181,7 @@ def fetch_data2():
                 "&searchby=FCS%7CFIATM%7CATMSF%7C&SearchKey=&rnd=1569844320549"
             # print(coords)
             s = requests.Session()
-            r = requests.post(
+            r = session.post(
                 'https://midlandsb.locatorsearch.com/GetItems.aspx',
                 headers=header, data=data,
             )

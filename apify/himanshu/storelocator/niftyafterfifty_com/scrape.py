@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import io
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -21,7 +24,7 @@ def fetch_data():
     }
     base_url = "https://www.niftyafterfifty.com/"
     page_url = "https://www.niftyafterfifty.com/locations"
-    r = requests.get(page_url, headers=headers)
+    r = session.get(page_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     exists = soup.findAll('p', {'class', 'font_8'})

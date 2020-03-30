@@ -1,12 +1,15 @@
 import csv
 import time
 
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -37,7 +40,7 @@ def fetch_data():
     }
 
     base_url = "https://www.lcbo.com"
-    r_store_id = requests.get(base_url, headers=headers)
+    r_store_id = session.get(base_url, headers=headers)
     store_id = r_store_id.text.split('"storeId":\'')[1].split("'")[0]
     # print("store_id === " + str(store_id))
 
@@ -55,7 +58,7 @@ def fetch_data():
 
         while True:
             try:
-                r = requests.post(location_url, headers=headers, data=data)
+                r = session.post(location_url, headers=headers, data=data)
                 break
             except Exception as e:
                 # print("Error = "+ str(e))

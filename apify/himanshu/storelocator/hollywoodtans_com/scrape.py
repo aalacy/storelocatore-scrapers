@@ -3,8 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
 session = SgRequests()
-import requests
+
+session = SgRequests()
+from sgrequests import SgRequests
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
 
     base_url = "http://hollywoodtans.com/" 
     try:
-        r = requests.get("http://hollywoodtans.com/locations/", headers=headers)
+        r = session.get("http://hollywoodtans.com/locations/", headers=headers)
     except:
         pass
     soup = BeautifulSoup(r.text, "lxml")
@@ -50,7 +53,7 @@ def fetch_data():
         store_number = data['id']   
         page_url = data['location']['redirect_custom_link']
         # print(page_url)
-        r1 = requests.get(page_url, headers=headers)
+        r1 = session.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text , "lxml")
         hours = soup1.find_all("div",{"class":"gdlr-item gdlr-content-item"})[-2].find_all("p")
         if len(hours) == 5:

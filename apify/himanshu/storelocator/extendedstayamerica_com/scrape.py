@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -24,12 +27,12 @@ def fetch_data():
     }
     addresses = []
     base_url = "https://www.extendedstayamerica.com"
-    r = requests.get(
+    r = session.get(
         "https://www.extendedstayamerica.com/hotels", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find('table', class_='sm_greytxt').find_all('a'):
         state_url = base_url + link['href']
-        r_state = requests.get(state_url, headers=headers)
+        r_state = session.get(state_url, headers=headers)
         soup_state = BeautifulSoup(r_state.text, 'lxml')
         for a in soup_state.find('div', class_='links').find_all('a'):
             data_url = base_url + a['href']
@@ -77,7 +80,7 @@ def fetch_data():
                 location_type = "<MISSING>"
                 country_code = "US"
                 try:
-                    phone_tag = requests.get(page_url, headers=headers)
+                    phone_tag = session.get(page_url, headers=headers)
                     soup_phone = BeautifulSoup(phone_tag.text, 'lxml')
                     phone = soup_phone.find(
                         'span', {'id': 'cpd_HotelMiniSite_15_lblHotelPhone'}).text.strip()

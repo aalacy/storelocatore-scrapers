@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def write_output(data):
 
 def fetch_data():
     base_url= "https://tonysaccos.com/locations/"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -38,14 +41,14 @@ def fetch_data():
         if "https://tonysaccos.com/pizza-locations/mentor-oh/" in a1['href'] or "https://tonysaccos.com/pizza-locations/granger-in/" in a1['href'] or "https://tonysaccos.com/pizza-locations/estero-fl/" in a1['href'] :
          
             base_url= a1['href']
-            r = requests.get(base_url)
+            r = session.get(base_url)
             soup1= BeautifulSoup(r.text,"lxml")
             g=(soup1.find_all("span",{"itemprop":"openingHours"}))
             for g1 in g:
                 hours1.append(g1.text)
         else:
             hours1.append("<INACCESSIBLE>")
-            # r = requests.get(a1['href'])
+            # r = session.get(a1['href'])
             # print(a1['href'])
             # soup1= BeautifulSoup(r.text,"lxml")
             # print(soup1)

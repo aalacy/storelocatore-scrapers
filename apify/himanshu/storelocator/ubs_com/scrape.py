@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -22,7 +25,7 @@ def fetch_data():
     }
     base_url = "https://www.ubs.com"
     try:
-        r = requests.get("https://www.ubs.com/locations/_jcr_content.lofisearch.all.en.data", headers=headers).json()
+        r = session.get("https://www.ubs.com/locations/_jcr_content.lofisearch.all.en.data", headers=headers).json()
         
         for i in r['hits']['hits']:
             if "/en/ca" in str(i['fields']['id']) or "/en/us" in str(i['fields']['id']):
@@ -38,11 +41,11 @@ def fetch_data():
                     location_name = str(i['fields']['title']).replace("['",'').replace("']",'')
                     country_code = "CA"
                     link = "https://www.ubs.com/locations/_jcr_content.location._en_ca_"+str(city.replace(' ','-').lower())+"_"+str(street_address.replace(' ','-').lower())+".en.data"
-                    r1 = requests.get(link).json()
+                    r1 = session.get(link).json()
                     phone = r1['telephoneNumber']
                     href = "https://www.ubs.com"+str(r1['poDs'][0]['url'])
 
-                    r4 = requests.get(href)
+                    r4 = session.get(href)
                     soup1 = BeautifulSoup(r4.text, "lxml")  
                     hours = soup1.find("table",{"class":"loFi-poi__location__details__schedule__hours"})
                     if hours != None:  
@@ -61,11 +64,11 @@ def fetch_data():
                     location_name = str(i['fields']['title']).replace("['",'').replace("']",'')
                     country_code = "US"
                     link = "https://www.ubs.com/locations/_jcr_content.location._en_us_"+str(city.replace(' ','-').replace('.','').lower())+"_"+str(street_address.replace(' ','-').replace("'",'-').lower())+".en.data"
-                    r2 = requests.get(link).json()
+                    r2 = session.get(link).json()
                     for k in r2['poDs']:
                         href = "https://www.ubs.com"+str(k['url'])
                         
-                        r3 = requests.get(href)
+                        r3 = session.get(href)
                         soup = BeautifulSoup(r3.text, "lxml")  
                         if soup.find("dd",{"class":"loFi-details__detail__info__phone"}) != None:
                             phone = soup.find("dd",{"class":"loFi-details__detail__info__phone"}).text                    

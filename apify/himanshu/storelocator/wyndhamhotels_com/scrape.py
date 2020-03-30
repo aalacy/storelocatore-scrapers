@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json,urllib
 import time
 import lxml
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def write_output(data):
 def fetch_data():
     base_url1 = "https://www.wyndhamhotels.com"
     base_url = "https://www.wyndhamhotels.com/baymont/locations"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     main_soup = BeautifulSoup(r.text,"lxml")
     k = main_soup.find_all('li',{'class':'property'})
 
@@ -28,7 +31,7 @@ def fetch_data():
     store_detail = []
     for link  in k:
         temp_var = []
-        r = requests.get(base_url1+str(link.a['href']))
+        r = session.get(base_url1+str(link.a['href']))
         soup = BeautifulSoup(r.text,"lxml")
         scripts =soup.find_all('script')
         for script in scripts:
@@ -37,7 +40,7 @@ def fetch_data():
                 id1 = re.findall('\d+',myString.split(';')[0]) 
                 for j in id1:
                     url = "https://www.wyndhamhotels.com/BWSServices/services/search/property/search?propertyId="+ j +"&isOverviewNeeded=true&isAmenitiesNeeded=true&channelId=tab&language=en-us" 
-                    lm_json = requests.get(url).json()
+                    lm_json = session.get(url).json()
                         
                     if "checkInTime" in lm_json['properties'][0] or "checkOutTime" in lm_json['properties'][0]:
                             if lm_json['properties'][0]['checkInTime']:

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.viaero.com"
-    r = requests.get("https://info.viaero.com/store-directory")
+    r = session.get("https://info.viaero.com/store-directory")
     soup = BeautifulSoup(r.text,"lxml")
     addressess = []
     for location in soup.find_all("div",{"class":"hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_inline_rich_text"}):
@@ -37,7 +40,7 @@ def fetch_data():
             else:
                 page_url = 'https://info.viaero.com'+location.find("a")['href']
         
-            location_request = requests.get(page_url)
+            location_request = session.get(page_url)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             data = list(location_soup.find_all("span",{"class":"hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_rich_text"})[1].stripped_strings)
             if "@context" in data[-1]:

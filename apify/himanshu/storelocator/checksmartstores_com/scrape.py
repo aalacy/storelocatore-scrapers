@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -27,7 +30,7 @@ def fetch_data():
     addresses = []
     base_url = "http://checksmartstores.com"
 
-    r = requests.post("https://www.ccfi.com/ajax/stores.php", headers=headers,data='zip=11756&distance=all')
+    r = session.post("https://www.ccfi.com/ajax/stores.php", headers=headers,data='zip=11756&distance=all')
     json_data = r.json()
 
     # it will used in store data.

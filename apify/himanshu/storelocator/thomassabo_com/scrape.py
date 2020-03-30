@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -8,6 +8,9 @@ from shapely.prepared import prep
 from shapely.geometry import Point
 from shapely.geometry import mapping, shape
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,7 +29,7 @@ countries = {}
 
 
 def getcountrygeo():
-    data = requests.get(
+    data = session.get(
         "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
 
     for feature in data["features"]:
@@ -73,7 +76,7 @@ def fetch_data():
             str(coord[0]) + "&lng=" + str(coord[1]) + "&filterBy="
         # ulr1 = "https://www.thomassabo.com/on/demandware.store/Sites-TS_US-Site/en_US/Shopfinder-GetStores?searchMode=radius&searchPhrase=&searchDistance="+str(MAX_DISTANCE)+"&lat="+str(coord[0])+"="+str(coord[1])+"&filterBy="
         try:
-            r = requests.get(f).json()
+            r = session.get(f).json()
         except:
             continue
 
@@ -82,7 +85,7 @@ def fetch_data():
         # print(soup)
         # url ="https://www.thomassabo.com/on/demandware.store/Sites-TS_INT-Site/en/Shopfinder-GetStores?searchMode=radius"+str(MAX_DISTANCE)+"&searchPhrase=10009&searchDistance=50&lat="+str(coord[0])+"&lng="+str(coord[1])+"&filterBy="
         # try:
-        #     r = requests.get(ulr1).json()
+        #     r = session.get(ulr1).json()
         # except:
         #     continue
 

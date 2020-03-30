@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
-    r = requests.get("http://aerosportsparks.com/locations/",headers=headers)
+    r = session.get("http://aerosportsparks.com/locations/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     location_url = []
     for location in soup.find("div",{'class':"mpfy-map-canvas"}).find_all("a"):
@@ -29,7 +32,7 @@ def fetch_data():
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
             'X-Requested-With': 'XMLHttpRequest'
         }
-        location_request = requests.get(location["href"],headers=location_headers)
+        location_request = session.get(location["href"],headers=location_headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         location_details = list(location_soup.find("div",{"class":'mpfy-p-entry'}).stripped_strings)
         name =  location_soup.find("h1").text.strip()
@@ -58,7 +61,7 @@ def fetch_data():
         store.append(geo_location.split("=")[-1].split(",")[0])
         store.append(geo_location.split("=")[-1].split(",")[1])
         if location_soup.find("a",{"class":"mpfy-p-color-accent-color"}):
-            hours_request = requests.get(location_soup.find("a",{"class":"mpfy-p-color-accent-color"})["href"] + "/contact",headers=headers)
+            hours_request = session.get(location_soup.find("a",{"class":"mpfy-p-color-accent-color"})["href"] + "/contact",headers=headers)
             hours_soup = BeautifulSoup(hours_request.text,"lxml")
             store.append(" ".join(list(hours_soup.find_all("div",{"class":'fl-rich-text'})[-1].stripped_strings)))
             store.append(location_soup.find("a",{"class":"mpfy-p-color-accent-color"})["href"])

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -54,20 +57,20 @@ def fetch_data():
     }
     addresses = []
     base_url = "https://jennycraig.com"
-    r = requests.get("https://locations.jennycraig.com",headers=headers)
+    r = session.get("https://locations.jennycraig.com",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for states in soup.find_all("a",{'class':"regionlist gaq-link"}):
         # print(states["href"])
-        state_request = requests.get(states["href"],headers=headers)
+        state_request = session.get(states["href"],headers=headers)
         state_soup = BeautifulSoup(state_request.text,"lxml")
         for city in state_soup.find_all("a",{'class':"citylist gaq-link"}):
             # print(city["href"])
-            city_request = requests.get(city["href"],headers=headers)
+            city_request = session.get(city["href"],headers=headers)
             city_soup = BeautifulSoup(city_request.text,"lxml")
             for location in city_soup.find("div",{"class":'tlsmap_list'}).find_all("div",recursive=False):
                 location_url = location.find("a")['href']
-                location_request = requests.get(location_url,headers=headers)
+                location_request = session.get(location_url,headers=headers)
                 location_soup = BeautifulSoup(location_request.text,"lxml")
                 store_data = parser(location_soup,location_url)
                 if store_data[6] not in ["US","CA"]:

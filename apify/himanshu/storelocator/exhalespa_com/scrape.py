@@ -1,12 +1,15 @@
 import csv
 import time
 
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
  
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -28,7 +31,7 @@ def fetch_data():
     base_url = "https://www.exhalespa.com"
     addresses = []
 
-    r = requests.get("https://www.exhalespa.com/locations", headers=headers)
+    r = session.get("https://www.exhalespa.com/locations", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     for script in soup.find_all("div", {"class": re.compile("loc-locations")}):
@@ -53,7 +56,7 @@ def fetch_data():
             page_url = base_url + location_url["href"]
             # print("page_url = " + page_url)
 
-            r_location = requests.get(page_url, headers=headers)
+            r_location = session.get(page_url, headers=headers)
             soup_location = BeautifulSoup(r_location.text, "lxml")
 
             if soup_location.find("div",{"class":"page_heading Configurable-Text"}):

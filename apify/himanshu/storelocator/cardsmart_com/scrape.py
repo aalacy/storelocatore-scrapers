@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.cardsmart.com"
-    r = requests.get("https://www.mira-labs.net/get_user_locations_map/?instanceID=338377d9-797b-4382-8235-f418c4032fea&compID=comp-j6cb5nsq&_=1564138585654")
+    r = session.get("https://www.mira-labs.net/get_user_locations_map/?instanceID=338377d9-797b-4382-8235-f418c4032fea&compID=comp-j6cb5nsq&_=1564138585654")
     data = r.json()["locations"]
     return_main_object = []
     for i in range(len(data)):

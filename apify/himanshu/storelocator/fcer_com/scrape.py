@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,14 +19,14 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://fcer.com"
-    r = requests.get(base_url+"/locations")
+    r = session.get(base_url+"/locations")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     main = soup.find('section',{"class":"metro_map"}).find_all('section',{"class":"metro_location"})
     for location in main:
         for atag in location.find_all('a'):
             if 'er-express' not in atag['href']:
-                r1 = requests.get(base_url+atag['href'])
+                r1 = session.get(base_url+atag['href'])
                 soup1= BeautifulSoup(r1.text,"lxml")
                 name=location.find('div',{"class":"metro_info"}).find('h4').text.strip()
                 main1=json.loads(soup1.find('script',{'type':"application/ld+json"}).text)

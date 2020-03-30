@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import shapely
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     for cd in cord:
         # print(cd)
         try:
-            r = requests.get("https://americandeli.com/wp-admin/admin-ajax.php?action=store_search&lat="+cd[0]+"&lng="+cd[1]+"&max_results=200&search_radius=50",headers=headers)
+            r = session.get("https://americandeli.com/wp-admin/admin-ajax.php?action=store_search&lat="+cd[0]+"&lng="+cd[1]+"&max_results=200&search_radius=50",headers=headers)
             if r.text=="":
                 continue
             r=r.json()

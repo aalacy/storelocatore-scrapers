@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json,urllib
 import time
 import lxml
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def write_output(data):
 def fetch_data():
     base_url = "https://www.westgateresorts.com/explore-destinations/"
 
-    r = requests.get(base_url)
+    r = session.get(base_url)
 
     main_soup = BeautifulSoup(r.content,"lxml")
     return_main_object = []
@@ -30,7 +33,7 @@ def fetch_data():
 
     for i in k:
         tem_var =[]
-        r = requests.get("https://www.westgateresorts.com/"+i['href'])
+        r = session.get("https://www.westgateresorts.com/"+i['href'])
         soup = BeautifulSoup(r.content,"lxml")
 
         info = soup.find('div',{'id':"footer-resort-info"})

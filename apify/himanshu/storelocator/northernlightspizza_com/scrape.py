@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -51,7 +54,7 @@ def fetch_data():
 
 
 
-    r= requests.get('https://www.northernlightspizza.com/locations/',headers = headers)
+    r= session.get('https://www.northernlightspizza.com/locations/',headers = headers)
     soup = BeautifulSoup(r.text,'html.parser')
     json_data = json.loads(soup.find(lambda tag: (tag.name == "script") and "var wpgmaps_localize_marker_data" in tag.text).text.split("var wpgmaps_localize_marker_data =")[1].split(";")[0])
     for key,value in json_data.items():

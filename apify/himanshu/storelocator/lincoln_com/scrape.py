@@ -1,12 +1,15 @@
 import csv
 import sys
 
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -77,7 +80,7 @@ def fetch_data():
         # location_url = "https://www.lincoln.com/services/dealer/Dealers.json?make=Lincoln&radius="+str(MAX_DISTANCE)+"&filter=&minDealers=1&maxDealers="+str(MAX_RESULTS)+"&postalCode="+str(zip_code)
         # print('location_url ==' +location_url))
         try:
-            k = requests.get(get_u, headers=headers).json()
+            k = session.get(get_u, headers=headers).json()
         except:
             pass
         if "Response" in k and "Dealer" in k['Response']:

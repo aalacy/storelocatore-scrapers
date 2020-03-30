@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import io
 import json
 import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -24,13 +27,13 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.ihg.com/kimptonhotels/content/us/en/stay/find-a-hotel#location=all"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     for data in soup.findAll('div', {'class', 'hotel-tile-info-wrapper'}):
         data_url = "https:" + data.find('a').get('href')
         page_url = data_url
-        detail_url = requests.get(data_url, headers=headers)
+        detail_url = session.get(data_url, headers=headers)
         detail_soup = BeautifulSoup(detail_url.text, "lxml")
         latitude = detail_soup.find('input',{'id':'latitude'})['value']
         longitude = detail_soup.find('input',{'id':'longitude'})['value']

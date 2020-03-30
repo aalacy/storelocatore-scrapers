@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://wahlburgers.com"
-    r = requests.get(base_url+"/all-locations")
+    r = session.get(base_url+"/all-locations")
     soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
     main=soup.find('section',{"id":'body'}).find('div',{"class":"locations"}).find('div',{"class":"cell"}).find_all('a')
@@ -28,11 +31,11 @@ def fetch_data():
             country="UK"
         else:
             country="US"
-        r1 = requests.get(base_url+atag['href'])
+        r1 = session.get(base_url+atag['href'])
         soup1=BeautifulSoup(r1.text,'lxml')
         main1=soup1.find('section',{"id":'body'}).find('div',{"class":"locationset"}).find('div',{"class":"cell"}).find_all('a',{"class":'fadey'})
         for atag1 in main1:
-            r2 = requests.get(base_url+atag1['href'])
+            r2 = session.get(base_url+atag1['href'])
             soup2=BeautifulSoup(r2.text,'lxml')
             if soup2.find('script',{"type":'application/ld+json'}) != None:
                 loc=json.loads(soup2.find('script',{"type":'application/ld+json'}).text,strict=False)

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,7 +24,7 @@ def fetch_data():
     header = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5'}
     return_main_object = []
     base_url = "https://victoryma.com/"
-    r = requests.get(base_url, headers=header)
+    r = session.get(base_url, headers=header)
     soup = BeautifulSoup(r.text, "lxml")
     script = soup.find_all('script')[-1]
     # print(script)
@@ -48,7 +51,7 @@ def fetch_data():
 
 
         # print(coord)
-        r = requests.get(base_url + val['href'], headers=header)
+        r = session.get(base_url + val['href'], headers=header)
         soup = BeautifulSoup(r.text, "lxml")
         locator_domain = base_url
         location_name = soup.find('div', {'class': 'school-address'}).find('h2').text.strip()

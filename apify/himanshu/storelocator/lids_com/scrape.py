@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
     }
     base_url = "https://www.lids.com"
-    r = requests.get(
+    r = session.get(
         base_url + "/api/stores?lat=40.7226698&long=-73.51818329999999&num=1000000000&shipToStore=false", headers=headers)
     data = r.json()
 

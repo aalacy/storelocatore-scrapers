@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 # import calendar
@@ -7,6 +7,9 @@ import re
 # import sgzip
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -53,11 +56,11 @@ def fetch_data():
 
 
 
-    r= requests.get('http://www.cremedelacrepe.com/',headers = headers)
+    r= session.get('http://www.cremedelacrepe.com/',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
     loc = soup.find('li',class_='menu-item-303').find('ul',class_='sub-menu').find_all('a')
     for a in loc:
-        r_loc = requests.get(a['href'],headers = headers)
+        r_loc = session.get(a['href'],headers = headers)
         s_loc = BeautifulSoup(r_loc.text,'lxml')
 
         detail = s_loc.find('div',class_='vc_col-sm-3')

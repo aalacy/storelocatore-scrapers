@@ -5,13 +5,16 @@
 
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 
 
 # In[7]:
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -32,7 +35,7 @@ def write_output(data):
 def fetch_data():
     data = []
     base_url = 'http://flagshipcinemas.com/' 
-    r = requests.get(base_url + 'contactus.html')
+    r = session.get(base_url + 'contactus.html')
     soup = BeautifulSoup(r.text, "lxml")
 
     locationTable = soup.findAll("table")[0]
@@ -47,7 +50,7 @@ def fetch_data():
             contacts[locName.text.strip().split(',')[0].strip().lower()] = locPhoneNumber.text
 
     addresses = {}
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup = BeautifulSoup(r.text, "lxml")
     for url in soup.findAll("a", {"class": "mm2-menuLink"}):
         cityName = ""
@@ -56,12 +59,12 @@ def fetch_data():
                 address_direction = "" 
                 address_dir_link = "" 
                 link = url["href"]
-                loc_r = requests.get(link)
+                loc_r = session.get(link)
                 loc_soup = BeautifulSoup(loc_r.text, "lxml")
                 dir_img = loc_soup.find("img", {"alt": "directions"})
                 if dir_img != None:
                     address_link = base_url + dir_img.find_parent("a")["href"]
-                    dir_req = requests.get(address_link)
+                    dir_req = session.get(address_link)
                     dir_soup = BeautifulSoup(dir_req.text, "lxml")
                     dt = dir_soup.find("iframe").find_parent()
                     if dt.find_next_siblings()[0].text.strip() == "": 
@@ -81,7 +84,7 @@ def fetch_data():
                     if("tritonmovies" in link):
                         link_split = link.split("/")
                         address_link = "http://" + "/".join(link_split[2:-1]) + "/" + loc_soup.find("img",{"id": "Image7"}).find_parent("a")["href"].replace(" ","%20")
-                        req_r = requests.get(address_link)
+                        req_r = session.get(address_link)
                         dir_r = BeautifulSoup(req_r.text, "lxml")
                         dts = dir_r.findAll("font")
                         addr = dts[len(dts)-1].text
@@ -89,7 +92,7 @@ def fetch_data():
                         address_dir_link = address_link
                     else:
                         address_link = link + "information.html"
-                        req_R = requests.get(address_link)
+                        req_R = session.get(address_link)
                         dir_R = BeautifulSoup(req_R.text, "lxml")
                         dtS = dir_R.findAll("span", {"class": "textcolor"})
                         addr = dtS[len(dtS) - 1].text

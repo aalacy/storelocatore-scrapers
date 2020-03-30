@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 from datetime import datetime
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
     return_main_object = []
     zips = sgzip.for_radius(100)
     addresses = []
-    r = requests.get("https://intl.target.com",headers=headers)
+    r = session.get("https://intl.target.com",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     for script in soup.find_all("script"):
         if '"apiKey":' in script.text:
@@ -32,7 +35,7 @@ def fetch_data():
         try:
         
             base_url = "https://intl.target.com"
-            r = requests.get("https://redsky.target.com/v3/stores/nearby/" + str(zip_code) + "?key=" + str(api_key) + "&limit=1000&within=100&unit=mile",headers=headers)
+            r = session.get("https://redsky.target.com/v3/stores/nearby/" + str(zip_code) + "?key=" + str(api_key) + "&limit=1000&within=100&unit=mile",headers=headers)
             data = r.json()[0]["locations"]
             for store_data in data:
                 store = []
@@ -52,7 +55,7 @@ def fetch_data():
                 store.append(store_data["geographic_specifications"]["latitude"])
                 store.append(store_data["geographic_specifications"]["longitude"])
             
-                location_request = requests.get("https://redsky.target.com/v3/stores/location/" + str(store_data["location_id"]) + "?key=" + str(api_key), headers=headers)
+                location_request = session.get("https://redsky.target.com/v3/stores/location/" + str(store_data["location_id"]) + "?key=" + str(api_key), headers=headers)
                 hours = ""
                 store_hours = location_request.json()[0]["rolling_operating_hours"]["regular_event_hours"]["days"]
                 for i in range(0,7):

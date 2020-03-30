@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -13,12 +13,15 @@ import time
 import unicodedata
 import platform
 
+
+session = SgRequests()
+
 system = platform.system()
 countries = {}
    
 
 def getcountrygeo():
-    data = requests.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
+    data = session.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
 
     for feature in data["features"]:
         geom = feature["geometry"]

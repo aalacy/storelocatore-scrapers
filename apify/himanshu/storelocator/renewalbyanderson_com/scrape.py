@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,14 +25,14 @@ def fetch_data():
     address = []
     base_url= "https://www.renewalbyandersen.com"
     location_url = "https://www.renewalbyandersen.com/about/renewal-by-andersen-showrooms"
-    r= requests.get(location_url, headers=headers)
+    r= session.get(location_url, headers=headers)
     soup=BeautifulSoup(r.text, "lxml")
     locations = soup.find_all("div",{"class":"row component column-splitter"})[6:8]
     for location in locations:
         for link in location.find_all("a"):
             if "item=web%3a%7b1C875120-4431-4506-BD46-9B579A66DBD1%7d%40en" not in link['href']:
                 href = "https://www.renewalbyandersen.com/"+link['href']
-                r1 = requests.get(href, headers=headers)
+                r1 = session.get(href, headers=headers)
                 soup1 = BeautifulSoup(r1.text, "lxml")
                 coords = soup1.find("map-config",{"style":"display: none;"})
                 latitude = str(coords).split('"Latitude":')[3].split(',')[0]

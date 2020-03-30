@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import io
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -22,7 +25,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     url1 = "https://cdn.storelocatorwidgets.com/json/b9fb8be18d69e8520c3d2df1717b3b58?callback=slw&_=1581327875153"
-    r1 = requests.get(url1, headers=headers)
+    r1 = session.get(url1, headers=headers)
     # print(r)
     soup1 = BeautifulSoup(r1.text, "lxml")
     k = (soup1.text.split('"stores":')[1].split(',"display_order_set":false,"filters":""})')[0])

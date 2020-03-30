@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,7 +30,7 @@ def fetch_data():
     location_type = "<MISSING>"
     country_code = "US"
     url= "https://www.redrockcanyongrill.com/locations/"
-    r = requests.get(url,headers=headers)
+    r = session.get(url,headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
     script = soup.find('div',class_='location-finder').find_next('script').text.split('var guteLocations =')[-1]
     json_data = json.loads(script)
@@ -36,7 +39,7 @@ def fetch_data():
         page_url = info['link']
         latitude = info['lat']
         longitude = info['long']
-        r_loc= requests.get(page_url,headers = headers)
+        r_loc= session.get(page_url,headers = headers)
         soup_loc = BeautifulSoup(r_loc.text,'lxml')
         location_name = soup_loc.find('h1',class_='title has-text-centered').text.strip().replace('|',',').strip()
         address= soup_loc.find('address',class_='address').text.strip()

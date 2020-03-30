@@ -1,11 +1,14 @@
 import csv
 import time
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -28,7 +31,7 @@ def fetch_data():
     base_url = "https://www.fallasstores.net"
     addresses = []
 
-    r = requests.get("https://storerocket.global.ssl.fastly.net/api/user/1vZ4v6y4Qd/locations", headers=headers)
+    r = session.get("https://storerocket.global.ssl.fastly.net/api/user/1vZ4v6y4Qd/locations", headers=headers)
     json_data = r.json()
 
     for location in json_data["results"]["locations"]:

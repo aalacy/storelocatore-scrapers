@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8", newline='') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.wellstreet.com"
-    r = requests.get("https://www.wellstreet.com/region/",headers=headers)
+    r = session.get("https://www.wellstreet.com/region/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     region_links = []
     for url in soup.find("main",{"id":'main'}).find_all("a"):
@@ -27,7 +30,7 @@ def fetch_data():
             region_links.append(url["href"])
     store_name = []
     for i in range(len(region_links)):
-        region_request = requests.get(base_url + region_links[i],headers=headers)
+        region_request = session.get(base_url + region_links[i],headers=headers)
         region_soup = BeautifulSoup(region_request.text,"lxml")
         for location in region_soup.find_all("div",{'class':"map-list-item"}):
             if location.find("div",{"class":'phone-line'}) == None:
@@ -38,7 +41,7 @@ def fetch_data():
             store_name.append(title)
             phone = location.find("div",{"class":'phone-line'}).text
             location_url = location.find("a")["href"]
-            location_request = requests.get(location_url,headers=headers)
+            location_request = session.get(location_url,headers=headers)
             location_soup = BeautifulSoup(location_request.text.replace("</html>"," "),"lxml")
             try:
                 hours = " ".join(list(location_soup.find('div',{"class":"hours"}).stripped_strings))

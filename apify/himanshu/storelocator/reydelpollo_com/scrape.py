@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -51,7 +54,7 @@ def fetch_data():
 
 
 
-    r= requests.get('https://reydelpollo.com/locations/',headers = headers)
+    r= session.get('https://reydelpollo.com/locations/',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
     for column in soup.find_all('div',class_='vc_row wpb_row vc_inner vc_row-fluid'):
         list_columns = list(column.stripped_strings)

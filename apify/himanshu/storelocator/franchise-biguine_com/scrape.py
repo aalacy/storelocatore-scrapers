@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import io
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -20,14 +23,14 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.franchise-biguine.com/trouver-mon-salon"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     exists = soup.find('div', {'class', 'pagination'}).findAll('li')[-2].findAll('span')[-1].get_text()
     for pages in range(1, int(exists)+1):
         data_url = "https://www.franchise-biguine.com/trouver-mon-salon/sort:distance/direction:asc/page:" + str(pages)
         print(data_url)
-        detail_url = requests.get(data_url, headers=headers)
+        detail_url = session.get(data_url, headers=headers)
         detail_soup = BeautifulSoup(detail_url.text, "lxml")
         if detail_soup.find('div', {'class', 'appartment-listing'}):
             for values in detail_soup.find('div', {'class', 'appartment-listing'}).findAll('div', {'class', 'item'}):

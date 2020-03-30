@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -51,13 +54,13 @@ def fetch_data():
 
 
 
-    r= requests.get('https://www.galvanize.com',headers = headers)
+    r= session.get('https://www.galvanize.com',headers = headers)
     soup = BeautifulSoup(r.text,'html.parser')
     li = soup.find('li',{'data-tag':'Campuses'}).find_all('a')
     for i in li:
         if  "/campuses/remote" in i['href'] or "/campuses/san-jose" in i['href']:
             continue
-        r_loc = requests.get(locator_domain + i['href'],headers = headers)
+        r_loc = session.get(locator_domain + i['href'],headers = headers)
         # print(locator_domain + i['href'])
         soup = BeautifulSoup(r_loc.text,'lxml')
         loc = soup.find('textarea',{'id':'state'}).text

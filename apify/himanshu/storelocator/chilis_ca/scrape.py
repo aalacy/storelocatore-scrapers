@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -42,7 +45,7 @@ def fetch_data():
     hours_of_operation = ""
     page_url = ""
 
-    r = requests.get("http://www.chilis.ca/locations/locations.cfm", headers=headers)
+    r = session.get("http://www.chilis.ca/locations/locations.cfm", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     for script in soup.find_all("a", {"class": re.compile("btn-map")}):
@@ -50,7 +53,7 @@ def fetch_data():
         location_url = "http://www.chilis.ca/skins/chilis/js/" + script["id"].replace("link-", "") + ".js"
         
         print("location_url === " + location_url)
-        r_location = requests.get(location_url, headers=headers)
+        r_location = session.get(location_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
 
         # print(soup_location)

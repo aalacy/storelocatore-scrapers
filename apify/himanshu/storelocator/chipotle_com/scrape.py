@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 from datetime import datetime
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -29,7 +32,7 @@ def fetch_data():
         'Accept': 'application/json, text/plain, */*',
     }
     base_url = "https://chipotle.com"
-    r = requests.post(base_url + "/api/v2.1/search",
+    r = session.post(base_url + "/api/v2.1/search",
                       data=data, headers=headers)
     data = r.json()["data"]
     for i in range(len(data)):

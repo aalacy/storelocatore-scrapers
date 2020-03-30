@@ -1,11 +1,14 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import http.client
+
+session = SgRequests()
+
 http.client._MAXHEADERS = 1000
 
 
@@ -30,7 +33,7 @@ def fetch_data():
 
     base_url = "http://papamurphys.ca/"
     location_url = "https://papa-murphys-order-online-locations.securebrygid.com/zgrid/themes/13097/portal/index.jsp"   
-    r = requests.get(location_url, headers=headers)   
+    r = session.get(location_url, headers=headers)   
     soup = BeautifulSoup(r.text, "lxml")
     data = soup.find_all("div",{"class":"restaurant"})
     for i in data:

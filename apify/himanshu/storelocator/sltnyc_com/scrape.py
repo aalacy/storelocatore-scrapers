@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import io
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -20,7 +23,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://sltnyc.com/studios/"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     address = []
@@ -48,7 +51,7 @@ def fetch_data():
                 else:
                     state = address[3].strip().split(' ')[0]
                 zip = address[3].strip().split(' ')[1]
-            detail_url = requests.get(data.find('a').get('href'), headers=headers)
+            detail_url = session.get(data.find('a').get('href'), headers=headers)
             detail_soup = BeautifulSoup(detail_url.text, "lxml")
             if detail_soup.find('a', {'class', 'hero__direction-link'}):
                 if "@" in detail_soup.find('a', {'class', 'hero__direction-link'}).get('href'):

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,14 +22,14 @@ def fetch_data():
     headers = {
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
-    r = requests.get("https://www.samuraisams.net/locator/index.php?brand=6&mode=desktop&pagesize=10000&latitude=&longitude=&q=11756&submit.x=0&submit.y=0",headers=headers)
+    r = session.get("https://www.samuraisams.net/locator/index.php?brand=6&mode=desktop&pagesize=10000&latitude=&longitude=&q=11756&submit.x=0&submit.y=0",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     for script in soup.find_all("script"):
         if "Locator.stores[" in script.text:
             store_data = json.loads(script.text.split("'] = ")[1].split("} ;")[0] + "}")
             if store_data["StatusName"] == "Coming Soon":
                 continue
-            location_request = requests.get("https://www.samuraisams.net/stores/" + str(store_data["StoreId"]),headers=headers)
+            location_request = session.get("https://www.samuraisams.net/stores/" + str(store_data["StoreId"]),headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
             name = location_soup.find("div",{'id':'intro'}).find("h2").text.strip()
             store = []

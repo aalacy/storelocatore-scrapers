@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -73,7 +76,7 @@ def fetch_data():
         result_coords = []
         get_url='https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE)
         try:
-            k = requests.get(get_url,headers=headers).json()
+            k = session.get(get_url,headers=headers).json()
             
         except:
             pass

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,13 +22,13 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://elpatomexicanfood.com"
-    r = requests.get("https://elpatomexicanfood.com/locations/",headers=headers)
+    r = session.get("https://elpatomexicanfood.com/locations/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     hours = " ".join(list(soup.find("div",{"class":"et_pb_row et_pb_row_5"}).find("div",{"class":'et_pb_text_inner'}).stripped_strings))
     for link in soup.find_all("a",text=re.compile("View Location")):
         print(link["href"])
-        location_request = requests.get(link["href"],headers=headers)
+        location_request = session.get(link["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         name = location_soup.find_all("div",{"class":re.compile("et_pb_module et_pb_text")})[0:2][0].text.strip()
         address = location_soup.find_all("div",{"class":re.compile("et_pb_module et_pb_text")})[0:2][1].text.strip().split("•")

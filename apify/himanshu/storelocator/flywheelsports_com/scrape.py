@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,12 +19,12 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.flywheelsports.com"
-    r = requests.get("https://www.flywheelsports.com/api/v2/region.json?")
+    r = session.get("https://www.flywheelsports.com/api/v2/region.json?")
     return_main_object = []
     addresses = []
     state_data = r.json()
     for i in range(len(state_data)):
-        state_request = requests.get("https://" + str(state_data[i]["region_subdomain"]) + ".flywheelsports.com/api/v2/classroom.json?")
+        state_request = session.get("https://" + str(state_data[i]["region_subdomain"]) + ".flywheelsports.com/api/v2/classroom.json?")
         for store_data in state_request.json():
             store = []
             if store_data["classroom_parent_nid"] != None:

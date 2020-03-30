@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -20,7 +23,7 @@ def fetch_data():
     ,
     "Accept":'application/json, text/javascript, */*; q=0.01'
     }
-    r = requests.post('https://www.relaxandwax.com/GoogleMaps/store_locator.php',data = dt,headers = headers).json()
+    r = session.post('https://www.relaxandwax.com/GoogleMaps/store_locator.php',data = dt,headers = headers).json()
     return_main_object = []
     for loc in r:
         store=[]

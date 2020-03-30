@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -35,7 +38,7 @@ def fetch_data():
         result_coords = []
         location_url = "https://www.deadriver.com/LocationFinder.asmx/GetLocation"
         try:
-            r = requests.post(location_url, headers=headers, data='{"zipCode":"' + zip_code + '"}')
+            r = session.post(location_url, headers=headers, data='{"zipCode":"' + zip_code + '"}')
         except:
             pass
         soup = BeautifulSoup(r.text, "lxml")

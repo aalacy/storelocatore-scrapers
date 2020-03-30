@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -57,7 +60,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
         try:
-            r= requests.get('https://www.lequipeur.com/services-rest/marks/stores?code=&productIds=&locale=en&location=+'+str(zip_code),headers = headers)
+            r= session.get('https://www.lequipeur.com/services-rest/marks/stores?code=&productIds=&locale=en&location=+'+str(zip_code),headers = headers)
             json_data = r.json()
         except:
             continue

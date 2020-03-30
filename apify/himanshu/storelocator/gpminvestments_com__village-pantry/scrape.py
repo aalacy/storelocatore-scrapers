@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,7 +23,7 @@ def fetch_data():
     }
     return_main_object = []
     base_url = "https://gpminvestments.com/village-pantry"
-    r = requests.get("https://gpminvestments.com/store-locator/",headers=headers)
+    r = session.get("https://gpminvestments.com/store-locator/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     data = "action=wpgmza_sl_basictable&security=fc0b57223a&map_id=7"
     for state in soup.find_all("a",{"name":re.compile("marker")}):
@@ -30,7 +33,7 @@ def fetch_data():
         "x-requested-with": "XMLHttpRequest",
         "content-type": "application/x-www-form-urlencoded; charset=UTF-8"
     }
-    r = requests.post("https://gpminvestments.com/wp-admin/admin-ajax.php",headers=headers,data=data)
+    r = session.post("https://gpminvestments.com/wp-admin/admin-ajax.php",headers=headers,data=data)
     soup = BeautifulSoup(r.text,"lxml")
     for location in soup.find("div").find_all("div",recursive=False):
         geo_location = location.find("a",text="Directions")["gps"]

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def write_output(data):
 
 def fetch_data():
     base_url= "https://stores.kidsfootlocker.com/index.html"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -29,7 +32,7 @@ def fetch_data():
     k= soup.find_all("a",{"class":"Directory-listLink"})
    
     for i in k:
-        r = requests.get("https://stores.kidsfootlocker.com/"+i['href'])
+        r = session.get("https://stores.kidsfootlocker.com/"+i['href'])
         print("============",i.text)
         soup1= BeautifulSoup(r.text,"lxml")
 
@@ -45,7 +48,7 @@ def fetch_data():
                 if data_count == "1":
                     # if "https://stores.kidsfootlocker.com/pr/pr/bayamon.html" in new_link:
                         # print("+++++++++++++++++++",new_link)
-                    r = requests.get(new_link)
+                    r = session.get(new_link)
                     soup2= BeautifulSoup(r.text,"lxml")
                     name = soup2.find("span",{"class":"LocationName-brand"}).text
                     name1 = soup2.find("span",{"class":"LocationName-geo"}).text
@@ -84,14 +87,14 @@ def fetch_data():
                     store_detail.append(tem_var)
                 else:
                     # print(new_link)
-                    r = requests.get(new_link)
+                    r = session.get(new_link)
                     soup3= BeautifulSoup(r.text,"lxml")
                     link2 = soup3.find_all("a",{"class":"Teaser-titleLink"})
 
                     for j in link2:
                         tem_var=[]
                         # print(j['href'].replace("..",""))
-                        r = requests.get("https://stores.kidsfootlocker.com"+j['href'].replace("..",""))
+                        r = session.get("https://stores.kidsfootlocker.com"+j['href'].replace("..",""))
                         soup4= BeautifulSoup(r.text,"lxml")
                         name = soup4.find("span",{"class":"LocationName-brand"}).text
                         name1 = soup4.find("span",{"class":"LocationName-geo"}).text
@@ -132,7 +135,7 @@ def fetch_data():
                         
         else:
             tem_var=[]
-            r = requests.get("https://stores.kidsfootlocker.com/"+i['href'])
+            r = session.get("https://stores.kidsfootlocker.com/"+i['href'])
             soup5= BeautifulSoup(r.text,"lxml")
 
           

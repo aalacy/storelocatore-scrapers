@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,15 +24,15 @@ def fetch_data():
     return_main_object = []
     base_url = "https://www.justtires.com"
     try:
-        r = requests.get("https://www.justtires.com/en-US/service-center-near-me",headers=headers)
+        r = session.get("https://www.justtires.com/en-US/service-center-near-me",headers=headers)
         soup = BeautifulSoup(r.text,"lxml")
         for state in soup.find("div",{'class':"browse-by-state-wrapper__list"}).find_all("a"):
             # print(base_url + state["href"])
-            state_request = requests.get(base_url + state["href"],headers=headers)
+            state_request = session.get(base_url + state["href"],headers=headers)
             state_soup = BeautifulSoup(state_request.text,"lxml")
             for city in state_soup.find("div",{'class':"browse-by-state-wrapper__list"}).find_all("a"):
                 # print(base_url + city["href"])
-                city_request = requests.get(base_url + city["href"],headers=headers)
+                city_request = session.get(base_url + city["href"],headers=headers)
                 city_soup = BeautifulSoup(city_request.text,"lxml")
                 for location in city_soup.find_all("li",{"class":'store-results__results__item'}):
                     page_url = base_url + location.find("a")["href"]
@@ -37,7 +40,7 @@ def fetch_data():
                     if location.find("p",{"class":"my-store__direction"}) == None:
                         continue
                     address = json.loads(location.find("p",{"class":"my-store__direction"})["data-location"])
-                    location_request = requests.get(page_url,headers=headers)
+                    location_request = session.get(page_url,headers=headers)
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                     name = location_soup.find("span",{'itemprop':"name"}).text.strip()
                     store_id = location_soup.find("div",{"data-mobile-store":"store"})["data-store-id"]

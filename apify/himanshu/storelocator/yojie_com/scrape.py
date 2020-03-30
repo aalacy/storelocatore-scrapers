@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sys
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -39,7 +42,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = "https://www.yojie.com/locations.html"
-    r = requests.get(page_url, headers=headers)
+    r = session.get(page_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     # print(soup.prettify())
     coord = []

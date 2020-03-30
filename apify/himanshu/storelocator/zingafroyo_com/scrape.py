@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from collections import Counter
 
 import re
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -41,7 +44,7 @@ def fetch_data():
     return_main_object = []
     base_url = "http://zingafroyo.com/"
     loacation_url = base_url
-    r = requests.get(loacation_url, headers=header)
+    r = session.get(loacation_url, headers=header)
     soup = BeautifulSoup(r.text, "html.parser")
 
     vk = soup.find('div', {'id': 'pu469'}).find_all('img')

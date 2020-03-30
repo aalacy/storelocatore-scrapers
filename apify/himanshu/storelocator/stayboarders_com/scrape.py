@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding='utf8') as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
     }
     data = "action=get_properties_for_map"
     base_url = "https://www.stayboarders.com"
-    r = requests.post("https://www.staycobblestone.com/wp-admin/admin-ajax.php", headers=headers, data = data)
+    r = session.post("https://www.staycobblestone.com/wp-admin/admin-ajax.php", headers=headers, data = data)
     print(r)
     soup = BeautifulSoup(r.text, "lxml")
     data = json.loads(soup.text)

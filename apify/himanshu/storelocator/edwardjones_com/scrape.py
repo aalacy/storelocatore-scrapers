@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import time
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -31,7 +34,7 @@ def fetch_data():
         result_coords = []
         #print("zip_code === "+zip_code)
         try:
-            r = requests.get("https://www.edwardjones.com/cgi/findFaByAddress.action?address=" + str(zip_code), headers=headers)
+            r = session.get("https://www.edwardjones.com/cgi/findFaByAddress.action?address=" + str(zip_code), headers=headers)
             json_data = r.json()
             current_results_len = len(json_data)
         except:

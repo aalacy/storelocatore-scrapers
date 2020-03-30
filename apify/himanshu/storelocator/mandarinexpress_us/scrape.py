@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     }
 
     base_url = "http://mandarinexpress.us"
-    r = requests.get(base_url + '/locations', headers=headers)
+    r = session.get(base_url + '/locations', headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     # for parts in soup.find_all("div", {"class": "rte-content colored-links"}):
     parts = soup.find("div", {"class": "foodmenu"})

@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import  pprint
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -45,7 +48,7 @@ def fetch_data():
     hours_of_operation = ""
 
     location_url = "https://bigredstores.net/findus/"
-    r = requests.get(location_url, headers=headers)
+    r = session.get(location_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     # print(soup.prettify())
     for link in soup.find_all("div", class_="has-post-thumbnail"):
@@ -54,7 +57,7 @@ def fetch_data():
 
         city = list_add[-1].strip()
         page_url = link.a['href']
-        r_loc = requests.get(link.a['href'], headers=headers)
+        r_loc = session.get(link.a['href'], headers=headers)
         soup_loc = BeautifulSoup(r_loc.text, "lxml")
         try:
             coords = soup_loc.find("div", class_="et_pb_map_pin")

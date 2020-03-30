@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ import unicodedata
 # import sgzip
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -52,7 +55,7 @@ def fetch_data():
 
 
 
-    r= requests.get('https://cococochocolatiers.com/pages/locations',headers = headers)
+    r= session.get('https://cococochocolatiers.com/pages/locations',headers = headers)
     soup = BeautifulSoup(r.text,'html.parser')
     for url in soup.find('div',class_='PageContent PageContent--narrow Rte').find_all('h5'):
         loc_url = url.a['href']
@@ -62,7 +65,7 @@ def fetch_data():
         else:
             country_code = "CA"
         page_url= loc_url
-        r_loc= requests.get(loc_url,headers = headers)
+        r_loc= session.get(loc_url,headers = headers)
         soup_loc = BeautifulSoup(r_loc.text,'lxml')
         try:
             div = soup_loc.find('div',class_='easyslider-contents')

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
     }
     base_url = "https://www.panago.com"
-    r = requests.get("https://assets-cdn.scdn4.secure.raxcdn.com/static_assets/js/bundle-46119c59a24c18fd7bdd.js",headers=headers)
+    r = session.get("https://assets-cdn.scdn4.secure.raxcdn.com/static_assets/js/bundle-46119c59a24c18fd7bdd.js",headers=headers)
     token = r.text.split("webToken")[1].split(",")[0].split(':"')[1].split('"')[0]
     city_headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
@@ -30,7 +33,7 @@ def fetch_data():
         "Authorization": 'Token token="'+ token + '"'
     }
     data = '{"store_number":918}'
-    city_request = requests.post("https://api.panagopos.com/locations",headers=city_headers,data=data)
+    city_request = session.post("https://api.panagopos.com/locations",headers=city_headers,data=data)
     locations = city_request.json()["data"]["locations"]
     store_ids = []
     return_main_object = []
@@ -48,7 +51,7 @@ def fetch_data():
                 "Authorization": 'Token token="'+ location_token + '"'
             }
             location_data = '{"search_params":{"query":"' + city + '"}}'
-            location_request = requests.post("https://api.panagopos.com/stores/search",headers=location_headers,data=location_data)
+            location_request = session.post("https://api.panagopos.com/stores/search",headers=location_headers,data=location_data)
             data = location_request.json()["data"]
             for i in range(len(data)):
                 store_data = data[i]

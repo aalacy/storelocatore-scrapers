@@ -1,12 +1,15 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -47,7 +50,7 @@ def fetch_data():
         location_url ="http://www.watermillexpress.com/wp-admin/admin-ajax.php?action=store_search&lat="+str(lat)+"&lng="+str(lng)+"&max_results=25&search_radius=25&search=&statistics="
         try:
 
-             r_locations = requests.get(location_url, headers=headers)
+             r_locations = session.get(location_url, headers=headers)
         except:
             continue
 

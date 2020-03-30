@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
         'Host': 'www.advanceamerica.net',
         'Referer': 'https://www.advanceamerica.net/store-locations/alabama'
     }
-    r = requests.post(base_url + "/api/posts/filter",data=data,headers=headers)
+    r = session.post(base_url + "/api/posts/filter",data=data,headers=headers)
     data = r.json()['posts']
     return_main_object = []
     for i in range(len(data)):

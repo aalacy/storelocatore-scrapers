@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import ast
+
+session = SgRequests()
+
 requests.packages.urllib3.disable_warnings()
 
 def write_output(data):
@@ -17,7 +20,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.abcwarehouse.com"
-    r = requests.get(base_url + "/store-locator",verify=False)
+    r = session.get(base_url + "/store-locator",verify=False)
 
     soup = BeautifulSoup(r.text,"lxml")
     store_list = ast.literal_eval(soup.find("input",{"class": "shop-resources"})["data-markersdata"])

@@ -1,7 +1,7 @@
 import csv
 from bs4 import BeautifulSoup
 from sgrequests import SgRequests
-import requests
+from sgrequests import SgRequests
 from random import choice
 import http.client
 import re
@@ -9,6 +9,9 @@ import json
 import sgzip
 import ssl
 import urllib3
+
+
+session = SgRequests()
 
 session = SgRequests()
 try:
@@ -22,7 +25,7 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context
 def get_proxy():
     url = "https://www.sslproxies.org/"
-    r = requests.get(url)
+    r = session.get(url)
     soup = BeautifulSoup(r.content, "html5lib")
     return {'https': (choice(list(map(lambda x:x[0]+':'+x[1],list(zip(map(lambda x:x.text,soup.findAll('td')[::8]),map(lambda x:x.text,soup.findAll('td')[1::8])))))))}
 

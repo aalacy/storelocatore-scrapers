@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -45,7 +48,7 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
 
-    r = requests.get('http://www.bigdoil.com/locations/', headers=headers)
+    r = session.get('http://www.bigdoil.com/locations/', headers=headers)
     soup = BeautifulSoup(r.text, 'lxml')
     val = soup.find('section', class_="entry")
     for result in val.find_all('div', class_='vc_col-sm-4'):
@@ -87,7 +90,7 @@ def fetch_data():
 
             for a in p.find_all('a'):
                 # print(a['href'])
-                r_loc = requests.get(a['href'], headers=headers)
+                r_loc = session.get(a['href'], headers=headers)
                 soup_loc = BeautifulSoup(r_loc.text, 'lxml')
                 # print(soup_loc.prettify())
                 page_url = a['href']

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -22,11 +25,11 @@ def fetch_data():
         "X-Requested-With": "XMLHttpRequest",
         "content-type": "application/x-www-form-urlencoded",
     }
-    r = requests.post("https://www.carespot.com/wp-admin/admin-ajax.php",headers=headers,data=data)
+    r = session.post("https://www.carespot.com/wp-admin/admin-ajax.php",headers=headers,data=data)
     return_main_object = []
     for location in r.json()["data"]:
         print(BeautifulSoup(location["info"],"lxml").find("a")["href"])
-        location_request = requests.get(BeautifulSoup(location["info"],"lxml").find("a")["href"])
+        location_request = session.get(BeautifulSoup(location["info"],"lxml").find("a")["href"])
         location_soup = BeautifulSoup(location_request.text,"lxml")
         if location_soup.find("p",text=re.compile("coming soon!",re.IGNORECASE)) != None:
             continue

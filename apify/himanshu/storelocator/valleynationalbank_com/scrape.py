@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
         }
         base_url = "https://www.valleynationalbank.com"
         data = '{"Location":"' + str(zip_code) + '"}'
-        r = requests.post("https://www.valley.com/siteAPI/Branch/Branches",headers=headers,data=data)
+        r = session.post("https://www.valley.com/siteAPI/Branch/Branches",headers=headers,data=data)
         r_data = r.json()
         if type(r_data) != dict:
             r_data = json.loads(r.json())
@@ -36,7 +39,7 @@ def fetch_data():
             if store_data["StreetAddress"] in addresses:
                 continue
             addresses.append(store_data["StreetAddress"])
-            location_request = requests.get("https://www.valley.com/" + store_data["Path"])
+            location_request = session.get("https://www.valley.com/" + store_data["Path"])
             location_soup = BeautifulSoup(location_request.text,"lxml")
             hours = " ".join(list(location_soup.find("div",{'class':"columns small-12 medium-7 large-4 panel--column"}).stripped_strings))
             store = []

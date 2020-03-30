@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import io
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -21,14 +24,14 @@ def fetch_data():
     }
     base_url = "https://www.eurekapizza.com/locations/"
     # hours for Fayetteville
-    h = requests.get('https://orderonline.granburyrs.com/slice/account/initialize?account=335').json()
+    h = session.get('https://orderonline.granburyrs.com/slice/account/initialize?account=335').json()
     hh = []
     for hours_list in  h['restaurants']:
         h1 = hours_list['hours']['Delivery']['ranges']
         hh1= "Monday " + h1['Monday']['startString'] +"-" + h1['Monday']['endString'] + ","+"Tuesday " + h1['Tuesday']['startString'] +"-" + h1['Tuesday']['endString'] + ","+"Wednesday " + h1['Wednesday']['startString'] +"-" + h1['Wednesday']['endString'] + ","+"Thursday " + h1['Thursday']['startString'] +"-" + h1['Thursday']['endString'] + " "+"Friday " + h1['Friday']['startString'] +"-" + h1['Friday']['endString'] + ","+"Saturday " + h1['Saturday']['startString'] +"-" + h1['Saturday']['endString'] + ","+"Sunday " + h1['Sunday']['startString'] +"-" + h1['Sunday']['endString']
         hh.append(hh1)
     ##################################
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     data = soup.find("div", {"id": "1260607478"})
@@ -49,7 +52,7 @@ def fetch_data():
                 link = semi_part.find("a",{"class":"dmDefaultGradient"})['href']
                 if("http" in link):
                     page_url = link
-                    store_request = requests.get(link)
+                    store_request = session.get(link)
                     store_soup = BeautifulSoup(store_request.text, "lxml")
 
                     if(store_soup.find("td",{"id":"ctl00_BP_Content_uRestaurantHeader_tdHours"})):

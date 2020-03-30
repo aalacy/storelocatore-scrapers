@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -48,7 +51,7 @@ def fetch_data():
         data = '{"operationName":"GetStores","variables":{"geoSearchParams":{"zipcode":"'+str(zip_code)+'","radius":"500"}},"query":"query GetStores($geoSearchParams: GeoSearchParams!) { getStores(geoSearchParams: $geoSearchParams) {   results {     retailStores {       name       uuid       hours       lat       lng       serviceArea       prettyName       comingSoon       address {         line1         line2         city         state         zip         __typename       }       storeType       ... on StoreWithSearchLocation {         distance         __typename       }       capabilities {         type         availableInventory         __typename       }       __typename     }     partnershipStores {       name       uuid       hours       lat       lng       prettyName       serviceArea       phoneNumber       address {         line1         line2         city         state         zip         __typename       }       storeType       ... on StoreWithSearchLocation {         distance         __typename       }       capabilities {         type         availableInventory         __typename       }       __typename     }     searchLocation {       lat       lng       __typename     }     __typename   }   __typename } } " }'
         location_url = "https://api.tuftandneedle.com/api/graphql"
         try:
-            json_data = requests.post(location_url,headers=headers,data=data).json()
+            json_data = session.post(location_url,headers=headers,data=data).json()
         except:
             continue
         # soup = BeautifulSoup(r.text, "lxml")

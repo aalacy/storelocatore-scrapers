@@ -1,12 +1,15 @@
 import csv
 import time
 
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -30,7 +33,7 @@ def fetch_data():
     base_url = "https://www.thecolumbiabank.com"
     addresses = []
 
-    r = requests.post("https://www.fultonbank.com/api/Branches/Search", headers=headers,
+    r = session.post("https://www.fultonbank.com/api/Branches/Search", headers=headers,
                       data="QueryModel.SearchTerm=11576&QueryModel.Radius=10000")
     json_data = r.json()
     soup = BeautifulSoup(json_data["branchFlyouts"].replace("\n", "").replace("\r", "").replace('\\"', '"'),

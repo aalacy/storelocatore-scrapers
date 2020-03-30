@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import ast
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +18,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.shopassociated.com"
-    r = requests.get(base_url + "/locations/?addr=")
+    r = session.get(base_url + "/locations/?addr=")
     soup = BeautifulSoup(r.text,"lxml")
     scripts = soup.find_all("script")
     return_main_object = []

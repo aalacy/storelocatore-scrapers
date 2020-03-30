@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -50,7 +53,7 @@ def fetch_data():
     #     print("store_url == " + store_url)
 
     list_store_url = []
-    r = requests.get("http://kevajuice.com/store-locator/", headers=headers)
+    r = session.get("http://kevajuice.com/store-locator/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for script in soup.find_all("div", {'class': re.compile('tp-caption')}):
         list_store_url.append(script.find('a')['href'])
@@ -59,7 +62,7 @@ def fetch_data():
     for store_url in list_store_url:
         if "nevada" not in store_url:
             # print(store_url)
-            r_store = requests.get(store_url, headers=headers)
+            r_store = session.get(store_url, headers=headers)
             soup_store = BeautifulSoup(r_store.text, "lxml")
             table = soup_store.find('table')
             # print(table)

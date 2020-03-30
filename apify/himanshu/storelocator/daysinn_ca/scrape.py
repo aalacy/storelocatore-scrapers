@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,15 +29,15 @@ def fetch_data():
     }
 
     base_url = "http://daysinn.ca"
-    r = requests.get(
+    r = session.get(
         'https://www.wyndhamhotels.com/en-ca/days-inn/locations', headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for parts in soup.find_all("ul", {"class": "property-list"}):
         for semi_parts in parts.find_all("li", {"class": "property"}):
             return_object = []
             try:
-                # store_request = requests.get('https://www.wyndhamhotels.com/en-ca/hotels/99778')
-                store_request = requests.get(
+                # store_request = session.get('https://www.wyndhamhotels.com/en-ca/hotels/99778')
+                store_request = session.get(
                     'https://www.wyndhamhotels.com' + semi_parts.find("a")['href'])
                 # print(store_request)
             except Exception as e:

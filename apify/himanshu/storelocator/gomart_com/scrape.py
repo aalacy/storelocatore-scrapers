@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -45,7 +48,7 @@ def fetch_data():
     hours_of_operation = ""
     page_url =""
 
-    r = requests.get("https://gomart.com/locations/",headers = headers)
+    r = session.get("https://gomart.com/locations/",headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
     # print(soup.prettify())
     script =soup.find(lambda tag: (tag.name == "script") and "window.map.addMarker" in tag.text).text.split('LatLngBounds();')[1].split('var storeList')[0].split('window.map.addMarker(')

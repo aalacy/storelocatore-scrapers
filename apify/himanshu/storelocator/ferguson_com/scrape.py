@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,16 +24,16 @@ def fetch_data():
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }   
     base_url = "https://www.ferguson.com"    
-    r = requests.get("https://www.ferguson.com/searchBranch", headers=headers)
+    r = session.get("https://www.ferguson.com/searchBranch", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
    
     for i in soup.find_all("a", {"class":"state_area"}):
         href = "https://www.ferguson.com/branchResults?state="+str(i.text)+"&distance=50"
-        r1 = requests.get(href, headers=headers)
+        r1 = session.get(href, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         loc_link = soup1.find_all('a', class_='button tertiary middle')
         for link in loc_link:  
-            r2 = requests.get(base_url + link['href'], headers= headers)
+            r2 = session.get(base_url + link['href'], headers= headers)
             soup2 = BeautifulSoup(r2.text, "lxml")
             try:
                 data = json.loads(soup2.find("div", {"id":"locations"}).text)

@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
     }
 
     base_url = "https://www.ulta.com"
-    r = requests.get('https://api.sweetiq.com/store-locator/public/locations/582b2f2f588e96c131eefa9f?categories=&geo%5B0%5D=-95.7129&geo%5B1%5D=37.0902&tag=&perPage=1000000000000&page=1&search=&searchFields%5B0%5D=name&clientIds%5B0%5D=57b75cf805fbd94379859661&box%5B0%5D=-180&box%5B1%5D=-71.03870026971174&box%5B2%5D=180&box%5B3%5D=71.03870026970304', headers=headers)
+    r = session.get('https://api.sweetiq.com/store-locator/public/locations/582b2f2f588e96c131eefa9f?categories=&geo%5B0%5D=-95.7129&geo%5B1%5D=37.0902&tag=&perPage=1000000000000&page=1&search=&searchFields%5B0%5D=name&clientIds%5B0%5D=57b75cf805fbd94379859661&box%5B0%5D=-180&box%5B1%5D=-71.03870026971174&box%5B2%5D=180&box%5B3%5D=71.03870026970304', headers=headers)
     data = r.json()['records']
     soup = BeautifulSoup(r.text, "lxml")
     for store_data in data:

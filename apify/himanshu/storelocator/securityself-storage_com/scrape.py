@@ -1,12 +1,15 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -39,7 +42,7 @@ def fetch_data():
     base_url = "https://www.securityself-storage.com/"
 
     location_url = "https://inventory.g5marketingcloud.com/api/v1/locations?category_id=4418748%2C3235631&client_id=606%2C718&geosearch=true&page=1&per_page=50&search_radius=50&wildcard=89025"
-    r = requests.get(location_url, headers=headers)
+    r = session.get(location_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     k = (soup.text)
     m = json.loads(k)

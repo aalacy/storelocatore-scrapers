@@ -1,9 +1,12 @@
 import csv
 import time
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -42,13 +45,13 @@ def fetch_data():
     hours_of_operation = ""
     page_url = ""
 
-    r = requests.get("https://www.fresh.com/us/customer-service/USShops.html", headers=headers)
+    r = session.get("https://www.fresh.com/us/customer-service/USShops.html", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     links = soup.find_all("p",{"class":"subheader1 privacy-info-question"})
     for link in links:
         page_url = link.find("a")['href']
         
-        page_r = requests.get(page_url, headers=headers)
+        page_r = session.get(page_url, headers=headers)
         page_soup = BeautifulSoup(page_r.text, "lxml")
         location_name = link.find("a").text
 

@@ -4,7 +4,10 @@ import re
 import json
 import time
 import sgzip
-import requests
+from sgrequests import SgRequests
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -34,7 +37,7 @@ def fetch_data():
         }
         #print("https://www.napaonline.com/en/store-finder?q="+str(zip_code)+"&sort=true")
         try:
-            r = requests.get("https://www.napaonline.com/en/store-finder?q="+str(zip_code)+"&sort=true", headers=headers)
+            r = session.get("https://www.napaonline.com/en/store-finder?q="+str(zip_code)+"&sort=true", headers=headers)
         except:
             pass
         soup = BeautifulSoup(r.text, "lxml")

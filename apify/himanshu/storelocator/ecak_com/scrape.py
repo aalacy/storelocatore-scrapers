@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,12 +25,12 @@ def fetch_data():
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url= "https://www.ecak.com/wp-json/352inc/v1/locations/coordinates?lat=36.8644932&lng=-88.3540557"
-    r = requests.get(base_url,headers=headers).json()
+    r = session.get(base_url,headers=headers).json()
     # soup= BeautifulSoup(r.text,"lxml")
     return_main_object=[]
     for i in r:
         tem_var =[]
-        r1 = requests.get(i['permalink'],headers=headers)
+        r1 = session.get(i['permalink'],headers=headers)
         soup= BeautifulSoup(r1.text,"lxml")
         hours = (" ".join(list(soup.find("div",{'class':"hours"}).stripped_strings)).replace("Daniel W. Newberry, O.D.","").replace("Joe Ellis, O.D. Laurel Morris, O.D. Michael Case, O.D.","").replace("Mark Owens, O.D. David Tucker, O.D. Chelsey Johnson, O.D. Justin Travis, O.D.","").replace("Ben Leonard, O.D.","").replace("Donise Sheridan, O.D. Landon Brewer, O.D.","").replace("David Jaco, O.D.","").replace("Mark Owens, O.D. David Tucker, O.D. Justin Travis, O.D.",''))
         # print(hours)

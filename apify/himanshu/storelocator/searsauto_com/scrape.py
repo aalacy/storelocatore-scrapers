@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
     base_url= "https://www.searsauto.com/find-a-store?q=395007"
 
    
-    r = requests.post(base_url,headers=headers,data=body)
+    r = session.post(base_url,headers=headers,data=body)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]

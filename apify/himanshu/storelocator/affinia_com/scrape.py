@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,13 +28,13 @@ def fetch_data():
     }
 
     base_url = "https://www.affinia.com"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for parts in soup.find_all("li", {"id": "menu-item-2809"}):
         for semi_part in parts.find_all("ul", {"class": "sub-menu"}):
             for inner_semi_part in semi_part.find_all("li", {"class": "menu-item"}):
                 location_name = inner_semi_part.find("a").text
-                store_request = requests.get(inner_semi_part.find("a")['href'])
+                store_request = session.get(inner_semi_part.find("a")['href'])
                 store_soup = BeautifulSoup(store_request.text, "lxml")
 
                 for in_semi_part in store_soup.find_all("address", {"class": "footer__top-section footer__top-section--left"}):

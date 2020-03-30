@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,15 +22,15 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://fit36.com"
-    r = requests.get("https://fit36.com/js/maps.js",headers=headers)
+    r = session.get("https://fit36.com/js/maps.js",headers=headers)
     token = r.text.split("accessToken = ")[1].split(";")[0].replace("'","")
-    main_request = requests.get("https://fit36.com/find-a-studio",headers=headers)
+    main_request = session.get("https://fit36.com/find-a-studio",headers=headers)
     main_soup = BeautifulSoup(main_request.text,"lxml")
     return_main_object = []
     for location in main_soup.find_all(lambda tag: tag.name == 'a' and tag.get('class') == ['abbr']):
-        location_geo_request = requests.get("https://api.mapbox.com/geocoding/v5/mapbox.places/" + location["href"].split("?q=")[1] + ".json/?access_token="+ token + "&country=US%2CCA&types=region%2Cpostcode%2Cplace",headers=headers)
+        location_geo_request = session.get("https://api.mapbox.com/geocoding/v5/mapbox.places/" + location["href"].split("?q=")[1] + ".json/?access_token="+ token + "&country=US%2CCA&types=region%2Cpostcode%2Cplace",headers=headers)
         geo_cord = location_geo_request.json()["features"][0]["center"]
-        location_request = requests.get(("https://fit36.com/locator?q=" + location["href"].split("?q=")[1] + "&lat=" + str(geo_cord[1]) + "&lng="+ str(geo_cord[0]) +"&limit=50").replace("State,",""),headers=headers)
+        location_request = session.get(("https://fit36.com/locator?q=" + location["href"].split("?q=")[1] + "&lat=" + str(geo_cord[1]) + "&lng="+ str(geo_cord[0]) +"&limit=50").replace("State,",""),headers=headers)
         location_list = location_request.json()["locations"]
         for i in range(len(location_list)):
             store_data = location_list[i]

@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import ast
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,14 +30,14 @@ def fetch_data():
     }
 
     base_url = "https://www.morganshotelgroup.com/delano"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
 
     parts = soup.find("li", {"class": "navregions__region"})
     for in_parts in parts.find_all("li", {"class": "navlocations__location"}):
 
-        store_request = requests.get(in_parts.find("a")['href'])
+        store_request = session.get(in_parts.find("a")['href'])
         page_url = in_parts.find("a")['href']
         store_soup = BeautifulSoup(store_request.text, "lxml")
         for semi_parts in store_soup.find_all("div", {"class": "locationinfo__map-address"}):

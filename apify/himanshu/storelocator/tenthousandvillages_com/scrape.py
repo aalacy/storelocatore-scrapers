@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,12 +20,12 @@ def write_output(data):
 def fetch_data():
     base_url = "https://www.tenthousandvillages.com/"
     return_main_object=[]
-    r = requests.get(base_url+'/store-locator/')
+    r = session.get(base_url+'/store-locator/')
     soup=BeautifulSoup(r.text,'lxml')
     main=soup.find('select',{"name":"st_state"}).find_all('option')
     del main[0]
     for opt in main:
-        r1 = requests.get(base_url+'/store-locator/ajaxdata/result/?country=US&state='+opt['value'])
+        r1 = session.get(base_url+'/store-locator/ajaxdata/result/?country=US&state='+opt['value'])
         soup1=BeautifulSoup(r1.text,'lxml')
         main1=json.loads(r1.text.split('<jsonmapdata><![CDATA[')[1].split(']]></jsonmapdata>')[0].strip())
         sno=soup1.find_all('storelocator_id')

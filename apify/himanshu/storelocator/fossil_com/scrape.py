@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -42,7 +45,7 @@ def fetch_data():
         }
         base_url = "https://www.fossil.com"
 
-        r = requests.get(
+        r = session.get(
             "https://hosted.where2getit.com/fossil/ajax?&xml_request=%3Crequest%3E%20%3Cappkey%3E269B11D6-E81F-11E3-A0C3-A70A0D516365%3C/appkey%3E%20%3Cformdata%20id=%22locatorsearch%22%3E%20%3Cdataview%3Estore_default%3C/dataview%3E%20%3Climit%3E100000%3C/limit%3E%20%3Cgeolocs%3E%20%3Cgeoloc%3E%20%3Caddressline%3E" + str(
                 zip_code) + "%3C/addressline%3E%20%3C/geoloc%3E%20%3C/geolocs%3E%20%3Csearchradius%3E100%3C/searchradius%3E%20%3Cradiusuom%3Emile%3C/radiusuom%3E%20%3C/formdata%3E%20%3C/request%3E",
             headers=headers)

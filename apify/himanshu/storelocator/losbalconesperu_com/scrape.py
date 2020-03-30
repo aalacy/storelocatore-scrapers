@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "http://losbalconesperu.com"
-    r = requests.get("http://losbalconesperu.com", headers=headers)
+    r = session.get("http://losbalconesperu.com", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     for location in soup.find_all("div", {'class': 'mc1inlineContent'}):
@@ -70,7 +73,7 @@ def fetch_data():
             # print(e)
 
         # geo_location = location.find("a")["href"]
-        # location_request = requests.get(
+        # location_request = session.get(
         #     location.find_all("a")[1]["href"], headers=headers)
         # location_soup = BeautifulSoup(location_request.text, "lxml")
         # location_details = list(location_soup.find(

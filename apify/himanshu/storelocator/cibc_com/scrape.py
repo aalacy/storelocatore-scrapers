@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ import time
 import sgzip
 import pprint
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -61,7 +64,7 @@ def fetch_data():
         count = 1
         while True:
             try:
-                r = requests.get("https://locations.cibc.com/search/nl/st+john%e2%80%99s?t=&q="+str(search.current_zip)+"&page="+str(count),headers=headers)
+                r = session.get("https://locations.cibc.com/search/nl/st+john%e2%80%99s?t=&q="+str(search.current_zip)+"&page="+str(count),headers=headers)
             except:
                 pass
             soup=BeautifulSoup(r.text,'lxml')
@@ -81,7 +84,7 @@ def fetch_data():
                     location_name = name[i].text.strip()
                     title = a_tage[i].attrs['title']
                     # print(a_tage[i]['href'])
-                    r1 = requests.get("https://locations.cibc.com"+a_tage[i]['href'], headers=headers)
+                    r1 = session.get("https://locations.cibc.com"+a_tage[i]['href'], headers=headers)
                     soup1=BeautifulSoup(r1.text,'lxml')
                     hours_of_operation = soup1.find("div",{"class":"locationHours bankHours"})
                     hours_of_operation2 = soup1.find("div",{"class":"locationHours tellerHours"})

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
     }
 
     base_url = "https://www.berluti.com"
-    # r = requests.get("http://store.berluti.com/search?country=us", headers=headers)
+    # r = session.get("http://store.berluti.com/search?country=us", headers=headers)
     # soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
@@ -48,7 +51,7 @@ def fetch_data():
 
     # print("data ==== "+str(soup))
 
-    r_us = requests.get(
+    r_us = session.get(
         "http://store.berluti.com/search?country=us", headers=headers)
     soup_us = BeautifulSoup(r_us.text, "lxml")
 
@@ -82,7 +85,7 @@ def fetch_data():
                                "class": "components-outlet-item-search-result-basic__link__details__link"})["href"]
             page_url = hours_url
             # print("script_us === " + str(hours_url))
-            r_hours = requests.get(hours_url, headers=headers)
+            r_hours = session.get(hours_url, headers=headers)
             soup_hours = BeautifulSoup(r_hours.text, "lxml")
 
             hours_of_operation = " ".join(list(soup_hours.find(
@@ -103,7 +106,7 @@ def fetch_data():
             # print(
             #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
-    r_ca = requests.get(
+    r_ca = session.get(
         "http://store.berluti.com/search?country=ca", headers=headers)
     soup_us = BeautifulSoup(r_ca.text, "lxml")
 
@@ -127,7 +130,7 @@ def fetch_data():
                                "class": "components-outlet-item-search-result-basic__link__details__link"})["href"]
             page_url = hours_url
             # print("script_us === " + str(hours_url))
-            r_hours = requests.get(hours_url, headers=headers)
+            r_hours = session.get(hours_url, headers=headers)
             soup_hours = BeautifulSoup(r_hours.text, "lxml")
 
             hours_of_operation = " ".join(list(soup_hours.find(

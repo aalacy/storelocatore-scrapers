@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,13 +22,13 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.zyn22.com"
-    r = requests.get("https://www.zyn22.com/locations/",headers=headers)
+    r = session.get("https://www.zyn22.com/locations/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for location in soup.find_all("div",{'class':"overlay-reveal"}):
         location_details = list(location.stripped_strings)
         location_url = location.find_all("a")[-1]["href"]
-        location_request = requests.get(location_url,headers=headers)
+        location_request = session.get(location_url,headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         geo_lcoation = location_soup.find("section",{"class":"map-embed"}).find("iframe")["src"]
         store = []

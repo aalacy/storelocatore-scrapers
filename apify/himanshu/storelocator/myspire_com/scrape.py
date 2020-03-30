@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
     while a < 4:
         a += 1 # Same as a = a + 1     
         location_url = base_url+'/Branches-ATMs?page='+str(a)
-        r = requests.get(location_url,headers = header)
+        r = session.get(location_url,headers = header)
         soup = BeautifulSoup(r.text,"lxml")
         v = soup.find_all('div',{'class':'locationTXT'})
         for target_list in v:

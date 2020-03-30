@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -49,7 +52,7 @@ def fetch_data():
     while isFinish is not True:
         params = {'latitude': 40.7958, 'longitude': -73.6513,
                   'radius': 8000, 'location': '11576', 'page': str(page)}
-        r = requests.get(
+        r = session.get(
             "https://www.raymondjames.com/dotcom/api/searchbranches/?location=11576&radius=8000", headers=headers, params=params)
         # print("json==" + r.text)
         # print(str(page))

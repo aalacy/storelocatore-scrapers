@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,13 +19,13 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.legalseafoods.com"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup=BeautifulSoup(r.text,'lxml')
     return_main_object = []
     main=soup.find('select',{"id":"restaurantDetailURL"}).find_all("option")
     del main[0]
     for link in main:
-        r1 = requests.get(base_url+link['value'])
+        r1 = session.get(base_url+link['value'])
         soup1=BeautifulSoup(r1.text,'lxml')
         main1=soup1.find('div',{"class":'Detail Body'})
         name=main1.find('h4').text.strip()

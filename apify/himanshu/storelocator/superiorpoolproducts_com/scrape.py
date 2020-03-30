@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,13 +22,13 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "http://superiorpoolproducts.com"
-    r = requests.get("http://superiorpoolproducts.com/map_api/map.php",headers=headers)
+    r = session.get("http://superiorpoolproducts.com/map_api/map.php",headers=headers)
     data = json.loads(r.text.split("var LocsAB =")[1].split("}];")[0]+"}]")
     return_main_object = []
     geo_locations = []
     for i in range(len(data)):
         zip_code = data[i]["html"].split(" ")[-1]
-        zip_request = requests.get("http://superiorpoolproducts.com/map_api/?z=" + str(zip_code),headers=headers)
+        zip_request = session.get("http://superiorpoolproducts.com/map_api/?z=" + str(zip_code),headers=headers)
         zip_data = zip_request.json()["locations"]
         for k in range(len(zip_data)):
             store_data = zip_data[k]

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import io
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -20,7 +23,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "http://www.drivenstyle.com/locations/"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     exists = soup.find('ul', {'class', 'states__list'})
@@ -28,7 +31,7 @@ def fetch_data():
         for links in exists.findAll('a'):
             city = links.get_text()
             url = "http://www.drivenstyle.com" + links.get('href')
-            detail_url = requests.get(url, headers=headers)
+            detail_url = session.get(url, headers=headers)
             detail_soup = BeautifulSoup(detail_url.text, "lxml")
             detail_exists = detail_soup.find('div', {'class', 'location__inner'})
             if detail_exists:

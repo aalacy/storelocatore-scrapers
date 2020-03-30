@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.oritani.com"
-    r = requests.get("https://www.oritani.com/Locations",headers=headers)
+    r = session.get("https://www.oritani.com/Locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     location_list = soup.find_all("div",{"class":"col-sm-12 col-md-6"})

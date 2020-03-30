@@ -3,7 +3,10 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import requests
+from sgrequests import SgRequests
+
+
+session = SgRequests()
 
 session = SgRequests()
 
@@ -31,7 +34,7 @@ def fetch_data():
     while True:
 
         page_url = "https://momentfeed-prod.apigee.net/api/llp.json?auth_token=EUQPBYIOEPTZLZLX&center=41.2524,-95.998&multi_account=false&page="+str(page)+"&pageSize=100"
-        json_r = requests.get(page_url, headers=headers).json()
+        json_r = session.get(page_url, headers=headers).json()
         if 'message' in  json_r:
             break
         for data in json_r:

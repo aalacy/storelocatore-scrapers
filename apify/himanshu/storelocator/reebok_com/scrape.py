@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
     }
 
     data = 'action=location_finder&new_lat=40.7226698&new_lng=-73.51818329999998&type=All+Stores&address=Location+Search+-+Near%3A+%E2%80%98Levittown%2C+NY+11756%2C+USA%E2%80%99&access=true&offset=0&ppp=50000&post_id=33'
-    r = requests.post("https://stores.reebok.com/wp-admin/admin-ajax.php",headers=headers,data=data)
+    r = session.post("https://stores.reebok.com/wp-admin/admin-ajax.php",headers=headers,data=data)
     soup = BeautifulSoup(r.text,"lxml")
 
     for location in soup.find_all("div",{"class":"content"}):

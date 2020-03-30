@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -17,14 +20,14 @@ def fetch_data():
     base_url ="https://www.breguet.com"
     return_main_object=[]
     output=[]
-    r = requests.get("https://store.breguet.com/en/point-of-sale?country=2277&region=All")
+    r = session.get("https://store.breguet.com/en/point-of-sale?country=2277&region=All")
     soup=BeautifulSoup(r.text,'lxml')
     main=json.loads(soup.find('script',text=re.compile('jQuery.extend')).text.split('"markers":')[1].split('],')[0]+']')
     for atag in main:
         lat=atag['latitude']
         lng=atag['longitude']
         soup1=BeautifulSoup(atag['text'],'lxml')
-        r1=requests.get("https://store.breguet.com"+soup1.find('a')['href'])
+        r1=session.get("https://store.breguet.com"+soup1.find('a')['href'])
         soup2=BeautifulSoup(r1.text,'lxml')
         name=soup2.find('h1',{"class":'title'}).text.strip()
         addr=list(soup2.find('div',{'class':"item-address"}).stripped_strings)

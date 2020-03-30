@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import phonenumbers
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     }
 
     base_url = "https://www.worldgym.com/"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     json_data = json.loads(soup.find(lambda tag: (tag.name == "script") and "var franhiseeLocations" in tag.text).text.split("var franhiseeLocations =")[1].split('$("')[0].replace('}];','}]'))
     for data in json_data:
@@ -48,7 +51,7 @@ def fetch_data():
         longitude = data['Longitude']
         page_url = data['MicroSiteUrl']
 
-        r1 = requests.get(page_url, headers=headers)
+        r1 = session.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         if "Time to get fit..." in soup1.find("div",{"class":"tab-pane gymhourstab"}).text:
             hours_of_operation = " ".join(list(soup1.find("div",{"class":"tab-pane gymhourstab"}).stripped_strings)).replace("Time to get fit... Hours","")

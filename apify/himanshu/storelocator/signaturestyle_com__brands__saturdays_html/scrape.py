@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -52,7 +55,7 @@ def fetch_data():
         # data = '{"strLocation":"85029","strLat":33.5973469,"strLng":-112.10725279999997,"strRadius":"100","country":"US"}'
         # print("zips === " + str(zip_code))
         try:
-            r = requests.get(
+            r = session.get(
                 'https://info3.regiscorp.com/salonservices/siteid/100/salons/searchGeo/map/'+zip_code[0]+'/'+zip_code[1]+'/0.8/0.8/true',
                 headers=headers)
             soup1= BeautifulSoup(r.text,"lxml").text

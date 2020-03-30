@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -59,7 +62,7 @@ def fetch_data():
         lng = coord[1]
         #print(lng)
         try:
-            r = requests.get(
+            r = session.get(
             'https://www.fuzzystacoshop.com/locations/?gmw_form=1&gmw_per_page=3000&gmw_lat='+str(lat)+'&gmw_lng='+str(lng)+'&gmw_px=pt&action=gmw_post',
             headers=headers)
         except:

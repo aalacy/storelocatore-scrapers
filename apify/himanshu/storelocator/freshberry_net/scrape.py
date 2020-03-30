@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -44,7 +47,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
 
-    r = requests.get('http://freshberry.net/locations.html',headers = headers)
+    r = session.get('http://freshberry.net/locations.html',headers = headers)
     soup= BeautifulSoup(r.text,'lxml')
     # print(soup.prettify())
     lat= soup.find('iframe')['src'].split('ll=')[-1].split(',')[0]

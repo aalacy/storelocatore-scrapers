@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ import json
 # from shapely.geometry import Point
 # from shapely.geometry import mapping, shape
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -25,7 +28,7 @@ def write_output(data):
 
 
 # def getcountrygeo():
-#     data = requests.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
+#     data = session.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
 
 #     for feature in data["features"]:
 #         geom = feature["geometry"]
@@ -71,7 +74,7 @@ def fetch_data():
     hours_of_operation = ""
     page_url =""
 
-    r = requests.get("https://buckhorngrill.com/location/")
+    r = session.get("https://buckhorngrill.com/location/")
     soup = BeautifulSoup(r.text,'lxml')
     for loc_row in soup.find_all('div',class_='location-row'):
         location_name = loc_row.find('h4').text

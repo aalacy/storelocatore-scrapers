@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,7 +30,7 @@ def fetch_data():
 
     }
     base_url= "https://www.gowireless.com/wp-content/plugins/superstorefinder-wp/ssf-wp-xml.php?wpml_lang="
-    data = requests.get(base_url,headers=headers).json()
+    data = session.get(base_url,headers=headers).json()
     # soup= BeautifulSoup(r.text,"lxml")
     
     store_name=[]

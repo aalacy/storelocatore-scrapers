@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def write_output(data):
 
 def fetch_data():
     base_url= "https://stores.loft.com/outlet/index.html"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -30,7 +33,7 @@ def fetch_data():
         link = i.text.split("(")[-1]
         if link != "1)":
             city_link = "https://stores.loft.com/"+i.find("a")['href'].replace("..","")
-            r1 = requests.get(city_link)
+            r1 = session.get(city_link)
             soup1= BeautifulSoup(r1.text,"lxml")
             citylink= soup1.find_all("li",{"class":"c-directory-list-content-item"})
             # print(citylink)
@@ -38,12 +41,12 @@ def fetch_data():
                 link1 = c.text.split("(")[-1]
                 if link1 != "1)":
                     sublink = "https://stores.loft.com/"+c.find("a")['href'].replace("..","")
-                    r2 = requests.get(sublink)
+                    r2 = session.get(sublink)
                     soup2= BeautifulSoup(r2.text,"lxml")
                     store_link = soup2.find_all("a",class_="c-location-grid-item-link visit-page-YA")
                     for st in store_link:
                         # print(st['href'].replace("..","").replace("//",""))
-                        r3 = requests.get("https://stores.loft.com/"+st['href'].replace("..","").replace("//",""))
+                        r3 = session.get("https://stores.loft.com/"+st['href'].replace("..","").replace("//",""))
                         page_url ="https://stores.loft.com/"+st['href'].replace("..","").replace("//","")
                         soup3= BeautifulSoup(r3.text,"lxml")
                         streetAddress = soup3.find("span",{"itemprop":"streetAddress"}).text.strip()
@@ -79,7 +82,7 @@ def fetch_data():
                     # pass
                     one_link="https://stores.loft.com"+c.find("a")['href'].replace("..","")
                     page_url = one_link
-                    r4 = requests.get(one_link)
+                    r4 = session.get(one_link)
                     soup4= BeautifulSoup(r4.text,"lxml")
                     streetAddress = soup4.find("span",{"itemprop":"streetAddress"}).text.strip()
                     state = soup4.find("span",{"itemprop":"addressRegion"}).text
@@ -113,7 +116,7 @@ def fetch_data():
             # print("https://stores.loft.com/"+i.find("a")['href'].replace("..",""))
             one_link1 = "https://stores.loft.com/"+i.find("a")['href'].replace("..","")
             page_url = one_link1
-            r5 = requests.get(one_link1)
+            r5 = session.get(one_link1)
             # print("--------------------------")
         
             soup5= BeautifulSoup(r5.text,"lxml")

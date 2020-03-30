@@ -1,7 +1,10 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,7 +20,7 @@ def fetch_data():
     base_url = "https://octapharmaplasma.com/"
 
     return_main_object = []
-    r = requests.get(base_url)
+    r = session.get(base_url)
 
     soup = BeautifulSoup(r.text,"lxml")
     States = soup.find("select", {"id": "States"})
@@ -29,14 +32,14 @@ def fetch_data():
     values = [o.get("value") for o in options]
     values.pop(0)
     for idx, val in enumerate(values):
-        getcenter = requests.get(base_url + "/donor/donation-centers/"+val)
+        getcenter = session.get(base_url + "/donor/donation-centers/"+val)
         getpage = BeautifulSoup(getcenter.text, "lxml")
 
         x = getpage.find('div',{'class':'articles--list'}).find_all('article',{'class':'clearfix'})
 
         for fb in x:
             geturl = fb.find('a')['href']
-            getdata = requests.get(base_url + geturl)
+            getdata = session.get(base_url + geturl)
             getpagedata = BeautifulSoup(getdata.text, "lxml")
 
             getdt  = list(getpagedata.find('div',{'class':'s-grid6 m-grid8'}).stripped_strings)

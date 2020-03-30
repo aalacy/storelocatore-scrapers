@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import time
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -20,7 +23,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }   
     base_url = "https://www.holidaystationstores.com/Locations/Search"
-    r = requests.post(base_url, headers=headers)
+    r = session.post(base_url, headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     data = soup.find("script",{"type":"text/javascript"}).text.split('=')[1].replace('};','}')
     data1 = json.loads(re.sub("(\w+):", r'"\1":',data))
@@ -33,7 +36,7 @@ def fetch_data():
         
         is_true = True
         while is_true:
-            r1 = requests.post(location_url,"lxml")
+            r1 = session.post(location_url,"lxml")
             soup1 = BeautifulSoup(r1.text, "lxml")
             info = soup1.find("div",{"id":"StoreDetails"})
             if info != None:

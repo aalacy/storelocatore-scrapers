@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -58,7 +61,7 @@ def fetch_data():
         # driver = get_driver()
         # data = '{"query":"'+str("85029")+'"}'
         try:
-            r = requests.post('https://www.farmandfleet.com/store-finder/a/find', headers=header, data=data).json()
+            r = session.post('https://www.farmandfleet.com/store-finder/a/find', headers=header, data=data).json()
         except:
             continue       
         # for loc in data:

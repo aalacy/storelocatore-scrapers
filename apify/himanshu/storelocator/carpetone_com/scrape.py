@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import sgzip
 import json
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -60,7 +63,7 @@ def fetch_data():
         # print("-------------------" + str(zip_code))
         result_coords =[]
         try:
-            r = requests.get('https://www.carpetone.com/carpetone/api/Locations/GetClosestStores?skip=0&zipcode=&latitude=' +
+            r = session.get('https://www.carpetone.com/carpetone/api/Locations/GetClosestStores?skip=0&zipcode=&latitude=' +
                          str(coord[0]) + '&longitude=' + str(coord[1]), headers=headers)
             # print('https://www.carpetone.com/carpetone/api/Locations/GetClosestStores?skip=0&zipcode=&latitude=' +str(coord[0]) + '&longitude=' + str(coord[1]))
         except:
@@ -99,7 +102,7 @@ def fetch_data():
                 page_url = url
                 #print("~~~~~~~~~~~~~~~~~~~~~~  ",page_url)
                 try:
-                    r_loc = requests.get(page_url, headers=headers)
+                    r_loc = session.get(page_url, headers=headers)
                 except:
                     pass
                 soup_loc = BeautifulSoup(r_loc.text, 'lxml')

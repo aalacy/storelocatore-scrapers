@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -22,7 +25,7 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-    app_key_request = requests.get("https://hosted.where2getit.com/northface/2015/index.html")
+    app_key_request = session.get("https://hosted.where2getit.com/northface/2015/index.html")
     app_key_soup = BeautifulSoup(app_key_request.text,"lxml")
     for script in app_key_soup.find_all("script"):
         if "appkey: " in script.text:
@@ -31,7 +34,7 @@ def fetch_data():
        
         base_url = "https://www.thenorthface.com"
         data = '{"request":{"appkey":"' + app_key + '","formdata":{"geoip":false,"dataview":"store_default","limit":1000,"order":"rank, _DISTANCE","geolocs":{"geoloc":[{"addressline":"' + str(zip_code) + '","country":"US","latitude":"","longitude":""}]},"searchradius":"100","where":{"visiblelocations":{"eq":""},"or":{"northface":{"eq":""},"outletstore":{"eq":""},"retailstore":{"eq":""},"summit":{"eq":""}},"and":{"youth":{"eq":""},"apparel":{"eq":""},"footwear":{"eq":""},"equipment":{"eq":""},"mt":{"eq":""},"access_pack":{"eq":""},"steep_series":{"eq":""}}},"false":"0"}}}'
-        r = requests.post("https://hosted.where2getit.com/northface/2015/rest/locatorsearch?lang=en_EN",headers=headers,data=data)
+        r = session.post("https://hosted.where2getit.com/northface/2015/rest/locatorsearch?lang=en_EN",headers=headers,data=data)
         if "collectioncount" not in r.json()["response"]:
             continue
         for store_data in r.json()["response"]["collection"]:

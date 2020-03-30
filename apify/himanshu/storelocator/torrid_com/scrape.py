@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.torrid.com"
-    r = requests.get("https://www.torrid.com/on/demandware.store/Sites-torrid-Site/default/Stores-GetNearestStores?postalCode=11756&customStateCode=&maxdistance=10000000&unit=mi&latitude=40.7226698&longitude=-73.51818329999998&maxResults=15&distanceUnit=mi&countryCode=US&counter=1000000000",headers=headers)
+    r = session.get("https://www.torrid.com/on/demandware.store/Sites-torrid-Site/default/Stores-GetNearestStores?postalCode=11756&customStateCode=&maxdistance=10000000&unit=mi&latitude=40.7226698&longitude=-73.51818329999998&maxResults=15&distanceUnit=mi&countryCode=US&counter=1000000000",headers=headers)
     data = r.json()["stores"]
     return_main_object = []
     for key in data:

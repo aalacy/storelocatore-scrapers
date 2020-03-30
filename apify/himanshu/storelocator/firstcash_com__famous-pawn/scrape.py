@@ -1,11 +1,14 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +31,7 @@ def fetch_data():
 
     base_url = "https://www.firstcash.com/famous-pawn"
     link = "http://find.cashamerica.us/api/stores?p=1&s=1068&lat=32.72&lng=-97.45&d=2019-11-11T13:33:27.150Z&key=D21BFED01A40402BADC9B931165432CD"
-    r = requests.get(link, headers=headers)
+    r = session.get(link, headers=headers)
     json_data = r.json()
     locator_domain = base_url
     location_name = ""
@@ -48,7 +51,7 @@ def fetch_data():
         http = "http://find.cashamerica.us/api/stores/"+str(store_number)+"?key=D21BFED01A40402BADC9B931165432CD"
         page_url =http
         try:
-            all_data = requests.get(http, headers=headers).json()
+            all_data = session.get(http, headers=headers).json()
         except:
             continue
         location_name = location['brand']

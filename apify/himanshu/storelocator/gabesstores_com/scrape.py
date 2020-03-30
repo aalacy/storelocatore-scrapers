@@ -1,7 +1,7 @@
 import csv
 import sys
 
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -9,6 +9,9 @@ import json
 # pp = pprint.PrettyPrinter(indent=4)
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -66,7 +69,7 @@ def fetch_data():
         # print("===============================================",zip_code)
         
         location_url = "https://liveapi.yext.com/v2/accounts/me/entities/geosearch?radius="+str(MAX_DISTANCE)+"&location="+zip_code+"&limit="+str(MAX_RESULTS)+"&api_key=56bb34af25f122cb7752babc1c8b9767&v=20181201&resolvePlaceholders=true&entityTypes=location"
-        k = requests.get(location_url, headers=headers).json()
+        k = session.get(location_url, headers=headers).json()
         current_results_len = len(k['response']['entities'])
         for i in k['response']['entities']:
             street_address =i["address"]['line1']
@@ -87,7 +90,7 @@ def fetch_data():
             # page_url = i['landingPageUrl']
             if "landingPageUrl" in i:
                 page_url =i['landingPageUrl']
-                k1 = requests.get(page_url, headers=headers)
+                k1 = session.get(page_url, headers=headers)
                 soup2 = BeautifulSoup(k1.text, "html.parser")
                 time = (" ".join(list(soup2.find("tbody",{"class":"hours-body"}).stripped_strings)))
             else:

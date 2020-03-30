@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,13 +25,13 @@ def fetch_data():
     addresses1 =[]
     #### US location
     base_url = "https://sbarro.com"
-    r = requests.get("https://sbarro.com/comment-card/")
+    r = session.get("https://sbarro.com/comment-card/")
     soup = BeautifulSoup(r.text, "lxml")
     states = soup.find("select",{"name":"State"})
     for i in states.find_all("option"):
         if "Select Your State" in i['value']:
             continue
-        r1 = requests.get("https://sbarro.com/locations/?user_search="+str(i['value'].replace(" ","+")))
+        r1 = session.get("https://sbarro.com/locations/?user_search="+str(i['value'].replace(" ","+")))
         soup1 = BeautifulSoup(r1.text, "lxml")
         coords = soup1.find_all("section",{"class":"locations-result"})
         latitude = []
@@ -39,7 +42,7 @@ def fetch_data():
         links = soup1.find_all("h2",{"class":"location-name"})
         for index,link in enumerate(links):
             page_url = base_url+link.find("a")['href']
-            r2 = requests.get(page_url)
+            r2 = session.get(page_url)
             soup2 = BeautifulSoup(r2.text, "lxml")
             location_name = soup2.find("h1",{"class":"location-name"}).text.strip()
             json_data = json.loads(soup2.find(lambda tag: (tag.name == "script") and "address" in tag.text).text)
@@ -80,7 +83,7 @@ def fetch_data():
     ### CANADA location
     state = ['Alberta', 'Ontario']
     for i in state:
-        r = requests.get("https://sbarro.com/locations/?user_search="+str(i))
+        r = session.get("https://sbarro.com/locations/?user_search="+str(i))
         soup = BeautifulSoup(r.text, "lxml")
         links = soup.find_all("h2",{"class":"location-name"})
         coords = soup.find_all("section",{"class":"locations-result"})
@@ -92,7 +95,7 @@ def fetch_data():
         
         for index,link in enumerate(links):
             page_url = base_url+link.find("a")['href']
-            r1 = requests.get(page_url)
+            r1 = session.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
             location_name = soup1.find("h1",{"class":"location-name"}).text.strip()
             street_address = " ".join(soup1.find("p",{"class":"location-address"}).text.replace(",,",',').split(",")[:-2]).strip()

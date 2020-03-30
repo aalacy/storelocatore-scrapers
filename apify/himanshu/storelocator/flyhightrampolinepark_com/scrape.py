@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -36,7 +39,7 @@ def fetch_data():
     base_url = "https://flyhightrampolinepark.com/"
     locator_domain = base_url
     try :
-        r = requests.get(base_url, headers=headers)
+        r = session.get(base_url, headers=headers)
     except:
         pass
     soup = BeautifulSoup(r.text, "lxml")
@@ -45,7 +48,7 @@ def fetch_data():
         page_url = (i['href'])
         # print(page_url)
         try:
-            r1 = requests.get(page_url, headers=headers)
+            r1 = session.get(page_url, headers=headers)
         except:
             pass
         soup1 = BeautifulSoup(r1.text, "lxml")
@@ -72,7 +75,7 @@ def fetch_data():
             phone = (list(j.stripped_strings)[3].replace("Fort Collins, CO 80525","(970) 305-5300"))
             q = location_name2.replace(" ","-")
             location_url = str(page_url)+'/'+str(q)+"/hours/"
-            r2 = requests.get(location_url, headers=headers)
+            r2 = session.get(location_url, headers=headers)
             soup2 = BeautifulSoup(r2.text, "lxml")
             z = soup2.find_all('div',{'class','col-xs-12 col-md-8'})
             hours_of_operation1 = ''

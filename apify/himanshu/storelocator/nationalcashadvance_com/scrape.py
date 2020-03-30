@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -9,6 +9,9 @@ import platform
 import time
 import sgzip
 import unicodedata
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -25,7 +28,7 @@ def request_wrapper(url,method,headers,data=None):
     if method == "get":
         while True:
             try:
-                r = requests.get(url,headers=headers)
+                r = session.get(url,headers=headers)
                 return r
                 break
             except:
@@ -38,9 +41,9 @@ def request_wrapper(url,method,headers,data=None):
         while True:
             try:
                 if data:
-                    r = requests.post(url,headers=headers,data=data)
+                    r = session.post(url,headers=headers,data=data)
                 else:
-                    r = requests.post(url,headers=headers)
+                    r = session.post(url,headers=headers)
                 return r
                 break
             except:
@@ -72,7 +75,7 @@ def fetch_data():
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
         }
-        # r = requests.get("https://www.nationalcashadvance.com/locations/results/11756/34.9918283/-90.0196623/50/",headers=headers)
+        # r = session.get("https://www.nationalcashadvance.com/locations/results/11756/34.9918283/-90.0196623/50/",headers=headers)
         #print("https://www.nationalcashadvance.com/locations/results/11756/" + str(x) + "/" + str(y) + "/50/")
         r = request_wrapper("https://www.nationalcashadvance.com/locations/results/11756/" + str(x) + "/" + str(y) + "/50/","get",headers=headers)
         if r == None:

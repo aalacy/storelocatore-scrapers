@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',newline="") as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
     }
     return_main_object = []
     base_url = "https://wellnow.com"
-    r1 = requests.get("https://wellnow.com/wp-json/facilities/v2/locations", headers=headers).json()
+    r1 = session.get("https://wellnow.com/wp-json/facilities/v2/locations", headers=headers).json()
 
     for data in r1.keys():
         for data1 in r1[data]:
@@ -38,7 +41,7 @@ def fetch_data():
 
             link = data1['link']
 
-            r2 = requests.get(link, headers=headers)
+            r2 = session.get(link, headers=headers)
             soup = BeautifulSoup(r2.text,"lxml")
             hours = list(soup.find("div",{"class":"col-md-6 py-5 white-text location-hours"}).stripped_strings)[1]
             # print(hours)

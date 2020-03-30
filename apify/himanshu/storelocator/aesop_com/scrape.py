@@ -1,6 +1,6 @@
 import csv
 import sys
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -8,6 +8,9 @@ import json
 # pp = pprint.PrettyPrinter(indent=4)
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -68,7 +71,7 @@ def fetch_data():
             str(lat) + "%2C" + str(lng)
         # print('location_url ==' +location_url))
         try:
-            r = requests.get(location_url, headers=headers)
+            r = session.get(location_url, headers=headers)
         except:
             continue
         soup = BeautifulSoup(r.text, "lxml")

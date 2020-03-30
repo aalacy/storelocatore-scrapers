@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +26,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.mackenzieriverpizza.com/locations/"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     main_soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     store_names=[]
@@ -66,7 +69,7 @@ def fetch_data():
                 store_names.append(j.a.text)
                 temp=[]
                 temp_var=[]
-                r = requests.get(j.a['href'])
+                r = session.get(j.a['href'])
                 soup = BeautifulSoup(r.text,"lxml")
                 if (soup.find('div',{"class":"et_pb_text_inner"}).find('p')):
                     temp = list(soup.find('div',{"class":"et_pb_text_inner"}).find('p').stripped_strings)

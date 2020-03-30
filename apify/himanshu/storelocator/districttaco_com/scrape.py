@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,6 +7,9 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import time
 import platform
+
+
+session = SgRequests()
 
 system = platform.system()
 
@@ -102,7 +105,7 @@ def fetch_data():
     # 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     # }
     # base_url = "https://www.districttaco.com"
-    # r = requests.get("https://www.districttaco.com/pages/locations",headers=headers)
+    # r = session.get("https://www.districttaco.com/pages/locations",headers=headers)
     # soup = BeautifulSoup(r.text,"lxml")
     # return_main_object = []
     # geo_locations = []

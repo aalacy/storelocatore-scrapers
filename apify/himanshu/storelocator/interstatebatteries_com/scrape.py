@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,13 +19,13 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://interstatebatteries.com"
-    r = requests.get(base_url+"/all-battery-center-locations")
+    r = session.get(base_url+"/all-battery-center-locations")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     main = soup.find('div',{'class':"store-directory"}).find('ul',{"class":"list"}).find_all('a')
     for dt in main:
         if re.search('/locations/',dt['href']):
-            r1 = requests.get(base_url+dt['href'])
+            r1 = session.get(base_url+dt['href'])
             soup1 = BeautifulSoup(r1.text,"lxml")
             if "Sorry, but the page you are looking for can't be found." not in soup1.text:
                 country=""

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,11 +22,11 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://bergmanluggage.com"
-    r = requests.get("https://bergmanluggage.com",headers=headers)
+    r = session.get("https://bergmanluggage.com",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     for state in soup.find("li",{"class":re.compile("store-locations")}).find_all("ul",{"class":re.compile("navmenu-depth-3")})[1:]:
         for page in state.find_all("a"):
-            page_request = requests.get(base_url + page["href"],headers=headers)
+            page_request = session.get(base_url + page["href"],headers=headers)
             page_soup = BeautifulSoup(page_request.text,"lxml")
             data = json.loads(page_soup.find("div",{"develic-map":re.compile('{')})["develic-map"])["items"]
             for i in range(len(data)):

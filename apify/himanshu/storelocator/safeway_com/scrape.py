@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 from datetime import datetime
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,19 +33,19 @@ def fetch_data():
     
     }
     try:
-        r = requests.get("https://local.safeway.com/index.html", headers=headers)
+        r = session.get("https://local.safeway.com/index.html", headers=headers)
     except:
         pass
     soup = BeautifulSoup(r.text, "lxml")
 
     content = soup.find_all("a",{"class":"Directory-listLink"})
     url1 = "https://local.safeway.com/"+content[0]['href']
-    r3 = requests.get(url1,headers=headers)
+    r3 = session.get(url1,headers=headers)
     soup3 = BeautifulSoup(r3.text, "lxml")
     all_link = soup3.find_all("a",{"class":"Directory-listLink"})
     for link in all_link:
         state_link = "https://local.safeway.com/"+link['href']
-        r4 = requests.get(state_link, headers=headers)
+        r4 = session.get(state_link, headers=headers)
         soup4 = BeautifulSoup(r4.text, "lxml")
         city_data = soup4.find_all("a",{"class":"Directory-listLink"})
         for i in city_data:
@@ -51,7 +54,7 @@ def fetch_data():
             if "(1)" in i['data-count']:
 
                 page_url = location_link
-                r5 = requests.get(page_url, headers=headers)
+                r5 = session.get(page_url, headers=headers)
                 soup5 = BeautifulSoup(r5.text, "lxml")
                 location_name = soup5.find("h1",{"class":"ContentBanner-h1"}).text
                 street_address = soup5.find("span",{"class":"c-address-street-1"}).text
@@ -89,7 +92,7 @@ def fetch_data():
 
             else:
                 try:
-                    r6 = requests.get(location_link, headers=headers)
+                    r6 = session.get(location_link, headers=headers)
                 except:
                     pass
                 soup6 = BeautifulSoup(r6.text, "lxml")
@@ -97,7 +100,7 @@ def fetch_data():
                 for j in data_link:
                     last_link = j['href'].replace("../../","https://local.safeway.com/")
                     page_url = last_link
-                    r7 = requests.get(page_url, headers=headers)
+                    r7 = session.get(page_url, headers=headers)
                     soup7 = BeautifulSoup(r7.text, "lxml")
                     location_name = soup7.find("h1",{"class":"ContentBanner-h1"}).text
                     street_address = soup7.find("span",{"class":"c-address-street-1"}).text
@@ -134,14 +137,14 @@ def fetch_data():
 
     url = "https://local.safeway.com/"+content[1]['href']
     try:
-        r1 = requests.get(url, headers=headers)
+        r1 = session.get(url, headers=headers)
     except:
         pass
     soup1 = BeautifulSoup(r1.text, "lxml")
     list_link = soup1.find_all("a",{"class":"Directory-listLink"})
     for link in list_link:
         location_link = link['href'].replace("..","https://local.safeway.com")
-        r2 = requests.get(location_link, headers=headers)
+        r2 = session.get(location_link, headers=headers)
         soup2 = BeautifulSoup(r2.text,"lxml")
         location_name = soup2.find("h1",{"class":"ContentBanner-h1"}).text
         street_address = soup2.find("span",{"class":"c-address-street-1"}).text

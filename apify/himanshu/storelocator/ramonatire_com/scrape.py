@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +25,7 @@ def fetch_data():
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url= "https://www.ramonatire.com/wp-admin/admin-ajax.php?action=store_search&lat=33.980601&lng=-117.375494&max_results=25&search_radius=50&autoload=1"
-    r = requests.get(base_url,headers=headers).json()
+    r = session.get(base_url,headers=headers).json()
     # soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -33,7 +36,7 @@ def fetch_data():
 
     for i in r:
         tem_var =[]
-        r1 = requests.get(i['permalink'],headers=headers)
+        r1 = session.get(i['permalink'],headers=headers)
         soup= BeautifulSoup(r1.text,"lxml")
         hours = " ".join(list(soup.find("table",{"class":"table-borderless table-condensed table hours-list"}).stripped_strings))
         

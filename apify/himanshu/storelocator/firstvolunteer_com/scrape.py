@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,11 +22,11 @@ def fetch_data():
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "https://www.firstvolunteer.com"
-    r = requests.get("https://www.firstvolunteer.bank/locations/",headers=headers,verify=False)
+    r = session.get("https://www.firstvolunteer.bank/locations/",headers=headers,verify=False)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for location in soup.find_all("li",{'class':"bank_menu_li_li vtip"}):
-        location_request = requests.get("https://www.firstvolunteer.bank/locations/bank-branch/" + location["slug"] + "/",headers=headers,verify=False)
+        location_request = session.get("https://www.firstvolunteer.bank/locations/bank-branch/" + location["slug"] + "/",headers=headers,verify=False)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         location_details = list(location_soup.find("div",{"class":"branch_col_2"}).stripped_strings)
         for i in range(len(location_details)):

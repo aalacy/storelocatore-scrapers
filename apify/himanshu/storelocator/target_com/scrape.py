@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 from datetime import datetime
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,14 +26,14 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-    app_key_request = requests.get("https://www.target.com/store-locator/find-stores",headers=headers)
+    app_key_request = session.get("https://www.target.com/store-locator/find-stores",headers=headers)
     app_key_soup = BeautifulSoup(app_key_request.text,"lxml")
     for script in app_key_soup.find_all("script"):
         if "apiKey" in script.text:
             app_key = json.loads(script.text.split("window.__PRELOADED_STATE__= ")[1])["config"]["firefly"]["apiKey"]
     for zip_code in zips:
         base_url = "https://www.target.com"
-        r = requests.get("https://redsky.target.com/v3/stores/nearby/"+ str(zip_code) + "?key=" + app_key + "&limit=100000&within=100&unit=mile",headers=headers)
+        r = session.get("https://redsky.target.com/v3/stores/nearby/"+ str(zip_code) + "?key=" + app_key + "&limit=100000&within=100&unit=mile",headers=headers)
         page_url="https://redsky.target.com/v3/stores/nearby/"+ str(zip_code) + "?key=" + app_key + "&limit=100000&within=100&unit=mile"
         for store_data in r.json()[0]["locations"]:
             store = []
@@ -54,7 +57,7 @@ def fetch_data():
             while True:
                 try:
                    
-                    location_request = requests.get("https://redsky.target.com/v3/stores/location/" + str(store_data["location_id"]) + "?key=" + str(app_key), headers=headers)
+                    location_request = session.get("https://redsky.target.com/v3/stores/location/" + str(store_data["location_id"]) + "?key=" + str(app_key), headers=headers)
                     hours = ""
                     store_hours = location_request.json()[0]["rolling_operating_hours"]["regular_event_hours"]["days"]
                     for i in range(0,7):

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -35,7 +38,7 @@ def handle_store(store_data,country_code):
     store.append("<MISSING>")
     store.append("<MISSING>")
     hours = ""
-    location_request = requests.get(store_data["link"],headers=headers)
+    location_request = session.get(store_data["link"],headers=headers)
     location_soup = BeautifulSoup(location_request.text,"lxml")
     if location_soup.find("div",{'class':"hours"}) == None:
         store.append("<MISSING>")
@@ -49,11 +52,11 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
     base_url = "https://mamadelucaspizza.com"
-    r = requests.get("https://mamadelucaspizza.com/wp-json/mdp/v1/states",headers=headers)
+    r = session.get("https://mamadelucaspizza.com/wp-json/mdp/v1/states",headers=headers)
     data = r.json()
     return_main_object = []
     for state in data:
-        state_request = requests.get("https://mamadelucaspizza.com/wp-json/mdp/v1/USlocations?state=" + state,headers=headers)
+        state_request = session.get("https://mamadelucaspizza.com/wp-json/mdp/v1/USlocations?state=" + state,headers=headers)
         if "code" in state_request.json():
             continue
         stores = state_request.json()
@@ -62,14 +65,14 @@ def fetch_data():
             if "COMING SOON!" in store[2]:
                 continue
             return_main_object.append(store)
-    r = requests.get("https://mamadelucaspizza.com/wp-json/mdp/v1/globallocations?country=CA",headers=headers)
+    r = session.get("https://mamadelucaspizza.com/wp-json/mdp/v1/globallocations?country=CA",headers=headers)
     data = r.json()
     for store_data in data:
         store = handle_store(store_data,"CA")
         if "COMING SOON!" in store[2]:
                 continue
         return_main_object.append(store)
-    r = requests.get("https://mamadelucaspizza.com/wp-json/mdp/v1/globallocations?country=PR",headers=headers)
+    r = session.get("https://mamadelucaspizza.com/wp-json/mdp/v1/globallocations?country=PR",headers=headers)
     data = r.json()
     for store_data in data:
         store = handle_store(store_data,"US")

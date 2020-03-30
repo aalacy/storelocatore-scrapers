@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,12 +22,12 @@ def fetch_data():
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "http://mexicolindos.com"
-    r = requests.get("http://mexicolindos.com/locations.php",headers=headers)
+    r = session.get("http://mexicolindos.com/locations.php",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     location_url = []
     for location in soup.find_all("iframe"):
-        geo_request = requests.get(location["src"],headers=headers)
+        geo_request = session.get(location["src"],headers=headers)
         geo_soup = BeautifulSoup(geo_request.text,"lxml")
         for script in geo_soup.find_all("script"):
             if "initEmbed" in script.text:

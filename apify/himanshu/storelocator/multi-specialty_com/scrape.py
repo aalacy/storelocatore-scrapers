@@ -1,10 +1,13 @@
 import csv
 import time
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -26,12 +29,12 @@ def fetch_data():
     base_url = "http://www.multi-specialty.com"
     # addresses = []
 
-    r = requests.get("http://www.multi-specialty.com/locations/", headers=headers)
+    r = session.get("http://www.multi-specialty.com/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
     for i in soup.find_all("area"):
         page_url = base_url+i['href']
-        r1 = requests.get(page_url, headers=headers)
+        r1 = session.get(page_url, headers=headers)
         soup1 = BeautifulSoup(r1.text, "lxml")
         for j in soup1.find_all("div",{"class":"map_info"}):
             page_url = page_url
@@ -97,7 +100,7 @@ def fetch_data():
             yield store
 
 
-    r1 = requests.get("http://www.multi-specialty.com/locations/", headers=headers)
+    r1 = session.get("http://www.multi-specialty.com/locations/", headers=headers)
     soup1 = BeautifulSoup(r1.text, "lxml")
     location_name = soup1.find_all("div",{"class":"title"})[1].text
     raw_address = list(soup1.find("div",{"class":"addr"}).stripped_strings)

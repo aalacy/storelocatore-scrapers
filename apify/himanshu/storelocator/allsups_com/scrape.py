@@ -1,11 +1,14 @@
 import csv
 import sys
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',newline= "") as output_file:
@@ -27,7 +30,7 @@ def fetch_data():
     for no in range(1,500):
         #print(no)
         page_url = "https://allsups.com/locations/details/"+str(no)
-        r= requests.get(page_url,headers= headers)
+        r= session.get(page_url,headers= headers)
         soup = BeautifulSoup(r.text,"lxml")
         location_name = soup.find("h1",class_="hTitle").text.strip()
         if location_name == "":

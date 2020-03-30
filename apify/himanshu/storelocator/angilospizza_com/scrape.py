@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +25,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
     base_url= "http://www.angilospizza.com/locations/"
-    r = requests.get(base_url,headers=headers)
+    r = session.get(base_url,headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -32,7 +35,7 @@ def fetch_data():
         p = i.find_all("a")
         for i in p:
             tem_var=[]
-            r = requests.get(i['href'],headers=headers)
+            r = session.get(i['href'],headers=headers)
             soup1= BeautifulSoup(r.text,"lxml")
             a = soup1.find("div",{"class":"google-maps gm-margin gmlocation"}).iframe
             if a != None:

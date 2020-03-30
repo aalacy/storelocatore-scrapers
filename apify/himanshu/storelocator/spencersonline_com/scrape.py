@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # from datetime import datetime
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -18,7 +21,7 @@ def fetch_data():
     }
 
     base_url = "https://www.spencersonline.com/custserv/locate_store.cmd"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     tag_store = soup.find(lambda tag: (tag.name == "script") and "var allStores" in  tag.text.strip())
     m = (tag_store.text)

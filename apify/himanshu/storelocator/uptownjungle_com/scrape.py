@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://uptownjungle.com"
-    r = requests.get("https://uptownjungle.com/",headers=headers)
+    r = session.get("https://uptownjungle.com/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     table = soup.find("div",{"id":"locations"})
@@ -27,7 +30,7 @@ def fetch_data():
         name = location.find("h3").text.strip()
         address = list(location.find("p").stripped_strings)
         url = location.find_all("a")[-1]["href"]
-        location_request = requests.get(url)
+        location_request = session.get(url)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         geo_location = location_soup.find("iframe")['src']
         store = []

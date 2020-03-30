@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +28,7 @@ def fetch_data():
     return_main_object=[]
     for  q  in range(0,10):
         base_url= "https://www.shopfamilyfare.com/locations?page="+str(q+1)
-        r = requests.get(base_url)
+        r = session.get(base_url)
         soup= BeautifulSoup(r.text,"lxml")
         k= soup.find_all("div",{"class":"col-xs-12 col-lg-7"})
         for i in k:
@@ -43,7 +46,7 @@ def fetch_data():
                 city = list(address.stripped_strings)[1].split(',')[0]
                 state = " ".join(list(address.stripped_strings)[1].split(',')[1].split( )[:-1])
                 zipcode = list(address.stripped_strings)[1].split(',')[1].split( )[-1]
-                r = requests.get(j.find('p', {'class': 'details'}).find('a')['href'])
+                r = session.get(j.find('p', {'class': 'details'}).find('a')['href'])
                 soup = BeautifulSoup(r.text, "lxml")
                 # print(j.find('p', {'class': 'details'}).find('a')['href'])
                 jk = soup.find('table', {'class': 'hours'}).find("tbody").find_all('tr',recursive=False)

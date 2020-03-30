@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -40,7 +43,7 @@ def fetch_data():
 
         location_url = 'https://hosted.where2getit.com/joann/mystore/ajax?&xml_request=<request><appkey>53EDE5D6-8FC1-11E6-9240-35EF0C516365</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>250</limit><geolocs><geoloc><addressline>'+str(zip_code)+'</addressline><longitude></longitude><latitude></latitude></geoloc></geolocs><searchradius>30|50|100|250</searchradius><where><new_in_store_meet_up><eq></eq></new_in_store_meet_up><or><customframing><eq></eq></customframing><edu_demos><eq></eq></edu_demos><busykids><eq></eq></busykids><buyonline><eq></eq></buyonline><vikingsewinggallery><eq></eq></vikingsewinggallery><project_linus><eq></eq></project_linus><sewing_studio><eq></eq></sewing_studio><store_features><eq></eq></store_features><petfriendly><eq></eq></petfriendly><glowforge><eq></eq></glowforge><custom_shop><eq></eq></custom_shop></or></where></formdata></request>'
         try:
-            r = requests.get(location_url,headers=headers)
+            r = session.get(location_url,headers=headers)
         except:
             continue
         soup = BeautifulSoup(r.text, "lxml")

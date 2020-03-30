@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 from datetime import  datetime
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -45,7 +48,7 @@ def fetch_data():
         location_url = "http://hosted.where2getit.com/dollargeneral/rest/locatorsearch?like=0.9394142712975708"
         try:
 
-            loc = requests.post(location_url,headers=headers,data=data).json()
+            loc = session.post(location_url,headers=headers,data=data).json()
         except:
             pass
       

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -17,7 +20,7 @@ def write_output(data):
 def fetch_data():
     base_url = "https://www.tmphysiciannetwork.org"
     return_main_object=[]
-    r = requests.get(base_url+'/locations')
+    r = session.get(base_url+'/locations')
     soup=BeautifulSoup(r.text,'lxml')
     output=[]
     main=soup.find('ul',{"class":"results"}).find_all('li',{"class":'location'})
@@ -35,7 +38,7 @@ def fetch_data():
         if dt.find('p',{"itemprop":"telephone"})!=None:
             phone=dt.find('p',{"itemprop":"telephone"}).text
         link=dt.find('a')['href']
-        r1 = requests.get(base_url+link)
+        r1 = session.get(base_url+link)
         soup1=BeautifulSoup(r1.text,'lxml')
         hour=''
         if soup1.find('div',{"class":"hours-fax"})!=None:

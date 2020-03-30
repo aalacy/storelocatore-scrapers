@@ -1,12 +1,15 @@
 # coding=UTF-8
 
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -37,7 +40,7 @@ def fetch_data():
     result_coords = []
     location_url = "https://heroburgers.com/wp/wp-admin/admin-ajax.php?action=get_all_stores&lat=&lng="
 
-    r = requests.get(location_url, headers=headers)
+    r = session.get(location_url, headers=headers)
 
     json_data = r.json()
 

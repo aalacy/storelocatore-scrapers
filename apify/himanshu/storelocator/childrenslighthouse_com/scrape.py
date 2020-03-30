@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -50,13 +53,13 @@ def fetch_data():
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
 
-    r_loc= requests.get('https://childrenslighthouse.com/find-a-daycare')
+    r_loc= session.get('https://childrenslighthouse.com/find-a-daycare')
     soup_loc= BeautifulSoup(r_loc.text,'lxml')
     select = soup_loc.find('select',class_='all_regions_list').find('option',{'value':'hoover-childcare-near-me'})
 
     s1 = base_url + select.text.lower().strip()+"Al"
 
-    r1 = requests.get(s1,headers=headers)
+    r1 = session.get(s1,headers=headers)
     soup = BeautifulSoup(r1.text,'lxml')
     info= soup.find('div',class_= "school_contact_information")
     list_info = list(info.stripped_strings)
@@ -79,7 +82,7 @@ def fetch_data():
     return_main_object.append(store)
 
 
-    r= requests.post('https://childrenslighthouse.com/ajax/locations.php',headers = headers)
+    r= session.post('https://childrenslighthouse.com/ajax/locations.php',headers = headers)
     json_data = r.json()
 
     for z in json_data:

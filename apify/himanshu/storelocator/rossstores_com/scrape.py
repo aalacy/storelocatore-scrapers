@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -54,7 +57,7 @@ def fetch_data():
     zip_code = search.next_zip()
     while zip_code:
         # print("zips === " + str(zip_code))
-        r = requests.get('https://hosted.where2getit.com/rossdressforless/2014/ajax?xml_request=<request><appkey>097D3C64-7006-11E8-9405-6974C403F339</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>'+str(MAX_RESULTS)+'</limit><geolocs><geoloc><addressline>'+str(zip_code)+'</addressline><country>US</country></geoloc></geolocs><searchradius>'+str(MAX_DISTANCE)+'</searchradius></formdata></request>',
+        r = session.get('https://hosted.where2getit.com/rossdressforless/2014/ajax?xml_request=<request><appkey>097D3C64-7006-11E8-9405-6974C403F339</appkey><formdata id="locatorsearch"><dataview>store_default</dataview><limit>'+str(MAX_RESULTS)+'</limit><geolocs><geoloc><addressline>'+str(zip_code)+'</addressline><country>US</country></geoloc></geolocs><searchradius>'+str(MAX_DISTANCE)+'</searchradius></formdata></request>',
             headers=headers)
         
         soup= BeautifulSoup(r.text,"lxml")

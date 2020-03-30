@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 import json
 from bs4 import BeautifulSoup
 import re
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
     page = 0
     while page<=8:
 
-        r = requests.get('https://www.zipscarwash.com/search-by-state?field_address_administrative_area=All&page='+str(page) , headers=headers)
+        r = session.get('https://www.zipscarwash.com/search-by-state?field_address_administrative_area=All&page='+str(page) , headers=headers)
         soup = BeautifulSoup(r.text, 'lxml')
         page_url = []
         latitude = []

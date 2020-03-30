@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://www.crowntrophy.com"
-    r = requests.get(base_url + "/grid/index/index")
+    r = session.get(base_url + "/grid/index/index")
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object  = []
     for store_data in soup.find_all("div",{"class":"stores-list-item"}):
@@ -35,7 +38,7 @@ def fetch_data():
             store.append("crown trophy")
             store.append("<INACCESSIBLE>")
             store.append("<INACCESSIBLE>")
-            location_request = requests.get(base_url + store_data.find("a")["href"])
+            location_request = session.get(base_url + store_data.find("a")["href"])
             location_soup = BeautifulSoup(location_request.text,"lxml")
             if location_soup.find("div",{"class":"flex_start flex_between"}) != None:
                 store.append(" ".join(list(location_soup.find("div",{"class":"flex_start flex_between"}).find_all("div",recursive=False)[1].stripped_strings)))

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,14 +26,14 @@ def fetch_data():
     #usa location
     url= "https://www.yankeecandle.com/stores"
     try:
-        r = requests.get(url, headers=headers)
+        r = session.get(url, headers=headers)
     except:
         pass
     soup= BeautifulSoup(r.text,"lxml")
     link = soup.find("div",{"class":"stateList"})
     for i in link.find_all("a"):
         m = (base_url +i['href'])
-        r1 = requests.get(m)
+        r1 = session.get(m)
         soup1= BeautifulSoup(r1.text,"lxml")
         data =  (soup1.find(lambda tag: (tag.name ==  "script" and "__NEXT_DATA__" in tag.text)).text.split("__NEXT_DATA__ =")[1].split("module={}")[0])
         json_data = json.loads(data)
@@ -56,7 +59,7 @@ def fetch_data():
                 else:
                     page_url = m
                 
-                r2 = requests.get(page_url, headers=headers)
+                r2 = session.get(page_url, headers=headers)
                 soup2 = BeautifulSoup(r2.text, "lxml")
                 if soup2.find(lambda tag: (tag.name ==  "script" and "latitude" in tag.text)):
                     latitude =  (soup2.find(lambda tag: (tag.name ==  "script" and "latitude" in tag.text)).text.split('{"latitude":"')[1].split('","longitude":"')[0])
@@ -95,7 +98,7 @@ def fetch_data():
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
                 yield store
     # canada location
-    canada_r = requests.get("https://www.yankeecandle.com/stores/ontario", headers=headers)
+    canada_r = session.get("https://www.yankeecandle.com/stores/ontario", headers=headers)
     canada_soup = BeautifulSoup(canada_r.text, "lxml")
     data_canada =  (canada_soup.find(lambda tag: (tag.name ==  "script" and "__NEXT_DATA__" in tag.text)).text.split("__NEXT_DATA__ =")[1].split("module={}")[0])
     json_data1 = json.loads(data_canada)
@@ -122,7 +125,7 @@ def fetch_data():
                 for o1 in  j1['specialHours']:
                     specialHours1 =specialHours1+' '+(o1['dayDisplay']+" "+o1['day']+" "+o1['open']+"am-"+o1['close']+"pm").replace("18:00","6:00").replace("21:00","9:00").replace("17:00","5:00").replace("24:00","12:00")
             hours_of_operation = (regHours11+' '+specialHours1).strip()
-            r3 = requests.get(page_url, headers=headers)
+            r3 = session.get(page_url, headers=headers)
             soup3 = BeautifulSoup(r3.text, "lxml")              
             latitude =  (soup3.find(lambda tag: (tag.name ==  "script" and "latitude" in tag.text)).text.split('{"latitude":"')[1].split('","longitude":"')[0])
             longitude = (soup3.find(lambda tag: (tag.name ==  "script" and "latitude" in tag.text)).text.split('{"latitude":"')[1].split('","longitude":"')[1].split('","zoomLevel"')[0])

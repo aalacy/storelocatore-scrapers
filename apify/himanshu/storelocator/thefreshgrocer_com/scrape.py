@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -43,7 +46,7 @@ def fetch_data():
     base_url = "https://www.thefreshgrocer.com"
 
     zip_code = '08311'
-    r = requests.post("https://shop.thefreshgrocer.com/StoreLocatorSearch",
+    r = session.post("https://shop.thefreshgrocer.com/StoreLocatorSearch",
                       headers=headers,
                       data='Region=&SearchTerm=' + str(zip_code) + '&Radius=1000&Take=9999&Redirect=')
     soup = BeautifulSoup(r.text, "lxml")

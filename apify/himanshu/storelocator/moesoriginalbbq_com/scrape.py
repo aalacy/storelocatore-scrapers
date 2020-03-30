@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
     addresses = []
 
     base_url = "https://www.moesoriginalbbq.com/"
-    r = requests.get("https://api.storepoint.co/v1/159d567264b9aa/locations", headers=headers)
+    r = session.get("https://api.storepoint.co/v1/159d567264b9aa/locations", headers=headers)
     # soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
@@ -104,7 +107,7 @@ def fetch_data():
         location_url = location_list['website']
         page_url = location_url
         # print("location_url == "+ location_url)
-        r_location = requests.get(location_url, headers=headers)
+        r_location = session.get(location_url, headers=headers)
         soup_location = BeautifulSoup(r_location.text, "lxml")
         if soup_location.find('h2') != None:
             hours = soup_location.find('h2')

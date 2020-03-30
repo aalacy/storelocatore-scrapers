@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import unicodedata
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -20,7 +23,7 @@ def fetch_data():
     addresses =[]
     base_url = "https://factory.jcrew.com/"
     location_url ="https://stores.factory.jcrew.com/en/api/v2/stores.json"   
-    r = requests.get(location_url, headers=headers).json()
+    r = session.get(location_url, headers=headers).json()
     for i in r['stores']:
         location_name = i['name']
         address_2 =  i['address_2']

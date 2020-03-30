@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import unicodedata
 import phonenumbers
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -34,7 +37,7 @@ def fetch_data():
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
         }
-        r = requests.get("https://www-api.woodspring.com/v1/gateway/hotel/hotels?lat=" + str(x) + "&lng=" + str(y) + "&max=200&offset=0&radius=150",headers=headers)
+        r = session.get("https://www-api.woodspring.com/v1/gateway/hotel/hotels?lat=" + str(x) + "&lng=" + str(y) + "&max=200&offset=0&radius=150",headers=headers)
         if "searchResults" not in r.json():
             search.max_distance_update(MAX_DISTANCE)
             coord = search.next_coord()
@@ -47,7 +50,7 @@ def fetch_data():
             store = []
             store.append(main_url)
             store.append(store_data["hotelName"])
-            location_request = requests.get("https://www-api.woodspring.com/v1/gateway/hotel/hotels/" + str(store_data["hotelId"]) + "?include=location,phones",headers=headers)
+            location_request = session.get("https://www-api.woodspring.com/v1/gateway/hotel/hotels/" + str(store_data["hotelId"]) + "?include=location,phones",headers=headers)
             location_data = location_request.json()
             if "hotelStatus" in location_data["hotelInfo"]["hotelSummary"]:
                 if location_data["hotelInfo"]["hotelSummary"]['hotelStatus'] == "Closed":

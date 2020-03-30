@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import time
 from datetime import datetime
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -41,7 +44,7 @@ def fetch_data():
             'accept': 'application/json'
         }   
         try:
-            r = requests.get("https://stores.bestbuy.ca/en-ca/search?q="+str(zip_code), headers=headers).json()
+            r = session.get("https://stores.bestbuy.ca/en-ca/search?q="+str(zip_code), headers=headers).json()
         except :
             pass
         current_results_len = len(r['locations'])
@@ -58,7 +61,7 @@ def fetch_data():
             latitude = r['locations'][i]['loc']['latitude']
             longitude = r['locations'][i]['loc']['longitude']
             page_url = "https://stores.bestbuy.ca/"+r['locations'][i]['url']
-            r1 = requests.get(page_url, headers=headers)
+            r1 = session.get(page_url, headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
             location_name = soup1.find("span",{"class":"LocationName"}).text.strip()
             hours = r['locations'][i]['loc']['hours']['days']

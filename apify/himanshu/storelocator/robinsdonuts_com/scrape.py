@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -22,7 +25,7 @@ def fetch_data():
     return_main_object = []
     count = 1
     while True:
-        r = requests.get("http://www.robinsdonuts.com/locations.aspx?address=&city=&Countryui=CA&pageNumber=" + str(count),headers=headers)
+        r = session.get("http://www.robinsdonuts.com/locations.aspx?address=&city=&Countryui=CA&pageNumber=" + str(count),headers=headers)
         soup = BeautifulSoup(r.text,"lxml")
         if soup.find("div",{'class':"location-box margin_t_40 margin-t-20"}) == None:
             break

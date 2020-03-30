@@ -1,8 +1,11 @@
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import re
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
     user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
     headers = {'User-Agent': user_agent}
 
-    req = requests.get(base_link, headers=headers)
+    req = session.get(base_link, headers=headers)
 
     try:
         base = BeautifulSoup(req.text, "lxml")
@@ -50,7 +53,7 @@ def fetch_data():
             continue
             # commingsoon
             # print(page_link)
-        req = requests.get(page_link, headers=headers)
+        req = session.get(page_link, headers=headers)
 
         try:
             new_base = BeautifulSoup(req.text, "lxml")

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "https://foodmarketlachiquita.com"
-    r = requests.post(base_url + "/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=3d27e8f47d&load_all=1&layout=1")
+    r = session.post(base_url + "/wp-admin/admin-ajax.php?action=asl_load_stores&nonce=3d27e8f47d&load_all=1&layout=1")
     data = r.json()
     return_main_object = []
     for i in range(len(data)):

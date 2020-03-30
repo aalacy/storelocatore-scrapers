@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -21,7 +24,7 @@ def fetch_data():
     }
     base_url = "https://pretzelmaker.com"
     data = "locateStore=true&country=USA&latitude=21.2099072&longitude=72.84736"
-    r = requests.post("https://pretzelmaker.com/locations/",headers=headers,data=data)
+    r = session.post("https://pretzelmaker.com/locations/",headers=headers,data=data)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for script in soup.find_all("script"):

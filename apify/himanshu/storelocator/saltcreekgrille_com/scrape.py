@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def write_output(data):
 
 def fetch_data():
     base_url= "https://saltcreekgrille.com"
-    r = requests.get(base_url)
+    r = session.get(base_url)
     soup= BeautifulSoup(r.text,"lxml")
     store_name=[]
     store_detail=[]
@@ -30,7 +33,7 @@ def fetch_data():
     for i in a:
         tem_var =[]
         base_url1= i['href']
-        r = requests.get(base_url1)
+        r = session.get(base_url1)
         soup1= BeautifulSoup(r.text,"lxml")
         k1 = soup1.find("div",{"class":"column col-sm-6"})
         v = list(k1.stripped_strings)

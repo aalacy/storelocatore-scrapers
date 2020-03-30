@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -51,10 +54,10 @@ def fetch_data():
 
 
 
-    r= requests.get('https://www.bigairusa.com',headers = headers)
+    r= session.get('https://www.bigairusa.com',headers = headers)
     soup = BeautifulSoup(r.text,'lxml')
     for link in soup.find('div',class_='textwidget').findAll('a'):
-        loc_r= requests.get(link['href'],headers = headers)
+        loc_r= session.get(link['href'],headers = headers)
         soup_loc= BeautifulSoup(loc_r.text,'lxml')
         page_url = link['href'].strip()
 

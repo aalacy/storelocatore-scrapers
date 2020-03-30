@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url= "https://jimmygs.squarespace.com/our-locations"
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup= BeautifulSoup(r.text,"lxml")
     link = soup.find_all("div", {"class":"sqs-block-content"})
     p = (soup.find("div", {"id":"content"}).find_all("div", {"class":"sqs-block map-block sqs-block-map sized vsize-12"}))

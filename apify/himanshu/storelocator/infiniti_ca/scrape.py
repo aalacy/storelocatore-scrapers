@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -31,7 +34,7 @@ def fetch_data():
     "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "https://www.infiniti.ca"
-    r = requests.get("https://www.infiniti.ca/infinitiretailers/locate/retailersAjax?channelCode=in&zipCode=M4B%201T4&format=json",headers=headers)
+    r = session.get("https://www.infiniti.ca/infinitiretailers/locate/retailersAjax?channelCode=in&zipCode=M4B%201T4&format=json",headers=headers)
     return_main_object = []
     location_data = r.json()['retailers']
     for store_data in location_data:

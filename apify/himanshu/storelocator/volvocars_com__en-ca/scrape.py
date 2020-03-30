@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "https://www.volvocars.com/en-ca"
-    r = requests.get("https://www.volvocars.com/data/dealers?marketSegment=%2Fen-ca&expand=Services%2CUrls&format=json&northToSouthSearch=False&filter=MarketId+eq+%27ca%27+and+LanguageId+eq+%27en%27&sc_site=en-ca",headers=headers)
+    r = session.get("https://www.volvocars.com/data/dealers?marketSegment=%2Fen-ca&expand=Services%2CUrls&format=json&northToSouthSearch=False&filter=MarketId+eq+%27ca%27+and+LanguageId+eq+%27en%27&sc_site=en-ca",headers=headers)
     return_main_object = []
     location_data = r.json()
     for store_data in location_data:

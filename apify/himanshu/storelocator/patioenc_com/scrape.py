@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 from datetime import datetime
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,7 +32,7 @@ def fetch_data():
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
     
     }
-    r = requests.get("https://www.patioenclosures.com/sitemap.aspx", headers=headers)
+    r = session.get("https://www.patioenclosures.com/sitemap.aspx", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     data = soup.find_all("li", {"class":"AspNet-TreeView-Root AspNet-TreeView-Leaf"})[-1].find("ul").find_all("li",{"class":"AspNet-TreeView-Leaf"})[3].find("ul")
     for i in data.find_all("li"):
@@ -37,7 +40,7 @@ def fetch_data():
         if "directions" in links or "photos" in links or "ideas" in links:
             continue
         page_url = base_url+links
-        r1 = requests.get(page_url)
+        r1 = session.get(page_url)
         soup1 = BeautifulSoup(r1.text, "lxml")
         location_name = soup1.find("h2").text
 

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -24,7 +27,7 @@ def fetch_data():
     # print("soup ===  first")
 
     base_url = "https://www.brothersbar.com"
-    r = requests.get("https://www.brothersbar.com/", headers=headers)
+    r = session.get("https://www.brothersbar.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
     #   data = json.loads(soup.find("div",{"paging_container":re.compile('latlong.push')["paging_container"]}))
@@ -55,7 +58,7 @@ def fetch_data():
             location_url = base_url + '/' + link_data['pageUriSEO']
             # print('location_url === ' + str(location_url))
 
-            r_location = requests.get(location_url, headers=headers)
+            r_location = session.get(location_url, headers=headers)
             soup_location = BeautifulSoup(r_location.text, "lxml")
 
             tag_hours = soup_location.find(lambda tag: tag.name == "span" and "hours:" in tag.text.lower())

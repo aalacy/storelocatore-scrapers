@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -43,7 +46,7 @@ def handle_result(store_data):
 
 def fetch_data():
     base_url = "https://www.dior.com"
-    r = requests.get(base_url + "/store/json/posG.json")
+    r = session.get(base_url + "/store/json/posG.json")
     data = r.json()["items"]
     return_main_object = []
     for i in range(0,len(data),100):
@@ -56,7 +59,7 @@ def fetch_data():
         for j in range(i,temp_number):
             url = url + data[j][0] + ","
         url = url[:-1]
-        location_reqeust = requests.get(url)
+        location_reqeust = session.get(url)
         try:
             location_data = location_reqeust.json()["Items"]
             for j in range(len(location_data)):
@@ -68,7 +71,7 @@ def fetch_data():
             for m in range(i,i+100):
                 print(m)
                 url = "https://tpc33of0na.execute-api.eu-west-1.amazonaws.com/prod/PointOfSale?ids=" + str(data[i])
-                location_reqeust = requests.get(url)
+                location_reqeust = session.get(url)
                 try:
                     location_data = location_reqeust.json()["Items"]
                     for j in range(len(location_data)):

@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -49,7 +52,7 @@ def fetch_data():
     # it will used in store data.
     for zip_code in zips:
         try:
-            r = requests.get(
+            r = session.get(
             'https://www.johnstonmurphy.com/on/demandware.store/Sites-johnston-murphy-us-Site/en_US/Stores-FindStores?dwfrm_storelocator_countryCode=US&dwfrm_storelocator_distanceUnit=mi&dwfrm_storelocator_postalCode='+zip_code+'&dwfrm_storelocator_maxdistance=30000&dwfrm_storelocator_findbyzip=Search',
             headers=headers)
         except:

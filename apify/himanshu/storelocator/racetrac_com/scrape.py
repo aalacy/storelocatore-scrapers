@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -21,7 +24,7 @@ def fetch_data():
     }
     base_url = "https://racetrac.com"
     data = '{"swLat":25.82303640133416,"swLng":-115.6947670532553,"neLat":41.79048379771046,"neLng":-61.202579553255305,"features":[]}'
-    r = requests.post("https://racetrac.com/Services.asmx/Locate",headers=headers,data=data)
+    r = session.post("https://racetrac.com/Services.asmx/Locate",headers=headers,data=data)
     return_main_object = []
     location_list = r.json()
     store_ids = []

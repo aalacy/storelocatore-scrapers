@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -107,7 +110,7 @@ def fetch_data():
 
     base_url = "https://www.smartstartinc.com/"
 
-    r_token = requests.get(base_url, headers=headers)
+    r_token = session.get(base_url, headers=headers)
     token = r_token.text.split('ss_webapi_bearer = "')[1].split('"')[0]
     company_id = r_token.text.split('ss_api_company_id = "')[1].split('"')[0]
 
@@ -131,7 +134,7 @@ def fetch_data():
 
         # print("location_url ==== " + locations_url)
 
-        r_locations = requests.get(locations_url, headers=headers)
+        r_locations = session.get(locations_url, headers=headers)
         json_data = r_locations.json()
         # print(json.dumps(json_data,indent=4))
         current_results_len = len(json_data["Data"])  # it always need to set total len of record.

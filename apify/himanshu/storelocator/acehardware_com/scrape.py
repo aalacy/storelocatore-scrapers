@@ -1,11 +1,14 @@
 import csv
 import sys
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 from datetime import datetime
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -44,7 +47,7 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = "<MISSING>"
     page_url = "<MISSING>"
-    r = requests.get(
+    r = session.get(
         "https://www.acehardware.com/store-directory", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
@@ -73,7 +76,7 @@ def fetch_data():
             hours_of_operation += key + ":" + t11 + " - " + t22 + " "
         page_url = "https://www.acehardware.com/store-details/" + \
             str(store_number)
-        cr = requests.get(page_url, headers=headers)
+        cr = session.get(page_url, headers=headers)
         cr_soup = BeautifulSoup(cr.text, "lxml")
         try:
             script = cr_soup.find("script", {"id": "data-mz-preload-store"})

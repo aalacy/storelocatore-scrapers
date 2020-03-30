@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,16 +22,16 @@ def fetch_data():
         "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "https://www.fsb1879.com"
-    r = requests.get("https://www.fsb1879.com/about-us/locations",headers=headers)
+    r = session.get("https://www.fsb1879.com/about-us/locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     for location in soup.find_all("div",{'class':"location-card w-dyn-item"}):
-        location_request = requests.get(base_url + location.find("a")["href"],headers=headers)
+        location_request = session.get(base_url + location.find("a")["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         address = list(location_soup.find("div",{'class':"w-col w-col-4"}).find("div",{"class":"w-embed"}).stripped_strings)
         phone = list(location_soup.find("div",text="phone").parent.stripped_strings)[-1]
         hours = " ".join(list(location_soup.find("h6",text=re.compile("Hours")).parent.stripped_strings)[1:])
-        geo_request = requests.get(location_soup.find("iframe")["src"],headers=headers)
+        geo_request = session.get(location_soup.find("iframe")["src"],headers=headers)
         geo_soup = BeautifulSoup(geo_request.text,"lxml")
         for script in geo_soup.find_all("script"):
             if "initEmbed" in script.text:

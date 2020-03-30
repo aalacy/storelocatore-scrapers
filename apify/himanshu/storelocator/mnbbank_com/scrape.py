@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
     return_main_object = []
     base_url = "https://mnbbank.com/"
     locator_domain = "https://mnbbank.com/"
-    r = requests.get(
+    r = session.get(
         "https://mnbbank.com/api/locationfilter?zipcode=&city=", headers=header).json()
     for loc in r['filteredLocations']:
         location_name = loc['locationBranchTitle']

@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,7 +22,7 @@ def fetch_data():
     "user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36"
     }
     base_url = "https://www.fiatcanada.com"
-    r = requests.get("https://www.fiatcanada.com/data/dealers/expandable-radius?brand=fiat&longitude=-79.3984&latitude=43.7068&radius=100000",headers=headers)
+    r = session.get("https://www.fiatcanada.com/data/dealers/expandable-radius?brand=fiat&longitude=-79.3984&latitude=43.7068&radius=100000",headers=headers)
     return_main_object = []
     location_data = r.json()["dealers"]
     for store_data in location_data:
@@ -36,7 +39,7 @@ def fetch_data():
         store.append("fiat")
         store.append(store_data["latitude"])
         store.append(store_data["longitude"])
-        location_request = requests.get("https://www.fiatcanada.com/en/dealers/" + store_data["code"],headers=headers)
+        location_request = session.get("https://www.fiatcanada.com/en/dealers/" + store_data["code"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         if location_soup.find("div",{'class':"C_DD-accordeonContent"}) == None:
             hours = "<MISSING>"

@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -40,7 +43,7 @@ def fetch_data():
         location_url = "https://services.publix.com/api/v1/storelocation?zipCode="+str(zip_code)
         
         try:
-            r = requests.get(location_url,headers=headers).json()
+            r = session.get(location_url,headers=headers).json()
         except:
             continue
         current_results_len = len(r['Stores'])

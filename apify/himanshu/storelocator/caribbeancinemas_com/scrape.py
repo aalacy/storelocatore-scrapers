@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 # import sgzip
@@ -7,6 +7,9 @@ import re
 # import http.client
 # import time
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -58,7 +61,7 @@ def fetch_data():
 
     }
 
-    r = requests.get(base_url, headers=headers)
+    r = session.get(base_url, headers=headers)
     soup = BeautifulSoup(r.text, 'html.parser')
     footer = soup.find('footer').find('div', class_='three-fourth column')
 
@@ -68,7 +71,7 @@ def fetch_data():
             page_url = 'https:' + loc_url['href']
         else:
             page_url = loc_url['href']
-        rr = requests.get(page_url, headers=headers)
+        rr = session.get(page_url, headers=headers)
         rr_soup = BeautifulSoup(rr.text, 'lxml')
         try:
             coords = rr_soup.find_all('div', class_='section')[1].find(
@@ -170,7 +173,7 @@ def fetch_data():
         try:
             if "#MORE" != li.a['href']:
                 page_url = "https:" + li.a['href']
-                r_loc = requests.get(page_url, headers=headers)
+                r_loc = session.get(page_url, headers=headers)
                 soup_loc = BeautifulSoup(r_loc.text, 'lxml')
                 coords = soup_loc.find_all('div', class_='section')[1].find(
                     'div', class_='column one-fourth1 column_column').find('iframe')

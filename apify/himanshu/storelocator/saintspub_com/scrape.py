@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', 'w') as output_file:
@@ -26,7 +29,7 @@ def fetch_data():
     return_main_object = []
     address1 = []
     
-    r = requests.get("https://saintspub.com/", headers=headers)
+    r = session.get("https://saintspub.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     # print(soup)
     main  = soup.find_all('div', {'class': 'et_pb_section et_pb_section_1 et_pb_with_background et_section_regular'})
@@ -41,7 +44,7 @@ def fetch_data():
             if 'https' in link3:
                 tem_var = []
                 link = link2['href']
-                r1 = requests.get(link, headers=headers)
+                r1 = session.get(link, headers=headers)
                 soup1 = BeautifulSoup(r1.text, "lxml")
                 # print(soup)
                 main2  = soup1.find('div', {'class': 'entry-content'})

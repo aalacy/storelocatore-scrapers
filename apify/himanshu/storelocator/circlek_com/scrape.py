@@ -1,6 +1,6 @@
 import csv
 import sys
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -10,11 +10,14 @@ from shapely.geometry import mapping, shape
 import phonenumbers
                     
 
+
+session = SgRequests()
+
 countries = {}
    
 
 def getcountrygeo():
-    data = requests.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
+    data = session.get("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson").json()
 
     for feature in data["features"]:
         geom = feature["geometry"]
@@ -76,7 +79,7 @@ def fetch_data():
     hours_of_operation = ""
     # print("start")
     location_url = "https://www.circlek.com/stores_new.php?lat=40.8&lng=-73.65&distance=100000&services=&region=global"
-    r = requests.get(location_url, headers=headers).json()
+    r = session.get(location_url, headers=headers).json()
     for key, value in r["stores"].items():
         latitude = value["latitude"]
         longitude = value["longitude"]
@@ -97,7 +100,7 @@ def fetch_data():
             page_url = "https://www.circlek.com" + value["url"]
             # print(page_url)
             # print(value["country"])
-            r_loc = requests.get(page_url, headers=headers)
+            r_loc = session.get(page_url, headers=headers)
             soup_loc = BeautifulSoup(r_loc.text, "lxml")
             try:
                 csz = list(soup_loc.find(

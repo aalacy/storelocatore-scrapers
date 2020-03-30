@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,13 +19,13 @@ def write_output(data):
 
 def fetch_data():
     base_url = "http://find.cashamerica.us"
-    r = requests.get("http://find.cashamerica.us/js/controllers/StoreMapController.js")
+    r = session.get("http://find.cashamerica.us/js/controllers/StoreMapController.js")
     key = r.text.split("&key=")[1].split('");')[0]
     return_main_object = []
     page = 0
     while True:
         page = page + 1
-        location_request = requests.get("http://find.cashamerica.us/api/stores?p="+str(page) + "&s=10&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key="+ str(key))
+        location_request = session.get("http://find.cashamerica.us/api/stores?p="+str(page) + "&s=10&lat=40.7128&lng=-74.006&d=2019-07-16T05:32:30.276Z&key="+ str(key))
         data = location_request.json()
         if "message" in data:
             if data["message"] == "An error has occurred.":
@@ -42,7 +45,7 @@ def fetch_data():
             store.append("cash america")
             store.append(store_data['latitude'])
             store.append(store_data['longitude'])
-            hours_request = requests.get("http://find.cashamerica.us/api/stores/"+ str(store_data["storeNumber"]) + "?key="+key)
+            hours_request = session.get("http://find.cashamerica.us/api/stores/"+ str(store_data["storeNumber"]) + "?key="+key)
             hours_details = hours_request.json()["weeklyHours"]
             hours = ""
             for k in range(len(hours_details)):

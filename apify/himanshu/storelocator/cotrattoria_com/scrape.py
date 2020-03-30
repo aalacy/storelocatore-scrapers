@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -19,16 +22,16 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://cotrattoria.com"
-    r = requests.get("https://candorestaurants.com",headers=headers)
+    r = session.get("https://candorestaurants.com",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
     count = 0
     for location in soup.find("div",{"class":"et_pb_row et_pb_row_1"}).find_all("div",{"class":re.compile("et_pb_column et_pb_column_1_3 et_pb_column_")}):
         if location.find("a") == None:
             continue
-        location_request = requests.get("https://candorestaurants.com" + location.find("a")["href"],headers=headers)
+        location_request = session.get("https://candorestaurants.com" + location.find("a")["href"],headers=headers)
         location_soup = BeautifulSoup(location_request.text,"lxml")
-        details_request = requests.get(location_soup.find_all("a",text="Contact Us")[count]["href"],headers=headers)
+        details_request = session.get(location_soup.find_all("a",text="Contact Us")[count]["href"],headers=headers)
         details_soup = BeautifulSoup(details_request.text,"lxml")
         count = count + 1
         location_details = list(details_soup.find("div",{'class':"et_pb_text_inner"}).stripped_strings)

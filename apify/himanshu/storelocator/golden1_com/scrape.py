@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import sgzip
 import json
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -41,7 +44,7 @@ def fetch_data():
         data = "golden1branches=true&golden1homecenters=false&golden1atm=false&sharedbranches=false&sharedatm=false&swlat="+str(coords[0])+"&swlng="+str(coords[1])+"&nelat="+str(coords[0])+"&nelng="+str(coords[1])+"&centerlat="+str(coords[0])+"&centerlng="+str(coords[1])+"&userlat=&userlng="
         location_url = 'https://www.golden1.com/api/BranchLocator/GetLocations'
         try:
-            data = requests.post(location_url, headers=header, data=data).json()
+            data = session.post(location_url, headers=header, data=data).json()
         except:
             pass
 

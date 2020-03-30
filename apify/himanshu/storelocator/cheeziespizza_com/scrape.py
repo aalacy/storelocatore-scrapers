@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,7 +19,7 @@ def write_output(data):
 
 def fetch_data():
     base_url = "http://www.cheeziespizza.com"
-    r = requests.get("http://www.cheeziespizza.com/locations-results?gmw_post=locations&gmw_address%5B0%5D&gmw_distance=200&gmw_units=imperial&gmw_form=1&gmw_per_page=1000000000&gmw_lat&gmw_lng&gmw_px=pt&action=gmw_post")
+    r = session.get("http://www.cheeziespizza.com/locations-results?gmw_post=locations&gmw_address%5B0%5D&gmw_distance=200&gmw_units=imperial&gmw_form=1&gmw_per_page=1000000000&gmw_lat&gmw_lng&gmw_px=pt&action=gmw_post")
     soup=BeautifulSoup(r.text ,"lxml")
     return_main_object = []
     main=soup.find('div',{"id":"wppl-results-wrapper-"}).find_all('div',{"class":"wppl-single-result"})
@@ -45,7 +48,7 @@ def fetch_data():
         if country.strip()=="USA":
             country="US"
         link=detail.find('a')['href']
-        r1 = requests.get(link)
+        r1 = session.get(link)
         soup1=BeautifulSoup(r1.text ,"lxml")
         hour=list(soup1.find('div',{"id":"content"}).find('div',{"class":'hours'}).stripped_strings)
         del hour[0]

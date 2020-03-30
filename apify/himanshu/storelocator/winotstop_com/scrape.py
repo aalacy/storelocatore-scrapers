@@ -1,11 +1,14 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import time
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,10 +29,10 @@ def get_driver():
     return webdriver.Firefox(executable_path="./geckodriver", options=options)
 
 def fetch_data():
-    r = requests.get("http://www.winotstop.com/locations.html")
+    r = session.get("http://www.winotstop.com/locations.html")
     soup = BeautifulSoup(r.text,"lxml")
     iframe_link = soup.find("iframe")["src"]
-    r = requests.get(iframe_link)
+    r = session.get(iframe_link)
     soup = BeautifulSoup(r.text,"lxml")
     geo_location = {}
     for script in soup.find_all("script"):

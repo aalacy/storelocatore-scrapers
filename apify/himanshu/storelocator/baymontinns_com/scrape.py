@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -22,7 +25,7 @@ def fetch_data():
         'Connection': 'keep-alive',
     }
     base_url = "https://www.wyndhamhotels.com"
-    r1 = requests.get("https://www.wyndhamhotels.com/BWSServices/services/search/properties?recordsPerPage=15000&pageNumber=1&brandId=ALL&countryCode=US%2CCA%2CMX", headers= headers).json()
+    r1 = session.get("https://www.wyndhamhotels.com/BWSServices/services/search/properties?recordsPerPage=15000&pageNumber=1&brandId=ALL&countryCode=US%2CCA%2CMX", headers= headers).json()
     for i in r1["countries"]:
         for j in i['states']:
             state = (j["stateName"].lower().replace(" ","-"))
@@ -33,7 +36,7 @@ def fetch_data():
                     unique_url = (h["uniqueUrl"]) 
                     url = "https://www.wyndhamhotels.com/en-ca/"+str(brand)+"/"+str(city)+"-"+str(state)+"/"+str(unique_url)+"/overview"
                     try:
-                        r1 = requests.get(url, headers=headers,  allow_redirects=False)
+                        r1 = session.get(url, headers=headers,  allow_redirects=False)
                     except:
                         pass
                     soup1= BeautifulSoup(r1.text,"lxml")

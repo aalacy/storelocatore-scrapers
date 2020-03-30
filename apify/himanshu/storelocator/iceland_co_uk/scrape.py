@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgRequests
+
+session = SgRequests()
+
 session = SgRequests()
 
 def write_output(data):
@@ -26,12 +29,12 @@ def fetch_data():
 
     base_url = "https://www.iceland.co.uk/store-finder"
     addresses = []
-    r1 = requests.get(base_url)
+    r1 = session.get(base_url)
     soup = BeautifulSoup(r1.text,"lxml")
     state = soup.find_all("ul",{"class":"region-stores"})
     for data in state:
         for href in data.find_all("a"):
-            r2 = requests.get(href['href'])
+            r2 = session.get(href['href'])
             page_url = href['href']
             # print(page_url)
             soup1 = BeautifulSoup(r2.text,"lxml")

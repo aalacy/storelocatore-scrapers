@@ -1,9 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -19,11 +22,11 @@ def fetch_data():
     zps=sgzip.for_radius(50)
     output = []
     for zp in zps:
-        r = requests.get(base_url+"/store/site_market_area/enterprise/readwherelikezipcode/"+str(zp)).json()
+        r = session.get(base_url+"/store/site_market_area/enterprise/readwherelikezipcode/"+str(zp)).json()
         for st in r:
             try:
                 page_url=base_url+"/store/site_info/enterprise/readwherecode/"+st['SiteCode']
-                r1 = requests.get(page_url).json()
+                r1 = session.get(page_url).json()
                 for loc in r1:
                     hour=loc['Hours'].replace('<br/>',' ').replace('<br>',' ').strip()
                     address=loc['Address']

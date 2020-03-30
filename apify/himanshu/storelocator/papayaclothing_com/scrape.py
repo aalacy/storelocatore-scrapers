@@ -1,8 +1,11 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -23,7 +26,7 @@ def fetch_data():
     }
     data = "ajax=1&action=get_nearby_stores&distance=20000000000&lat=38.7745565&lng=-75.13934979999999"
     base_url = "https://www.papayaclothing.com"
-    r = requests.post("https://www.papayaclothing.com/cms/papaya_store.aspx",headers=headers,data=data)
+    r = session.post("https://www.papayaclothing.com/cms/papaya_store.aspx",headers=headers,data=data)
     return_main_object = []
     location_list = r.json()["stores"]
     for i in range(len(location_list)):

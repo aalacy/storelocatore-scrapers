@@ -1,10 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -45,7 +48,7 @@ def fetch_data():
 
         # zip_code = 11576
         try:
-            r = requests.get(
+            r = session.get(
                 "https://benjerry.where2getit.com/ajax?lang=en_US&xml_request=%3Crequest%3E%20%3Cappkey%3E3D71930E-EC80"
                 "-11E6-A0AE-8347407E493E%3C/appkey%3E%20%3Cformdata%20id=%22locatorsearch%22%3E%20%3Cdataview"
                 "%3Estore_default%3C/dataview%3E%20%3Climit%3E10000%3C/limit%3E%20%3Cgeolocs%3E%20%3Cgeoloc%3E%20"
@@ -55,7 +58,7 @@ def fetch_data():
                 headers=headers)
         except:
             continue
-        # r = requests.get("https://benjerry.where2getit.com/ajax?lang=en_US&xml_request=%3Crequest%3E%3Cappkey%3E3D71930E-EC80-11E6-A0AE-8347407E493E%3C%2Fappkey%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Climit%3E10000%3C%2Flimit%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3E" + str(zip_code) +
+        # r = session.get("https://benjerry.where2getit.com/ajax?lang=en_US&xml_request=%3Crequest%3E%3Cappkey%3E3D71930E-EC80-11E6-A0AE-8347407E493E%3C%2Fappkey%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Climit%3E10000%3C%2Flimit%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3E" + str(zip_code) +
         #                  "%3C%2Faddressline%3E%3Clongitude%3E-73.41557399999999%3C%2Flongitude%3E%3Clatitude%3E46.0363198%3C%2Flatitude%3E%3Ccountry%3ECA%3C%2Fcountry%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Csearchradius%3E15%7C20%7C30%7C50%7C100%7C250%7C500%3C%2Fsearchradius%3E%3Corder%3ERANK%2C+_distance%3C%2Forder%3E%3Cstateonly%3E1%3C%2Fstateonly%3E%3Cradiusuom%3E%3C%2Fradiusuom%3E%3Cproximitymethod%3Edrivetime%3C%2Fproximitymethod%3E%3Ccutoff%3E500%3C%2Fcutoff%3E%3Ccutoffuom%3Emile%3C%2Fcutoffuom%3E%3Cdistancefrom%3E0.01%3C%2Fdistancefrom%3E%3Cwhere%3E%3Cor%3E%3Ccakesforsale%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fcakesforsale%3E%3Ccatering%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fcatering%3E%3Cfcd%3E%3Ceq%3E%3C%2Feq%3E%3C%2Ffcd%3E%3Cflavorserved%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fflavorserved%3E%3C%2For%3E%3Cicon%3E%3Cin%3EShop%2CSHOP%2Cshop%2CCINEMA%2CCinema%2Cdefault%3C%2Fin%3E%3C%2Ficon%3E%3Cclientkey%3E%3Cnotin%3EFLL01%2CFLL02%2CFLL05%2CFLL08%2CFLL09%2CMDL01%2CTXL01%2CNJL06%2CCAL07%2CNJL07%2CFLL12%2CFLL16%2CFLL18%2CFLL19%2CCA102%2CFL050%2CFL051%2CFL053%2CFL054%2CFL055%2CFL056%2CFL058%2CFL061%2CFL063%2CFL064%2CFL065%2CMD017%2CNJ030%2CNJ031%2CTX029%3C%2Fnotin%3E%3C%2Fclientkey%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E", headers=headers)
         soup = BeautifulSoup(r.text, "lxml")
 

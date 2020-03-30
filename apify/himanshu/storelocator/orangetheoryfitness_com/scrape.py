@@ -1,10 +1,13 @@
 # coding=UTF-8
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -53,7 +56,7 @@ def fetch_data():
         #print("zip_code === "+zip_code)
         base_url=  "https://www.orangetheoryfitness.com/service/directorylisting/filterMarkers?s="+str(zip_code)
         try:
-            r = requests.get(base_url)
+            r = session.get(base_url)
         except:
             continue
         json_data = r.json()
