@@ -24,88 +24,92 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
+    p = 0
     
-    url = 'https://www.bankwithunited.com/contact-us#location'
+    url = 'https://www.bankwithunited.com/location-results?field_geolocation_proximity=25&field_geolocation_proximity-lat=&field_geolocation_proximity-lng=&geolocation_geocoder_google_places_api=&geolocation_geocoder_google_places_api_state=1&full_view=true'
     r = session.get(url, headers=headers, verify=False)
   
     soup =BeautifulSoup(r.text, "html.parser")
-   
-    title_list = soup.findAll('div', {'class': 'views-field-field-branch-name'})
-    street_list = soup.findAll('div', {'class': 'views-field-field-address-address-line1'})
-    city_list = soup.findAll('span', {'class': 'views-field-field-address-locality'})
-    state_list = soup.findAll('span', {'class': 'views-field-field-address-administrative-area'})
-    pcode_list = soup.findAll('span', {'class': 'views-field-field-address-postal-code'})
-    phone_list = soup.findAll('div', {'class': 'views-field-field-phone-number'})
-    coords_list = soup.findAll('span', {'property': 'geo'})
-    
-    
-    print("title = ",len(title_list))
-    print("city = ",len(city_list))
-    p = 0
-    for i in range(0,len(title_list)):
 
-        title = title_list[i].text
-        street = street_list[i].text
-        city =  city_list[i].text
-        city = city.replace(',','')
-        pcode = pcode_list[i].text
-        state =  state_list[i].text
-        phone = phone_list[i].text
-        lat = coords_list[i].find('meta',{'property':'latitude'})
-        lat = str(lat['content'])
-        longt = coords_list[i].find('meta',{'property':'longitude'})
-        longt = str(longt['content'])
-        if title.lower().find('atm') > -1:
-            ltype = "ATM"
-        else:
-            ltype = "Branch"
-        title = title.replace('\n','')
-        street = street.replace('\n','')
-        city = city.replace('\n','')
-        state = state.replace('\n','')
-        pcode = pcode.replace('\n','')
-        phone = phone.replace('\n','')
-        phone = phone[0:phone.find('|')]
-        phone = phone.replace('.','-')
-        phone = phone.rstrip()
-        if len(phone) <3:
-            phone = "<MISSING>"
-        if len(street) <3:
-            street = "<MISSING>"
-        if len(city) <3:
-            city = "<MISSING>"
-        if len(state) <2:
-            state = "<MISSING>"
-        if len(pcode) <3:
-            pcode = "<MISSING>"
-        if state == 'West Virginia':
-            state = 'WV'
-       
-        link = 'https://www.bankwithunited.com/contact-us?geolocation_geocoder_google_places_api='+pcode+'&geolocation_geocoder_google_places_api_state=0&field_geolocation_proximity-lat=&field_geolocation_proximity-lng=&field_geolocation_proximity=25&name=Apply#location'        
-        #print(pcode, link)
-        r = session.get(link, headers=headers, verify=False)
-        
-        soup =BeautifulSoup(r.text, "html.parser")
-        divlist = soup.findAll('div',{'class':'adrs'})
+    divlist = soup.findAll('div',{'class':'adrs'})
 
         #print(len(divlist))
-        hours = "<MISSING>"
-        for div in divlist:            
-            try:
-               addr = div.find('div',{'class':'views-field-address'}).text
-            except:
-                try:
-                    addr = div.find('span',{'class':'postal-code'}).text
-                except:
-                    addr = 'None'
-            if addr.find(pcode) > -1 and addr != 'None':
-                try:
-                    hours = div.find('div',{'class':'views-field views-field-field-location-service-hour'}).text
-                    if hours.find("Drive") > -1:
-                        hours = hours[0:hours.find("Drive")]
-                except:
-                    hours = "<MISSING>"
-                break
+    hours = "<MISSING>"
+    for div in divlist:
+        title = div.find('div',{'class':'views-field-field-branch-name'}).text
+       
+        try:
+            hours = div.find('div',{'class':'views-field views-field-field-location-service-hour'}).text
+            if hours.find("Drive") > -1:
+                hours = hours[0:hours.find("Drive")]
+            if hours.find("Walk:") > -1:
+                hours = hours[0:hours.find("Walk")]
+        except:
+            hours = "<MISSING>"
+        ltype =''
+        try:
+            loc = div.find('div',{'class':'views-field-field-location-amenities'})
+            #print(loc)
+            loc = str(loc)
+            if loc.find('brnch') > -1:
+                ltype = ltype + 'Branch'
+            if loc.find('atm') > -1:
+                if len(ltype) < 2:
+                    ltype = 'ATM'
+                else:
+                    ltype = ltype + "|" + 'ATM'
+            
+           
+                        
+        except:
+            ltype = "<MISSING>"
+        try:
+            address = div.find('div',{'class':'views-field-address'})         
+            state = address.find('div').text
+            address = address.text
+            address = address.replace('\n','')
+            address = address.replace('  ','')
+            state = state.lstrip()
+            state = state.replace('\n','')
+            state = state.replace('  ','')
+            state = state.lstrip()            
+            street = address.replace(state,'')
+            state, pcode = state.split(',')           
+        except:
+            street= "<MISSING>"
+            state = "<MISSING>"
+            pcode = "<MISSING>"
+
+        try:
+            city = div.find('div',{'class':'views-field-title'}).text
+        except:
+            city = "<MISSING>"
+        try:
+            phone = div.find('div',{'class':'views-field-phone'}).text
+            phone = phone.replace('.','-')
+        except:
+            phone = "<MISSING>"
+        try:
+            hours = div.find('div',{'class':'views-field-field-location-service-hour'}).text
+            if hours.find('Drive') > -1:
+                hours = hours[0:hours.find('Drive')]
+            if hours.find('Walk') > -1:
+                hours = hours[0:hours.find('Walk')]
+            hours = hours.replace('Lobby: ','')
+        except:
+            hours = "<MISSING>"
+        try:
+            coord = str(div.find('div',{'class':'views-field-field-get-location-link'}).find('a')['href'])
+            start =coord.find('@')+ 1
+            end = coord.find(',',start)
+            lat = coord[start : end]
+            start = end + 1
+            end = coord.find(',',start)
+            longt = coord[start : end]
+        except:
+            lat =  "<MISSING>"
+            longt =  "<MISSING>"
+                 
         hours = hours.replace('\n','')
         hours = hours.rstrip()
         if len(hours) < 3:
@@ -113,7 +117,27 @@ def fetch_data():
         #print(hours)
         hours = hours.replace('Lobby: ','')        
         hours = hours.lstrip()
-           
+        title = title.replace('\n','')
+        title = title.lstrip()
+        city = city.replace('\n','')
+        city = city.lstrip()
+        phone = phone.replace('\n','')
+        if len(street) < 3:
+            street = "<MISSING>"
+        if len(pcode) < 3:
+            pcode = "<MISSING>"
+        if len(state) < 2:
+            state = "<MISSING>"
+        if len(phone) < 2:
+            phone = "<MISSING>"
+        phone = phone.lstrip()
+        phone = phone.rstrip()
+        title = title.rstrip()
+        city = city.rstrip()
+        state = state.replace("West Virginia","WV")
+        state = state.replace("Virginia","VA")
+        state = state.replace("Maryland","MD")
+        state = state.replace("Ohio","OH")
         data.append([
                         'https://www.bankwithunited.com/',
                         url,                   
