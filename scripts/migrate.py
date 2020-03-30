@@ -58,6 +58,10 @@ def process_requests_scraper(base_path):
     replace_files(base_path)
 
 def process(base_path):
+    (_, _, files) = next(os.walk(base_path))
+    if 'scrape.py' not in files or 'requirements.txt' not in files:
+        print('skipping {}'.format(base_path))
+        return
     with open('{}/scrape.py'.format(base_path)) as f:
         content = f.readlines()
         for line in content:
@@ -69,7 +73,8 @@ def process(base_path):
                 return
 
 def run(root):
-    dirs = os.listdir(root)
-    print(dirs)
+    (_, dirs, _) = next(os.walk(root))
+    for dir in dirs:
+        process('{}/{}'.format(root, dir))
 
-run('/Users/tenzing/code/crawl-service/apify/ggrahambaker/storelocator/')
+run('/Users/tenzing/code/crawl-service/apify/ggrahambaker/storelocator')
