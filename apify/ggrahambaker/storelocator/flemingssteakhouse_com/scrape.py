@@ -60,7 +60,11 @@ def fetch_data():
         city, state, zip_code = addy_ext(cont[2])
         
         phone_number = cont[3]
+
+
         hours = cont[7]
+        if 'Local' in hours:
+            hours = cont[6]
         
         
         country_code = 'US'

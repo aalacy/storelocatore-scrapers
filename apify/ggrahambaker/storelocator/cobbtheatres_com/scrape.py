@@ -65,6 +65,9 @@ def fetch_data():
 
     all_store_data = []
     for href in href_arr:
+        print(href[0])
+        if href[0] == 'https://www.cmxcinemas.com/theaters/15/cmx-cinbistro-halcyon':
+            continue
         cut = href[0].find('.com')
         locator_domain = href[0][:cut + 5]
         location_name = href[1]

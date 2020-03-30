@@ -26,7 +26,7 @@ def fetch_data():
     soup = BeautifulSoup(page.content, 'html.parser')
 
 
-    main = soup.find('div', {'class':'mt-25'})
+    main = soup.find('div', {'class':'tlsmap_list'})
 
     locs = main.find_all('a', {'class', 'gaq-link'})
     state_list = []
