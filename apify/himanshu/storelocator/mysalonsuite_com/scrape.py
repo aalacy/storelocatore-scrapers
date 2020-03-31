@@ -25,7 +25,7 @@ def fetch_data():
     }
 
     base_url = "http://www.mysalonsuite.com"
-    json_data = requests.get("https://easylocator.net/ajax/search_by_lat_lon/Weebly%20Hearts/33.5973469/-112.1072528/null/null").json()['physical']
+    json_data = session.get("https://easylocator.net/ajax/search_by_lat_lon/Weebly%20Hearts/33.5973469/-112.1072528/null/null").json()['physical']
     for data in json_data:
         if data['street_address'] == "Coming Soon!" or data['street_address'] == "Opening Soon!":
             continue
@@ -54,10 +54,21 @@ def fetch_data():
                 page_url = "http://"+data['website_url']
         else:
             page_url = "http://www.mysalonsuite.com/"+str(location_name.replace(" ","-").lower())
+        if street_address:
+            street_address = street_address
+        else:
+            r1 = session.get(page_url)
+            soup1 = BeautifulSoup(r1.text, "lxml")
+            street_address1 = list(soup1.find("span",{"class":"wsite-text wsite-headline-paragraph"}).stripped_strings)
+            street_address =street_address1[0]
+            # print(street_address)
+            # if number[-1] == ".":
+            #     del number[-1]
+            # phone = number[-1].replace("949) 424-6770","(949) 424-6770").replace("63-608-9772","863-608-9772").replace("Leasing Phone Number:","")
         if phone:
             phone = phone
         else:
-            r1 = requests.get(page_url)
+            r1 = session.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
             number = list(soup1.find("span",{"class":"wsite-text wsite-headline-paragraph"}).stripped_strings)
             if number[-1] == ".":
