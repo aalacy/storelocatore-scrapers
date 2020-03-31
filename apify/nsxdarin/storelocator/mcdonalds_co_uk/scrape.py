@@ -5,7 +5,8 @@ import json
 import sgzip
 
 session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
+           'connection': 'keep-alive'
            }
 
 def write_output(data):
@@ -34,8 +35,9 @@ def fetch_data():
         x, y = coord[0], coord[1]
         url = 'https://www.mcdonalds.com/googleapps/GoogleRestaurantLocAction.do?method=searchLocation&latitude=' + str(x) + '&longitude=' + str(y) + '&radius=' + rad + '&maxResults=' + maxr + '&country=gb&language=en-gb&showClosed=&hours24Text=Open%2024%20hr'
         try:
-            r = session.get(url, headers=headers, timeout=3)
-            for item in json.loads(r.content)['features']:
+            #r = session.get(url, headers=headers, timeout=1)
+            page_text = urllib2.urlopen(url).read()
+            for item in json.loads(page_text)['features']:
                 name = item['properties']['name']
                 add = item['properties']['addressLine1']
                 add = add + ' ' + item['properties']['addressLine2']
