@@ -46,7 +46,9 @@ def fetch_data():
             lat = coord[0]
             lng = coord[1]
             location_url = "http://www.gamestop.com/on/demandware.store/Sites-gamestop-us-Site/default/Stores-FindStores?radius="+str(MAX_DISTANCE)+"&radius="+str(MAX_DISTANCE)+"&lat="+str(lat)+"&lat="+str(lat)+"&long="+str(lng)+"&long="+str(lng)
-            json_data = session.get(location_url, headers=HEADERS).json()
+            response = session.get(location_url, headers=HEADERS)
+            print(response.content)
+            json_data = response.json()
             if "stores" in json_data:
                 current_results_len = len(json_data['stores'])
                 for i in json_data['stores']:
