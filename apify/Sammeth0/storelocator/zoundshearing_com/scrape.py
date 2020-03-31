@@ -48,11 +48,13 @@ def fetch_data():
 	driver.get(urlpage)
 	#driver.execute_script("window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
 	time.sleep(3)
-	
+	driver.find_element_by_id("radiusSelect").find_elements_by_tag_name("option")[-1].click()
+	driver.find_element_by_id("addressSubmit").click()
+	time.sleep(3)
 	locs_results = driver.find_elements_by_xpath(".//span[@class='location_name']")
 	for r in locs_results:
 		locs.append(r.text)
-	
+	print(len(locs_results))
 	streets_results = driver.find_elements_by_xpath(".//div[@class='results_row_center_column location_secondary']")
 	for r in streets_results:
 		streets.append(r.find_element_by_xpath(".//span[@class='slp_result_address slp_result_street']").text)
