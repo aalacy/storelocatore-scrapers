@@ -75,9 +75,9 @@ def fetch_data():
 
         res=requests.post("https://stores.crocs.com/rest/locatorsearch",data=data)
 
-        print(res)
-        print(postcode)
-        print(res.json())
+       # print(res)
+       # print(postcode)
+       # print(res.json())
         try:
             jso=res.json()["response"]["collection"]
         except:
@@ -89,9 +89,6 @@ def fetch_data():
 
             if js["country"]!="CA":
                 continue
-
-
-
             try:
                 loc=js["name"]
             except:
@@ -108,13 +105,13 @@ def fetch_data():
             if zip==None:
                 zip="<MISSING>"
             city=js["city"]
-            print(city,zip,state)
+            #print(city,zip,state)
             key=loc+city+zip+state
             if key in key_set:
                 continue
             key_set.add(key)
             count += 1
-            print(js)
+            #print(js)
             try:
                 tim=js["storehours"]
             except:
