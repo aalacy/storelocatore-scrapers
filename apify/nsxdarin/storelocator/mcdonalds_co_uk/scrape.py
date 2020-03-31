@@ -26,15 +26,15 @@ def fetch_data():
     locations = []
     coord = search.next_coord()
     locs = []
-    rad = '5'
+    rad = '10'
     maxr = '25'
     while coord:
         result_coords = []
         print("remaining zipcodes: " + str(len(search.zipcodes)))
         x, y = coord[0], coord[1]
         url = 'https://www.mcdonalds.com/googleapps/GoogleRestaurantLocAction.do?method=searchLocation&latitude=' + str(x) + '&longitude=' + str(y) + '&radius=' + rad + '&maxResults=' + maxr + '&country=gb&language=en-gb&showClosed=&hours24Text=Open%2024%20hr'
-        r = session.get(url, headers=headers, timeout=3)
         try:
+            r = session.get(url, headers=headers, timeout=3)
             for item in json.loads(r.content)['features']:
                 name = item['properties']['name']
                 add = item['properties']['addressLine1']
