@@ -28,9 +28,10 @@ def get_driver():
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
     if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
     else:
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+
 
 def fetch_data():
     driver = get_driver()
@@ -63,6 +64,8 @@ def fetch_data():
                 continue
             store_zip = address["data-postal-code"]
             phone = address["data-contact"]
+            if "+1" not in phone:
+                continue
             lat = json.loads(location["data-property"])["lat"]
             lng = json.loads(location["data-property"])["longitude"]
             page_url = "https://www.marriott.com" + location.find("span",{"class":"l-property-name"}).parent.parent["href"]
