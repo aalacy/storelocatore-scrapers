@@ -16,8 +16,8 @@ def write_output(data):
 def fetch_data():
     ids = []
     for xlat in range(41, 70):
+        print('Pulling Lat %s...' % (str(xlat)))
         for ylng in range(-141, -52):
-            print('Pulling Lat-Long %s,%s...' % (str(xlat), str(ylng)))
             url = 'https://www.curves.com/ca/find-a-club?location=Toronto,%20ON&lat=' + str(xlat) + '&lng=' + str(ylng)
             r = session.get(url, headers=headers)
             for line in r.iter_lines():
