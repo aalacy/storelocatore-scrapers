@@ -85,7 +85,7 @@ def fetch_data():
         hours = hours[1].find('strong').text
         print(hours)
         data.append(['http://beefsteakveggies.com',link,title,street,city,state,pcode,'US',"<MISSING>",phone,"<MISSING>",lat,longt,hours])
-        print(p,data[p])
+        #print(p,data[p])
         p += 1
 
     return data
