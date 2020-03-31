@@ -1,10 +1,11 @@
 import csv
-import requests
-import http.client
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -15,6 +16,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
 def fetch_data():
         addresses = []
         search = sgzip.ClosestNSearch()
@@ -24,19 +26,30 @@ def fetch_data():
         current_results_len = 0  # need to update with no of count.
         coord = search.next_coord()
 
+        HEADERS = {
+            'Host': 'www.gamestop.com',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'cross-site',
+            'Sec-Fetch-User': '?1',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'max-age=0',
+            'Connection': 'keep-alive'
+        }
+        
         while coord:
             result_coords = []
+            print("remaining zipcodes: " + str(len(search.zipcodes)))
             lat = coord[0]
             lng = coord[1]
-            conn = http.client.HTTPSConnection("www.gamestop.com")
             location_url = "http://www.gamestop.com/on/demandware.store/Sites-gamestop-us-Site/default/Stores-FindStores?radius="+str(MAX_DISTANCE)+"&radius="+str(MAX_DISTANCE)+"&lat="+str(lat)+"&lat="+str(lat)+"&long="+str(lng)+"&long="+str(lng)
-            conn.request("GET",location_url)
-            res = conn.getresponse()
-            data = res.read()
-            get_deata = json.loads(data.decode("utf-8"))
-            if "stores" in get_deata:
-                current_results_len = len(get_deata['stores'])
-                for i in get_deata['stores']:
+            json_data = session.get(location_url, headers=HEADERS).json()
+            if "stores" in json_data:
+                current_results_len = len(json_data['stores'])
+                for i in json_data['stores']:
                     store_number = i['ID']
                     location_name = i['name']
                     street_address = str(i['address1'])+" "+str(i['address2'])
