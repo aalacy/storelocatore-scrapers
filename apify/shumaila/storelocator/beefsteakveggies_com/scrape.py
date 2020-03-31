@@ -32,7 +32,7 @@ def fetch_data():
     linklist = soup.findAll('a',{'class':'card__btn'})
     for link in linklist:
         link = 'https://www.beefsteakveggies.com'+ link['href']
-        print(link)
+        #print(link)
         r = session.get(link, headers=headers, verify=False)
   
         soup =BeautifulSoup(r.text, "html.parser")
