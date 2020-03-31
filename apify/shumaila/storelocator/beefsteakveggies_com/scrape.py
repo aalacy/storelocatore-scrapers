@@ -83,7 +83,7 @@ def fetch_data():
         hours = soup.find('div',{'class':'col-md-6'})
         hours = hours.findAll('p')
         hours = hours[1].find('strong').text
-        print(hours)
+        #print(hours)
         data.append(['http://beefsteakveggies.com',link,title,street,city,state,pcode,'US',"<MISSING>",phone,"<MISSING>",lat,longt,hours])
         #print(p,data[p])
         p += 1
