@@ -35,8 +35,16 @@ def fetch_data():
 
         #print(len(divlist))
     hours = "<MISSING>"
+    flag = 0
     for div in divlist:
-        title = div.find('div',{'class':'views-field-field-branch-name'}).text
+        try:
+            title = div.find('div',{'class':'views-field-field-branch-name'}).text
+        except:
+            try:
+                title = div.find('div',{'class':'field--name-field-branch-name'}).text                
+                
+            except:
+                title = '<MISSING>'
        
         try:
             hours = div.find('div',{'class':'views-field views-field-field-location-service-hour'}).text
@@ -62,7 +70,19 @@ def fetch_data():
            
                         
         except:
-            ltype = "<MISSING>"
+            try:
+                loc = div.find('div',{'class':'field--name-field-location-amenities'}).text
+            #print(loc)
+                loc = str(loc)
+                if loc.find('Branch') > -1:
+                    ltype = ltype + 'Branch'
+                if loc.find('ATM') > -1:
+                    if len(ltype) < 2:
+                        ltype = 'ATM'
+                    else:
+                        ltype = ltype + "|" + 'ATM'  
+            except:
+                ltype = "<MISSING>"
         try:
             address = div.find('div',{'class':'views-field-address'})         
             state = address.find('div').text
@@ -76,14 +96,32 @@ def fetch_data():
             street = address.replace(state,'')
             state, pcode = state.split(',')           
         except:
-            street= "<MISSING>"
-            state = "<MISSING>"
-            pcode = "<MISSING>"
+            try:
+                street = div.find('span',{'class':'address-line1'}).text
+            except:
+                street= "<MISSING>"
+            try:
+                city = div.find('span',{'class':'locality'}).text
+            except:
+                city =  "<MISSING>"
+                    
+            try:
+                state = div.find('span',{'class':'administrative-area'}).text
+            except:
+                state= "<MISSING>"
+            try:
+                pcode = div.find('span',{'class':'postal-code'}).text
+            except:
+                pcode = "<MISSING>"
 
         try:
             city = div.find('div',{'class':'views-field-title'}).text
         except:
-            city = "<MISSING>"
+            if city == "<MISSING>":
+                try:
+                    city = div.find('span',{'class':'field-content'}).text 
+                except:
+                    city = "<MISSING>"
         try:
             phone = div.find('div',{'class':'views-field-phone'}).text
             phone = phone.replace('.','-')
@@ -100,15 +138,36 @@ def fetch_data():
             hours = "<MISSING>"
         try:
             coord = str(div.find('div',{'class':'views-field-field-get-location-link'}).find('a')['href'])
-            start =coord.find('@')+ 1
-            end = coord.find(',',start)
-            lat = coord[start : end]
-            start = end + 1
-            end = coord.find(',',start)
-            longt = coord[start : end]
-        except:
+            #print(coord)
+            #input()
+            start =coord.find('@')
+            if start > -1 :
+                start = start + 1
+                end = coord.find(',',start)
+                lat = coord[start : end]
+                start = end + 1
+                end = coord.find(',',start)
+                longt = coord[start : end]
+            else:
+                start = coord.find('3d')
+                if start > -1:
+                    start = start + 2
+                    end = coord.find('%',start)
+                    lat = coord[start : end]
+                    start = coord.find('-',start)
+                    end = len(coord)
+                    longt = coord[start : end]
+                    
+                    
+                else:
+                    lat =  "<MISSING>"
+                    longt =  "<MISSING>"
+                    
+        except Exception as e:            
+            
             lat =  "<MISSING>"
             longt =  "<MISSING>"
+        
                  
         hours = hours.replace('\n','')
         hours = hours.rstrip()
@@ -130,6 +189,12 @@ def fetch_data():
             state = "<MISSING>"
         if len(phone) < 2:
             phone = "<MISSING>"
+        if len(lat) < 2:
+            lat = "<MISSING>"
+        if len(longt) < 2:
+            longt = "<MISSING>"
+        if len(ltype) < 2:
+            ltype = "<MISSING>"
         phone = phone.lstrip()
         phone = phone.rstrip()
         title = title.rstrip()
@@ -138,6 +203,8 @@ def fetch_data():
         state = state.replace("Virginia","VA")
         state = state.replace("Maryland","MD")
         state = state.replace("Ohio","OH")
+        hours = hours.replace('\r',' ')
+        
         data.append([
                         'https://www.bankwithunited.com/',
                         url,                   
