@@ -68,48 +68,54 @@ def fetch_data():
                         allids.append(lid)
                         locs.append(lurl + '|' + plat + '|' + plng)
     for loc in locs:
-        #print('Pulling Location %s...' % loc.split('|')[0])
-        website = 'uhaul.com'
-        typ = ''
-        hours = ''
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        zc = ''
-        country = ''
-        store = ''
-        phone = ''
-        lat = loc.split('|')[1]
-        lng = loc.split('|')[2]
-        lurl = loc.split('|')[0]
-        store = lurl.rsplit('/',1)[1]
-        r2 = session.get(lurl, headers=headers)
-        for line2 in r2.iter_lines():
-            if '<small class="text-light">(' in line2 and 'all room' not in line2:
-                typ = line2.split('<small class="text-light">(')[1].split(')')[0]
-            if ',"addressRegion":"' in line2:
-                state = line2.split(',"addressRegion":"')[1].split('"')[0]
-                name = line2.split('"name":"')[1].split('"')[0]
-                country = line2.split(',"addressCountry":"')[1].split('"')[0]
-                if 'United' in country:
-                    country = 'US'
-                if 'Canada' in country:
-                    country = 'CA'
-                city = line2.split('"addressLocality":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-                add = line2.split('"streetAddress":"')[1].split('"')[0]
-                phone = line2.split('"telephone":"')[1].split('"')[0]
-                hours = line2.split('"openingHours":')[1].split(',"aggregateRating')[0]
-                hours = hours.replace('[','').replace(']','').replace('","','; ').replace('"','')
-        if hours == '':
-            hours = '<MISSING>'
-        if phone == '':
-            phone = '<MISSING>'
-        if typ == '':
-            typ = 'U-Haul'
-        if add != '':
-            yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        PageFound = True
+        while PageFound:
+            try:
+                PageFound = False
+                #print('Pulling Location %s...' % loc.split('|')[0])
+                website = 'uhaul.com'
+                typ = ''
+                hours = ''
+                name = ''
+                add = ''
+                city = ''
+                state = ''
+                zc = ''
+                country = ''
+                store = ''
+                phone = ''
+                lat = loc.split('|')[1]
+                lng = loc.split('|')[2]
+                lurl = loc.split('|')[0]
+                store = lurl.rsplit('/',1)[1]
+                r2 = session.get(lurl, headers=headers, timeout=5)
+                for line2 in r2.iter_lines():
+                    if '<small class="text-light">(' in line2 and 'all room' not in line2:
+                        typ = line2.split('<small class="text-light">(')[1].split(')')[0]
+                    if ',"addressRegion":"' in line2:
+                        state = line2.split(',"addressRegion":"')[1].split('"')[0]
+                        name = line2.split('"name":"')[1].split('"')[0]
+                        country = line2.split(',"addressCountry":"')[1].split('"')[0]
+                        if 'United' in country:
+                            country = 'US'
+                        if 'Canada' in country:
+                            country = 'CA'
+                        city = line2.split('"addressLocality":"')[1].split('"')[0]
+                        zc = line2.split('"postalCode":"')[1].split('"')[0]
+                        add = line2.split('"streetAddress":"')[1].split('"')[0]
+                        phone = line2.split('"telephone":"')[1].split('"')[0]
+                        hours = line2.split('"openingHours":')[1].split(',"aggregateRating')[0]
+                        hours = hours.replace('[','').replace(']','').replace('","','; ').replace('"','')
+                if hours == '':
+                    hours = '<MISSING>'
+                if typ == '':
+                    typ = 'U-Haul'
+                if phone == '':
+                    phone = '<MISSING>'
+                if add != '':
+                    yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            except:
+                PageFound = True
 
 def scrape():
     data = fetch_data()
