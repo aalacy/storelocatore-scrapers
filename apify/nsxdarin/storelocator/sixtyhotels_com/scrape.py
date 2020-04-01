@@ -1,8 +1,8 @@
 import csv
 import urllib2
-from sgrequests import SgRequests
+import requests
 
-session = SgRequests()
+session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
            'content-type': 'application/json',
            'X-Requested-With': 'XMLHttpRequest'
@@ -40,7 +40,13 @@ def fetch_data():
                     store = '<MISSING>'
                     country = 'US'
                     typ = 'Hotel'
-                    phone = '<MISSING>'
+                    phone = item.split('"phone":"')[1].split('"')[0].replace('.','-')
+                    if 'soho' in name.lower():
+                        loc = 'https://www.sixtyhotels.com/destinations/new-york-city/sixty-soho'
+                    if 'beverly' in name.lower():
+                        loc = 'https://www.sixtyhotels.com/destinations/california/sixty-beverly-hills'
+                    if 'les' in name.lower():
+                        loc = 'https://www.sixtyhotels.com/destinations/new-york-city/sixty-les'
                     lat = item.split('!3d')[1].split('!')[0]
                     lng = item.split('!4d')[1].split('"')[0]
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
