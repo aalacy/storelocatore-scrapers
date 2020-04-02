@@ -4,6 +4,7 @@ import csv
 import string
 import re, time
 import json
+import usaddress
 
 from sgrequests import SgRequests
 
@@ -117,9 +118,26 @@ def fetch_data():
         mend = strm.find(',',mstart)
         link = strm[mstart:mend]
         link = link.replace('"','')
-        street = address[0:address.find(city)]
         
+        
+        address = usaddress.parse(address)
+        i = 0
+        street = ""        
+        while i < len(address):
+            temp = address[i]
+            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or \
+                    temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
+                "USPSBoxID") != -1:
+                street = street + " " + temp[0]
+           
+            i += 1
+        
+       
+        street = street.lstrip()
+        street = street.replace(',','')
         start = end + 1
+        #print(street)
+        #input()
         
         link = link.replace('\\','')
         if len(pcode) > 5:
@@ -128,7 +146,7 @@ def fetch_data():
             state = 'WI'
         if len(phone) < 3:
             phone = "<MISSING>"
-        if ccode == "United States":
+        if ccode == "United States" and link.find('COMING SOON') == -1:
             data.append(['https://www.fredastaire.com/',link,title,street,city,state,pcode,'US',store,phone,"<MISSING>",lat,longt,"<MISSING>"])
             #print(p,data[p])
             p += 1
