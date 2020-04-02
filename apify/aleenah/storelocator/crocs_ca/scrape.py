@@ -75,9 +75,9 @@ def fetch_data():
 
         res=requests.post("https://stores.crocs.com/rest/locatorsearch",data=data)
 
-       # print(res)
-       # print(postcode)
-       # print(res.json())
+        #print(res)
+        #print(postcode)
+        #print(res.json())
         try:
             jso=res.json()["response"]["collection"]
         except:
@@ -89,14 +89,17 @@ def fetch_data():
 
             if js["country"]!="CA":
                 continue
+
             try:
                 loc=js["name"]
             except:
                 continue
+
             try:
                 id=js["uid"]
             except:
                 id = "<MISSING>"
+
             lat=js["latitude"]
             long=js["longitude"]
             street=js["address1"]
@@ -106,24 +109,34 @@ def fetch_data():
                 zip="<MISSING>"
             city=js["city"]
             #print(city,zip,state)
+
             key=loc+city+zip+state
+
             if key in key_set:
                 continue
             key_set.add(key)
             count += 1
+
             #print(js)
             try:
                 tim=js["storehours"]
             except:
                 tim=None
+
             if tim == "null" or tim=="" or tim ==None:
                 tim="<MISSING>"
+            else:
+                tim="Mon: "+js["monopen"]+" - "+js["monclose"]+" Tue: "+js["tueopen"]+" - "+js["tueclose"]+" Wed: "+js["wedopen"]+" - "+js["wedclose"]+" Thu: "+js["thropen"]+" - "+js["thrclose"]+" Fri: "+js["friopen"]+" - "+js["friclose"]+" Sat: "+js["satopen"]+" - "+js["satclose"]+" Sun: "+js["sunopen"]+" - "+js["sunclose"]
+
             try:
                 phone=js["phone"]
             except:
                 phone=None
+
             if phone == "null" or phone=="" or phone ==None:
                 phone="<MISSING>"
+
+            type=js["tblstoretype"]
 
             all.append([
                 "https://www.crocs.ca/",
@@ -135,7 +148,7 @@ def fetch_data():
                 'CA',
                 id,  # store #
                 phone,  # phone
-                "<MISSING>",  # type
+                type,  # type
                 lat,  # lat
                 long,  # long
                 tim,  # timing
