@@ -21,14 +21,19 @@ def fetch_data():
     # Your scraper here
     res = session.get("http://jerrysusa.com/locations/")
     soup = BeautifulSoup(res.text, 'html.parser')
-
-    divs = soup.find_all('div', {'class': 'g48'})
+    divas = soup.find_all('div', {'class': 'g48'})
     #print(len(divs))
-    divs=divs[0::2]
+    divs=divas[0::2]
+    ldivs=divas[1::2]
     #print(len(divs))
     del divs[0]
     del divs[-1]
     del divs[-1]
+    del ldivs[0]
+    del ldivs[-1]
+    del ldivs[-1]
+    
+    
     
     for div in divs:
         #print(div)
@@ -49,7 +54,15 @@ def fetch_data():
         if phone=="":
                phone="<MISSING>"
 
-
+        a=ldivs[divs.index(div)].find_all('a')
+        if a=[]:
+            tim="<MISSING>"
+        else:
+            res = session.get(a[0].get('href'))
+            soup = BeautifulSoup(res.text, 'html.parser')
+            tim = soup.find('div', {'class': 'mt-2'}).text.replace("Hours","").replace("Hour","").strip()
+            if tim=="":
+                tim="<MISSING>"
 
         all.append([
             "http://jerrysusa.com",
@@ -64,7 +77,7 @@ def fetch_data():
             "<MISSING>",  # type
             "<MISSING>",  # lat
             "<MISSING>",  # long
-            "<MISSING>",  # timing
+            tim,  # timing
             "http://jerrysusa.com/locations/"])
 
     return all
