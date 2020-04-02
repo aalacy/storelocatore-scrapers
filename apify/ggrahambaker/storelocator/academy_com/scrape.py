@@ -46,8 +46,7 @@ def fetch_data():
             driver.implicitly_wait(10)
             n_links = driver.find_elements_by_css_selector('a.neighborhoodLinks')
             for n_link in n_links:
-                link = n_link.get_attribute('href')
-         
+                link = n_link.get_attribute('href')         
                 link_list.append(link)
 
 
@@ -70,7 +69,7 @@ def fetch_data():
 
         street_address = loc['data-address']
         city = loc['data-city']
-        state = loc['data-state']
+        state = loc['data-state'].title()
         zip_code = loc['data-zip']
         lat = loc['data-lat']
         longit = loc['data-lng']
@@ -87,8 +86,8 @@ def fetch_data():
         
         country_code = 'US'
         location_type = '<MISSING>'
-        store_number = '<MISSING>'
         page_url = link
+        store_number = link.split('store-')[1]
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
