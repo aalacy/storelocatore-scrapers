@@ -55,7 +55,7 @@ def fetch_data():
                phone="<MISSING>"
 
         a=ldivs[divs.index(div)].find_all('a')
-        if a=[]:
+        if a==[]:
             tim="<MISSING>"
         else:
             res = session.get(a[0].get('href'))
