@@ -1,8 +1,4 @@
 
-#http://www.primerica.com/public/locations.html
-#https://pterrys.com
-
-# Import libraries
 import requests
 from bs4 import BeautifulSoup
 import csv
@@ -12,15 +8,12 @@ import usaddress
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
+from sgrequests import SgRequests
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    chrome_path = '/Users/Dell/local/chromedriver'
-    #return webdriver.Chrome(chrome_path)
-    return webdriver.Chrome('chromedriver')
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+
 
 
 def write_output(data):
@@ -36,174 +29,132 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    data = []
-    links = []
-    nxtlinks = []
-    p = 1
+    data = []    
+    p = 0
     url = 'http://www.primerica.com/public/locations.html'
-    page = requests.get(url)
+    page = session.get(url, headers=headers, verify=False)
     soup = BeautifulSoup(page.text, "html.parser")
     maidiv = soup.find('main')
     mainsection = maidiv.findAll('section',{'class':'content locList'})
-    print(len(mainsection))
+    #print(len(mainsection))
     sec = 0
     while sec < 2:
-
         if sec == 0:
             ccode = "US"
         if sec == 1:
             ccode = "CA"
-
-        rep_list = mainsection[sec].findAll('a')
-        #print(maindiv)
+        rep_list = mainsection[sec].findAll('a')       
         cleanr = re.compile('<.*?>')
         pattern = re.compile(r'\s\s+')
-        for rep in rep_list:
-            link = "http://www.primerica.com/public/" + rep['href']
-            #link = 'http://www.primerica.com/public/FindRep?pageName=FINDREPZIP&province=NewFoundland&abbrv=NF'
-            print(link)
-
+        for rep in rep_list:            
+            link = "http://www.primerica.com/public/" + rep['href']            
+            print(link)           
             try:
-                n = 0
-                while True:
-                    driver1 = get_driver()
-                    driver1.get(link)
-                    maindiv = driver1.find_element_by_tag_name('main')
-                    xip_list = maindiv.find_elements_by_tag_name('a')
-
-                    #for i in range(0,len(xip_list)):
-                    #title = xip_list[n].text
-                    if ccode == "CA":
-                        pcode = xip_list[n].text
-                    xip_list[n].click()
-                    time.sleep(2)
-                    mainul = driver1.find_element_by_class_name('agent-list')
-                    #print(mainul.text)
-
+               
+                page1 = session.get(link, headers=headers, verify=False)                    
+                time.sleep(1)
+                soup1 = BeautifulSoup(page1.text, "html.parser")
+                maindiv = soup1.find('main')
+                xip_list = maindiv.findAll('a')
+                print("len = ",len(xip_list))
+               
+                for xip in xip_list:                    
                     try:
-                        li_list = mainul.find_elements_by_tag_name('li')
+                        pcode = xip.text
+                        #print('http://www.primerica.com'+xip['href'])
+                        page2 = session.get('http://www.primerica.com'+xip['href'], headers=headers, verify=False)                    
+                        time.sleep(1)
+                        soup2 = BeautifulSoup(page2.text, "html.parser")                   
+                        mainul = soup2.find('ul',{'class':'agent-list'})
+                        li_list = mainul.findAll('li')
                         #print(len(li_list))
                         for m in range(0, len(li_list)):
+                            try:
+                                alink = li_list[m].find('a')                       
+                                title = alink.text
+                                alink = alink['href']     
+                                page3 = session.get(alink, headers=headers, verify=False)                    
+                                time.sleep(1)
+                                soup3 = BeautifulSoup(page3.text, "html.parser")                            
+                                 
+                                address = soup3.find('div',{'class':'officeInfoDataWidth'}).text
+                                address = re.sub(pattern,'',address)
+                                street = address[0:address.find('\n')]
+                                state = address[address.find('\n')+1:len(address)]                    
+                                city,state = state.split(', ',1)
+                                state,pcode1 = state.split(' ',1)
+                                phone = soup3.find('div',{'class':'telephoneLabel'}).text
+                                phone = phone.replace('Office: ','')
+                                phone = phone.replace("Mobile","")
+                                phone = phone.replace(":","")
+                                phone = phone.strip()
+                                if len(phone) < 2:
+                                    phone = "<MISSING>"
+                                if len(street) < 2 :
+                                    street = "<MISSING>"
+                                if len(city) < 2:
+                                    city  = "<MISSING>"                        
+                                if len(state) < 2 :
+                                    state = "<MISSING>"
 
-                            alink = li_list[m].find_element_by_tag_name('a')
-                            mainlink = alink.get_attribute('href')
-                            title = alink.text
-                            driver = get_driver()
-                            driver.get(alink.get_attribute('href'))
-                            time.sleep(1)
-                            #address = driver.find_element_by_class_name('officeinfo1of3blocks')
-                            address = driver.find_element_by_class_name('officeInfoDataWidth')
-                            address = str(address.text)
-                            address = address.replace("\n", " ")
-                            pdetail =driver.find_element_by_class_name('telephoneLabel')
-                            phone = str(pdetail.text)
-                            phone = phone.replace("Office: ", "")
+                                if len(pcode) < 2:
+                                    pcode = "<MISSING>"
 
-                            address = usaddress.parse(address)
-                            i = 0
-                            street = ""
-                            city = ""
-                            state = ""
-                            if ccode == "US":
-                                pcode = ""
-                            while i < len(address):
-                                temp = address[i]
-                                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find(
-                                        "Recipient") != -1 or \
-                                        temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[
-                                    1].find(
-                                    "USPSBoxID") != -1:
-                                    street = street + " " + temp[0]
-                                if temp[1].find("PlaceName") != -1:
-                                    city = city + " " + temp[0]
-                                if temp[1].find("StateName") != -1:
-                                    state = state + " " + temp[0]
-                                if ccode == "US":
-                                    if temp[1].find("ZipCode") != -1:
-                                        pcode = pcode + " " + temp[0]
-                                i += 1
-
-
-                            street = street.lstrip()
-                            city = city.lstrip()
-                            city = city.replace(",", "")
-                            state = state.lstrip()
-                            pcode = pcode.lstrip()
-                            if len(phone) < 2:
-                                phone = "<MISSING>"
-                            if len(street) < 2 :
-                                street = "<MISSING>"
-                            if len(city) < 2:
-                                city  = "<MISSING>"
-                            if len(state) > 2:
-                                state = state[0:2]
-                            if len(state) < 2 :
-                                state = "<MISSING>"
-
-                            if len(pcode) < 2:
-                                pcode = "<MISSING>"
-
-                            if len(phone) < 11:
-                                phone = "<MISSING>"
-
-                            #print(address)
-                            #print(mainlink)
-                            #print(title)
-                            #print(street)
-                            #print(city)
-                            #print(state)
-                            #print(pcode)
-                            #print(ccode)
-                            #print(phone)
-                            #print(p)
-                            p += 1
-                            #print("...................")
-                            flag = True
-                            #print(len(data))
-                            i = 0
-                            while i < len(data) and flag:
-                                if title == data[i][2]:
-                                    flag = False
-                                    break
-                                else:
-                                    i += 1
-                            if state == "NF":
-                                state = "NL"
-                            phone = phone.replace("Mobile","")
-                            phone = phone.replace(":","")
-                            phone = phone.strip()
-
-                            if flag:
-                                data.append([
-                                    'http://www.primerica.com/',
-                                    mainlink,
-                                    title,
-                                    street,
-                                    city,
-                                    state,
-                                    pcode,
-                                    ccode,
-                                    "<MISSING>",
-                                    phone,
-                                    "<MISSING>",
-                                    "<MISSING>",
-                                    "<MISSING>",
-                                    "<MISSING>",
-                                ])
-                            driver.quit()
-
-                    except:
+                                if len(phone) < 11:
+                                    phone = "<MISSING>"
+                                i = 0
+                                flag = True
+                                #print("Data", len(data))
+                                try:
+                                    for i in range(0,len(data)):                                        
+                                        #print(i, pcode,data[i][6])
+                                        if pcode == data[i][6]:
+                                            #print("exist")
+                                            flag = False
+                                            break
+                                    
+                                except Exception as e:
+                                    print(e)
+                                if state == "NF":
+                                    state = "NL"
+                                if state == "PQ":
+                                    state = "QC"
+                                if flag:
+                                    data.append([
+                                            'http://www.primerica.com/',
+                                            alink,
+                                            title,
+                                            street,
+                                            city,
+                                            state,
+                                            pcode,
+                                            ccode,
+                                            "<MISSING>",
+                                            phone,
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                        ])
+                                    
+                                #print(street,city,state,pcode,phone)
+                                    print(p,data[p])
+                                    p += 1
+                                #input()
+                                
+                            except Exception as e:
+                                print(e)
+                                pass
+                               
+                    except Exception as e:
+                        print(e)
                         pass
-                    n += 1
-                    #driver1.back()
-                    driver1.quit()
-                    #if p == 100:
-                        #break
+                        
 
 
                     #break
-            except:
-                #print("error")
+            except Exception as e:
+                print(e)
                 pass
 
             #driver1.quit()
@@ -219,8 +170,10 @@ def fetch_data():
 
 def scrape():
 
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 
 scrape()
