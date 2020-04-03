@@ -5,9 +5,6 @@ import csv
 import string
 import re, time
 import usaddress
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -48,7 +45,7 @@ def fetch_data():
         pattern = re.compile(r'\s\s+')
         for rep in rep_list:            
             link = "http://www.primerica.com/public/" + rep['href']            
-            print(link)           
+            #print(link)           
             try:
                
                 page1 = session.get(link, headers=headers, verify=False)                    
@@ -138,7 +135,7 @@ def fetch_data():
                                         ])
                                     
                                 #print(street,city,state,pcode,phone)
-                                    print(p,data[p])
+                                    #print(p,data[p])
                                     p += 1
                                 #input()
                                 
