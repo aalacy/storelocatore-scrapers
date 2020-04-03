@@ -79,7 +79,7 @@ def fetch_data():
                         if phone == '':
                             phone = '<MISSING>'
                         if add != '':
-                            yield [website, purl, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                            yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
