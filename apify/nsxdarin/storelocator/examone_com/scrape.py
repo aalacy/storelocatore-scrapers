@@ -1,10 +1,10 @@
 import csv
 import urllib2
-from sgrequests import SgRequests
+import requests
 import sgzip
 import time
 
-session = SgRequests()
+session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -54,6 +54,21 @@ def fetch_data():
                             stores.append(store)
                             if phone == '':
                                 phone = '<MISSING>'
+                            if ' 405 942' in add:
+                                add = add.split(' 405 942')[0]
+                            if ' 832-' in add:
+                                add = add.split(' 832-')[0]
+                            if ' 800-' in add:
+                                add = add.split(' 800-')[0]
+                            if ' 866-' in add:
+                                add = add.split(' 866-')[0]
+                            if ' 610-' in add:
+                                add = add.split(' 610-')[0]
+                            if ' 877' in add:
+                                add = add.split(' 877')[0]
+                            if ' Ofc#' in add:
+                                add = add.split(' Ofc#')[0]
+                            
                             yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

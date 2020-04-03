@@ -28,9 +28,10 @@ def get_driver():
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
     if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
     else:
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+
 
 def fetch_data():
     driver = get_driver()
@@ -53,6 +54,9 @@ def fetch_data():
         for location in soup.find('div',{'class':'js-property-list-container'}).find_all("div",{"data-brand":str(brand_id)},recursive=False):
             if location["data-brand"] != brand_id:
                 continue
+            if "Opening Soon" in " ".join(list(location.stripped_strings)):
+                continue
+            
             name = location.find("span",{"class":"l-property-name"}).text
             address = location.find("div",{"data-address-line1":True})
             street_address = address["data-address-line1"]

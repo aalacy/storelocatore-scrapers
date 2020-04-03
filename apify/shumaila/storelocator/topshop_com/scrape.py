@@ -1,4 +1,3 @@
-
 import time
 import csv
 from selenium import webdriver
@@ -206,9 +205,9 @@ def fetch_data():
                         try:
                             
                             temps = city.split(' ')
-                            print('checking',len(temps),len(temps[0]))
+                            print('hhhhhhhhhhhhhh',len(temps),len(temps[0]))
                             if len(temps) > 2:
-                                print('length is greater than 2')
+                                print('ttttttttttttttttt')
                                 state = temps[0]
                                 try:
                                     pcode = temps[1]+temps[2]+ temps[3]
@@ -331,7 +330,7 @@ def fetch_data():
                    ])
             print(p,data[p])
             p += 1
-            input()
+            #input()
 
     
     return data

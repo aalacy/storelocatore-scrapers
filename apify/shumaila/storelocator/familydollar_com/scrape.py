@@ -110,8 +110,9 @@ def fetch_data():
                 lat = "<MISSING>"
             if len(longt) < 3:
                 longt = "<MISSING>"
-            
-            data.append(['https://www.familydollar.com/',url,title,street,city,state,pcode,'US',store,phone,"<MISSING>",lat,longt,hours])
+            hours = hours.rstrip()
+            hours = hours[0:len(hours)-1]
+            data.append(['https://www.familydollar.com/',"<MISSING>",title,street,city,state,pcode,'US',store,phone,"<MISSING>",lat,longt,hours])
             #print(p,data[p])
             p += 1
             

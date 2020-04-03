@@ -35,7 +35,7 @@ class Scraper(Scrape):
         options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(self.CHROME_DRIVER_PATH, options=options)
 
-        location_url = "https://www.lush.ca/on/demandware.store/Sites-LushCA-Site/en_CA/Stores-Search?lat=49.2827291&lng=-123.12073750000002&radius=1000"
+        location_url = "https://www.lush.ca/on/demandware.store/Sites-LushCA-Site/en_CA/Stores-Search?lat=49.2827291&long=-123.12073750000002&radius=1000"
         driver.get(location_url)
         stores.extend(json.loads(driver.find_element_by_css_selector("pre").text))
 

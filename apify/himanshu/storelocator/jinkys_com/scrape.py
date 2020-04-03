@@ -33,7 +33,7 @@ def fetch_data():
             country_code = loc['country']
             store_number = loc['id']
             phone = loc['phone']
-            location_type = loc['__typename']
+            location_type = loc['__typename'].replace("Location","").strip()
             latitude = loc['lat']
             longitude = loc['lng']
             hours = " ".join(loc['schemaHours'])

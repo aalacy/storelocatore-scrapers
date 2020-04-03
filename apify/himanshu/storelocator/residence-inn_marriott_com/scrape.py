@@ -63,6 +63,8 @@ def fetch_data():
                 continue
             store_zip = address["data-postal-code"]
             phone = address["data-contact"]
+            if "+1" not in phone:
+                continue
             lat = json.loads(location["data-property"])["lat"]
             lng = json.loads(location["data-property"])["longitude"]
             page_url = "https://www.marriott.com" + location.find("span",{"class":"l-property-name"}).parent.parent["href"]
