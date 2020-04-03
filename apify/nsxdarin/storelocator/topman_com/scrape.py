@@ -20,7 +20,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     for item in json.loads(r.content):
         store = item['storeId']
-        website = 'topman.com'
+        website = 'us.topman.com'
         typ = item['brandName']
         name = item['name']
         country = 'US'
@@ -33,6 +33,8 @@ def fetch_data():
         else:
             state = '<MISSING>'
         zc = item['address']['postcode']
+        add = add + ' ' + item['address']['line2'].strip()
+        add = add.strip()
         if zc == '':
             zc = '<MISSING>'
         phone = item['telephoneNumber'].replace('(+001) ','')
