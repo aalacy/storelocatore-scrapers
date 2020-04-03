@@ -1,16 +1,13 @@
 import csv
-from sgrequests import SgRequests
+import requests
 from bs4 import BeautifulSoup
 import re
 import json
 import time
 from datetime import datetime
 
-
-session = SgRequests()
-
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -31,15 +28,14 @@ def fetch_data():
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
         'accept': 'application/json'
     }
-    r = session.get("https://www.hollisterco.com/shop/ViewAllStoresDisplayView?storeId=11205&catalogId=10201&langId=-1", headers=headers)
+    r = requests.get("https://www.hollisterco.com/shop/ViewAllStoresDisplayView?storeId=11205&catalogId=10201&langId=-1", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     data = soup.find_all("li",{"class":"view-all-stores__store"})
     for link in data:
         
         if "/shop/wd/clothing-stores/CA/" in link.find("a")['href'] or "/shop/wd/clothing-stores/US/"in link.find("a")['href']:
             page_url = base_url+link.find("a")['href']
-            # print(page_url)
-            r = session.get(page_url, headers=headers)
+            r = requests.get(page_url, headers=headers)
             soup = BeautifulSoup(r.text, "lxml")
             if soup.find(lambda tag: (tag.name == "script") and "geoNodeUniqueId" in tag.text) == None:
                 continue
@@ -81,9 +77,9 @@ def fetch_data():
             store.append(longitude)
             store.append(hours_of_operation)
             store.append(page_url)
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
+            # if store[2] in addresses:
+            #     continue
+            # addresses.append(store[2])
             # print("data =="+str(store))
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store

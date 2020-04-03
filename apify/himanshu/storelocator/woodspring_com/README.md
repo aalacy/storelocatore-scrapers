@@ -10,4 +10,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
  
-address contains state name,same lat & lng  this website
+address contains state name  this website

@@ -6,8 +6,8 @@ import re
 from bs4 import BeautifulSoup
 import json
 import platform
-
 system = platform.system()
+
 def get_driver():
     options = Options()
     options.add_argument('--headless')
@@ -35,11 +35,8 @@ def fetch_data():
     driver = get_driver()
     driver.get('https://www.armani.com/experience/us/?yoox_storelocator_action=true&action=yoox_storelocator_get_all_stores')
     cookies_list = driver.get_cookies()
-    #sssprint(cookies_list)
     soup = BeautifulSoup(driver.page_source,"lxml")
     dict_from_json = json.loads(soup.find("body").text)
-    return_main_object = []
-    addresses = []
     for store_data in dict_from_json:
         store = []
         if "location" not in store_data:
@@ -71,14 +68,13 @@ def fetch_data():
                 store[-2] = " ".join(address.split("|")[-1].split(",")[-1].split(" ")[2:])
         store.append(store_data["ID"])
         store.append(store_data["wpcf-yoox-store-phone"].replace("\xa0","").split("Suggest")[0].split("|")[0] if "wpcf-yoox-store-phone" in store_data and store_data["wpcf-yoox-store-phone"] else "<MISSING>")
-        store.append("armani")
+        store.append(store_data["wpcf-store-main-store-brand"])
         store.append(store_data["_yoox-store-lat"])
         store.append(store_data["_yoox-store-lng"])
         store.append("<MISSING>")
-        store.append("<MISSING>")
-        return_main_object.append(store)
+        store.append("https://www.armani.com/experience/us/store-locator/#store/"+str(store_data["ID"]))
+        yield store
     driver.quit()
-    return return_main_object
 
 def scrape():
     data = fetch_data()

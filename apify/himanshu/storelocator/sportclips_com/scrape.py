@@ -28,58 +28,71 @@ def fetch_data():
     # }
     base_url = "https://sportclips.com"
     r = session.get("https://sportclips.com/all-locations")
+    addressesess=[]
     soup = BeautifulSoup(r.text, "lxml")
     for anchor in soup.find_all("div",{"class":"locations-list locations-list-noicon"}):
-        for link in anchor.find_all("a"):
-            if "google" in link['href']:
-                continue
-            if "products" in link['href']:
-                continue
-            page_url = link['href'].replace("www.",'')
-            # print(page_url)
-            try:
-                r1 = session.get(page_url)
-                soup1 = BeautifulSoup(r1.text, "lxml")
+        # print(len())
+        for coming in anchor.find_all("p"):
+            the_word='COMING SOON!'
+            words = coming.find(text=lambda text: text and the_word in text)
+            if words==None:
+                for index,link in enumerate(coming.find_all("a")):
+                    if "google" in link['href']:
+                        continue
+                    if "products" in link['href']:
+                        continue
+                    page_url = link['href'].replace("www.",'')
+                    # print(link)
+                    try:
+                        r1 = session.get(page_url)
+                    except:
+                        pass
 
-                location_name = soup1.find("div",{"class":"contact-location"}).find("h1").text.strip()
+                    soup1 = BeautifulSoup(r1.text, "lxml")
+
+                    try:
+                        location_name = soup1.find("div",{"class":"contact-location"}).find("h1").text.strip()
+                        json_data = json.loads(soup1.find(lambda tag: (tag.name == "script") and "@context" in tag.text).text.replace("\t","").strip())
+                        hours_of_operation = " ".join(list(soup1.find("table").stripped_strings))
+                    except:
+                        location_name=''
+
+                    
+                    street_address = json_data['address']['streetAddress']
+                    city = json_data['address']['addressLocality']
+                    state = json_data['address']['addressRegion']
+                    zipp = json_data['address']['postalCode']
+                    phone = json_data['telephone']
+                    location_type = json_data['@type']
+                    latitude = json_data['geo']['latitude']
+                    longitude = json_data['geo']['longitude']
+
+                    
                 
-                json_data = json.loads(soup1.find(lambda tag: (tag.name == "script") and "@context" in tag.text).text.replace("\t","").strip())
-
-                street_address = json_data['address']['streetAddress']
-                city = json_data['address']['addressLocality']
-                state = json_data['address']['addressRegion']
-                zipp = json_data['address']['postalCode']
-                phone = json_data['telephone']
-                location_type = json_data['@type']
-                latitude = json_data['geo']['latitude']
-                longitude = json_data['geo']['longitude']
-
-                hours_of_operation = " ".join(list(soup1.find("table").stripped_strings))
+                    store = []
+                    store.append(base_url)
+                    store.append(location_name)
+                    store.append(street_address)
+                    store.append(city)
+                    store.append(state)
+                    store.append(zipp if zipp else "<MISSING>")
+                    store.append("US")
+                    store.append("<MISSING>")
+                    store.append(phone)
+                    store.append(location_type)
+                    store.append(latitude)
+                    store.append(longitude)
+                    store.append(hours_of_operation)
+                    store.append(page_url)
+                    # store = [x.replace("–","-") if type(x) == str else x for x in store]
+                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                    if store[2] in addressesess:
+                        continue
+                    addressesess.append(store[2])
+                    # print("data == "+str(store))
+                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                    yield store
             
-            
-                store = []
-                store.append(base_url)
-                store.append(location_name)
-                store.append(street_address)
-                store.append(city)
-                store.append(state)
-                store.append(zipp if zipp else "<MISSING>")
-                store.append("US")
-                store.append("<MISSING>")
-                store.append(phone)
-                store.append(location_type)
-                store.append(latitude)
-                store.append(longitude)
-                store.append(hours_of_operation)
-                store.append(page_url)
-                # store = [x.replace("–","-") if type(x) == str else x for x in store]
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-               # print("data == "+str(store))
-                #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                yield store
-            except:
-                pass
-
 def scrape():
     data = fetch_data()
     write_output(data)
