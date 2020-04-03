@@ -54,7 +54,10 @@ def fetch_data():
                             division = item.split('"divisionNumber":"')[1].split('"')[0]
                             #print(name + '|' + division)
                             store = item.split('"storeNumber":"')[1].split('"')[0]
-                            phone = item.split('"phoneNumber":"')[1].split('"')[0].replace('"','')
+                            try:
+                                phone = item.split('"phoneNumber":"')[1].split('"')[0].replace('"','')
+                            except:
+                                phone = '<MISSING>'
                             lat = item.split('"latitude":"')[1].split('"')[0]
                             lng = item.split('"longitude":"')[1].split('"')[0]
                             add = item.split('"addressLine1":"')[1].split('"')[0]
