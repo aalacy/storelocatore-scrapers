@@ -42,9 +42,9 @@ def fetch_data():
             if 'open 24 hours' in line2.lower():
                 hours = 'Open 24 Hours'
             if 'Hours</h3>' in line2:
-                g = next(lines).replace('<span>','').replace('</span>','')
+                g = next(lines).replace('<span>','').replace('</span>','').replace('<br/>','; ')
                 if hours != 'Open 24 Hours':
-                    hours = g.split('<p>')[1].split('<')[0]
+                    hours = g.split('<p>')[1].split('</p>')[0]
             if '<title>' in line2:
                 name = line2.split('<title>')[1].split(' |')[0]
             if 'Address</h3>' in line2:
