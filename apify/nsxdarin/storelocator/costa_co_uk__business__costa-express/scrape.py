@@ -26,6 +26,75 @@ def fetch_data():
     adds = []
     locations = []
     coord = search.next_coord()
+    BFound = True
+    if BFound:
+        BFound = False
+        url = 'https://www.costa.co.uk/api/locations/stores?latitude=51.016&longitude=-4.209&maxrec=500'
+        r = session.get(url, headers=headers)
+        for item in json.loads(r.content)['stores']:
+            store = item['storeNo8Digit'].encode('utf-8')
+            typ = item['storeType'].encode('utf-8')
+            phone = item['telephone'].encode('utf-8')
+            add = item['storeAddress']['addressLine1'].encode('utf-8')
+            add = add + ' ' + item['storeAddress']['addressLine2'].encode('utf-8') + ' ' + item['storeAddress']['addressLine3'].encode('utf-8')
+            add = add.strip()
+            name = item['storeNameExternal'].encode('utf-8')
+            if name == '':
+                name = typ
+            city = item['storeAddress']['city'].encode('utf-8')
+            state = '<MISSING>'
+            zc = item['storeAddress']['postCode'].encode('utf-8')
+            country = 'GB'
+            lng = item['longitude']
+            website = 'costa.co.uk/business/costa-express'
+            lat = item['latitude']
+            hours = 'Mon: ' + item['storeOperatingHours']['openMon'] + '-' + item['storeOperatingHours']['closeMon']
+            hours = hours + '; Tue: ' + item['storeOperatingHours']['openTue'] + '-' + item['storeOperatingHours']['closeTue']
+            hours = hours + '; Wed: ' + item['storeOperatingHours']['openWed'] + '-' + item['storeOperatingHours']['closeWed']
+            hours = hours + '; Thu: ' + item['storeOperatingHours']['openThu'] + '-' + item['storeOperatingHours']['closeThu']
+            hours = hours + '; Fri: ' + item['storeOperatingHours']['openFri'] + '-' + item['storeOperatingHours']['closeFri']
+            hours = hours + '; Sat: ' + item['storeOperatingHours']['openSat'] + '-' + item['storeOperatingHours']['closeSat']
+            hours = hours + '; Sun: ' + item['storeOperatingHours']['openSun'] + '-' + item['storeOperatingHours']['closeSun']
+            if ':' not in hours:
+                hours = '<MISSING>'
+            if phone == '':
+                phone = '<MISSING>'
+            if add == '':
+                add = '<MISSING>'
+            if city == '':
+                city = item['storeAddress']['addressLine3'].encode('utf-8')
+            if city == '':
+                city = '<MISSING>'
+            loc = '<MISSING>'
+            if city == '<MISSING>':
+                city = name
+                if 'Belfast' in name:
+                    city = 'Belfast'
+                if 'Knightswick' in name:
+                    city = 'Knightswick'
+                if 'Lewes' in name:
+                    city = 'Lewes'
+                if 'Belper' in name:
+                    city = 'Belper'
+                if 'Barrow in Furness' in name:
+                    city = 'Barrow in Furness'
+                if 'Washington' in name:
+                    city = 'Washington'
+                if 'Purfleet' in add:
+                    city = 'Purfleet'
+                if 'Taunton' in name:
+                    city = 'Taunton'
+                if 'Hempstead Valley' in name:
+                    city = 'Hempstead Valley'
+                if 'Belfast' in add:
+                    city = 'Belfast'
+            addinfo = add + city + zc
+            if 'Mon: -; Tue: -; Wed: -; Thu: -; Fri: -; Sat: -; Sun: -' in hours:
+                hours = '<MISSING>'
+            if store not in ids and addinfo not in adds:
+                adds.append(addinfo)
+                ids.append(store)
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     while coord:
         result_coords = []
         print("remaining zipcodes: " + str(len(search.zipcodes)))
