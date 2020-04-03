@@ -25,7 +25,7 @@ def fetch_data():
     }
 
     base_url = "http://www.mysalonsuite.com"
-    json_data = requesessionsts.get("https://easylocator.net/ajax/search_by_lat_lon/Weebly%20Hearts/33.5973469/-112.1072528/null/null").json()['physical']
+    json_data = session.get("https://easylocator.net/ajax/search_by_lat_lon/Weebly%20Hearts/33.5973469/-112.1072528/null/null").json()['physical']
     for data in json_data:
         if data['street_address'] == "Coming Soon!" or data['street_address'] == "Opening Soon!":
             continue
