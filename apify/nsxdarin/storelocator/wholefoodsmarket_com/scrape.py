@@ -1,5 +1,6 @@
 import csv
 import urllib2
+import json
 from sgrequests import SgRequests
 
 session = SgRequests()
