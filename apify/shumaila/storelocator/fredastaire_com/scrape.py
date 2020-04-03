@@ -74,10 +74,10 @@ def fetch_data():
         title = strm[mstart:mend]
         title = title.replace('"','')
         mstart = strm.find('"address"')
-        mstart = strm.find(':',mstart)+ 1
-        mend = strm.find(',',mstart)
+        mstart = strm.find(':',mstart)+ 2
+        mend = strm.find('"',mstart)
         address = strm[mstart:mend]
-        address = address.replace('"','')
+        #address = address.replace('"','')
         mstart = strm.find('"lat"')
         mstart = strm.find(':',mstart)+ 1
         mend = strm.find(',',mstart)
@@ -119,13 +119,15 @@ def fetch_data():
         link = strm[mstart:mend]
         link = link.replace('"','')
         
-        
+        #print(address)
         address = usaddress.parse(address)
+        #print(address)
+        
         i = 0
         street = ""        
         while i < len(address):
             temp = address[i]
-            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or \
+            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("OccupancyType") != -1 or temp[1].find("OccupancyIdentifier") != -1 or temp[1].find("Recipient") != -1 or \
                     temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
                 "USPSBoxID") != -1:
                 street = street + " " + temp[0]
@@ -137,6 +139,7 @@ def fetch_data():
         street = street.replace(',','')
         start = end + 1
         #print(street)
+        street = street.replace('\\','')
         #input()
         
         link = link.replace('\\','')
