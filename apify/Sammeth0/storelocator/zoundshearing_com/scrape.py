@@ -44,7 +44,7 @@ def fetch_data():
 	options.add_argument('--disable-dev-shm-usage')
 	options.add_argument('--window-size=1920,1080')
 	options.add_argument("user-agent= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36'")
-	driver= webdriver.Chrome('chromedriver', options=options)
+	driver= webdriver.Chrome('/home/aleena/Downloads/chromedriver', options=options)
 	driver.get(urlpage)
 	#driver.execute_script("window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
 	time.sleep(3)
@@ -57,15 +57,12 @@ def fetch_data():
 	print(len(locs_results))
 	streets_results = driver.find_elements_by_xpath(".//div[@class='results_row_center_column location_secondary']")
 	for r in streets_results:
-		streets.append(r.find_element_by_xpath(".//span[@class='slp_result_address slp_result_street']").text)
+		streets.append(r.find_element_by_xpath(".//span[@class='slp_result_address slp_result_street']").text+" "+r.find_element_by_xpath(".//span[@class='slp_result_address slp_result_street2']").text.strip())
 		cities.append(r.find_element_by_xpath(".//span[@class='slp_result_address slp_result_citystatezip']").text.split(',')[0])
 		states.append(r.find_element_by_xpath(".//span[@class='slp_result_address slp_result_citystatezip']").text.split(', ')[1].split(' ')[0])
 		zips.append(r.find_element_by_xpath(".//span[@class='slp_result_address slp_result_citystatezip']").text.split(' ')[-1])
-		id=r.find_element_by_xpath(".//span[@class='slp_result_address slp_result_street2']").text.split(' ')[-1]
-		if id!='':
-			ids.append(id)
-		else:
-			ids.append("<MISSING>")
+		ids.append("<MISSING>")
+		
 		try:
 			phones.append(r.find_element_by_xpath(".//span[@class='slp_result_address slp_result_phone']").text)
 		except:
@@ -78,7 +75,7 @@ def fetch_data():
 			timing.append("<MISSING>")
 		
 		directions=r.find_element_by_xpath(".//span[@class='slp_result_contact slp_result_directions']/a").get_attribute('href')
-		driver_directions= webdriver.Chrome('chromedriver', options=options)
+		driver_directions= webdriver.Chrome('/home/aleena/Downloads/chromedriver', options=options)
 		driver_directions.get(directions)
 		lats.append(str(driver_directions.find_elements_by_xpath(".//meta")[8].get_attribute('content')).split('center=')[1].split('%2C')[0])
 		longs.append(str(driver_directions.find_elements_by_xpath(".//meta")[8].get_attribute('content')).split('%2C')[1].split('&zoom')[0])
