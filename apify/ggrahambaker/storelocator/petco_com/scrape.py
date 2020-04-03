@@ -32,7 +32,6 @@ def fetch_data():
     state_list = []
     for loc in locs:
         state_list.append(loc['href'])
-        print(loc['href'])
 
 
 
@@ -46,7 +45,6 @@ def fetch_data():
         cities = main.find_all('a', {'class', 'gaq-link'})
         for city in cities:
             link = city['href']
-            print(link)
             city_list.append(link)
         
 
@@ -58,7 +56,6 @@ def fetch_data():
         for loc in locs:
             link = loc.find('a')['href']
             link_list.append(link)
-            print(link)
 
     all_store_data = []
     for i, link in enumerate(link_list):
@@ -69,7 +66,8 @@ def fetch_data():
             if "@context" in loc.text:
                 loc_json = json.loads(loc.text)[0]
 
-                
+            
+
         coords = loc_json['geo']
         lat = coords['latitude']
         longit = coords['longitude']
@@ -86,7 +84,7 @@ def fetch_data():
 
 
         
-        location_name = '<MISSING>'
+        location_name = loc_json['name'].replace('Welcome to your Petco in ', '').replace('Welcome to your ', '').replace('!', '').strip()
         country_code = 'US'
         page_url = link
         location_type = soup.find('span', {'class':'location-name'}).text
