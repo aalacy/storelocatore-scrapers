@@ -8,8 +8,6 @@ from requests.exceptions import ConnectionError
 from sgrequests import SgRequests
 import collections 
 
-session = SgRequests()
-
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
 }
@@ -24,6 +22,7 @@ def write_output(data):
 def fetch_data():
     url = 'https://www.redroof.com/sitemap.xml'
     locs = []
+    session = SgRequests()
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if 'https://www.redroof.com/property/' in line:
@@ -52,6 +51,7 @@ def fetch_data():
         store = loc.rsplit('/',1)[1]
         r2 = None
         try:
+            session = SgRequests()
             r2 = session.get(loc, headers=headers)
         except ConnectionError:
             print('Failed to connect to ' + loc)
