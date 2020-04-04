@@ -96,6 +96,7 @@ def fetch_data():
            
             street = street.replace('Distribution Center','')
             street = street.replace('-','')
+            street = street.lstrip()
             start = hours.find(':')+1
             end = hours.find('-',start)
             temp = hours[start:end]
