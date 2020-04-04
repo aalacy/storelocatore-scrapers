@@ -44,7 +44,7 @@ def fetch_data():
     for i in range(0,len(states)):
         print(states[i])          
         url = 'https://locations.familydollar.com/ajax?&xml_request=%3Crequest%3E%20%3Cappkey%3ED2F68B64-7E11-11E7-B734-190193322438%3C/appkey%3E%20%3Cgeoip%3E1%3C/geoip%3E%20%3Cformdata%20id=%22getlist%22%3E%20%3Cobjectname%3ELocator::Store%3C/objectname%3E%20%3Cwhere%3E%20%3Ccity%3E%3Ceq%3E%3C/eq%3E%3C/city%3E%20%3Cstate%3E%3Ceq%3E'+states[i]+'%3C/eq%3E%3C/state%3E%20%3C/where%3E%20%3C/formdata%3E%20%3C/request'
-        
+      
         page = session.get(url, headers=headers, verify=False)
         soup = BeautifulSoup(page.text,"html.parser")
         #print(soup)
@@ -65,6 +65,7 @@ def fetch_data():
             pcode = repo.find('postalcode').text
             hours = ''
             try :
+                
                 hours = hours + "Monday : "+repo.find('monopen').text +' - '+ repo.find('monclose').text +', '
             except:
                 pass
@@ -92,8 +93,18 @@ def fetch_data():
                 hours = hours + "Sunday : "+repo.find('sunopen').text +' - '+ repo.find('sunclose').text +', '
             except:
                 pass
-            if len(hours) < 3:
+           
+            street = street.replace('Distribution Center','')
+            street = street.replace('-','')
+            start = hours.find(':')+1
+            end = hours.find('-',start)
+            temp = hours[start:end]
+            if len(temp) < 3:
                 hours = "<MISSING>"
+            else:
+                hours = hours.rstrip()
+                hours = hours[0:len(hours)-1]
+            
             if len(phone) < 3:
                 phone = "<MISSING>"
             if len(street) < 3:
@@ -110,10 +121,10 @@ def fetch_data():
                 lat = "<MISSING>"
             if len(longt) < 3:
                 longt = "<MISSING>"
-            hours = hours.rstrip()
-            hours = hours[0:len(hours)-1]
+
+            
             data.append(['https://www.familydollar.com/',"<MISSING>",title,street,city,state,pcode,'US',store,phone,"<MISSING>",lat,longt,hours])
-            #print(p,data[p])
+            #print(p,data[p])           
             p += 1
             
             
