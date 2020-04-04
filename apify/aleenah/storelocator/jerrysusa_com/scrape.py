@@ -58,9 +58,22 @@ def fetch_data():
         if a==[]:
             tim="<MISSING>"
         else:
-            res = session.get(a[0].get('href'))
-            soup = BeautifulSoup(res.text, 'html.parser')
-            tim = soup.find('div', {'class': 'mt-2'}).text.replace("Hours","").replace("Hour","").strip()
+            u=a[0].get('href').split(":")
+            print(u)
+            if len(u)>2:
+                 del u[-1]
+            u=":".join(u)                                                        
+            print(u)
+            try:
+                res = session.get(u, timeout=3)
+                soup = BeautifulSoup(res.text, 'html.parser')
+                tim= soup.find_all('div', {'class': 'mt-2'})
+            except:
+                tim=[]
+            if tim==[]:
+                tim="<MISSING>"
+            else:
+                tim = tim[0].text.replace("Hours","").replace("Hour","").strip()
             if tim=="":
                 tim="<MISSING>"
 
