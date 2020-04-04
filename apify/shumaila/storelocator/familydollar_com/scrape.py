@@ -115,7 +115,7 @@ def fetch_data():
                 state = "<MISSING>"
             if len(pcode) < 3:
                 pcode = "<MISSING>"
-            if len(store) < 3:
+            if len(store) < 1:
                 store = "<MISSING>"
             if len(lat) < 3:
                 lat = "<MISSING>"
