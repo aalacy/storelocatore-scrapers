@@ -74,8 +74,9 @@ def fetch_data():
                 tim="<MISSING>"
             else:
                 tim = tim[0].text.replace("Hours","").replace("Hour","").strip()
-            if tim=="":
-                tim="<MISSING>"
+                if "Mon-Thu:" not in tim or tim=="" :
+                    tim=""
+            
 
         all.append([
             "http://jerrysusa.com",
