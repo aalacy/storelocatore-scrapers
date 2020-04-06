@@ -1,11 +1,18 @@
-import pout
 import requests
 import re
 import datetime
 
+hasPout = True
+try: 
+  import pout
+except ImportError: 
+  hasPout = False
 
 def prettyPrint(d):
-  pout.v(d)
+  if hasPout:
+    pout.v(d)
+  else: 
+    print(d)
 
 
 def printRequestInfo(r, s):
