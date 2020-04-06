@@ -44,7 +44,7 @@ def fetch_data():
 	options.add_argument('--disable-dev-shm-usage')
 	options.add_argument('--window-size=1920,1080')
 	options.add_argument("user-agent= 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.97 Safari/537.36'")
-	driver= webdriver.Chrome('/home/aleena/Downloads/chromedriver', options=options)
+	driver= webdriver.Chrome('chromedriver', options=options)
 	driver.get(urlpage)
 	#driver.execute_script("window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
 	time.sleep(3)
