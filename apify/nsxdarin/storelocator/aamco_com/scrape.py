@@ -62,6 +62,11 @@ def fetch_data():
                     add = '69 South Green Bay Road'
                     city = 'Waukegan'
                     zc = '60085'
+                elif 'Medford-Ave,' in loc:
+                    add = '638 Medford Ave. Rt 112'
+                    city = 'Patchogue'
+                    state = 'NY'
+                    zc = '11772'
                 else:
                     addinfo = g.split('<')[0].strip().replace('\t','').replace(', Canada','').strip()
                     add = addinfo.split(',')[0]
