@@ -14,6 +14,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    alllocs = []
     stnames = []
     states = []
     url = 'https://oldnavy.gap.com/stores'
@@ -76,7 +77,9 @@ def fetch_data():
                         zc = line4.split('"postalCode": "')[1].split('"')[0]
                 if hours == '':
                     hours = '<MISSING>'
-                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                if loc not in alllocs:
+                    alllocs.append(loc)
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
