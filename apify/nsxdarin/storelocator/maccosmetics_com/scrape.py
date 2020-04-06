@@ -120,6 +120,8 @@ def fetch_data():
 
     get_csrf_token()
 
+    time.sleep(random.random()*5)
+
     r = get_locations_data()
 
     for line in r.iter_lines():
