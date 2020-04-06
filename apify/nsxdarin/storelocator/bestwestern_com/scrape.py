@@ -40,8 +40,10 @@ def fetch_data():
         phone = ''
         lat = ''
         lng = ''
+        pagecount = 0
         while PageFound:
             try:
+                pagecount = pagecount + 1
                 PageFound = False
                 r2 = session.get(loc, headers=headers, timeout=3)
                 try:
@@ -67,6 +69,8 @@ def fetch_data():
                     pass
             except:
                 PageFound = True
+                if pagecount >= 3:
+                    PageFound = False
 
 def scrape():
     data = fetch_data()
