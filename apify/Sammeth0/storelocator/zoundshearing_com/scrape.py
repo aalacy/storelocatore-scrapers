@@ -75,7 +75,7 @@ def fetch_data():
 			timing.append("<MISSING>")
 		
 		directions=r.find_element_by_xpath(".//span[@class='slp_result_contact slp_result_directions']/a").get_attribute('href')
-		driver_directions= webdriver.Chrome('/home/aleena/Downloads/chromedriver', options=options)
+		driver_directions= webdriver.Chrome('chromedriver', options=options)
 		driver_directions.get(directions)
 		lats.append(str(driver_directions.find_elements_by_xpath(".//meta")[8].get_attribute('content')).split('center=')[1].split('%2C')[0])
 		longs.append(str(driver_directions.find_elements_by_xpath(".//meta")[8].get_attribute('content')).split('%2C')[1].split('&zoom')[0])
