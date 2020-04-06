@@ -45,7 +45,7 @@ def fetch_data():
                         else:
                             cities.append(lurl)
     for city in cities:
-        print('Pulling City %s...' % city)
+        #print('Pulling City %s...' % city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
             if '<a itemprop="url" href="../../' in line2:
@@ -60,7 +60,7 @@ def fetch_data():
         while LocFound:
             try:
                 LocFound = False
-                print('Pulling Location %s...' % loc)
+                #print('Pulling Location %s...' % loc)
                 website = 'riteaid.com'
                 typ = '<MISSING>'
                 name = ''
@@ -105,6 +105,7 @@ def fetch_data():
                 if hours == '':
                     hours = '<MISSING>'
                 if store != '':
+                    hours = hours.replace('-0','-0000')
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             except:
                 LocFound = True
