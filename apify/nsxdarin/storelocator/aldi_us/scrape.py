@@ -25,61 +25,64 @@ def fetch_data():
     locations = []
     coord = search.next_zip()
     while coord:
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         website = 'aldi.us'
-        #print('%s...' % coord)
+        print('%s...' % coord)
         url = 'https://www.aldi.us/stores/en-us/Search?SingleSlotGeo=' + coord + '&Mode=None'
-        r = session.get(url, headers=headers)
-        result_coords = []
-        purl = '<MISSING>'
-        typ = 'Store'
-        array = []
-        for line in r.iter_lines():
-            if '<li tabindex="' in line:
-                try:
-                    lng = line.split('locX&quot;:&quot;')[1].split('&')[0]
-                    lat = line.split('locY&quot;:&quot;')[1].split('&')[0]
-                except:
-                    lat = '<MISSING>'
-                    lng = '<MISSING>'
-            if 'itemprop="name">' in line:
-                hours = ''
-                name = line.split('itemprop="name">')[1].split('<')[0]
-            if '"streetAddress" class="resultItem-Street">' in line:
-                add = line.split('"streetAddress" class="resultItem-Street">')[1].split('<')[0]
-            if 'class="resultItem-City" data-city="' in line:
-                try:
-                    city = line.split('class="resultItem-City" data-city="')[1].split(',')[0]
-                    state = line.split('class="resultItem-City" data-city="')[1].split(',')[1].split('"')[0].strip()
-                    zc = line.split('">')[1].split('<')[0].strip().rsplit(' ',1)[1]
-                    country = 'US'
-                    store = '<MISSING>'
-                    phone = '<MISSING>'
-                except:
-                    state = '<MISSING>'
-            if '<td class="open">' in line:
-                if hours == '':
-                    hours = line.split('<td class="open">')[1].split('<')[0] + ': '
-                else:
-                    hours = hours + '; ' + line.split('<td class="open">')[1].split('<')[0] + ': '
-            if '<td class="open openingTime">' in line:
-                hours = hours + line.split('<td class="open openingTime">')[1].split('<')[0]
-            if '<div class="onlyMobile resultItem-Arrow">' in line:
-                info = add + ';' + city + ';' + state
-                ids.add(info)
-                array.append(info)
-                if info not in locations:
-                    locations.append(info)
+        try:
+            r = session.get(url, headers=headers)
+            result_coords = []
+            purl = '<MISSING>'
+            typ = 'Store'
+            array = []
+            for line in r.iter_lines():
+                if '<li tabindex="' in line:
+                    try:
+                        lng = line.split('locX&quot;:&quot;')[1].split('&')[0]
+                        lat = line.split('locY&quot;:&quot;')[1].split('&')[0]
+                    except:
+                        lat = '<MISSING>'
+                        lng = '<MISSING>'
+                if 'itemprop="name">' in line:
+                    hours = ''
+                    name = line.split('itemprop="name">')[1].split('<')[0]
+                if '"streetAddress" class="resultItem-Street">' in line:
+                    add = line.split('"streetAddress" class="resultItem-Street">')[1].split('<')[0]
+                if 'class="resultItem-City" data-city="' in line:
+                    try:
+                        city = line.split('class="resultItem-City" data-city="')[1].split(',')[0]
+                        state = line.split('class="resultItem-City" data-city="')[1].split(',')[1].split('"')[0].strip()
+                        zc = line.split('">')[1].split('<')[0].strip().rsplit(' ',1)[1]
+                        country = 'US'
+                        store = '<MISSING>'
+                        phone = '<MISSING>'
+                    except:
+                        state = '<MISSING>'
+                if '<td class="open">' in line:
                     if hours == '':
-                        hours = '<MISSING>'
-                    if state != '<MISSING>':
-                        yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        if len(array) <= MAX_RESULTS:
-            #print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_zip()
+                        hours = line.split('<td class="open">')[1].split('<')[0] + ': '
+                    else:
+                        hours = hours + '; ' + line.split('<td class="open">')[1].split('<')[0] + ': '
+                if '<td class="open openingTime">' in line:
+                    hours = hours + line.split('<td class="open openingTime">')[1].split('<')[0]
+                if '<div class="onlyMobile resultItem-Arrow">' in line:
+                    info = add + ';' + city + ';' + state
+                    ids.add(info)
+                    array.append(info)
+                    if info not in locations:
+                        locations.append(info)
+                        if hours == '':
+                            hours = '<MISSING>'
+                        if state != '<MISSING>':
+                            yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            if len(array) <= MAX_RESULTS:
+                print("max distance update")
+                search.max_distance_update(MAX_DISTANCE)
+            else:
+                raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+            coord = search.next_zip()
+        except:
+            pass
 
 def scrape():
     data = fetch_data()
