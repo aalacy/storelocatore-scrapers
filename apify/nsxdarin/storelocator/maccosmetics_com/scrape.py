@@ -25,13 +25,13 @@ headers = {
 def get_locations_page(): 
 
   url = 'https://www.maccosmetics.com/stores'
-  if __debug__: 
-    print('Getting ' + url)
+  # if __debug__: 
+  #   print('Getting ' + url)
 
   r = session.get(url, headers=headers)
 
-  if __debug__:
-    printRequestInfo(r, session)
+  # if __debug__:
+  #   printRequestInfo(r, session)
 
 
 def setup_for_posts():
@@ -54,8 +54,8 @@ def setup_for_posts():
 
 def init_session(): 
 
-  if __debug__:
-    print('Posting to https://www.maccosmetics.com/static/751a18e8ae4197a37d96984c95bb902')
+  # if __debug__:
+    # print('Posting to https://www.maccosmetics.com/static/751a18e8ae4197a37d96984c95bb902')
 
   headers['content-type'] = 'text/plain;charset=UTF-8'
 
@@ -63,36 +63,36 @@ def init_session():
   
   r = session.post('https://www.maccosmetics.com/static/751a18e8ae4197a37d96984c95bb902', headers=headers, data=data)
   
-  if __debug__:
-    printRequestInfo(r, session)
+  # if __debug__:
+  #   printRequestInfo(r, session)
 
 
 def get_csrf_token(): 
 
-  if __debug__:
-    print('Posting to https://www.maccosmetics.com/rpc/jsonrpc.tmpl?dbgmethod=csrf.getToken')
+  # if __debug__:
+  #   print('Posting to https://www.maccosmetics.com/rpc/jsonrpc.tmpl?dbgmethod=csrf.getToken')
 
   headers['content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
 
   r = session.post('https://www.maccosmetics.com/rpc/jsonrpc.tmpl?dbgmethod=csrf.getToken', headers=headers,
                    data="JSONRPC=%5B%7B%22method%22%3A%22csrf.getToken%22%2C%22id%22%3A1%2C%22params%22%3A%5B%7B%7D%5D%7D%5D")
 
-  if __debug__:
-    printRequestInfo(r, session)
+  # if __debug__:
+  #   printRequestInfo(r, session)
 
 
 def get_locations_data(): 
 
-  if __debug__:
-    print('Posting to https://www.maccosmetics.com/rpc/jsonrpc.tmpl?dbgmethod=locator.doorsandevents')
+  # if __debug__:
+  #   print('Posting to https://www.maccosmetics.com/rpc/jsonrpc.tmpl?dbgmethod=locator.doorsandevents')
 
   url = 'https://www.maccosmetics.com/rpc/jsonrpc.tmpl?dbgmethod=locator.doorsandevents'
   payload = {'JSONRPC': '[{"method":"locator.doorsandevents","id":3,"params":[{"fields":"DOOR_ID, DOORNAME, EVENT_NAME, SUB_HEADING, EVENT_START_DATE, EVENT_END_DATE, EVENT_IMAGE, EVENT_FEATURES, EVENT_TIMES, SERVICES, STORE_HOURS, ADDRESS, ADDRESS2, STATE_OR_PROVINCE, CITY, REGION, COUNTRY, ZIP_OR_POSTAL, PHONE1, PHONE2, STORE_TYPE, LONGITUDE, LATITUDE, COMMENTS","country":"United States","latitude":44.9951298,"longitude":-93.4352207,"uom":"mile","radius":15000,"region_id":"0,47,27"}]}]'
              }
   r = session.post(url, headers=headers, data=payload)
   
-  if __debug__:
-    printRequestInfo(r, session)
+  # if __debug__:
+  #   printRequestInfo(r, session)
 
   return r
 
