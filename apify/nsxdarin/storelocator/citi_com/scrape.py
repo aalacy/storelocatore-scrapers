@@ -17,7 +17,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
            'client_id': '4a51fb19-a1a7-4247-bc7e-18aa56dd1c40'
            }
 
-MAX_RESULTS = 20
+MAX_RESULTS = 200
 MAX_DISTANCE = 0.1
 
 def write_output(data):
