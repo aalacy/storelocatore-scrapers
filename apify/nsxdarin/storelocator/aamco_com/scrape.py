@@ -22,7 +22,7 @@ def fetch_data():
         if '<loc>https://www.aamco.com/Auto-Repair-Center/' in line:
             locs.append(line.split('<loc>')[1].split('<')[0])
     for loc in locs:
-        #print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc)
         website = 'aamco.com'
         name = ''
         store = '<MISSING>'
@@ -87,7 +87,22 @@ def fetch_data():
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if city == '#102':
+            city = 'El Paso'
+            add = '1407 Lomaland Dr. #102'
+        if city == '#13':
+            city = 'Santa Clarita'
+            add = '25845 Railroad Avenue #13'
+        if city == '#A':
+            city = 'Willoughby'
+            add = '36705 Euclid Ave. #A'
+        if city == 'Harbor City':
+            zc = '90710'
+        if 'Eglinton' in add or 'Manitou' in add or 'Hopkins St' in add:
+            state = 'ON'
+            zc = '<MISSING>'
+        if add != '':
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
