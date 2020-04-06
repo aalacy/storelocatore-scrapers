@@ -81,6 +81,13 @@ def fetch_data():
             hours = 'General: 7 a.m. - 9 p.m. daily'
         if '2900' in add and 'Springfield' in city:
             hours = 'Monday-Friday: 8 a.m.-8 p.m.'
+        try:
+            hours1 = hours.rsplit(';',1)[0]
+            hours2 = hours.rsplit(';',1)[1]
+            if '0' not in hours2 and '1' not in hours2 and '2' not in hours2 and '3' not in hours2 and '4' not in hours2 and '5' not in hours2 and '6' not in hours2 and '7' not in hours2 and '8' not in hours2 and '9' not in hours2:
+                hours = hours1
+        except:
+            pass
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
