@@ -5,8 +5,7 @@ import sgzip
 
 session = SgRequests()
 
-session = SgRequests()
-from sgrequests import SgRequests
+ 
  
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,8 +18,8 @@ def fetch_data():
     return_main_object = []
     addressess123 = []
     search = sgzip.ClosestNSearch()
-    search.initialize(country_codes = ["UK"])
-    MAX_RESULTS = 50
+    search.initialize(country_codes = ["gb"])
+    MAX_RESULTS = 25
     MAX_DISTANCE = 10
     current_results_len = 1
     zip_code = search.next_zip()
@@ -40,7 +39,11 @@ def fetch_data():
         state = "<MISSING>"
         zipp = addr[-1]
         store_number = "<MISSING>"
-        phone = soup.find("div",{"class":"col col3"}).find_all("p")[1].text
+        phone1 = soup.find("div",{"class":"col col3"}).find_all("p")[1].text.strip()
+        if phone1:
+            phone = phone1
+        else:
+            phone = phone1
         location_type = "Store"
         country_code = "UK"
         latitude = soup.find("div",{"id":"store-map"})['data-lat']
@@ -52,6 +55,13 @@ def fetch_data():
         result_coords.append((latitude,longitude))
         store = [base_url, location_name, street_address, city, state, zipp, country_code,
                 store_number, phone, location_type, str(latitude), str(longitude), hours,page_url]
+        
+        if store[2]  in addressess123:
+            continue
+        addressess123.append(store[2])
+        yield store
+       # print(store)
+
         if current_results_len < MAX_RESULTS:
     
             search.max_distance_update(MAX_DISTANCE)
@@ -61,13 +71,11 @@ def fetch_data():
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()      
-        if store[2]  in addressess123:
-            continue
-        addressess123.append(store[2])
 
+        
       
 
-        yield store
+        
        
         #
         

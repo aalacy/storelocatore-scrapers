@@ -33,18 +33,22 @@ def fetch_data():
         city = location['address']['addressLocality'].strip()
         state = location['address']['addressRegion'].strip()
         zipp = location['address']['postalCode'].strip()
+        country_code = location['address']['addressCountry'].replace("United States","US").replace("Canada","CA").replace("USA","US")
         if page_url == "https://renaissance-hotels.marriott.com/new-york-flushing-hotel" or page_url == "https://renaissance-hotels.marriott.com/renaissance-new-york-chelsea-hotel" or page_url == "https://renaissance-hotels.marriott.com/renaissance-newport-beach-hotel" or page_url == "https://renaissance-hotels.marriott.com/renaissance-reno-downtown-hotel" or page_url == "https://renaissance-hotels.marriott.com/renaissance-toledo-downtown-hotel":
             country_code = "US"
-        country_code = location['address']['addressCountry'].replace("United States","US").replace("Canada","CA").replace("USA","US")
-        # if country_code == "CA":
-        #     state = state
-        #     zipp = zipp
-        if country_code =='US' and len(zipp.strip().split(" ")) == 2:
-            state = zipp.split(" ")[0]
-            zipp = zipp.split(" ")[1].strip()
+        if country_code == "CA":
+            state = state
+            zipp = zipp
+        else:
+            if len(zipp.strip().split(" ")) == 2:
+                state = zipp.split(" ")[0]
+                zipp = zipp.split(" ")[1].strip()
+            else:
+                state = state
+                zipp = zipp
         
         
-
+        
         if country_code not in ['US','CA']:
             continue
         store_number = link['value']
@@ -52,6 +56,8 @@ def fetch_data():
         location_type = location['@type']
         latitude = location['geo']['latitude']
         longitude = location['geo']['longitude']
+        if street_address == "401 Chestnut Street":
+            phone = "+1 215-925-0000"
         
         store = []
         store.append(base_url)

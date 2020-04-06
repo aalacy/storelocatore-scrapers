@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
+import requests
 
 session = SgRequests()
 
@@ -27,12 +27,20 @@ def fetch_data():
         if "United States" in addr[-1] or "US" in addr[-1]:
             del addr[-1]
         street_address = " ".join(addr[:-2])
+        
         city = addr[-2]
         zipp_list = re.findall(r'\d{5}',addr[-1])
         if zipp_list:
             zipp = zipp_list[-1]
         state = addr[-1].replace(zipp,"").strip()
-        
+        if "111 Main St Greensboro" in addr[-2]:
+            street_address = addr[-2]
+            city = "<MISSING>"
+
+        if "2606 Zion Road  Henderson" in street_address:
+            state ='Kentucky'
+            street_address = street_address.replace("Henderson",'')
+
         
         country=loc['countryCode'].strip()
         try:
@@ -51,7 +59,7 @@ def fetch_data():
         store.append(base_url)
         store.append(name if name else "<MISSING>")
         store.append(street_address if street_address else "<MISSING>")
-        store.append(city if city else "<MISSING>")
+        store.append(city.replace("Kentucky",'Henderson') if city else "<MISSING>")
         store.append(state if state else "<MISSING>")
         store.append(zipp if zipp else "<MISSING>")
         store.append(country if country else "<MISSING>")

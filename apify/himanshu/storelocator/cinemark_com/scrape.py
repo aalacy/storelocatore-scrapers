@@ -1,77 +1,88 @@
+
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
-
-
-
+import urllib3
+import requests
 session = SgRequests()
-
+requests.packages.urllib3.disable_warnings()
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    zips = sgzip.for_radius(50)
-    return_main_object = []
-    addresses = []
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
+    # addresses = []
+   
+    base_url= "https://cinemark.com/"
+
+    
+    headers = {           
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
+    
     }
-    content_id_request = session.get("https://cinemark.com/theatres")
-    content_id_soup = BeautifulSoup(content_id_request.text, "lxml")
-    for script in content_id_soup.find_all("script"):
-        if "var contentId = " in script.text:
-            content_id = script.text.split("(")[1].split(")")[0]
-    for zip_code in zips:
-        base_url = "https://cinemark.com"
-        r = session.get("https://cinemark.com/umbraco/surface/theaters/GetTheatersbyText?contentId=" + str(
-            content_id) + "&searchText=" + str(zip_code), headers=headers)
-        soup = BeautifulSoup(r.text, "lxml")
-        if "No participating theatres found near the selected ZIP code." in soup.find("div",{"id": "theaterList"}).text:
+    
+    r = session.get("https://centurytheatres.com/full-theatre-list", headers=headers, verify=False)
+
+    soup = BeautifulSoup(r.text, "lxml")
+    data = soup.find("div",{"class":"columnList wide"})
+    for link in data.find_all("a"):
+        # if "Tinseltown" not in link.text:
+        #     continue
+
+        page_url = "https://centurytheatres.com"+link['href']
+        #print(page_url)
+        r1 = session.get(page_url, headers=headers, verify=False)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        info = soup1.find_all("script",{"type":"application/ld+json"})[-1].text
+        data = json.loads(info)
+        for address in  data['address']:
+            street_address = address['streetAddress']
+            city = address['addressLocality']
+            state = address['addressRegion']
+            zipp = address['postalCode']
+            country_code = address['addressCountry']
+        phone = data['telephone']
+        location_name = data['name']
+        if "NOW CLOSED".lower() in location_name.lower():
             continue
-        for location in soup.find("div", {"id": "theaterList"}).find_all("a", {'class': "theaterLink"}):
-            location_request = session.get(base_url + location["href"])
-            location_soup = BeautifulSoup(location_request.text, "lxml")
-            store_data = json.loads(location_soup.find("script", {'type': "application/ld+json"}).text)
+        location_type = data['@type']
+        latitude = soup1.find("img",{"class":"img-responsive lazyload"})['data-src'].split("pp=")[1].split(",")[0]
+        longitude = soup1.find("img",{"class":"img-responsive lazyload"})['data-src'].split("pp=")[1].split(",")[1].split("&")[0]
+        
 
-            if location_soup.find("div", {'class': "theatreMap"}) is None:
-                continue
-            if location_soup.find("div", {'class': "theatreMap"}).find("img") is None:
-                continue
-
-            geo_location = location_soup.find("div", {'class': "theatreMap"}).find("img")["data-src"].split("pp=")[1].split("&")[0]
-            store = []
-            store.append("https://cinemark.com")
-            store.append(store_data["name"])
-            store.append(store_data["address"][0]["streetAddress"])
-            if store[-1] in addresses:
-                continue
-            addresses.append(store[-1])
-            store.append(store_data["address"][0]["addressLocality"])
-            store.append(store_data["address"][0]["addressRegion"])
-            store.append(store_data["address"][0]["postalCode"])
-            store.append(store_data["address"][0]["addressCountry"])
-            store.append("<MISSING>")
-            store.append(store_data["telephone"])
-            store.append("cinemark")
-            store.append(geo_location.split(",")[0])
-            store.append(geo_location.split(",")[1])
-            store.append("<MISSING>")
-            return_main_object.append(store)
-    return return_main_object
-
-
+       
+        store = []
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append(country_code)
+        store.append("<MISSING>")
+        store.append(phone if phone else "<MISSING>")
+        store.append(location_type)
+        store.append(latitude if latitude else "<MISSING>")
+        store.append(longitude if longitude else "<MISSING>")
+        store.append("<MISSING>")
+        store.append(page_url)
+        # print("data =="+str(store))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        yield store
+        
+       
+        
 def scrape():
     data = fetch_data()
     write_output(data)
