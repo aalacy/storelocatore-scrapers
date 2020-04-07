@@ -114,7 +114,7 @@ def fetch_data():
                 state,
                 zip,
                 country,
-                "<MISSING>",  # store #
+                url.strip().strip('/').split('/')[-1].split('-')[0],  # store #
                 phone,  # phone
                 "<MISSING>",  # type
                 lat,  # lat
