@@ -7,6 +7,9 @@ session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
+connect_timeout=3
+read_timeout=3
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -26,7 +29,7 @@ def fetch_data():
     for loc in locs:
         PageFound = True
         time.sleep(2)
-        print('Pulling Location %s...' % loc)
+        #print('Pulling Location %s...' % loc)
         website = 'bestwestern.com'
         typ = '<MISSING>'
         hours = '<MISSING>'
@@ -40,12 +43,10 @@ def fetch_data():
         phone = ''
         lat = ''
         lng = ''
-        pagecount = 0
         while PageFound:
             try:
-                pagecount = pagecount + 1
                 PageFound = False
-                r2 = session.get(loc, headers=headers, timeout=3)
+                r2 = session.get(loc, headers=headers, timeout=(connect_timeout, read_timeout))
                 try:
                     for line2 in r2.iter_lines():
                         if '&#34;street1&#34;:&#34;' in line2:
@@ -69,8 +70,6 @@ def fetch_data():
                     pass
             except:
                 PageFound = True
-                if pagecount >= 3:
-                    PageFound = False
 
 def scrape():
     data = fetch_data()
