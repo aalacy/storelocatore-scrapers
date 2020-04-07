@@ -75,7 +75,7 @@ def fetch_data():
             else:
                 tim = tim[0].text.replace("Hours","").replace("Hour","").strip()
                 if "Mon-Thu:" not in tim or tim=="" :
-                    tim=""
+                    tim="<MISSING>"
             
 
         all.append([
