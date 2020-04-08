@@ -1,16 +1,16 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import json
 
-session = requests.Session()
+session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -69,27 +69,27 @@ def fetch_data():
         store = ''
         phone = ''
         for line2 in r2.iter_lines():
-            if '<span class="location-name-geo">' in line2:
+            if '<span class="location-name-geo">' in line2 and name == '':
                 name = line2.split('<span class="location-name-geo">')[1].split('<')[0].strip()
-            if '"c-address-street-1">' in line2:
+            if '"c-address-street-1">' in line2 and add == '':
                 add = line2.split('"c-address-street-1">')[1].split('<')[0].strip()
                 addinfo = line2.split('<span class="c-address-street-1">')[1].split('<span class="c-address-city">')[0]
                 if 'class="c-address-street-2">' in addinfo:
                     add = add + ' ' + line2.split('class="c-address-street-2">')[1].split('<')[0].strip()
-            if 'itemprop="addressLocality">' in line2:
+            if 'itemprop="addressLocality">' in line2 and city == '':
                 city = line2.split('itemprop="addressLocality">')[1].split('<')[0].strip()
-            if 'itemprop="addressRegion">' in line2:
+            if 'itemprop="addressRegion">' in line2 and state == '':
                 state = line2.split('itemprop="addressRegion">')[1].split('<')[0].strip()
-            if 'itemprop="postalCode">' in line2:
+            if 'itemprop="postalCode">' in line2 and zc == '':
                 zc = line2.split('itemprop="postalCode">')[1].split('<')[0].strip()
-            if 'data-ya-track="phonecall">' in line2:
+            if 'data-ya-track="phonecall">' in line2 and phone == '':
                 phone = line2.split('data-ya-track="phonecall">')[1].split('<')[0].strip()
             if '<meta itemprop="latitude" content="' in line2:
                 lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
                 lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]
             if '{"ids":' in line2:
                 store = line2.split('{"ids":')[1].split(',')[0]
-            if "data-days='[" in line2:
+            if "data-days='[" in line2 and hours == '':
                 days = line2.split("data-days='[")[1].split("]}]'")[0].split('"day":"')
                 for day in days:
                     if '"intervals"' in day:
@@ -100,7 +100,7 @@ def fetch_data():
                                 hours = hours + '; ' + day.split('"')[0] + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
                         except:
                             hours = '<MISSING>'
-        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
