@@ -73,7 +73,7 @@ def fetch_data():
         except:
             pass
         print("max count update")
-        search.max_count_update(result_coords)
+
         coord = search.next_coord()
 
 
