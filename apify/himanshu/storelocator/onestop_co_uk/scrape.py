@@ -20,7 +20,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ["gb"])
     MAX_RESULTS = 25
-    MAX_DISTANCE = 10
+    MAX_DISTANCE = 20
     current_results_len = 1
     zip_code = search.next_zip()
     base_url = "https://www.onestop.co.uk/"

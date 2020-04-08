@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import requests
+
 
 session = SgRequests()
 
@@ -34,8 +34,8 @@ def fetch_data():
             zipp = zipp_list[-1]
         state = addr[-1].replace(zipp,"").strip()
         if "111 Main St Greensboro" in addr[-2]:
-            street_address = addr[-2]
-            city = "<MISSING>"
+            street_address = addr[-2].replace("Greensboro",'')
+            city = "Greensboro"
 
         if "2606 Zion Road  Henderson" in street_address:
             state ='Kentucky'
@@ -53,7 +53,14 @@ def fetch_data():
         if 'hours' in loc:
             if 'hoursOfOperation' in loc['hours']:
                 for hr in loc['hours']['hoursOfOperation']:
-                    hour+=' '+hr+":"+loc['hours']['hoursOfOperation'][hr]
+                    hour+=' '+hr+" : "+loc['hours']['hoursOfOperation'][hr]
+
+        if "hrs_ywfef43p" in loc['hours']:
+            hour = 'Monday 9am-9pm Tuesday 9am-9pm Wednesday 9am-9pm Thursday 9am-9pm Friday 9am-9pm Saturday 9am-9pm Sunday 10am-8pm'
+            
+        if "hrs_a4db656x" in loc['hours']:
+            hour = 'Monday 9am-6pm Tuesday 9am-6pm Wednesday 9am-6pm Thursday 9am-6pm Friday 9am-6pm Saturday 9am-6pm Sunday 12pm-6pm'
+        
         storeno=''
         store=[]
         store.append(base_url)

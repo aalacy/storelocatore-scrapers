@@ -42,10 +42,11 @@ def fetch_data():
     return_main_object = []
     addresses = []
     search = sgzip.ClosestNSearch()
-    search.initialize()
+    search.initialize(country_codes = ['us', 'ca'])
     MAX_RESULTS = 50
     MAX_DISTANCE = 10
     current_results_len = 0     # need to update with no of count.
+
     zip_code = search.next_zip()
 
     headers = {
@@ -58,13 +59,26 @@ def fetch_data():
         try:
             r = session.get(base_url)
         except:
-            continue
+            pass
         json_data = r.json()
         # print(len(json_data['markers']))
         for i in json_data['markers']:
             store_number = i['id']
             location_name = i['name']
             street_address = i['address1']
+            street_address1=i['address2']
+            try:
+                if street_address1 != None:
+                    street_address1 = street_address1
+                else:
+                    street_address1=''
+            except:
+                street_address1=''
+            
+            if street_address == None:
+                street_address = "<MISSING>"
+
+
             city = i['city']
             state = i['state']
             zipp = i['zip'].replace("0209","80209").replace("880209","80209").replace("2550","12550").replace("125504","25504").replace("2145","02145").encode('ascii', 'ignore').decode('ascii').strip()
@@ -80,23 +94,30 @@ def fetch_data():
             latitude  = i['lat']
             longitude = i['lon']
             page_url = i['web_site']
+            r1 = session.get(page_url)
+            soup1 = BeautifulSoup(r1.text,"lxml")
+            try:
+                hours_of_operation =json.loads(soup1.find("script",{"type":"application/ld+json"}).text)['openingHours']
+            except:
+                hours_of_operation="<MISSING>"
+
             if "Wichita West" in location_name:
                 street_address = "2835 N Maize Rd., Suite 161"
             result_coords.append((latitude, longitude))
             store = []
             store.append("https://www.orangetheoryfitness.com/")
             store.append(location_name if location_name else "<MISSING>") 
-            store.append(street_address if street_address else "<MISSING>")
+            store.append(street_address+' '+street_address1 if street_address else "<MISSING>")
             store.append(city if city else "<MISSING>")
             store.append(state if state else "<MISSING>")
             store.append(zipp)
             store.append(country_code)
-            store.append(store_number if store_number else "<MISSING>") 
+            store.append(store_number.replace("37630","") if store_number else "<MISSING>") 
             store.append(phone if phone else "<MISSING>")
             store.append("<MISSING>")
             store.append(latitude if latitude else "<MISSING>")
             store.append(longitude if longitude else "<MISSING>")
-            store.append("Mo-Su 05:00-19:00")
+            store.append(hours_of_operation)
             store.append(page_url)
             if store[2] in addresses:
                 continue

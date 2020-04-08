@@ -5,7 +5,7 @@ import re
 import json
 import sgzip
 import time
-
+import requests
 
 session = SgRequests()
 

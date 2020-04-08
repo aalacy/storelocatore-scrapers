@@ -41,6 +41,7 @@ def fetch_data():
             break
         table = soup.find_all('table',{'class':'table'})
         for i in range(len(table)):
+            phone = ''
             location_name  = table[i].find("span").text
             address_tage = table[i].find("p")
             phone_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(table[i]))

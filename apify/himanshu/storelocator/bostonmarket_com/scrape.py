@@ -36,7 +36,7 @@ def fetch_data():
             location_soup = BeautifulSoup(location_r.text, "lxml")
 
             location_name = "Boston Market" +" "+location_soup.find("div",{"class":"Core-location"}).text.strip()
-            if " Fort Buchanan, PR" in location_name or "Ramstein, Miesenbach" in location_name:
+            if "Ramstein, Miesenbach" in location_name:
                 continue
             street_address = location_soup.find("meta",{"itemprop":"streetAddress"})['content']
             city = location_soup.find("span",{"class":"c-address-city"}).text.strip()
@@ -88,7 +88,7 @@ def fetch_data():
                     location_r = session.get(page_url)
                     location_soup = BeautifulSoup(location_r.text, "lxml")
                     location_name = "Boston Market" +" "+location_soup.find("div",{"class":"Core-location"}).text.strip()
-                    if " Fort Buchanan, PR" in location_name or "Ramstein, Miesenbach" in location_name:
+                    if "Ramstein, Miesenbach" in location_name:
                         continue
                     street_address = location_soup.find("meta",{"itemprop":"streetAddress"})['content']
                     city = location_soup.find("span",{"class":"c-address-city"}).text.strip()
@@ -138,7 +138,7 @@ def fetch_data():
         
                         # print(page_url)
                         location_name = "Boston Market" +" "+location_soup.find("div",{"class":"Core-location"}).text.strip()
-                        if " Fort Buchanan, PR" in location_name or "Ramstein, Miesenbach" in location_name:
+                        if "Ramstein, Miesenbach" in location_name:
                             continue
                         street_address = location_soup.find("meta",{"itemprop":"streetAddress"})['content']
                         city = location_soup.find("span",{"class":"c-address-city"}).text.strip()
