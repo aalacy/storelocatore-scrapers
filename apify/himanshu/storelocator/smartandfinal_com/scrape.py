@@ -84,6 +84,7 @@ def fetch_data():
     #     s.cookies.set(cookie['name'], cookie['value'])
     # # print("=============================data ",s.cookies)
     # soup = BeautifulSoup(driver.page_source, "lxml")
+    raise Exception(str(cookies_string1)[0:5000])
     data = s.get("https://www.smartandfinal.com/api/m_store_location?store_type_ids=1,2,3",headers=headers).json()
     raise Exception(str(data)[0:1000])
     for loc in data['stores']:
