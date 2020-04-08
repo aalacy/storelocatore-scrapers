@@ -25,9 +25,9 @@ def fetch_data():
     locations = []
     coord = search.next_zip()
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         website = 'aldi.us'
-        print('%s...' % coord)
+        #print('%s...' % coord)
         url = 'https://www.aldi.us/stores/en-us/Search?SingleSlotGeo=' + coord + '&Mode=None'
         try:
             r = session.get(url, headers=headers)
@@ -76,7 +76,7 @@ def fetch_data():
                         if state != '<MISSING>':
                             yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             if len(array) <= MAX_RESULTS:
-                print("max distance update")
+                #print("max distance update")
                 search.max_distance_update(MAX_DISTANCE)
             else:
                 raise Exception("expected at most " + str(MAX_RESULTS) + " results")
