@@ -1,5 +1,5 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -57,7 +57,7 @@ def fetch_data():
     # }
 
     driver.get("https://www.smartandfinal.com/stores#/?coordinates=36.679107000000016,-121.64554999999996&zoom=0")
-    s = requests.Session()
+    s = SgRequests()
     cookies_list = driver.get_cookies()
 # # print("cookies_list === " + str(cookies_list))
     cookies_json = {}
