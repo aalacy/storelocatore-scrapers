@@ -56,6 +56,10 @@ def fetch_data():
                         if phone == '':
                             phone = '<MISSING>'
                         hours = hours.replace('\t','').strip()
+                        if ' Floor' in add:
+                            add = add.split(' Floor')[0]
+                        if ' Suite' in add:
+                            add = add.split(' Suite')[0]
                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
