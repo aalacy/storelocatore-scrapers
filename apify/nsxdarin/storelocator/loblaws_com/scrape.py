@@ -29,11 +29,14 @@ def fetch_data():
         print(x)
         url = 'https://www.loblaws.ca/api/pickup-locations/' + str(x)
         r = session.get(url, headers=headers)
-        if 'Could not find' not in r.content:
+        if 'Could not find' not in r.content and 'storeDetails' in r.content:
             array = json.loads(r.content)
             loc = 'https://www.loblaws.ca/store-locator/details/' + str(x)
             store = str(x)
-            phone = array['storeDetails']['phoneNumber']
+            try:
+                phone = array['storeDetails']['phoneNumber']
+            except:
+                phone = '<MISSING>'
             name = array['name']
             website = 'loblaws.com'
             typ = array['storeBannerName'] + '-' + array['locationType']
@@ -43,7 +46,10 @@ def fetch_data():
             state = array['address']['region']
             city = array['address']['town']
             zc = array['address']['postalCode']
-            add = array['address']['line1'] + ' ' + array['address']['line2']
+            try:
+                add = array['address']['line1'] + ' ' + array['address']['line2']
+            except:
+                add = array['address']['line1']
             add = add.strip()
             hours = ''
             for item in array['storeDetails']['storeHours']:
