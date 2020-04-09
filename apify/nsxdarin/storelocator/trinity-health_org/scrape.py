@@ -14,49 +14,39 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    locs = []
-    url = 'https://www.trinity-health.org/hospitals-locations'
-    r = session.get(url, headers=headers)
-    Found = False
-    for line in r.iter_lines():
-        if '_children_1" role="menu">' in line:
-            Found = True
-        if Found and '</ul>' in line:
-            Found = False
-        if Found and '<li class="navbar_6' in line:
-            locs.append('http://www.trinity-health.org/' + line.split('a href="')[1].split('"')[0])
-    for loc in locs:
-        r2 = session.get(loc, headers=headers)
-        print('Pulling Region %s...' % loc)
-        for line2 in r2.iter_lines():
-            if '" src="https://www.google.com/maps/' in line2:
-                gurl = line2.split('src="')[1].split('"')[0]
-                r3 = session.get(gurl, headers=headers)
-                for line3 in r3.iter_lines():
-                    if ',[[[' in line3:
-                        items = line3.split(',[[[')
-                        for item in items:
-                            if '"description' in item:
-                                name = item.split('"name\\",[\\"')[1].split('\\')[0]
-                                website = 'trinity-health.org'
-                                add = item.split('"description\\",[\\"')[1].split('\\')[0]
-                                csz = item.split('\\\\n')[1].split('\\')[0]
-                                city = csz.split(',')[0]
-                                state = csz.split(',')[1].strip().split(' ')[0]
-                                zc = csz.rsplit(' ',1)[1]
-                                phone = item.split('\\\\n')[2].split('\\')[0]
-                                lat = item.split(',')[0]
-                                lng = item.split(',')[1].split(']')[0]
-                                typ = '<MISSING>'
-                                country = 'US'
-                                hours = '<MISSING>'
-                                loc = '<MISSING>'
-                                store = '<MISSING>'
-                                if zc == '':
-                                    zc = '<MISSING>'
-                                if phone == '':
-                                    phone = '<MISSING>'
-                                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    for x in range(0, 250):
+        print(x)
+        loc = 'http://www.trinity-health.org/body.cfm?id=21&action=detail&ref=' + str(x)
+        r = session.get(loc, headers=headers)
+        name = ''
+        website = 'trinity-health.org'
+        typ = '<MISSING>'
+        add = ''
+        state = ''
+        city = ''
+        zc = ''
+        country = 'US'
+        store = str(x)
+        phone = ''
+        lat = '<MISSING>'
+        lng = '<MISSING>'
+        hours = '<MISSING>'
+        for line in r.iter_lines():
+            if '<dd id="locationName"><h2>' in line:
+                name = line.split('<dd id="locationName"><h2>')[1].split('<')[0]
+            if '<dd id="address">' in line:
+                add = line.split('<dd id="address">')[1].split('<')[0]
+                city = line.split('<br>')[1].split(',')[0]
+                state = line.split('<br>')[1].split(',')[1].strip().split(' ')[0]
+                zc = line.split('</dd>')[0].rsplit(' ',1)[1]
+            if '<dd id="phone"><a href="tel:' in line:
+                phone = line.split('<dd id="phone"><a href="tel:')[1].split('"')[0]
+        if name != '':
+            if zc == '':
+                zc = '<MISSING>'
+            if phone == '':
+                phone = '<MISSING>'
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
