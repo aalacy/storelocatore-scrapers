@@ -25,7 +25,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    for x in range(1313, 2000):
+    for x in range(1546, 2000):
         print(x)
         url = 'https://www.loblaws.ca/api/pickup-locations/' + str(x)
         r = session.get(url, headers=headers)
@@ -39,18 +39,18 @@ def fetch_data():
                 phone = '<MISSING>'
             name = array['name'].encode('utf-8')
             website = 'loblaws.com'
-            typ = array['storeBannerName'] + '-' + array['locationType']
+            typ = array['storeBannerName'].encode('utf-8') + '-' + array['locationType'].encode('utf-8')
             lat = array['geoPoint']['latitude']
             lng = array['geoPoint']['longitude']
             country = 'CA'
             state = array['address']['region'].encode('utf-8')
             city = array['address']['town'].encode('utf-8')
-            zc = array['address']['postalCode']
+            zc = array['address']['postalCode'].encode('utf-8')
             try:
                 add = array['address']['line1'] + ' ' + array['address']['line2']
             except:
                 add = array['address']['line1']
-            add = add.strip()
+            add = add.strip().encode('utf-8')
             hours = ''
             for item in array['storeDetails']['storeHours']:
                 hrs = item['day'] + ': ' + item['hours']
