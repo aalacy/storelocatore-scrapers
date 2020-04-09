@@ -56,8 +56,8 @@ def fetch_data():
         for line2 in r2.iter_lines():
             if '<div class="map-list-item-wrap" data-fid="' in line2:
                 store = line2.split('<div class="map-list-item-wrap" data-fid="')[1].split('"')[0]
-            if '<span class="stores-nearby-text">' in line2:
-                name = line2.split('<span class="stores-nearby-text">')[1].split('<')[0]
+            #if '<span class="stores-nearby-text">' in line2:
+                #name = line2.split('<span class="stores-nearby-text">')[1].split('<')[0]
             if '"latitude": "' in line2:
                 lat = line2.split('"latitude": "')[1].split('"')[0]
             if '"longitude": "' in line2:
