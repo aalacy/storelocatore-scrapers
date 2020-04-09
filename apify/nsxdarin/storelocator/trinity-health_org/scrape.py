@@ -35,10 +35,17 @@ def fetch_data():
             if '<dd id="locationName"><h2>' in line:
                 name = line.split('<dd id="locationName"><h2>')[1].split('<')[0]
             if '<dd id="address">' in line:
-                add = line.split('<dd id="address">')[1].split('<')[0]
-                city = line.split('<br>')[1].split(',')[0]
-                state = line.split('<br>')[1].split(',')[1].strip().split(' ')[0]
-                zc = line.split('</dd>')[0].rsplit(' ',1)[1]
+                count = line.count('<br>')
+                if count == 1:
+                    add = line.split('<dd id="address">')[1].split('<')[0]
+                    city = line.split('<br>')[1].split(',')[0]
+                    state = line.split('<br>')[1].split(',')[1].strip().split(' ')[0]
+                    zc = line.split('</dd>')[0].rsplit(' ',1)[1]
+                else:
+                    add = line.split('<dd id="address">')[1].split('<')[0]
+                    city = line.split('<br>')[2].split(',')[0]
+                    state = line.split('<br>')[2].split(',')[1].strip().split(' ')[0]
+                    zc = line.split('</dd>')[0].rsplit(' ',1)[1]
             if '<dd id="phone"><a href="tel:' in line:
                 phone = line.split('<dd id="phone"><a href="tel:')[1].split('"')[0]
         if name != '':
