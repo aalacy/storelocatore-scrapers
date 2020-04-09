@@ -25,7 +25,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    for x in range(1546, 2000):
+    for x in range(1000, 2000):
         print(x)
         url = 'https://www.loblaws.ca/api/pickup-locations/' + str(x)
         r = session.get(url, headers=headers)
