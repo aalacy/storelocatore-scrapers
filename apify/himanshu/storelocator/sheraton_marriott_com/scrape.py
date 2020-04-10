@@ -61,6 +61,7 @@ def fetch_data():
             city = address["data-city"]
             state = address["data-state"]
             if state in ["QROO","JAL","BC","DF","NL","PE","RS","RJ","SP","ES","HN","CHIH"]:
+            # if state in ["QROO","JAL","BC","DF","NL","YUC"]:
                 continue
             store_zip = address["data-postal-code"]
             phone = address["data-contact"]
