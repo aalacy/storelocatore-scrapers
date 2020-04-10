@@ -107,6 +107,10 @@ def fetch_data():
             phone = '<MISSING>'
         lat = '<MISSING>'
         lng = '<MISSING>'
+        if ',' in add:
+            add = add.split(',')[0].strip()
+        if ' Suite' in add:
+            add = add.split(' Suite')[0]
         if '; ; <a href=""' in hours:
             hours = hours.split('; ; <a href=""')[0]
         hours = hours.strip().replace('\t','').replace('&ndash;','-').replace('<p>','')
@@ -185,6 +189,10 @@ def fetch_data():
             phone = '<MISSING>'
         lat = '<MISSING>'
         lng = '<MISSING>'
+        if ',' in add:
+            add = add.split(',')[0].strip()
+        if ' Suite' in add:
+            add = add.split(' Suite')[0]
         if add != '':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for x in range(1, 50):
@@ -254,6 +262,10 @@ def fetch_data():
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
+        if ',' in add:
+            add = add.split(',')[0].strip()
+        if ' Suite' in add:
+            add = add.split(' Suite')[0]
         if add != '':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for x in range(1, 10):
@@ -267,7 +279,7 @@ def fetch_data():
                     aklocs.append(lurl)
         print('%s AK Locations Found' % str(len(aklocs)))
     for loc in aklocs:
-        print('Pulling AK Location %s...' % loc)
+        #print('Pulling AK Location %s...' % loc)
         website = 'providence.org'
         typ = '<MISSING>'
         hours = ''
@@ -328,6 +340,46 @@ def fetch_data():
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
+        if 'n/neuroscience-center' in loc:
+            add = '3851 Piper Street'
+            city = 'Anchorage'
+            state = 'AK'
+            zc = '99508'
+            phone = '907-212-5606'
+        if '3801-' in loc:
+            add = '3801 Lake Otis Parkway'
+            city = 'Anchorage'
+            state = 'AK'
+            zc = '99508'
+        if 'c/providence-cancer-center' in loc:
+            add = '3851 Piper Street'
+            state = 'AK'
+            zc = '99508'
+            city = 'Anchorage'
+        if 'anchorage/providence-diabetes-and-nutrition-center' in loc:
+            add = '3220 Providence Drive'
+            city = 'Anchorage'
+            state = 'AK'
+            zc = '99508'
+        if '/p/providence-medical-group-u-med' in loc:
+            add = '3260 Providence Drive'
+            city = 'Anchorage'
+            state = 'AK'
+            zc = '99508'
+        if 'medical-group-primary-care' in loc:
+            add = '3300 Providence Drive'
+            city = 'Anchorage'
+            state = 'AK'
+            zc = '99508'
+        if 'providence-rehabilitation-services' in loc:
+            add = '4411 Business Park Blvd'
+            city = 'Anchorage'
+            state = 'AK'
+            zc = '99503'
+        if ',' in add:
+            add = add.split(',')[0].strip()
+        if ' Suite' in add:
+            add = add.split(' Suite')[0]
         if add != '':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for x in range(1, 75):
@@ -373,6 +425,10 @@ def fetch_data():
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
+        if ',' in add:
+            add = add.split(',')[0].strip()
+        if ' Suite' in add:
+            add = add.split(' Suite')[0]
         if add != '':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     r = session.get('https://www.stjosephhealth.org/our-locations/', headers=headers)
@@ -412,6 +468,10 @@ def fetch_data():
             hours = '<MISSING>'
             loc = '<MISSING>'
             store = '<MISSING>'
+            if ',' in add:
+                add = add.split(',')[0].strip()
+            if ' Suite' in add:
+                add = add.split(' Suite')[0]
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
