@@ -110,6 +110,10 @@ def fetch_data():
             phone = '<MISSING>'
         if hours == '':
             hours = '<MISSING>'
+        if ' Suite' in add:
+            add = add.split(' Suite')[0]
+        if ' #' in add:
+            add = add.split(' #')[0]
         if lurl not in donelocs:
             donelocs.append(lurl)
             yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
