@@ -41,7 +41,7 @@ def fetch_data():
     brand_id = "TS"
     domain_url = "https://towneplacesuites.marriott.com"
     driver.get("https://www.marriott.com/search/submitSearch.mi?showMore=true&marriottBrands=" + str(brand_id) + "&destinationAddress.country=US")
-    element = WebDriverWait(driver, 10).until(lambda x: x.find_element_by_xpath('//input[@id="keywords"]'))
+    element = WebDriverWait(driver, 20).until(lambda x: x.find_element_by_xpath('//input[@id="keywords"]'))
     element.send_keys("townplace") 
     WebDriverWait(driver, 10).until(lambda x: x.find_element_by_xpath('//input[@value="Search Hotels"]')).click()
     while True:
@@ -65,7 +65,10 @@ def fetch_data():
             phone = address["data-contact"]
             lat = json.loads(location["data-property"])["lat"]
             lng = json.loads(location["data-property"])["longitude"]
-            page_url = "https://www.marriott.com" + location.find("span",{"class":"l-property-name"}).parent.parent["href"]
+            property_id =location.find("span",{"class":"l-property-name"}).parent.parent["href"].split("=")[1].split("&")[0].lower().strip()
+            
+            page_url = "https://www.marriott.com/hotels/travel/"+property_id+"-"+name.lower().replace(" ","-").replace("/","-").strip()
+            # print(page_url)
             store = []
             store.append(domain_url)
             store.append(name if name else "<MISSING>")
