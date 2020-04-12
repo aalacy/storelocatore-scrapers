@@ -1,0 +1,125 @@
+import csv
+import os
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+import usaddress
+
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', options=options)
+
+
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
+        # Header
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        # Body
+        for row in data:
+            writer.writerow(row)
+
+
+
+def parse_address(addy_string):
+    parsed_add = usaddress.tag(addy_string)[0]
+
+    street_address = ''
+
+    if 'AddressNumber' in parsed_add:
+        street_address += parsed_add['AddressNumber'] + ' '
+    if 'StreetNamePreDirectional' in parsed_add:
+        street_address += parsed_add['StreetNamePreDirectional'] + ' '
+    if 'StreetNamePreType' in parsed_add:
+        street_address += parsed_add['StreetNamePreType'] + ' '
+    if 'StreetName' in parsed_add:
+        street_address += parsed_add['StreetName'] + ' '
+    if 'StreetNamePostType' in parsed_add:
+        street_address += parsed_add['StreetNamePostType'] + ' '
+    if 'OccupancyType' in parsed_add:
+        street_address += parsed_add['OccupancyType'] + ' '
+    if 'OccupancyIdentifier' in parsed_add:
+        street_address += parsed_add['OccupancyIdentifier'] + ' '
+        
+    if 'PlaceName' not in parsed_add:
+        city = '<MISSING>'
+    else:
+        city = parsed_add['PlaceName']
+    
+    if 'StateName' not in parsed_add:
+        state = '<MISSING>'
+    else:
+        state = parsed_add['StateName']
+        
+    if 'ZipCode' not in parsed_add:
+        zip_code = '<MISSING>'
+    else:
+        zip_code = parsed_add['ZipCode']
+
+    return street_address, city, state, zip_code
+
+
+def fetch_data():
+    locator_domain = 'https://jacksonhealth.org/' 
+    ext = 'locations/'
+
+    driver = get_driver()
+    driver.get(locator_domain + ext)
+
+    locs = driver.find_elements_by_css_selector('div.location-single-loop-instance')
+
+    all_store_data = []
+    for loc in locs:
+        location_name = loc.find_element_by_css_selector('h2').text
+        if 'CLOSED' in location_name:
+            continue
+        
+        location_type = loc.find_element_by_css_selector('p').text
+        
+        links = loc.find_elements_by_css_selector('a')
+        for l in links:
+            if 'jacksonhealth.org' in l.get_attribute('href'):
+                if '#' not in l.get_attribute('href'):
+                    page_url = l.get_attribute('href')
+            if 'place/' in l.get_attribute('href'): 
+                addy = l.get_attribute('href').split('place/')[1].replace('%20', ' ').replace('+', ' ')
+                if 'Jackson Memorial Hospital 1611 NW 12 Ave Ambulatory Care Center' in addy:
+                    street_address = '1611 NW 12 Ave'
+                    city = 'Miami'
+                    state = 'FL'
+                    zip_code = '33136'
+                else:
+                    street_address, city, state, zip_code = parse_address(addy)
+
+            if 'tel:' in l.get_attribute('href'):
+                phone_number = l.get_attribute('href').replace('tel:', '')
+        
+    
+        
+        country_code = 'US'
+        store_number = '<MISSING>'
+        hours = '<MISSING>'
+        lat = '<MISSING>'
+        longit = '<MISSING>'
+        
+        
+        
+        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
+                    store_number, phone_number, location_type, lat, longit, hours, page_url]
+
+        all_store_data.append(store_data)
+
+
+
+    driver.quit()
+    return all_store_data
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()
