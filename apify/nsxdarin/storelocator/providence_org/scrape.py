@@ -120,7 +120,8 @@ def fetch_data():
         print('Pulling MT Page %s...' % str(x))
         url = 'https://montana.providence.org/locations-directory/list-view?page=' + str(x)
         r = session.get(url, headers=headers)
-        for line in r.iter_lines():
+        lines = r.iter_lines()
+        for line in lines:
             if '<ul  class="list-unstyled row">' in line:
                 Found = True
             if Found and '<div id="psjh_body_1' in line:
@@ -129,72 +130,99 @@ def fetch_data():
                 lurl = 'https://montana.providence.org' + line.split('href="')[1].split('"')[0]
                 if lurl not in mtlocs:
                     mtlocs.append(lurl)
-        print('%s MT Locations Found' % str(len(mtlocs)))
-    for loc in mtlocs:
-        HFound = False
-        print('Pulling MT Location %s...' % loc)
-        website = 'providence.org'
-        typ = '<MISSING>'
-        hours = ''
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        zc = ''
-        country = 'US'
-        store = '<MISSING>'
-        phone = ''
-        lat = ''
-        lng = ''
-        r = session.get(loc, headers=headers)
-        lines = r.iter_lines()
-        for line in lines:
-            if 'locationHoursContainer_0">' in line:
-                HFound = True
-            if HFound and '</div>' in line:
-                HFound = False
-            if HFound and '<br />' in line:
-                if 'p.m' in line:
-                    hrs = line.split('<br />')[0]
-                    if hours == '':
-                        hours = hrs
-                    else:
-                        hours = hours + '; ' + hrs
-                else:
-                    g = line
-                    h = next(lines)
-                    if 'p.m' in h:
-                        hrs = g.split('<br')[0] + ': ' + h.strip().replace('\r','').replace('\t','').replace('\n','')
-                        if hours == '':
-                            hours = hrs
-                        else:
-                            hours = hours + '; ' + hrs
-                hours = hours.replace('&nbsp;',' ')
-                hours = hours.replace('  ',' ')
-            if "</span></a></li><li class='active'>" in line:
-                name = line.split("</span></a></li><li class='active'>")[1].split('<')[0]
-            if 'addressContainer_0">' in line:
+                mloc = lurl
+                website = 'providence.org'
+                typ = '<MISSING>'
+                hours = '<MISSING>'
                 g = next(lines)
-                h = next(lines)
-                add = g.strip().replace('\r','').replace('\t','').replace('\n','')
-                csz = h.strip().replace('\r','').replace('\t','').replace('\n','')
-                city = csz.split(',')[0]
-                state = csz.split(',')[1].strip().split(' ')[0]
-                zc = csz.rsplit(' ',1)[1]
-            if '<a href="tel:' in line:
-                phone = line.split('<a href="tel:')[1].split('"')[0]
-        if hours == '':
-            hours = '<MISSING>'
-        if phone == '':
-            phone = '<MISSING>'
-        lat = '<MISSING>'
-        lng = '<MISSING>'
-        if ',' in add:
-            add = add.split(',')[0].strip()
-        if ' Suite' in add:
-            add = add.split(' Suite')[0]
-        if add != '':
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                name = g.strip().replace('\r','').replace('\t','').replace('\n','')
+                next(lines)
+                next(lines)
+                next(lines)
+                g = next(lines)
+                h = next(lines).strip().replace('\r','').replace('\t','').replace('\n','')
+                add = g.split('<')[0].strip().replace('\t','')
+                if ' Suite' in add:
+                    add = add.split(' Suite')[0]
+                city = h.split(',')[0]
+                state = h.split(',')[1].strip().split(' ')[0]
+                zc = h.rsplit(' ',1)[1]
+                country = 'US'
+                phone = '<MISSING>'
+                lat = '<MISSING>'
+                store = '<MISSING>'
+                lng = '<MISSING>'
+            if Found and '?q=' in line:
+                lat = line.split('?q=')[1].split(',')[0]
+                lng = line.split('?q=')[1].split(',')[1].split('"')[0]
+            if Found and '</li>' in line:
+                yield [website, mloc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        print('%s MT Locations Found' % str(len(mtlocs)))
+##    for loc in mtlocs:
+##        HFound = False
+##        print('Pulling MT Location %s...' % loc)
+##        website = 'providence.org'
+##        typ = '<MISSING>'
+##        hours = ''
+##        name = ''
+##        add = ''
+##        city = ''
+##        state = ''
+##        zc = ''
+##        country = 'US'
+##        store = '<MISSING>'
+##        phone = ''
+##        lat = ''
+##        lng = ''
+##        r = session.get(loc, headers=headers)
+##        lines = r.iter_lines()
+##        for line in lines:
+##            if 'locationHoursContainer_0">' in line:
+##                HFound = True
+##            if HFound and '</div>' in line:
+##                HFound = False
+##            if HFound and '<br />' in line:
+##                if 'p.m' in line:
+##                    hrs = line.split('<br />')[0]
+##                    if hours == '':
+##                        hours = hrs
+##                    else:
+##                        hours = hours + '; ' + hrs
+##                else:
+##                    g = line
+##                    h = next(lines)
+##                    if 'p.m' in h:
+##                        hrs = g.split('<br')[0] + ': ' + h.strip().replace('\r','').replace('\t','').replace('\n','')
+##                        if hours == '':
+##                            hours = hrs
+##                        else:
+##                            hours = hours + '; ' + hrs
+##                hours = hours.replace('&nbsp;',' ')
+##                hours = hours.replace('  ',' ')
+##            if "</span></a></li><li class='active'>" in line:
+##                name = line.split("</span></a></li><li class='active'>")[1].split('<')[0]
+##            if 'addressContainer_0">' in line:
+##                g = next(lines)
+##                h = next(lines)
+##                add = g.strip().replace('\r','').replace('\t','').replace('\n','')
+##                csz = h.strip().replace('\r','').replace('\t','').replace('\n','')
+##                city = csz.split(',')[0]
+##                state = csz.split(',')[1].strip().split(' ')[0]
+##                zc = csz.rsplit(' ',1)[1]
+##            if '<a href="tel:' in line:
+##                phone = line.split('<a href="tel:')[1].split('"')[0]
+##        if hours == '':
+##            hours = '<MISSING>'
+##        if phone == '':
+##            phone = '<MISSING>'
+##        lat = '<MISSING>'
+##        lng = '<MISSING>'
+##        if ',' in add:
+##            add = add.split(',')[0].strip()
+##        if ' Suite' in add:
+##            add = add.split(' Suite')[0]
+##        if add != '':
+##            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for x in range(1, 50):
         print('Pulling OR Page %s...' % str(x))
         url = 'https://oregon.providence.org/location-directory/list-view/?page=' + str(x) + '&within=5000'
