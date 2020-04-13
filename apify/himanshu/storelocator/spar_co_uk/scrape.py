@@ -5,6 +5,7 @@ import re
 import json
 import datetime
 from datetime import datetime
+import requests
 session = SgRequests()
 
 def write_output(data):
@@ -13,7 +14,7 @@ def write_output(data):
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "raw_address", "page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -28,7 +29,11 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     result_coords = []
-    r = session.get("https://www.spar.co.uk/sitemap-page",headers=headers)
+    try:
+
+        r = session.get("https://www.spar.co.uk/sitemap-page",headers=headers)
+    except:
+        pass
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find_all("a"):
         if "/store-locator/" in link['href']:
@@ -40,21 +45,25 @@ def fetch_data():
             if soup1.find("span",{"class":"page__notice-title"}):
                 continue
             addr = json.loads(soup1.find(lambda tag : (tag.name == "script") and "latitude" in tag.text).text)
+            
+            # exit()
             location_name = addr['name']
+           
             try:
-                street_address = data['streetAddress']
+                street_address = addr['address']['streetAddress']         
             except:
-                street_address = "<MISSING>"
+                street_address  = "<MISSING>"
+            # # print()
             try:
-                city = data['addressLocality']
+                city = addr['address']['addressLocality']
             except:
-                city = "<MISSINIG>"
+                city = "<MISSING>"
             try:
-                state = data['addressRegion']
+                state = addr['address']['addressRegion']
             except:
-                state = "<MISSNG>"
+                state = "<MISSING>"
             try:
-                zipp = data['postalCode']
+                zipp = addr['address']['postalCode']
             except:
                 zipp = "<MISSING>"
             # raw_address = re.sub(r'\s+'," "," ".join(list(soup1.find("div",{"class":"store-details__contact"}).find_all("p")[-1].stripped_strings)))
