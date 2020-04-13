@@ -62,13 +62,8 @@ def fetch_data():
         zipp = addr_json['address']['postalCode']
         country_code = addr_json['address']['addressCountry']
         phone = addr_json['telephone']
-        try:
-            latitude = page_soup.find_all("img",{"class":{"lemon--img__373c0__3GQUb"}})[10]['src'].split("center=")[1].split("%2C")[0]
-            longitude = page_soup.find_all("img",{"class":{"lemon--img__373c0__3GQUb"}})[10]['src'].split("%2C")[1].split("&language")[0]
-        except:
-            latitude = page_soup.find_all("img",{"class":{"lemon--img__373c0__3GQUb"}})[7]['src'].split("center=")[1].split("%2C")[0]
-            longitude = page_soup.find_all("img",{"class":{"lemon--img__373c0__3GQUb"}})[7]['src'].split("%2C")[1].split("&language")[0]
-
+        latitude = page_soup.find("img",{"alt":"Map"})['src'].split("center=")[1].split("%2C")[0]
+        longitude = page_soup.find("img",{"alt":"Map"})['src'].split("%2C")[1].split("&language")[0]
         hours_of_operation = " ".join(list(page_soup.find("tbody",{"class":"lemon--tbody__373c0__2T6Pl"}).stripped_strings)).replace("Closed now","").strip()
 
     
