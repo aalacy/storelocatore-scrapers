@@ -95,8 +95,8 @@ def fetch_data():
                             if phone == '':
                                 phone = '<MISSING>'
                             hours = hours.replace(':00:00',':00').replace(':30:00',':30')
-                            donelocs.append(loc)
                             if loc not in donelocs:
+                                donelocs.append(loc)
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                         except:
                             if lcount <= 3:
