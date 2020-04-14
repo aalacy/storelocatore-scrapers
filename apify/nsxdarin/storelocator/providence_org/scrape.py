@@ -20,12 +20,12 @@ def fetch_data():
     orlocs = []
     walocs = []
     Found = False
-    PFound = True
     for x in range(1, 50):
+        print('Pulling OR Page %s...' % str(x))
+        PFound = True
         while PFound:
             try:
                 PFound = False
-                print('Pulling OR Page %s...' % str(x))
                 url = 'https://oregon.providence.org/location-directory/list-view/?page=' + str(x) + '&within=5000'
                 r = session.get(url, headers=headers)
                 lines = r.iter_lines()
