@@ -117,6 +117,7 @@ def fetch_data():
                     ids.append(store)
                     print('Pulling Store ID #%s...' % store)
                     hours = '<MISSING>'
+                    country = 'US'
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
