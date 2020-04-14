@@ -1,11 +1,11 @@
 import csv
 import urllib2
-from sgrequests import SgRequests
+import requests
 import json
 from sgzip import sgzip
 
 
-session = SgRequests()
+session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -32,6 +32,7 @@ def fetch_data():
         for line in r.iter_lines():
             if '"ID": "' in line:
                 hours = ''
+                loc = '<MISSING>'
                 add = ''
                 city = ''
                 state = ''
@@ -62,19 +63,14 @@ def fetch_data():
                 phone = line.split('"phone": "')[1].split('"')[0]
             if '"stateCode": "' in line:
                 state = line.split('"stateCode": "')[1].split('"')[0]
-            if '"storeHours": "' in line:
-                if ' ' in zc:
-                  country = 'CA'
-                else:
-                  country = 'US'
-                hours = 'Monday:' + line.split("<div class='store-hours-day'>Monday:")[1].split('</span></div>\\n        </div>')[0]
-                hours = hours.replace('</span></div>','; ')
-                hours = hours.replace('<span class=\\"hours-of-day\\">','').replace('</span>','').replace('</div>','').replace('\\n            ','')
-                hours = hours.replace("<div class='store-hours-day'>",'').replace('closed - closed','closed')
+                cas = ['AB','BC','MB','NL','ON','NB','QC','PQ','SK','PE','PEI']
+                if state in cas:
+                    country = 'CA'
                 if store not in ids and country == 'CA':
                     ids.append(store)
                     print('Pulling Store ID #%s...' % store)
-                    yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    hours = '<MISSING>'
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for coord in sgzip.coords_for_radius(50):
         x = coord[0]
         y = coord[1]
@@ -84,6 +80,7 @@ def fetch_data():
         for line in r.iter_lines():
             if '"ID": "' in line:
                 hours = ''
+                loc = '<MISSING>'
                 add = ''
                 city = ''
                 state = ''
@@ -114,19 +111,13 @@ def fetch_data():
                 phone = line.split('"phone": "')[1].split('"')[0]
             if '"stateCode": "' in line:
                 state = line.split('"stateCode": "')[1].split('"')[0]
-            if '"storeHours": "' in line:
-                if ' ' in zc:
-                  country = 'CA'
-                else:
-                  country = 'US'
-                hours = 'Monday:' + line.split("<div class='store-hours-day'>Monday:")[1].split('</span></div>\\n        </div>')[0]
-                hours = hours.replace('</span></div>','; ')
-                hours = hours.replace('<span class=\\"hours-of-day\\">','').replace('</span>','').replace('</div>','').replace('\\n            ','')
-                hours = hours.replace("<div class='store-hours-day'>",'').replace('closed - closed','closed')
-                if store not in ids:
+            if '"stateCode": "' in line:
+                state = line.split('"stateCode": "')[1].split('"')[0]
+                if store not in ids and ' ' not in zc:
                     ids.append(store)
                     print('Pulling Store ID #%s...' % store)
-                    yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    hours = '<MISSING>'
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
