@@ -20,6 +20,59 @@ def fetch_data():
     orlocs = []
     walocs = []
     Found = False
+    PFound = True
+    for x in range(1, 50):
+        while PFound:
+            try:
+                PFound = False
+                print('Pulling OR Page %s...' % str(x))
+                url = 'https://oregon.providence.org/location-directory/list-view/?page=' + str(x) + '&within=5000'
+                r = session.get(url, headers=headers)
+                lines = r.iter_lines()
+                for line in lines:
+                    if '<h4><a id="main_0_contentpanel' in line:
+                        lurl = 'https://oregon.providence.org' + line.split('href="')[1].split('"')[0]
+                        if lurl not in orlocs:
+                            orlocs.append(lurl)
+                        mloc = lurl
+                        website = 'providence.org'
+                        typ = '<MISSING>'
+                        hours = '<MISSING>'
+                        name = line.split('">')[1].split('<')[0].strip()
+                        phone = '<MISSING>'
+                        add = ''
+                        city = ''
+                        state = ''
+                        country = 'US'
+                        zc = ''
+                        store = '<MISSING>'
+                    if 'pnlAddress_' in line:
+                        next(lines)
+                        g = next(lines)
+                        if g.count('<br/>') == 1:
+                            add = g.split('<br/>')[0].strip().replace('\t','')
+                            csz = g.split('<br/>')[1].strip().replace('\t','').replace('\r','').replace('\n','')
+                            city = csz.split(',')[0]
+                            state = csz.split(',')[1].strip().split(' ' )[0]
+                            zc = csz.rsplit(' ',1)[1]
+                        else:
+                            add = g.split('<br/>')[0].strip().replace('\t','')
+                            csz = g.split('<br/>')[2].strip().replace('\t','').replace('\r','').replace('\n','')
+                            city = csz.split(',')[0]
+                            state = csz.split(',')[1].strip().split(' ' )[0]
+                            zc = csz.rsplit(' ',1)[1]
+                        phone = '<MISSING>'
+                        lat = '<MISSING>'
+                        lng = '<MISSING>'
+                    if 'Phone:' in line:
+                        g = next(lines)
+                        phone = g.split('tel:')[1].split('"')[0]
+                    if '<div class="module-lc-services">' in line:
+                        if add != '':
+                            yield [website, mloc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                print('%s OR Locations Found' % str(len(orlocs)))
+            except:
+                PFound = True
     for x in range(1, 15):
         print('Pulling WA Page %s...' % str(x))
         url = 'https://washington.providence.org/locations-directory/search-results?page=' + str(x)
@@ -112,53 +165,6 @@ def fetch_data():
             if Found and '</li>' in line:
                 yield [website, mloc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         print('%s MT Locations Found' % str(len(mtlocs)))
-    for x in range(1, 50):
-        print('Pulling OR Page %s...' % str(x))
-        url = 'https://oregon.providence.org/location-directory/list-view/?page=' + str(x) + '&within=5000'
-        r = session.get(url, headers=headers)
-        lines = r.iter_lines()
-        for line in lines:
-            if '<h4><a id="main_0_contentpanel' in line:
-                lurl = 'https://oregon.providence.org' + line.split('href="')[1].split('"')[0]
-                if lurl not in orlocs:
-                    orlocs.append(lurl)
-                mloc = lurl
-                website = 'providence.org'
-                typ = '<MISSING>'
-                hours = '<MISSING>'
-                name = line.split('">')[1].split('<')[0].strip()
-                phone = '<MISSING>'
-                add = ''
-                city = ''
-                state = ''
-                country = 'US'
-                zc = ''
-                store = '<MISSING>'
-            if 'pnlAddress_' in line:
-                next(lines)
-                g = next(lines)
-                if g.count('<br/>') == 1:
-                    add = g.split('<br/>')[0].strip().replace('\t','')
-                    csz = g.split('<br/>')[1].strip().replace('\t','').replace('\r','').replace('\n','')
-                    city = csz.split(',')[0]
-                    state = csz.split(',')[1].strip().split(' ' )[0]
-                    zc = csz.rsplit(' ',1)[1]
-                else:
-                    add = g.split('<br/>')[0].strip().replace('\t','')
-                    csz = g.split('<br/>')[2].strip().replace('\t','').replace('\r','').replace('\n','')
-                    city = csz.split(',')[0]
-                    state = csz.split(',')[1].strip().split(' ' )[0]
-                    zc = csz.rsplit(' ',1)[1]
-                phone = '<MISSING>'
-                lat = '<MISSING>'
-                lng = '<MISSING>'
-            if 'Phone:' in line:
-                g = next(lines)
-                phone = g.split('tel:')[1].split('"')[0]
-            if '<div class="module-lc-services">' in line:
-                if add != '':
-                    yield [website, mloc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-        print('%s OR Locations Found' % str(len(orlocs)))
     for x in range(1, 10):
         print('Pulling AK Page %s...' % str(x))
         url = 'https://alaska.providence.org/locations/list-view?page=' + str(x) + '&within=5000'
