@@ -69,6 +69,8 @@ def fetch_data():
                         phone = g.split('tel:')[1].split('"')[0]
                     if '<div class="module-lc-services">' in line:
                         if add != '':
+                            if ' Suite' in add:
+                                add = add.split(' Suite')[0]
                             yield [website, mloc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                 print('%s OR Locations Found' % str(len(orlocs)))
             except:
@@ -278,6 +280,8 @@ def fetch_data():
         if ' Suite' in add:
             add = add.split(' Suite')[0]
         if add != '':
+            if ' Suite' in add:
+                add = add.split(' Suite')[0]
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for x in range(1, 75):
         print('Pulling SCA Page %s...' % str(x))
