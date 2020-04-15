@@ -62,6 +62,7 @@ def fetch_data():
         
         
         street_address = driver.find_element_by_css_selector('span.address-line1').text
+        street_address = street_address.split(',')[0]
         city = driver.find_element_by_css_selector('span.locality').text
         state = driver.find_element_by_css_selector('span.administrative-area').text
         zip_code = driver.find_element_by_css_selector('span.postal-code').text
@@ -79,7 +80,7 @@ def fetch_data():
             
 
         
-        google_link = driver.find_elements_by_xpath('//a[contains(@href,"/maps/")]')#.get_attribute('href')
+        google_link = driver.find_elements_by_xpath('//a[contains(@href,"/maps/")]')
         if len(google_link) == 0:
             lat, longit = '<MISSING>', '<MISSING>'
         else:

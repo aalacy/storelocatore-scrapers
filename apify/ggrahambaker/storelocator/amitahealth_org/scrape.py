@@ -84,11 +84,29 @@ def fetch_data():
         
         addy = driver.find_element_by_xpath('//strong[contains(text(),"Address")]').find_element_by_xpath('..').text.split('\n')
         
-        street_address = addy[1].split('Ste')[0].strip()
+        street_address = addy[1].split('Ste.')[0].strip()
+        if '1600 W. Rte. 6' in street_address:
+            street_address = '1600 W. Rte. 6'
+        elif '830 W. Diversey Pkwy' in street_address:
+            street_address = '830 W. Diversey Pkwy'
+        elif 'S. Rt. 59' in street_address:
+            street_address = street_address
+        elif '420 S. Schmidt Ave' in street_address:
+            street_address = '420 S. Schmidt Ave'
+        else:
+            end = street_address.rfind('.')
+            if end > 0:
+                street_address = street_address[:end]
+            else:
+                street_address = street_address
+
+   
         city, state, zip_code = addy_ext(addy[2])
 
         phone_number = driver.find_element_by_xpath('//strong[contains(text(),"Phone")]').find_element_by_xpath('..').text
         phone_number = phone_number.replace('Phone:', '').strip()
+        if phone_number == '':
+            phone_number = '<MISSINg>'
         
         hours_div = driver.find_elements_by_xpath('//label[contains(text(),"Office Hours")]')#.text
         if len(hours_div) == 0:
