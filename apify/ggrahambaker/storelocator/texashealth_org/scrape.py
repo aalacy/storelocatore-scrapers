@@ -4,6 +4,9 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
 import time
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
+
 
 def get_driver():
     options = Options()
@@ -44,6 +47,10 @@ def fetch_data():
     for opt in opts:
         opt_list.append(opt.text.strip())
 
+    session = SgRequests()
+    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
+
+    
 
     
     all_store_data = []
@@ -57,9 +64,7 @@ def fetch_data():
         time.sleep(5)
         
         more = driver.find_element_by_css_selector('div.load-more')
-        #print(more)
         while more.get_attribute('style') != 'display: none;':
-            
             more.find_element_by_css_selector('input').click()
             driver.implicitly_wait(5)
             time.sleep(2)
@@ -78,6 +83,9 @@ def fetch_data():
             street_address = loc.find_element_by_css_selector('div.field-address-line-1').text
             if len(loc.find_elements_by_css_selector('div.field-address-line-2')) > 0:
                 street_address += ' ' + loc.find_element_by_css_selector('div.field-address-line-2').text
+
+            street_address = street_address.split('Suite')[0].strip().split('Ste')[0].strip().replace(',', '').strip()
+
             
             city = loc.find_element_by_css_selector('span.field-city').text.replace(',', '').strip()
             state = loc.find_element_by_css_selector('span.field-state').text.strip()
@@ -92,7 +100,31 @@ def fetch_data():
             
             country_code = 'US'
             location_type = opt.split('(')[0].strip()
-            hours = '<MISSING>'
+
+
+            r = session.get(page_url, headers = HEADERS)
+
+            soup = BeautifulSoup(r.content, 'html.parser')
+
+            hours_div = soup.find_all('office-hours')
+            if len(hours_div) == 1:
+                days = hours_div[0].find_all('div', {'class': 'day'})
+                hours = ''
+                for h in days:
+                    day = h.find('span', {'class': 'day-title'})
+                    start = h.find('span', {'class': 'open'})
+                    end = h.find('span', {'class': 'close'})
+
+                    hours += day + ' ' + start + ' ' + end + ' '
+                
+                hours = hours.strip()
+                print(hours)
+
+
+            else:   
+                hours = '<MISSING>'
+
+
             store_number = '<MISSING>'
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]

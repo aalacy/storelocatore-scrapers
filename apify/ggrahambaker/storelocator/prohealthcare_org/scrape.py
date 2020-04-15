@@ -33,15 +33,31 @@ def fetch_data():
         
         locs = soup.find_all('script', {'type': 'application/ld+json'})
         links = soup.find_all('a', {'class': 'Name'})
+        #street_addresses = soup.find_all('span', {'class': 'street-address'})
 
         for i, loc in enumerate(locs):
+           
             page_url = locator_domain[:-1] + links[i]['href']
+            #street_address = street_addresses[i].text
+            
+
             info = json.loads(loc.text)
             
             location_name = info['name']
             phone_number = info['telephone'].replace('+1-', '')
             addy = info['address']
-            street_address = addy['streetAddress']
+            street_addy = addy['streetAddress']
+            street_addy = street_addy.split(',')
+            if len(street_addy) == 1:
+                street_address = street_addy[0].strip()
+               
+            else:
+                if 'Suite' in street_addy[1]:
+                    street_address = street_addy[0].strip()
+                else:
+                    street_address = street_addy[1].strip()
+
+
             city = addy['addressLocality']
             state = addy['addressRegion']
             zip_code = addy['postalCode']
@@ -69,10 +85,7 @@ def fetch_data():
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
             
-            print(store_data)
-            print()
-            print()
-            print()
+
             all_store_data.append(store_data)
 
 

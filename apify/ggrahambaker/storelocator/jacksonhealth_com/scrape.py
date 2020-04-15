@@ -74,15 +74,24 @@ def fetch_data():
 
     all_store_data = []
     for loc in locs:
-        location_name = loc.find_element_by_css_selector('h2').text
+        location = loc.find_element_by_css_selector('h2')
+        page_url = location.find_elements_by_css_selector('a')
+        if len(page_url) == 1:
+            page_url = page_url[0].get_attribute('href')#.text
+        else:
+            page_url = '<MISSING>'
+        location_name = location.text
+   
         if 'CLOSED' in location_name:
             continue
         
         location_type = loc.find_element_by_css_selector('p').text
         
         links = loc.find_elements_by_css_selector('a')
+
+    
         for l in links:
-            if 'jacksonhealth.org' in l.get_attribute('href'):
+            if '/directions/' in l.get_attribute('href'):
                 if '#' not in l.get_attribute('href'):
                     page_url = l.get_attribute('href')
             if 'place/' in l.get_attribute('href'): 
@@ -94,6 +103,7 @@ def fetch_data():
                     zip_code = '33136'
                 else:
                     street_address, city, state, zip_code = parse_address(addy)
+                    street_address = street_address.split('Suite')[0].strip().split('Room')[0].strip().split('Unit')[0].strip().replace(',', '').strip()
 
             if 'tel:' in l.get_attribute('href'):
                 phone_number = l.get_attribute('href').replace('tel:', '')

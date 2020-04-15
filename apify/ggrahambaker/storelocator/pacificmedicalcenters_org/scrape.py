@@ -47,13 +47,13 @@ def fetch_data():
     all_store_data = []
     for loc in locs:
         link_name = loc.find('span').find('a')#['href']
-        location_name = link_name.text
+       
         page_url = locator_domain[:-1] + link_name['href']
         r = session.get(page_url, headers = HEADERS)
 
         soup = BeautifulSoup(r.content, 'html.parser')
         
-        
+        location_name = soup.find('h3').text
         addy_raw = soup.find('p', {'id': 'address'}).prettify().split('\n')
         addy_raw2 = [a for a in addy_raw if '<' not in a]
         addy = []

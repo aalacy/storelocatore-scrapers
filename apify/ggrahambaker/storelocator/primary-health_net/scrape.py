@@ -56,8 +56,7 @@ def fetch_data():
         hours = driver.find_element_by_xpath('//*[@itemprop="openingHours"]').text.replace('\n', ' ').split('PATIENTS')[0].strip()
         if hours == '':
             hours = '<MISSING>'
-        if 'Wednesday' not in hours:
-            hours = 'Temporary Closure'
+        
             
             
         phone_number = driver.find_element_by_css_selector('span#PageTitle_SiteList2_PhoneLabel_0').text
