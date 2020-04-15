@@ -57,13 +57,13 @@ def fetch_data():
     cat_links = [[cat.text,locator_domain[:-1] + cat['href']] for cat in cats]
 
 
-
     all_store_data = []
     for cat_obj in cat_links:
         location_type = cat_obj[0]
         link = cat_obj[1]
         if 'location?field_location_type_target_id' not in link:
-            continue
+            print(link)
+            #continue
         driver.get(link)
         driver.implicitly_wait(5)
         
@@ -82,7 +82,10 @@ def fetch_data():
             
                 street_address, city, state, zip_code = parse_addy(addy)
 
-                has_phone_number = loc.find_elements_by_css_selector('a.tel__number')#.text
+                street_address = street_address.split('Ste ')[0]
+
+                has_phone_number = loc.find_elements_by_css_selector('a.tel__number')
+
                 if len(has_phone_number) > 0:
                     phone_number = has_phone_number[0].text
                 else:
@@ -97,6 +100,9 @@ def fetch_data():
                     page_url = button[0].find_element_by_css_selector('a').get_attribute('href')
                 else:
                     page_url = '<MISSING>'
+
+
+
                 hours = '<MISSING>'
                 store_number = '<MISSING>'
                 street_address = street_address.split('Suite')[0].strip().split('Unit')[0].strip().replace(',', '').strip()

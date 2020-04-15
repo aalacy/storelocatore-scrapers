@@ -67,6 +67,7 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
+        
         driver.get(link)
         driver.implicitly_wait(5)
         
@@ -91,10 +92,13 @@ def fetch_data():
         street_address = street_address.split('Suite')[0].strip().split('Unit')[0].strip().replace(',', '').strip()
 
         city, state, zip_code = addy_ext(info[1])
+
+        
         
         phone_number = info[2].replace('Phone:', '').strip()
-        
-        
+        if 'Maps' in phone_number:
+            phone_number = '<MISSING>'
+            
         
         hours =  driver.find_element_by_css_selector('div.module-lc-hours').text.replace('\n', ' ').replace('Hours', '').strip()
         hours = hours.split('Email')[0]
