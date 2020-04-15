@@ -101,6 +101,7 @@ def fetch_data():
 
             hours = '<MISSING>'
             page_url = '<MISSING>'
+            street_address = street_address.split('Suite')[0].strip().split('Unit')[0].strip().replace(',', '').strip()
 
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                             store_number, phone_number, location_type, lat, longit, hours, page_url]

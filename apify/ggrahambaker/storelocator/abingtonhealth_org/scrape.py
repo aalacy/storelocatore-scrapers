@@ -35,7 +35,7 @@ def fetch_data():
     all_store_data = []
     for loc in locs:
         street_address = loc['address'] + ' ' + loc['address2']
-        street_address = street_address.strip()
+        street_address = street_address.split('Suite')[0].strip()
         
         city = loc['city']
         state = loc['state']

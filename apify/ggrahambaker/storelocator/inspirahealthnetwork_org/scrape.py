@@ -68,11 +68,12 @@ def fetch_data():
         if phone_number == '':
             phone_number = '<MISSING>'
 
-        link_list.append([page_url, phone_number, street_address, city, state, zip_code ])
+        link_list.append([page_url, phone_number, street_address, city, state, zip_code, location_name])
 
     all_store_data = []
     for info in link_list:
         driver.get(info[0])
+        page_url = info[0]
 
         google_link = driver.find_element_by_css_selector('a.getdirections').get_attribute('href')
         
@@ -109,7 +110,6 @@ def fetch_data():
             
         hours = hours.split('Schedule')[0].split('Visit')[0].split('The goal')[0].split('REQUEST')[0].split('Whether')[0].split('Inspira Sleep')[0].split('Inspira Medical')[0].strip()
         if hours == '':
-            #print(hours_arr)
             hours = '<MISSING>'
         
 
@@ -123,7 +123,7 @@ def fetch_data():
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         
-        
+        location_name = info[6]
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 

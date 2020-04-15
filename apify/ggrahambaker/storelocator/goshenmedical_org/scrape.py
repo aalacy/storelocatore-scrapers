@@ -84,6 +84,7 @@ def fetch_data():
         
         phone_number = driver.find_element_by_xpath('//u[contains(text(),"Phone Number")]').find_element_by_xpath('../..').text.split('\n')[1]
         page_url, location_name, street_address, city, state, zip_code = link
+        street_address = street_address.split('Suite')[0].strip().replace(',', '').strip()
         
         
         country_code = 'US'

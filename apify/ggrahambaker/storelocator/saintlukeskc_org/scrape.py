@@ -79,7 +79,6 @@ def fetch_data():
                 
                 location_name = loc.find_element_by_css_selector('h4').text
                 addy = loc.find_element_by_css_selector('p.address').text
-                print(addy)
             
                 street_address, city, state, zip_code = parse_addy(addy)
 
@@ -100,6 +99,8 @@ def fetch_data():
                     page_url = '<MISSING>'
                 hours = '<MISSING>'
                 store_number = '<MISSING>'
+                street_address = street_address.split('Suite')[0].strip().split('Unit')[0].strip().replace(',', '').strip()
+
                 store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                             store_number, phone_number, location_type, lat, longit, hours, page_url]
 

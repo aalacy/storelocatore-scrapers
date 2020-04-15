@@ -88,6 +88,8 @@ def fetch_data():
             
         
         street_address = info[0]
+        street_address = street_address.split('Suite')[0].strip().split('Unit')[0].strip().replace(',', '').strip()
+
         city, state, zip_code = addy_ext(info[1])
         
         phone_number = info[2].replace('Phone:', '').strip()
