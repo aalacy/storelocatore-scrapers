@@ -6,7 +6,7 @@ import requests
  
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
@@ -16,7 +16,6 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    return_main_object = []
     addresses = []
     
     headers = {
@@ -35,7 +34,7 @@ def fetch_data():
     'cache-control': "no-cache",
     'postman-token': "b8d9f318-2038-6a3f-6b5d-c70ac7ec0ea7"
     }
-    result_coords = []
+
     url = "https://www.piedmont.org/_services/LocationsService.asmx/GetLocations"
 
     try:
@@ -55,18 +54,20 @@ def fetch_data():
 
 
 
-        street_address = i["Address1"].split("suite")[0].split("floor")[0]
-        page_url = i["PracticeID"]
+        street_address = i["Address1"].split("Suite")[0].split("Floor")[0].replace(",","")
         city = i["City"]
+        if city == "1265 Hwy 54 West, Suite 302":
+            city = "<MISSING>"
         state = i["State"]
         zipp = i["Zip"]
         phone = i["Phone"]
         latitude = i["Latitude"]
         longitude = i["Longitude"]
-        loctype = i['ParentPractice']['LocationTitle']
-        store_number = "<MISSING>"
+        # loctype = i['ParentPractice']['LocationTitle'].split("|")[-1].strip()
+        store_number = i["PracticeID"]
+
         store = []
-        store.append(url)
+        store.append('https://www.piedmont.org/')
         store.append(i['Name']) 
         store.append(street_address if street_address else "<MISSING>")
         store.append(city if city else "<MISSING>")
@@ -79,7 +80,8 @@ def fetch_data():
         store.append(latitude if latitude else "<MISSING>")
         store.append(longitude if longitude else "<MISSING>")
         store.append(hours_of_operation)
-        store.append("https://www.piedmont.org/locations/location-details?practice="+str(page_url))
+        store.append("https://www.piedmont.org/locations/location-details?practice="+str(store_number))
+        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
         if store[2] in addresses:
             continue

@@ -40,8 +40,14 @@ def fetch_data():
         except:
             phone = "<MISSING>"
         page_url = data['clickUri']
-    
-        store = []
+        # print(page_url)
+        r1 = session.get(page_url)
+        soup1 = BeautifulSoup(r1.text, "lxml")
+        try:
+            hours = " ".join(list(soup1.find("div",{"class":"col-md-3 col-6 loc-hours"}).find("span").stripped_strings)).replace("Level I Trauma Center and Comprehensive Stroke Center","")
+        except:
+            hours = "<MISSING>"
+        store = []  
         
         store.append(base_url)
         store.append(location_name)
@@ -55,7 +61,7 @@ def fetch_data():
         store.append("MetroHealth")
         store.append(latitude)
         store.append(longitude)
-        store.append("<MISSING>")
+        store.append(hours)
         store.append(page_url)
         # print("data==="+str(store))
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")

@@ -36,6 +36,10 @@ def fetch_data():
             if anchor["CountryCode"] != "US" or anchor["CountryCode"] != "CA":
                 continue
         street_address = anchor['Address']['Street']
+        if "Suite" in street_address:
+            street_address = street_address.split("Suite")[0].replace(",","").strip()
+        if "suite" in street_address:
+            street_address = street_address.split("suite")[0].replace(",","").strip()
         city = anchor['Address']['City']
         state = anchor['Address']['StateCode']
         zipp = anchor['Address']['Zip']

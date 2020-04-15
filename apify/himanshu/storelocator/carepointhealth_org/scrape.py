@@ -3,10 +3,11 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import sgzip
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -27,7 +28,7 @@ def fetch_data():
 
     r = session.get("https://carepointhealth.org/locations/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    addressesess =[]
+
     for data in soup.find_all("div",{"class":"nf-card-text"}):
         page_url = data.find("a")['href']
         latitude = data.find("a")['data-lat']
@@ -64,9 +65,6 @@ def fetch_data():
         store.append(page_url)
         # print("data==="+str(store))
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-        if store[2] in addressesess:
-            continue
-        addressesess.append(store[2])
 
         yield store
         
