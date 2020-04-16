@@ -40,6 +40,8 @@ def fetch_data():
             street_address = street_address.split("Suite")[0].replace(",","").strip()
         if "suite" in street_address:
             street_address = street_address.split("suite")[0].replace(",","").strip()
+        if "Ste" in street_address:
+            street_address = street_address.split("Ste")[0].strip()
         city = anchor['Address']['City']
         state = anchor['Address']['StateCode']
         zipp = anchor['Address']['Zip']

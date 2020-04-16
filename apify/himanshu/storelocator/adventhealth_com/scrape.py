@@ -8,9 +8,8 @@ import requests
 import time
 session = SgRequests()
 
-
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
@@ -19,7 +18,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    addressesess = []
+    # addressesess = []
     url = "https://www.adventhealth.com/views/ajax?_wrapper_format=drupal_ajax"
     for data in range(0,51):
         querystring = {"_wrapper_format":"drupal_ajax"}
@@ -30,7 +29,7 @@ def fetch_data():
             'postman-token': "67ad5f12-df8c-ff6c-91cc-8ca13af8abd5"
         }
         try:
-            response = requests.post(url, data=payload, headers=headers, params=querystring)
+            response = session.post(url, data=payload, headers=headers, params=querystring)
             json_data = json.loads(response.text)
         except:
             pass
@@ -54,16 +53,22 @@ def fetch_data():
                     except:
                         phone = "<MISSING>"
                     page_url = link[index]['href']
+                    # print(page_url)
+                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                     hours2 ='<MISSING>'
                     page_url1='<MISSING>'
                     location_type ='<MISSING>'
                     latitude ='<MISSING>'
                     longitude ='<MISSING>'
+                   
                     if page_url:
                         try:
-                            page_url1 = "https://www.adventhealth.com"+page_url.replace("https://www.adventhealth.com",'')
-                        
-                            response1 = requests.get(page_url1)
+                            if "http" in page_url:
+                                page_url1 = page_url
+                            else:
+                                page_url1 = "https://www.adventhealth.com"+page_url
+                            # print(page_url1)
+                            response1 = session.get(page_url1)
                         except:
                             pass
 
@@ -110,7 +115,7 @@ def fetch_data():
                         if  hours1 != None:
                             hours  = hours1.find("li").text.strip()
 
-                        if "Visiting Hours:" in hours and "Visiting Hours: As we monitor coronavirus (COVID-19) in our communities, we have made changes to our visitation policies to ensure the safety of our patients, visitors and team members. Read our new visitation policy." != hours:
+                        if "Visiting Hours" in hours and "Visiting Hours: As we monitor coronavirus (COVID-19) in our communities, we have made changes to our visitation policies to ensure the safety of our patients, visitors and team members. Read our new visitation policy." != hours:
                             hours2 = hours.split("Emergency Care:")[0].replace("Visiting",'')
 
                     else:
@@ -129,6 +134,7 @@ def fetch_data():
                     store.append("<MISSING>")
                     store.append(phone)
                     store.append(location_type if location_type else "<MISSING>")
+
                     store.append(latitude)
                     store.append(longitude)
                     hours2 = hours2.replace(" secondary shift change (secondary to patient information being exchanged between the nurses and the providers) and only 2 visitors at a bedside.",'')
@@ -139,8 +145,8 @@ def fetch_data():
                     # if store[2] in addressesess:
                     #     continue
                     # addressesess.append(store[2])
-                   # print("data == "+str(store))
-                    #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                    # print("data == "+str(store))
+                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                     yield store
 
 def scrape():
