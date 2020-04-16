@@ -62,9 +62,11 @@ def fetch_data():
         select.select_by_value(t)
         driver.implicitly_wait(5)
         time.sleep(3)
+        print(driver.current_url)
                     
         
-        while True: 
+        while True:
+            print('top') 
             links = driver.find_elements_by_css_selector('div.listing-item-more-link')
             
             for l in links:
@@ -72,17 +74,16 @@ def fetch_data():
                 link_list.append([link, t])
             eles = driver.find_elements_by_css_selector('span.module-pg-no-link')
             
-        
-            
             if len(eles) == 2:
                 if 'Next' in eles[0].text:
+                    print('hmmm')
                     break
             if len(eles) == 0:
                 break
-                    
-                    
             
+
             next_link = driver.find_elements_by_xpath('//a[contains(text(),"Next")]')[0].get_attribute('href')
+            print(next_link)
             driver.get(next_link)
             driver.implicitly_wait(5)
             
@@ -91,7 +92,7 @@ def fetch_data():
     for link in link_list:
         page_url = link[0]
         location_type = link[1]
-        print(page_url)
+        # print(page_url)
         driver.get(page_url)
         driver.implicitly_wait(5)
         

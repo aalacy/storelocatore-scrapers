@@ -37,6 +37,7 @@ def fetch_data():
 
             
             phone_number = lis[1].text.strip()
+            
 
             page_url = locator_domain[:-1] + uls[1].find_all('li')[1].find('a')['href']
             
@@ -47,13 +48,21 @@ def fetch_data():
 
             
             phone_number = lis[0].find('a').text.strip()
+            if 'Get Directions' in phone_number:
+                phone_number = '<MISSING>'
             page_url = '<MISSING>'
             
-        
-        street_address = addy[0].text
-        city = addy[1].text
-        state = addy[2].text
-        zip_code = addy[3].text
+
+        if len(addy) == 5:
+            street_address = addy[0].text
+            city = addy[2].text
+            state = addy[3].text
+            zip_code = addy[4].text
+        else:
+            street_address = addy[0].text
+            city = addy[1].text
+            state = addy[2].text
+            zip_code = addy[3].text
         
         country_code = 'US'
         store_number = '<MISSING>'
