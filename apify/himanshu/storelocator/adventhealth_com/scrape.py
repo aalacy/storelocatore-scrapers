@@ -8,6 +8,7 @@ import requests
 import time
 session = SgRequests()
 
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -128,7 +129,6 @@ def fetch_data():
                     store.append("<MISSING>")
                     store.append(phone)
                     store.append(location_type if location_type else "<MISSING>")
-
                     store.append(latitude)
                     store.append(longitude)
                     hours2 = hours2.replace(" secondary shift change (secondary to patient information being exchanged between the nurses and the providers) and only 2 visitors at a bedside.",'')
@@ -136,11 +136,11 @@ def fetch_data():
                     store.append(page_url1 )
                     store = [x.replace("–","-") if type(x) == str else x for x in store]
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                    if store[2] in addressesess:
-                        continue
-                    addressesess.append(store[2])
-                    # print("data == "+str(store))
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                    # if store[2] in addressesess:
+                    #     continue
+                    # addressesess.append(store[2])
+                   # print("data == "+str(store))
+                    #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                     yield store
 
 def scrape():

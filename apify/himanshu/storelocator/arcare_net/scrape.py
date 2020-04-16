@@ -4,6 +4,7 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import platform
 system = platform.system()
+
 def get_driver():
     options = Options()
     options.add_argument('--headless')
@@ -57,10 +58,15 @@ def fetch_data():
             hours_of_operation = '<MISSING>'
 
         page_url = value.find('a', {'class': 'storelocatorlink'})['href']
+        
         street_address = street_address.lower().replace('suite', '').replace('floor', '').capitalize()
+        if "11219 financial centre parkway,  200" in street_address:
+            street_address = street_address.replace(",  200",'')
+        if "501 millwood circle,  e" in street_address:
+            street_address = street_address.replace(",  e",'')
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",store)
         yield store
 
 

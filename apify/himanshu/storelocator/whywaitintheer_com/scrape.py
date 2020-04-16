@@ -2,11 +2,10 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-import json
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8",newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -49,6 +48,7 @@ def fetch_data():
                     else:
                         city = "<MISSING>"
                         zipp = info.strip()
+                    
                 elif len(addr) == 3:
                     
                     street_address = addr[0]
@@ -57,6 +57,10 @@ def fetch_data():
                 else:
                     street_address = " ".join(addr[0].split(" ")[:-1]).replace(state,"").strip()
                     zipp = addr[0].split(" ")[-1]
+                if "Forest Hill" in street_address:
+                    city = " ".join(addr[0].split()[-2:])
+                    street_address = " ".join(addr[0].split()[:-2])
+                
             except:
                 continue
             # print("final---",street_address)
@@ -87,6 +91,7 @@ def fetch_data():
                 location_name = location_name.strip().encode('ascii', 'ignore').decode('ascii').strip()
             else:
                 location_name = "<MISSING>"
+            
 
             
             store.append(base_url)

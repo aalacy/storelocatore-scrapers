@@ -117,7 +117,7 @@ def fetch_data():
 		location_name = div_blue.text
 		
 		address = list(div_blue.find_next("div",class_="box-rounded-blue").find("p",class_="location").stripped_strings)
-		print(address)
+		# print(address)
 		street_address = address[0].split("Suite")[0]
 		city = address[-1].split(",")[0]
 		state = address[-1].split(",")[-1].split()[0].strip()

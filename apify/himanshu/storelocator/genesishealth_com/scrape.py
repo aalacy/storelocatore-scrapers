@@ -16,6 +16,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    # print("start")
     addresses = []
     headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.92 Safari/537.36',
@@ -48,11 +49,13 @@ def fetch_data():
             else:
                 store_number = "<MISSING>"
             
-        
+            if "floor" in street_address:
+                street_address = street_address.replace("located on the 1st floor","").replace("On the first floor near Gift Shop","").replace("2nd floor","").replace(",","").strip()
+       
             store = []
             store.append(base_url)
             store.append(location_name)
-            store.append(street_address.replace("Floor",""))
+            store.append(street_address)
             store.append(city)
             store.append(state)
             store.append(zipp)
@@ -64,8 +67,8 @@ def fetch_data():
             store.append("<MISSING>")
             store.append("<MISSING>")
             store.append("<MISSING>")
-            # if store[2] in addresses:
-            #     continue
+            if store[2] in addresses:
+                continue
             addresses.append(store[2])
             # store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
