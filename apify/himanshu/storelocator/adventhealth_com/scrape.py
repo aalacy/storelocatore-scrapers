@@ -18,7 +18,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    # addressesess = []
+    addressesess = []
     url = "https://www.adventhealth.com/views/ajax?_wrapper_format=drupal_ajax"
     for data in range(0,51):
         querystring = {"_wrapper_format":"drupal_ajax"}
@@ -44,7 +44,7 @@ def fetch_data():
                 link = soup.find_all("a",{"class":"button--blue--dark"})
                 for index,data2 in enumerate(soup.find_all("a",{"class":"location-block__name-link u-text--fw-300 notranslate"})):
                     name = (data2.text)
-                    street_address = Address[index].text.strip()
+                    street_address = Address[index].text.split("Suite")[0].replace(",","").replace("3rd Floor","").replace("1st Floor","").replace("8th Floor","").replace("3rd floor","").replace("2nd Floor","").replace("Floor 2","").strip()
                     city = city1[index].text
                     state = state1[index].text
                     zip1 = zip2[index].text
@@ -142,9 +142,9 @@ def fetch_data():
                     store.append(page_url1 )
                     store = [x.replace("–","-") if type(x) == str else x for x in store]
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                    # if store[2] in addressesess:
-                    #     continue
-                    # addressesess.append(store[2])
+                    if store[2] in addressesess:
+                        continue
+                    addressesess.append(store[2])
                     # print("data == "+str(store))
                     # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                     yield store

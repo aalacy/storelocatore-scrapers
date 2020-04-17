@@ -44,7 +44,7 @@ def fetch_data():
     driver.get("https://www.marriott.com/search/submitSearch.mi?showMore=true&marriottBrands=" + str(brand_id) + "&destinationAddress.country=US")
     element = WebDriverWait(driver, 20).until(lambda x: x.find_element_by_xpath('//input[@id="keywords"]'))
     element.send_keys("sheraton") 
-    WebDriverWait(driver, 20).until(lambda x: x.find_element_by_xpath('//input[@value="Search Hotels"]')).click()
+    WebDriverWait(driver, 10).until(lambda x: x.find_element_by_xpath('//input[@value="Search Hotels"]')).click()
     while True:
         # wait = WebDriverWait(driver, 10)
         # element = wait.until(lambda x: x.find_element_by_xpath("//div[text()='Destination']"))
@@ -60,7 +60,7 @@ def fetch_data():
                 street_address = street_address + " " + address["data-address-line2"]
             city = address["data-city"]
             state = address["data-state"]
-            if state in ["QROO","JAL","BC","DF","NL","PE","RS","RJ","SP","ES","HN","CHIH"]:
+            if state in ["QROO","JAL","DF","NL","PE","RS","RJ","SP","ES","HN","CHIH"]:
             # if state in ["QROO","JAL","BC","DF","NL","YUC"]:
                 continue
             store_zip = address["data-postal-code"]

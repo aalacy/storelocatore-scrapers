@@ -30,20 +30,20 @@ def fetch_data():
 	}
 	locator_domain = base_url = "https://www.baystatehealth.org"
 
-	r = session.get("https://www.baystatehealth.org/locations/search-results",headers=headers)
-	soup= BeautifulSoup(r.text,"lxml")
-	for link1 in soup.find_all("div",{"class":"dd-1 drop"})[2].find_all("li"):
-		if "/locations/search-results?loctype=hospital" in link1.find("a")['href']:
-			newlinke = "https://www.baystatehealth.org"+link1.find("a")['href']
+	# r = session.get("https://www.baystatehealth.org/locations/search-results",headers=headers)
+	# soup= BeautifulSoup(r.text,"lxml")
+	# for link1 in soup.find_all("div",{"class":"dd-1 drop"})[2].find_all("li"):
+	# 	if "/locations/search-results?loctype=hospital" in link1.find("a")['href']:
+	# 		newlinke = "https://www.baystatehealth.org"+link1.find("a")['href']
 			# print("~~~~~~~~~~~~~~~",newlinke)
-		else:
-			newlinke = link1.find("a")['href']
-		# print(newlinke)
-		r1 = session.get(newlinke,headers=headers)
+		# else:
+		# 	newlinke = link1.find("a")['href']
+	for data in range(1,26):
+		r1 = session.get("https://www.baystatehealth.org/locations/search-results?page="+str(1),headers=headers)
 		soup1= BeautifulSoup(r1.text,"lxml")
 		script = soup1.find(lambda tag: (tag.name == "script") and "var maplocations" in tag.text.strip()).text.split("var maplocations=")[1]
 		for link  in json.loads(script):
-			location_type = link1.find("a").text.strip()
+			location_type = "<MISSING>"
 			page_url = "https://www.baystatehealth.org"+link['LocationDetailLink']
 			soup2= BeautifulSoup(link['LocationFullAddress'],"lxml")
 			location_name = link["LocationName"]
@@ -74,13 +74,10 @@ def fetch_data():
 			if "Office Hours Temporarily" in hours_of_operation:
 				hours_of_operation = "<MISSING>"
 			store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-				 store_number, phone, location_type, latitude, longitude, hours_of_operation.encode('ascii', 'ignore').decode('ascii').strip().replace(". (mammogram screenings only)",'').replace("on select days (call us to learn more)",'').replace('Office Hours',''),page_url]
-			# print("data = " + str(store))
-			# if store[2]  in addressess123:
-			# 	continue
-			# addressess123.append(store[2])
+				 store_number, phone, location_type, latitude, longitude, hours_of_operation.replace("(mammogram screenings only)",'').split("daily We")[0],page_url]
 			yield store
-		# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+			# print("~~~",store)
+			# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
 	
 def scrape():

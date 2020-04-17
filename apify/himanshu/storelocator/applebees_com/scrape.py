@@ -7,10 +7,9 @@ import re
 import json
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
-
 import platform
-
 system = platform.system()
+
 session = SgRequests()
 def get_driver():
     options = Options()
@@ -19,7 +18,7 @@ def get_driver():
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
     if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)
     else:
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 def write_output(data):
@@ -66,41 +65,43 @@ def fetch_data():
             time.sleep(3)
             soup1 = BeautifulSoup(driver.page_source,"lxml")
             loc_section = soup1.find("div",{"id":"location-cards-wrapper"})
-            for loc_block in loc_section.find("div",class_="owl-item"):
-                country_code = loc_block.find("input",{"name":"location-country"})["value"]
-                geo_code = loc_block.find("input",{"name":"location-country"}).nextSibling.nextSibling
-                latitude = geo_code["value"].split(",")[0]
-                longitude = geo_code["value"].split(",")[1].split("?")[0]
-                page_url ="https://www.applebees.com"+ loc_block.find("div",class_="map-list-item-header").find("a")["href"]
-                location_name = loc_block.find("div",class_="map-list-item-header").find("span",class_="location-name").text.strip()
-                address = loc_block.find("div",class_="address").find("a",{"title":"Get Directions"})
-                address_list = list(address.stripped_strings)
-                street_address = " ".join(address_list[:-1]).strip()
-                city = address_list[-1].split(",")[0].strip()
-                state = address_list[-1].split(",")[1].split()[0].strip()
-                zipp = address_list[-1].split(",")[1].split()[-1].strip()
-                phone = loc_block.find("a",class_="data-ga phone js-phone-mask").text.strip()
-                store_number= "<MISSING>"
-                driver.get(page_url)
-                time.sleep(3)
-                soup2 = BeautifulSoup(driver.page_source,"lxml")
-                # hours_of_operation = " ".join(list(soup2.find("div",class_="hours").stripped_strings))
-                # print(hours_of_operation)
-                try:
-                    hours_of_operation = " ".join(list(soup2.find("div",class_="hours").stripped_strings))
-                except :
-                    hours_of_operation = "<MISSING>"
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+            try:
+                for loc_block in loc_section.find_all("div",class_="owl-item"):
+                    country_code = loc_block.find("input",{"name":"location-country"})["value"]
+                    geo_code = loc_block.find("input",{"name":"location-country"}).nextSibling.nextSibling
+                    latitude = geo_code["value"].split(",")[0]
+                    longitude = geo_code["value"].split(",")[1].split("?")[0]
+                    page_url ="https://www.applebees.com"+ loc_block.find("div",class_="map-list-item-header").find("a")["href"]
+                    location_name = loc_block.find("div",class_="map-list-item-header").find("span",class_="location-name").text.strip()
+                    address = loc_block.find("div",class_="address").find("a",{"title":"Get Directions"})
+                    address_list = list(address.stripped_strings)
+                    street_address = " ".join(address_list[:-1]).strip()
+                    city = address_list[-1].split(",")[0].strip()
+                    state = address_list[-1].split(",")[1].split()[0].strip()
+                    zipp = address_list[-1].split(",")[1].split()[-1].strip()
+                    phone = loc_block.find("a",class_="data-ga phone js-phone-mask").text.strip()
+                    store_number= "<MISSING>"
+                    driver.get(page_url)
+                    time.sleep(3)
+                    soup2 = BeautifulSoup(driver.page_source,"lxml")
+                    try:
+                        hours_of_operation = " ".join(list(soup2.find("div",class_="hours").stripped_strings))
+                    except :
+                        hours_of_operation = "<MISSING>"
+                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                    store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
-                if str(store[2]) + str(store[-3]) not in addresses:
-                    addresses.append(str(store[2]) + str(store[-3]))
+                    if str(store[2]) + str(store[-3]) not in addresses:
+                        addresses.append(str(store[2]) + str(store[-3]))
 
-                    store = [x if x else "<MISSING>" for x in store]
+                        store = [x if x else "<MISSING>" for x in store]
 
-                   # print("data = " + str(store))
-                   # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    yield store
+                       # print("data = " + str(store))
+                        #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        yield store
+            except:
+               # print(a)
+                continue            
 
 
             

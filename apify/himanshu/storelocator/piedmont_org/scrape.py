@@ -4,7 +4,8 @@ import re
 import json
 import requests
  
-
+def my_function(x):
+  return list(dict.fromkeys(x))
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -36,12 +37,9 @@ def fetch_data():
     }
 
     url = "https://www.piedmont.org/_services/LocationsService.asmx/GetLocations"
-
-    try:
-        response = requests.request("GET", url, headers=headers)
-    except:
-        pass
+    response = requests.request("GET", url, headers=headers)
     json_data = response.json()
+    loc = {9: 'Cancer', 3: 'Cardiac Care', 6: 'Emergency Care', 1: 'Hospitals', 7: 'Imaging', 2: 'Primary Care', 18: 'QuickCare', 4: 'Specialists', 8: 'Surgery Centers', 5: 'Urgent Care', 11: 'Brain Cancer', 10: 'Breast Cancer', 16: 'Colon Cancer', 14: 'Gynecologic Cancer', 15: 'Liver & Pancreas Cancer', 13: 'Lung Cancer', 17: 'Orthopedic Surgeon', 12: 'Prostate Cancer', 19: 'Walgreens QuickCare'}
     for i in json_data['d']:
         if i['OfficeHours'] != None:
             hours_of_operation =i['OfficeHours']
@@ -52,9 +50,7 @@ def fetch_data():
         else:
             hours_of_operation = "<MISSING>"
 
-
-
-        street_address = i["Address1"].split("Suite")[0].split("Floor")[0].replace(",","")
+        street_address = i["Address1"].split("Suite")[0].replace(",","").replace("6th Floor","").replace("1st Floor","").replace("3rd Floor","").replace("2nd Floor","").replace("Ground Floor","").replace("5th Floor","").replace("Second Floor","").replace("NE6th floor","").replace("5th floor","").replace("Piedmont West Medical Office Park","")
         city = i["City"]
         if city == "1265 Hwy 54 West, Suite 302":
             city = "<MISSING>"
@@ -63,11 +59,17 @@ def fetch_data():
         phone = i["Phone"]
         latitude = i["Latitude"]
         longitude = i["Longitude"]
-        # loctype = i['ParentPractice']['LocationTitle'].split("|")[-1].strip()
+        if i['Categories']:
+            loc_type = []
+            for l_type in my_function(i['Categories']):
+                loc_type.append(loc[l_type])
+            location_type = ",".join(loc_type)
+        else:
+            location_type = "<MISSING>"
         store_number = i["PracticeID"]
 
         store = []
-        store.append('https://www.piedmont.org/')
+        store.append("https://www.piedmont.org/")
         store.append(i['Name']) 
         store.append(street_address if street_address else "<MISSING>")
         store.append(city if city else "<MISSING>")
@@ -76,16 +78,13 @@ def fetch_data():
         store.append("US")
         store.append(store_number if store_number else "<MISSING>") 
         store.append(phone if phone else "<MISSING>")
-        store.append("<MISSING>")
+        store.append(location_type)
         store.append(latitude if latitude else "<MISSING>")
         store.append(longitude if longitude else "<MISSING>")
         store.append(hours_of_operation)
         store.append("https://www.piedmont.org/locations/location-details?practice="+str(store_number))
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-        if store[2] in addresses:
-            continue
-        addresses.append(store[2])
         # print("data ==="+str(store))
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         yield store

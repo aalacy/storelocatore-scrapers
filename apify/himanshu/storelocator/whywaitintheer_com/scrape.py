@@ -30,6 +30,7 @@ def fetch_data():
         state_soup = BeautifulSoup(state_r.text, "lxml")
         for url in state_soup.find_all("a",{"class":"class_blue"}):
             page_url = url['href']
+            # print(page_url)
             location_r = session.get(page_url)
             location_soup = BeautifulSoup(location_r.text, "lxml")
             location_name = location_soup.find("div",{"id":"subpagecontent"}).find("h1").text
@@ -106,9 +107,9 @@ def fetch_data():
             store.append("Express Care")
             store.append("<MISSING>" )
             store.append("<MISSING>" )
-            store.append(hours_of_operation.strip().encode('ascii', 'ignore').decode('ascii').strip())
+            store.append(hours_of_operation.strip())
             store.append(page_url)
-            # print("data==="+str(store))
+            # print("data==="+str(store[-2]))
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
             yield store

@@ -84,7 +84,7 @@ def fetch_data():
         
             store.append(base_url)
             store.append(location_name)
-            store.append(street_address.replace("Floor",""))
+            store.append(street_address.split('Ste')[0].strip().split('St')[0].strip())
             store.append(city)
             store.append(state)
             store.append(zipp)   

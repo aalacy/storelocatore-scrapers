@@ -59,7 +59,7 @@ def fetch_data():
                 street_address = street_address + " " + address["data-address-line2"]
             city = address["data-city"]
             state = address["data-state"]
-            if state in ["QROO","JAL","BC","DF","NL","YUC"]:
+            if state in ["QROO","JAL","DF","NL","YUC"]:
                 continue
             store_zip = address["data-postal-code"]
             phone = address["data-contact"]
@@ -107,6 +107,7 @@ def fetch_data():
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
+            # print("data === ",store)
             # print("data === ",str(store))
         # if len(soup.find('div',{'class':'js-property-list-container'}).find_all("div",{"data-brand":str(brand_id)})) <= 0:
         #     break

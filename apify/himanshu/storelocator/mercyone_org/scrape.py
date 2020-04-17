@@ -1,21 +1,20 @@
 import csv
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
-import platform
-system = platform.system()
-from sgrequests import SgRequests
 session = SgRequests()
+import platform
 
+system = platform.system()
 def get_driver():
     options = Options()
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
-    
     if "linux" in system.lower():
         return webdriver.Firefox(executable_path='./geckodriver', options=options)        
     else:
@@ -57,7 +56,7 @@ def fetch_data():
             for data in soup.find("div",{"class":"ih-tab-list ng-scope"}).find_all("div",{"class":"row ng-scope"},recursive=False):
                 location_name = data.find("div",{"class":"form-group ih-field-locationnamelink"}).find("div").text
                 addr = list(data.find("div",{"class":"ih-field-address-formated"}).stripped_strings)
-                street_address = " ".join(addr[:-1]).split("Suite")[0].strip()
+                street_address = " ".join(addr[:-1]).split("Suite")[0].split("Level")[0].replace(",","").strip()
                 city = addr[-1].split(",")[0]
                 state = " ".join(addr[-1].split(",")[1].split(" ")[:-1])
                 zipp = addr[-1].split(",")[1].split(" ")[-1]
@@ -74,7 +73,7 @@ def fetch_data():
                     if json_data['OrgUnitTypes']:
                         location_type = json_data['OrgUnitTypes'][0]['OrgUnitTypeName']
                     else:
-                        location_type = "<MISSING>"
+                        location_type = "<MIDSSING>"
                 except:
                     latitude = "<MISSING>"
                     longitude = "<MISSING>"

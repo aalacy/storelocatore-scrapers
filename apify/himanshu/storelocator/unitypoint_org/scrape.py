@@ -3,8 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -53,7 +51,6 @@ def fetch_data():
 				store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
 				store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 				# print(latitude)
-				
 				yield store
 			except:
 				pass
@@ -77,6 +74,27 @@ def fetch_data():
 	state = list(soup2.find("div",{"class":"footerWrapInner site-footer-inner"}).find("div",{"class":"columns"}).find("div",{"class":"column column-third column-3"}).stripped_strings)[-1].split(",")[1].strip().split( )[0]
 	zipp = list(soup2.find("div",{"class":"footerWrapInner site-footer-inner"}).find("div",{"class":"columns"}).find("div",{"class":"column column-third column-3"}).stripped_strings)[-1].split(",")[1].strip().split( )[1]
 	phone = soup2.find("div",{"class":"footerWrapInner site-footer-inner"}).find("div",{"class":"columns"}).find("div",{"class":"column column-third column-1"}).find("li").find("a").text.replace("Main Hospital:",'')
+	store1 = ["https://www.unitypoint.org", location_name, street_address, city, state, zipp, country_code,
+				store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+	yield store1
+
+	page_url="https://www.unitypoint.org/quadcities/muscatine-directions-and-maps.aspx"
+	r3 = session.get("https://www.unitypoint.org/quadcities/muscatine-directions-and-maps.aspx",headers=headers)
+	soup3= BeautifulSoup(r3.text,"lxml")
+	location_type="<MISSING>"
+	country_code = "US"
+	store_number="<MISSING>"
+	hours_of_operation = "<MISSING>"
+	location_name=list(soup3.find("aside",{"class":"page-callouts"}).stripped_strings)[1]
+	latitude = 	soup3.find_all("iframe")[2]['src'].split("&sll=")[1].split(",")[0]
+	longitude = soup3.find_all("iframe")[2]['src'].split("&sll=")[1].split(",")[1].split("&")[0]
+	street_address = soup3.find_all("iframe")[2]['src'].split("&hnear=")[-1].split("&t=m&z=")[0].replace("+",' ').split(",")[0]
+	city = soup3.find_all("iframe")[2]['src'].split("&hnear=")[-1].split("&t=m&z=")[0].replace("+",' ').split(",")[1]
+	state = soup3.find_all("iframe")[2]['src'].split("&hnear=")[-1].split("&t=m&z=")[0].replace("+",' ').split(",")[-1].strip().split(" ")[0]
+	zipp = soup3.find_all("iframe")[2]['src'].split("&hnear=")[-1].split("&t=m&z=")[0].replace("+",' ').split(",")[-1].strip().split(" ")[1]
+	phone = list(soup3.find("aside",{"class":"page-callouts"}).stripped_strings)[-1]
+	# print(soup3.find_all("iframe")[2]['src'].split("&sll=")[1].split(",")[1].split("&")[0])
+	# .find("div",{"class":"columns"}).find("div",{"class":"column column-third column-1"}).find("li").find("a").text.replace("Main Hospital:",'')
 	store1 = ["https://www.unitypoint.org", location_name, street_address, city, state, zipp, country_code,
 				store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 	yield store1

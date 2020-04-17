@@ -10,7 +10,6 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-address with no number,address contains state name,same lat & lng and i checked all data is true this website 
+address with no number ,same lat & lng this website
 
-
-2 loctaion address same bt lov type  differnt so i have scraped 
+not scraped all location because some locations are repeated 

@@ -6,9 +6,9 @@ import requests
 from bs4 import BeautifulSoup
 from selenium.webdriver.firefox.options import Options
 from selenium import webdriver
-
 import platform
 system = platform.system()
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -102,18 +102,18 @@ def fetch_data():
 
             # do your logic here.
             page_url = loc_detail["href"]
-            # page_url = "https://www.promedica.org/Pages/OHAM/OrgUnitDetails.aspx?OrganizationalUnitId=361"
+            # page_url = 'https://www.promedica.org/Pages/OHAM/OrgUnitDetails.aspx?OrganizationalUnitId=135'
             # print("page_url = ",page_url)
             r_location = request_wrapper(page_url,"get", headers=headers)
             soup_location = BeautifulSoup(r_location.text, "lxml")
             if soup_location.find("h1",{"class":"loc-top-image"}):
                 # store_number = loc_detail.find("OrganizationID").next
-                full_address = list(soup_location.find("div",{"class":"address-block xs-mbm"}).stripped_strings)
+                full_address = list(soup_location.find("div",{"class":"address-block xs-mbm"}).find("a").stripped_strings)
                 # print("full_address == ", full_address)
-                if len(full_address) > 2:
+                if len(full_address) > 1:
                     location_name = soup_location.find("h1",{"class":"loc-top-image"}).text
                     phone = soup_location.find("a",{"class":"phone"}).text
-                    street_address = ", ".join(full_address[1:-1])
+                    street_address = ", ".join(full_address[:-1])
                     if "Suite" in street_address:
                         street_address = "".join(street_address[:street_address.index("Suite")])
                     ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(full_address[-1]))

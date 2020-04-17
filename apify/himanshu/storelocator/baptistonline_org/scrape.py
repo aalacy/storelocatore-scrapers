@@ -6,6 +6,8 @@ import re
 import json
 import time
 
+
+
 session = SgRequests()
 
 def write_output(data):
@@ -47,6 +49,7 @@ def fetch_data():
 		store_number = "<MISSING>"
 		hours_of_operation = "<MISSING>"
 		page_url = "https://www.baptistonline.org/api/sitecore/LocationsFolder/LocationsListingSearchByType?query=11576&dsiID={32179276-CB99-4809-B92A-37738122FA0C}&locationType=Clinic&uniqueID=79bda440-e5ee-4f71-b0f6-8b4edb3d1d30&radius=5000&bmgonly=true&_=1587010148776"
+		
 		store = [locator_domain, location_name,street_address, city, state, zipp, country_code,
 				store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 		store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
@@ -117,9 +120,10 @@ def fetch_data():
 		main_arr.append(store)
 
 	for data in range(len(main_arr)):
-		if "Suite" in main_arr[data][2] or "Floor" in main_arr[data][2]:
-			main_arr[data][2]=main_arr[data][2].split("Suite")[0].split("Floor")[0].replace(",",'')
-
+		if "Suite" in main_arr[data][2] or "Floor" in main_arr[data][2] or "Ste" in main_arr[data][2] or "#" in main_arr[data][2]:
+			main_arr[data][2]=main_arr[data][2].split("Suite")[0].split("Floor")[0].split("Ste")[0].split("#")[0].replace(",",'')
+			# print(main_arr[data][2])
+		
 		if str(main_arr[data][2]+main_arr[data][-5]) in addressesess:
 			continue
 		addressesess.append(str(main_arr[data][2]+main_arr[data][-5]))

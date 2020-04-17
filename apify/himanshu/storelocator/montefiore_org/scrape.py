@@ -6,6 +6,7 @@ import re
 import json
  
 
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -50,6 +51,7 @@ def request_wrapper(url,method,headers,data=None):
         return None
 def hasNumbers(inputString):
     return any(char.isdigit() for char in inputString)
+
 def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
@@ -83,11 +85,9 @@ def fetch_data():
         location_name = location_detail.find("h2",{"itemprop":"name"}).text
         if location_detail.find("div",{"itemprop":"location"}) and location_detail.find("div",{"itemprop":"streetAddress"}):
             street_address = location_detail.find("div",{"itemprop":"streetAddress"}).text
-            street = "s"
-            if location_detail.find("div",{"itemprop":"name"}):
-                street = location_detail.find("div",{"itemprop":"name"}).text
-            if street[0].isdigit():
-                street_address = street+" "+street_address
+            # street = ""
+            # if location_detail.find("div",{"itemprop":"name"}):
+            #     street = location_detail.find("div",{"itemprop":"name"}).text
             if "Suite" in street_address:
                 street_address = "".join(street_address[:street_address.index("Suite")])
             if "suite" in street_address:
@@ -97,9 +97,10 @@ def fetch_data():
             if "floor" in street_address:
                 street_address = "".join(street_address[:street_address.index("floor")])
             street_address=street_address.split(',')[0]
-            
-            if hasNumbers(street_address)==False:
-                continue;
+            if hasNumbers(street_address):
+                street_address = street_address
+            else:
+                street_address = ""
             if location_detail.find("span",{"itemprop":"addressLocality"}):
                 city = location_detail.find("span",{"itemprop":"addressLocality"}).text
             if location_detail.find("span",{"itemprop":"addressRegion"}):
@@ -121,8 +122,8 @@ def fetch_data():
 
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                #print("data = " + str(store))
-                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
 

@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import requests
 
 
 
@@ -24,7 +25,7 @@ def fetch_data():
     
     locator_domain = base_url = "https://laclinica.org/"
 
-    r = session.get("https://laclinica.org/wp-admin/admin-ajax.php?action=mapp_query&filters=&list=true&query%5Bpost_type%5D=location&debug=")
+    r = requests.get("https://laclinica.org/wp-admin/admin-ajax.php?action=mapp_query&filters=&list=true&query%5Bpost_type%5D=location&debug=")
     json_data  = r.json()
     if 'pois' in json_data['data']:
         for key,value in enumerate(json_data['data']['pois']):
@@ -34,7 +35,7 @@ def fetch_data():
             state = '<MISSING>'
             zipp = '<MISSING>'
             # main_address = value['address'].split(',')
-            r = session.get(value['url'])
+            r = requests.get(value['url'])
             soup = BeautifulSoup(r.text, "lxml")
 
             main_address = soup.find('p', {'class': 'address'}).text.split(',')
@@ -78,14 +79,15 @@ def fetch_data():
             location_type = '<MISSING>'
             hours_of_operation = soup.find('p',{'class':'hours'}).text.replace('Hours:','').strip() if soup.find('p',{'class':'hours'}) else '<MISSING>'
             page_url = value['url']
-            street_address  = street_address.lower().replace('suite','').replace('floor','').capitalize().replace(city,'')
-            if "210 hospital drive vallejo" in street_address or "100 whitney ave vallejo" in  street_address:
-                street_address = street_address.replace("vallejo",'')
+            street_address  = street_address.split('Suite')[0].split('Floor')[0].replace(city,'')
+            # print(street_address)
+            if "210 Hospital Drive Vallejo" in street_address or "100 Whitney Ave Vallejo" in  street_address:
+                street_address = street_address.replace("Vallejo",'')
                 city = 'vallejo'
-            if "2000 sierra road concord" in street_address:
-                street_address = street_address.replace("concord",'')
+            if "2000 Sierra Road Concord" in street_address:
+                street_address = street_address.replace("Concord",'')
                 city = 'concord'
-            store = [locator_domain, location_name, street_address.replace("oakland",''), city, state, zipp, country_code,
+            store = [locator_domain, location_name, street_address.replace("oakland",'').replace(". Room S-5",''), city, state, zipp, country_code,
                  store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
 
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip().replace('<br>','') if x else "<MISSING>" for x in store]
