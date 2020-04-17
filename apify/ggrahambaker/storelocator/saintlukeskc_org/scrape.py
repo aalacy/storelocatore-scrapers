@@ -54,30 +54,32 @@ def fetch_data():
 
     cats = soup.find_all('a')
 
-    cat_links = [[cat.text,locator_domain[:-1] + cat['href']] for cat in cats]
+    cat_links = [[cat.text, locator_domain[:-1] + cat['href']] for cat in cats]
 
 
     all_store_data = []
     for cat_obj in cat_links:
         location_type = cat_obj[0]
         link = cat_obj[1]
-        if 'location?field_location_type_target_id' not in link:
-            print(link)
-            #continue
+        #if 'location?field_location_type_target_id' not in link:
+        #    print(link)
+        #    #continue
         driver.get(link)
         driver.implicitly_wait(5)
         
         next_button = driver.find_elements_by_css_selector('li.pager__item--next')
         while len(next_button) > 0:
             time.sleep(2)
+            print('done sleep')
             
             locs = driver.find_elements_by_css_selector('div.geolocation')
-            
+            print(len(locs))
             for loc in locs:
                 lat = loc.get_attribute('data-lat')
                 longit = loc.get_attribute('data-lng')
                 
                 location_name = loc.find_element_by_css_selector('h4').text
+                print(location_name)
                 addy = loc.find_element_by_css_selector('p.address').text
             
                 street_address, city, state, zip_code = parse_addy(addy)
@@ -102,7 +104,6 @@ def fetch_data():
                     page_url = '<MISSING>'
 
 
-
                 hours = '<MISSING>'
                 store_number = '<MISSING>'
                 street_address = street_address.split('Suite')[0].strip().split('Unit')[0].strip().replace(',', '').strip()
@@ -114,8 +115,7 @@ def fetch_data():
                 all_store_data.append(store_data)
                 
                 
-                
-
+            
             next_button[0].find_element_by_css_selector('a').click()
             
             time.sleep(2)

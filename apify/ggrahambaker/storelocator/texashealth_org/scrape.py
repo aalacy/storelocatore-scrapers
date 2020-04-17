@@ -47,13 +47,9 @@ def fetch_data():
     for opt in opts:
         opt_list.append(opt.text.strip())
 
-    session = SgRequests()
-    HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
-
     
     all_store_data = []
     for i, opt in enumerate(opt_list):
-        print(opt)
         if i == 0:
             continue
             
@@ -63,7 +59,6 @@ def fetch_data():
         time.sleep(5)
         
         more = driver.find_element_by_css_selector('div.load-more')
-        print(more.get_attribute('style'))
         while more.get_attribute('style') != 'display: none;':
             
             more.find_element_by_css_selector('input').click()
@@ -82,18 +77,14 @@ def fetch_data():
             
             location_name = loc.find_element_by_css_selector('div.field-navigationtitle').text
             street_address = loc.find_element_by_css_selector('div.field-address-line-1').text
-            #if len(loc.find_elements_by_css_selector('div.field-address-line-2')) > 0:
-            #    street_address += ' ' + loc.find_element_by_css_selector('div.field-address-line-2').text
+            street_address = street_address.split('Ste ')[0].split(' Suite ')[0].replace(',', '')
 
-
-            
             
             city = loc.find_element_by_css_selector('span.field-city').text.replace(',', '').strip()
             state = loc.find_element_by_css_selector('span.field-state').text.strip()
             zip_code = loc.find_element_by_css_selector('span.field-zip-code').text
             
             phone_number = loc.find_element_by_css_selector('a.field-phone-number').text
-            
             
             page_url = loc.find_element_by_css_selector('div.button-primary').find_element_by_css_selector('a').get_attribute('href')
             
