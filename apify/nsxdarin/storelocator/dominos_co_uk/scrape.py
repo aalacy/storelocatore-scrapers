@@ -1,10 +1,9 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 
-session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -15,7 +14,8 @@ def write_output(data):
 
 def fetch_data():
     for x in range(27500, 30000):
-        print(str(x))
+        if x % 10 == 0:
+            session = SgRequests()
         url = 'https://www.dominos.co.uk/storefindermap/getstoredetails?PostCode=London&StoreId=' + str(x)
         r = session.get(url, headers=headers)
         loc = '<MISSING>'
@@ -25,7 +25,8 @@ def fetch_data():
         store = x
         phone = ''
         name = ''
-        for line in r.iter_lines():
+        for raw_line in r.iter_lines():
+            line = str(raw_line)
             if '"name":"' in line:
                 name = line.split('"name":"')[1].split('"')[0]
                 lat = line.split('"latitude":"')[1].split('"')[0]
