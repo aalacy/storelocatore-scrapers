@@ -1,9 +1,9 @@
 import csv
-import requests
 from bs4 import BeautifulSoup
 import re
 from sgrequests import SgRequests
 import json
+import phonenumbers
 session = SgRequests()
 def write_output(data):
 	with open('data.csv', mode='w',newline="") as output_file:
@@ -23,248 +23,38 @@ def fetch_data():
         'accept': '*/*',
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
     }
-    returnres=[]
     base_url="https://www.steward.org/"
-    r=session.get("https://locations.steward.org/index.html",headers=headers)
-    soup= BeautifulSoup(r.text,"lxml")
-    main=soup.find('ul',{"class":"c-directory-list-content"}).find_all('li',{'class':'c-directory-list-content-item'})
-    for ltag  in main:
-        if ltag.find('span',{'class':"c-directory-list-content-item-count"}).text.strip()=="(1)":
-            page_url="https://locations.steward.org/"+ltag.find('a')['href'].replace('../','')
-            r1=session.get(page_url,headers=headers)
-            soup1= BeautifulSoup(r1.text,"lxml")
-            location_name=soup1.find('h1',{"itemprop":"name","class":"Hero-midSection--name"}).text.strip()
-            addr=list(soup1.find('a',{"itemprop":"address"}).stripped_strings)
-            street_address=addr[0].split('Suite')[0].strip()
-            ct=addr[1].strip().split(' ')
-            zipp=ct[-1]
-            del ct[-1]
-            state=ct[-1]
-            del ct[-1]
-            city=' '.join(ct).strip()
-            try:
-                phone=soup1.find('span',{"itemprop":"telephone"}).text.strip()
-            except:
-                phone=""
-            try:            
-                latitude=soup1.find('meta',{"itemprop":"latitude"})['content'].strip()
-            except:
-                latitude=""
-            try:
-                longitude=soup1.find('meta',{"itemprop":"longitude"})['content'].strip()
-            except:
-                longitude=""
-            try:    
-                hr=soup1.find('table',{"class":"c-location-hours-details"}).find('tbody').find_all('tr',{'class':"c-location-hours-details-row"})
-                hour=""
-                for h in hr:
-                    hour=hour+" "+h.find('td',{"class":"c-location-hours-details-row-day"}).text.strip()
-                    hour=hour+" "+' '.join(list(h.find('td',{"class":"c-location-hours-details-row-intervals"}).stripped_strings))
-            except:
-                hour=""
-            store =[]
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp if zipp else "<MISSING>")
-            store.append("US")
-            store.append("<MISSING>")
-            store.append(phone)
-            store.append("<MISSING>")
-            store.append(latitude if latitude else "<MISSING>")
-            store.append(longitude if longitude else "<MISSING>")
-            store.append(hour)
-            store.append(page_url)
-            if store[2] in addressess:
-                continue
-            addressess.append(store[2])
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            yield store 
-        else:
-            link="https://locations.steward.org/"+ltag.find('a')['href']
-            r1=session.get(link,headers=headers)
-            soup1= BeautifulSoup(r1.text,"lxml")
-            flag=True;
-            try:
-                main1=soup1.find('ul',{"class":"c-directory-list-content"}).find_all('li',{'class':'c-directory-list-content-item'})
-            except:
-                flag=False
-            if flag==True:
-                for ltag in main1:
-                    #print(ltag.find('a')['href'])
-                    if ltag.find('span',{'class':"c-directory-list-content-item-count"}).text.strip()=="(1)":
-                        page_url="https://locations.steward.org/"+ltag.find('a')['href'].replace('../','')
-                       # print(page_url)
-                        r1=session.get(page_url,headers=headers)
-                        soup1= BeautifulSoup(r1.text,"lxml")
-                        location_name=soup1.find('h1',{"itemprop":"name","class":"Hero-midSection--name"}).text.strip()
-                        addr=list(soup1.find('a',{"itemprop":"address"}).stripped_strings)
-                        street_address=addr[0].split('Suite')[0].strip()
-                        ct=addr[1].strip().split(' ')
-                        zipp=ct[-1]
-                        del ct[-1]
-                        state=ct[-1]
-                        del ct[-1]
-                        city=' '.join(ct).strip()
-                        try:
-                            phone=soup1.find('span',{"itemprop":"telephone"}).text.strip()
-                        except:
-                            phone=""
-                        try:            
-                            latitude=soup1.find('meta',{"itemprop":"latitude"})['content'].strip()
-                        except:
-                            latitude=""
-                        try:
-                            longitude=soup1.find('meta',{"itemprop":"longitude"})['content'].strip()
-                        except:
-                            longitude=""
-                        try:    
-                            hr=soup1.find('table',{"class":"c-location-hours-details"}).find('tbody').find_all('tr',{'class':"c-location-hours-details-row"})
-                            hour=""
-                            for h in hr:
-                                hour=hour+" "+h.find('td',{"class":"c-location-hours-details-row-day"}).text.strip()
-                                hour=hour+" "+' '.join(list(h.find('td',{"class":"c-location-hours-details-row-intervals"}).stripped_strings))
-                        except:
-                            hour=""
-                        store =[]
-                        store.append(base_url)
-                        store.append(location_name)
-                        store.append(street_address)
-                        store.append(city)
-                        store.append(state)
-                        store.append(zipp if zipp else "<MISSING>")
-                        store.append("US")
-                        store.append("<MISSING>")
-                        store.append(phone)
-                        store.append("<MISSING>")
-                        store.append(latitude if latitude else "<MISSING>")
-                        store.append(longitude if longitude else "<MISSING>")
-                        store.append(hour)
-                        store.append(page_url)
-                        if store[2] in addressess:
-                            continue
-                        addressess.append(store[2])
-                        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                        yield store 
-                    else:
-                        link="https://locations.steward.org/"+ltag.find('a')['href']
-                        r1=session.get(link,headers=headers)
-                        soup1= BeautifulSoup(r1.text,"lxml")
-                        main2=soup1.find_all('a',{"class":"viewpractice"})
-                        for atag in main2:
-                            page_url="https://locations.steward.org/"+atag['href'].replace('../','')
-                            #print(page_url)
-                            r1=session.get(page_url,headers=headers)
-                            soup1= BeautifulSoup(r1.text,"lxml")
-                            location_name=soup1.find('h1',{"itemprop":"name","class":"Hero-midSection--name"}).text.strip()
-                            addr=list(soup1.find('a',{"itemprop":"address"}).stripped_strings)
-                            street_address=addr[0].split('Suite')[0].strip()
-                            ct=addr[1].strip().split(' ')
-                            zipp=ct[-1]
-                            del ct[-1]
-                            state=ct[-1]
-                            del ct[-1]
-                            city=' '.join(ct).strip()
-                            try:
-                                phone=soup1.find('span',{"itemprop":"telephone"}).text.strip()
-                            except:
-                                phone=""
-                            try:            
-                                latitude=soup1.find('meta',{"itemprop":"latitude"})['content'].strip()
-                            except:
-                                latitude=""
-                            try:
-                                longitude=soup1.find('meta',{"itemprop":"longitude"})['content'].strip()
-                            except:
-                                longitude=""
-                            try:    
-                                hr=soup1.find('table',{"class":"c-location-hours-details"}).find('tbody').find_all('tr',{'class':"c-location-hours-details-row"})
-                                hour=""
-                                for h in hr:
-                                    hour=hour+" "+h.find('td',{"class":"c-location-hours-details-row-day"}).text.strip()
-                                    hour=hour+" "+' '.join(list(h.find('td',{"class":"c-location-hours-details-row-intervals"}).stripped_strings))
-                            except:
-                                hour=""
-                            store =[]
-                            store.append(base_url)
-                            store.append(location_name)
-                            store.append(street_address)
-                            store.append(city)
-                            store.append(state)
-                            store.append(zipp if zipp else "<MISSING>")
-                            store.append("US")
-                            store.append("<MISSING>")
-                            store.append(phone)
-                            store.append("<MISSING>")
-                            store.append(latitude if latitude else "<MISSING>")
-                            store.append(longitude if longitude else "<MISSING>")
-                            store.append(hour)
-                            store.append(page_url)
-                            if store[2] in addressess:
-                                continue
-                            addressess.append(store[2])
-                            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                            yield store 
-            else:
-                main2=soup1.find_all('a',{"class":"viewpractice"})
-                for atag in main2:
-                    page_url="https://locations.steward.org/"+atag['href'].replace('../','')
-                    #print(page_url)
-                    r1=session.get(page_url,headers=headers)
-                    soup1= BeautifulSoup(r1.text,"lxml")
-                    location_name=soup1.find('h1',{"itemprop":"name","class":"Hero-midSection--name"}).text.strip()
-                    addr=list(soup1.find('a',{"itemprop":"address"}).stripped_strings)
-                    street_address=addr[0].split('Suite')[0].strip()
-                    ct=addr[1].strip().split(' ')
-                    zipp=ct[-1]
-                    del ct[-1]
-                    state=ct[-1]
-                    del ct[-1]
-                    city=' '.join(ct).strip()
-                    try:
-                        phone=soup1.find('span',{"itemprop":"telephone"}).text.strip()
-                    except:
-                        phone=""
-                    try:            
-                        latitude=soup1.find('meta',{"itemprop":"latitude"})['content'].strip()
-                    except:
-                        latitude=""
-                    try:
-                        longitude=soup1.find('meta',{"itemprop":"longitude"})['content'].strip()
-                    except:
-                        longitude=""
-                    try:    
-                        hr=soup1.find('table',{"class":"c-location-hours-details"}).find('tbody').find_all('tr',{'class':"c-location-hours-details-row"})
-                        hour=""
-                        for h in hr:
-                            hour=hour+" "+h.find('td',{"class":"c-location-hours-details-row-day"}).text.strip()
-                            hour=hour+" "+' '.join(list(h.find('td',{"class":"c-location-hours-details-row-intervals"}).stripped_strings))
-                    except:
-                        hour=""
-                    store =[]
-                    store.append(base_url)
-                    store.append(location_name)
-                    store.append(street_address)
-                    store.append(city)
-                    store.append(state)
-                    store.append(zipp if zipp else "<MISSING>")
-                    store.append("US")
-                    store.append("<MISSING>")
-                    store.append(phone if phone else "<MISSING>")
-                    store.append("<MISSING>")
-                    store.append(latitude if latitude else "<MISSING>")
-                    store.append(longitude if longitude else "<MISSING>")
-                    store.append(hour if hour else "<MISSING>")
-                    store.append(page_url)
-                    if store[2] in addressess:
-                        continue
-                    addressess.append(store[2])
-                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                    yield store 
-       
+    r = session.get("https://www.steward.org/network/our-hospitals",headers=headers)
+    soup = BeautifulSoup(r.text,"lxml")
+    for data in soup.find_all("div",{"col-md-4 col-sm-6 col-xs-12 state-location"}):
+        location_name = data.find("h3").text
+        addr = list(data.find("div",{"class":"state-location-left"}).find("div").stripped_strings)
+        street_address = addr[1]
+        city = addr[-1].split(",")[0]
+        state = addr[-1].split(",")[-1].split()[0]
+        zipp = addr[-1].split(",")[-1].split()[1]
+        phone = phonenumbers.format_number(phonenumbers.parse(str(data.find("a",{"class":"phone"})['href'].replace("tel:","")), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
+        page_url = data.find("a",{"class":"website"})['href']
+        store =[]
+        store.append(base_url)
+        store.append(location_name)
+        store.append(street_address)
+        store.append(city)
+        store.append(state)
+        store.append(zipp)
+        store.append("US")
+        store.append("<MISSING>")
+        store.append(phone)
+        store.append("HOSPITAL")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append("<MISSING>")
+        store.append(page_url)
+        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+
+        yield store
+    
 def scrape():
-    data = fetch_data();
+    data = fetch_data()
     write_output(data)
 scrape()

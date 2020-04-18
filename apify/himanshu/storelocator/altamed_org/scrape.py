@@ -35,7 +35,7 @@ def fetch_data():
             if location_name == "AltaMed Medical Group -":
                 continue
             addr = data.find("div",{"class":"address"}).find("p").text
-            street_address = addr.split(",")[0]
+            street_address = addr.split(",")[0].split("Ste")[0].strip()
             city = addr.split(",")[-2]
             state = addr.split(",")[-1].split()[0]
             zipp = addr.split(",")[-1].split()[1]
@@ -84,7 +84,7 @@ def fetch_data():
         for data in soup.find_all("div",{"class":"clinic-wrapper affiliate-type"}):
             location_name = data.find("h3",{"class":"affiliate-type"}).text
             addr = data.find("div",{"class":"address"}).find("p").text
-            street_address = addr.split(",")[0]
+            street_address = addr.split(",")[0].split("Ste")[0].strip()
             city = addr.split(",")[-2]
             state = addr.split(",")[-1].split()[0]
             zipp = addr.split(",")[-1].split()[1]
