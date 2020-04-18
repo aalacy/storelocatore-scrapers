@@ -45,6 +45,8 @@ def fetch_data():
                 street_address = anchor['ad'].split(",")[0]
                 city = anchor['ad'].split(",")[1].strip().lower()
                 location_name = anchor['n']
+                store_number = location_name.split()[-1].strip()
+                # print(store_number)
                 if anchor["w"]:
                     page_url =  anchor["w"]
                 else:
@@ -62,7 +64,7 @@ def fetch_data():
                 store.append(state)
                 store.append(zipp if zipp else "<MISSING>")
                 store.append("UK")
-                store.append("<MISSING>")
+                store.append(store_number)
                 store.append(phone)
                 store.append(location_type)
                 store.append(latitude)
