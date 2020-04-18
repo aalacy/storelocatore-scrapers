@@ -1,5 +1,7 @@
 import csv
 from sgrequests import SgRequests
+from tenacity import retry
+from tenacity import stop_after_attempt
 
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -12,12 +14,22 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+@retry(stop=stop_after_attempt(3))
+def get_result(url, headers):
+    global session
+    try:
+        return session.get(url, headers=headers)
+    except:
+        session = SgRequests()
+        raise
+
 def fetch_data():
     for x in range(27500, 30000):
+        print(x)
         if x % 10 == 0:
             session = SgRequests()
         url = 'https://www.dominos.co.uk/storefindermap/getstoredetails?PostCode=London&StoreId=' + str(x)
-        r = session.get(url, headers=headers)
+        r = get_result(url, headers=headers)
         loc = '<MISSING>'
         website = 'dominos.co.uk'
         typ = '<MISSING>'
@@ -29,6 +41,7 @@ def fetch_data():
             line = str(raw_line)
             if '"name":"' in line:
                 name = line.split('"name":"')[1].split('"')[0]
+                print(name)
                 lat = line.split('"latitude":"')[1].split('"')[0]
                 lng = line.split('"longitude":"')[1].split('"')[0]
                 add = line.split('"address1":"')[1].split('"')[0] + ' ' + line.split('"address2":"')[1].split('"')[0]
