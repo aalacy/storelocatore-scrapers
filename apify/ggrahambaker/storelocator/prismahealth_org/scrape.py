@@ -82,24 +82,22 @@ def fetch_data():
 
         val = opt[0]
         location_type = opt[1]
+
         select.select_by_value(val)
         
-        
-        driver.find_element_by_css_selector('a.go-btn').click()
+        but = driver.find_element_by_css_selector('a.go-btn')
+
+        driver.execute_script("arguments[0].click();", but)
         time.sleep(2)
-        
-    
         
         source = str(driver.page_source)
         for line in source.split('\n'):
-            #print(line.strip())
             if line.strip().startswith("var locations"):
                 info = str(line.strip()).replace('var locations = ', '').replace(';', '')
                 j_loc = json.loads(info)
 
     
         for loc in j_loc:
-        
             lat = loc[2]
             longit = loc[3]
             
@@ -112,6 +110,14 @@ def fetch_data():
             addy = rows[1].find_all('td')[1].text.strip()
 
             street_address, city, state, zip_code = parse_address(addy)
+
+            if street_address.strip() == '':
+                street_address = '<MISSING>'
+
+            if ',' in city:
+                city = city.split(',')[1]
+
+
             phone_number = rows[2].find_all('td')[1].text.strip()
             
             if phone_number == '':

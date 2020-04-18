@@ -61,19 +61,18 @@ def fetch_data():
     for cat_obj in cat_links:
         location_type = cat_obj[0]
         link = cat_obj[1]
-        #if 'location?field_location_type_target_id' not in link:
-        #    print(link)
-        #    #continue
+        if 'field_location_type_target_id=' not in link:
+            continue
         driver.get(link)
         driver.implicitly_wait(5)
         
-        next_button = driver.find_elements_by_css_selector('li.pager__item--next')
-        while len(next_button) > 0:
+        #next_button = driver.find_elements_by_css_selector('li.pager__item--next')
+        while True:
+            next_button = driver.find_elements_by_css_selector('li.pager__item--next')
+
             time.sleep(2)
-            print('done sleep')
-            
+           
             locs = driver.find_elements_by_css_selector('div.geolocation')
-            print(len(locs))
             for loc in locs:
                 lat = loc.get_attribute('data-lat')
                 longit = loc.get_attribute('data-lng')
@@ -115,11 +114,12 @@ def fetch_data():
                 all_store_data.append(store_data)
                 
                 
-            
-            next_button[0].find_element_by_css_selector('a').click()
-            
+            if len(next_button) == 0:
+                break
+            butt = next_button[0].find_element_by_css_selector('a')
+            driver.execute_script("arguments[0].click();", butt)
             time.sleep(2)
-            next_button = driver.find_elements_by_css_selector('li.pager__item--next')
+            
             driver.implicitly_wait(5)
             
             
