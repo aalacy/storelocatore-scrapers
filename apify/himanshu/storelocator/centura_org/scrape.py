@@ -80,11 +80,13 @@ def fetch_data():
 
             if "Suite" in street_address:
                 street_address = street_address.split("Suite")[0].strip()
+            if "Ste" in street_address:
+                street_address = street_address.split("Ste")[0].strip()
             store = []
         
             store.append(base_url)
             store.append(location_name)
-            store.append(street_address.split('Ste')[0].strip().split('St')[0].strip())
+            store.append(street_address.replace("Floor",""))
             store.append(city)
             store.append(state)
             store.append(zipp)   

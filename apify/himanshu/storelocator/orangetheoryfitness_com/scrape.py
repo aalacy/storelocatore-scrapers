@@ -58,11 +58,13 @@ def fetch_data():
         base_url=  "https://www.orangetheoryfitness.com/service/directorylisting/filterMarkers?s="+str(zip_code)
         try:
             r = session.get(base_url)
+            json_data = r.json()
         except:
             pass
-        json_data = r.json()
+        
         # print(len(json_data['markers']))
         for i in json_data['markers']:
+            hours_of_operation="<MISSING>"
             store_number = i['id']
             location_name = i['name']
             street_address = i['address1']
@@ -94,10 +96,13 @@ def fetch_data():
             latitude  = i['lat']
             longitude = i['lon']
             page_url = i['web_site']
-            r1 = session.get(page_url)
-            soup1 = BeautifulSoup(r1.text,"lxml")
             try:
-                hours_of_operation =json.loads(soup1.find("script",{"type":"application/ld+json"}).text)['openingHours']
+                r1 = session.get(page_url)
+                soup1 = BeautifulSoup(r1.text,"lxml")
+                try:
+                    hours_of_operation =json.loads(soup1.find("script",{"type":"application/ld+json"}).text)['openingHours']
+                except:
+                    hours_of_operation="<MISSING>"
             except:
                 hours_of_operation="<MISSING>"
 
