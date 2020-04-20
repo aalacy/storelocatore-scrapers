@@ -49,7 +49,9 @@ def fetch_data():
         street_address = soup.find('div', {'itemprop': 'streetAddress'}).text
         if 'closed' in street_address:
             continue
+        
         street_address = street_address.split(',')[0].replace('Chicago', '').strip()
+
         city = soup.find('span', {'itemprop': 'addressLocality'}).text
         state = soup.find('span', {'itemprop': 'addressRegion'}).text
         zip_code = soup.find('span', {'itemprop': 'postalCode'}).text

@@ -96,8 +96,6 @@ class Scraper(Scrape):
 
         for store in stores:
             if store["OfficeNumber"] not in seen:
-
-                print(store)
                 # Store ID
                 location_id = store["OfficeNumber"]
 
@@ -105,7 +103,7 @@ class Scraper(Scrape):
                 location_title = "Hackson Hewitt" + " " + store["City"]
 
                 # Type
-                location_type = store["Location"].strip()
+                location_type = store["TypeName"].strip()
 
                 if location_type == '':
                     location_type = '<MISSING>'
