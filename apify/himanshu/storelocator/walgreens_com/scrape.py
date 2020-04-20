@@ -24,7 +24,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 600
-    MAX_DISTANCE = 100
+    MAX_DISTANCE = 10
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
     headers = {
@@ -36,7 +36,7 @@ def fetch_data():
         result_coords = []
         lat = coord[0]
         lng = coord[1]
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         page = 1
         while True:
             data = '{"lat":'+str(lat)+',"lng":'+str(lng)+',"requestType":"dotcom","s":"1000","p":"'+str(page)+'"}'

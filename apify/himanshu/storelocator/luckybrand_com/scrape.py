@@ -15,9 +15,8 @@ from sgrequests import SgRequests
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
+    with open('data.csv', mode='w', newline='') as output_file:
+        writer = csv.writer(output_file, delimiter=',',quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip",
@@ -27,132 +26,82 @@ def write_output(data):
             writer.writerow(row)
 
 
-HEADERS = {
-    "Accept": "*/*",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Authorization": "R8-Gateway App=shoplocal, key=luckybrand, Type=SameOrigin",
-    "Connection": "keep-alive",
-    "Cookie": "r8d=6445a34d-455d-f094-0e82-872f195dce4b; r8lsc_luckybrand_shoplocal=40613",
-    "Host": "luckybrand.radius8.com",
-    "Referer": "https://luckybrand.radius8.com/sl/shoplocal?r8dref=6445a34d-455d-f094-0e82-872f195dce4b&",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Site": "same-origin",
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36",
-    "X-Device-Id": "6445a34d-455d-f094-0e82-872f195dce4b",
-    "X-Domain-Id": "luckybrand",
-    "X-Request-Tag": "rsQhlMGgA5WZx773hlUsrlS/sNklkVDFoas5cQy36JQBAFEx/5InLVjTdGASEV3Dcym7EfhoCsZOlWGJvrtLcw==#NDY4NzQ1"
-}
-
-
 def fetch_data():
-    return_main_object = []
+    addresses = []
     search = sgzip.ClosestNSearch()
-    search.initialize(include_canadian_fsas=True)
+    search.initialize(country_codes= ["US","CA"])
+    MAX_RESULTS = 50
+    MAX_DISTANCE = 100
+    current_results_len = 0  # need to update with no of count.
+    coord = search.next_coord()
+
     base_url = "https://www.luckybrand.com"
     coord = search.next_coord()
-    keys = set()
     while coord:
-        # print('{} zip codes remaining'.format(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
-        ts = int(round(time.time() * 1000))
-        query_lat, query_lng = coord[0], coord[1]
-        session = SgRequests()
-        sleep(randint(10, 100))       
-        r = session.get("https://luckybrand.radius8.com/api/v1/streams/stores?lat={}&lng={}&radius=1000&units=MI&limit=50&_ts={}".format(
-            query_lat, query_lng, ts), headers=HEADERS)
+        lat = coord[0]
+        lng = coord[1]
         
-        parsed = r.json()
-        # print(parsed)
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        for val in parsed['results']:
-            address = val['address']['address1']
-            if "address2" in val['address'].keys():
-                if val['address']['address2']:
-                    address += " " + val['address']['address2']
-                    # print(address)
-            city = val['address']['city']
-            if "state" in val['address'].keys():
-                state = val['address']['state']
-            else:
-                state = "<MISSING>"
-            zip = val['address']['postal_code']
-            if "contact_info" in val:
-                if "phone" in val['contact_info']:
-                    phone = val['contact_info']['phone']
-                else:
-                    phone = "<MISSING>"
-            else:
-                phone = "<MISSING>"
-            country = val['address']['country']
-            # print(country)
-            # if country == "USA":
-            #     country = "US"
-            # elif country == "CAN":
-            #     country = "CA"
-            # else:
-            #     continue
-            lat = val['geo_point']['lat']
-            lng = val['geo_point']['lng']
-            result_coords.append((lat, lng))
-            hour = '<MISSING>'
-            if 'hours' in val:
-                hour = ''
-                for hr in val['hours']:
-                    if "closed" not in val['hours'][hr][0]:
-                        d1 = datetime.strptime("".join(str(
-                            val['hours'][hr][0][:-2])) + ":" + "".join(str(val['hours'][hr][0][-2:])), "%H:%M")
-                        t1 = d1.strftime("%I:%M %p")
-                    else:
-                        t1 = "closed"
-                    if "closed" not in val['hours'][hr][1]:
-                        d2 = datetime.strptime("".join(str(
-                            val['hours'][hr][1][:-2])) + ":" + "".join(str(val['hours'][hr][1][-2:])), "%H:%M")
-                        t2 = d2.strftime("%I:%M %p")
-                    else:
-                        t2 = ""
-                    if val:
-                        hour += hr + ":" + t1 + " - " + t2 + " "
-                hour = hour.replace("closed -", "closed ")
-                # print(hour)
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~")
-
-            name = val['name'] if 'name' in val else '<MISSING>'
-            page_url = val["extra_attributes"]["custom"]['landingPageUrl'] if 'extra_attributes' in val else '<MISSING>'
-            if "[[LANDING PAGE URL]]" in page_url:
-                page_url = "<MISSING>"
+        json_data = session.get("https://liveapi.yext.com/v2/accounts/me/entities/geosearch?api_key=0700165de62eb1a445df7d02b02c7831&v=20181017&location="+str(lat)+",%20"+str(lng)+"&limit=50&radius=500&entityTypes=location,healthcareProfessional,restaurant,healthcareFacility,atm&fields=name,hours,address,websiteUrl&resolvePlaceholders=true&searchIds=").json()['response']['entities']
+        current_result_len = len(json_data)
+        for data in json_data:
+            if "CLOSED" in data['name']:
+                continue
+            country_code = data['address']['countryCode']
+            if country_code not in ['US','CA']:
+                continue
+            page_url = data['websiteUrl']['url']
             # print(page_url)
+            street_address = (data['address']['line1'] +" "+ str(data['address']['line1'])).strip()
+            city = data['address']['city']
+           
+            state = data['address']['region']
+            zipp = data['address']['postalCode']
+            store_number = data['meta']['id']
+            location_type = data['meta']['schemaTypes'][0]
+            r = session.get(page_url)
+            soup = BeautifulSoup(r.text, "lxml")
+            location_name = soup.find("title").text
+            try:
+                hours = " ".join(list(soup.find("tbody",{"class":"hours-body"}).stripped_strings))
+            except:
+                hours = "<MISSING>"
+            info = json.loads(soup.find(lambda tag:(tag.name == "script") and "latitude" in tag.text).text)
+            latitude = info['geo']['latitude']
+            longitude = info['geo']['longitude']
+            phone = info['telephone']
+
+            result_coords.append((latitude,longitude))
             store = []
             store.append(base_url)            
-            store.append(name)
-            store.append(address)
+            store.append(location_name)
+            store.append(street_address)
             store.append(city)
             store.append(state)
-            store.append(zip)
-            store.append(country)
-            store.append("<MISSING>")
+            store.append(zipp)
+            store.append(country_code)
+            store.append(store_number)
             store.append(phone)
-            store.append("<MISSING>")
-            store.append(lat)
-            store.append(lng)
-            if hour:
-                store.append(hour)
-            else:
-                store.append("<MISSING>")
+            store.append(location_type)
+            store.append(latitude)
+            store.append(longitude)
+            store.append(hours)
             store.append(page_url)
-            key = '|'.join([address, city, state, zip])
-            if key not in keys:
-                yield store
-                # print("data == " + str(store))
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                # return_main_object.append(store)
-                keys.add(key)
-        if len(result_coords) > 0:
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
+            yield store
+           
+        if current_results_len < MAX_RESULTS:
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
             search.max_count_update(result_coords)
         else:
-            search.max_distance_update(100)
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         coord = search.next_coord()
-    # return return_main_object
+    
 
 
 def scrape():

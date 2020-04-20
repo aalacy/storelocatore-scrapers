@@ -9,6 +9,7 @@ from selenium import webdriver
 import platform
 system = platform.system()
 
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -102,7 +103,8 @@ def fetch_data():
 
             # do your logic here.
             page_url = loc_detail["href"]
-            # page_url = 'https://www.promedica.org/Pages/OHAM/OrgUnitDetails.aspx?OrganizationalUnitId=135'
+            # page_url = 'https://www.promedica.org/Pages/OHAM/OrgUnitDetails.aspx?OrganizationalUnitId=823'
+            # page_url = 'https://www.promedica.org/Pages/OHAM/OrgUnitDetails.aspx?OrganizationalUnitId=1120'
             # print("page_url = ",page_url)
             r_location = request_wrapper(page_url,"get", headers=headers)
             soup_location = BeautifulSoup(r_location.text, "lxml")
@@ -116,6 +118,25 @@ def fetch_data():
                     street_address = ", ".join(full_address[:-1])
                     if "Suite" in street_address:
                         street_address = "".join(street_address[:street_address.index("Suite")])
+                    if "suite" in street_address:
+                        street_address = "".join(street_address[:street_address.index("suite")])
+                    if "Floor" in street_address:
+                        street_address = "".join(street_address[:street_address.index("Floor")])
+                    if "floor" in street_address:
+                        street_address = "".join(street_address[:street_address.index("floor")])
+                    if "Ste." in street_address:
+                        street_address = "".join(street_address[:street_address.index("Ste.")])
+                    if "ste." in street_address:
+                        street_address = "".join(street_address[:street_address.index("ste.")])
+
+                    start_index = re.search(r"\d", street_address).start()
+                    if start_index:
+                        # print("Street Address : "+ street_address)
+                        if not street_address[start_index:].isnumeric():
+                            # print("Success Street Address : "+ street_address)
+                            street_address = street_address[start_index:]
+
+
                     ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(full_address[-1]))
                     us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(full_address[-1]))
 

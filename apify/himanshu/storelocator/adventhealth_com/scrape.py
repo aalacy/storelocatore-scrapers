@@ -7,7 +7,6 @@ import unicodedata
 import requests
 import time
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -20,21 +19,24 @@ def write_output(data):
 def fetch_data():
     addressesess = []
     url = "https://www.adventhealth.com/views/ajax?_wrapper_format=drupal_ajax"
-    for data in range(0,51):
+    page = 0
+    while True:
         querystring = {"_wrapper_format":"drupal_ajax"}
-        payload = "view_name=ahs_facility_search_list&view_display_id=map&view_dom_id=b0da30de68d9f6634a06d1872be164a69563df4a3477c2c70378c9bbd380baf4&pager_element=0&geolocation_geocoder_google_geocoding_api_state=1&page="+str(data)+"&_drupal_ajax=1&ajax_page_state%5Btheme%5D=ahs_theme&ajax_page_state%5Blibraries%5D=ahs_admin%2Fahstabletools%2Cahs_banners%2Femergency%2Cahs_breadcrumbs%2Fviews%2Cahs_datalayer%2Fvisitor_geolocation%2Cahs_js%2Fahs_tooltip%2Cahs_js%2Fanchor_links%2Cahs_js%2Fautocomplete%2Cahs_js%2Fform_validate.extended%2Cahs_js%2FiframeRedirector%2Cahs_js%2Frandom_hero_picker%2Cahs_media%2Fblazy_slick%2Cahs_microsites%2Fnon_microsite_page%2Cahs_search%2Fclear_all_facets_block%2Cahs_search%2Ffacet_facility_checkbox_widget%2Cahs_search%2Ffacets%2Cahs_search%2Ffacets_header_block%2Cahs_search%2Ffacets_module_checkbox_widget_extended%2Cahs_search%2Fgeolocation.links%2Cahs_search%2Fphysician_search.autocomplete%2Cahs_theme%2Fcore%2Cahs_views%2Fbef_auto_submit%2Cahs_views%2Fexposed_form_persistent_facets%2Cahs_views%2Fexposed_form_persistent_facets_ajax%2Cbetter_exposed_filters%2Fgeneral%2Ccore%2Fhtml5shiv%2Ccore%2Fpicturefill%2Cdatalayer%2Fhelper%2Cextlink%2Fdrupal.extlink%2Cfacets%2Fdrupal.facets.hierarchical%2Cgeolocation%2Fgeolocation.views.filter.geocoder%2Cparagraphs%2Fdrupal.paragraphs.unpublished%2Csearch_api_autocomplete%2Fsearch_api_autocomplete%2Csystem%2Fbase%2Cviews%2Fviews.module"
+        payload = "view_name=ahs_facility_search_list&view_display_id=map&view_dom_id=b0da30de68d9f6634a06d1872be164a69563df4a3477c2c70378c9bbd380baf4&pager_element=0&geolocation_geocoder_google_geocoding_api_state=1&page="+str(page)+"&_drupal_ajax=1&ajax_page_state%5Btheme%5D=ahs_theme&ajax_page_state%5Blibraries%5D=ahs_admin%2Fahstabletools%2Cahs_banners%2Femergency%2Cahs_breadcrumbs%2Fviews%2Cahs_datalayer%2Fvisitor_geolocation%2Cahs_js%2Fahs_tooltip%2Cahs_js%2Fanchor_links%2Cahs_js%2Fautocomplete%2Cahs_js%2Fform_validate.extended%2Cahs_js%2FiframeRedirector%2Cahs_js%2Frandom_hero_picker%2Cahs_media%2Fblazy_slick%2Cahs_microsites%2Fnon_microsite_page%2Cahs_search%2Fclear_all_facets_block%2Cahs_search%2Ffacet_facility_checkbox_widget%2Cahs_search%2Ffacets%2Cahs_search%2Ffacets_header_block%2Cahs_search%2Ffacets_module_checkbox_widget_extended%2Cahs_search%2Fgeolocation.links%2Cahs_search%2Fphysician_search.autocomplete%2Cahs_theme%2Fcore%2Cahs_views%2Fbef_auto_submit%2Cahs_views%2Fexposed_form_persistent_facets%2Cahs_views%2Fexposed_form_persistent_facets_ajax%2Cbetter_exposed_filters%2Fgeneral%2Ccore%2Fhtml5shiv%2Ccore%2Fpicturefill%2Cdatalayer%2Fhelper%2Cextlink%2Fdrupal.extlink%2Cfacets%2Fdrupal.facets.hierarchical%2Cgeolocation%2Fgeolocation.views.filter.geocoder%2Cparagraphs%2Fdrupal.paragraphs.unpublished%2Csearch_api_autocomplete%2Fsearch_api_autocomplete%2Csystem%2Fbase%2Cviews%2Fviews.module"
         headers = {
             'content-type': "application/x-www-form-urlencoded",
             'cache-control': "no-cache",
             'postman-token': "67ad5f12-df8c-ff6c-91cc-8ca13af8abd5"
         }
         try:
-            response = session.post(url, data=payload, headers=headers, params=querystring)
+            response = requests.post(url, data=payload, headers=headers, params=querystring)
             json_data = json.loads(response.text)
         except:
             pass
         for data1 in json_data:
             if "data" in data1:
+                if "No locations were found that match your search" in data1['data']:
+                    break
                 soup = BeautifulSoup(data1['data'],'lxml')
                 Address = soup.find_all("span",{"property":"streetAddress"})
                 city1 = soup.find_all("span",{"property":"addressLocality"})
@@ -68,7 +70,7 @@ def fetch_data():
                             else:
                                 page_url1 = "https://www.adventhealth.com"+page_url
                             # print(page_url1)
-                            response1 = session.get(page_url1)
+                            response1 = requests.get(page_url1)
                         except:
                             pass
 
@@ -145,10 +147,10 @@ def fetch_data():
                     if store[2] in addressesess:
                         continue
                     addressesess.append(store[2])
-                    # print("data == "+str(store))
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                    #print("data == "+str(store))
+                    #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                     yield store
-
+    page+=1
 def scrape():
     data = fetch_data()
     write_output(data)

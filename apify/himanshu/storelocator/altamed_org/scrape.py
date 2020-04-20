@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from sgrequests import SgRequests
-import sgzip
 import json
 session = SgRequests()
 def write_output(data):
@@ -12,7 +11,7 @@ def write_output(data):
 
 		# Header
 		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-						 "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+						 "store_number", "phone", "location_type", "service", "latitude", "longitude", "hours_of_operation","page_url"])
 		# Body
 		for row in data:
 			writer.writerow(row)
@@ -24,35 +23,32 @@ def fetch_data():
         'accept': '*/*',
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
     }
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 25
-    MAX_DISTANCE = 50
-    current_results_len = 0  # need to update with no of count.
-    coord = search.next_coord()
-
-    returnres=[]
+    
     base_url="https://www.altamed.org/"
-    while coord:
-        result_coords = []
-        lat = coord[0]
-        lng = coord[1]
-        page_url="https://www.altamed.org/find/resultsJson?type=clinic&affiliates=yes&lat=" + str(lat) +"&lng=" + str(lng)
-        r=session.get(page_url).json()
-        for item  in r['items']:
-            location_name=item['name'].strip()
-            addr=item['address'].split(',')
-            street_address=addr[0].split('Suite')[0].strip().split('Ste')[0].strip()
-            city=addr[-3].strip()
-            state=addr[-2].strip()
-            zipp=addr[-1].strip()
-            phone=item['phone'].strip()
-            latitude=item['lat']
-            longitude=item['lon']
-            location_type = item['location_type']
-            hour=re.sub(r'\s+'," ",item['urgent_care_work_hour'].strip()).strip()
-            result_coords.append((latitude,longitude))
-
+    page = 1
+    while True:
+        page_url="https://www.altamed.org/find/facility?page="+str(page)
+        r = session.get(page_url)
+        soup = BeautifulSoup(r.text, "lxml")
+        for data in soup.find_all("div",{"class":"clinic-wrapper altamed-type"}):
+            location_name = data.find("h3",{"class":"altamed-type"}).text
+            if location_name == "AltaMed Medical Group -":
+                continue
+            addr = data.find("div",{"class":"address"}).find("p").text
+            street_address = addr.split(",")[0].split("Ste")[0].strip()
+            city = addr.split(",")[-2]
+            state = addr.split(",")[-1].split()[0]
+            zipp = addr.split(",")[-1].split()[1]
+            phone = data.find("div",{"class":"phone"}).text.strip()
+            location_type = "AltaMed Location"
+            if data.find("div",{"class":"specialties"}):
+                service = data.find("div",{"class":"specialties"}).text.strip()
+            else:
+                service = "<MISSING>"
+            hours = ''
+            for day in data.find_all("div",{"class":"col-xs-6 col-sm-3"}):
+                hours+= " " +" ".join(list(day.stripped_strings))
+            hours = hours
 
             store =[]
             store.append(base_url)
@@ -64,27 +60,66 @@ def fetch_data():
             store.append("US")
             store.append("<MISSING>")
             store.append(phone if phone else "<MISSING>")
-            store.append(location_type if location_type else '<MISSING>')
-            store.append(latitude if latitude else "<MISSING>")
-            store.append(longitude if longitude else "<MISSING>")
-            store.append(hour if hour else "<MISSING>")
+            store.append(location_type)
+            store.append(service)
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            store.append(hours)
             store.append(page_url)
-            if store[2] in addressess:
-                continue
-            addressess.append(store[2])
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
     
             yield store
-        if current_results_len < MAX_RESULTS:
-            # print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        coord = search.next_coord()
-    # return returnres;
+        if soup.find("div",{"class":"results-separator"}):
+            break
+        page+=1
+
+        
+    page = 4
+    while True:
+        page_url="https://www.altamed.org/find/facility?page="+str(page)
+        r = session.get(page_url)
+        soup = BeautifulSoup(r.text, "lxml")
+        if soup.find("div",{"class":"clinic-wrapper affiliate-type"}) == None:
+            break
+        for data in soup.find_all("div",{"class":"clinic-wrapper affiliate-type"}):
+            location_name = data.find("h3",{"class":"affiliate-type"}).text
+            addr = data.find("div",{"class":"address"}).find("p").text
+            street_address = addr.split(",")[0].split("Ste")[0].strip()
+            city = addr.split(",")[-2]
+            state = addr.split(",")[-1].split()[0]
+            zipp = addr.split(",")[-1].split()[1]
+            store_number = location_name.split("#")[-1]
+            phone = data.find("div",{"class":"phone"}).text.strip()
+            location_type = "Affiliated Location"
+            if data.find("div",{"class":"specialties"}):
+                service = data.find("div",{"class":"specialties"}).text.strip()
+            else:
+                service = "<MISSING>"
+            hours = ''
+            for day in data.find_all("div",{"class":"col-xs-6 col-sm-3"}):
+                hours+= " " +" ".join(list(day.stripped_strings))
+            hours = re.sub(r'\s+'," ",hours)
+
+            store =[]
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
+            store.append("US")
+            store.append(store_number)
+            store.append(phone)
+            store.append(location_type)
+            store.append(service)
+            store.append("<MISSING>")
+            store.append("<MISSING>")
+            store.append(hours)
+            store.append(page_url)
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+    
+            yield store
+        page+=1
 
 def scrape():
     data = fetch_data();

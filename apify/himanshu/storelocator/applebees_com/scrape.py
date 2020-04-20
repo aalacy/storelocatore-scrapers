@@ -18,7 +18,7 @@ def get_driver():
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--window-size=1920,1080')
     if "linux" in system.lower():
-        return webdriver.Firefox(executable_path='./geckodriver', options=options)
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
     else:
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 def write_output(data):
@@ -61,11 +61,17 @@ def fetch_data():
     for link in soup.find("div",class_="site-map").find_all("ul")[8:]:
         for a in link.find_all("a",class_="nav-link"):
             a = "https://www.applebees.com"+a["href"]
-            driver.get(a)
-            time.sleep(3)
-            soup1 = BeautifulSoup(driver.page_source,"lxml")
-            loc_section = soup1.find("div",{"id":"location-cards-wrapper"})
+            # print(a)
             try:
+                driver.get(a)
+                time.sleep(3)
+                soup1 = BeautifulSoup(driver.page_source,"lxml")
+            except Exception as e:
+                #print(e)
+                continue
+            try:
+                loc_section = soup1.find("div",{"id":"location-cards-wrapper"})
+                
                 for loc_block in loc_section.find_all("div",class_="owl-item"):
                     country_code = loc_block.find("input",{"name":"location-country"})["value"]
                     geo_code = loc_block.find("input",{"name":"location-country"}).nextSibling.nextSibling
@@ -84,6 +90,8 @@ def fetch_data():
                     driver.get(page_url)
                     time.sleep(3)
                     soup2 = BeautifulSoup(driver.page_source,"lxml")
+                    # hours_of_operation = " ".join(list(soup2.find("div",class_="hours").stripped_strings))
+                    # print(hours_of_operation)
                     try:
                         hours_of_operation = " ".join(list(soup2.find("div",class_="hours").stripped_strings))
                     except :
@@ -96,13 +104,11 @@ def fetch_data():
 
                         store = [x if x else "<MISSING>" for x in store]
 
-                       # print("data = " + str(store))
+                        #print("data = " + str(store))
                         #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                         yield store
             except:
-               # print(a)
-                continue            
-
+                continue
 
             
 

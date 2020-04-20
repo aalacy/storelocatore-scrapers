@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import requests
 
 session = SgRequests()
 def write_output(data):
@@ -24,7 +25,7 @@ def fetch_data():
     }
     base_url = "https://www.bostonmarket.com/"
 
-    r_state = session.get("https://www.bostonmarket.com/location/")
+    r_state = requests.get("https://www.bostonmarket.com/location/")
     soup_state = BeautifulSoup(r_state.text, "lxml")
 
     for state_link in soup_state.find_all("a",{"class":"Directory-listLink"}):
@@ -32,7 +33,7 @@ def fetch_data():
         if state_link['data-count'] == "(1)":
             page_url = "https://www.bostonmarket.com/location/"+s_link
             # print(page_url)
-            location_r = session.get(page_url)
+            location_r = requests.get(page_url)
             location_soup = BeautifulSoup(location_r.text, "lxml")
 
             location_name = "Boston Market" +" "+location_soup.find("div",{"class":"Core-location"}).text.strip()
@@ -77,7 +78,7 @@ def fetch_data():
             yield store
         else:
             city_link = "https://www.bostonmarket.com/location/"+state_link['href']
-            city_r = session.get(city_link)
+            city_r = requests.get(city_link)
             city_soup = BeautifulSoup(city_r.text, "lxml")
 
             for location in city_soup.find_all("a",{"class":"Directory-listLink"}):
@@ -85,7 +86,7 @@ def fetch_data():
                     
                     page_url = "https://www.bostonmarket.com/location/"+location['href']
                     # print(page_url)
-                    location_r = session.get(page_url)
+                    location_r = requests.get(page_url)
                     location_soup = BeautifulSoup(location_r.text, "lxml")
                     location_name = "Boston Market" +" "+location_soup.find("div",{"class":"Core-location"}).text.strip()
                     if "Ramstein, Miesenbach" in location_name:
@@ -128,12 +129,12 @@ def fetch_data():
                     
                 else:
                     store_link = "https://www.bostonmarket.com/location/"+location['href']
-                    store_r = session.get(store_link)
+                    store_r = requests.get(store_link)
                     store_soup = BeautifulSoup(store_r.text, "lxml")
 
                     for location in store_soup.find_all("a",{"class":"Teaser-titleLink"}):
                         page_url = location['href'].replace("..","https://www.bostonmarket.com/location")
-                        location_r = session.get(page_url)
+                        location_r = requests.get(page_url)
                         location_soup = BeautifulSoup(location_r.text, "lxml")
         
                         # print(page_url)

@@ -10,4 +10,6 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-address with no number,same lat & lng this website
+same lat & lng this website
+
+only 50 location avilabel in this website ,and other location is duplicate 

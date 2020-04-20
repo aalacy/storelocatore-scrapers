@@ -148,9 +148,6 @@ def fetch_data():
         else:
             hours_raw = 'Monday-Friday, 9 a.m.-3 p.m.'
 
-        
-        
-        #
         if hours_raw == '':
             hours = '<MISSING>'
         else:

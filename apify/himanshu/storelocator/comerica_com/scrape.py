@@ -1,19 +1,16 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from sgrequests import SgRequests
+import requests
 import re
 import json
 import sgzip
 # from tenacity import *
 # import timeout_decorator
 
-
-session = SgRequests()
-
 session = SgRequests()
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -26,13 +23,14 @@ def fetch_data():
     addressess = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 10
+    MAX_RESULTS = 200
+    MAX_DISTANCE = 50
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
     base_url = "https://www.comerica.com"
 
     while zip_code:
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
         page = 1
         while True:
@@ -98,7 +96,7 @@ def fetch_data():
                     store.append(location_type)
                     store.append(latitude)
                     store.append(longitude)
-                    store.append(hours_of_operation.replace('PM','PM,'))
+                    store.append(hours_of_operation)
                     store.append(page_url)
 
                     if store[2] in addressess:
