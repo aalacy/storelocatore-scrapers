@@ -41,7 +41,6 @@ def fetch_data():
             line = str(raw_line)
             if '"name":"' in line:
                 name = line.split('"name":"')[1].split('"')[0]
-                raise Exception('name: {}'.format(name))
                 lat = line.split('"latitude":"')[1].split('"')[0]
                 lng = line.split('"longitude":"')[1].split('"')[0]
                 add = line.split('"address1":"')[1].split('"')[0] + ' ' + line.split('"address2":"')[1].split('"')[0]
