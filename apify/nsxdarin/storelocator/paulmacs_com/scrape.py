@@ -1,16 +1,13 @@
 import csv
 import urllib2
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from sgrequests import SgRequests
 
+driver = webdriver.Chrome("chromedriver")
+
 session = SgRequests()
-headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-           'Sec-Fetch-Dest': 'document',
-           'Cookie': 'visid_incap_2192629=Io6J3IhJRnSyD3I3BTsorF4CiV4AAAAAQUIPAAAAAAC4YqgoAv4yX7SSdA1rzSd8; incap_ses_303_2192629=xF7TLRzvUV6ZYrX++Xg0BGACiV4AAAAAWmURnU2rb4q+rxv8lnE7FA==; _ga=GA1.2.599562391.1586037349; _gid=GA1.2.1971349787.1586037349; _fbp=fb.1.1586037349211.17645479; _gat_UA-12821136-3=1'
-           'Sec-Fetch-Mode': 'navigate',
-           'Sec-Fetch-Site': 'none',
-           'Sec-Fetch-User': '?1',
-           'Cache-Control': 'max-age=0',
-           'Connection': 'keep-alive'
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
 def write_output(data):
@@ -30,10 +27,10 @@ def fetch_data():
         for line in r.iter_lines():
             if '<loc>https://paulmacs.com/location/' in line:
                 lurl = line.split('<loc>')[1].split('<')[0]
-                if '1308' in lurl:
-                    locs.append(lurl)
+                locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
+        driver.get(loc)
         Found = True
         name = ''
         add = ''
@@ -49,35 +46,40 @@ def fetch_data():
         lat = ''
         country = 'US'
         lng = ''
-        r2 = session.get(loc, headers=headers)
-        lines = r2.iter_lines()
-        for line2 in lines:
-            if 'rel="canonical" href="https://paulmacs.com/location/' in line2:
-                store = line2.split('rel="canonical" href="https://paulmacs.com/location/')[1].split('/')[0]
-            if ',"name":"' in line2:
-                typ = line2.split(',"name":"')[1].split('"')[0]
-                name = line2.split(',"name":"')[2].split(' |')[0]
-            if '<div class="address_info">' in line2:
-                g = next(lines)
+        lines = driver.page_source.split('\n')
+        for linenum in range(0, len(lines)):
+            if 'rel="canonical" href="https://paulmacs.com/location/' in lines[linenum]:
+                store = lines[linenum].split('rel="canonical" href="https://paulmacs.com/location/')[1].split('/')[0]
+            if ',"name":"' in lines[linenum]:
+                typ = lines[linenum].split(',"name":"')[1].split('"')[0]
+                name = lines[linenum].split(',"name":"')[2].split(' |')[0]
+            if '<div class="address_info">' in lines[linenum]:
+                g = lines[linenum + 1]
                 if '<br' not in g:
-                    g = next(lines)
-                add = g.split('<')[0].strip().replace('\t','')
-                city = g.split('<br />')[1].split(',')[0]
-                state = g.rsplit('<br />',1)[1].split(',')[1].strip().split(' ')[0]
-                zc = g.rsplit('<br />',1)[1].split(',')[1].strip().split(' ',1)[1].split('<')[0]
+                    g = lines[linenum + 1]
+                if ',' in g.split('<br')[1]:
+                    add = g.split('<')[0].strip().replace('\t','')
+                    city = g.split('<br')[1].split('>')[1].split(',')[0]
+                    state = g.split('<br')[1].split('>')[1].split(',')[1].strip().split(' ')[0]
+                    zc = g.split('<br')[1].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1]
+                else:
+                    add = g.split('<')[0].strip().replace('\t','')
+                    city = g.split('<br')[2].split('>')[1].split(',')[0]
+                    state = g.split('<br')[2].split('>')[1].split(',')[1].strip().split(' ')[0]
+                    zc = g.split('<br')[2].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1]
                 try:
                     phone = g.split('<a href="tel: ')[1].split('"')[0]
                 except:
                     phone = '<MISSING>'
-            if 'src="https://www.google.com/maps/' in line2:
-                lat = line2.split('q=')[1].split(',')[0]
-                lng = line2.split('q=')[1].split(',')[1].split('&')[0]
-            if '<h4>HOURS</h4>' in line2:
-                g = next(lines)
+            if 'src="https://www.google.com/maps/' in lines[linenum]:
+                lat = lines[linenum].split('q=')[1].split(',')[0]
+                lng = lines[linenum].split('q=')[1].split(',')[1].split('&')[0]
+            if '<h4>HOURS</h4>' in lines[linenum]:
+                g = lines[linenum + 1]
                 if '<p>' not in g:
-                    g = next(lines)
+                    g = lines[linenum + 1]
                 try:
-                    hours = g.split('<p>')[1].split('</div>')[0].replace('</p><p>','; ').replace('</span><span>',' ').replace('<span>','').replace('</p>','').replace('</span>','').strip().replace('\t','')
+                    hours = g.split('<p>',1)[1].split('</div>')[0].replace('</p><p>','; ').replace('</span><span>',' ').replace('<span>','').replace('</p>','').replace('</span>','').strip().replace('\t','')
                 except:
                     hours = '<MISSING>'
         purl = loc
