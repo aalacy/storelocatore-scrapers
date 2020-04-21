@@ -150,7 +150,7 @@ def fetch_data():
                     #print("data == "+str(store))
                     #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                     yield store
-    page+=1
+        page+=1
 def scrape():
     data = fetch_data()
     write_output(data)

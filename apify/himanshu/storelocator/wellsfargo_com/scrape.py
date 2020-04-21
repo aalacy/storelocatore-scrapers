@@ -5,12 +5,12 @@ import re
 import json
 import sgzip
 import time
-import time
+# import time
 
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -30,8 +30,8 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 25
-    MAX_DISTANCE = 30
+    MAX_RESULTS = 100
+    MAX_DISTANCE = 100
     # coord = search.next_coord()
     current_results_len = 0 
     zip_code = search.next_zip()
@@ -61,8 +61,6 @@ def fetch_data():
         try:
             r = session.get('https://www.wellsfargo.com/locator/search/?searchTxt='+str(zip_code)+'&mlflg=N&sgindex=99&chflg=N&_bo=on&_wl=on&_os=on&_bdu=on&_adu=on&_ah=on&_sdb=on&_aa=on&_nt=on&_fe=on')
                                 
-        
-            
         except:
             continue
         soup = BeautifulSoup(r.text, 'lxml')
@@ -80,9 +78,15 @@ def fetch_data():
                     street_address = adr.find('div',class_='street-address').text.strip().capitalize()
                     city= adr.find('span',class_='locality').text.strip().capitalize()
                     state = adr.find('abbr',class_='region').text.strip()
-                    zipp = adr.find('span',class_='postal-code').text.strip()
-                    #print(zipp)
-                    country_code = "US"
+                    zipp_tag = adr.find('span',class_='postal-code').text.strip()
+                    ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp_tag))
+                    us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp_tag))
+                    if ca_zip_list:
+                        zipp = ca_zip_list[-1]
+                        country_code = "CA"
+                    if us_zip_list:
+                        zipp = us_zip_list[-1]
+                        country_code = "US"
                     phone_tag = left_data.find('div',class_='tel').text.replace('Phone:','').strip()
                     phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
                     if phone_list != []:
@@ -116,8 +120,8 @@ def fetch_data():
                     continue
                 addresses.append(store[2])
 
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                #print("data = " + str(store))
+                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 # return_main_object.append(store)
                 yield store
         

@@ -74,52 +74,52 @@ def fetch_data():
         page+=1
 
         
-    page = 4
-    while True:
-        page_url="https://www.altamed.org/find/facility?page="+str(page)
-        r = session.get(page_url)
-        soup = BeautifulSoup(r.text, "lxml")
-        if soup.find("div",{"class":"clinic-wrapper affiliate-type"}) == None:
-            break
-        for data in soup.find_all("div",{"class":"clinic-wrapper affiliate-type"}):
-            location_name = data.find("h3",{"class":"affiliate-type"}).text
-            addr = data.find("div",{"class":"address"}).find("p").text
-            street_address = addr.split(",")[0].split("Ste")[0].strip()
-            city = addr.split(",")[-2]
-            state = addr.split(",")[-1].split()[0]
-            zipp = addr.split(",")[-1].split()[1]
-            store_number = location_name.split("#")[-1]
-            phone = data.find("div",{"class":"phone"}).text.strip()
-            location_type = "Affiliated Location"
-            if data.find("div",{"class":"specialties"}):
-                service = data.find("div",{"class":"specialties"}).text.strip()
-            else:
-                service = "<MISSING>"
-            hours = ''
-            for day in data.find_all("div",{"class":"col-xs-6 col-sm-3"}):
-                hours+= " " +" ".join(list(day.stripped_strings))
-            hours = re.sub(r'\s+'," ",hours)
+    # page = 4
+    # while True:
+    #     page_url="https://www.altamed.org/find/facility?page="+str(page)
+    #     r = session.get(page_url)
+    #     soup = BeautifulSoup(r.text, "lxml")
+    #     if soup.find("div",{"class":"clinic-wrapper affiliate-type"}) == None:
+    #         break
+    #     for data in soup.find_all("div",{"class":"clinic-wrapper affiliate-type"}):
+    #         location_name = data.find("h3",{"class":"affiliate-type"}).text
+    #         addr = data.find("div",{"class":"address"}).find("p").text
+    #         street_address = addr.split(",")[0].split("Ste")[0].strip()
+    #         city = addr.split(",")[-2]
+    #         state = addr.split(",")[-1].split()[0]
+    #         zipp = addr.split(",")[-1].split()[1]
+    #         store_number = location_name.split("#")[-1]
+    #         phone = data.find("div",{"class":"phone"}).text.strip()
+    #         location_type = "Affiliated Location"
+    #         if data.find("div",{"class":"specialties"}):
+    #             service = data.find("div",{"class":"specialties"}).text.strip()
+    #         else:
+    #             service = "<MISSING>"
+    #         hours = ''
+    #         for day in data.find_all("div",{"class":"col-xs-6 col-sm-3"}):
+    #             hours+= " " +" ".join(list(day.stripped_strings))
+    #         hours = re.sub(r'\s+'," ",hours)
 
-            store =[]
-            store.append(base_url)
-            store.append(location_name)
-            store.append(street_address)
-            store.append(city)
-            store.append(state)
-            store.append(zipp)
-            store.append("US")
-            store.append(store_number)
-            store.append(phone)
-            store.append(location_type)
-            store.append(service)
-            store.append("<MISSING>")
-            store.append("<MISSING>")
-            store.append(hours)
-            store.append(page_url)
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+    #         store =[]
+    #         store.append(base_url)
+    #         store.append(location_name)
+    #         store.append(street_address)
+    #         store.append(city)
+    #         store.append(state)
+    #         store.append(zipp)
+    #         store.append("US")
+    #         store.append(store_number)
+    #         store.append(phone)
+    #         store.append(location_type)
+    #         store.append(service)
+    #         store.append("<MISSING>")
+    #         store.append("<MISSING>")
+    #         store.append(hours)
+    #         store.append(page_url)
+    #         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
     
-            yield store
-        page+=1
+    #         yield store
+    #     page+=1
 
 def scrape():
     data = fetch_data();
