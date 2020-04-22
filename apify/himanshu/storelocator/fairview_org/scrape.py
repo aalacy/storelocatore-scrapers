@@ -37,12 +37,15 @@ def fetch_data():
         if jdata==None:
             continue
         try:
-            location_name = jdata['Address']['Title']
+            location_name = jdata['Title']
         except:
             location_name = "<MISSING>"
-
+        # print(location_name)
+        # exit()
         response = session.post(page_url)
         soup = BeautifulSoup(response.text,'lxml')
+        # print(soup.find("div",{"class":"hours-contact rte"}).find("h2").text)
+        # print(page_url)
         hours = soup.find(lambda tag: (tag.name == "h4") and "Hours" == tag.text.strip())
         if hours != None:
             hours1=' '.join(list(hours.parent.stripped_strings))

@@ -17,7 +17,23 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    addressesess = []
+    addresses = []
+    base_url = locator_domain = "https://www.adventhealth.com"
+    location_name = ""
+    street_address = ""
+    city = ""
+    state = ""
+    zipp = ""
+    country_code = "US"
+    store_number = "<MISSING>"
+    phone = ""
+    location_type = ""
+    latitude = ""
+    longitude = ""
+    raw_address = ""
+    page_url = ""
+    hours_of_operation = ""
+    
     url = "https://www.adventhealth.com/views/ajax?_wrapper_format=drupal_ajax"
     page = 0
     while True:
@@ -38,118 +54,118 @@ def fetch_data():
                 if "No locations were found that match your search" in data1['data']:
                     break
                 soup = BeautifulSoup(data1['data'],'lxml')
-                Address = soup.find_all("span",{"property":"streetAddress"})
-                city1 = soup.find_all("span",{"property":"addressLocality"})
-                state1 = soup.find_all("span",{"property":"addressRegion"})
-                zip2 = soup.find_all("span",{"property":"postalCode"})
-                phone1 = soup.find_all("a",{"class":"telephone"})
-                link = soup.find_all("a",{"class":"button--blue--dark"})
-                for index,data2 in enumerate(soup.find_all("a",{"class":"location-block__name-link u-text--fw-300 notranslate"})):
-                    name = (data2.text)
-                    street_address = Address[index].text.split("Suite")[0].replace(",","").replace("3rd Floor","").replace("1st Floor","").replace("8th Floor","").replace("3rd floor","").replace("2nd Floor","").replace("Floor 2","").strip()
-                    city = city1[index].text
-                    state = state1[index].text
-                    zip1 = zip2[index].text
+                # print(soup.prettify())
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                for li in soup.find_all("li",class_="facility-search-block__item"):
                     try:
-                        phone = phone1[index].text.split('at')[-1]
+                        location_name = li.find("div",class_="location-block__headline").find("a").text.strip()
                     except:
-                        phone = "<MISSING>"
-                    page_url = link[index]['href']
-                    # print(page_url)
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-                    hours2 ='<MISSING>'
-                    page_url1='<MISSING>'
-                    location_type ='<MISSING>'
-                    latitude ='<MISSING>'
-                    longitude ='<MISSING>'
-                   
-                    if page_url:
-                        try:
-                            if "http" in page_url:
-                                page_url1 = page_url
-                            else:
-                                page_url1 = "https://www.adventhealth.com"+page_url
-                            # print(page_url1)
-                            response1 = requests.get(page_url1)
-                        except:
-                            pass
+                        location_name = "<MISSING>"
+                    # page_url = "https://www.adventhealth.com"+li.find("div",class_="location-block__headline").find("a")["href"]
+                    street_address = li.find("span",{"property":"streetAddress"}).text.strip()
+                    try:
+                        city = li.find("span",{"property":"addressLocality"}).text.strip()
+                    except:
+                        city = "<MISSING>"
+                    try:
+                        state = li.find("span",{"property":"addressRegion"}).text.strip()
+                    except:
+                        state = "<MISSING>"
+                    try:
+                        zipp = li.find("span",{"property":"postalCode"}).text.strip()
+                    except:
+                        zipp = "<MISSING>"
+                    country_code= "US"
+                    try:
+                        phone_tag = li.find("span",{"class":"location-block__telephone-text"})
+                        phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
+                        if phone_list:
+                            phone = phone_list[0]
+                        else:
+                            phone = "<MISSING>"
+                    except:
+                        phone ="<MISSING>"
+                    try:
+                        page_url = li.find("a",class_="button--blue--dark")["href"]
+                        if page_url:
+                            try:
+                                if "http" in page_url:
+                                    page_url1 = page_url
+                                else:
+                                    page_url1 = "https://www.adventhealth.com"+page_url
+                                # print(page_url1)
+                                response1 = requests.get(page_url1)
+                            except:
+                                pass
 
-                        soup1 = BeautifulSoup(response1.text,'lxml')
-                        try:
-                            if "3A121"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1]:
-                                location_type="Hospital and Emergency Rooms"
-                            if "3A738"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1]:
-                                location_type="Urgent Care"
-                            if "3A123"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1]:
-                                location_type="Institutes"
-                            if "3A122" == soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1]:
-                                location_type="Imaging"
-                            if "3A124"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1]:
-                                location_type ='Lab'
-                            if "3A144"== soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1]:
-                                location_type ='Home Care'
-                            if "3A145"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1]:
-                                location_type ='Hospice Care'
-                            if "3A150"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1]:
-                                location_type ='Skilled Nursing'
-                            if "3A147"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1]:
-                                location_type ='Pharmacy'
-                            if "3A394"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1]:
-                                location_type ='Wellness Centers'
-                            if "3A397"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1]:
-                                location_type ='Rehabilitation Service'
-                            if "3A127"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1]:
-                                location_type ='Surgery Centers'
-                            if "3A398"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1]:
-                                location_type ='Endoscopy Centers'
-                            if "3A373"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1]:
-                                location_type ="Practices"
-                        except:
-                            location_type="<MISSING>"
+                            soup1 = BeautifulSoup(response1.text,'lxml')
+                            try:
+                                if "3A121"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1] or "hospital" in page_url1:
+                                    location_type="Hospital and Emergency Rooms"
+                                if "3A738"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1] or "urgent-care" in page_url1:
+                                    location_type="Urgent Care"
+                                if "3A123"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1] or "institites" in page_url1:
+                                    location_type="Institutes"
+                                if "3A122" == soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1] or "imaging" in page_url1:
+                                    location_type="Imaging"
+                                if "3A124"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1] or "lab" in page_url1:
+                                    location_type ='Lab'
+                                if "3A144"== soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1] or "home-care" in page_url1:
+                                    location_type ='Home Care'
+                                if "3A145"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1] or "hospice-care" in page_url1:
+                                    location_type ='Hospice Care'
+                                if "3A150"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1] or "skilled-nursing" in page_url1:
+                                    location_type ='Skilled Nursing'
+                                if "3A147"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1] or "pharmacy" in page_url1:
+                                    location_type ='Pharmacy'
+                                if "3A394"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1] or "wellness-centers" in page_url1:
+                                    location_type ='Wellness Centers'
+                                if "3A397"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1] or "rehabilitation-service" in page_url1:
+                                    location_type ='Rehabilitation Service'
+                                if "3A127"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1] or "surgery-centers" in page_url1:
+                                    location_type ='Surgery Centers'
+                                if "3A398"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1] or "endoscopy-centers" in page_url1:
+                                    location_type ='Endoscopy Centers'
+                                if "3A373"==soup1.find("a",{"class":"location-bar__change"})['href'].split("facility_type%")[-1] or "practices" in page_url1:
+                                    location_type ="Practices"
+                            except:
+                                location_type="<MISSING>"
+                            try:
+                                latitude = soup1.find("meta",{"property":"latitude"})['content']
+                                longitude = soup1.find("meta",{"property":"longitude"})['content']
+                            except:
+                                latitude='<MISSING>'
+                                longitude = '<MISSING>'
+                            try:
+                                hours_of_operation =" ".join(list(soup1.find("ul",{"class":"location-block__details-list"}).stripped_strings)).replace(" Our urgent care center in Apopka accepts most major insurance plans. Click here to see a list of the insurance plans we accept.","").strip()
+                            except:
+                                hours_of_operation = "<MISSING>"
+                            if "Visiting Hours" in hours_of_operation and "Visiting Hours: As we monitor coronavirus (COVID-19) in our communities, we have made changes to our visitation policies to ensure the safety of our patients, visitors and team members. Read our new visitation policy." != hours_of_operation:
+                                hours_of_operation = hours_of_operation.split("Emergency Care:")[0].replace("Visiting",'')
+                            if "AdventHealth has a responsibility" in hours_of_operation:
+                                hours_of_operation = "<MISSING>"
 
-                        try:
-                            latitude = soup1.find("meta",{"property":"latitude"})['content']
-                            longitude = soup1.find("meta",{"property":"longitude"})['content']
-                        except:
-                            latitude='<MISSING>'
-                            longitude = '<MISSING>'
-                        hours1 = soup1.find("ul",{"class":"location-block__details-list"})
-                        if  hours1 != None:
-                            hours  = hours1.find("li").text.strip()
-
-                        if "Visiting Hours" in hours and "Visiting Hours: As we monitor coronavirus (COVID-19) in our communities, we have made changes to our visitation policies to ensure the safety of our patients, visitors and team members. Read our new visitation policy." != hours:
-                            hours2 = hours.split("Emergency Care:")[0].replace("Visiting",'')
-
-                    else:
+                            hours_of_operation = hours_of_operation.replace("Visiting Hours: As we monitorcoronavirus (COVID-19) in our communities, we have made changes to our visitation policies to ensure the safety of our patients, visitors and team members. Read our new visitation policy.","").replace("Care Close to Home: Located at K-7 and Prairie Star Parkway in western Lenexa, this comprehensive health care facility can be easily accessed from K-7, K-10, I-435 and I-35  allowing area residents to receive care from the most talented and skillful health care professionals in the region.","").replace(" Amenities: Eden Spa Outdoor healing garden Calming and comforting chapel Pastoral care Two Pharmacy Locations Three Market Place Gift Shops AdventHealth Wellness Center Orlando","").replace("Call Call 813-715-6618 to connect with a chaplain","")
+                    except:
                         page_url1 = "<MISSING>"
                         location_type = "<MISSING>"
-                    if "AdventHealth has a responsibility" in hours2:
-                        hours2 = "<MISSING>"
-                    store = []
-                    store.append("https://www.adventhealth.com")
-                    store.append(name)
-                    store.append(street_address)
-                    store.append(city)
-                    store.append(state)
-                    store.append(zip1 if zip1 else "<MISSING>")
-                    store.append("US")
-                    store.append("<MISSING>")
-                    store.append(phone)
-                    store.append(location_type if location_type else "<MISSING>")
-
-                    store.append(latitude)
-                    store.append(longitude)
-                    hours2 = hours2.replace(" secondary shift change (secondary to patient information being exchanged between the nurses and the providers) and only 2 visitors at a bedside.",'')
-                    store.append(hours2.replace("\n",' ').replace("Hours:  Hours:",'Hours:').replace(",",' ') if hours2 else "<MISSING>")
-                    store.append(page_url1 )
-                    store = [x.replace("–","-") if type(x) == str else x for x in store]
+                        latitude = "<MISSING>"
+                        longitude = "<MISSING>"
+                        hours_of_operation= "<MISSING>"
+                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                    store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url1]
                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                    if store[2] in addressesess:
+
+
+                    if (str(store[2])+str(store[-1])) in addresses:
                         continue
-                    addressesess.append(store[2])
-                    #print("data == "+str(store))
-                    #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                    yield store
+                    addresses.append(str(store[2])+str(store[-1]))
+
+                    #print("data = " + str(store))
+                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    
+                    yield store    
+                    
         page+=1
 def scrape():
     data = fetch_data()

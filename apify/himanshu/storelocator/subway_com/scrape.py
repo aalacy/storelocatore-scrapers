@@ -66,7 +66,11 @@ def fetch_data():
             if store[-1] == "CA":
                 store[-2] = store[-2].replace(" ","")
                 store[-2] = store[-2][:3] + " " + store[-2][3:]
-            store.append("<MISSING>")
+            try:
+                store.append(str(store_data['LocationId']['StoreNumber']))
+            except:
+                store.append("<MISSING>")
+            # print(str(store_data['LocationId']['StoreNumber']))
             location_soup =  BeautifulSoup(html[0],"lxml")
             if location_soup.find("div",{'class':"locationOpen"}) == False:
                 continue

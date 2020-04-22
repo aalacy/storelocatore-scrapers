@@ -27,7 +27,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes=['uk'])
     MAX_RESULTS = 25
-    MAX_DISTANCE = 50
+    MAX_DISTANCE = 25
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
     locator_domain = base_url = "https://www.williamhill.com/"
@@ -45,40 +45,49 @@ def fetch_data():
         soup = BeautifulSoup(r.text, "lxml")
         json_data = soup.find(lambda tag: (tag.name == "script" ) and "window.lctr.center" in tag.text.strip())
         if json_data != None:
-            json_data1 = json_data.text.split("window.lctr.results.push(")
             try:
-                for data in json_data1[1:]: 
-                    j_data = json.loads(data.replace("});",'}'))
-                    location_name=j_data['name']
-                    latitude = j_data['latitude']
-                    longitude =j_data['longitude']
-                    zipp =j_data['post_code']
-                    street_address = j_data['street_no']+' '+j_data['street']
-                    city = j_data['city']
-                    if city:
-                        city = city
-                    else:
-                        city ="<MISSING>"
-                    state='<MISSING>'
-                    phone =j_data['phone']
-                    country_code="UK"
-                    page_url="<MISSING>"
-                    location_type="<MISSING>"
-                    store_number = "<MISSING>"
-                    try:
-                        hours_of_operation='Monday '+j_data['mon_open']+' - '+j_data['mon_close']+ ' Tuesday '+j_data['tue_open']+' - '+j_data['tue_close']+ ' Wednesday '+j_data['wed_open']+' - '+j_data['wed_close']+' Thursday '+j_data['thu_open']+' - '+j_data['thu_close']+ ' Friday '+j_data['fri_open']+' - '+j_data['fri_close']+' Saturday '+j_data['sat_open']+' - '+j_data['sat_close']+ ' Sunday '+j_data['sun_open']+' - '+j_data['sun_close']
-                    except:
-                        hours_of_operation="<MISSING>"
-                    store = [locator_domain, location_name.replace('\n', ' '), street_address, city, state, zipp, country_code,
-                            store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                    if store[2]  in addressess123:
-                        continue
-                    addressess123.append(store[2])
-                    #print(store)
-                    yield store
+                json_data1 = json_data.text.split("window.lctr.results.push(")
             except:
-                pass
+                coord = search.next_coord()
+                search.max_distance_update(MAX_DISTANCE)
+                continue
+            for data in json_data1[1:]: 
+                j_data = json.loads(data.replace("});",'}'))
+                location_name=j_data['name']
+                latitude = j_data['latitude']
+                longitude =j_data['longitude']
+                zipp =j_data['post_code']
+                street_address = j_data['street_no']+' '+j_data['street']
+                city = '<MISSING>'
+                if j_data['city']:
+                    city = j_data['city']
+                else:
+                    city = j_data['county']
+                if city:
+                    city=city
+                else:
+                    city ="<MISSING>"
+
+                state='<MISSING>'
+                phone =j_data['phone']
+                country_code="UK"
+                page_url="<MISSING>"
+                location_type="<MISSING>"
+                store_number = "<MISSING>"
+                try:
+                    hours_of_operation='Monday '+j_data['mon_open']+' - '+j_data['mon_close']+ ' Tuesday '+j_data['tue_open']+' - '+j_data['tue_close']+ ' Wednesday '+j_data['wed_open']+' - '+j_data['wed_close']+' Thursday '+j_data['thu_open']+' - '+j_data['thu_close']+ ' Friday '+j_data['fri_open']+' - '+j_data['fri_close']+' Saturday '+j_data['sat_open']+' - '+j_data['sat_close']+ ' Sunday '+j_data['sun_open']+' - '+j_data['sun_close']
+                except:
+                    hours_of_operation="<MISSING>"
+                store = [locator_domain, location_name.replace('\n', ' '), street_address, city, state, zipp, country_code,
+                        store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                if store[2]  in addressess123:
+                    continue
+                addressess123.append(store[2])
+                # print(store)
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                yield store
+            
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)

@@ -1,14 +1,14 @@
 import csv
 import re
 import time
-
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from selenium.webdriver.firefox.options import Options
 from selenium import webdriver
 import platform
 system = platform.system()
-
+import requests
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -21,37 +21,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def request_wrapper(url,method,headers,data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = requests.get(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:
-                if data:
-                    r = requests.post(url,headers=headers,data=data)
-                else:
-                    r = requests.post(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None
+
 
 
 def get_driver():
@@ -63,7 +33,7 @@ def get_driver():
     if "linux" in system.lower():
         return webdriver.Firefox(executable_path='./geckodriver', options=options)        
     else:
-        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+        return webdriver.Firefox(executable_path='E:/captcha/geckodriver.exe', options=options)
 
 
 def fetch_data():
@@ -84,7 +54,6 @@ def fetch_data():
     while not isLast:
         soup = BeautifulSoup(driver.page_source,"lxml")
         for loc_detail in soup.find_all("a",{"class":"location-search-results"}):
-
             locator_domain = base_url
             location_name = ""
             street_address = ""
@@ -106,8 +75,11 @@ def fetch_data():
             # page_url = 'https://www.promedica.org/Pages/OHAM/OrgUnitDetails.aspx?OrganizationalUnitId=823'
             # page_url = 'https://www.promedica.org/Pages/OHAM/OrgUnitDetails.aspx?OrganizationalUnitId=1120'
             # print("page_url = ",page_url)
-            r_location = request_wrapper(page_url,"get", headers=headers)
-            soup_location = BeautifulSoup(r_location.text, "lxml")
+            r_location = requests.get(page_url, headers=headers)
+            try:
+                soup_location = BeautifulSoup(r_location.text, "lxml")
+            except:
+                pass
             if soup_location.find("h1",{"class":"loc-top-image"}):
                 # store_number = loc_detail.find("OrganizationID").next
                 full_address = list(soup_location.find("div",{"class":"address-block xs-mbm"}).find("a").stripped_strings)
@@ -129,13 +101,15 @@ def fetch_data():
                     if "ste." in street_address:
                         street_address = "".join(street_address[:street_address.index("ste.")])
 
-                    start_index = re.search(r"\d", street_address).start()
-                    if start_index:
-                        # print("Street Address : "+ street_address)
-                        if not street_address[start_index:].isnumeric():
-                            # print("Success Street Address : "+ street_address)
-                            street_address = street_address[start_index:]
-
+                    try:
+                        start_index = re.search(r"\d", street_address).start()
+                        if start_index:
+                            # print("Street Address : "+ street_address)
+                            if not street_address[start_index:].isnumeric():
+                                # print("Success Street Address : "+ street_address)
+                                street_address = street_address[start_index:]
+                    except:
+                        pass
 
                     ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(full_address[-1]))
                     us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(full_address[-1]))
@@ -165,14 +139,16 @@ def fetch_data():
 
                         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                        # print("data = " + str(store))
-                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        #print("data = " + str(store))
+                        #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                         yield store
 
         if soup.find("input",{"class":"rdpPageNext","onclick":True}):
             isLast = True
         else:
             driver.find_element_by_xpath("//input [@class='rdpPageNext']").click()
+        time.sleep(10)
+        
 
 
 def scrape():
