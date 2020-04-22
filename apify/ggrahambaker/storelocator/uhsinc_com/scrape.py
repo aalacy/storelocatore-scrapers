@@ -25,22 +25,14 @@ def parse_address(addy_string):
     if 'StreetNamePostType' in parsed_add:
         street_address += parsed_add['StreetNamePostType'] + ' '
         
-    if 'PlaceName' not in parsed_add:
-        city = '<MISSING>'
-    else:
-        city = parsed_add['PlaceName']
-    
-    if 'StateName' not in parsed_add:
-        state = '<MISSING>'
-    else:
-        state = parsed_add['StateName']
+
         
     if 'ZipCode' not in parsed_add:
         zip_code = '<MISSING>'
     else:
         zip_code = parsed_add['ZipCode']
 
-    return street_address, city, state, zip_code
+    return street_address, zip_code
 
 
 
@@ -62,6 +54,7 @@ def fetch_data():
     places = re.finditer(r'places.push\(([\s\S]+?)\);', res.text)
     all_store_data = []
     for place_match in places: 
+        
         place_js = place_match.group(1)
         place_py = json.loads(_jsonnet.evaluate_snippet('snippet', place_js))
         location_type = place_py['type']
@@ -86,9 +79,23 @@ def fetch_data():
         raw_info = info.prettify().split('\n')
         addy_phone = [i for i in raw_info if '<' not in i]
 
-        addy = addy_phone[1].replace('West Springville', '')
-        street_address, city, state, zip_code = parse_address(addy)
-        
+        city_state = addy_phone[0].split(',')
+        if 'Guaynabo' in city_state[0]:
+            street_address = 'Calle 1'
+            state = 'Puerto Rico'
+            zip_code = '00968'
+            city = 'Guaynabo'
+        else:
+            if len(city_state) == 1:
+                city_state = city_state[0].strip().split(' ')
+
+            city = city_state[0].strip()
+            state = city_state[1].strip()
+
+            addy = addy_phone[1].replace('West Springville', '')
+
+            street_address, zip_code = parse_address(addy)
+            
         if len(addy_phone) == 2:
             phone_number = '<MISSING>'
         else:
