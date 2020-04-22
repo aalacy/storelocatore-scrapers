@@ -45,7 +45,10 @@ def fetch_data():
             continue
         else:
             location_name = location_name.text
-        street_address = soup.find('span', {'itemprop': 'streetAddress'}).text
+        street_address = soup.find('span', {'itemprop': 'streetAddress'}).text.split(',')[0]
+
+
+
         city = soup.find('span', {'itemprop': 'addressLocality'})
         
         if city == None:
