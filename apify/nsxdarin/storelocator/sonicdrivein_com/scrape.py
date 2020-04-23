@@ -23,7 +23,6 @@ def fetch_data():
         if '<loc>https://locations.sonicdrivein.com/sitemap/sitemap' in line:
             sitemaps.append(line.split('<loc>')[1].split('<')[0])
     for sm in sitemaps:
-        print('Pulling Sitemap %s...' % sm)
         smurl = sm
         with open('branches.xml.gz','wb') as f:
             f.write(urllib2.urlopen(smurl).read())
@@ -34,10 +33,7 @@ def fetch_data():
                         lurl = line.split('<loc>')[1].split('<')[0]
                         if lurl not in locs:
                             locs.append(lurl)
-        print(str(len(locs)) + ' Locations Found...')
-    print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
         url = loc
         add = ''
         city = ''
