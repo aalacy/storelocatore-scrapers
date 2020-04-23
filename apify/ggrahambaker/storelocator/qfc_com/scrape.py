@@ -38,8 +38,10 @@ def fetch_data():
     for link in link_list:
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
-        loc_json = json.loads(soup.find('script', {'type': 'application/ld+json' }).text)
-        
+        try:
+            loc_json = json.loads(soup.find('script', {'type': 'application/ld+json' }).text)
+        except:
+            continue
         addy = loc_json['address']
         street_address = addy['streetAddress']
         city = addy['addressLocality']
