@@ -8,8 +8,6 @@ import ssl
 import gzip
 import certifi
 
-# http_client.HTTPConnection.debuglevel = 3
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -28,7 +26,6 @@ def fetch_data():
         MAX_DISTANCE = 100
         current_results_len = 0  # need to update with no of count.
         coord = search.next_coord()
-        
         HEADERS = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36',
             'Host': 'www.gamestop.com',
@@ -48,32 +45,19 @@ def fetch_data():
             print("remaining zipcodes: " + str(len(search.zipcodes)))
             lat = coord[0]
             lng = coord[1]
-
             context = ssl.SSLContext(ssl.PROTOCOL_TLS)
             context.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
             certs_path = certifi.where()
-            # print('certs_path', certs_path)
             context.load_verify_locations(cafile=certs_path)
             context.verify_mode = ssl.CERT_REQUIRED
             context.check_hostname = True
 
             conn = http_client.HTTPSConnection("www.gamestop.com", context=context)
-            # conn = http_client.HTTPSConnection("www.gamestop.com")
             conn.connect()
-
             conn.request("GET",'/on/demandware.store/Sites-gamestop-us-Site/default/Stores-FindStores?radius='+str(MAX_DISTANCE)+"&lat="+str(lat)+"&long="+str(lng), headers=HEADERS)
             res = conn.getresponse()
-
-            # print('status', res.status)
-            # print('headers', res.getheaders())
-            # print('body', res.read())
-
             data = gzip.decompress(res.read())
-            # print(data)
-
             json_data = json.loads(data)
-            # print(json_data)
-
             if "stores" in json_data:
                 current_results_len = len(json_data['stores'])
                 for i in json_data['stores']:
@@ -91,9 +75,6 @@ def fetch_data():
                     hours_of_operation = i['storeHours']
                     name = location_name.replace('-','')
                     page_url = "https://www.gamestop.com/store/us/"+str(state.lower())+"/"+str(city.lower().replace(' ','-'))+"/"+str(store_number)+"/"+str(name.replace(' ','-').replace("--",'-').replace('.','').lower())
-                    # print(page_url)
-
-
                     store = []
                     result_coords.append((latitude, longitude))
                     store.append("http://www.gamestop.com")
@@ -113,23 +94,16 @@ def fetch_data():
                     if store[2] in addresses:
                         continue
                     addresses.append(store[2])
-                    # print("====",str(store))
                     yield store
-
-
             if current_results_len < MAX_RESULTS:
-                # print("max distance update")
                 search.max_distance_update(MAX_DISTANCE)
             elif current_results_len == MAX_RESULTS:
-                # print("max count update")
                 search.max_count_update(result_coords)
             else:
                 raise Exception("expected at most " + str(MAX_RESULTS) + " results")
             coord = search.next_coord()
           
-
 def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
-# https://www.gamestop.com/on/demandware.store/Sites-gamestop-us-Site/default/Stores-FindStores?radius=100&lat=33.5973469&long=-112.1072528
