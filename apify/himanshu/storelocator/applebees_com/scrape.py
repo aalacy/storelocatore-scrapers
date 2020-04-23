@@ -19,58 +19,39 @@ def get_ssl_context():
   context.check_hostname = True
   return context
 
-
 def request(method, url, body=None): 
   conn = http_client.HTTPSConnection(host_name, context=ssl_context)
   conn.connect()
   if body != None: 
     body = urllib.parse.urlencode(body)
     headers['content-length'] = len(body)
-
   conn.request(method, url, body=body, headers=headers)
   res = conn.getresponse()
-
-  # print('url', url)
-  # print('status', res.status)
-
   all_headers = res.getheaders()
-
   cookies = []
   for header in all_headers:
     if header[0] == 'Set-Cookie': 
       cookie = header[1].split(';')[0]
       cookies.append(cookie)
-      
   global next_cookies_header
   next_cookies_header = "; ".join(cookies)
-  # print('next_cookies_header', next_cookies_header);
-
   content = res.read()
   conn.close()  
-
   content = gzip.decompress(content)
   content = content.decode('utf-8')
-  
   return content
-
 
 def get_required_search_values(): 
   # get a couple hidden inputs from the initial locations page
   html = request('GET', '/en/restaurants')
-
   match = re_location_root_pattern.search(html)
   location_root = match.group(1)
-  # print(location_root)
- 
   match = re_request_verification_token_pattern.search(html)
   request_verification_token = match.group(1)
-  # print(request_verification_token)
-
   return {
     "location_root": location_root, 
     "request_verification_token": request_verification_token
   }
-
 
 def setup_for_posts():
   headers['origin'] = 'https://www.applebees.com'
@@ -79,10 +60,8 @@ def setup_for_posts():
   headers['sec-fetch-mode'] = 'navigate'
   headers['sec-fetch-site'] = 'same-origin'
   headers['sec-fetch-user'] = '?1'
-  # headers['x-requested-with'] = 'XMLHttpRequest'
   headers['cookie'] = next_cookies_header
   headers['content-type'] = 'application/x-www-form-urlencoded'
-
 
 def get_locations_data(search_query, required_search_values): 
   url = '/api/sitecore/Locations/LocationSearchAsync'
@@ -98,12 +77,9 @@ def get_locations_data(search_query, required_search_values):
     'SearchQuery': search_query,
     '__RequestVerificationToken': required_search_values['request_verification_token'],
   }
-  # print('payload', payload)
-
   content = request('POST', url, payload)
   data = json.loads(content)
   return data
-
 
 def formatHours(hours): 
   try: 
@@ -114,9 +90,7 @@ def formatHours(hours):
       formatted += entry["LocationHourLabel"] + ' ' + entry["LocationHourText"] 
     return formatted
   except:
-    print(hours)
     raise 
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -125,37 +99,21 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
-
-    print('getting initial search tokens ...')
     required_search_values = get_required_search_values()
-    print('got tokens: ', required_search_values)
-
     setup_for_posts()
-
     store_numbers = []
-
     for state in us.states.STATES: 
       time.sleep(random.random()*10)
-
-      print('searching state: ' + state.abbr)
       data = get_locations_data(state.abbr, required_search_values)
-
       for loc in data["Locations"]: 
-
         try: 
-
           country_code = loc['Location']['Country']
           if country_code != "US": 
             continue
-
           store_number = loc['Location']['StoreNumber']
-
           if store_number not in store_numbers: 
-
             store_numbers.append(store_number)
-
             locator_domain = 'https://www.applebees.com'
             page_url = loc['Location']['WebsiteUrl']
             page_url = locator_domain + page_url if page_url else '<MISSING>'
@@ -164,19 +122,14 @@ def fetch_data():
             city = loc['Location']['City']
             state = loc['Location']['State']
             zipcode = loc['Location']['Zip']
-            
             phone = loc['Contact']['Phone']
             location_type = 'Store'
             latitude = loc['Location']['Coordinates']['Latitude']
             longitude = loc['Location']['Coordinates']['Longitude']
             hours_of_operation = formatHours(loc['HoursOfOperation']['DaysOfOperationVM'])
-
             yield [locator_domain, page_url, location_name, street_address, city, state, zipcode, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
-        
         except: 
-          print(loc)
           raise
-
 
 def scrape():
     data = fetch_data()
