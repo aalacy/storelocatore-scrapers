@@ -31,7 +31,6 @@ def fetch_data():
     maxr = '25'
     while coord:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
         x, y = coord[0], coord[1]
         url = 'https://www.mcdonalds.com/googleapps/GoogleRestaurantLocAction.do?method=searchLocation&latitude=' + str(x) + '&longitude=' + str(y) + '&radius=' + rad + '&maxResults=' + maxr + '&country=gb&language=en-gb&showClosed=&hours24Text=Open%2024%20hr'
         try:
@@ -72,7 +71,6 @@ def fetch_data():
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         except:
             pass
-        print("max count update")
 
         coord = search.next_coord()
 
