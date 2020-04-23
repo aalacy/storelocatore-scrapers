@@ -26,12 +26,17 @@ def fetch_data():
 	}
 	locator_domain = "https://www.baystatehealth.org"
 
-	for data in range(1,26):
-		r1 = session.get("https://www.baystatehealth.org/locations/search-results?page="+str(data),headers=headers)
-		soup1= BeautifulSoup(r1.text,"lxml")
+	r = session.get("https://www.baystatehealth.org/locations/search-results",headers =headers)
+	soup = BeautifulSoup(r.text,"lxml")
+	for loc_type in soup.find("select",{"id":"main_1_leftpanel_0_ddlLocationType"}).find_all("option")[1:]:
+		location_type = loc_type["value"]
+		
+		r1 = session.get("https://www.baystatehealth.org/locations/search-results?&loctype="+location_type)
+		soup1 = BeautifulSoup(r1.text,"lxml")
+			
 		script = soup1.find(lambda tag: (tag.name == "script") and "var maplocations" in tag.text.strip()).text.split("var maplocations=")[1]
 		for link  in json.loads(script):
-			location_type = "<MISSING>"
+			
 			page_url = "https://www.baystatehealth.org"+link['LocationDetailLink']
 			soup2= BeautifulSoup(link['LocationFullAddress'],"lxml")
 			location_name = link["LocationName"]
@@ -63,13 +68,61 @@ def fetch_data():
 				hours_of_operation = "<MISSING>"
 			store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
 				 store_number, phone, location_type, latitude, longitude, hours_of_operation.replace("(mammogram screenings only)",'').split("daily We")[0],page_url]
-			if (store[2],store[1]) in addressess123:
+			if (store[2],store[-5]) in addressess123:
 				continue
-			addressess123.append((store[2],store[1]))
+			addressess123.append((store[2],store[-5]))
 			store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 			yield store
-			print("~~~",store)
-			print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+			#print("~~~",store)
+			#print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
+	
+			
+
+	# for data in range(1,26):
+	# 	r1 = session.get("https://www.baystatehealth.org/locations/search-results?page="+str(data),headers=headers)
+		# soup1= BeautifulSoup(r1.text,"lxml")
+		# script = soup1.find(lambda tag: (tag.name == "script") and "var maplocations" in tag.text.strip()).text.split("var maplocations=")[1]
+		# for link  in json.loads(script):
+		# 	location_type = "<MISSING>"
+		# 	page_url = "https://www.baystatehealth.org"+link['LocationDetailLink']
+		# 	soup2= BeautifulSoup(link['LocationFullAddress'],"lxml")
+		# 	location_name = link["LocationName"]
+		# 	street_address = list(soup2.stripped_strings)[0]
+		# 	city = list(soup2.stripped_strings)[-1].split(",")[0]
+		# 	state =list(soup2.stripped_strings)[-1].split(",")[1].split( )[0]
+		# 	zipp  =list(soup2.stripped_strings)[-1].split(",")[1].split( )[-1]
+		# 	country_code = "US"
+		# 	store_number="<MISSING>"
+		# 	r1 = session.get(page_url,headers=headers)
+		# 	soup_loc = BeautifulSoup(r1.text,"lxml")
+		# 	try:
+		# 		phone = list(soup_loc.find("div",{"id":"main_2_contentpanel_1_pnlOfficePhone"}).stripped_strings)[-1].replace("Office Phone:",'').replace("(To schedule an MRI)",'').replace("CARE","").replace("KIDS","").replace(", option 7","").strip()
+		# 	except:
+		# 		phone ="<MISSING>"
+		# 	try:
+		# 		hours_of_operation =" ".join(list(soup_loc.find("div",class_="module-lc-hours").stripped_strings)).strip()
+		# 	except:
+		# 		hours_of_operation="<MISSING>"
+		# 	if hours_of_operation.strip():
+		# 		hours_of_operation=hours_of_operation
+		# 	else:
+		# 		hours_of_operation="<MISSING>"
+		# 	latitude = link['LocationLat']
+		# 	longitude = link['LocationLon']
+		# 	store =[]
+		# 	street_address = street_address.split("Floor")[0].split("Suite")[0].replace(",",'')
+		# 	if "Office Hours Temporarily" in hours_of_operation:
+		# 		hours_of_operation = "<MISSING>"
+		# 	store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+		# 		 store_number, phone, location_type, latitude, longitude, hours_of_operation.replace("(mammogram screenings only)",'').split("daily We")[0],page_url]
+		# 	# if (store[2],store[1]) in addressess123:
+		# 	# 	continue
+		# 	# addressess123.append((store[2],store[1]))
+		# 	store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+		# 	yield store
+		# 	print("~~~",store)
+		# 	print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
 	
 def scrape():

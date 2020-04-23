@@ -7,7 +7,7 @@ import sgzip
 import datetime
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8",newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -33,6 +33,7 @@ def fetch_data():
 
     while coords:
         result_coords = []
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         #print(coord[0], coord[1])
         url = "https://www.choicehotels.com/webapi/location/hotels"
 
@@ -62,45 +63,45 @@ def fetch_data():
         session = SgRequests()
         r = session.post(url, data=payload, headers=headers, params=querystring)
 
-        if "hotels" not in r.json():
-            continue
-        data = r.json()["hotels"]
-        for store_data in data:
-            if store_data["address"]["country"] != "US":
-                continue
-           # print(store_data['brandName'],store_data['brandCode'])
-           # print(store_data["address"]["postalCode"])
-            page_url = "https://www.choicehotels.com/"+str(store_data["address"]["subdivision"].lower())+"/"+str(store_data["address"]["city"].replace(" ","-").lower())+"/"+str(brand[store_data['brandCode']])+"/"+str(store_data["id"].lower())
-            result_coords.append((store_data["lat"],store_data["lon"]))
-            store = []
-            store.append("https://mainstaysuites.com")
-            store.append(store_data["name"])
-            address = ""
-            if "line1" in store_data["address"]:
-                address = address + store_data["address"]["line1"]
-            if "line2" in store_data["address"]:
-                address = address + store_data["address"]["line2"]
-            if "line3" in store_data["address"]:
-                address = address + store_data["address"]["line3"]
-            store.append(address)
-            if store[-1] in addresses:
-                continue
-            addresses.append(store[-1])
-            store.append(store_data["address"]["city"])
-            store.append(store_data["address"]["subdivision"])
-            store.append(store_data["address"]["postalCode"])
-            if len(store[-1]) == 10:
-                store[-1] = store[-1][:5] + "-" + store[-1][6:]
-            store.append(store_data["address"]["country"])
-            store.append(store_data["id"])
-            store.append(store_data["phone"])
-            store.append("<MISSING>")
-            store.append(store_data["lat"])
-            store.append(store_data["lon"])
-            store.append("<MISSING>")
-            store.append(page_url)
-            # print("data =="+str(store))
-            yield store
+        if "hotels"  in r.json():
+        
+            data = r.json()["hotels"]
+            for store_data in data:
+                if "US" in store_data["address"]["country"] :
+                
+                # print(store_data['brandName'],store_data['brandCode'])
+                # print(store_data["address"]["postalCode"])
+                    page_url = "https://www.choicehotels.com/"+str(store_data["address"]["subdivision"].lower())+"/"+str(store_data["address"]["city"].replace(" ","-").lower())+"/"+str(brand[store_data['brandCode']])+"/"+str(store_data["id"].lower())
+                    result_coords.append((store_data["lat"],store_data["lon"]))
+                    store = []
+                    store.append("https://mainstaysuites.com")
+                    store.append(store_data["name"])
+                    address = ""
+                    if "line1" in store_data["address"]:
+                        address = address + store_data["address"]["line1"]
+                    if "line2" in store_data["address"]:
+                        address = address + store_data["address"]["line2"]
+                    if "line3" in store_data["address"]:
+                        address = address + store_data["address"]["line3"]
+                    store.append(address)
+                    if store[-1] in addresses:
+                        continue
+                    addresses.append(store[-1])
+                    store.append(store_data["address"]["city"])
+                    store.append(store_data["address"]["subdivision"])
+                    store.append(store_data["address"]["postalCode"])
+                    if len(store[-1]) == 10:
+                        store[-1] = store[-1][:5] + "-" + store[-1][6:]
+                    store.append(store_data["address"]["country"])
+                    store.append(store_data["id"])
+                    store.append(store_data["phone"])
+                    store.append("<MISSING>")
+                    store.append(store_data["lat"])
+                    store.append(store_data["lon"])
+                    store.append("<MISSING>")
+                    store.append(page_url)
+                    #print("data =="+str(store))
+                    yield store
 
         if len(data) < MAX_RESULTS:
             # print("max distance update")
@@ -130,6 +131,7 @@ def fetch_data():
     addresses1 = []
 
     while coords:
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
         lat = coords[0]
         lng = coords[1]
@@ -161,41 +163,41 @@ def fetch_data():
         session = SgRequests()
         r = session.post(url, data=payload, headers=headers, params=querystring)
 
-        if "hotels" not in r.json():
-            continue
-        data = r.json()["hotels"]
-        for store_data1 in data:
-            result_coords.append((store_data1["lat"],store_data1["lon"]))
-            store1 = []
-            store1.append("https://mainstaysuites.com")
-            page_url = "https://www.choicehotels.com/"+str(store_data["address"]["subdivision"].lower())+"/"+str(store_data["address"]["city"].replace(" ","-").lower())+"/"+str(brand[store_data['brandCode']])+"/"+str(store_data["id"].lower())
-            store1.append(store_data1["name"])
-            address = ""
-            if "line1" in store_data1["address"]:
-                address = address + store_data1["address"]["line1"]
-            if "line2" in store_data1["address"]:
-                address = address + store_data1["address"]["line2"]
-            if "line3" in store_data1["address"]:
-                address = address + store_data1["address"]["line3"]
-            store1.append(address)
-            if store1[-1] in addresses1:
-                continue
-            addresses1.append(store1[-1])
-            store1.append(store_data1["address"]["city"])
-            store1.append(store_data1["address"]["subdivision"])
-            store1.append(store_data1["address"]["postalCode"])
-            if len(store1[-1]) == 10:
-                store1[-1] = store1[-1][:5] + "-" + store1[-1][6:]
-            store1.append(store_data1["address"]["country"])
-            store1.append(store_data1["id"])
-            store1.append(store_data1["phone"])
-            store1.append("<MISSING>")
-            store1.append(store_data1["lat"])
-            store1.append(store_data1["lon"])
-            store1.append("<MISSING>")
-            store1.append(page_url)
-            # print("data =="+str(store1))
-            yield store1
+        if "hotels" in r.json():
+        
+            data = r.json()["hotels"]
+            for store_data1 in data:
+                result_coords.append((store_data1["lat"],store_data1["lon"]))
+                store1 = []
+                store1.append("https://mainstaysuites.com")
+                page_url = "https://www.choicehotels.com/"+str(store_data["address"]["subdivision"].lower())+"/"+str(store_data["address"]["city"].replace(" ","-").lower())+"/"+str(brand[store_data['brandCode']])+"/"+str(store_data["id"].lower())
+                store1.append(store_data1["name"])
+                address = ""
+                if "line1" in store_data1["address"]:
+                    address = address + store_data1["address"]["line1"]
+                if "line2" in store_data1["address"]:
+                    address = address + store_data1["address"]["line2"]
+                if "line3" in store_data1["address"]:
+                    address = address + store_data1["address"]["line3"]
+                store1.append(address)
+                if store1[-1] in addresses1:
+                    continue
+                addresses1.append(store1[-1])
+                store1.append(store_data1["address"]["city"])
+                store1.append(store_data1["address"]["subdivision"])
+                store1.append(store_data1["address"]["postalCode"])
+                if len(store1[-1]) == 10:
+                    store1[-1] = store1[-1][:5] + "-" + store1[-1][6:]
+                store1.append(store_data1["address"]["country"])
+                store1.append(store_data1["id"])
+                store1.append(store_data1["phone"])
+                store1.append("<MISSING>")
+                store1.append(store_data1["lat"])
+                store1.append(store_data1["lon"])
+                store1.append("<MISSING>")
+                store1.append(page_url)
+                #print("data =="+str(store1))
+                yield store1
 
 
         if len(data) < MAX_RESULTS:

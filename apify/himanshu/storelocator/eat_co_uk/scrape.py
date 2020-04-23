@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import urllib3
-
+import requests
 
 session = SgRequests()
 
@@ -14,7 +14,7 @@ requests.packages.urllib3.disable_warnings()
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline = "") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
