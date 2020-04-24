@@ -10,4 +10,6 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
+address hard to  parse so some extra word inside address column , invalid zip 
+
  i checked all data is true thie website

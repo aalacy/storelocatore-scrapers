@@ -35,46 +35,49 @@ def fetch_data():
     store_name=[]
     loc = soup.find_all("a",{"class":"platopusLink"})
     for data in loc:
-        us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(list(data.stripped_strings)[2]))
-        if us_zip_list:
-            pass
+        # us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(list(data.stripped_strings)[2]))
+        # if us_zip_list:
+        #     pass
+        # else:
+        name = list(data.stripped_strings)[0]
+        address = list(data.stripped_strings)[1]
+        zip1 =list(data.stripped_strings)[2].split(",")[-1].replace("BART1","<MISSING>") 
+        city = list(data.stripped_strings)[2].split(",")[0]
+        len1 = list(data.stripped_strings)[2].split(",")
+        if len(len1)==3:
+            state = len1[1]
         else:
-            name = list(data.stripped_strings)[0]
-            address = list(data.stripped_strings)[1]
-            zip1 =list(data.stripped_strings)[2].split(",")[-1].replace("BART1","<MISSING>") 
-            city = list(data.stripped_strings)[2].split(",")[0]
-            len1 = list(data.stripped_strings)[2].split(",")
-            if len(len1)==3:
-                state = len1[1]
-            else:
-                state =  "<MISSING>"
-            page_url = "https://eat.co.uk/"+data['href']
-            # print("https://eat.co.uk/"+data['href'])
-            r1 = session.get("https://eat.co.uk"+data['href'],verify=False, headers =headers)
-            soup1= BeautifulSoup(r1.text,"lxml")
-            hours = " ".join(list(soup1.find("table",{"class":"platopusOpeningHoursTable"}).stripped_strings))
-            lat = soup1.find("a",{"class":"align-center dmButtonLink dmWidget dmWwr default dmOnlyButton dmDefaultGradient u_1454164222"})['href'].split("=")[-1].split(",")[0]
-            log = soup1.find("a",{"class":"align-center dmButtonLink dmWidget dmWwr default dmOnlyButton dmDefaultGradient u_1454164222"})['href'].split("=")[-1].split(",")[1]
-            if lat=="0":
-                lat = "<MISSING>"
-                log = "<MISSING>"
-            tem_var =[]
-            tem_var.append("https://eat.co.uk")
-            tem_var.append(name)
-            tem_var.append(address.replace(",",""))
-            tem_var.append(city)
-            tem_var.append(state)
-            tem_var.append(zip1)
-            tem_var.append("UK")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append("<MISSING>")
-            tem_var.append(lat)
-            tem_var.append(log)
-            tem_var.append(hours)
-            tem_var.append(page_url)
-            # print("tem_var============ ",tem_var)
-            yield tem_var
+            state =  "<MISSING>"
+        page_url = "https://eat.co.uk/"+data['href']
+        store_number = page_url.split("_")[-1].strip()
+        # print("https://eat.co.uk/"+data['href'])
+        r1 = session.get("https://eat.co.uk"+data['href'],verify=False, headers =headers)
+        soup1= BeautifulSoup(r1.text,"lxml")
+        hours = " ".join(list(soup1.find("table",{"class":"platopusOpeningHoursTable"}).stripped_strings))
+        lat = soup1.find("a",{"class":"align-center dmButtonLink dmWidget dmWwr default dmOnlyButton dmDefaultGradient u_1454164222"})['href'].split("=")[-1].split(",")[0]
+        log = soup1.find("a",{"class":"align-center dmButtonLink dmWidget dmWwr default dmOnlyButton dmDefaultGradient u_1454164222"})['href'].split("=")[-1].split(",")[1]
+        if lat=="0":
+            lat = "<MISSING>"
+            log = "<MISSING>"
+        tem_var =[]
+        tem_var.append("https://eat.co.uk")
+        tem_var.append(name)
+        tem_var.append(address.replace(",",""))
+        tem_var.append(city)
+        tem_var.append(state)
+        tem_var.append(zip1)
+        tem_var.append("UK")
+        tem_var.append(store_number)
+        tem_var.append("<MISSING>")
+        tem_var.append("<MISSING>")
+        tem_var.append(lat)
+        tem_var.append(log)
+        tem_var.append(hours)
+        tem_var.append(page_url)
+        tem_var = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in tem_var]
+        
+        # print("tem_var============ ",tem_var)
+        yield tem_var
 
   
 
