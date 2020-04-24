@@ -24,7 +24,7 @@ def fetch_data():
             items = line.split('<a class="c-directory-list-content-item-link" href="')
             for item in items:
                 if '<div class="container bread-crumbs-container hidden-xs">' not in item:
-                    lurl = 'https://locations.riteaid.com/' + item.split('"')[0]
+                    lurl = 'https://riteaid.com/locations/' + item.split('"')[0]
                     if lurl.count('/') == 6:
                         locs.append(lurl)
                     elif lurl.count('/') == 5:
@@ -35,24 +35,24 @@ def fetch_data():
         print('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
-            if '<a class="c-directory-list-content-item-link" href="../' in line2:
-                items = line2.split('<a class="c-directory-list-content-item-link" href="../')
+            if '<a class="c-directory-list-content-item-link" href="' in line2:
+                items = line2.split('<a class="c-directory-list-content-item-link" href="')
                 for item in items:
                     if '<div class="container bread-crumbs-container hidden-xs">' not in item:
-                        lurl = 'https://locations.riteaid.com/' + item.split('"')[0]
+                        lurl = 'https://riteaid.com/locations/' + item.split('"')[0]
                         if lurl.count('/') == 6:
                             locs.append(lurl)
                         else:
                             cities.append(lurl)
     for city in cities:
-        #print('Pulling City %s...' % city)
+        print('Pulling City %s...' % city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
-            if '<a itemprop="url" href="../../' in line2:
-                items = line2.split('<a itemprop="url" href="../../')
+            if '<a itemprop="url" href="../' in line2:
+                items = line2.split('<a itemprop="url" href="../')
                 for item in items:
                     if '<div class="container bread-crumbs-container hidden-xs">' not in item and ' - Closed ' not in item:
-                        lurl = 'https://locations.riteaid.com/' + item.split('"')[0]
+                        lurl = 'https://riteaid.com/locations/' + item.split('"')[0]
                         locs.append(lurl)
     print('Found %s Locations...' % str(len(locs)))
     for loc in locs:
@@ -60,7 +60,7 @@ def fetch_data():
         while LocFound:
             try:
                 LocFound = False
-                #print('Pulling Location %s...' % loc)
+                print('Pulling Location %s...' % loc)
                 website = 'riteaid.com'
                 typ = '<MISSING>'
                 name = ''
@@ -69,7 +69,7 @@ def fetch_data():
                 state = ''
                 country = 'US'
                 zc = ''
-                store = ''
+                store = '<MISSING>'
                 phone = ''
                 lat = ''
                 lng = ''
