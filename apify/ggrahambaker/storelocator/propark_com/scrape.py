@@ -68,6 +68,7 @@ def fetch_data():
             else:
                 end = google_link.find(',17z')
                 coords = google_link[start + 1:end].split(',')[:2]
+
                 
             pop_up_link = links[1]['href'].replace('#', '').strip()
 
@@ -78,6 +79,7 @@ def fetch_data():
 
  
         pop = soup.find('div', {'id': pop_up_link})
+        location_name = pop.find('h3').text
         tds = pop.find_all('td')
         hours = ''
         phone_number = ''
@@ -217,7 +219,6 @@ def fetch_data():
         if len(zip_code) == 4:
             zip_code = '<MISSING>'
 
-        location_name = street_address
         country_code = 'US'
         page_url = '<MISSING>'
         lat = coords[0]
