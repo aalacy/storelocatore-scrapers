@@ -32,7 +32,7 @@ def fetch_data():
     driver = get_driver()
     driver.get(locator_domain + ext)
 
-    element = driver.find_element_by_css_selector('div#show_all_locs')
+    element = driver.find_element_by_css_selector('button#show_all_locs')
     driver.execute_script("arguments[0].click();", element)
 
     usa = driver.find_element_by_css_selector('div#cg_usa')

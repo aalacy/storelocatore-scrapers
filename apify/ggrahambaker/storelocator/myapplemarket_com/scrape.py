@@ -39,11 +39,13 @@ def fetch_data():
     driver = get_driver()
     driver.get(locator_domain)
 
-    stores = driver.find_elements_by_css_selector('div.LocalBusiness')
+    stores = driver.find_elements_by_css_selector('p')
 
     all_store_data = []
     for i, store in enumerate(stores):
         content = store.text.split('\n')
+        if len(content) < 3:
+            continue
         street_address = content[0]
         city, state, zip_code = addy_ext(content[1])
         phone_number = content[2].replace('Phone:', '').strip()
