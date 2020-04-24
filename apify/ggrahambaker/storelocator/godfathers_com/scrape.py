@@ -57,7 +57,8 @@ def fetch_data():
 
     session = SgRequests()
 
-    url = 'https://api-prod-gfp-us-a.tillster.com/mobilem8-web-service/rest/storeinfo/distance?_=1580869219683&disposition=DINE_IN&latitude=39.75&longitude=-104.99000000000001&maxResults=1000&radius=6000&statuses=ACTIVE,TEMP-INACTIVE,ORDERING-DISABLED&tenant=gfp-us'
+
+    url = 'https://api-prod-gfp-us-a.tillster.com/mobilem8-web-service/rest/storeinfo/distance?_=1587766814072&disposition=DINE_IN&latitude=39.6961606&longitude=-105.0382076&maxResults=1000&radius=6000&statuses=ACTIVE,TEMP-INACTIVE,ORDERING-DISABLED&tenant=gfp-us'
 
     r = session.get(url, headers = HEADERS)
 
@@ -66,6 +67,7 @@ def fetch_data():
     all_store_data = []
 
     for store in all_stores:
+
         
         if store['status'] == 'TEMP-INACTIVE':
             continue
@@ -76,7 +78,11 @@ def fetch_data():
         city = store['city']
         zip_code = store['zipCode']
         
-        country_code = store['country']
+        if 'country' not in store:
+            country_code = 'US'
+        else:
+            country_code = store['country']
+        
        
             
         
