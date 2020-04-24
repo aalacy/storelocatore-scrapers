@@ -1,51 +1,65 @@
 import csv
 import urllib2
 from sgrequests import SgRequests
-import json
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
-headers2 = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-            }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
-    ids = []
-    url = 'https://tacodelmar.com/wp-json/store-locator-plus/v2/locations'
-    r = session.get(url, headers=headers2)
-    for item in json.loads(r.content):
-        ids.append(item['sl_id'])
-    for loc in ids:
-        print('Pulling Location %s...' % loc)
-        url2 = 'https://tacodelmar.com/wp-json/store-locator-plus/v2/locations/' + loc
-        r2 = session.get(url2, headers=headers2)
-        array = json.loads(r2.content)
+    for x in range(0, 125):
+        print('Pulling Location %s...' % str(x))
+        url = 'https://tacodelmar.com/location/?id=' + str(x)
+        r = session.get(url, headers=headers)
         website = 'tacodelmar.com'
-        name = array['sl_store']
-        add = array['sl_address']
-        add = add + ' ' + array['sl_address2']
-        city = array['sl_city']
-        state = array['sl_state']
-        zc = array['sl_zip']
-        phone = array['sl_phone']
-        hours = array['sl_hours'].replace('</br>','; ').replace('<br>','; ').replace('\r','').replace('\n','').replace('  ',' ').replace('  ',' ').replace('  ',' ').replace('  ',' ')
-        country = array['sl_country']
-        typ = 'Restaurant'
-        store = array['sl_id']
-        lat = array['sl_latitude']
-        lng = array['sl_longitude']
-        if country == 'USA':
-            country = 'US'
-        else:
-            country = 'CA'
-        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        lines = r.iter_lines()
+        hours = ''
+        typ = '<MISSING>'
+        store = str(x)
+        try:
+            for line in lines:
+                if '<h3 class="color-turquoise padding-above-below">' in line:
+                    name = line.split('<h3 class="color-turquoise padding-above-below">')[1].split('<')[0]
+                if 'data-latitude="' in line:
+                    lat = line.split('data-latitude="')[1].split('"')[0]
+                    lng = line.split('data-longitude="')[1].split('"')[0]
+                if '<div class="right-dsc">' in line and '>(' in line:
+                    phone = line.split('<div class="right-dsc">')[1].split('<')[0]
+                if '<div class="right-dsc">' in line and '>(' not in line:
+                    g = next(lines)
+                    h = next(lines)
+                    add = g.split('<')[0].strip().replace('\t','')
+                    csz = h.split('<')[0].strip().replace('\t','')
+                    city = csz.split(',')[0]
+                    state = csz.split(',')[1].strip().split(' ')[0]
+                    zc = csz.split(',')[1].strip().split(' ',1)[1]
+                if 'PM<' in line:
+                    hrs = line.split('<')[0].strip()
+                    if hours == '':
+                        hours = hrs
+                    else:
+                        hours = hours + '; ' + hrs
+            if ' ' in zc:
+                country = 'CA'
+            else:
+                country = 'US'
+            if hours == '':
+                hours = '<MISSING>'
+            if phone == '':
+                phone = '<MISSING>'
+            canada = ['AB','MB','BC','SK','ON','QC','PQ','NB','NL','NS']
+            if state in canada:
+                country = 'CA'
+            yield [website, url, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        except:
+            pass
 
 def scrape():
     data = fetch_data()
