@@ -46,7 +46,7 @@ def fetch_data():
 
             code=search.current_zip
         #
-            print(code)
+            #print(code)
         #continue
             al="addressline="+str(code)+"&r=100&storetype="+o
             url="https://local.pavilions.com/search.html?"+al
@@ -123,10 +123,10 @@ def fetch_data():
                     page_url.append(url)
                     countries.append(country)
             if len(results) < MAX_RESULTS:
-                print("max distance update")
+                #print("max distance update")
                 search.max_distance_update(MAX_DISTANCE)
             elif len(results) == MAX_RESULTS:
-                print("max count update")
+                #print("max count update")
                 search.max_count_update(result_coords)
         #break
             coord = search.next_coord()
