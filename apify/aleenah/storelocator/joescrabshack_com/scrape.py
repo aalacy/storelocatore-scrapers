@@ -34,7 +34,7 @@ def fetch_data():
     soup = BeautifulSoup(res.text, 'html.parser')
     divs = soup.find_all('div', {'class': 'loc-results-box'})
     divs=divs[53:]
-    len(divs)
+    print(len(divs))
     for div in divs:
         a = div.find("h4").find('a')
         ids.append(a.get('href').split("/")[-1])
