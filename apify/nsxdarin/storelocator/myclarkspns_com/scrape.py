@@ -27,7 +27,6 @@ def fetch_data():
         phone = item['phone']
         hours = ''
         purl = '<MISSING>'
-        print(item['streetaddress'])
         if item['streetaddress'].count(',') == 3 or item['streetaddress'].count(',') >= 5:
             add = item['streetaddress'].split(',')[0]
             city = item['streetaddress'].split(',')[1].strip()
