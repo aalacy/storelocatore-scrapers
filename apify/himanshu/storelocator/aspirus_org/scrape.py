@@ -122,7 +122,8 @@ def fetch_data():
     vk=10
     while True:
         # print(driver.current_url)
-        
+        if page >= 47:
+            break
         soup_loc_list  =BeautifulSoup(driver.page_source,"lxml")
         if soup_loc_list.find("ul", {"class": "results"}):
 
@@ -147,7 +148,7 @@ def fetch_data():
                 # print("page_url : ",page_url)
                 # print("//a[@id='cphBody_cphCenter_ctl01_PaginationTop_PaginationTop_lb']")
                 page_v="Page "+str(page)
-                # print(page_v)
+                #print(page_v)
                 r_location = request_wrapper(page_url,"get", headers=headers)
                 soup_location = BeautifulSoup(r_location.text, "lxml")
 
@@ -202,8 +203,7 @@ def fetch_data():
         else:
             break
         time.sleep(10)
-        if page > 47:
-            break
+        
         if page-1 == vk:
             vk +=10
             driver.find_element_by_xpath("//a[@title='"+str('Next 10')+"']").click()

@@ -31,7 +31,9 @@ def fetch_data():
     response = session.post( vurl, data=payload, headers=headers, params=querystring)
     locator_domain ='https://fairview.org'
     for value in json.loads(response.text)['results']:
+
         page_url = value['ClickUri']
+        # print(page_url)
         hours1='<MISSING>'
         jdata= json.loads(value['raw']['flocationdisplaycontent41631'])
         if jdata==None:
@@ -60,16 +62,15 @@ def fetch_data():
         zipp = jdata['Address']['Zip']
         latitude = jdata['Address']['Latitude']
         longitude = jdata['Address']['Longitude']
-        try:
-            if "DisplayNumber" in  jdata['LocationPhones'][0]:
-                phone = jdata['LocationPhones'][0]['DisplayNumber']
-        except:
-            phone="<MISSING>"
-        
+        # print(jdata['LocationPhones'])
+        if "DisplayNumber" in  jdata['LocationPhones'][0]:
+            phone = jdata['LocationPhones'][0]['DisplayNumber']
+        if phone == "":
+            phone = jdata['LocationPhones'][1]['DisplayNumber']
         if "FAIRVIEW" in phone:
             phone=phone.replace("-FAIRVIEW",'').replace("FAIRVIEW",'')
-        
-        
+        phone = phone.split(";")[0].strip()
+        # print(phone)
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -78,9 +79,9 @@ def fetch_data():
                     store_number, phone.replace('612-336-2670 or 1-844-858-2670','612-336-2670'), location_type, latitude, longitude, hours1.replace('Hours','').strip(), page_url]
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         
-        if store[2]  in addressess123:
+        if store[1]+store[2]  in addressess123:
             continue
-        addressess123.append(store[2])
+        addressess123.append(store[1]+store[2])
         # print(store)
         yield store
 
