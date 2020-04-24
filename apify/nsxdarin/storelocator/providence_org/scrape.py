@@ -71,7 +71,16 @@ def fetch_data():
                         if add != '':
                             if ' Suite' in add:
                                 add = add.split(' Suite')[0]
-                            yield [website, mloc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                            if ',' in add:
+                                addparts = add.split(',')
+                                newadd = ''
+                                for aitem in addparts:
+                                    if 'Floor' not in aitem:
+                                        if newadd == '':
+                                            newadd = aitem
+                                        else:
+                                            newadd = newadd + ',' + aitem
+                            yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
                 print('%s OR Locations Found' % str(len(orlocs)))
             except:
                 PFound = True
@@ -123,7 +132,16 @@ def fetch_data():
                 if 'h/hospice-of-seattle' in mloc:
                     name = 'Providence Hospice of Seattle'
                 city = city.strip().replace('\t','')
-                yield [website, mloc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                if ',' in add:
+                    addparts = add.split(',')
+                    newadd = ''
+                    for aitem in addparts:
+                        if 'Floor' not in aitem:
+                            if newadd == '':
+                                newadd = aitem
+                            else:
+                                newadd = newadd + ',' + aitem
+                yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
         print('%s WA Locations Found' % str(len(mtlocs)))
     for x in range(1, 10):
         print('Pulling MT Page %s...' % str(x))
@@ -165,7 +183,16 @@ def fetch_data():
                 lat = line.split('?q=')[1].split(',')[0]
                 lng = line.split('?q=')[1].split(',')[1].split('"')[0]
             if Found and '</li>' in line:
-                yield [website, mloc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                if ',' in add:
+                    addparts = add.split(',')
+                    newadd = ''
+                    for aitem in addparts:
+                        if 'Floor' not in aitem:
+                            if newadd == '':
+                                newadd = aitem
+                            else:
+                                newadd = newadd + ',' + aitem
+                yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
         print('%s MT Locations Found' % str(len(mtlocs)))
     for x in range(1, 10):
         print('Pulling AK Page %s...' % str(x))
@@ -282,7 +309,16 @@ def fetch_data():
         if add != '':
             if ' Suite' in add:
                 add = add.split(' Suite')[0]
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            if ',' in add:
+                addparts = add.split(',')
+                newadd = ''
+                for aitem in addparts:
+                    if 'Floor' not in aitem:
+                        if newadd == '':
+                            newadd = aitem
+                        else:
+                            newadd = newadd + ',' + aitem
+            yield [website, loc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for x in range(1, 75):
         print('Pulling SCA Page %s...' % str(x))
         url = 'https://www.providence.org/locations?postal=90210&lookup=&lookupvalue=&page=' + str(x) + '&radius=5000&term=#'
@@ -331,7 +367,16 @@ def fetch_data():
         if ' Suite' in add:
             add = add.split(' Suite')[0]
         if add != '':
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            if ',' in add:
+                addparts = add.split(',')
+                newadd = ''
+                for aitem in addparts:
+                    if 'Floor' not in aitem:
+                        if newadd == '':
+                            newadd = aitem
+                        else:
+                            newadd = newadd + ',' + aitem
+            yield [website, loc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
     r = session.get('https://www.stjosephhealth.org/our-locations/', headers=headers)
     lines = r.iter_lines()
     for line in lines:
@@ -373,7 +418,16 @@ def fetch_data():
                 add = add.split(',')[0].strip()
             if ' Suite' in add:
                 add = add.split(' Suite')[0]
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            if ',' in add:
+                addparts = add.split(',')
+                newadd = ''
+                for aitem in addparts:
+                    if 'Floor' not in aitem:
+                        if newadd == '':
+                            newadd = aitem
+                        else:
+                            newadd = newadd + ',' + aitem
+            yield [website, loc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
