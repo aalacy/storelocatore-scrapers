@@ -35,7 +35,7 @@ def fetch_data():
         lat = '<MISSING>'
         lng = '<MISSING>'
         hours = ''
-        country = ''
+        country = 'US'
         zc = ''
         phone = ''
         print('Pulling Location %s...' % loc)
@@ -43,21 +43,34 @@ def fetch_data():
         typ = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
-            if '<h1 data-testid="page-title" class="css-hcge3v">' in line2:
-                name = line2.split('<h1 data-testid="page-title" class="css-hcge3v">')[1].split('<')[0]
-            if '"@type":"PostalAddress",' in line2:
+            if '<h1 class="css-hcge3v' in line2:
+                name = line2.split('<h1 class="css-hcge3v')[1].split('>')[1].split('<')[0]
+            if '"@type":"PostalAddress",' in line2 and add == '':
                 add = line2.split(',"streetAddress":"')[1].split('"')[0]
-                country = 'US'
                 city = line2.split('"addressLocality":"')[1].split('"')[0]
                 state = line2.split('"addressRegion":"')[1].split('"')[0]
                 zc = line2.split('"postalCode":"')[1].split('"')[0]
                 phone = line2.split('"telephone":"')[1].split('"')[0]
             if '<h5>' in line2:
                 typ = line2.split('<h5>')[1].split('</h5>')[0].replace('<i>','').replace('</i>','')
-            if '"openingHours":"' in line2:
+            if '"openingHours":"' in line2 and hours == '':
                 hours = line2.split('"openingHours":"')[1].split('"')[0]
         if 'broadway' in loc:
             hours = 'Mo, Tu, We, Th, Fr, Sa, Su, 10:00-19:00'
+        if 'tower-road' in loc:
+            add = '7050 Tower Rd'
+            city = 'Denver'
+            state = 'CO'
+            zc = '80249'
+            country = 'US'
+            phone = '720-428-8990'
+            hours = 'Mo, Tu, We, Th, Fr, Sa, Su, 8:00-22:00'
+        if 'champa-wellness-hemp-cbd' in loc:
+            name = 'Native Roots Wellness CBD Champa'
+            phone = '303-623-1900'
+        if 'eagle-vail-marijuana-CBD-wellness' in loc:
+            name = 'Native Roots Wellness CBD Vail'
+        phone = phone.replace('+1-','')
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
