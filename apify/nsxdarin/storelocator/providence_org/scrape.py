@@ -68,18 +68,20 @@ def fetch_data():
                         g = next(lines)
                         phone = g.split('tel:')[1].split('"')[0]
                     if '<div class="module-lc-services">' in line:
+                        newadd = ''
                         if add != '':
                             if ' Suite' in add:
                                 add = add.split(' Suite')[0]
                             if ',' in add:
                                 addparts = add.split(',')
-                                newadd = ''
                                 for aitem in addparts:
                                     if 'Floor' not in aitem:
                                         if newadd == '':
                                             newadd = aitem
                                         else:
                                             newadd = newadd + ',' + aitem
+                            else:
+                                newadd = add
                             yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
                 print('%s OR Locations Found' % str(len(orlocs)))
             except:
@@ -132,15 +134,17 @@ def fetch_data():
                 if 'h/hospice-of-seattle' in mloc:
                     name = 'Providence Hospice of Seattle'
                 city = city.strip().replace('\t','')
+                newadd = ''
                 if ',' in add:
                     addparts = add.split(',')
-                    newadd = ''
                     for aitem in addparts:
                         if 'Floor' not in aitem:
                             if newadd == '':
                                 newadd = aitem
                             else:
                                 newadd = newadd + ',' + aitem
+                else:
+                    newadd = add
                 yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
         print('%s WA Locations Found' % str(len(mtlocs)))
     for x in range(1, 10):
@@ -183,15 +187,17 @@ def fetch_data():
                 lat = line.split('?q=')[1].split(',')[0]
                 lng = line.split('?q=')[1].split(',')[1].split('"')[0]
             if Found and '</li>' in line:
+                newadd = ''
                 if ',' in add:
                     addparts = add.split(',')
-                    newadd = ''
                     for aitem in addparts:
                         if 'Floor' not in aitem:
                             if newadd == '':
                                 newadd = aitem
                             else:
                                 newadd = newadd + ',' + aitem
+                else:
+                    newadd = add
                 yield [website, mloc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
         print('%s MT Locations Found' % str(len(mtlocs)))
     for x in range(1, 10):
@@ -307,17 +313,19 @@ def fetch_data():
         if ' Suite' in add:
             add = add.split(' Suite')[0]
         if add != '':
+            newadd = ''
             if ' Suite' in add:
                 add = add.split(' Suite')[0]
             if ',' in add:
                 addparts = add.split(',')
-                newadd = ''
                 for aitem in addparts:
                     if 'Floor' not in aitem:
                         if newadd == '':
                             newadd = aitem
                         else:
                             newadd = newadd + ',' + aitem
+            else:
+                newadd = add
             yield [website, loc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
     for x in range(1, 75):
         print('Pulling SCA Page %s...' % str(x))
@@ -367,15 +375,17 @@ def fetch_data():
         if ' Suite' in add:
             add = add.split(' Suite')[0]
         if add != '':
+            newadd = ''
             if ',' in add:
                 addparts = add.split(',')
-                newadd = ''
                 for aitem in addparts:
                     if 'Floor' not in aitem:
                         if newadd == '':
                             newadd = aitem
                         else:
                             newadd = newadd + ',' + aitem
+            else:
+                newadd = add
             yield [website, loc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
     r = session.get('https://www.stjosephhealth.org/our-locations/', headers=headers)
     lines = r.iter_lines()
@@ -414,19 +424,21 @@ def fetch_data():
             hours = '<MISSING>'
             loc = '<MISSING>'
             store = '<MISSING>'
+            newadd = ''
             if ',' in add:
                 add = add.split(',')[0].strip()
             if ' Suite' in add:
                 add = add.split(' Suite')[0]
             if ',' in add:
                 addparts = add.split(',')
-                newadd = ''
                 for aitem in addparts:
                     if 'Floor' not in aitem:
                         if newadd == '':
                             newadd = aitem
                         else:
                             newadd = newadd + ',' + aitem
+            else:
+                newadd = add
             yield [website, loc, name, newadd, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
