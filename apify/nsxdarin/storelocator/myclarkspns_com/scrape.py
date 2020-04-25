@@ -18,7 +18,7 @@ def fetch_data():
     url = 'https://api.storepoint.co/v1/15d97b1ea687fe/locations?lat=41.8265833&long=-72.551402&radius=1000000'
     r = session.get(url, headers=headers)
     for item in json.loads(r.content)['results']['locations']:
-        store = item['id']
+        store = item['description']
         name = item['name']
         typ = 'Station'
         website = 'myclarkspns.com'
