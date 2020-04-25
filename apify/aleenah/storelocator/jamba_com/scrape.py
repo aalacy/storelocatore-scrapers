@@ -66,13 +66,13 @@ def fetch_data():
         url='https://momentfeed-prod.apigee.net/api/llp.json?address='+street[page_url.index(u)].replace(" ","+")+"&auth_token=PQUBOCBNLKOUIYUP&locality="+cities[page_url.index(u)].replace(" ","+")+"&multi_account=false&pageSize=30&region="+states[page_url.index(u)]
         res=requests.get(url,headers=headers)
         #print(url)
-        if 'message' in res.json():
+        if 'message' in res.json() or 'error' in res.json() :
             ur=re.findall(r'(.*)#',street[page_url.index(u)].replace(" ","+"))
             if ur!=[]:
                 ur=ur[0]
                 url = 'https://momentfeed-prod.apigee.net/api/llp.json?address=' + ur + "&auth_token=PQUBOCBNLKOUIYUP&locality=" +cities[page_url.index(u)].replace(" ", "+") + "&multi_account=false&pageSize=30&region=" + states[page_url.index(u)]
                 res = requests.get(url, headers=headers)
-            if 'message' in res.json():
+            if 'message' in res.json() or 'error' in res.json() :
                 print(url)
                 locs.append("<MISSING>")
                 ids.append("<MISSING>")
