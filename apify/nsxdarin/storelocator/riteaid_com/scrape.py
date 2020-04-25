@@ -102,10 +102,14 @@ def fetch_data():
                                     hours = hrs
                                 else:
                                     hours = hours + '; ' + hrs
+                    if '<span class="c-address-street-2">' in line2:
+                        add = add + ' ' + line2.split('<span class="c-address-street-2">')[1].split('<')[0].strip()
                 if hours == '':
                     hours = '<MISSING>'
                 if store != '':
                     hours = hours.replace('-0','-0000')
+                    if phone == '':
+                        phone = '<MISSING>'
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             except:
                 LocFound = True
