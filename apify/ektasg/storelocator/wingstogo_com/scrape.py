@@ -37,13 +37,16 @@ def fetch_data():
     time.sleep(5)
     stores = driver.find_elements_by_css_selector('div.view-more > a')
     name = [stores[i].get_attribute('href') for i in range(0, len(stores))]
-    print(name)
+    #print(name)
     for i in range(len(name)):
             driver.get(name[i])
             page_url = name[i]
             time.sleep(5)
-            location_name = driver.find_element_by_css_selector('div.loc-details-title').text
             street_addr = driver.find_element_by_css_selector('span.detail-address').text
+            if "coming soon" in street_addr.lower():
+                continue
+            location_name = driver.find_element_by_css_selector('div.loc-details-title').text
+            
             state_city_zip = driver.find_element_by_css_selector('span.detail-city').text
             zipcode = state_city_zip.split(" ")[-1]
             state = state_city_zip.split(" ")[-2]
