@@ -22,10 +22,15 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url = "https://www.freseniuskidneycare.com"
-    for page_number in range(1,281):
-        location_url = "https://www.freseniuskidneycare.com/dialysis-centers?lat=39.3096984&lng=-76.6701475&radius=10000&page=" + str(page_number)
+    page_number = 1
+    while True:
+        # print(page_number)
+        location_url = "https://www.freseniuskidneycare.com/dialysis-centers?lat=40.7987048&lng=-73.6506776&radius=250&page="+ str(page_number)
+        # location_url1 = "https://www.freseniuskidneycare.com/dialysis-centers?lat=39.3096984&lng=-76.6701475&radius=10000&page=" + str(page_number)
         location_r = session.get(location_url, headers=headers)
         location_soup = BeautifulSoup(location_r.text, "lxml")
+        if location_soup.find("tr",{"class":"locator-results-item js-locator-item js-loadmore-item"}) == None:
+            break
         for data in location_soup.find_all("tr",{"class":"locator-results-item js-locator-item js-loadmore-item"}):
             location_name = data['data-clinicname'].split(".")[1]
             street_address = data['data-clinicaddr1']
@@ -65,7 +70,7 @@ def fetch_data():
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             # print('---store--'+str(store))
             yield store
-        
+        page_number += 1
 
 
 

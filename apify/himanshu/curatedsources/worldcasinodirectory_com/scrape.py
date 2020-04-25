@@ -8,7 +8,7 @@ import re
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8",newline = "") as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -24,12 +24,7 @@ def fetch_data():
     # zips = sgzip.coords_for_radius(50)
     addresses = []
 
-    # headers = {
-    #     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36',
-    #     "accept": "application/json, text/javascript, */*; q=0.01",
-    #     # "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    # }
-
+    
     # it will used in store data.
     locator_domain = "https://www.worldcasinodirectory.com/"
     location_name = ""
@@ -64,60 +59,46 @@ def fetch_data():
             latitude = loc['location']['latitude']
             page_url = "https://www.worldcasinodirectory.com/casino/" + \
                 loc['slug']
-
-            try:
-                r_loc = requests.get(page_url, headers=headers)
-                soup_loc = BeautifulSoup(r_loc.text, 'lxml')
-                street_address = list(soup_loc.find('h1', {'itemprop': 'name'}).find_next(
-                    'h3').stripped_strings)[0].split(',')[-3]
-                # print(street_address)
-                location_type = "<MISSING>"
-                info = list(soup_loc.find(
-                    'div', class_='contentInGreyBlock contactInfo clearfix').stripped_strings)
-                if info == []:
-                    # print(page_url)
-                    phone = "<MISSING>"
-                    hours_of_operation = "<MISSING>"
-                    zipp = "<MISSING>"
-                else:
-                    ca_zip_list = re.findall(
-                        r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(" ".join(info)))
-                    if ca_zip_list:
-                        zipp = ca_zip_list[0].strip()
-                    else:
-                        zipp = "<MISSING>"
-                    phone_list = re.findall(re.compile(
-                        ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(" ".join(info)))
-                    if phone_list:
-                        phone = phone_list[0].strip()
-                    else:
-                        phone = "<MISSING>"
-                    if "Casino hours" in " ".join(info):
-                        hours_of_operation = "Casino hours  " + \
-                            " ".join(info).split('Casino hours')[1]
-                        # print(hours_of_operation)
-                    else:
+            if page_url:
+                try:
+                    r_loc = requests.get(page_url, headers=headers)
+                    soup_loc = BeautifulSoup(r_loc.text, 'lxml')
+                    try:
+                        hours_of_operation = " ".join(list(soup_loc.find("div",class_="hotel-hours").stripped_strings))
+                    except:
                         hours_of_operation = "<MISSING>"
-                        # print(info)
-                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    try:
+                        phone = soup_loc.find("span",{"itemprop":"telephone"}).text.replace("=","").replace("=+","").strip()
+                    except:
+                        phone = "<MISSING>"
+                    try:
+                        street_address = " ".join(" ".join(list(soup_loc.find("span",{"itemprop":"address"}).stripped_strings)).split(",")[:-3]).replace("Grey Eagle Casino & Bingo","").strip()
+                    except:
+                        street_address = "<MISSING>"
+                    try:
+                        zipp = " ".join(" ".join(list(soup_loc.find("span",{"itemprop":"address"}).stripped_strings)).split(",")[-2].split()[1:]).strip()
+                    except:
+                        zipp = "<MISSING>"
+                except:
+                    hours_of_operation = "<MISSING>"
+                    phone= "<MISSING>"
+                    street_address = "<MISSING>"
+                    zipp = "<MISSING>"
+                
 
-            except:
-                street_address = "<MISSING>"
-                phone = "<MISSING>"
-                zipp = "<MISSING>"
-                hours_of_operation = "<MISSING>"
 
+            location_type = "Casino"
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
             store = ["<MISSING>" if x == "" or x == None else x for x in store]
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             # attr = store[2] + " " + store[3]
             if store[-1] in addresses:
                 continue
             addresses.append(store[-1])
 
             # print("data = " + str(store))
-            # print(
-            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             yield store
     #### US Location #####
@@ -134,57 +115,43 @@ def fetch_data():
             latitude = loc['location']['latitude']
             page_url = "https://www.worldcasinodirectory.com/casino/" + \
                 loc['slug']
-            try:
-                r_loc = requests.get(page_url, headers=headers)
-                soup_loc = BeautifulSoup(r_loc.text, 'lxml')
-                street_address = list(soup_loc.find('h1', {'itemprop': 'name'}).find_next(
-                    'h3').stripped_strings)[0].split(',')[-3]
-                location_type = "<MISSING>"
-                info = list(soup_loc.find(
-                    'div', class_='contentInGreyBlock contactInfo clearfix').stripped_strings)
-                if info == []:
-                    # print(page_url)
-                    phone = "<MISSING>"
-                    hours_of_operation = "<MISSING>"
-                    zipp = "<MISSING>"
-                else:
-                    us_zip_list = re.findall(re.compile(
-                        r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(" ".join(info)))
-                    if us_zip_list:
-                        zipp = us_zip_list[-1].strip()
-                    else:
-                        zipp = "<MISSING>"
-                    phone_list = re.findall(re.compile(
-                        ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(" ".join(info)))
-                    if phone_list:
-                        phone = phone_list[0].strip()
-                    else:
-                        phone = "<MISSING>"
-                    if "Casino hours" in " ".join(info):
-                        hours_of_operation = "Casino hours  " + \
-                            " ".join(info).split('Casino hours')[1]
-                        # print(hours_of_operation)
-                    else:
+            if page_url:
+                try:
+                    r_loc = requests.get(page_url, headers=headers)
+                    soup_loc = BeautifulSoup(r_loc.text, 'lxml')
+                    try:
+                        hours_of_operation = " ".join(list(soup_loc.find("div",class_="hotel-hours").stripped_strings))
+                    except:
                         hours_of_operation = "<MISSING>"
-                        # print(info)
-                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            except:
-                street_address = "<MISSING>"
-                phone = "<MISSING>"
-                zipp = "<MISSING>"
-                hours_of_operation = "<MISSING>"
-
+                    try:
+                        phone = soup_loc.find("span",{"itemprop":"telephone"}).text.replace("=","").replace("=+","").strip()
+                    except:
+                        phone = "<MISSING>"
+                    try:
+                        street_address = " ".join(" ".join(list(soup_loc.find("span",{"itemprop":"address"}).stripped_strings)).split(",")[:-3]).strip()
+                    except:
+                        street_address = "<MISSING>"
+                    try:
+                        zipp = " ".join(" ".join(list(soup_loc.find("span",{"itemprop":"address"}).stripped_strings)).split(",")[-2].split()[1:]).strip()
+                    except:
+                        zipp = "<MISSING>"
+                except:
+                    hours_of_operation = "<MISSING>"
+                    phone= "<MISSING>"
+                    street_address = "<MISSING>"
+                    zipp = "<MISSING>"
+            location_type = "Casino"
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
             store = ["<MISSING>" if x == "" or x == None else x for x in store]
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             # attr = store[2] + " " + store[3]
             if store[-1] in addresses:
                 continue
             addresses.append(store[-1])
 
             # print("data = " + str(store))
-            # print(
-            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             yield store
 

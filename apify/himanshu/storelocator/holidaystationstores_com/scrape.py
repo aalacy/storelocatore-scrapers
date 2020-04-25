@@ -3,13 +3,14 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
-import time
-
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 session = SgRequests()
+import platform
+system = platform.system()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -17,77 +18,83 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    if "linux" in system.lower():
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
+    else:
+        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+
 
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-    }   
-    base_url = "https://www.holidaystationstores.com/Locations/Search"
-    r = session.post(base_url, headers=headers)
-    soup = BeautifulSoup(r.text,"lxml")
-    data = soup.find("script",{"type":"text/javascript"}).text.split('=')[1].replace('};','}')
-    data1 = json.loads(re.sub("(\w+):", r'"\1":',data))
-    for i in data1:
-        store_number = data1[i]['ID']
-        latitude = data1[i]['Lat']
-        longitude = data1[i]['Lng']
+    driver = get_driver()
+    base_url = "https://www.holidaystationstores.com/"
+    data = {"Lat": 40.4172871,
+            "Lng": -82.90712300000001,
+            "Diesel": "false",
+            "E85": "false",
+            "NonOxygenated": "false",
+            "Carwash": "false",
+            "UnlimitedCarWashPass": "false",
+            "Open24Hours": "false",
+            "ATM": "false",
+            "Cub": "false",
+            "UnattendedFueling": "false",
+            "TruckStop": "false",
+            "DEF": "false",
+            "Propane": "false",
+            "CNG": "false",
+            "SearchMethod": "City",
+            "SearchValue": "OH"
+            }
 
-        location_url = "https://www.holidaystationstores.com/Locations/store/" +str(store_number) + "?page=0"
-        
-        is_true = True
-        while is_true:
-            r1 = session.post(location_url,"lxml")
-            soup1 = BeautifulSoup(r1.text, "lxml")
-            info = soup1.find("div",{"id":"StoreDetails"})
-            if info != None:
-                is_true = False
-            else:
-                continue
-        t = list(info.stripped_strings)
-        # print(t)
-        if t[6] == "24 hours, 7 days a week":
-            street_address = t[1]
-            city = t[2].split(',')[0]
-            state = t[2].split(',')[1]
-            zip1 = t[2].split(',')[2]
-            phone = t[4]
-            hours_of_operation = t[6]
-            location_name = "Store #"+data1[i]['Name']+"-"+city+","+state
-        elif t[5] == "24 hours, 7 days a week":
-            street_address = t[1]
-            city = t[2].split(',')[0]
-            state = t[2].split(',')[1]
-            zip1 = t[2].split(',')[2]
-            phone = "<MISSING>"
-            hours_of_operation = t[5]
-            location_name = "Store #"+data1[i]['Name']+"-"+city+","+state
-        else:
-            street_address = t[1]
-            city = t[2].split(',')[0]
-            state = t[2].split(',')[1]
-            zip1 = t[2].split(',')[2]
-            phone = t[4]
-            hours_of_operation = ''.join(t[6:20])
-            location_name = "Store #"+data1[i]['Name']+"-"+city+","+state
+    headers = {
+        'Accept': 'text/html, */*; q=0.01',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9,gu;q=0.8,es;q=0.7',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
+        'X-Requested-With': 'XMLHttpRequest',
+    }
+    r = session.post("https://www.holidaystationstores.com/Locations/Results/", data=data, headers=headers)
+    soup = BeautifulSoup(r.text,"lxml")
+    for name in soup.find_all("a",{"class":"HolidayHoverNone"}):
+        location_name = name.find("div",{"class":"col-12 HolidayFontColorRedHover font-weight-bold"}).text.strip()
+        store_number = location_name.split("#")[-1]
+        longitude = name['data-lng']
+        latitude = name['data-lat']
+        street_address = name.find_all("div")[1].text
+        raw = name.find_all("div")[-1].text
+        city = raw.split(",")[0]
+        state = raw.split(",")[1].split()[0]
+        zipp = raw.split(",")[1].split()[1]
+        page_url = "http://www.holidaystationstores.com/Locations/Detail?storeNumber="+str(store_number)
+        driver.get(page_url)
+        location_soup = BeautifulSoup(driver.page_source, "lxml")
+        phone = location_soup.find("div",{"class":"col-lg-4 col-sm-12"}).find("div",{"class":"HolidayFontColorRed"}).text.strip()
+        hours = " ".join(list(location_soup.find("div",{"class":"col-lg-4 col-sm-12"}).stripped_strings)).split("Hours")[1].split("Services")[0].strip()
+    
         store = []
-        address =[]
-        store.append("www.holidaystationstores.com")
+        store.append(base_url)
         store.append(location_name)
         store.append(street_address)
         store.append(city)
         store.append(state)
-        store.append(zip1)   
+        store.append(zipp)   
         store.append("US")
         store.append(store_number)
         store.append(phone)
         store.append("<MISSING>")
         store.append(latitude )
         store.append(longitude )
-        store.append(hours_of_operation)
-        store.append(location_url)
-        if store[2] in address:
-            continue     
-        address.append(store[2])
+        store.append(hours)
+        store.append(page_url)
+        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        #print(store)
         yield store
 
     

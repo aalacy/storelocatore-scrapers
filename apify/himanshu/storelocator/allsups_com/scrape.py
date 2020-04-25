@@ -1,13 +1,8 @@
 import csv
-import sys
 from sgrequests import SgRequests
-from bs4 import BeautifulSoup
 import re
 import json
-
-
-
-
+import sgzip
 session = SgRequests()
 
 def write_output(data):
@@ -22,60 +17,63 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
-    headers = {'User-agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.5) Gecko/20091102 Firefox/3.5.5','Accept':'application/json, text/javascript, */*; q=0.01'}
+    search = sgzip.ClosestNSearch()
+    search.initialize()
+    MAX_RESULTS = 150
+    MAX_DISTANCE = 60
+    current_results_len = 0  # need to update with no of count.
+    coord = search.next_coord()
     locator_domain = "https://allsups.com/"
-    addresses = []
-    for no in range(1,500):
-        #print(no)
-        page_url = "https://allsups.com/locations/details/"+str(no)
-        r= session.get(page_url,headers= headers)
-        soup = BeautifulSoup(r.text,"lxml")
-        location_name = soup.find("h1",class_="hTitle").text.strip()
-        if location_name == "":
-            # print("----")
-            continue
-        store_number = location_name.split()[-1].strip()
-        street_address = soup.find("span",class_="street-address").text.strip()
-        city = soup.find("span",class_="locality").text.strip()
-        state = soup.find("abbr",class_="region").text.strip()
-        zipp_tag = soup.find("span",class_="postal-code").text.strip()
-        ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp_tag))
-        us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp_tag))
-        if ca_zip_list:
-            zipp = ca_zip_list[-1]
-            country_code = "CA"
-        if us_zip_list:
-            zipp = us_zip_list[-1]
-            country_code = "US"
-        phone = soup.find("div",class_="tel").text.strip()
-        location_type = "<MISSING>"
-        latitude = soup.findAll("script",text = re.compile("generateMap"))[-1].text.split("(")[1].split(")")[0].split(",")[0].strip()
-        longitude = soup.findAll("script",text = re.compile("generateMap"))[-1].text.split("(")[1].split(")")[0].split(",")[1].strip()
-        hours_of_operation = "<MISSING>"
-        if street_address in addresses:
-            continue
-        addresses.append(street_address)
-        store = []
-        store.append(locator_domain if locator_domain else '<MISSING>')
-        store.append(location_name if location_name else '<MISSING>')
-        store.append(street_address if street_address else '<MISSING>')
-        store.append(city if city else '<MISSING>')
-        store.append(state if state else '<MISSING>')
-        store.append(zipp if zipp else '<MISSING>')
-        store.append(country_code if country_code else '<MISSING>')
-        store.append(store_number if store_number else '<MISSING>')
-        store.append(phone if phone else '<MISSING>')
-        store.append(location_type if location_type else '<MISSING>')
-        store.append(latitude if latitude else '<MISSING>')
-        store.append(longitude if longitude else '<MISSING>')
-        store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-        store.append(page_url if page_url else "<MISSING>")
-        yield store
-        # print("===========",store)
+    addresses = [] 
+    
+    while coord:
+        result_coords = []
+        lat = coord[0]
+        lng = coord[1]
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        json_data = session.get("https://allsups.com/wp-admin/admin-ajax.php?action=store_search&lat="+str(lat)+"&lng="+str(lng)+"&max_results=100&search_radius=500").json()
+        current_results_len = len(json_data)
+        for data in json_data:
+            location_name = data['store']
+            street_address = (data['address']+" "+ str(data['address2']))
+            city = data['city']
+            state = data['state']
+            zipp = data['zip']
+            phone = data['phone']
+            store_number = location_name.split()[-1].strip()
+            latitude = data['lat']
+            longitude = data['lng']
 
+            result_coords.append((latitude,longitude))
+            store = []
+            store.append(locator_domain if locator_domain else '<MISSING>')
+            store.append(location_name if location_name else '<MISSING>')
+            store.append(street_address if street_address else '<MISSING>')
+            store.append(city if city else '<MISSING>')
+            store.append(state if state else '<MISSING>')
+            store.append(zipp if zipp else '<MISSING>')
+            store.append("US" if zipp.replace("-","").strip().isdigit() else "CA")
+            store.append(store_number if store_number else '<MISSING>')
+            store.append(phone if phone else '<MISSING>')
+            store.append('<MISSING>')
+            store.append(latitude if latitude else '<MISSING>')
+            store.append(longitude if longitude else '<MISSING>')
+            store.append('<MISSING>')
+            store.append("<MISSING>")
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            yield store
 
+        if current_results_len < MAX_RESULTS:
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        coord = search.next_coord()
 def scrape():
     data = fetch_data()
     write_output(data)

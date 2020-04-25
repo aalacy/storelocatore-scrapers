@@ -22,38 +22,6 @@ def write_output(data):
             writer.writerow(row)
 
 
-def request_wrapper(url, method, headers, data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = session.get(url, headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:
-                if data:
-                    r = session.post(url, headers=headers, data=data)
-                else:
-                    r = session.post(url, headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None
-
 
 def fetch_data():
     headers = {
@@ -63,7 +31,7 @@ def fetch_data():
     base_url = "https://www.ufhealth.org"
     addresses = []
 
-    r_search_location = request_wrapper("https://ufhealth.org/search/locations", "get", headers=headers)
+    r_search_location = session.get("https://ufhealth.org/search/locations", headers=headers)
     soup_search_location = BeautifulSoup(r_search_location.text, "lxml")
     # print("soup_search_location === "+ str(soup_search_location))
     for cat_tag in soup_search_location.find_all("option", {"value": re.compile("im_field_dpt_specialty:")}):
@@ -73,7 +41,7 @@ def fetch_data():
 
         while True:
             # print(cat_tag.text + " == type_tag  === " + str(cat_url))
-            r_locations = request_wrapper(cat_url, "get", headers=headers)
+            r_locations = session.get(cat_url, headers=headers)
 
             if r_locations is None:
                 continue
@@ -103,7 +71,7 @@ def fetch_data():
 
                 # print("page_url ==== " + page_url)
                 # do your logic here.
-                r_store = request_wrapper(page_url + "/maps", "get", headers=headers)
+                r_store = session.get(page_url + "/maps", headers=headers)
 
                 if r_store is None:
                     continue
@@ -147,11 +115,15 @@ def fetch_data():
                         "class": "field field-name-field-hours-of-operation field-type-table field-label-hidden"})
                     if hours_raw:
                         hours_of_operation = " ".join(list(hours_raw.stripped_strings)[1:])
+                try:
+                    latitude = soup_store.text.split('"latitude":"')[1].split('"')[0]
+                    longitude = soup_store.text.split('"longitude":"')[1].split('"')[0]
+                except:
+                    latitude="<MISSING>"
+                    latitude="<MISSING>"
 
-                latitude = soup_store.text.split('"latitude":"')[1].split('"')[0]
-                longitude = soup_store.text.split('"longitude":"')[1].split('"')[0]
 
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                store = [locator_domain, location_name.replace(': Maps',''), street_address, city, state, zipp, country_code,
                          store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
                 if str(store[1] + " "+ store[2]+ " "+ store[9]) not in addresses and country_code:

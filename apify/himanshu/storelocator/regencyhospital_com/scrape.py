@@ -8,11 +8,11 @@ import json
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv', mode='w',encoding="utf-8",newline ="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -31,6 +31,7 @@ def fetch_data():
     v = data["v"]
     count = 0
     while True:
+        page_url = "https://www.selectmedical.com//sxa/search/results/?s="+ s + "&itemid=" + item_id + "&sig=&autoFireSearch=true&v=" + v + "&p=8&e=" + str(count)
         location_request = session.get("https://www.selectmedical.com//sxa/search/results/?s="+ s + "&itemid=" + item_id + "&sig=&autoFireSearch=true&v=" + v + "&p=8&e=" + str(count),headers=headers)
         try:
             location_list = location_request.json()["Results"]
@@ -41,13 +42,36 @@ def fetch_data():
             break
         for store_data in location_list:
             location_soup = BeautifulSoup(store_data["Html"],"lxml")
-            name = location_soup.find("span",{'class':"location-title"}).text.strip()
-            address = location_soup.find("div",{'class':"address"}).text
-            city = location_soup.find("span",{'class':"city"}).text
-            state = location_soup.find("span",{'class':"state"}).text
-            store_zip = location_soup.find("span",{'class':"zip"}).text
-            phone = location_soup.find("div",{'class':"phone-container"}).text.strip()
-            geo_location = location_soup.find("img")["data-latlong"]
+            try:
+                name = location_soup.find("span",{'class':"location-title"}).text.strip()
+            except:
+                name = "<MISSING>"
+            try:
+                address = location_soup.find("div",{'class':"address"}).text
+            except:
+                address = "<MISSING>"
+            try:
+                city = location_soup.find("span",{'class':"city"}).text
+            except:
+                city = "<MISSINg>"
+            try:
+                state = location_soup.find("span",{'class':"state"}).text
+            except:
+                state = "<MISSING>"
+            try:
+                store_zip = location_soup.find("span",{'class':"zip"}).text
+            except:
+                store_zip = "<MISSING>"
+            try:
+                phone = location_soup.find("div",{'class':"phone-container"}).text.strip()
+            except:
+                phone = "<MISSING>"
+            try:
+                latitude = location_soup.find("img")["data-latlong"].split("|")[0]
+                longitude = location_soup.find("img")["data-latlong"].split("|")[1]
+            except:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
             store = []
             store.append("https://www.regencyhospital.com")
             store.append(name)
@@ -59,12 +83,15 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(phone if phone != "" else "<MISSING>")
             store.append("regency hospital")
-            store.append(geo_location.split("|")[0])
-            store.append(geo_location.split("|")[1])
+            store.append(latitude)
+            store.append(longitude)
             store.append("<MISSING>")
-            return_main_object.append(store)
+            store.append(page_url)
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            yield store
+            # print(store)
         count = count + 8
-    return return_main_object
+    
 
 def scrape():
     data = fetch_data()

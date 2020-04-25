@@ -44,9 +44,12 @@ def fetch_data():
             city = addr[-1].split(",")[0]
             state = addr[-1].split(",")[1].split(" ")[1]
             zipp = addr[-1].split(",")[1].split(" ")[2]
-        if "TEMPORARILY CLOSED" in street_address:
+        if "CLOSED" in street_address:
             continue
-        phone = data.find("div",{"class":"location-list__phone"}).text.replace("\t","").replace("\n","").replace("// Store Hours: Thursday, Friday & Saturday, 11:00am - 2:00pm, 5:00pm - 8:00pm","").strip()
+        try:
+            phone = data.find("div",{"class":"location-list__phone"}).text.replace("\t","").replace("\n","").replace("// Store Hours: Thursday, Friday & Saturday, 11:00am - 2:00pm, 5:00pm - 8:00pm","").strip()
+        except:
+            phone = "<MISSING>"
         try:
             hours = " ".join(list(data.find("div",{"class":re.compile("js-location-hours")}).stripped_strings))
         except:
@@ -59,7 +62,7 @@ def fetch_data():
         store = []
         store.append(base_url)
         store.append("<MISSING>")
-        store.append(street_address)
+        store.append(street_address.replace("Online Ordering Coming Soon!",""))
         store.append(city)
         store.append(state)
         store.append(zipp.replace("953636","95363"))

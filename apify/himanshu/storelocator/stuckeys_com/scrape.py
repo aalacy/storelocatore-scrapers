@@ -48,7 +48,11 @@ def fetch_data():
         tem_var.append(loc[i]['zp'])
         tem_var.append("US")
         tem_var.append("<MISSING>")
-        tem_var.append(loc[i]['te'])
+        if "te" in loc[i]:
+            tem_var.append(loc[i]['te'])
+        else:
+            tem_var.append("<MISSING>")
+
         tem_var.append("<MISSING>")
         tem_var.append(loc[i]['lat'] if loc[i]['lat'] else "<MISSING>")
         tem_var.append(loc[i]['lng'] if loc[i]['lng'] else  "<MISSING>")
