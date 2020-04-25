@@ -25,15 +25,15 @@ def fetch_data():
     soup = BeautifulSoup(page.text, "html.parser")
     repo_list = soup.findAll('div', {'class': 'store-content'})
     cleanr = re.compile('<.*?>')
-    phoner = re.compile('(.*?)')
-    p = 1
+
+    p = 0
     for repo in repo_list:
         links = repo.findAll('a')
         for link in links:
            if link.text == "Details ":
                 link = link['href']
-                print(link)
-                print(p)
+                #print(link)
+                #print(p)
                 page = requests.get(link)
                 soup = BeautifulSoup(page.text, "html.parser")
                 scriptlist = soup.findAll('script', {'type': 'application/ld+json'})
@@ -86,16 +86,14 @@ def fetch_data():
                 phone = detail[start:end]
 
                 hours = ""
-                hourlist = soup.findAll('div', {'class': 'hours'})
+                hourlist = soup.findAll('div', {'class': 'hour'})
                 for temph in hourlist:
-                    hours = hours + " | " + temph.find('span').text
+                    #print("Hours = ",temph.text)
+                    hours = hours + temph.text +' '
 
-
-                start = hours.find(" | ")
-                hours = hours[start+3:len(hours)]
-                start = hours.find(" | ")
-                if start < 2:
-                    hours = hours[start + 3:len(hours)]
+                hours = hours.replace('\u200b','')
+                #print(hours)
+                
 
                 if len(street) < 4:
                     address = "<MISSING>"
@@ -109,24 +107,14 @@ def fetch_data():
                     pcode = "<MISSING>"
                 if len(phone) < 6:
                     phone = "<MISSING>"
-                if len(hours) < 6:
+                if len(hours) < 3:
                     hours = "<MISSING>"
                 if len(lat) < 2 :
                     lat = "<MISSING>"
                 if len(longt) < 2 :
                     longt = "<MISSING>"
 
-                print(hours)
-                print(title)
-                print(street)
-                print(city)
-                print(state)
-                print(ccode)
-                print(pcode)
-                print(lat)
-                print(longt)
-                print(phone)
-
+                
                 data.append([
                     url,
                     title,
@@ -142,7 +130,7 @@ def fetch_data():
                     longt,
                     hours
                 ])
-
+                print(data[p])
                 p += 1
 
     return data
