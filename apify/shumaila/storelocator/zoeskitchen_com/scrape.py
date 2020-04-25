@@ -1,16 +1,8 @@
-#https://zios.com/locations/?disp=all
-# https://zoeskitchen.com/locations/search?location=WI
-# https://www.llbean.com/llb/shop/1000001703?nav=gn-hp
-
-
 import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
-import json
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from sgrequests import SgRequests
 
 session = SgRequests()
@@ -27,15 +19,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument("--disable-notifications")
-    #return webdriver.Chrome('chromedriver')
-    #, chrome_options=options
-    return webdriver.Chrome('C:\\Users\\Dell\\local\\chromedriver.exe')
 
 
 
@@ -56,10 +39,10 @@ def fetch_data():
     start = soup.find('{',0)+1
     
     while True:        
-        start = soup.find('{',start)+1       
+        start = soup.find('{',start)       
         if start == -1:
             break
-        
+        start = start + 1
         end = soup.find('}',start)       
         detail = soup[start:end]        
         mstart = detail.find('storeNumber')
@@ -132,7 +115,10 @@ def fetch_data():
             mend = soup1.find('}',mstart)
             longt = soup1[mstart:mend]
         
-        start = end
+        
+        lat = lat.lstrip()
+        longt = longt.lstrip()
+        hours = hours.rstrip()
         data.append([
                         'https://zoeskitchen.com/',
                         link,                   
@@ -151,6 +137,8 @@ def fetch_data():
                     ])
         #print(p,data[p])
         p += 1
+        
+        start = end
         
         
         
