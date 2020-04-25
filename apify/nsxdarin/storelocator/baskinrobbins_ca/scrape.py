@@ -19,7 +19,7 @@ def fetch_data():
     r = session.get(url, headers=headers)
     items = r.content.split('"storeid":"')
     for item in items:
-        if '"name":"' in item:
+        if '"name":"' in item and 'slw({"settings":' not in item:
             item = item.replace(', Canada",','",')
             item = item.replace(', Canada\\r\\n",','",')
             item = item.replace(', CA",','",')
@@ -37,8 +37,12 @@ def fetch_data():
                 phone = item.split('"phone":"')[1].split('"')[0]
             except:
                 phone = '<MISSING>'
-            lat = item.split('"map_lat":')[1].split(',')[0].replace('"','')
-            lng = item.split('"map_lng":')[1].split(',')[0].replace('"','')
+            try:
+                lat = item.split('"map_lat":"')[1].split('"')[0]
+                lng = item.split('"map_lng":"')[1].split('"')[0]
+            except:
+                lat = '<MISSING>'
+                lng = '<MISSING>'
             country = 'CA'
             if addinfo.count(',') == 3:
                 add = addinfo.split(',',1)[0].strip()
