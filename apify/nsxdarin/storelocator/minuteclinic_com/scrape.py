@@ -38,40 +38,46 @@ def fetch_data():
                 locs.append(line2.split('data-location-page="')[1].split('"')[0])
     for loc in locs:
         print('Pulling Location %s...' % loc)
-        website = 'minuteclinic.com'
-        typ = '<MISSING>'
-        hours = ''
-        name = 'Minute Clinic'
-        add = ''
-        city = ''
-        country = 'US'
-        state = ''
-        zc = ''
-        phone = ''
-        lat = ''
-        lng = ''
-        store = loc.rsplit('/',1)[1].split('.')[0]
-        r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
-            if '"streetAddress": "' in line2:
-                add = line2.split('"streetAddress": "')[1].split('"')[0]
-            if '"addressLocality": "' in line2:
-                city = line2.split('"addressLocality": "')[1].split('"')[0]
-            if '"addressRegion": "' in line2:
-                state = line2.split('"addressRegion": "')[1].split('"')[0]
-            if '"postalCode": "' in line2:
-                zc = line2.split('"postalCode": "')[1].split('"')[0]
-            if '"telephone": "' in line2:
-                phone = line2.split('"telephone": "')[1].split('"')[0]
-            if '"openingHours": "' in line2:
-                hours = line2.split('"openingHours": "')[1].split('"')[0].strip()
-            if '"latitude": "' in line2:
-                lat = line2.split('"latitude": "')[1].split('"')[0]
-            if '"longitude": "' in line2:
-                lng = line2.split('"longitude": "')[1].split('"')[0]
-        if hours == '':
-            hours = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        PFound = True
+        while PFound:
+            try:
+                website = 'minuteclinic.com'
+                typ = '<MISSING>'
+                hours = ''
+                name = 'Minute Clinic'
+                add = ''
+                city = ''
+                country = 'US'
+                state = ''
+                zc = ''
+                phone = ''
+                lat = ''
+                lng = ''
+                store = loc.rsplit('/',1)[1].split('.')[0]
+                r2 = session.get(loc, headers=headers)
+                for line2 in r2.iter_lines():
+                    if '"streetAddress": "' in line2:
+                        PFound = False
+                        add = line2.split('"streetAddress": "')[1].split('"')[0]
+                    if '"addressLocality": "' in line2:
+                        city = line2.split('"addressLocality": "')[1].split('"')[0]
+                    if '"addressRegion": "' in line2:
+                        state = line2.split('"addressRegion": "')[1].split('"')[0]
+                    if '"postalCode": "' in line2:
+                        zc = line2.split('"postalCode": "')[1].split('"')[0]
+                    if '"telephone": "' in line2:
+                        phone = line2.split('"telephone": "')[1].split('"')[0]
+                    if '"openingHours": "' in line2:
+                        hours = line2.split('"openingHours": "')[1].split('"')[0].strip()
+                    if '"latitude": "' in line2:
+                        lat = line2.split('"latitude": "')[1].split('"')[0]
+                    if '"longitude": "' in line2:
+                        lng = line2.split('"longitude": "')[1].split('"')[0]
+                if hours == '':
+                    hours = '<MISSING>'
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            except:
+                PFound = True
 
 def scrape():
     data = fetch_data()
