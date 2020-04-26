@@ -117,6 +117,8 @@ def fetch_data():
                 add = g.split('<')[0].strip().replace('\t','')
                 if ' Suite' in add:
                     add = add.split(' Suite')[0]
+                if ',' not in h:
+                    h = next(lines)
                 city = h.split(',')[0]
                 state = h.split(',')[1].strip().split(' ')[0]
                 zc = h.rsplit(' ',1)[1]
