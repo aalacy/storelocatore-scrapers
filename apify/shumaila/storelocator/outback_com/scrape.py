@@ -15,8 +15,8 @@ def get_driver():
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-notifications")
     chrome_path = 'c:\\Users\\Dell\\local\\chromedriver'
-    #return webdriver.Chrome('chromedriver', chrome_options=options)
-    return webdriver.Chrome(chrome_path, chrome_options=options)
+    return webdriver.Chrome('chromedriver', chrome_options=options)
+    #return webdriver.Chrome(chrome_path, chrome_options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
