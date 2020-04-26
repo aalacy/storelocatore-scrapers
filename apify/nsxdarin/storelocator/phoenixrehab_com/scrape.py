@@ -1,8 +1,10 @@
 import csv
 import urllib2
-from sgrequests import SgRequests
+import requests
 
-session = SgRequests()
+requests.packages.urllib3.disable_warnings()
+
+session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -16,26 +18,28 @@ def write_output(data):
 def fetch_data():
     url = 'https://www.phoenixrehab.com/locations/'
     locs = []
+    website = 'phoenixrehab.com'
+    typ = '<MISSING>'
+    store = '<MISSING>'
+    country = 'US'
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
         if '<li class=""><a href="https://www.phoenixrehab.com/' in line:
-            locs.append(line.split('href="')[1].split('"')[0])
+            lurl = line.split('href="')[1].split('"')[0]
+            if '/ohio' not in lurl:
+                locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
         name = ''
         add = ''
         city = ''
         state = ''
-        store = '<MISSING>'
         lat = ''
         lng = ''
         hours = ''
-        country = 'US'
         zc = ''
         phone = ''
         print('Pulling Location %s...' % loc)
-        website = 'phoenixrehab.com'
-        typ = '<MISSING>'
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             if '{"@type":"Organization' in line2:
@@ -66,6 +70,42 @@ def fetch_data():
             lat = '39.9284938'
             lng = '-77.6305067'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    url = 'https://www.phoenixrehab.com/ohio/'
+    r = session.get(url, headers=headers)
+    lines = r.iter_lines()
+    name = ''
+    hours = '<MISSING>'
+    print('Pulling OH Locations...')
+    for line in lines:
+        if '<h3 class="clinic-title">' in line:
+            if name != '':
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            name = line.split('<h3 class="clinic-title">')[1].split('<')[0]
+            loc = '<MISSING>'
+            hours = '<MISSING>'
+        if '<p class="clinic-address">' in line:
+            g = next(lines)
+            h = next(lines)
+            add = g.split('<')[0].strip().replace('\t','')
+            csz = h.strip().replace('\t','').replace('\r','').replace('\n','')
+            if '<' in csz:
+                csz = csz.split('<')[0]
+            city = csz.split(',')[0]
+            zc = csz.rsplit(' ',1)[1]
+            state = 'OH'
+        if '<a href="tel:+1-' in line:
+            phone = line.split('<a href="tel:+1-')[1].split('"')[0]
+            lat = '<MISSING>'
+            lng = '<MISSING>'
+        if '<a class="website-link" href="' in line:
+            loc = line.split('<a class="website-link" href="')[1].split('"')[0]
+            r2 = session.get(loc, headers=headers)
+            hours = ''
+            for line2 in r2.iter_lines():
+                if 'HOURS: </strong>' in line2:
+                    hours = line2.split('HOURS: </strong>')[1].split('</p>')[0].replace('<br />','; ').replace('&#8211;','-')
+        if '</main><!-- #main -->' in line:
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
