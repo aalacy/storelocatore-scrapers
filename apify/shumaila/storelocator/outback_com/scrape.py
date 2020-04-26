@@ -13,9 +13,10 @@ def get_driver():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    chrome_path = '/Users/Dell/local/chromedriver'
-    return webdriver.Chrome('chromedriver', chrome_options=options)
-    #return webdriver.Chrome(chrome_path, chrome_options=options)
+    options.add_argument("--disable-notifications")
+    chrome_path = 'c:\\Users\\Dell\\local\\chromedriver'
+    #return webdriver.Chrome('chromedriver', chrome_options=options)
+    return webdriver.Chrome(chrome_path, chrome_options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -42,14 +43,14 @@ def fetch_data():
     
     driver1.get(url)
 
-    time.sleep(20)
-    try:
+    time.sleep(10)
+    '''try:
         closeb = driver1.find_element_by_xpath('/html/body/div[1]/div/div/div/div/div[1]/div/div/div/div[2]/span')
         closeb.click()
     except:
         time.sleep(20)
         closeb = driver1.find_element_by_xpath('/html/body/div[1]/div/div/div/div/div[1]/div/div/div/div[2]/span')
-        closeb.click()
+        closeb.click()'''
 
     province_box = driver1.find_element_by_id("mainContent")
     poption = province_box.find_elements_by_tag_name('option')
