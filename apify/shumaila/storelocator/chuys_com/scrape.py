@@ -74,7 +74,7 @@ def fetch_data():
         if len(phone) < 4:
             phone = "<MISSING>"
         hours = maindiv.find('p', {'class': 'hours'}).text
-        hours = re.sub(pattern, "", hours)
+        hours = re.sub(pattern, " ", hours)
         if len(hours) < 4:
             hours = "<MISSING>"
         #print(hours)
