@@ -4,6 +4,11 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 
 def write_output(data):
@@ -20,41 +25,43 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
+    p = 0
     url = 'https://www.chuys.com/locations'
-    page = requests.get(url, verify=False)
-    soup = BeautifulSoup(page.text, "html.parser")
+    r = session.get(url, headers=headers, verify=False)
+    
+    soup = BeautifulSoup(r.text, "html.parser")
     maindiv = soup.find('div', {'class': 'overview'})
     repo_list = maindiv.findAll('a')
     cleanr = re.compile('<.*?>')
     pattern = re.compile(r'\s\s+')
     for repo in repo_list:
         link = "https://www.chuys.com" + repo['href']
-        print(link)
-        page = requests.get(link,verify=False)
+        #print(link)
+        page = requests.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
         title = soup.find("title").text
-        print(title)
+        #print(title)
         maindiv = soup.find('div', {'class': 'location-info'})
         address = maindiv.find('p', {'class': 'address'}).text
         address = re.sub(pattern, "", address)
-        print(address)
+        #print(address)
         address = str(address)
         start = address.find("|")
         street = address[0:start-1]
         street = street.replace(",", "")
-        print(street)
+        #print(street)
         start = start + 2
         end = address.find(",", start)
         city = address[start:end-1]
-        print(city)
+        #print(city)
         start = end + 2
         end = address.find(" ", start)
         state = address[start:end]
-        print(state)
+        #print(state)
         start = end + 1
         end = len(address)
         pcode = address[start:end]
-        print(pcode)
+        #print(pcode)
         phone = maindiv.find('p', {'class': 'phone'}).text
         phone = re.sub(pattern, "", phone)
         start = phone.find("|")
@@ -62,7 +69,7 @@ def fetch_data():
             phone = phone[2:start]
         else:
             phone = phone[2:len(phone)]
-        print(phone)
+        #print(phone)
 
         if len(phone) < 4:
             phone = "<MISSING>"
@@ -70,7 +77,7 @@ def fetch_data():
         hours = re.sub(pattern, "", hours)
         if len(hours) < 4:
             hours = "<MISSING>"
-        print(hours)
+        #print(hours)
         data.append([
             url,
             title,
@@ -86,6 +93,8 @@ def fetch_data():
             "<MISSING>",
             hours
         ])
+        #print(p,data[p])
+        p += 1
 
     return data
 
