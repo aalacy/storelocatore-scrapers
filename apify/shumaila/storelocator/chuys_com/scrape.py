@@ -16,7 +16,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -41,6 +41,7 @@ def fetch_data():
         soup = BeautifulSoup(page.text, "html.parser")
         title = soup.find("title").text
         #print(title)
+        tempt = soup.find('h1').text
         maindiv = soup.find('div', {'class': 'location-info'})
         address = maindiv.find('p', {'class': 'address'}).text
         address = re.sub(pattern, "", address)
@@ -78,8 +79,10 @@ def fetch_data():
         if len(hours) < 4:
             hours = "<MISSING>"
         #print(hours)
-        data.append([
+        if tempt.find('Coming Soon') == -1:
+            data.append([
             url,
+            link,
             title,
             street,
             city,
@@ -93,8 +96,8 @@ def fetch_data():
             "<MISSING>",
             hours
         ])
-        #print(p,data[p])
-        p += 1
+            print(p,data[p])
+            p += 1
 
     return data
 
