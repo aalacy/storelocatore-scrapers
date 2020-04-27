@@ -40,42 +40,37 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(locator_domain + ext)
+    driver.implicitly_wait(10)
 
     lis = driver.find_elements_by_css_selector('li.stockist-list-result')
 
     all_store_data = []
     for li in lis:
-        details = li.text.split('\n')
-        location_name = details[0]
-        street_address = details[1]
-        
+        location_name = li.find_element_by_css_selector('div.stockist-result-name').text
 
-        if 'Nutrition Blacksburg' in location_name or 'Hattiesburg' in location_name or 'Texarkana' in location_name or 'Braunfels' in location_name:
-            street_address += ' ' + details[2]
-            city, state, zip_code = addy_ext(details[3])
-            if 'Braunfels' in location_name:
-                phone_number = details[4]
-            else:
-                phone_number = details[5]
-
-        elif 'Tuscaloosa' in location_name:
-            addy = details[2].split(',')
-            city = addy[0]
-            state = addy[1].strip()
-            zip_code = '<MISSING>'
-            phone_number = details[4]
-        elif 'West Monroe' in location_name:
-            addy = details[2].split(',')
-            city = addy[0]
-            state = '<MISSING>'
-            zip_code = addy[1].strip()
-            phone_number = details[4]
+        street_address = li.find_element_by_css_selector('div.stockist-result-addr-1').text
+        rest = li.find_element_by_css_selector('div.stockist-result-addr-locality').text.split(',')
+        city = rest[0].strip()
+        state_zip = rest[1].strip().split(' ')
+        if len(state_zip) == 3:
+            state = state_zip[0] + ' ' + state_zip[1]
+            zip_code = state_zip[2]
         else:
-            city, state, zip_code = addy_ext(details[2])
-            if '784-3000' in details[3]:
-                phone_number = details[3]
+            if len(state_zip) == 1:
+                state = state_zip[0]
+                zip_code = '<MISSING>'
             else:
-                phone_number = details[4]
+                state = state_zip[0]
+                zip_code = state_zip[1]
+
+
+
+        phone_number = street_address = li.find_element_by_css_selector('div.stockist-result-phone').text
+
+        try:
+            hours = li.find_element_by_css_selector('div.stockist-result-notes').text.replace('\n', ' ')
+        except:
+            hours = '<MISSING>'
 
 
         country_code = 'US'
@@ -83,11 +78,7 @@ def fetch_data():
         location_type = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
-        hours = ''
-        for h in details[-7:]:
-            hours += h + ' '
-
-    
+        
         page_url = '<MISSING>'
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,

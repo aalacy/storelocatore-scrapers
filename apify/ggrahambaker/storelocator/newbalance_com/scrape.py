@@ -33,6 +33,7 @@ def fetch_data():
         y = coord[1]
         #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://newbalance.locally.com/stores/conversion_data?has_data=true&company_id=41&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=' + str(x) + '&map_center_lng=' + str(y) + '&map_distance_diag=100&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=&zoom_level=10'
+        print(url)
         r = session.get(url, headers=HEADERS)
         
         res_json = json.loads(r.content)['markers']
@@ -42,22 +43,31 @@ def fetch_data():
         for loc in res_json:
             lat = loc['lat']
             longit = loc['lng']
+
             if 'New Balance' in loc['name']:
                 location_name = loc['name']
-                if 'Achieve' in location_name:
-                    continue
+                
                 if location_name not in dup_tracker:
                     dup_tracker.add(location_name)
                 else:
                     continue
 
-                street_address = loc['address']
+                # print(loc)
+
+                street_address = loc['address'].split('-')[-1].strip()
+                # print(street_address)
+
                 city = loc['city']
                 state = loc['state']
                 zip_code = loc['zip']
                 country_code = loc['country']
-                
-                phone_number = loc['phone_link'].replace('+1', '').replace('tel:', '').strip()
+                try:
+                    phone_number = loc['phone_link'].replace('+1', '').replace('tel:', '').strip()
+
+                except:
+                    phone_number = '<MISSING>'
+
+
                 if phone_number == '':
                     phone_number = '<MISSING>'
 
@@ -70,25 +80,29 @@ def fetch_data():
                 
 
                 cat = str(loc['enhanced_categories']).split(':')[0].replace('{', '').replace("'", '')
-  
-                location_type = loc['enhanced_categories'][cat]['value']
-
+                
+                try:
+                    location_type = loc['enhanced_categories'][cat]['value']
+                except:
+                    location_type = '<MISSING>'
                 r = session.get(page_url, headers=HEADERS)
-                soup = BeautifulSoup(r.content, 'html.parser')
                 
-                app_json_html = soup.find('script', {'type': "application/ld+json"})
-                
-                loc_json = json.loads(app_json_html.text)
-                
-            
-                if 'openingHours' not in loc_json:
+                # print(page_url)
+                if page_url == 'https://stores.newbalance.com/shop/new-balance':
                     hours = '<MISSING>'
-                else:
-                    hours = ''
-                    for h in loc_json['openingHours']:
-                        hours += h + ' '
+                else:    
+                    soup = BeautifulSoup(r.content, 'html.parser')
+                    app_json_html = soup.find('script', {'type': "application/ld+json"})
+                    loc_json = json.loads(app_json_html.text)
+                    
+                    if 'openingHours' not in loc_json:
+                        hours = '<MISSING>'
+                    else:
+                        hours = ''
+                        for h in loc_json['openingHours']:
+                            hours += h + ' '
 
-                    hours = hours.strip()
+                        hours = hours.strip()
                 
     
                 store_number = '<MISSING>'
@@ -101,7 +115,8 @@ def fetch_data():
                 all_store_data.append(store_data)
                 
                 
-                
+            else:
+                print(loc)    
             result_coords.append((lat, longit))
         
         

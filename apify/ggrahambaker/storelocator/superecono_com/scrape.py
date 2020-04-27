@@ -25,7 +25,8 @@ def write_output(data):
 
 def fetch_data():
     locator_domain = 'http://superecono.com/'
-    ext = 'index.php?src=directory&view=store'
+    ext = 'tiendas'
+
 
     driver = get_driver()
     driver.get(locator_domain + ext)
@@ -36,6 +37,7 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
+        print(link)
 
         driver.get(link)
         driver.implicitly_wait(10)
