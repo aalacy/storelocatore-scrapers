@@ -30,7 +30,7 @@ def fetch_data():
             city = item['address']['lines'][1]
         zc = item['address']['postcode']
         country = 'GB'
-        loc = '<MISSING>'
+        loc = url
         state = '<MISSING>'
         website = 'pizzahut.co.uk'
         typ = item['type']
