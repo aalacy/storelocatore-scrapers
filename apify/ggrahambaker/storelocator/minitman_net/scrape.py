@@ -25,13 +25,15 @@ def write_output(data):
 
 
 
+
 def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
+    addy = addy.split(',')
+    city = addy[0]
+    state_zip = addy[1].strip().split(' ')
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
+
 
 
 def fetch_data():
@@ -40,26 +42,32 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(locator_domain + ext)
-    time.sleep(2)
 
-
-    table = driver.find_element_by_css_selector('div#map_sidebar')
-    locs = table.find_elements_by_css_selector('span.location_name')
+    driver.implicitly_wait(10)
+    time.sleep(10)
+    locs = driver.find_elements_by_css_selector('div.results_entry')
     all_store_data = []
     for loc in locs:
-        driver.execute_script("arguments[0].click();", loc)
-
-        time.sleep(2)
-
-        cont = driver.find_element_by_css_selector('div#sl_info_bubble').text.split('\n')
-        location_name = cont[0]
-        store_number = cont[0].split('#')[1].strip()
-        street_address = cont[1]
-        city, state, zip_code = addy_ext(cont[2])
-        hours = cont[-1]
-
+        tds = loc.find_elements_by_css_selector('td')
+        
+        location_name = tds[0].text
+        
+        store_number = location_name.split('#')[-1].strip()
+        
+        
+        addy = tds[1].text.split('\n')
+        street_address = addy[0]
+        
+        city, state, zip_code = addy_ext(addy[1])
+        
+        links = tds[2].find_elements_by_css_selector('a')
+        if len(links) == 2:
+            page_url = links[-1].get_attribute('href')
+        else:
+            page_url = '<MISSING>'
+        
+        hours = '<MISSING>'
         country_code = 'US'
-        page_url = '<MISSING>'
         longit = '<MISSING>'
         lat = '<MISSING>'
         phone_number = '<MISSING>'
@@ -69,7 +77,7 @@ def fetch_data():
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
 
-        time.sleep(3)
+      
 
     driver.quit()
     return all_store_data
