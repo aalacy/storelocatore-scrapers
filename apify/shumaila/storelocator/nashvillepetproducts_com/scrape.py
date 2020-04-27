@@ -85,8 +85,9 @@ def fetch_data():
                 hours = hours.lstrip()                              
                 phone = phone[phone.find(' ')+ 1:len(phone)]
                 phone = phone.lstrip()
-                phone = phone.replace('.','-')                        
+                phone = phone.replace('.','-')
                 
+                city = city.replace(',','')
                 
                 if street in stlist:
                     pass
