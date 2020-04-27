@@ -1,160 +1,122 @@
 import csv
+from bs4 import BeautifulSoup
+import requests
 import time
-import random
-import gzip
-import http.client as http_client
-import ssl
-import certifi
 import re
 import json
-import urllib.parse
-import us
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+import platform
+system = platform.system()
 
-def get_ssl_context():
-  context = ssl.SSLContext(ssl.PROTOCOL_TLS)
-  context.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
-  certs_path = certifi.where()
-  context.load_verify_locations(cafile=certs_path)
-  context.verify_mode = ssl.CERT_REQUIRED
-  context.check_hostname = True
-  return context
 
-def request(method, url, body=None): 
-  conn = http_client.HTTPSConnection(host_name, context=ssl_context)
-  conn.connect()
-  if body != None: 
-    body = urllib.parse.urlencode(body)
-    headers['content-length'] = len(body)
-  conn.request(method, url, body=body, headers=headers)
-  res = conn.getresponse()
-  all_headers = res.getheaders()
-  cookies = []
-  for header in all_headers:
-    if header[0] == 'Set-Cookie': 
-      cookie = header[1].split(';')[0]
-      cookies.append(cookie)
-  global next_cookies_header
-  next_cookies_header = "; ".join(cookies)
-  content = res.read()
-  conn.close()  
-  content = gzip.decompress(content)
-  content = content.decode('utf-8')
-  return content
-
-def get_required_search_values(): 
-  # get a couple hidden inputs from the initial locations page
-  html = request('GET', '/en/restaurants')
-  match = re_location_root_pattern.search(html)
-  location_root = match.group(1)
-  match = re_request_verification_token_pattern.search(html)
-  request_verification_token = match.group(1)
-  return {
-    "location_root": location_root, 
-    "request_verification_token": request_verification_token
-  }
-
-def setup_for_posts():
-  headers['origin'] = 'https://www.applebees.com'
-  headers['referer'] = 'https://www.applebees.com/en/restaurants'
-  headers['sec-fetch-dest'] = 'document'
-  headers['sec-fetch-mode'] = 'navigate'
-  headers['sec-fetch-site'] = 'same-origin'
-  headers['sec-fetch-user'] = '?1'
-  headers['cookie'] = next_cookies_header
-  headers['content-type'] = 'application/x-www-form-urlencoded'
-
-def get_locations_data(search_query, required_search_values): 
-  url = '/api/sitecore/Locations/LocationSearchAsync'
-
-  payload = {
-    'ResultsPage': '/locations/results',
-    'LocationRoot': required_search_values['location_root'],
-    'NumberOfResults': 1000,
-    'LoadResultsForCareers': False,
-    'MaxDistance': 5000,
-    'UserLatitude': '',
-    'UserLongitude': '',
-    'SearchQuery': search_query,
-    '__RequestVerificationToken': required_search_values['request_verification_token'],
-  }
-  content = request('POST', url, payload)
-  data = json.loads(content)
-  return data
-
-def formatHours(hours): 
-  try: 
-    formatted = ''
-    for entry in hours: 
-      if formatted != "": 
-        formatted += ", "
-      formatted += entry["LocationHourLabel"] + ' ' + entry["LocationHourText"] 
-    return formatted
-  except:
-    raise 
-
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    if "linux" in system.lower():
+        return webdriver.Firefox(executable_path='./geckodriver', options=options)        
+    else:
+        return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline ="", encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        # Header
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        # Body
         for row in data:
             writer.writerow(row)
 
-def fetch_data():
-    required_search_values = get_required_search_values()
-    setup_for_posts()
-    store_numbers = []
-    for state in us.states.STATES: 
-      time.sleep(random.random()*10)
-      data = get_locations_data(state.abbr, required_search_values)
-      for loc in data["Locations"]: 
-        try: 
-          country_code = loc['Location']['Country']
-          if country_code != "US": 
-            continue
-          store_number = loc['Location']['StoreNumber']
-          if store_number not in store_numbers: 
-            store_numbers.append(store_number)
-            locator_domain = 'https://www.applebees.com'
-            page_url = loc['Location']['WebsiteUrl']
-            page_url = locator_domain + page_url if page_url else '<MISSING>'
-            location_name = loc['Location']['Name']
-            street_address = loc['Location']['Street']
-            city = loc['Location']['City']
-            state = loc['Location']['State']
-            zipcode = loc['Location']['Zip']
-            phone = loc['Contact']['Phone']
-            location_type = 'Store'
-            latitude = loc['Location']['Coordinates']['Latitude']
-            longitude = loc['Location']['Coordinates']['Longitude']
-            hours_of_operation = formatHours(loc['HoursOfOperation']['DaysOfOperationVM'])
-            yield [locator_domain, page_url, location_name, street_address, city, state, zipcode, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
-        except: 
-          raise
 
+def fetch_data():
+    driver = get_driver()
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        'accept': '*/*',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+    }
+     # it will used in store data.
+    addresses = []
+    base_url = "https://www.applebees.com/"
+    locator_domain = base_url
+    location_name = ""
+    street_address = ""
+    city = ""
+    state = ""
+    zipp = ""
+    country_code = "US"
+    store_number = ""
+    phone = ""
+    location_type = "presidentebarandgrill"
+    latitude = ""
+    longitude = ""
+    raw_address = ""
+    hours_of_operation = ""
+    driver.get("https://www.applebees.com/en/sitemap")
+    soup = BeautifulSoup(driver.page_source,"lxml")
+    for link in soup.find("div",class_="site-map").find_all("ul")[7:]:
+        for a in link.find_all("a",class_="nav-link"):
+            a = "https://www.applebees.com"+a["href"]
+            # print(a)
+            try:
+                driver.get(a)
+                time.sleep(3)
+                soup1 = BeautifulSoup(driver.page_source,"lxml")
+            except Exception as e:
+                #print(e)
+                continue
+            try:
+                loc_section = soup1.find("div",{"id":"location-cards-wrapper"})
+                
+                for loc_block in loc_section.find_all("div",class_="owl-item"):
+                    country_code = loc_block.find("input",{"name":"location-country"})["value"]
+                    geo_code = loc_block.find("input",{"name":"location-country"}).nextSibling.nextSibling
+                    latitude = geo_code["value"].split(",")[0]
+                    longitude = geo_code["value"].split(",")[1].split("?")[0]
+                    page_url ="https://www.applebees.com"+ loc_block.find("div",class_="map-list-item-header").find("a")["href"]
+                    location_name = loc_block.find("div",class_="map-list-item-header").find("span",class_="location-name").text.strip()
+                    address = loc_block.find("div",class_="address").find("a",{"title":"Get Directions"})
+                    address_list = list(address.stripped_strings)
+                    street_address = " ".join(address_list[:-1]).strip()
+                    city = address_list[-1].split(",")[0].strip()
+                    state = address_list[-1].split(",")[1].split()[0].strip()
+                    zipp = address_list[-1].split(",")[1].split()[-1].strip()
+                    phone = loc_block.find("a",class_="data-ga phone js-phone-mask").text.strip()
+                    store_number= "<MISSING>"
+                    driver.get(page_url)
+                    time.sleep(3)
+                    soup2 = BeautifulSoup(driver.page_source,"lxml")
+                    # hours_of_operation = " ".join(list(soup2.find("div",class_="hours").stripped_strings))
+                    # print(hours_of_operation)
+                    try:
+                        hours_of_operation = " ".join(list(soup2.find("div",class_="hours").stripped_strings))
+                    except :
+                        hours_of_operation = "<MISSING>"
+                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                    store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+
+                    if str(store[2]) + str(store[-3]) not in addresses:
+                        addresses.append(str(store[2]) + str(store[-3]))
+
+                        store = [x if x else "<MISSING>" for x in store]
+
+                        #print("data = " + str(store))
+                        #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        yield store
+            except:
+                continue
+
+            
+
+ 
 def scrape():
     data = fetch_data()
     write_output(data)
 
-host_name = "www.applebees.com"
-
-headers = {
-  'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-  'accept-encoding': 'gzip, deflate, br',
-  'accept-language': 'en-US,en;q=0.9,la;q=0.8',
-  'cache-control': 'no-cache',
-  'pragma': 'no-cache',
-  'sec-fetch-dest': 'document',
-  'sec-fetch-mode': 'navigate',
-  'sec-fetch-site': 'none',
-  'upgrade-insecure-requests': '1',
-  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.113 Safari/537.36'
-}
-
-ssl_context = get_ssl_context()
-
-re_location_root_pattern = re.compile('LocationSearchAsync[\s\S]+?<input id=\"LocationRoot\"[\s\S]+?value=\"([\w{}-]+?)\"')
-re_request_verification_token_pattern = re.compile('LocationSearchAsync[\s\S]+?<input name=\"__RequestVerificationToken\"[\s\S]+?value=\"([\w{}-]+?)\"')
-
-next_cookies_header = ''
 
 scrape()
+
+

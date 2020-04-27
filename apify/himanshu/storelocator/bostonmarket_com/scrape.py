@@ -32,7 +32,7 @@ def fetch_data():
         s_link = state_link['href']
         if state_link['data-count'] == "(1)":
             page_url = "https://www.bostonmarket.com/location/"+s_link
-            # print(page_url)
+            print(page_url)
             location_r = requests.get(page_url)
             location_soup = BeautifulSoup(location_r.text, "lxml")
 
@@ -45,6 +45,8 @@ def fetch_data():
                 state = location_soup.find("abbr",{"itemprop":"addressRegion"}).text.strip()
             except:
                 state = "<MISSING>"
+            if '689 N Terminal Road' in street_address:
+                state='PR'
             zipp = location_soup.find("span",{"class":"c-address-postal-code"}).text.strip()
             try:
                 phone = location_soup.find("div",{"itemprop":"telephone"}).text

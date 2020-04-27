@@ -3,14 +3,12 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-from sgrequests import SgRequests
 
-session = SgRequests()
 
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline ="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -36,6 +34,7 @@ def fetch_data():
         for href in data.find_all("a"):
             r2 = session.get(href['href'])
             page_url = href['href']
+            store_number= page_url.split('StoreID=')[1].split('&StoreName')[0]
             # print(page_url)
             soup1 = BeautifulSoup(r2.text,"lxml")
             try:
@@ -46,20 +45,27 @@ def fetch_data():
                 streetAddress2  = soup1.find("div",{"class":"address2"}).text.strip()
             except:
                 streetAddress2 =''
-            name = soup1.find("h3",{"class":"store-details-bar-header"}).text
+            try:
+                name = soup1.find("h3",{"class":"store-details-bar-header"}).text.strip()
+            except:
+                name = "<MISSING>"
             city = re.sub(r'\s+'," ",(soup1.find("div",{"class":"city"}).text))
             if city == " ":
                 city = soup1.find("div",{"class":"address2"}).text.strip()
             else:
                 city = city
-                
-            zip1 = soup1.find("div",{"class":"StateZip"}).text
+            try:   
+                zip1 = soup1.find("div",{"class":"StateZip"}).text
+            except:
+                zip1 = "<MISSING>"
             try:
                 phone = soup1.find("div",{"class":"phone"}).text
             except:
                 phone = "<MISSING>"
-
-            hours =  " ".join(list(soup1.find("store-hours").stripped_strings))
+            try:
+                hours =  " ".join(list(soup1.find("store-hours").stripped_strings))
+            except:
+                hours = "<MISSING>"
             stripts = soup1.find_all("script",{"type":"application/ld+json"})
             for stript in stripts:
                 if "latitude" in  stript.text:
@@ -75,7 +81,7 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append(zip1.strip() if zip1 else "<MISSING>")
             tem_var.append("UK")
-            tem_var.append("<MISSING>")
+            tem_var.append(store_number)
             tem_var.append(phone.strip() if name else "<MISSING>")
             tem_var.append("<MISSING>")
             tem_var.append(latitude)

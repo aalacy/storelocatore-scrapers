@@ -77,7 +77,7 @@ def fetch_data():
             store.append(store_data["geographicLocation"]["latitude"])
             store.append(store_data["geographicLocation"]["longitude"])
             try:
-                store.append(location_data['hotelInfo']['policyCodes'][0]['policyDescription'][0].replace("Hotel Office Hours :","").replace("|","").strip().replace("&","-").replace("a week with staff on property",''))
+                store.append(location_data['hotelInfo']['policyCodes'][0]['policyDescription'][0].replace("Hotel Office Hours :","").replace("|","").strip().replace("&","-").replace("a week with staff on property",'').replace('Open from ',''))
             except:
                 store.append("<MISSING>")
                 

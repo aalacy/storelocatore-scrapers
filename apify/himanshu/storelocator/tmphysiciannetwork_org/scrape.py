@@ -57,7 +57,7 @@ def fetch_data():
         store.append(country if country else "<MISSING>")
         store.append(storeno if storeno else "<MISSING>")
         store.append(phone if phone else "<MISSING>")
-        store.append("tmphysiciannetwork")
+        store.append("<MISSING>")
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
         store.append(hour if hour.strip() else "<MISSING>")
