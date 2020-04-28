@@ -1,13 +1,12 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import time
-from datetime import datetime
+session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -19,7 +18,7 @@ def write_output(data):
 
 
 def fetch_data():
-    base_url= "https://www.safeway.com/fuel"
+    base_url= "https://local.fuel.safeway.com/"
 
     
     headers = {           
@@ -27,77 +26,68 @@ def fetch_data():
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
     
     }
-    r = requests.get("https://local.safeway.com/index.html", headers=headers)
+    r = session.get("https://local.fuel.safeway.com/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-
-    content = soup.find_all("a",{"class":"Directory-listLink"})
-    url1 = "https://local.safeway.com/"+content[0]['href']
-    r3 = requests.get(url1,headers=headers)
-    soup3 = BeautifulSoup(r3.text, "lxml")
-    all_link = soup3.find_all("a",{"class":"Directory-listLink"})
-    for link in all_link:
-        state_link = "https://local.safeway.com/"+link['href']
-        r4 = requests.get(state_link, headers=headers)
-        soup4 = BeautifulSoup(r4.text, "lxml")
-        city_data = soup4.find_all("a",{"class":"Directory-listLink"})
-        for i in city_data:
-            location_link = i['href'].replace("..","https://local.safeway.com")
+    for link in soup.find_all("a",{"class":"Directory-listLink"}):
         
-            if "(1)" in i['data-count']:
-
-                page_url = location_link
-                r5 = requests.get(page_url, headers=headers)
-                soup5 = BeautifulSoup(r5.text, "lxml")
-                location_name = soup5.find("h1",{"class":"ContentBanner-h1"}).text
-                street_address = soup5.find("span",{"class":"c-address-street-1"}).text
-                city = soup5.find("span",{"class":"c-address-city"}).text
-                state = soup5.find("abbr",{"class":"c-address-state"}).text
-                zipp = soup5.find("span",{"class":"c-address-postal-code"}).text
-                phone = soup5.find("div",{"class":"Phone-display Phone-display--withLink"}).text.strip()
-                hours = " ".join(list(soup5.find("table",{"class":"c-hours-details"}).stripped_strings)).replace("Day of the Week","").replace("Hours","").strip()
-                latitude = soup5.find("meta",{"itemprop":"latitude"})['content']
-                longitude = soup5.find("meta",{"itemprop":"longitude"})['content']
-                location_type = "Safeway"
-                country_code = "US"
-                
-                store = []
-                store.append(base_url)
-                store.append(location_name)
-                store.append(street_address)
-                store.append(city)
-                store.append(state)
-                store.append(zipp)
-                store.append(country_code)
-                store.append("<MISSING>")
-                store.append(phone )
-                store.append("<MISSING>")
-                store.append(latitude)
-                store.append(longitude)
-                store.append(hours)
-                store.append(page_url)
-                yield store
-
-            else:
+        if link['data-count'] == "(1)":
+            page_url = "https://local.fuel.safeway.com/" + link['href']
+            
+            location_r = session.get(page_url, headers=headers)
+            location_soup = BeautifulSoup(location_r.text, "lxml")
+            location_name = location_soup.find("h1",{"class":"ContentBanner-h1"}).text
+            street_address = location_soup.find("span",{"class":"c-address-street-1"}).text
+            city = location_soup.find("span",{"class":"c-address-city"}).text
+            state = location_soup.find("abbr",{"class":"c-address-state"}).text
+            zipp = location_soup.find("span",{"class":"c-address-postal-code"}).text
+            phone = location_soup.find("div",{"class":"Phone-display Phone-display--withLink"}).text.strip()
+            hours = " ".join(list(location_soup.find("table",{"class":"c-hours-details"}).find("tbody").stripped_strings))
+            latitude = location_soup.find("meta",{"itemprop":"latitude"})['content']
+            longitude = location_soup.find("meta",{"itemprop":"longitude"})['content']
+            location_type = "Fuel"
+            country_code = "US"
+            
+            store = []
+            store.append(base_url)
+            store.append(location_name)
+            store.append(street_address)
+            store.append(city)
+            store.append(state)
+            store.append(zipp)
+            store.append(country_code)
+            store.append("<MISSING>")
+            store.append(phone )
+            store.append(location_type)
+            store.append(latitude)
+            store.append(longitude)
+            store.append(hours)
+            store.append(page_url)
+            yield store
         
-                r6 = requests.get(location_link, headers=headers)
-                soup6 = BeautifulSoup(r6.text, "lxml")
-                data_link = soup6.find_all("a",{"class":"Teaser-titleLink"})
-                for j in data_link:
-                    last_link = j['href'].replace("../../","https://local.safeway.com/")
-                    page_url = last_link
-                    r7 = requests.get(page_url, headers=headers)
-                    soup7 = BeautifulSoup(r7.text, "lxml")
-                    location_name = soup7.find("h1",{"class":"ContentBanner-h1"}).text
-                    street_address = soup7.find("span",{"class":"c-address-street-1"}).text
-                    city = soup7.find("span",{"class":"c-address-city"}).text
-                    state = soup7.find("abbr",{"class":"c-address-state"}).text
-                    zipp = soup7.find("span",{"class":"c-address-postal-code"}).text
-                    phone = soup7.find("div",{"class":"Phone-display Phone-display--withLink"}).text.strip()
-                    hours = " ".join(list(soup7.find("table",{"class":"c-hours-details"}).stripped_strings)).replace("Day of the Week","").replace("Hours","").strip()
-                    latitude = soup7.find("meta",{"itemprop":"latitude"})['content']
-                    longitude = soup7.find("meta",{"itemprop":"longitude"})['content']
-                    location_type = "Safeway"
+        else:
+
+            state_link = "https://local.fuel.safeway.com/"+link['href']
+            state_r = session.get(state_link, headers=headers)
+            state_soup = BeautifulSoup(state_r.text, "lxml")
+            for city_link in state_soup.find_all("a",{"class":"Directory-listLink"}):
+
+                if city_link['data-count'] == "(1)":
+                    
+                    page_url = "https://local.fuel.safeway.com/"+city_link['href']
+                    location_r = session.get(page_url, headers=headers)
+                    location_soup = BeautifulSoup(location_r.text, "lxml")
+                    location_name = location_soup.find("h1",{"class":"ContentBanner-h1"}).text
+                    street_address = location_soup.find("span",{"class":"c-address-street-1"}).text
+                    city = location_soup.find("span",{"class":"c-address-city"}).text
+                    state = location_soup.find("abbr",{"class":"c-address-state"}).text
+                    zipp = location_soup.find("span",{"class":"c-address-postal-code"}).text
+                    phone = location_soup.find("div",{"class":"Phone-display Phone-display--withLink"}).text.strip()
+                    hours = " ".join(list(location_soup.find("table",{"class":"c-hours-details"}).find("tbody").stripped_strings))
+                    latitude = location_soup.find("meta",{"itemprop":"latitude"})['content']
+                    longitude = location_soup.find("meta",{"itemprop":"longitude"})['content']
+                    location_type = "Fuel"
                     country_code = "US"
+                    
                     store = []
                     store.append(base_url)
                     store.append(location_name)
@@ -108,51 +98,53 @@ def fetch_data():
                     store.append(country_code)
                     store.append("<MISSING>")
                     store.append(phone )
-                    store.append("<MISSING>")
+                    store.append(location_type)
                     store.append(latitude)
                     store.append(longitude)
                     store.append(hours)
                     store.append(page_url)
                     yield store
+                    
+    
+                else:
 
-    url = "https://local.safeway.com/"+content[1]['href']
-    r1 = requests.get(url, headers=headers)
-    soup1 = BeautifulSoup(r1.text, "lxml")
-    list_link = soup1.find_all("a",{"class":"Directory-listLink"})
-    for link in list_link:
-        location_link = link['href'].replace("..","https://local.safeway.com")
-        r2 = requests.get(location_link, headers=headers)
-        soup2 = BeautifulSoup(r2.text,"lxml")
-        location_name = soup2.find("h1",{"class":"ContentBanner-h1"}).text
-        street_address = soup2.find("span",{"class":"c-address-street-1"}).text
-        city = soup2.find("span",{"class":"c-address-city"}).text
-        state = soup2.find("abbr",{"class":"c-address-state"}).text
-        zipp = soup2.find("span",{"class":"c-address-postal-code"}).text
-        phone = soup2.find("div",{"class":"Phone-display Phone-display--withLink"}).text.strip()
-        hours = " ".join(list(soup2.find("table",{"class":"c-hours-details"}).stripped_strings)).replace("Day of the Week","").replace("Hours","").strip()
-        latitude = soup2.find("meta",{"itemprop":"latitude"})['content']
-        longitude = soup2.find("meta",{"itemprop":"longitude"})['content']
-        page_url = location_link
-        location_type = "Safeway"
-        country_code = "US"
-
-        store = []
-        store.append(base_url)
-        store.append(location_name)
-        store.append(street_address)
-        store.append(city)
-        store.append(state)
-        store.append(zipp)
-        store.append(country_code)
-        store.append("<MISSING>")
-        store.append(phone )
-        store.append("<MISSING>")
-        store.append(latitude)
-        store.append(longitude)
-        store.append(hours)
-        store.append(page_url)
-        yield store
+                    r6 = session.get("https://local.fuel.safeway.com/"+city_link['href'], headers=headers)
+                    soup6 = BeautifulSoup(r6.text, "lxml")
         
+                    for lastlink in soup6.find_all("a",{"class":"Teaser-titleLink"}):
+                        page_url = lastlink['href'].replace("../","https://local.fuel.safeway.com/")
+                        location_r = session.get(page_url, headers=headers)
+                        location_soup = BeautifulSoup(location_r.text, "lxml")
+                        location_name = location_soup.find("h1",{"class":"ContentBanner-h1"}).text
+                        street_address = location_soup.find("span",{"class":"c-address-street-1"}).text
+                        city = location_soup.find("span",{"class":"c-address-city"}).text
+                        state = location_soup.find("abbr",{"class":"c-address-state"}).text
+                        zipp = location_soup.find("span",{"class":"c-address-postal-code"}).text
+                        phone = location_soup.find("div",{"class":"Phone-display Phone-display--withLink"}).text.strip()
+                        hours = " ".join(list(location_soup.find("table",{"class":"c-hours-details"}).find("tbody").stripped_strings))
+                        latitude = location_soup.find("meta",{"itemprop":"latitude"})['content']
+                        longitude = location_soup.find("meta",{"itemprop":"longitude"})['content']
+                        location_type = "Fuel"
+                        country_code = "US"
+                        
+                        store = []
+                        store.append(base_url)
+                        store.append(location_name)
+                        store.append(street_address)
+                        store.append(city)
+                        store.append(state)
+                        store.append(zipp)
+                        store.append(country_code)
+                        store.append("<MISSING>")
+                        store.append(phone )
+                        store.append(location_type)
+                        store.append(latitude)
+                        store.append(longitude)
+                        store.append(hours)
+                        store.append(page_url)
+                        yield store
+                
+
        
         
 def scrape():

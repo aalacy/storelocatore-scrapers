@@ -4,14 +4,13 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
+import requests
 
 
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8",newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
@@ -68,7 +67,7 @@ def fetch_data():
                 page_url = single_location.find("a")["href"]
 
                 # page_url = "https://ufhealth.org/uf-health-congenital-heart-center/maps"
-
+                # print(page_url)
                 # print("page_url ==== " + page_url)
                 # do your logic here.
                 r_store = session.get(page_url + "/maps", headers=headers)
@@ -80,7 +79,8 @@ def fetch_data():
                 location_type = cat_tag.text.split("(")[0]
 
                 if soup_store.find("div", {"class": "street-address"}):
-                    street_address = " ".join(list(soup_store.find("div", {"class": "street-address"}).stripped_strings))
+                    street_address = " ".join(list(soup_store.find("div", {"class": "street"}).stripped_strings))
+                    # print(street_address)
 
                 if soup_store.find("div", {"class": "span-15 omega location-title"}):
                     location_name = soup_store.find("div", {"class": "span-15 omega location-title"}).text
@@ -101,15 +101,33 @@ def fetch_data():
 
                     if us_zip_list:
                         country_code = "US"
-
                 if soup_store.find("div", {"class": "field field-name-field-phone-number field-type-text field-label-inline clearfix"}):
-                    phone_raw = soup_store.find("div", {
-                        "class": "field field-name-field-phone-number field-type-text field-label-inline clearfix"}).text
+                    phone_raw = " ".join(list(soup_store.find("div", {"class": "field field-name-field-phone-number field-type-text field-label-inline clearfix"}).stripped_strings))
                     phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_raw))
-
                     if phone_list:
                         phone = phone_list[0]
-
+                        # print(phone)
+                    else:
+                        phone = phone_raw.split(":")[1].replace("WELL","").replace("1NOW","").replace("PEDS","").replace("RUNR","").replace("SPNE","").replace("4FRC","").replace("Outpatient","").replace("KIDS","").replace("HELP","").replace("TMS","").strip()
+                        # phone = phone_raw.split(":")[1].replace("Outpatient","").replace("TMS","").strip()
+                        # print(phone)
+                elif soup_store.find("div",{"class":"field field-name-field-alt-phone field-type-text field-label-inline clearfix"}):
+                    phone_raw = " ".join(list(soup_store.find("div",{"class":"field field-name-field-alt-phone field-type-text field-label-inline clearfix"}).stripped_strings))
+                    phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_raw))
+                    if phone_list:
+                        phone = phone_list[0]
+                        # print(phone)
+                    else:
+                        phone = phone_raw.split(":")[1].replace("WELL","").replace("1NOW","").replace("PEDS","").replace("RUNR","").replace("Outpatient","").replace("SPNE","").replace("4FRC","").replace("KIDS","").replace("KIDS","").replace("HELP","").replace("TMS","").strip()
+                        # phone = phone_raw.split(":")[1].replace("Outpatient","").replace("TMS","").strip()
+                        # print(phone)
+                        
+                else:
+                    phone = "<MISSING>"
+                if "352-265-" == phone:
+                    phone = "352-265-7337"
+                # print(phone)
+                
                 if soup_store.find("div", {"class": "field field-name-field-hours-of-operation field-type-table field-label-hidden"}):
                     hours_raw = soup_store.find("div", {
                         "class": "field field-name-field-hours-of-operation field-type-table field-label-hidden"})
@@ -121,6 +139,9 @@ def fetch_data():
                 except:
                     latitude="<MISSING>"
                     latitude="<MISSING>"
+                # print(street_address)
+                if "Suite" in street_address or "suite" in street_address:
+                    street_address = street_address.split("Suite")[0].split(",")[0].strip()
 
 
                 store = [locator_domain, location_name.replace(': Maps',''), street_address, city, state, zipp, country_code,
@@ -129,8 +150,7 @@ def fetch_data():
                 if str(store[1] + " "+ store[2]+ " "+ store[9]) not in addresses and country_code:
                     addresses.append(str(store[1] + " "+ store[2]+ " "+ store[9]))
 
-                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in
-                             store]
+                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
                     # print("data = " + str(store))
                     # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
