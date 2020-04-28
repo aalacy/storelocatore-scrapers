@@ -136,6 +136,8 @@ def fetch_data():
             city, state, zip_code = addy_ext(addy[1])
             
         phone_numbers = driver.find_element_by_css_selector('div.phones').find_elements_by_css_selector('a')
+
+        
         if len(phone_numbers) > 0:
             phone_number = phone_numbers[0].text
         else:
