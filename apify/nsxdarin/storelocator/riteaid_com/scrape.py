@@ -84,7 +84,7 @@ def fetch_data():
                         lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
                         lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]
                     if " 'dimension4', '" in line2:
-                        add = line2.split(" 'dimension4', '")[1].split("'")[0]
+                        #add = line2.split(" 'dimension4', '")[1].split("'")[0]
                         zc = line2.split("dimension5', '")[1].split("'")[0]
                         state = line2.split("'dimension2', '")[1].split("'")[0]
                         city = line2.split("'dimension3', '")[1].split("'")[0]
@@ -102,8 +102,10 @@ def fetch_data():
                                     hours = hrs
                                 else:
                                     hours = hours + '; ' + hrs
-                    if '<span class="c-address-street-2">' in line2:
-                        add = add + ' ' + line2.split('<span class="c-address-street-2">')[1].split('<')[0].strip()
+                    if '<span class="c-address-street-1">' in line2:
+                        add = line2.split('<span class="c-address-street-1">')[1].split('<')[0].strip()
+                        if '<span class="c-address-street-2">' in line2:
+                            add = add + ' ' + line2.split('<span class="c-address-street-2">')[1].split('<')[0].strip()
                 if hours == '':
                     hours = '<MISSING>'
                 if store != '':
