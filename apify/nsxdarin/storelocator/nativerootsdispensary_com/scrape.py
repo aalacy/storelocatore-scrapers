@@ -46,16 +46,35 @@ def fetch_data():
         for line2 in r2.iter_lines():
             if '<h1 class="css-hcge3v' in line2:
                 name = line2.split('<h1 class="css-hcge3v')[1].split('>')[1].split('<')[0]
-            if '"@type":"PostalAddress",' in line2 and add == '':
-                add = line2.split(',"streetAddress":"')[1].split('"')[0]
-                city = line2.split('"addressLocality":"')[1].split('"')[0]
-                state = line2.split('"addressRegion":"')[1].split('"')[0]
-                zc = line2.split('"postalCode":"')[1].split('"')[0]
-                phone = line2.split('"telephone":"')[1].split('"')[0]
+            if 'Address</h3><p>' in line2 and '<b>OPENING SOON</b>' not in line2:
+                add = line2.split('Address</h3><p>')[1].split('<')[0]
+                csz = line2.split('Address</h3><p>')[1].replace('</p><p>','<br/>').split('<hr/>')[0].split('<br/>')[1]
+                try:
+                    city = csz.split(',')[0]
+                    state = csz.split(',')[1].strip().split(' ')[0]
+                    zc = csz.split(',')[1].rsplit(' ',1)[1]
+                except:
+                    city = ''
+                    state = ''
+                    zc = ''
+            if '<b>Address</b></h3>' in line2 and '<b>OPENING SOON</b>' not in line2:
+                add = line2.split('Address</b></h3><p>')[1].split('<')[0]
+                csz = line2.split('Address</b></h3><p>')[1].replace('</p><p>','<br/>').split('<hr/>')[0].split('<br/>')[1]
+                try:
+                    city = csz.split(',')[0]
+                    state = csz.split(',')[1].strip().split(' ')[0]
+                    zc = csz.split(',')[1].rsplit(' ',1)[1]
+                except:
+                    city = ''
+                    state = ''
+                    zc = ''
+            if '<h3>Phone</h3><p>' in line2:
+                phone = line2.split('<h3>Phone</h3><p>')[1].split('<')[0]
             if '<h5>' in line2:
                 typ = line2.split('<h5>')[1].split('</h5>')[0].replace('<i>','').replace('</i>','')
             if '"openingHours":"' in line2 and hours == '':
                 hours = line2.split('"openingHours":"')[1].split('"')[0]
+        typ = typ.replace('Â','')
         if 'broadway' in loc:
             hours = 'Mo, Tu, We, Th, Fr, Sa, Su, 10:00-19:00'
         if 'tower-road' in loc:
@@ -92,8 +111,22 @@ def fetch_data():
             zc = '81657'
             phone = '970-470-4572'
             hours = 'Mo, Tu, We, Th, Fr, Sa, Su, 9:00-22:00'
-        typ = typ.replace('Â','')
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if 'tejon-marijuana-dispensary-and-CBD-wellness' in loc:
+            phone = '719-434-7739'
+        if '<' in zc:
+            zc = zc.split('<')[0]
+        if 'santa-fe-south-denver-marijuana-dispensary' in loc:
+            city = 'Denver'
+            state = 'CO'
+            zc = '80223'
+            phone = '720-428-8050'
+            hours = 'Mo, Tu, We, Th, Fr, Sa, Su, 9:00-22:00'
+        if 'dandelion-boulder-marijuana-dispensary' in loc:
+            hours = 'Mo, Tu, We, Th, Fr, Sa, Su, 10:00-19:50'
+        if 'edgewater-marijuana-dispensary' in loc:
+            hours = 'Mo, Tu, We, Th, Fr, Sa, Su, 9:00-22:00'
+        if city != '':
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
