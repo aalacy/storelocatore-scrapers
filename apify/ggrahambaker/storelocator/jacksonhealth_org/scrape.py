@@ -102,6 +102,7 @@ def fetch_data():
                     state = 'FL'
                     zip_code = '33136'
                 else:
+                    addy = addy.replace('Second Floor', '')
                     street_address, city, state, zip_code = parse_address(addy)
                     street_address = street_address.split('Suite')[0].strip().split('Room')[0].strip().split('Unit')[0].strip().replace(',', '').strip()
 
