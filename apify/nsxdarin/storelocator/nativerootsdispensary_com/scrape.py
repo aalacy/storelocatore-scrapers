@@ -1,3 +1,4 @@
+# -*- coding: cp1252 -*-
 import csv
 import urllib2
 from sgrequests import SgRequests
@@ -68,9 +69,30 @@ def fetch_data():
         if 'champa-wellness-hemp-cbd' in loc:
             name = 'Native Roots Wellness CBD Champa'
             phone = '303-623-1900'
+            add = '1555 Champa St'
+            city = 'Denver'
+            state = 'CO'
+            zc = '80202'
+            phone = '303-623-1900'
+            hours = 'Monday 10am-8pm; Tuesday 10am-8pm; Wednesday 10am-8pm; Thursday 10am-8pm; Friday 10am-9pm; Saturday 10am-9pm; Sunday 10am-8pm'
         if 'eagle-vail-marijuana-CBD-wellness' in loc:
             name = 'Native Roots Wellness CBD Vail'
         phone = phone.replace('+1-','')
+        if 'uintah-marijuana-dispensary-and-CBD-wellness' in loc:
+            add = '1705 W Uintah St'
+            city = 'Colorado Springs'
+            state = 'CO'
+            zc = '80904'
+            phone = '719-375-5512'
+            hours = 'Mo, Tu, We, Th, Fr, Sa, Su, 9:00-21:00'
+        if 'eagle-vail-marijuana-CBD-wellness' in loc:
+            add = '141 E Meadow Dr. Suite #202'
+            city = 'Vail'
+            state = 'CO'
+            zc = '81657'
+            phone = '970-470-4572'
+            hours = 'Mo, Tu, We, Th, Fr, Sa, Su, 9:00-22:00'
+        typ = typ.replace('Â','')
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
