@@ -54,8 +54,8 @@ def fetch_data():
                 if store not in ids and country == 'US':
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                     ids.append(store)
-    for x in range(24, 50, 2):
-        for y in range(-66, -126, -2):
+    for x in range(24, 50):
+        for y in range(-66, -126, -1):
             lat = str(x)
             lng = str(y)
             print(str(lat) + ',' + str(lng))
