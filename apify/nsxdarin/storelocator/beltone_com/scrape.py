@@ -58,6 +58,7 @@ def fetch_data():
                 name = line2.split('<title>')[1].split('<')[0]
                 if 'Beltone Hearing Aid Center on ' in name:
                     name = name.split('Beltone Hearing Aid Center on ')[1]
+                name = name.replace('>','')
             if '"streetAddress":"' in line2:
                 add = line2.split('"streetAddress":"')[1].split('"')[0]
             if '"addressLocality":"' in line2:
