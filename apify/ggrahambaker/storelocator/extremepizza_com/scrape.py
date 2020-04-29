@@ -2,7 +2,6 @@ import csv
 import os
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import time
 
 
 def get_driver():
@@ -24,85 +23,59 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-def addy_ext(addy):
-    addy = addy.split(',')
-    city = addy[0]
-    state_zip = addy[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
-
-
-
 def fetch_data():
-    locator_domain = 'https://genesishcc.com/'
-    ext = 'findlocations'
+    locator_domain = 'https://www.extremepizza.com/' 
+    ext = 'store-locator/'
 
     driver = get_driver()
     driver.get(locator_domain + ext)
-    time.sleep(2)
-    driver.implicitly_wait(5)
-    locs = driver.find_elements_by_css_selector('div.p-1.nano')
+
+    locs = driver.find_elements_by_css_selector('div.locationListItem')
     all_store_data = []
     for loc in locs:
-        location_name = loc.find_element_by_css_selector('div.cI-title').text
-
+        location_name = loc.find_element_by_css_selector('h3').text
         page_url = loc.find_element_by_css_selector('a').get_attribute('href')
+        hours = loc.find_element_by_css_selector('div.locationListItemHours').text.replace('ORDER ONLINE', '').strip().replace('\n', ' ')
         
-        addy = loc.find_element_by_css_selector('div.cI-address').text.split('\n')
-        if len(addy) > 3:
-            addy = addy[1:]
+        if 'Coming Soon' in hours:
+            continue
+        if 'Coming soon' in hours:
+            continue
+        spans = loc.find_elements_by_css_selector('span')
+        addy = spans[0].text.split(',')
+        
+        street_address = addy[0].strip()
+        city = addy[-2].strip()
+        state_zip = addy[-1].strip().split(' ')
+        state = state_zip[0]
+        zip_code = state_zip[1]
+        
+        google_map = spans[0].find_element_by_css_selector('a').get_attribute('href')
+        
+        start = google_map.find('query=')
+        end = google_map.find('&query_place')
+        coords = google_map[start + 6: end].split(',')
+        if len(coords) == 2:
+            lat = coords[0]
+            longit = coords[1]
+        else:
+            lat, longit = '<MISSING>', '<MISSING>'
+        phone_number = spans[1].text
 
-        street_address = addy[0]
-        
-        city, state, zip_code = addy_ext(addy[1])
-        
         country_code = 'US'
         store_number = '<MISSING>'
-        
         location_type = '<MISSING>'
-        
-        lat = '<MISSING>'
-        longit = '<MISSING>'
-        
-        hours = '<MISSING>'
-        
-        phone_number = '<MISSING>'
-        
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
 
         all_store_data.append(store_data)
-
-    for data in all_store_data:
-        url = data[-1].replace('https', 'http')
-
-        while data[-6] == '<MISSING>':
-
-            driver.get(url)
-
-            driver.implicitly_wait(10)
-            time.sleep(2)
-            try:
-                phone_number = driver.find_element_by_xpath('//a[contains(@href,"tel:")]').text.replace('Phone:', '').strip()
-            except:
-                try:
-                    phone_number = driver.find_element_by_css_selector('i.fa-phone').find_element_by_xpath('..').text.replace('tel', '').strip()
-                except:
-       
-                    continue
-            data[-6] = phone_number
-
-
+        
 
 
     driver.quit()
     return all_store_data
-
-
 
 def scrape():
     data = fetch_data()
