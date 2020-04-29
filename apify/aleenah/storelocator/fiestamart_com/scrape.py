@@ -1,6 +1,6 @@
 import csv
 import re
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
 
@@ -14,7 +14,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
+session = SgRequests()
 def fetch_data():
     # Your scraper here
     locs = []
@@ -30,15 +30,18 @@ def fetch_data():
     ids=[]
     page_url=[]
 
-    headers={'accept': '*/*',
-             'accept-encoding': 'gzip, deflate, br',
-             'accept-language': 'en-US,en;q=0.9',
-             'referer': 'https://www.fiestamart.com/store-locator/',
-             'sec-fetch-mode': 'cors',
-             'sec-fetch-site': 'same-origin',
-             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
-             }
-    res=requests.get("https://www.fiestamart.com/wp-json/store_locations/all",headers=headers)
+    headers={
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'accept-encoding': 'gzip, deflate',
+        'accept-language': 'en-US,en;q=0.9',
+        'cache-control': 'max-age=0',
+        'sec-fetch-dest': 'document',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-site': 'none',
+        'sec-fetch-user': '?1',
+        'upgrade-insecure-requests': '1',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36'}
+    res=session.get("https://www.fiestamart.com/wp-json/store_locations/all",headers=headers)
     #print(res)
     #print(res.json())
     stores=res.json()['locations']
@@ -60,8 +63,21 @@ def fetch_data():
         page_url.append("https://www.fiestamart.com/store/"+store['address'].strip().replace(".","").replace(" ","-")+"_store-"+store['id'])
 
     for url in page_url:
-        print(url)
-        res=requests.get(url,headers=headers)
+        #print(url)
+        headers = {
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'accept-encoding': 'gzip, deflate',
+            'accept-language': 'en-US,en;q=0.9',
+            'cache-control': 'max-age=0',
+            'sec-fetch-dest': 'document',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-site': 'none',
+            'sec-fetch-user': '?1',
+            'upgrade-insecure-requests': '1',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36',
+            'x-requested-with': 'XMLHttpRequest'                   }
+        res=session.get(url,headers=headers)
+        #print(res)
         soup = BeautifulSoup(res.text, 'html.parser')
         #print(soup,"**********")
         #div=soup.find('div',{'class':'store-info-wrapper'})
