@@ -1,79 +1,99 @@
 import csv
-import re
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-import requests
-import time
+import re
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",
+                         "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
+
+session = SgRequests()
+all=[]
 def fetch_data():
     # Your scraper here
-    locs = []
-    street = []
-    states=[]
-    cities = []
-    types=[]
-    phones = []
-    zips = []
-    long = []
-    lat = []
-    timing = []
-    ids=[]
     page_url=[]
-    urls=[]
-    res=requests.get("https://www.starbuds.us/locations")
+    res=session.get("https://www.starbuds.us/locations")
     soup = BeautifulSoup(res.text, 'html.parser')
-    divs=soup.find_all('div',{'role':'gridcell'})
+    sa = soup.find_all('a', {'class': 'g-transparent-a b1link'})
+    urls=[]
+    for a in sa:
+        #print(a.get('href'))
+        res = session.get(a.get('href'))
+        soup = BeautifulSoup(res.text, 'html.parser')
+        stores = soup.find_all('div', {'role': 'gridcell'})
+        if len(stores) ==0:
+            urls.append(a.get('href'))
+        else:
 
-    for div in divs:
-        h=div.find_all('h4')
+            for store in stores:
 
-        locs.append(h[0].text)
-        street.append(h[1].text)
-        addr=h[2].text.split(",")
-        cities.append(addr[0])
-        addr=addr[1].replace("\xa0"," ")
-        addr=addr.strip().split(" ")
-        states.append(addr[0])
-        zips.append(addr[1].strip())
-        phones.append(h[3].text.strip())
-        tim = (h[5].text+" "+h[6].text+" "+h[7].text).replace("\n"," ")
-        timing.append(tim)
+                urls.append(store.find_all('a')[1].get('href'))
 
-    all = []
-    for i in range(0, len(locs)):
-        row = []
-        row.append("https://www.starbuds.us")
-        row.append(locs[i])
-        row.append(street[i])
-        row.append(cities[i])
-        row.append(states[i])
-        row.append(zips[i])
-        row.append("US")
-        row.append("<MISSING>")  # store #
-        row.append(phones[i])  # phone
-        row.append("<MISSING>")  # type
-        row.append("<MISSING>")  # lat
-        row.append("<MISSING>")  # long
-        row.append(timing[i])  # timing
-        row.append("https://www.starbuds.us/locations")  # page url
 
-        all.append(row)
+    for url in urls:
+        #print(url)
+        res = session.get(url)
+        soup = BeautifulSoup(res.text, 'html.parser')
+        try:
+            loc=soup.find_all('h1')[1].text
+        except:
+            loc = soup.find_all('h1')[0].text
+        loc=loc.split('\n')[-1]
+        ps=soup.find_all('p',{'class':'font_7'})
+        addr=ps[0].text.replace(u'\xa0',' ').split('-')
+        street = addr[0]
+        addr=addr[1].split(",")
+        city=addr[0].strip()
+        addr=addr[1].strip().split(" ")
+        #print(addr)
+        state=addr[0]
+        zip=addr[1]
+        phone=ps[1].text
+        tim=soup.find_all('div',{'class':'txtNew'})[3].text
+        if 'HOURS' in tim:
+            tim=tim.replace('HOURS','').replace('\n',' ').replace(u'\xa0',' ')
+        else:
+            tim = soup.find_all('div', {'class': 'txtNew'})[4].text.replace('HOURS','').replace('\n',' ').replace(u'\xa0',' ')
+        
+
+        try:
+            lat,long=re.findall(r'/@(-?[\d\.]+),(-?[\-\d\.]+),',str(soup))[0]
+        except:
+            lat=long="<INACCESSIBLE>"
+
+
+
+
+        all.append([
+                "https://www.starbuds.us",
+                loc,
+                street,
+                city,
+                state,
+                zip,
+                "US",
+                "<MISSING>",  # store #
+                phone,  # phone
+                "<MISSING>",  # type
+                lat,  # lat
+                long,  # long
+                tim.strip(),  # timing
+                url])
+        #print(all)
     return all
 
-
 def scrape():
-    data = fetch_data()
-    write_output(data)
-
+        data = fetch_data()
+        write_output(data)
 
 scrape()
 
