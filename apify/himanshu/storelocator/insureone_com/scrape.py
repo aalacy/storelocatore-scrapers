@@ -13,7 +13,7 @@ import time
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline ="") as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -39,15 +39,17 @@ def fetch_data():
     current_results_len = 0 
     zip_code = search.next_zip()
     while zip_code:
+        base_url = "https://www.insureone.com/"
+                
         result_coords = []
-        locator_domain = ''
+        locator_domain = base_url
         location_name = ""
         street_address = ""
         city = ""
         state = ""
         zipp = ""
-        country_code = "CA"
-        store_number = ""
+        country_code = ""
+        store_number = "<MISSING>"
         phone = ""
         location_type = ""
         latitude = ""
@@ -56,47 +58,33 @@ def fetch_data():
         page_url = ""
         hours_of_operation = ""
 
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         #print("zip_code === "+zip_code)
         # x = coord[0]
         # y = coord[1]
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        try:
-            r = session.get("https://www.insureone.com/locations/?address=" + str(zip_code) + "&search=search&page=1&radius=200",
-                                "get", headers=headers)
-                                
-        except:
-            continue
+        data = {"address": ""+str(zip_code)+"",
+                "search": "search",
+                "page": "1",
+                "radius": "200"}
+        r = session.post("https://www.insureone.com/locations/",data=data,headers=headers)
         soup = BeautifulSoup(r.text, 'lxml')
        
         ul = soup.find('ul', class_='office-locator-results__list')
         if ul != None:
-            # print("len==" + len(ul))
-            current_results_len = len( ul.find_all('li'))
+            current_results_len= len(ul)
+            # current_results_len = len(ul.find_all('li'))
             for li in ul.find_all('li'):
-                base_url = "https://www.insureone.com/"
-                store_number = "<MISSING>"
-                locator_domain = base_url
-                try:
-                    location_name = li.find(
-                        'h3', class_='office-locator-results__title').text.strip()
-                except:
-                    location_name =''
                 
                 try:
-                    page_url = li.find(
-                        'a', class_='office-locator-results__view')['href']
-                except:
-                    page_url =''
 
-
-                try:   
+                    location_name = li.find('h3', class_='office-locator-results__title').text.strip()
+                    page_url = li.find('h3', class_='office-locator-results__title').find("a")["href"]
                     r_loc = session.get(page_url)
                     soup_loc = BeautifulSoup(r_loc.text, 'lxml')
-                    script = soup_loc.find(
-                        'script', {"type": "application/ld+json"}).text.strip()
+                    script = soup_loc.find('script', {"type": "application/ld+json"}).text.strip()
                     json_data = json.loads(script)
-                    location_type = json_data['@type'].strip()
+                    location_type = json_data['name'].strip()
                     phone = json_data['telephone'].strip()
                     street_address = json_data['address']['streetAddress']
                     city = json_data['address']['addressLocality']
@@ -108,37 +96,21 @@ def fetch_data():
                     result_coords.append((latitude, longitude))
                     hours_of_operation = " ".join(json_data['openingHours']).replace('Mo', "MON :").replace('Tu', "TUE :").replace(
                         'We', "WED :").replace('Th', "THU :").replace('Fr', "FRI :").replace('Sa', "SAN :").replace('Su', "SUN :").strip()
+                    
+                    store = [locator_domain, location_name.replace(': Maps',''), street_address, city, state, zipp, country_code,
+                             store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+
+                    if str(store[1] + " "+ store[2]+ " "+ store[9]) not in addresses and country_code:
+                        addresses.append(str(store[1] + " "+ store[2]+ " "+ store[9]))
+
+                        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+
+                        # print("data = " + str(store))
+                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        yield store
                 except:
-                    pass
-
-                store = []
-                store.append(base_url)
-                store.append(
-                    location_name if location_name else "<MISSING>")
-                store.append(
-                    street_address if street_address else "<MISSING>")
-                store.append(city if city else "<MISSING>")
-                store.append(state if state else "<MISSING>")
-                store.append(zipp if zip else "<MISSING>")
-                store.append(country_code if country_code else "<MISSING>")
-                store.append(store_number if store_number else "<MISSING>")
-                store.append(phone if phone else "<MISSING>")
-                store.append(
-                    location_type if location_type else "<MISSING>")
-                store.append(latitude if latitude else "<MISSING>")
-                store.append(longitude if longitude else "<MISSING>")
-                store.append(
-                    hours_of_operation if hours_of_operation else "<MISSING>")
-                store.append(page_url if page_url else "<MISSING>")
-                if store[2] in addresses:
                     continue
-                addresses.append(store[2])
-                #print("===", str(store))
-                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                # return_main_object.append(store)
-                yield store
 
-               
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)

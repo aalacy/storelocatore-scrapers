@@ -9,7 +9,7 @@ session = SgRequests()
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline = "") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -24,13 +24,13 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes= ["US","CA"])
-    MAX_RESULTS = 100
-    MAX_DISTANCE = 100
+    MAX_RESULTS = 500
+    MAX_DISTANCE = 50
     zip_code = search.next_zip()
     while zip_code:
         result_coords = []
         # print("zip_code === " + str(zip_code))
-        # print("ramiang zip =====" + str(len(search.zipcodes)))
+        # print("remaining zip =====" + str(len(search.zipcodes)))
         headers = {
             'User-Agent': "PostmanRuntime/7.19.0",
             'content-type' : 'application/json;charset=UTF-8'
@@ -40,7 +40,7 @@ def fetch_data():
         try:
             datas = r.json()['data']['storeSearch']['stores']
         except:
-            continue
+            pass
         for key in datas:
             location_name = key['vanityName']
             street_address = key['address']['addressLine1'].capitalize()
@@ -54,8 +54,8 @@ def fetch_data():
             else:
                 phone = "<MISSING>"
             location_type = "store"
-            latitude = key['latitude']
-            longitude = key['longitude']
+            latitude = key['latitude'].strip()
+            longitude = key['longitude'].strip()
             result_coords.append((latitude, longitude))
             hours_of_operation = ''
             if key['ungroupedFormattedHours']:
@@ -64,34 +64,27 @@ def fetch_data():
             else:
                 hours_of_operation =  "<MISSING>"
             page_url = "https://www.fredmeyer.com/stores/details/"+str(key['divisionNumber'])+"/"+str(store_number)
-        
-            store = []
-            store.append(locator_domain if locator_domain else '<MISSING>')
-            store.append(location_name if location_name else '<MISSING>')
-            store.append(street_address if street_address else '<MISSING>')
-            store.append(city if city else '<MISSING>')
-            store.append(state if state else '<MISSING>')
-            store.append(zipp if zipp else '<MISSING>')
-            store.append(country_code if country_code else '<MISSING>')
-            store.append(store_number if store_number else '<MISSING>')
-            store.append(phone if phone else '<MISSING>')
-            store.append(location_type if location_type else '<MISSING>')
-            store.append(latitude if latitude else '<MISSING>')
-            store.append(longitude if longitude else '<MISSING>')
-            store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-            store.append(page_url)
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
-            yield store
+            if "0" == latitude or "0" == longitude or "0.00000000" == latitude or "0.00000000" == longitude:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+
+            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                             store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+
+            if str(store[1] + " "+ store[2]+ " "+ store[9]+" "+store[-1]) not in addresses and country_code:
+                addresses.append(str(store[1] + " "+ store[2]+ " "+ store[9]+" "+store[-1]))
+
+                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                yield store
 
         ###fuel store
         try:
             datas1 = r.json()['data']['storeSearch']['fuel']
         except:
-            continue
+            pass
         for key1 in datas1:
             location_name = key1['vanityName']
             street_address = key1['address']['addressLine1'].capitalize()
@@ -100,10 +93,13 @@ def fetch_data():
             zipp =  key1['address']['zip']
             country_code = key1['address']['countryCode']
             store_number = key1['storeNumber']
-            phone = key1['phoneNumber']
+            if key1['phoneNumber']:
+                phone = phonenumbers.format_number(phonenumbers.parse(str(key1['phoneNumber']), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
+            else:
+                phone = "<MISSING>"
             location_type = "fuel"
-            latitude = key1['latitude']
-            longitude = key1['longitude']
+            latitude = key1['latitude'].strip()
+            longitude = key1['longitude'].strip()
             result_coords.append((latitude, longitude))
             hours_of_operation = ''
             if key1['ungroupedFormattedHours']:
@@ -112,27 +108,23 @@ def fetch_data():
             else:
                 hours_of_operation =  "<MISSING>"
             page_url = "https://www.fredmeyer.com/stores/details/"+str(key1['divisionNumber'])+"/"+str(store_number)
-            store = []
-            store.append(locator_domain if locator_domain else '<MISSING>')
-            store.append(location_name if location_name else '<MISSING>')
-            store.append(street_address if street_address else '<MISSING>')
-            store.append(city if city else '<MISSING>')
-            store.append(state if state else '<MISSING>')
-            store.append(zipp if zipp else '<MISSING>')
-            store.append(country_code if country_code else '<MISSING>')
-            store.append(store_number if store_number else '<MISSING>')
-            store.append(phone if phone else '<MISSING>')
-            store.append(location_type if location_type else '<MISSING>')
-            store.append(latitude if latitude else '<MISSING>')
-            store.append(longitude if longitude else '<MISSING>')
-            store.append(hours_of_operation if hours_of_operation else '<MISSING>')
-            store.append(page_url)
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
-            yield store
+            if "0" == latitude or "0" == longitude or "0.00000000" == latitude or "0.00000000" == longitude:
+                latitude = "<MISSING>"
+                longitude = "<MISSING>"
+                
+            
+            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                             store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+
+            if str(store[1] + " "+ store[2]+ " "+ store[9]+" "+store[-1]) not in addresses and country_code:
+                addresses.append(str(store[1] + " "+ store[2]+ " "+ store[9]+" "+store[-1]))
+
+                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                yield store
+
     
         if len(datas)+len(datas1) < MAX_RESULTS:
             # print("max distance update")
