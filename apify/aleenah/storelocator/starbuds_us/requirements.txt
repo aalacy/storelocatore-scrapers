@@ -1,2 +1,2 @@
-requests==2.22.0
+sgrequests
 bs4==0.0.1
