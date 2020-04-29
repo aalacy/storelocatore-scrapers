@@ -42,7 +42,8 @@ def fetch_data():
                             typ = item.split('"site_brand":"')[1].split('"')[0]
                             website = 'mybpstation.com'
                             loc = '<MISSING>'
-                            store = item.split('"')[0]
+                            store = '<MISSING>'
+                            storeinfo = name + '|' + add + '|' + city + '|' + lat
                             hours = ''
                             if '"opening_hours":[]' in item:
                                 hours = '<MISSING>'
@@ -57,9 +58,9 @@ def fetch_data():
                                             hours = hours + '; ' + hrs
                             if phone == '':
                                 phone = '<MISSING>'
-                            if store not in ids and country == 'US':
+                            if storeinfo not in ids and country == 'US':
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-                                ids.append(store)
+                                ids.append(storeinfo)
 
 def scrape():
     data = fetch_data()
