@@ -82,7 +82,7 @@ def fetch_data():
         link = loc.get_attribute('href')
         link_list.append(link)
 
-
+    dup_tracker = set()
     all_store_data = []
     for link in link_list:
         if link == 'https://www.irvingoil.com/location/irving-oil':
@@ -98,6 +98,10 @@ def fetch_data():
             continue
         
         street_address = addy[0]
+        if street_address not in dup_tracker:
+            dup_tracker.add(street_address)
+        else:
+            continue
         if addy[2] == 'Canada':
             city, state, zip_code, country_code = addy_ext_can(addy[1])
         else:
