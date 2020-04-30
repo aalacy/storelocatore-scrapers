@@ -73,6 +73,12 @@ def fetch_data():
                     lng = '<MISSING>'
                 if ', Suite' in add:
                     add = add.split(', Suite')[0]
+                if ' Suite' in add:
+                    add = add.split(' Suite')[0]
+                if ', Ste' in add:
+                    add = add.split(', Ste')[0]
+                if ' Ste' in add:
+                    add = add.split(' Ste')[0]
             if '<ul class="fd--no-bullets fd--no-padding-margin">' in line2:
                 g = next(lines)
                 hours = g.split('>')[1].split('<')[0]
