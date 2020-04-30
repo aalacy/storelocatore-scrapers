@@ -41,7 +41,10 @@ def fetch_data():
                             phone = item.split('"telephone":"')[1].split('"')[0]
                             typ = item.split('"brand":"')[1].split('"')[0]
                             website = 'shell.ca'
-                            loc = item.split('"website_url":"')[1].split('"')[0]
+                            try:
+                                loc = item.split('"website_url":"')[1].split('"')[0]
+                            except:
+                                loc = '<MISSING>'
                             store = '<MISSING>'
                             storeinfo = name + '|' + add + '|' + city + '|' + lat
                             hours = ''
@@ -50,25 +53,26 @@ def fetch_data():
                             if storeinfo not in ids and country == 'CA':
                                 print('Pulling Store %s...' % name)
                                 days = []
-                                r2 = session.get(loc, headers=headers)
-                                lines = r2.iter_lines()
-                                rc = 0
-                                dc = -1
-                                for line in lines:
-                                    if '<div class="opening-times__cell">' in line:
-                                        rc = rc + 1
-                                        if rc <= 7:
-                                            g = next(lines)
-                                            days.append(g.strip().replace('\r','').replace('\n','').replace('\t',''))
-                                        if rc >= 8:
-                                            dc = dc + 1
-                                            g = next(lines)
-                                            days[dc] = days[dc] + ': ' + g.strip().replace('\r','').replace('\n','').replace('\t','')
-                                for day in days:
-                                    if hours == '':
-                                        hours = day
-                                    else:
-                                        hours = hours + '; ' + day
+                                if loc != '<MISSING>'
+                                    r2 = session.get(loc, headers=headers)
+                                    lines = r2.iter_lines()
+                                    rc = 0
+                                    dc = -1
+                                    for line in lines:
+                                        if '<div class="opening-times__cell">' in line:
+                                            rc = rc + 1
+                                            if rc <= 7:
+                                                g = next(lines)
+                                                days.append(g.strip().replace('\r','').replace('\n','').replace('\t',''))
+                                            if rc >= 8:
+                                                dc = dc + 1
+                                                g = next(lines)
+                                                days[dc] = days[dc] + ': ' + g.strip().replace('\r','').replace('\n','').replace('\t','')
+                                    for day in days:
+                                        if hours == '':
+                                            hours = day
+                                        else:
+                                            hours = hours + '; ' + day
                                 if hours == '':
                                     hours = '<MISSING>'
                                 if phone == '':
