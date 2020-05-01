@@ -36,13 +36,13 @@ def fetch_data():
         purl = '<MISSING>'
         array = []
         for item in json.loads(r.content):
-            store = item['id']
-            name = item['name']
+            store = item['id'].encode('utf-8')
+            name = item['name'].encode('utf-8')
             lat = item['lat']
             lng = item['lng']
             result_coords.append((lat, lng))
-            add = item['address1']
-            city = item['city']
+            add = item['address1'].encode('utf-8')
+            city = item['city'].encode('utf-8')
             state = item['state']
             zc = item['postcode']
             country = 'US'
@@ -54,7 +54,8 @@ def fetch_data():
             info = add + ';' + city + ';' + state
             ids.add(info)
             array.append(info)
-            if store not in locations:
+            canada = ['NL','NS','PE','QC','ON','BC','AB','MB','SK','YT','NU']
+            if store not in locations and state not in canada:
                 locations.append(store)
                 if 'PENNZOIL' in name.upper():
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
