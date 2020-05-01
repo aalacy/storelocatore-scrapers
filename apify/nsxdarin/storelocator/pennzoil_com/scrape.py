@@ -43,7 +43,7 @@ def fetch_data():
             result_coords.append((lat, lng))
             add = item['address1'].encode('utf-8')
             city = item['city'].encode('utf-8')
-            state = item['state']
+            state = item['state'].encode('utf-8')
             zc = item['postcode']
             country = 'US'
             phone = item['telephone']
@@ -54,7 +54,7 @@ def fetch_data():
             info = add + ';' + city + ';' + state
             ids.add(info)
             array.append(info)
-            canada = ['NL','NS','PE','QC','ON','BC','AB','MB','SK','YT','NU']
+            canada = ['NL','NS','PE','QC','ON','BC','AB','MB','SK','YT','NU','NT','NB']
             if store not in locations and state not in canada:
                 locations.append(store)
                 if 'PENNZOIL' in name.upper():
