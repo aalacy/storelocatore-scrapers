@@ -36,10 +36,13 @@ def fetch_data():
                             lat = item.split('"Latitude":')[1].split(',')[0]
                             lng = item.split('"Longitude":')[1].split(',')[0]
                             phone = item.split('"Phone":"')[1].split('"')[0]
-                            name = item.split('"Name":"')[1].split('"')[0]
+                            name = item.split('"Name":"')[1].split('"')[0].replace('\\/','/')
                             loc = 'https://www.phillips66gas.com/station/' + typ + '-' + name.replace(' ','-') + '-' + store
                             hours = '<MISSING>'
-                            if store not in ids:
+                            if phone == '':
+                                phone = '<MISSING>'
+                            mx = ['COA','SIN','SON','CHI','MX','NL']
+                            if store not in ids and state not in mx:
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                                 ids.append(store)
 
