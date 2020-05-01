@@ -77,10 +77,12 @@ def fetch_data():
                     lat = line2.split('<meta itemprop="latitude" content="')[1].split('"')[0]
                 if '<meta itemprop="longitude" content="' in line2:
                     lng = line2.split('<meta itemprop="longitude" content="')[1].split('"')[0]
-                if '"detail-block--days">' in line2:
+                if '"detail-block--days">' in line2 and 'Holidays</div>' not in line2:
                     hrs = line2.split('"detail-block--days">')[1].split('<')[0]
-                if '"detail-block--hours">' in line2:
-                    hrs = hrs + ': ' + line2.split('"detail-block--hours">')[1].split('<')[0]
+                if 'Holidays</div>' in line2:
+                    hrs = 'XXX'
+                if '"detail-block--hours">' in line2 and hrs != 'XXX':
+                    hrs = hrs + ': ' + line2.split('"detail-block--hours">')[1].split('</div')[0].replace('<br />',', ')
                     if hours == '':
                         hours = hrs
                     else:
