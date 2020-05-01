@@ -50,21 +50,24 @@ def fetch_data():
                             lines = r2.iter_lines()
                             rc = 0
                             dc = -1
-                            for line in lines:
-                                if '<div class="opening-times__cell">' in line:
-                                    rc = rc + 1
-                                    if rc <= 7:
-                                        g = next(lines)
-                                        days.append(g.strip().replace('\r','').replace('\n','').replace('\t',''))
-                                    if rc >= 8:
-                                        dc = dc + 1
-                                        g = next(lines)
-                                        days[dc] = days[dc] + ': ' + g.strip().replace('\r','').replace('\n','').replace('\t','')
-                            for day in days:
-                                if hours == '':
-                                    hours = day
-                                else:
-                                    hours = hours + '; ' + day
+                            try:
+                                for line in lines:
+                                    if '<div class="opening-times__cell">' in line:
+                                        rc = rc + 1
+                                        if rc <= 7:
+                                            g = next(lines)
+                                            days.append(g.strip().replace('\r','').replace('\n','').replace('\t',''))
+                                        if rc >= 8:
+                                            dc = dc + 1
+                                            g = next(lines)
+                                            days[dc] = days[dc] + ': ' + g.strip().replace('\r','').replace('\n','').replace('\t','')
+                                for day in days:
+                                    if hours == '':
+                                        hours = day
+                                    else:
+                                        hours = hours + '; ' + day
+                            except:
+                                pass
                             if hours == '':
                                 hours = '<MISSING>'
                             if phone == '':
