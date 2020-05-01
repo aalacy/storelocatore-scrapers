@@ -45,11 +45,13 @@ def fetch_data():
             page_url = data['venue']['website']
         else:
             page_url = "http://hyperionpublic.com/silver-lake"
+
         if "silver-lake" in page_url:
             hours = "RESTAURANT : Monday11AM10PM Tuesday11AM10PM Wednesday11AM10PM Thursday11AM11PM Friday11AM11PM Saturday 9AM11PM Sunday 9AM10PM COMMUNITY PUB : Monday 4PM2AM Tuesday 4PM2AM Wednesday 4PM2AM Thursday 4PM2AM Friday 4PM2AM Saturday 9AM2AM Sunday 9AM2AM"
         else:
             hours = "<MISSING>"
-        
+        if "Studio City" in city.strip():
+            continue
         store = []
         store.append(base_url)
         store.append(location_name)
@@ -69,6 +71,7 @@ def fetch_data():
             continue
         addresses.append(store[2])
         yield store
+        # print(store)
 
 def scrape():
     data = fetch_data()
