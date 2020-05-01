@@ -53,7 +53,7 @@ def fetch_data():
                             if storeinfo not in ids and country == 'CA':
                                 print('Pulling Store %s...' % name)
                                 days = []
-                                if loc != '<MISSING>'
+                                if loc != '<MISSING>':
                                     r2 = session.get(loc, headers=headers)
                                     lines = r2.iter_lines()
                                     rc = 0
