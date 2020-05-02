@@ -11,7 +11,7 @@ session = SgRequests()
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -154,23 +154,23 @@ def fetch_data():
 
     r_wc = session.get("https://www.autozone.com/locations/dc/washington.html", headers=headers)
     soup_wc = BeautifulSoup(r_wc.text, "lxml")
-    for link in soup_wc.find("div",{"class":"row grid-container"}).find_all("h5",{"class":"c-location-grid-item-title"}):
-        page_url = link.find("a")['href'].replace("..","https://www.autozone.com/locations")
-        r6 = session.get(page_url)
+
+    for link in soup_wc.find_all("div",{"class":"c-location-grid-col col-lg-4 col-sm-5 col-xs-12"}):
+        page_url = link.find("h5",class_="c-location-grid-item-title").find("a")["href"].replace("..","https://www.autozone.com/locations")
+        # print(page_url)
+        name = link.find("h5",class_="c-location-grid-item-title").find("a").text.strip()
+        address = list(link.find("address",class_="c-address").stripped_strings)
+        street_address = address[0].strip()
+        city = address[1].strip()
+        state = address[-3].strip()
+        zip1 = address[-2].strip()
+        country_code = "US"
+        phone = link.find("span",{"itemprop":"telephone"}).text.strip()
+        r6 = session.get(page_url,headers=headers)
         soup6 = BeautifulSoup(r6.text, "lxml")
-        street_address = soup6.find("span",{"class":"c-address-street-1"}).text.strip()
-        try:
-            state = soup6.find("abbr",{"class":"c-address-state"}).text
-        except:
-            state = "<MISSING>"
-        zip1 = soup6.find("span",{"class":"c-address-postal-code"}).text
-        city = soup6.find("span",{"class":"c-address-city"}).text
-        name = " ".join(list(soup6.find("h1",{"class":"c-location-title"}).stripped_strings))
-        phone = soup6.find("span",{"class":"c-phone-number-span c-phone-main-number-span"}).text
-        hours = " ".join(list(soup6.find("table",{"class":"c-location-hours-details"}).find("tbody").stripped_strings))
+        hours = " ".join(list(soup6.find("table",class_="c-location-hours-details").stripped_strings)).replace("Day of the Week Hours","").strip()
         latitude = soup6.find("meta",{"itemprop":"latitude"})['content']
         longitude = soup6.find("meta",{"itemprop":"longitude"})['content']
-        
         store4 =[]
         store4.append(base_url)
         store4.append(name)
@@ -190,9 +190,9 @@ def fetch_data():
 
         yield store4
 
+        # print("========================================",store4)
         
-    
-
+       
 
 
 def scrape():

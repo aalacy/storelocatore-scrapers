@@ -5,6 +5,7 @@ import re
 from sgrequests import SgRequests
 import json
 session = SgRequests()
+requests.packages.urllib3.disable_warnings()
 def write_output(data):
 	with open('data.csv', mode='w',newline="") as output_file:
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -28,7 +29,7 @@ def fetch_data():
     page = 1
     while True:
         page_url="https://www.altamed.org/find/facility?page="+str(page)
-        r = session.get(page_url)
+        r = requests.get(page_url,headers=headers,verify=False)
         soup = BeautifulSoup(r.text, "lxml")
         for data in soup.find_all("div",{"class":"clinic-wrapper altamed-type"}):
             location_name = data.find("h3",{"class":"altamed-type"}).text

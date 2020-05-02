@@ -1,6 +1,7 @@
 import csv
 from bs4 import BeautifulSoup
 import requests
+from sgrequests import SgRequests
 import time
 import re
 import json
@@ -11,6 +12,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 import platform
 system = platform.system()
 
+session = SgRequests()
 def get_driver():
     options = Options()
     options.add_argument('--headless')
@@ -156,9 +158,9 @@ def fetch_data():
                     map_it_index = full_address.index("Map It")
                     city = full_address[:map_it_index][-1].split(",")[0].strip()
                     # print("city == ",str(city))
-                    # city = city_state_zipp.replace(zipp, "").replace(state, "").replace(",", "")
+                   
                     if "Hours" in full_address:
-                        hours_of_operation = " ".join(full_address[full_address.index("Hours"):]).replace("Hours Business Office Hours","").replace("Business  & Provider","").replace("Therapy","").replace('weekends and holidays Call 906 - 337 - 6500 and ask to contact Home Health "on - call." 24-hour emergency services are available','').replace("Medical Esthetician Consultations & Services By Appointment","").replace("Clinic","").replace("Walk-In Care","").replace("Hours","").replace("Open for calls","").replace("(staffed)","").replace("Store","").replace("Business","").replace("Visiting","").replace("(ET)","").replace("Provider","").replace("(support person, siblings anytime) Critical Care Unit Visitation Daily, anytime Family, significant others only","").replace("Family Birthplace Visitation","").replace("Visiting  Unlimited, but quiet hours after 8:30 pm (Hospital Entrance B closed on weekends) Scheduling","").replace("&","").replace("After-hours,","").replace("General","").replace("Unlimited, but quiet hours after 8:30 pm (Hospital Entrance B closed on weekends) Scheduling ","").replace("By Appointmen","").strip()
+                        hours_of_operation = " ".join(full_address[full_address.index("Hours"):]).replace("Hours Business Office Hours","").replace("Business  & Provider","").replace("Therapy","").replace('weekends and holidays Call 906 - 337 - 6500 and ask to contact Home Health "on - call." 24-hour emergency services are available','').replace("Medical Esthetician Consultations & Services By Appointment","").replace("Clinic","").replace("Walk-In Care","").replace("Hours","").replace("Open for calls","").replace("(staffed)","").replace("Store","").replace("Business","").replace("Visiting","").replace("(ET)","").replace("Provider","").replace("(support person, siblings anytime) Critical Care Unit Visitation Daily, anytime Family, significant others only","").replace("Family Birthplace Visitation","").replace("Visiting  Unlimited, but quiet hours after 8:30 pm (Hospital Entrance B closed on weekends) Scheduling","").replace("&","").replace("After-hours,","").replace("General","").replace("Unlimited, but quiet hours after 8:30 pm (Hospital Entrance B closed on weekends) Scheduling ","").replace("By Appointment","").replace("EST","").replace("Evenings By appointment","").strip()
                     # print("full_address == ",full_address)
 
                     if "Visit website for hours" in full_address:
@@ -169,8 +171,8 @@ def fetch_data():
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                             store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
-                    if str(str(store[2])+str(store[-1])) not in addresses and country_code:
-                        addresses.append(str(store[2])+str(store[-1]))
+                    if str(str(store[1])+str(store[2])+str(store[-5])+str(store[-1]))not in addresses and country_code:
+                        addresses.append(str(store[1])+str(store[2])+str(store[-5])+str(store[-1]))
 
                         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
