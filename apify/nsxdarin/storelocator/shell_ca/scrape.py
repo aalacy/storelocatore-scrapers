@@ -30,10 +30,10 @@ def fetch_data():
                     items = line.split('{"id":"')
                     for item in items:
                         if '"name":"' in item:
-                            name = item.split('"name":"')[1].split('"')[0]
+                            name = item.split('"name":"')[1].split('"')[0].replace('\\u0026','&')
                             lat = item.split('"lat":')[1].split(',')[0]
                             lng = item.split('"lng":')[1].split(',')[0]
-                            add = item.split('"address":"')[1].split('"')[0]
+                            add = item.split('"address":"')[1].split('"')[0].replace('\\u0026','&')
                             city = item.split('"city":"')[1].split('"')[0]
                             state = item.split('"state":"')[1].split('"')[0]
                             zc = item.split('"postcode":"')[1].split('"')[0]
@@ -77,6 +77,7 @@ def fetch_data():
                                     hours = '<MISSING>'
                                 if phone == '':
                                     phone = '<MISSING>'
+                                store = loc.rsplit('/',1)[1].split('-')[0]
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                                 ids.append(storeinfo)
 
