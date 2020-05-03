@@ -38,7 +38,7 @@ def fetch_data():
                         typ = item.split('"brand":"')[1].split('"')[0]
                         website = 'shell.us'
                         loc = item.split('"website_url":"')[1].split('"')[0]
-                        store = '<MISSING>'
+                        store = loc.rsplit('/',1)[1].split('-')[0]
                         storeinfo = name + '|' + add + '|' + city + '|' + lat
                         hours = ''
                         if phone == '':
@@ -72,6 +72,8 @@ def fetch_data():
                                 hours = '<MISSING>'
                             if phone == '':
                                 phone = '<MISSING>'
+                            name = name.replace('\\u0026','&')
+                            add = add.replace('\\u0026','&')
                             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                             ids.append(storeinfo)
 
@@ -102,9 +104,9 @@ def fetch_data():
                             typ = item.split('"brand":"')[1].split('"')[0]
                             website = 'shell.us'
                             loc = item.split('"website_url":"')[1].split('"')[0]
-                            store = '<MISSING>'
                             storeinfo = name + '|' + add + '|' + city + '|' + lat
                             hours = ''
+                            store = loc.rsplit('/',1)[1].split('-')[0]
                             if phone == '':
                                 phone = '<MISSING>'
                             if storeinfo not in ids and country == 'US':
@@ -114,25 +116,30 @@ def fetch_data():
                                 lines = r2.iter_lines()
                                 rc = 0
                                 dc = -1
-                                for line in lines:
-                                    if '<div class="opening-times__cell">' in line:
-                                        rc = rc + 1
-                                        if rc <= 7:
-                                            g = next(lines)
-                                            days.append(g.strip().replace('\r','').replace('\n','').replace('\t',''))
-                                        if rc >= 8:
-                                            dc = dc + 1
-                                            g = next(lines)
-                                            days[dc] = days[dc] + ': ' + g.strip().replace('\r','').replace('\n','').replace('\t','')
-                                for day in days:
-                                    if hours == '':
-                                        hours = day
-                                    else:
-                                        hours = hours + '; ' + day
+                                try:
+                                    for line in lines:
+                                        if '<div class="opening-times__cell">' in line:
+                                            rc = rc + 1
+                                            if rc <= 7:
+                                                g = next(lines)
+                                                days.append(g.strip().replace('\r','').replace('\n','').replace('\t',''))
+                                            if rc >= 8:
+                                                dc = dc + 1
+                                                g = next(lines)
+                                                days[dc] = days[dc] + ': ' + g.strip().replace('\r','').replace('\n','').replace('\t','')
+                                    for day in days:
+                                        if hours == '':
+                                            hours = day
+                                        else:
+                                            hours = hours + '; ' + day
+                                except:
+                                    pass
                                 if hours == '':
                                     hours = '<MISSING>'
                                 if phone == '':
                                     phone = '<MISSING>'
+                                name = name.replace('\\u0026','&')
+                                add = add.replace('\\u0026','&')
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                                 ids.append(storeinfo)
 
