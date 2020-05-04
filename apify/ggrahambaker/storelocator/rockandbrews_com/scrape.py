@@ -67,6 +67,9 @@ def fetch_data():
             phone_number = driver.find_element_by_css_selector('a.phone-link').text
         except:
             phone_number = '<MISSING>'
+
+        if 'att-center/' in page_url:
+            phone_number = '(818) 574-3220'
         
         street_address = driver.find_element_by_xpath('//span[@itemprop="streetAddress"]').text.replace('\n', ' ')
         city = driver.find_element_by_xpath('//span[@itemprop="addressLocality"]').text
