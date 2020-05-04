@@ -37,7 +37,10 @@ def fetch_data():
                         phone = item.split('"telephone":"')[1].split('"')[0]
                         typ = item.split('"brand":"')[1].split('"')[0]
                         website = 'shell.us'
-                        loc = item.split('"website_url":"')[1].split('"')[0]
+                        try:
+                            loc = item.split('"website_url":"')[1].split('"')[0]
+                        except:
+                            loc = '<MISSING>'
                         store = loc.rsplit('/',1)[1].split('-')[0]
                         storeinfo = name + '|' + add + '|' + city + '|' + lat
                         hours = ''
@@ -103,7 +106,10 @@ def fetch_data():
                             phone = item.split('"telephone":"')[1].split('"')[0]
                             typ = item.split('"brand":"')[1].split('"')[0]
                             website = 'shell.us'
-                            loc = item.split('"website_url":"')[1].split('"')[0]
+                            try:
+                                loc = item.split('"website_url":"')[1].split('"')[0]
+                            except:
+                                loc = '<MISSING>'
                             storeinfo = name + '|' + add + '|' + city + '|' + lat
                             hours = ''
                             store = loc.rsplit('/',1)[1].split('-')[0]
