@@ -41,12 +41,15 @@ def fetch_data():
                             loc = item.split('"website_url":"')[1].split('"')[0]
                         except:
                             loc = '<MISSING>'
-                        store = loc.rsplit('/',1)[1].split('-')[0]
+                        try:
+                            store = loc.rsplit('/',1)[1].split('-')[0]
+                        except:
+                            store = '<MISSING>'
                         storeinfo = name + '|' + add + '|' + city + '|' + lat
                         hours = ''
                         if phone == '':
                             phone = '<MISSING>'
-                        if storeinfo not in ids and country == 'US':
+                        if storeinfo not in ids and country == 'US' and loc != '<MISSING>':
                             print('Pulling Store %s...' % name)
                             days = []
                             r2 = session.get(loc, headers=headers)
@@ -77,8 +80,9 @@ def fetch_data():
                                 phone = '<MISSING>'
                             name = name.replace('\\u0026','&')
                             add = add.replace('\\u0026','&')
-                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-                            ids.append(storeinfo)
+                            if loc != '<MISSING>':
+                                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                                ids.append(storeinfo)
 
     url = ''
     for x in range(24, 50):
@@ -112,10 +116,13 @@ def fetch_data():
                                 loc = '<MISSING>'
                             storeinfo = name + '|' + add + '|' + city + '|' + lat
                             hours = ''
-                            store = loc.rsplit('/',1)[1].split('-')[0]
+                            try:
+                                store = loc.rsplit('/',1)[1].split('-')[0]
+                            except:
+                                store = '<MISSING>'
                             if phone == '':
                                 phone = '<MISSING>'
-                            if storeinfo not in ids and country == 'US':
+                            if storeinfo not in ids and country == 'US' and loc != '<MISSING>':
                                 print('Pulling Store %s...' % name)
                                 days = []
                                 r2 = session.get(loc, headers=headers)
@@ -146,8 +153,9 @@ def fetch_data():
                                     phone = '<MISSING>'
                                 name = name.replace('\\u0026','&')
                                 add = add.replace('\\u0026','&')
-                                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-                                ids.append(storeinfo)
+                                if loc != '<MISSING>':
+                                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                                    ids.append(storeinfo)
 
 def scrape():
     data = fetch_data()
