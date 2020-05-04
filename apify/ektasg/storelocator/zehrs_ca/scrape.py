@@ -63,8 +63,6 @@ def fetch_data():
     names = [stores[i].get_attribute("href") for i in range(0, len(stores))]
 
     for i in range(0, len(names)):
-        print(i)
-        print(names[i])
         driver2.get(names[i])
         time.sleep(5)
         page_url = names[i]

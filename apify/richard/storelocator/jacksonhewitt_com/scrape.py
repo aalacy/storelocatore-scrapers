@@ -97,6 +97,7 @@ class Scraper(Scrape):
         for store in stores:
             if store["OfficeNumber"] not in seen:
                 # Store ID
+
                 location_id = store["OfficeNumber"]
 
                 # Name
@@ -133,6 +134,7 @@ class Scraper(Scrape):
                 phone = store["Phone"]
 
                 # hour
+                print(store['OfficeHours'])
                 hour_arr = store["OfficeHours"]
                 hour = ''
                 for h in hour_arr:
