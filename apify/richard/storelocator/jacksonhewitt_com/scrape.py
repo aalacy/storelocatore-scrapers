@@ -134,7 +134,6 @@ class Scraper(Scrape):
                 phone = store["Phone"]
 
                 # hour
-                print(store['OfficeHours'])
                 hour_arr = store["OfficeHours"]
                 hour = ''
                 for h in hour_arr:
