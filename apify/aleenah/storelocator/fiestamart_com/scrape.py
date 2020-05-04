@@ -87,7 +87,8 @@ def fetch_data():
         else:
             timing.append(tim)
 
-        ty=soup.find_all('script', {'type': 'application/ld+json'})[1].text
+        ty=soup.find_all('script', {'type': 'application/ld+json'})[1].string
+
         types.append(re.findall(r'"@type": "([^"]*)",',ty)[0])
 
     all = []
