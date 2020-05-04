@@ -56,7 +56,7 @@ def fetch_data():
 
             loc=soup.find('h1', {'class': 'hp-gradienttxt mt-3 mt-lg-5'}).text
         except:
-            all.append([
+            """all.append([
                 "https://www.happyspizza.com",
                 "<INACCESSIBLE>",
                 "<INACCESSIBLE>",
@@ -70,7 +70,7 @@ def fetch_data():
                 "<INACCESSIBLE>",  # lat
                 "<INACCESSIBLE>",  # long
                 "<INACCESSIBLE>",  # timing
-                url])
+                url])"""
             continue
         addr=soup.find('p', {'class': 'hp-storeaddress hp-black mb-1'}).text.strip().split('\n')
         street=addr[0]
