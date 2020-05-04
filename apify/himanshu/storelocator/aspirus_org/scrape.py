@@ -1,7 +1,6 @@
 import csv
 from bs4 import BeautifulSoup
 import requests
-from sgrequests import SgRequests
 import time
 import re
 import json
@@ -12,7 +11,6 @@ from selenium.webdriver.support.wait import WebDriverWait
 import platform
 system = platform.system()
 
-session = SgRequests()
 def get_driver():
     options = Options()
     options.add_argument('--headless')

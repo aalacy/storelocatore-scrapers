@@ -29,7 +29,6 @@ def fetch_data():
     for q in link:
         for i in range(0,q):
             url123 = str(link[q].split("page=")[0].replace("1",'')+"page="+str(i)+"&"+link[q].split("page=")[1].split("&")[1])
-            
             response = requests.get(url123, headers=headers)
             soup=BeautifulSoup(response.text,'lxml')
             data = soup.find(lambda tag: (tag.name == "script") and "var g_ihApplicationPath" in tag.text.strip())
@@ -51,7 +50,8 @@ def fetch_data():
                 latitude = str(soup1).split("center: {")[1].split("},")[0].split("lat: ")[1].split(",")[0]
                 longitude = str(soup1).split("center: {")[1].split("},")[0].split("lng: ")[1].split(",")[0]
                 street_address=(soup1.find("meta",{"itemprop":"streetAddress"})['content'])
-                name=soup1.find("meta",{"itemprop":"name"})['content']
+                name=soup1.find_all("meta",{"itemprop":'name'})[-1]['content']
+                # print(name)
                 city = soup1.find("meta",{"itemprop":"addressLocality"})['content']
                 state = soup1.find("meta",{"itemprop":"addressRegion"})['content']
                 zipp = soup1.find("meta",{"itemprop":"postalCode"})['content']
