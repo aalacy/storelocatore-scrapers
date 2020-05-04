@@ -28,7 +28,8 @@ def fetch_data():
     for loc in locs:
         location_name = loc['store']
         store_number = loc['id']
-        street_address = loc['address']
+        street_address = loc['address'] + ' ' + loc['address2']
+        street_address = street_address.strip() 
         city = loc['city']
         state = loc['state']
         zip_code = loc['zip']
