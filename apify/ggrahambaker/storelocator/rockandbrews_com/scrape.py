@@ -35,6 +35,7 @@ def fetch_data():
     locs = driver.find_elements_by_css_selector('li.location')
 
     data_list = []
+
     for loc in locs:
         location_name = loc.get_attribute('data-name')
         lat = loc.get_attribute('data-latitude')
@@ -47,10 +48,14 @@ def fetch_data():
         
         data_list.append([url, location_name, lat, longit])
 
-
+    dup_tracker = set()
     all_store_data = []
     for data in data_list:
         page_url = data[0]
+        if page_url not in dup_tracker:
+            dup_tracker.add(page_url)
+        else:
+            continue
         location_name = data[1]
         lat = data[2]
         longit = data[3]
