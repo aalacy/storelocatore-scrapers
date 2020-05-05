@@ -54,8 +54,11 @@ def fetch_data():
         hours_of_operation = ""
         location_url = "https://portal.seniorhelpers.com/api/offices"
         data="------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"zip\"\r\n\r\n"+str(zip_code)+"\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--" 
-        r = requests.post(location_url,headers=headers,data=data)
-
+        
+        try:
+            r = requests.post(location_url,headers=headers,data=data)
+        except:
+            pass
         soup = BeautifulSoup(r.text, "html5lib")
         current_results_len = len(soup.find_all("marker"))    
         for data in soup.find_all("marker"):
@@ -73,8 +76,11 @@ def fetch_data():
 
             soup1 = BeautifulSoup(str(data.find("alias")).replace("<!--","").replace("-->",""), "html5lib")
             page_url="https://www.seniorhelpers.com/"+soup1.text.replace("[CDATA[","").replace("]]",'')
-            r1 = requests.get(page_url,headers=headers)
-            soup2 = BeautifulSoup(r1.text, "html5lib")
+            try:
+                r1 = requests.get(page_url,headers=headers)
+                soup2 = BeautifulSoup(r1.text, "html5lib")
+            except:
+                pass
             try:
                 hours_of_operation = " ".join(list(soup2.find("i",{"class":"fas fa-clock"}).parent.stripped_strings)).replace("Hours ",'')
             except:
@@ -92,18 +98,18 @@ def fetch_data():
             addresses.append(store[2])
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            print("data = " + str(store))
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
             yield store
             # return_main_object.append(store)
 
         # yield store
         if current_results_len < MAX_RESULTS:
-            #print("max distance update")
+            # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
-           # print("max count update")
+            # print("max count update")
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")

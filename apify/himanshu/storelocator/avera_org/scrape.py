@@ -27,7 +27,7 @@ def fetch_data():
         soup5 = BeautifulSoup(r5.text, "lxml")        
         try:
             for number in soup5.find("select",{"class":"SuperShort"}).find_all("option"):
-                print(number.text)
+                # print(number.text)l
                 r1 = session.get("https://www.avera.org/locations/search-results/?termId="+d['value']+"&sort=13&page="+str(number.text))
                 soup1 = BeautifulSoup(r1.text, "lxml")
                 for index,url in enumerate(soup1.find("div",{"class":"LocationsList"}).find_all("li")):
@@ -54,8 +54,12 @@ def fetch_data():
                         state = data['address']['addressRegion']
                         zipp = data['address']['postalCode']
                         phone = data['telephone']
-                        latitude = data['geo']['latitude']
-                        longitude = data['geo']['longitude']
+                        try:
+                            latitude = data['geo']['latitude']
+                            longitude = data['geo']['longitude']
+                        except:
+                            latitude="<MISSING>"
+                            longitude="<MISSING>"
                         page_url = data['url']
                         # print(longitude)
                         if soup2.find("div",{"class":"Hours"}):
@@ -71,8 +75,12 @@ def fetch_data():
                         state = data['address']['addressRegion']
                         zipp = data['address']['postalCode']
                         phone = data['telephone']
-                        latitude = data['geo']['latitude']
-                        longitude = data['geo']['longitude']
+                        try:
+                            latitude = data['geo']['latitude']
+                            longitude = data['geo']['longitude']
+                        except:
+                            latitude="<MISSING>"
+                            longitude="<MISSING>"
                         page_url = data['url']
                         if soup2.find("div",{"class":"Hours"}):
                             hours = " ".join(list(soup2.find("div",{"class":"Hours"}).stripped_strings)).replace("Hours of Operation","")
@@ -121,8 +129,12 @@ def fetch_data():
                         state = data['address']['addressRegion']
                         zipp = data['address']['postalCode']
                         phone = data['telephone']
-                        latitude = data['geo']['latitude']
-                        longitude = data['geo']['longitude']
+                        try:
+                            latitude = data['geo']['latitude']
+                            longitude = data['geo']['longitude']
+                        except:
+                            latitude="<MISSING>"
+                            longitude= "<MISSING>"
                         page_url = data['url']
                         # print(longitude)
                         if soup2.find("div",{"class":"Hours"}):
@@ -138,8 +150,12 @@ def fetch_data():
                         state = data['address']['addressRegion']
                         zipp = data['address']['postalCode']
                         phone = data['telephone']
-                        latitude = data['geo']['latitude']
-                        longitude = data['geo']['longitude']
+                        try:
+                            latitude = data['geo']['latitude']
+                            longitude = data['geo']['longitude']
+                        except:
+                            latitude="<MISSING>"
+                            longitude="<MISSING>"
                         page_url = data['url']
                         if soup2.find("div",{"class":"Hours"}):
                             hours = " ".join(list(soup2.find("div",{"class":"Hours"}).stripped_strings)).replace("Hours of Operation","")
