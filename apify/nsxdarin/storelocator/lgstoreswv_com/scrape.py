@@ -1,18 +1,10 @@
 import csv
 import urllib2
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from sgrequests import SgRequests
-import json
 
-session = SgRequests()
-headers = {'authority': 'lgstoreswv.com',
-           'method': 'POST',
-           'scheme': 'https',
-           'x-requested-with': 'XMLHttpRequest',
-           'x-wp-nonce': '1d0fe044a4',
-           'x-wpgmza-action-nonce': 'deebbcd111',
-           'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-           'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
-           }
+driver = webdriver.Chrome("chromedriver")
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,23 +14,21 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://lgstoreswv.com/wp-json/wpgmza/v1/marker-listing/'
-    payload = {'phpClass': 'WPGMZA\MarkerListing\Carousel',
-               'map_id': '2'
-               }
-    r = session.post(url, headers=headers, data=payload)
+    url = 'https://lgstoreswv.com/locations/'
+    driver.get(url)
     state = 'WV'
     website = 'lgstoreswv.com'
     country = 'US'
     hours = '<MISSING>'
-    for line in r.iter_lines():
-        if '"id":"' in line:
-            items = line.split('"id":"')
+    lines = driver.page_source.split('\n')
+    for linenum in range(0, len(lines)):
+        if '"marker_id":"' in lines[linenum]:
+            items = lines[linenum].split('"marker_id":"')
             for item in items:
                 if '"address":"' in item:
                     if '"title":"' in item:
                         name = item.split('"title":"')[1].split('"')[0]
-                        store = item.split('STORE#')[1].split('<')[0]
+                        store = item.split('STORE#')[1].split('\\')[0]
                     if '<\\/strong><\\/p><p>' in item:
                         addinfo = item.split('<\\/strong><\\/p><p>')[1].split('<\\/span><\\/')[0]
                     if '><p class=\\"p1\\"><span class=\\"s1\\">' in item:
@@ -58,6 +48,10 @@ def fetch_data():
                     lat = item.split('"lat":"')[1].split('"')[0]
                     lng = item.split('"lng":"')[1].split('"')[0]
                     purl = '<MISSING>'
+                    if '<' in store:
+                        store = store.split('<')[0]
+                    if '<' in zc:
+                        zc = zc.split('<')[0]
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
