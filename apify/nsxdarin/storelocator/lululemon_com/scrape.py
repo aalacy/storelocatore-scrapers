@@ -4,8 +4,6 @@ from sgrequests import SgRequests
 import time
 import json
 
-requests.packages.urllib3.disable_warnings()
-
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -37,7 +35,10 @@ def fetch_data():
         state = item['state']
         zc = addinfo.rsplit(' ',1)[1]
         add = addinfo.split(',')[0]
-        phone = item['phone']
+        try:
+            phone = item['phone']
+        except:
+            phone = '<MISSING>'
         for day in item['hours']:
             try:
                 hrs = day['name'] + ': ' + day['openHour'] + '-' + day['closeHour']
@@ -48,7 +49,10 @@ def fetch_data():
             else:
                 hours = hours + '; ' + hrs
         if country == 'US' or country == 'CA':
-            if len(phone) < 5:
+            try:
+                if len(phone) < 5:
+                    phone = '<MISSING>'
+            except:
                 phone = '<MISSING>'
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
