@@ -65,13 +65,15 @@ def fetch_data():
         driver2.get(names[i])
         time.sleep(5)
         page_url = names[i]
-        try:
-            store_name = driver2.find_element_by_css_selector('div.hero__title-copy').text
-        except:
-            store_name = "coming soon"
-        if "coming soon" in store_name.lower():
-            pass
+        print(names[i])
+        #print(driver2.find_element_by_class_name("location-info-map__details-inner-container").get_attribute("innerText"))
+        if "coming soon" in driver2.find_element_by_class_name("location-info-map__details-inner-container").get_attribute("innerText").lower():
+
+            print("coming soon")
+            continue
         else:
+            store_name=driver2.find_element_by_tag_name('title').get_attribute('textContent').strip()
+            #print(store_name)
             try:
                 hours_elems =driver2.find_elements_by_css_selector('div.map__days')
                 if hours_elems == []:
@@ -86,17 +88,23 @@ def fetch_data():
                 phone_no =driver2.find_element_by_xpath("//a[contains(@href,'tel:')]").get_attribute('textContent').replace("\n","").replace(" ","")
             except:
                 phone_no = '<MISSING>'
-            elem = driver2.find_element_by_xpath("//a[contains(@itemprop, 'address')]")
-            geomap = elem.get_attribute('href')
-            store_address = elem.get_attribute("innerHTML")
-            street_addr= store_address.split("<br>")[0]
-            state= store_address.split("<br>")[1].split(",")[1].split(" ")[-2]
-            city= store_address.split("<br>")[1].split(",")[0]
-            zipcode = store_address.split("<br>")[1].split(",")[1].split(" ")[-1]
-            geomap = driver2.find_element_by_xpath("//a[contains(@itemprop, 'address')]").get_attribute('href')
-            driver3.get(geomap)
-            time.sleep(5)
-            lat, lon = parse_geo(driver3.current_url)
+            elem = driver2.find_element_by_class_name("location-info-map__info").find_element_by_tag_name('a')
+            #geomap = elem.get_attribute('href')
+            #store_address = elem.get_attribute("innerHTML")
+            store_address = elem.get_attribute("text").strip()
+            #print(store_address)
+            street_addr= store_address.split("\n")[0].strip()
+            state= store_address.split("\n")[1].split(",")[1].split(" ")[-2]
+            city= store_address.split("\n")[1].split(",")[0].strip()
+            zipcode = store_address.split("\n")[1].split(",")[1].split(" ")[-1]
+            coords=driver2.find_element_by_id("map").get_attribute("data-location").replace("[","").replace("]","").split(",")
+            lon=coords[0].strip()
+            lat=coords[1].strip()
+            #print(lat,lon)
+            #geomap = driver2.find_element_by_xpath("//a[contains(@itemprop, 'address')]").get_attribute('href')
+            #driver3.get(geomap)
+            #time.sleep(5)
+            #lat, lon = parse_geo(driver3.current_url)
             data.append([
                  'https://www.yogasix.com/',
                   page_url,
@@ -114,7 +122,7 @@ def fetch_data():
                   store_opening_hours
                 ])
             count+=1
-            print(count)
+            #print(count)
 
 
     time.sleep(3)
