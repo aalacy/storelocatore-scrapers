@@ -24,7 +24,7 @@ def fetch_data():
                     if '"franchiseNm":"' in item:
                         website = 'pizzahut.ca'
                         hours = ''
-                        store = item.split(',')[0]
+                        store = item.split('"storeName":"')[1].split('"')[0]
                         name = "Pizza Hut"
                         add = item.split('"street":"')[1].split('"')[0]
                         city = item.split('"city":"')[1].split('"')[0]
