@@ -1,2 +1,2 @@
-sgzip==0.0.31
-requests==2.22.0
+bs4==0.0.1
+sgrequests
