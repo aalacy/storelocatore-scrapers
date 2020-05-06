@@ -23,7 +23,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url", "operating_info"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -52,9 +52,13 @@ def fetch_data():
         response = session.get(api_base + store_number).content
         cont = json.loads(response)
         
+        
         store_number = cont['StoreNumber']
         location_name = cont['Name']
         street_address = cont['StreetAddress']
+
+
+
         city = cont['City']
         state = cont['State']
         zip_code = cont['ZipCode']
@@ -64,13 +68,14 @@ def fetch_data():
         for day in cont['DiningRoomNormalHours']:
             hours += day['Name'] + ': ' + day['Hours'] + ' '
 
+
         
         location_type = '<MISSING>'
         phone_number = '<MISSING>'
         page_url = '<MISSING>'
         country_code = 'US'
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                        store_number, phone_number, location_type, lat, longit, hours, page_url]
+                        store_number, phone_number, location_type, lat, longit, hours, page_url, cont['DiningRoomHours']]
         all_store_data.append(store_data)
 
         

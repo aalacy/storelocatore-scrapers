@@ -64,9 +64,11 @@ def fetch_data():
 
     all_store_data = []
     for link in link_list:
+        if link == 'https://matchboxrestaurants.com/':
+            continue
         driver.implicitly_wait(10)
         driver.get(link)
-
+        
         main = driver.find_element_by_css_selector('section.Main-content')
         content = main.text.split('\n')[:17]
 
@@ -76,6 +78,8 @@ def fetch_data():
         phone_number = content[3].replace('call', '').strip()
         hours = ''
         for h in content[11:]:
+            if 'order online' in h:
+                break
             hours += h + ' '
 
         if 'ellsworth' in street_address or 'potomac' in street_address:

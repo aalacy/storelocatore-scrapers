@@ -11,7 +11,7 @@ def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             if(row[0] != 0):
@@ -31,7 +31,7 @@ def parse_id(id):
 
 def fetch_data():
     # data = []
-    data = [[0]*13 for i in range(100)]
+    data = [[0]*14 for i in range(100)]
     options = Options() 
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
@@ -47,11 +47,13 @@ def fetch_data():
         print('No alert')
     
     stores = driver.find_elements_by_class_name('hospital-list-item')
+    #print(len(stores))
     i = 0
-
+    
     for store in stores:
         store_number = parse_id(store.get_attribute('id'))
         store_info = driver.execute_script("return hsp_info[id_index["+store_number+"]]")
+        #print(i,store_info['title'])
         lat, lon = store_info['coords']
         street_address = store_info['address_1']
         state = store_info['state']
@@ -60,37 +62,52 @@ def fetch_data():
         zipcode = store_info['zip']
         city = store_info['city']
 
-        data[i][10] = lat
-        data[i][11] = lon
-        data[i][0] = "https://www.smartcareuc.com/"
-        data[i][1] = location_name
-        data[i][2] = street_address
-        data[i][3] = city
-        data[i][4] = state
-        data[i][5] = zipcode
-        data[i][6] = "US"
-        data[i][7] = store_number
-        data[i][8] = phone
-        data[i][9] = ""
+        data[i][11] = lat
+        data[i][12] = lon
+        data[i][0] = "https://www.smartcareuc.com/"        
+        data[i][2] = location_name
+        data[i][3] = street_address
+        data[i][4] = city
+        data[i][5] = state
+        data[i][6] = zipcode
+        data[i][7] = "US"
+        data[i][8] = store_number
+        data[i][9] = phone
+        data[i][10] = "<MISSING>"
 
         i += 1
 
-    store_els = driver.find_elements_by_css_selector('div.hospital-list-item h4:nth-of-type(6) a.directions-link')
+    store_els = driver.find_elements_by_css_selector('div.hospital-list-item h3 a:nth-child(3)')
     # Fetch store urls from location menu
     store_urls = [store_el.get_attribute('href') for store_el in store_els]
+   
     # Fetch data for each store url
     i = 0    
     for store_url in store_urls:
+        #print(store_url)
+        data[i][1] = store_url
         driver.get(store_url)
-        hours_of_operation = driver.find_element_by_css_selector('div.entry-content ul li:nth-of-type(3)').text.replace('HOURS:','')[1:].replace("\n",",")
-        data[i][12] = hours_of_operation
+        try:
+            hours_of_operation = driver.find_elements_by_class_name('todays-hours')
+            hours_of_operation = hours_of_operation[1].text.replace("Hours",'')[1:].replace("\n"," ")
+            hours_of_operation = hours_of_operation.replace('AM', ' AM')
+            hours_of_operation = hours_of_operation.replace('PM', ' PM')
+            data[i][13] = hours_of_operation
+        
+            
+        except:
+            data[i][13] = "<MISSING>"
+
+        #print(i,data[i])
         i += 1
     driver.quit()
+    
     return data
 
 def scrape():
     # fetch_data()
     data = fetch_data()
+    #print(data)
     write_output(data)
 
 scrape()

@@ -97,6 +97,7 @@ class Scraper(Scrape):
         for store in stores:
             if store["OfficeNumber"] not in seen:
                 # Store ID
+
                 location_id = store["OfficeNumber"]
 
                 # Name

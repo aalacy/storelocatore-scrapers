@@ -11,9 +11,8 @@ session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w',newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url","operating_info"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -51,6 +50,7 @@ def fetch_data():
             store = []
             store.append("https://www.capitalone.com")
             store.append(store_data["locationName"])
+
             store.append(store_data["address"]["addressLine1"])
             if store[-1].lower() in addresses:
                 continue
@@ -81,6 +81,11 @@ def fetch_data():
                 hours = hours + " sunday " + store_data["sunLobbyHours"]
             store.append(hours if hours != "" else "<MISSING>")
             store.append("https://locations.capitalone.com/location/"+str(store_data['id']))
+            if "Temporarily Closed" in store_data["locationName"]:
+                store.append(store_data["locationName"].split("-")[-1].replace("\xa0"," ").strip())
+            else:
+                store.append("<MISSING>")
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store
             # print("===",store)
         if len(data) < MAX_RESULTS:
@@ -150,6 +155,11 @@ def fetch_data():
                 hours = hours + " sunday " + store_data["sunLobbyHours"]
             store.append(hours if hours != "" else "<MISSING>")
             store.append("https://locations.capitalone.com/location/"+str(store_data['id']))
+            if "Temporarily Closed" in store_data["locationName"]:
+                store.append(store_data["locationName"].split("-")[-1].replace("\xa0"," ").strip())
+            else:
+                store.append("<MISSING>")
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store
             # print("===",store)
         if len(data) < MAX_RESULTS:
@@ -217,7 +227,13 @@ def fetch_data():
                 hours = hours + " sunday " + store_data["sunLobbyHours"]
             store.append(hours if hours != "" else "<MISSING>")
             store.append("https://locations.capitalone.com/location/"+str(store_data['id']))
+            if "Temporarily Closed" in store_data["locationName"]:
+                store.append(store_data["locationName"].split("-")[-1].replace("\xa0"," ").strip())
+            else:
+                store.append("<MISSING>")
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store
+
             # print("===",store)
         if len(data) < MAX_RESULTS:
             # print("max distance update")

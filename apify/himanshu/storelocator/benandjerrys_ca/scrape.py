@@ -4,13 +4,10 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-
-
-
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -21,32 +18,23 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-def minute_to_hours(time):
-    am = "AM"
-    hour = int(time / 60)
-    if hour > 12:
-        am = "PM"
-        hour = hour - 12
-    if int(str(time / 60).split(".")[1]) == 0:
-        return str(hour) + ":00" + " " + am
-    else:
-        return str(hour) + ":" + str(int(str(time / 60).split(".")[1]) * 6) + " " + am
-
-
 def fetch_data():
-    zips = sgzip.for_radius(50)
+    search = sgzip.ClosestNSearch()
+    search.initialize(country_codes=["CA"])
+    MAX_RESULTS = 100
+    MAX_DISTANCE = 50
+    current_results_len = 0     # need to update with no of count.
+    zip_code = search.next_zip()
     return_main_object = []
     addresses = []
 
-    for zip_code in zips:
-        # print(zip_code)
+    while zip_code:
+        result_coords = []
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
         }
         base_url = "https://www.benandjerrys.ca"
 
-        # zip_code = 11576
         try:
             r = session.get(
                 "https://benjerry.where2getit.com/ajax?lang=en_US&xml_request=%3Crequest%3E%20%3Cappkey%3E3D71930E-EC80"
@@ -58,24 +46,22 @@ def fetch_data():
                 headers=headers)
         except:
             continue
-        # r = session.get("https://benjerry.where2getit.com/ajax?lang=en_US&xml_request=%3Crequest%3E%3Cappkey%3E3D71930E-EC80-11E6-A0AE-8347407E493E%3C%2Fappkey%3E%3Cformdata+id%3D%22locatorsearch%22%3E%3Cdataview%3Estore_default%3C%2Fdataview%3E%3Climit%3E10000%3C%2Flimit%3E%3Cgeolocs%3E%3Cgeoloc%3E%3Caddressline%3E" + str(zip_code) +
-        #                  "%3C%2Faddressline%3E%3Clongitude%3E-73.41557399999999%3C%2Flongitude%3E%3Clatitude%3E46.0363198%3C%2Flatitude%3E%3Ccountry%3ECA%3C%2Fcountry%3E%3C%2Fgeoloc%3E%3C%2Fgeolocs%3E%3Csearchradius%3E15%7C20%7C30%7C50%7C100%7C250%7C500%3C%2Fsearchradius%3E%3Corder%3ERANK%2C+_distance%3C%2Forder%3E%3Cstateonly%3E1%3C%2Fstateonly%3E%3Cradiusuom%3E%3C%2Fradiusuom%3E%3Cproximitymethod%3Edrivetime%3C%2Fproximitymethod%3E%3Ccutoff%3E500%3C%2Fcutoff%3E%3Ccutoffuom%3Emile%3C%2Fcutoffuom%3E%3Cdistancefrom%3E0.01%3C%2Fdistancefrom%3E%3Cwhere%3E%3Cor%3E%3Ccakesforsale%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fcakesforsale%3E%3Ccatering%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fcatering%3E%3Cfcd%3E%3Ceq%3E%3C%2Feq%3E%3C%2Ffcd%3E%3Cflavorserved%3E%3Ceq%3E%3C%2Feq%3E%3C%2Fflavorserved%3E%3C%2For%3E%3Cicon%3E%3Cin%3EShop%2CSHOP%2Cshop%2CCINEMA%2CCinema%2Cdefault%3C%2Fin%3E%3C%2Ficon%3E%3Cclientkey%3E%3Cnotin%3EFLL01%2CFLL02%2CFLL05%2CFLL08%2CFLL09%2CMDL01%2CTXL01%2CNJL06%2CCAL07%2CNJL07%2CFLL12%2CFLL16%2CFLL18%2CFLL19%2CCA102%2CFL050%2CFL051%2CFL053%2CFL054%2CFL055%2CFL056%2CFL058%2CFL061%2CFL063%2CFL064%2CFL065%2CMD017%2CNJ030%2CNJ031%2CTX029%3C%2Fnotin%3E%3C%2Fclientkey%3E%3C%2Fwhere%3E%3C%2Fformdata%3E%3C%2Frequest%3E", headers=headers)
+      
         soup = BeautifulSoup(r.text, "lxml")
-
-        # it will used in store data.
+        # print(soup)
+        
         locator_domain = base_url
         location_name = ""
         street_address = "<MISSING>"
         city = "<MISSING>"
         state = "<MISSING>"
         zipp = "<MISSING>"
-        country_code = "US"
+        country_code = "CA"
         store_number = "<MISSING>"
         phone = "<MISSING>"
         location_type = "benandjerrys"
         latitude = "<MISSING>"
         longitude = "<MISSING>"
-        raw_address = ""
         hours_of_operation = "<MISSING>"
         page_url = "<MISSING>"
 
@@ -135,18 +121,18 @@ def fetch_data():
                     or len(script.find('tuesday').text) > 0 or len(script.find('wednesday').text) > 0 \
                     or len(script.find('thursday').text) > 0 or len(script.find('friday').text) > 0 \
                     or len(script.find('saturday').text) > 0:
-                hours_of_operation = "Sunday = " + script.find('sunday').text + ", " + \
-                                     "Monday = " + script.find('monday').text + ", " + \
-                                     "Tuesday = " + script.find('tuesday').text + ", " + \
-                                     "Wednesday = " + script.find('wednesday').text + ", " + \
-                                     "Thursday = " + script.find('thursday').text + ", " + \
-                                     "Friday = " + script.find('friday').text + ", " + \
-                                     "Saturday = " + \
+                hours_of_operation = "Sunday : " + script.find('sunday').text + ", " + \
+                                     "Monday : " + script.find('monday').text + ", " + \
+                                     "Tuesday : " + script.find('tuesday').text + ", " + \
+                                     "Wednesday : " + script.find('wednesday').text + ", " + \
+                                     "Thursday : " + script.find('thursday').text + ", " + \
+                                     "Friday : " + script.find('friday').text + ", " + \
+                                     "Saturday : " + \
                     script.find('saturday').text
             else:
                 hours_of_operation = "<MISSING>"
 
-            # print("hours_of_operation === "+str(hours_of_operation))
+            result_coords.append((latitude,longitude))
 
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -156,12 +142,18 @@ def fetch_data():
 
                 store = [x.encode('ascii', 'ignore').decode(
                     'ascii').strip() if x else "<MISSING>" for x in store]
-                # print("data = " + str(store))
-                # print(
-                #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                 yield store
 
-
+        if current_results_len < MAX_RESULTS:
+            # print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            # print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        zip_code = search.next_zip()
+        
 def scrape():
     data = fetch_data()
     write_output(data)

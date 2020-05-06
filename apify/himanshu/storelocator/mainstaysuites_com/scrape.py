@@ -7,7 +7,7 @@ import sgzip
 import datetime
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8",newline="") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8",newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -33,7 +33,7 @@ def fetch_data():
 
     while coords:
         result_coords = []
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         #print(coord[0], coord[1])
         url = "https://www.choicehotels.com/webapi/location/hotels"
 
@@ -100,7 +100,7 @@ def fetch_data():
                     store.append(store_data["lon"])
                     store.append("<MISSING>")
                     store.append(page_url)
-                    #print("data =="+str(store))
+                    # print("data =="+str(store))
                     yield store
 
         if len(data) < MAX_RESULTS:
@@ -131,7 +131,7 @@ def fetch_data():
     addresses1 = []
 
     while coords:
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
         lat = coords[0]
         lng = coords[1]
@@ -196,7 +196,7 @@ def fetch_data():
                 store1.append(store_data1["lon"])
                 store1.append("<MISSING>")
                 store1.append(page_url)
-                #print("data =="+str(store1))
+                # print("data =="+str(store1))
                 yield store1
 
 

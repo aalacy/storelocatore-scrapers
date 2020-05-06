@@ -110,24 +110,25 @@ def fetch_data():
             #print("....................................")
             ccode = ccode.rstrip()
             longt = longt.rstrip()
-            data.append([
-                    url,
-                    link,
-                    title,
-                    street,
-                    city,
-                    state,
-                    pcode,
-                    ccode,
-                    "<MISSING>",
-                    phone,
-                    "<MISSING>",
-                    lat,
-                    longt,
-                    hours
-            ])
-            #print(p,data[p])
-            p += 1
+            if title.find('Coming Soon') == -1:
+                data.append([
+                        url,
+                        link,
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        ccode,
+                        "<MISSING>",
+                        phone,
+                        "<MISSING>",
+                        lat,
+                        longt,
+                        hours
+                ])
+                print(p,data[p])
+                p += 1
 
     print(p)
     return data

@@ -51,7 +51,7 @@ def fetch_store_urls():
                 if 'class="se-amenities se-local-store" href="/locations/' in line3:
                     items = line3.split('class="se-amenities se-local-store" href="/locations/')
                     for item in items:
-                        if '<!DOCTYPE html>' not in item:
+                        if '<!DOCTYPE html>' not in item and 'st-albans' not in item:
                             locs.append('https://www.7-eleven.com/locations/' + item.split('"')[0])
     return locs
 

@@ -54,6 +54,14 @@ def fetch_data():
         lat = '<MISSING>'
         lng = '<MISSING>'
         loc = '<MISSING>'
+        if 'Nordstrom 808' in add:
+            add = '7700 18th St SW'
+        if 'Nordstrom ' in add:
+            add = add.split(' ',1)[1]
+            try:
+                add = add.split(' ',1)[1]
+            except:
+                add = '<MISSING>'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():

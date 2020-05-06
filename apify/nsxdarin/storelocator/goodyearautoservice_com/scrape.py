@@ -24,14 +24,14 @@ def fetch_data():
         if 'data-tracking-cta-id="bbs-' in line:
             states.append('https://www.goodyear.com/' + line.split('href="')[1].split('"')[0])
     for state in states:
-        print('Pulling State %s...' % state)
+        # print('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
             if '<li><a href="/en-US/tire-stores/' in line2:
                 cities.append('https://www.goodyear.com/' + line2.split('href="')[1].split('"')[0])
     for city in cities:
         locs = []
-        print('Pulling City %s...' % city)
+        # print('Pulling City %s...' % city)
         citystate = city.split('/tire-stores/')[1].split('/')[0]
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
@@ -41,7 +41,7 @@ def fetch_data():
                     alllocs.append(lurl)
                     locs.append(lurl)
         for loc in locs:
-            print('Pulling Location %s...' % loc)
+            # print('Pulling Location %s...' % loc)
             PageFound = False
             while PageFound is False:
                 try:

@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
+# import sgzip
 import time
 from datetime import datetime
 
@@ -11,12 +11,12 @@ from datetime import datetime
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline= "") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url","operating_info"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -24,14 +24,6 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 50
-    current_results_len = 0     # need to update with no of count.
-    zip_code = search.next_zip()
-
-   
     base_url= "https://chase.com/"
 
     
@@ -43,14 +35,13 @@ def fetch_data():
     offset = []
     for data in range(553):
         
-        
+        # print(data)
         offset.append(data*10)
-        print("~~~~~~~~~~~~~~~~~~~~~~~~~"+str(offset[data]))
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~"+str(offset[data]))
         location_url = "https://locator.chase.com/search?offset="+str(offset[data])
+        # print(location_url)
     
         r = session.get(location_url, headers=headers).json()
-        current_results_len = len(r['response']['entities'])
-
         for i in r['response']['entities']:
             city = i['profile']['address']['city']
             street_address = i['profile']['address']['line1']
@@ -107,8 +98,14 @@ def fetch_data():
             else:
                 store_number = "<MISSING>"
                 hours_of_operation = "Open 24 Hours"
-
-
+            try:
+                operating_info_tag = i['profile']['c_emergencyMessage'].split(".")[0].strip()
+                if "Temporarily Closed" in operating_info_tag:
+                    operating_info = operating_info_tag
+                else:
+                    operating_info = "<MISSING>"
+            except:
+                operating_info = "<MISSING>"
             store = []
             # result_coords.append((latitude, longitude))
             store.append(base_url)
@@ -125,12 +122,12 @@ def fetch_data():
             store.append(longitude if longitude else '<MISSING>')
             store.append(hours_of_operation if hours_of_operation else '<MISSING>')
             store.append(page_url if page_url else '<MISSING>')
-            
+            store.append(operating_info if operating_info else '<MISSING>')
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            #print("data =="+str(store))
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            # print("data =="+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
 
        

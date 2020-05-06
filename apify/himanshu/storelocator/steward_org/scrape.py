@@ -30,6 +30,7 @@ def fetch_data():
     state_list = soup.find("div",class_="state-list-column").find("div",class_="c-directory-list")
     for link in state_list.find_all("a",class_="c-directory-list-content-item-link"):
         a = "https://locations.steward.org/"+link["href"]
+        # print(a)
         r1 = session.get(a,headers=headers)
         soup1 = BeautifulSoup(r1.text,"lxml")
         try:
@@ -43,6 +44,7 @@ def fetch_data():
                     street_address = location.find("span",class_="c-address-street").text.split("Suite")[0].split("Ste")[0].split(",")[0].strip()
                     if "Floor" in street_address:
                         street_address =  " ".join(street_address.split()[:-2])
+                    street_address = street_address.split("\n")[0].strip()
                     city = location.find("span",class_="c-address-city").text.replace(",","").strip()
                     state = location.find("abbr",class_="c-address-state").text.strip()
                     zipp = location.find("span",class_="c-address-postal-code").text.strip()
@@ -65,11 +67,11 @@ def fetch_data():
                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                     store = [x if x else "<MISSING>" for x in store]
 
-                    if store[2] in addresses:
+                    if (store[1]+" "+store[2]+" "+store[-3]) in addresses:
                         continue
-                    addresses.append(store[2])
-                    # print("data = " + str(store))
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    addresses.append(store[1]+" "+store[2]+" "+store[-3])
+                    #print("data = " + str(store))
+                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     yield store
                     
 
@@ -83,7 +85,7 @@ def fetch_data():
                     if "Floor" in street_address:
                         street_address =  " ".join(street_address.split()[:-2])
                    
-                    
+                    street_address = street_address.split("\n")[0].strip()
                     city = location.find("span",class_="c-address-city").text.replace(",","").strip()
                     state = location.find("abbr",class_="c-address-state").text.strip()
                     zipp = location.find("span",class_="c-address-postal-code").text.strip()
@@ -105,9 +107,9 @@ def fetch_data():
                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                     store = [x if x else "<MISSING>" for x in store]
 
-                    if store[2] in addresses:
+                    if (store[1]+" "+store[2]+" "+store[-3]) in addresses:
                         continue
-                    addresses.append(store[2])
+                    addresses.append(store[1]+" "+store[2]+" "+store[-3])
 
                     # print("data = " + str(store))
                     # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
@@ -130,9 +132,9 @@ def fetch_data():
                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                 store = [x if x else "<MISSING>" for x in store]
 
-                if store[2] in addresses:
-                    continue
-                addresses.append(store[2])
+                if (store[1]+" "+store[2]+" "+store[-3]) in addresses:
+                        continue
+                addresses.append(store[1]+" "+store[2]+" "+store[-3])
                 # print(street_address)
                 # print("data = " + str(store))
                 # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
@@ -164,6 +166,10 @@ def fetch_data():
         store.append("<MISSING>")
         store.append("<MISSING>")
         store.append(page_url)
+        if (store[1]+" "+store[2]) in addresses:
+            continue
+        addresses.append(store[1]+" "+store[2])
+
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
         yield store

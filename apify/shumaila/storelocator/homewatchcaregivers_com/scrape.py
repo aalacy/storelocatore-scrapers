@@ -4,7 +4,8 @@ import time
 from bs4 import BeautifulSoup
 import csv
 import string
-
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from sgrequests import SgRequests
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -18,10 +19,23 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument("--disable-notifications") 
+    chrome_path = 'c:\\Users\\Dell\\local\\chromedriver.exe'
+    return webdriver.Chrome('chromedriver', chrome_options=options)
+
 def fetch_data():   
     p = 0
+   
     data = []
     statelist = []
+    ment = []
+    ment.append('none')
+    driver = get_driver()
     url = 'https://www.homewatchcaregivers.com/locations/'
     r = session.get(url, headers=headers, verify=False)    
     soup =BeautifulSoup(r.text, "html.parser")    
@@ -30,87 +44,143 @@ def fetch_data():
     for rep in repo_list:
         statelist.append(rep.text.lower())        
      
-    
+    print(len(statelist))
     for i in range(1,len(statelist)):
-        statelink = 'https://www.homewatchcaregivers.com/locations/'+statelist[i]
-        print('state = ',statelink)
+        state = statelist[i]
+        state = state.replace(' ','-')
+        statelink = 'https://www.homewatchcaregivers.com/locations/'+state
+        #print('state = ',i,statelist[i],statelink)
         try:
-            r1 = session.get(statelink, headers=headers, verify=False)        
-            soup1 =BeautifulSoup(r1.text, "html.parser")
-            divlist = soup1.find('ul', {'class': 'state-list'})        
-            divlist = divlist.findAll('li')
-            for div in divlist:           
-                lat = div['data-latitude']
-                longt = div['data-longitude']
-                det = div.find('h3')
-                title = det.text
-                link = det.find('a')['href']
-                title = title.replace('\n','')
-                link = 'https://www.homewatchcaregivers.com'+link            
-                r2 = session.get(link, headers=headers, verify=False)        
-                soup2 =BeautifulSoup(r2.text, "html.parser")
-                try:
-                    phone = soup2.find('span',{'itemprop':'telephone'}).text
-                except:
-                    phone = "<MISSING>"
-                try:
-                    street = soup2.find('span',{'itemprop':'streetAddress'}).text
-                    street = street.replace('\t','')
-                    street = street.replace('\n',' ')
-                    street = street.strip()
+            count = 0
+            page = 0
+            #r1 = session.get(statelink, headers=headers, verify=False).text
+            r1 = driver.get(statelink)
+            mtrue = 0
+            while True:
+                if mtrue == 0:
+                    #print("MMMMMM")
+                    r1  = driver.page_source
+                    soup1 =BeautifulSoup(r1, "html.parser")
+                    divlist = soup1.find('ul', {'class': 'state-list'})        
+                    divlist = divlist.findAll('li')
+                    try:
+                        countdiv = soup1.find('div',{'class':'left flex'}).text
+                        temp = countdiv[countdiv.find('of') + 2:len(countdiv)]
+                        temp = temp.lstrip()
+                        #print(temp)
+                        count = int(temp)
+                        
+                    except Exception as e:
+                        #print(e)
+                        count = 1
+                    #print("COUNT = ",page,count)
+                    if page == count:
+                        break
+                   # print(countdiv)
+                    #print("len = ",len(divlist))
+                    #input()
+                    for div in divlist:           
+                        lat = div['data-latitude']
+                        longt = div['data-longitude']
+                        det = div.find('h3')
+                        title = det.text
+                        link = det.find('a')['href']
+                        title = title.replace('\n','')
+                        if link.find('http') == -1:
+                            link = 'https://www.homewatchcaregivers.com'+link
+                            
+                        #print(link)
+                        r2 = session.get(link, headers=headers, verify=False)        
+                        soup2 =BeautifulSoup(r2.text, "html.parser")
+                        try:
+                            phone = soup2.find('span',{'itemprop':'telephone'}).text
+                        except:
+                            phone = "<MISSING>"
+                        try:
+                            street = soup2.find('span',{'itemprop':'streetAddress'}).text
+                            street = street.replace('\t','')
+                            street = street.replace('\n',' ')
+                            street = street.strip()
 
-                except:
-                    street = "<MISSING>"
-                try:
-                    city = soup2.find('span',{'itemprop':'addressLocality'}).text
-                    city = city.replace(',','')
+                        except:
+                            street = "<MISSING>"
+                        try:
+                            city = soup2.find('span',{'itemprop':'addressLocality'}).text
+                            city = city.replace(',','')
 
-                except:
-                    city = "<MISSING>"
-                try:
-                    state = soup2.find('span',{'itemprop':'addressRegion'}).text
+                        except:
+                            city = "<MISSING>"
+                        try:
+                            state = soup2.find('span',{'itemprop':'addressRegion'}).text
 
-                except:
-                    state = "<MISSING>"
-                try:
-                    pcode = soup2.find('span',{'itemprop':'postalCode'}).text
+                        except:
+                            state = "<MISSING>"
+                        try:
+                            pcode = soup2.find('span',{'itemprop':'postalCode'}).text
 
-                except:
-                    pcode = "<MISSING>"
-                try:
-                    hours = soup2.find('li',{'class':'item1'}).text
-                    hours =hours.replace('\n','')
-                    hours = hours.replace('Care','')
-                    hours = hours.strip()
-                    if hours.find('24-Hour') == -1:
-                        hours = "<MISSING>"
-                except:
-                    hours = "<MISSING>"
+                        except:
+                            pcode = "<MISSING>"
+                        try:
+                            hours = soup2.find('li',{'class':'item1'}).text
+                            hours =hours.replace('\n','')
+                            hours = hours.replace('Care','')
+                            hours = hours.strip()
+                            if hours.find('24-Hour') == -1:
+                                hours = "<MISSING>"
+                        except:
+                            hours = "<MISSING>"
 
-                city = city.rstrip()
-                state = state.rstrip()
-                data.append([
-                            'https://www.homewatchcaregivers.com',
-                            link,                   
-                            title,
-                            street,
-                            city,
-                            state,
-                            pcode,
-                            'US',
-                            "<MISSING>",
-                            phone,
-                            "<MISSING>",
-                            lat,
-                            longt,
-                            hours
-                        ])
-                #print(p,data[p])
-                p += 1
+                        city = city.rstrip()
+                        state = state.rstrip()
+                        fflag = 0
+                        for m in ment:
+                            if m == title:
+                                fflag = 1
+                                break
+                        if fflag == 0:
+                            #print("BBBB")
+                            ment.append(title)
+                            data.append([
+                                        'https://www.homewatchcaregivers.com',
+                                        link,                   
+                                        title,
+                                        street,
+                                        city,
+                                        state,
+                                        pcode,
+                                        'US',
+                                        "<MISSING>",
+                                        phone,
+                                        "<MISSING>",
+                                        lat,
+                                        longt,
+                                        hours
+                                    ])
+                            #print(p,data[p])
+                            p += 1
+                        
+                if count == 1:
+                    page += 1
+                if count > 1:
+                    #print("Enter")
+                    try:
+                        driver.find_element_by_xpath('/html/body/main/form/section/div/aside/div[2]/ul/li[2]/a').click()
+                        mtrue = 0
+                        page += 1
+                              
+                                # input()
+                        time.sleep(2)
+                    except Exception as e:
+                        mtrue = 1
+                        #print("E!",e)
+                    
+                    
+                
 
 
-        except:
+        except Exception as e:
             # broken link or no store
+            #print(e)
             pass
 
 

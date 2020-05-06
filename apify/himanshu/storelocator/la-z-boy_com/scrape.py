@@ -14,14 +14,14 @@ import time
 import sgzip
 import unicodedata
 
-
+import requests
 session = SgRequests()
 
 system = platform.system()
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', newline = "",encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -63,8 +63,8 @@ def fetch_data():
     while zip:
         try:
             result_coords = []
-            #print("remaining zipcodes: " + str(len(search.zipcodes)))
-            # print('Pulling Lat-Long %s...' % (str(zip)))
+            print("remaining zipcodes: " + str(len(search.zipcodes)))
+            print('Pulling zipcode  %s...' % (str(zip)))
             WebDriverWait(driver, 10).until(
                 lambda x: x.find_element_by_xpath("//input[@id='locator']"))
             if temp_zip == "":
@@ -148,10 +148,10 @@ def fetch_data():
                 if store_data["website"]:
                     page_url = "https://www.la-z-boy.com" + \
                         store_data["website"]
-                    hours_request = session.get(page_url, headers=headers)
+                    hours_request = requests.get(page_url, headers=headers)
                     hours_soup = BeautifulSoup(hours_request.text, "lxml")
                     if hours_soup.find("a", text=re.compile("Store Hours")):
-                        hours_details_request = session.get("https://www.la-z-boy.com" + hours_soup.find(
+                        hours_details_request = requests.get("https://www.la-z-boy.com" + hours_soup.find(
                             "a", text=re.compile("Store Hours"))["href"], headers=headers)
                         hours_details_soup = BeautifulSoup(
                             hours_details_request.text, "lxml")
@@ -172,8 +172,8 @@ def fetch_data():
                          str else x for x in store]
                 store = [x.encode('ascii', 'ignore').decode(
                     'ascii').strip() if type(x) == str else x for x in store]
-                #print(store)
-                #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                print(store)
+                print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                 yield store
             if len(data) < MAX_RESULTS:
                 # print("max distance update")

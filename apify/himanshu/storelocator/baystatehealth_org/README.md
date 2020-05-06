@@ -12,4 +12,4 @@ Please make sure that:
 
 same lat & lng this website
 
-only 90 location avilabel in this website ,and other location is duplicate 
+
