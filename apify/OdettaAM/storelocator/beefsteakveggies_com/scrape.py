@@ -1,17 +1,14 @@
-import time
+import requests
+from bs4 import BeautifulSoup
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-import re
+import string
+import re, time
 import usaddress
+from sgrequests import SgRequests
 
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-#driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-chrome_path = '/Users/Dell/local/chromedriver'
-driver = webdriver.Chrome('chromedriver', options=options)
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,110 +24,76 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data=[]
-    driver.get("http://beefsteakveggies.com/where-we-are/")
-    globalvar = driver.execute_script("return locations;")
-    i = 0
-    stores = driver.find_elements_by_css_selector('div.contact-box')
-    for store in stores:
-        location_name = store.find_element_by_css_selector('h2.contact-title').text
-        address = store.find_element_by_tag_name('address').find_element_by_tag_name('p').text
-        start = address.find('At the corner')
-        if start != -1:
-            address = address[0:start]
-
-        address = address.replace("'",'')
+    p =0
+    url = "http://beefsteakveggies.com/where-we-are/"
+    r = session.get(url, headers=headers, verify=False)
+  
+    soup =BeautifulSoup(r.text, "html.parser")
+    linklist = soup.findAll('a',{'class':'card__btn'})
+    for link in linklist:
+        link = 'https://www.beefsteakveggies.com'+ link['href']
+        #print(link)
+        r = session.get(link, headers=headers, verify=False)
+  
+        soup =BeautifulSoup(r.text, "html.parser")
+        maindiv = soup.find('section',{'id':'intro'})
+        title = maindiv.find('h2').text
+        #print(title)
+        address = maindiv.find('a',{'data-bb-track-category':'Address'}).text
+        address = address.lstrip()
+        address = address.replace('\n','')
         #print(address)
-        
-        if address.find('food truck') == -1:
-            address = usaddress.parse(address)
-            #print(address)
-            m = 0
-            street = ""
-            city = ""
-            state = ""
-            pcode = ""
-            while m < len(address):
-                temp = address[m]                
-                if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
-                    "USPSBoxID") != -1:
-                    street = street + " " + temp[0]
-                if temp[1].find("PlaceName") != -1:
-                    city = city + " " + temp[0]                    
-                if temp[1].find("StateName") != -1:
-                    state = state + " " + temp[0]
-                if temp[1].find("ZipCode") != -1:
-                    pcode = pcode + " " + temp[0]
-                
-                m += 1
-        else:
-            street = '<MISSING>'
-            city = '<MISSING>'
-            state = '<MISSING>'
-            pcode = '<MISSING>'
-            
+        address = address.replace(',',' ')
+        address = usaddress.parse(address)
+        #print(address)
+        i = 0
+        street = ""
+        city = ""
+        state = ""
+        pcode = ""
+        while i < len(address):
+            temp = address[i]
+            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("Occupancy") != -1 or  temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
+                "USPSBoxID") != -1:
+                street = street + " " + temp[0]
+            if temp[1].find("PlaceName") != -1:
+                city = city + " " + temp[0]
+            if temp[1].find("StateName") != -1:
+                state = state + " " + temp[0]
+            if temp[1].find("ZipCode") != -1:
+                pcode = pcode + " " + temp[0]
+            i += 1
+
+        #print(city)
         street = street.lstrip()
-        city = city.lstrip()
-        state = state.lstrip()
-        pcode = pcode.lstrip()
-        
-        
-        if city.find("Building") > -1:
-            street = street + " " + city            
-            city,state = state.split(' ',1)
-        try:
-            if city == street:                  
-                city,state = state.split(' ',1)
-        except:
-            pass
-            
-        city = city.replace(',','')
         street = street.replace(',','')
+        city = city.lstrip()
+        city = city.replace(',','')
+        state = state.lstrip()
+        state = state.replace(',','')
+        pcode = pcode.lstrip()
+        pcode = pcode.replace(',','')
+       
+
+        #print(street)
         try:
-            phone = store.find_element_by_css_selector('div.contact-info').text
-            
-            phone = phone.replace('CONTACT US','')
-            phone = phone.replace('email us','')            
-            if len(phone) < 3:
-                phone = '<MISSING>'
+            phone = maindiv.find('a',{'data-bb-track-category':'Phone Number'}).text
         except:
-            phone = '<MISSING>'
-        phone= phone.replace('\n','')
-        #print(phone)
-        latitude = globalvar[i]['lat_lng'].split(',')[0]
-        longitude = globalvar[i]['lat_lng'].split(',')[1]
-        store_id = globalvar[i]['marker_id']
-        hours_of_op = store.find_element_by_css_selector('div.contact-timing').text       
-        hours_of_op = hours_of_op.replace('Hours of Operation:','')       
-        hours_of_op = hours_of_op.replace('HOURS','')
-        hours_of_op = hours_of_op.replace('LEARN MORE','')
-        hours_of_op = hours_of_op.replace('\n',' ')
-        hours_of_op = hours_of_op.lstrip()
-        street = street.replace('\n',' ')
-        data.append([
-             'http://beefsteakveggies.com/',
-             'http://beefsteakveggies.com/where-we-are/',
-              location_name,
-              street,
-              city,
-              state,
-              pcode,             
-              'US',
-              store_id,
-              phone,
-              '<MISSING>',
-              latitude,
-              longitude,
-              hours_of_op
-            ])
+            phone = "<MISSING>"
+        coords = soup.find('div',{'class':'gmaps'})
+        lat = coords['data-gmaps-lat']
+        longt = coords['data-gmaps-lng']
+        #print(lat)
+        hours = soup.find('div',{'class':'col-md-6'})
+        hours = hours.findAll('p')
+        hours = hours[1].find('strong').text
+        #print(hours)
+        data.append(['http://beefsteakveggies.com',link,title,street,city,state,pcode,'US',"<MISSING>",phone,"<MISSING>",lat,longt,hours])
+        #print(p,data[p])
+        p += 1
 
-        #print(data[i])
-        
-        i+=1
-
-    #time.sleep(3)
-    driver.quit()
     return data
-
+        
 def scrape():
     data = fetch_data()
     write_output(data)
