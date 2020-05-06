@@ -1,8 +1,7 @@
 import csv
-import urllib2
 from sgrequests import SgRequests
 import sgzip
-from tenacity import retry
+from tenacity import retry, stop_after_attempt
 
 search = sgzip.ClosestNSearch()
 search.initialize()
