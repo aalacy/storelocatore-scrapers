@@ -2,6 +2,7 @@ import csv
 import urllib2
 from sgrequests import SgRequests
 import sgzip
+from tenacity import retry
 
 search = sgzip.ClosestNSearch()
 search.initialize()
@@ -19,20 +20,24 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+@retry(stop=stop_after_attempt(7))
+def request_with_retries(url):
+    session = SgRequests()
+    return session.get(url, headers=headers)
+
 def fetch_data():
     ids = set()
     locations = []
     alllocs = []
     coord = search.next_coord()
     while coord:
-        session = SgRequests()
         #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
         website = 'verizonwireless.com'
         #print('%s, %s...' % (x, y))
         url = 'https://www.verizonwireless.com/stores/storesearchresults/?lat=' + str(x) + '&long=' + str(y)
-        r = session.get(url, headers=headers)
+        r = request_with_retries(url) 
         result_coords = []
         purl = '<MISSING>'
         array = []
