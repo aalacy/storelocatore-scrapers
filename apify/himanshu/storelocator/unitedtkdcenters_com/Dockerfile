@@ -1,4 +1,4 @@
-FROM safegraph/apify-python3:latest
+FROM safegraph/apify-python3-ssl-upgrade:latest
 
 COPY . ./
 
