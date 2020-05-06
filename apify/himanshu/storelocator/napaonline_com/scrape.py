@@ -22,10 +22,11 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
+    addresses5=[]
     search = sgzip.ClosestNSearch()    
     search.initialize(country_codes=["US"])
     MAX_RESULTS = 300
-    MAX_DISTANCE = 50
+    MAX_DISTANCE = 22
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
     while zip_code:
@@ -50,7 +51,7 @@ def fetch_data():
                 latitude.append(json_data['store'+str(i)]['latitude'])
                 longitude.append((json_data['store'+str(i)]['longitude']))
 
-        current_results_len = len(soup.find_all("div",{"class":"pure-g"}))
+        data_len = len(soup.find_all("div",{"class":"pure-g"}))
         for index,data in enumerate(soup.find_all("div",{"class":"pure-g"})):
             page_url = base_url + data.find("a",{"class":"storeWebsiteLink"})['href']
             location_name = re.sub(r'\s+'," ",data.find("a",{"class":"storeWebsiteLink"}).text)
@@ -81,8 +82,6 @@ def fetch_data():
             location_type = "Auto Parts"
             hours = " ".join(list(data.find("div",{"class":"store-hours"}).stripped_strings)).replace('Shop this Store','').replace("no online reservations Reserve Online Not Available. Why? We' re sorry, this store does not participate in Reserve Online. Please choose another store.",'').strip()
 
-
-            
             store = []
             store.append(base_url)
             store.append(location_name)
@@ -104,8 +103,49 @@ def fetch_data():
             # print("data ====="+str(store))
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
             yield store
+        
+        try:
+            r1 = session.get("https://www.napaonline.com/api/storelocator/nearby-stores?storeType=ACMEC&location="+str(zip_code)+"&sortBy=1&language=en", headers=headers).json()
+        except:
+            pass
+        # soup1 = BeautifulSoup(r1.text, "lxml")
+        current_results_len= data_len+len(r1['DetailResponse'])
+        for data in r1['DetailResponse']:
+            state=data['Basic']['address'].split(",")[-2]
+            city = data['Basic']['address'].split(",")[-3]
+            street_address=(" ".join(data['Basic']['address'].split(",")[:-3]))
+            hour = ''
+            for h in data['Basic']['StoreHours']['hours']:
+                hour = hour + ' '+ h
+            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(data['Basic']['address']))
+            if us_zip_list:
+                zipp = us_zip_list[-1]
+                country_code = "US"
 
-        # print(current_results_len)
+            store_number=data['Basic']['facilityId']
+            store = []
+            store.append("https://www.napaonline.com/")
+            store.append(data['Basic']['facilityName'])
+            store.append(street_address)
+            store.append(city)
+            store.append(state.replace("00000","<MISSING>" if state else "<MISSING>"))
+            store.append(zipp if zipp else "<MISSING>")
+            store.append("US")
+            store.append(store_number)
+            store.append(data['Basic']['facilityPhoneNumber'] if data['Basic']['facilityPhoneNumber'] else "<MISSING>")
+            store.append("Auto Care")
+            store.append(data['Basic']['StoreGeoLocation']['latitude'])
+            store.append(data['Basic']['StoreGeoLocation']['longitude'])
+            store.append(hour.replace("|",":"))
+            store.append("https://www.napaonline.com/en/autocare/?facilityId="+str(store_number))
+            if store[2] in addresses5:
+                continue
+            addresses5.append(store[2])
+            # print("data ====="+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            yield store
+        
+       
         if current_results_len < MAX_RESULTS:
                 # print("max distance update")
                 search.max_distance_update(MAX_DISTANCE)

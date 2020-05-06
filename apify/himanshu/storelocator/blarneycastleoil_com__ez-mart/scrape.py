@@ -24,7 +24,8 @@ def fetch_data():
     json_data = json.loads(mp)
     for data1 in json_data:
         for mp1 in (data1['locations']):
-            soup = BeautifulSoup((mp1['address']), "lxml")
+
+            soup = BeautifulSoup(mp1['description'], "lxml")
             
             addr = list(soup.find_all("p")[-1].stripped_strings)
             if len(addr) == 2:
@@ -59,9 +60,9 @@ def fetch_data():
             store.append(mp1['longitude'])
             store.append("<MISSING>")
             store.append("http://blarneycastleoil.com/ez-mart-promo/ez-mart-locations/")
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
+            # if store[2] in addresses:
+            #     continue
+            # addresses.append(store[2])
             yield store
 def scrape():
     data = fetch_data()

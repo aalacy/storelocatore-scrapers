@@ -7,6 +7,7 @@ import sgzip
 import time
 from datetime import datetime
 session = SgRequests()
+import requests
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -42,7 +43,7 @@ def fetch_data():
 
         location_url = " https://www.safeway.com/abs/pub/storelocator/api/accounts/me/locations/geosearch?api_key=843b2f10cedf121969b2e44eab5f15aa&v=20180530&location="+str(zip_code)+"&limit=10&radius=200&filters=%5B%7B%22custom95965%22%3A%20%7B%22equalTo%22%3A%5B%22safeway%22%5D%7D%7D%5D"
         
-        r = session.get(location_url).json()
+        r = requests.get(location_url).json()
         current_results_len = len(r['response']['locations'])
 
         for i in r['response']['locations']:
@@ -57,7 +58,7 @@ def fetch_data():
             latitude = i['yextDisplayLat']
             longitude = i['yextDisplayLng']	
             page_url = "https://local.pharmacy.safeway.com/"+str(state.lower())+"/"+str(city.lower().replace(" ","-"))+"/"+str(street_address.lower().replace(" ","-").replace("#","-"))+".html"
-            r1 = session.get(page_url)
+            r1 = requests.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
             if soup1.find("h1",{"class":"ContentBanner-h1"}):
                 location_name = soup1.find("h1",{"class":"ContentBanner-h1"}).text
