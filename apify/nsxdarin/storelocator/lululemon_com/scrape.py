@@ -18,7 +18,7 @@ def write_output(data):
 def fetch_data():
     url = 'https://wae-store-experience-prod.lllapi.com/stores'
     locs = []
-    r = session.get(url, headers=headers, verify=False)
+    r = session.get(url, headers=headers)
     for item in json.loads(r.content):
         website = 'lululemon.com'
         typ = '<MISSING>'
