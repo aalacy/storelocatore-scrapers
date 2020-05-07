@@ -2,6 +2,7 @@ import csv
 import urllib2
 from sgrequests import SgRequests
 import json
+import sgzip
 
 session = SgRequests()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -15,15 +16,22 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://www.security-finance.com/wpsl_stores-sitemap.xml'
     locs = []
-    r = session.get(url, headers=headers, verify=False)
-    for line in r.iter_lines():
-        if '<loc>https://www.securityfinance.com/locations/' in line:
-            locs.append(line.split('<loc>')[1].split('<')[0])
+    for code in sgzip.for_radius(50):
+        print('Pulling Zip Code %s...' % code)
+        url = 'https://www.securityfinance.com/wp-admin/admin-ajax.php?action=tba_locator_search&zip=' + code + '&radius=100&results=100'
+        r = session.get(url, headers=headers)
+        for line in r.iter_lines():
+            if 'More info' in line:
+                items = line.split('\\" href=\\"https:\\/\\/www.securityfinance.com\\/locations\\/')
+                for item in items:
+                    if '{"list":"' not in item:
+                        lurl = 'https://www.securityfinance.com/locations/' + item.split('\\')[0]
+                        if lurl not in locs:
+                            locs.append(lurl)
     for loc in locs:
-        r2 = session.get(loc, headers=headers, verify=False)
-        #print('Pulling Location %s...' % loc)
+        r2 = session.get(loc, headers=headers)
+        print('Pulling Location %s...' % loc)
         website = 'www.security-finance.com'
         typ = ''
         store = ''
