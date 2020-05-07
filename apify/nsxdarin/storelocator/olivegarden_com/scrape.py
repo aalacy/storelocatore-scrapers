@@ -16,7 +16,7 @@ search.initialize(country_codes = ['us', 'ca'])
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "operating_info", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -44,10 +44,13 @@ def fetch_data():
                 for item in items:
                     if '"corpNumber":"' in item:
                         num = num + 1
+                        opinfo = '<MISSING>'
                         country = item.split('"')[0]
                         city = item.split('"city":"')[1].split('"')[0]
                         lat = item.split('"latitude":"')[1].split('"')[0]
                         store = item.split('"restaurantId":"')[1].split('"')[0]
+                        if '"message":"' in item:
+                            opinfo = item.split('"message":"')[1].split('"')[0]
                         lng = item.split('"longitude":"')[1].split('"')[0]
                         result_coords.append((lat, lng))
                         zc = item.split('"zip":"')[1].split('"')[0]
@@ -81,7 +84,7 @@ def fetch_data():
                             if country == 'GUAM':
                                 country = 'US'
                                 state = 'GU'
-                            locations.append([website, '<MISSING>', name, add, city, state, zc, country, store, phone, typ, lat, lng, hours])
+                            locations.append([website, '<MISSING>', name, opinfo, add, city, state, zc, country, store, phone, typ, lat, lng, hours])
         if len(result_coords) > 0:
             search.max_count_update(result_coords)
         else:
