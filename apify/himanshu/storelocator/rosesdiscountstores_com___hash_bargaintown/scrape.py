@@ -32,7 +32,7 @@ def fetch_data():
 
     base_url = "https://www.rosesdiscountstores.com/#bargaintown"
     link = "https://api.zenlocator.com/v1/apps/app_vfde3mfb/init?widget=MAP"
-    json_data = session.get(link, headers=headers).json()['locations']
+    json_data = requests.get(link, headers=headers).json()['locations']
     locator_domain = base_url
     location_name = ""
     street_address = ""
@@ -48,39 +48,40 @@ def fetch_data():
     hours = ""
     page_url = "https://www.rosesdiscountstores.com/store-locator-index"
     for data in json_data:
-        location_name = data['name']
-        addr = data['address'].split(",")
-        if " US" == addr[-1]:
-            del addr[-1]
-        if "United States" in addr[-1]:
-            del addr[-1]
-        if data['address1']:
-            street_address = (data['address1']+ " " + str(data['address2'])).strip()
-        else:
-            street_address = " ".join(addr[:-2]).strip()
-        if data['city']:
+        if "Bargain Town" in data['name']:
+            location_name = data['name']
+            addr = data['address'].split(",")
+            if " US" == addr[-1]:
+                del addr[-1]
+            if "United States" in addr[-1]:
+                del addr[-1]
+            if data['address1']:
+                street_address = (data['address1']+ " " + str(data['address2'])).strip()
+            else:
+                street_address = " ".join(addr[:-2]).strip()
+            if data['city']:
 
-            city = data['city']
-        else:
-            city = addr[1].strip()
-        state = data['region']
-        if data['postcode']:
-            zipp = data['postcode']
-        else:
-            try:
-                zipp = re.findall(r'\b[0-9]{5}(?:-[0-9]{4})?\b',data['address'])[-1].strip()
-            except:
-                zipp = "<MISSING>"
-        if "con_wg5rd22k" in data['contacts']:
-            phone = data['contacts']['con_wg5rd22k']['text']
-        else:
-            phone = "<MISSING>"
-        latitude = data['lat']
-        longitude = data['lng']
-        hours = "Monday 9am-9pm Tuesday 9am-9pm Wednesday 9am-9pm Thursday 9am-9pm Friday 9am-9pm Saturday 9am-9pm Sunday 10am-8pm"
+                city = data['city']
+            else:
+                city = addr[1].strip()
+            state = data['region']
+            if data['postcode']:
+                zipp = data['postcode']
+            else:
+                try:
+                    zipp = re.findall(r'\b[0-9]{5}(?:-[0-9]{4})?\b',data['address'])[-1].strip()
+                except:
+                    zipp = "<MISSING>"
+            if "con_wg5rd22k" in data['contacts']:
+                phone = data['contacts']['con_wg5rd22k']['text']
+            else:
+                phone = "<MISSING>"
+            latitude = data['lat']
+            longitude = data['lng']
+            hours = "Monday 9am-9pm Tuesday 9am-9pm Wednesday 9am-9pm Thursday 9am-9pm Friday 9am-9pm Saturday 9am-9pm Sunday 10am-8pm"
 
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                    store_number, phone, location_type, str(latitude), str(longitude), hours,page_url]
+            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                        store_number, phone, location_type, str(latitude), str(longitude), hours,page_url]
 
         # if str(store[2]) + str(store[-3]) not in addresses:
         #     addresses.append(str(store[2]) + str(store[-3]))
@@ -88,7 +89,7 @@ def fetch_data():
         # store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         # print("data = " + str(store))
         # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        yield store
+            yield store
 
         
 

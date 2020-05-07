@@ -4,44 +4,47 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-# import zulu
+import unicodedata
 import json
+import requests
+
+
 import time
 
 
 session = SgRequests()
 
-def request_wrapper(url,method,headers,data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = session.get(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:
-                if data:
-                    r = session.post(url,headers=headers,data=data)
-                else:
-                    r = session.post(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None
+# def request_wrapper(url,method,headers,data=None):
+#     request_counter = 0
+#     if method == "get":
+#         while True:
+#             try:
+#                 r = session.get(url,headers=headers)
+#                 return r
+#                 break
+#             except:
+#                 time.sleep(2)
+#                 request_counter = request_counter + 1
+#                 if request_counter > 10:
+#                     return None
+#                     break
+#     elif method == "post":
+#         while True:
+#             try:
+#                 if data:
+#                     r = session.post(url,headers=headers,data=data)
+#                 else:
+#                     r = session.post(url,headers=headers)
+#                 return r
+#                 break
+#             except:
+#                 time.sleep(2)
+#                 request_counter = request_counter + 1
+#                 if request_counter > 10:
+#                     return None
+#                     break
+#     else:
+#         return None
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -63,11 +66,12 @@ def fetch_data():
         'Accept': 'application/json, text/plain, */*',
 
     }
-
     base_url = "https://www.firstcash.com/king-pawn"
     link = "http://find.cashamerica.us/api/stores?p=1&s=1068&lat=33.5973&lng=-112.1073&d=2020-03-18T12:13:28.997Z&key=D21BFED01A40402BADC9B931165432CD"
-    r = request_wrapper(link,'get',headers=headers)
+    r = requests.get(link,headers=headers)
+    # print(r.text)
     json_data = r.json()
+    
     locator_domain = base_url
     location_name = ""
     street_address = ""
@@ -82,11 +86,19 @@ def fetch_data():
     longitude = ""
     hours_of_operation = ""
     for location in json_data:
-        location_type = location['brand']
+        distance = location['distance']
+        h = location['hours']['openTime']
+        status =location['hours']['storeStatus']
+        # print("~~~~~~~~~~~~~~~~~~~")
+        # print(location)
+        # exit()
         store_number =  str(location['storeNumber'])
+        location_type = location['brand']
+        page_url = "http://find.cashamerica.us/#/storesdetails/"+store_number+'/'+location_type+'/'+str(distance)+'/'+h+'/'+status
+        
         http = "http://find.cashamerica.us/api/stores/"+str(store_number)+"?key=D21BFED01A40402BADC9B931165432CD"
-        page_url =http
-        all_data = request_wrapper(http,'get', headers=headers).json()
+        # page_url =http
+        all_data = requests.get(http, headers=headers).json()
         location_name = location['brand']
         street_address = all_data['address']['address1']
         city = all_data['address']['city']

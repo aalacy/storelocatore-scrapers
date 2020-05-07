@@ -1,14 +1,10 @@
 import csv
-from sgrequests import SgRequests
+import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import certifi # This should be already installed as a dependency of 'requests'
 import warnings
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-
-session = SgRequests()
-
+from urllib3.exceptions import InsecureRequestWarning
 def write_output(data):
     with open('data.csv', 'w') as output_file:
         writer = csv.writer(output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL)
@@ -32,7 +28,7 @@ def fetch_data():
 
     base_url = "https://www.pauldavis.com"
     # canada location
-    r = session.get('https://pauldavis.ca/wp-json/locator/v1/list/?formattedAddress=&boundsNorthEast=&boundsSouthWest=',headers = headers).json()
+    r = requests.get('https://pauldavis.ca/wp-json/locator/v1/list/?formattedAddress=&boundsNorthEast=&boundsSouthWest=',headers = headers).json()
 
     for loc in r:
         location_name = loc['name']
@@ -44,8 +40,6 @@ def fetch_data():
         longitude = loc['lng']
         phone = loc['phone']
         page_url = loc['web']
-        if "pauldavis.ca/template" in page_url:
-            continue
         country_code = "CA"
         
         store = []
@@ -64,20 +58,20 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(page_url)
         store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        #print(store)
+        
         yield store
 
     # us location
     warnings.simplefilter('ignore',InsecureRequestWarning)
     links = []
-    us_r = session.get("https://pauldavis.com/paul-davis-locations/", verify=False)
+    us_r = requests.get("https://pauldavis.com/paul-davis-locations/", verify=False)
     soup1 = BeautifulSoup(us_r.text, "lxml")
     state_data = soup1.find_all('div', class_='cell tablet-4')
 
     for link in state_data:
         city_href = base_url + link.find("a")['href']
         try:
-            city_r = session.get(city_href, verify=False)
+            city_r = requests.get(city_href, verify=False)
         except:
             continue
         city_soup = BeautifulSoup(city_r.text, "lxml")
@@ -86,7 +80,7 @@ def fetch_data():
         for loc in city_data.find_all("div"):
             loc_href= base_url + loc.a['href']
             try:
-                loc_r = session.get(loc_href, verify=False)
+                loc_r = requests.get(loc_href, verify=False)
             except:
                 continue
             loc_soup = BeautifulSoup(loc_r.text, "lxml")
@@ -98,12 +92,12 @@ def fetch_data():
                 continue
             links.append(r_data)            
             try:
-                data_r = session.get(r_data, verify=False)
+                data_r = requests.get(r_data, verify=False)
             except:
                 continue
             data_soup = BeautifulSoup(data_r.text, "lxml")
             page_url = r_data
-            #print(page_url)
+            print(page_url)
 
             if len(data_soup.find_all('p',class_='info')) == 4:
                 street_address = data_soup.find_all('p',class_='info')[1].text
@@ -140,7 +134,7 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-           # print("data~~~~~~"+str(store))
+            # print("data~~~~~~"+str(store))
             yield store
 
 def scrape():

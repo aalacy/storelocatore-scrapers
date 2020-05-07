@@ -1,5 +1,7 @@
 import csv
 from sgrequests import SgRequests
+from datetime import datetime
+import phonenumbers
 from bs4 import BeautifulSoup
 import re
 import unicodedata
@@ -9,7 +11,7 @@ import sgzip
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv',newline="", mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -19,7 +21,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    main_url = "https://www.valueplace.com"
+    main_url = locator_domain = "https://www.valueplace.com"
     return_main_object = []
     addresses = []
     search = sgzip.ClosestNSearch()
@@ -28,8 +30,9 @@ def fetch_data():
     MAX_DISTANCE = 150
     coord = search.next_coord()
     while coord:
+        
         result_coords = []
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
         #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
@@ -37,7 +40,6 @@ def fetch_data():
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36',
         }
         r = session.get("https://www-api.woodspring.com/v1/gateway/hotel/hotels?lat=" + str(x) + "&lng=" + str(y) + "&max=200&offset=0&radius=150",headers=headers)
-        # print("https://www-api.woodspring.com/v1/gateway/hotel/hotels?lat=" + str(x) + "&lng=" + str(y) + "&max=200&offset=0&radius=150")
         if "searchResults" not in r.json():
             search.max_distance_update(MAX_DISTANCE)
             coord = search.next_coord()
@@ -48,45 +50,82 @@ def fetch_data():
             result_coords.append((store_data["geographicLocation"]["latitude"], store_data["geographicLocation"]["longitude"]))
             if store_data["address"]["countryCode"] != "US" and store_data["address"]["countryCode"] != "CA":
                 continue
-            store = []
-            store.append(main_url)
-            store.append(store_data["hotelName"])
+            location_name = store_data["hotelName"]
             # print("https://www-api.woodspring.com/v1/gateway/hotel/hotels/" + str(store_data["hotelId"]) + "?include=location,phones")
-            location_request = session.get("https://www-api.woodspring.com/v1/gateway/hotel/hotels/" + str(store_data["hotelId"]) + "?include=location,phones",headers=headers)
+            location_request = session.get("https://www-api.woodspring.com/v1/gateway/hotel/hotels/" + str(store_data["hotelId"]) + "?include=location,phones,amenities,contacts,occupancy,policies,rooms",headers=headers)
             location_data = location_request.json()
             if "hotelStatus" in location_data["hotelInfo"]["hotelSummary"]:
                 if location_data["hotelInfo"]["hotelSummary"]['hotelStatus'] == "Closed":
                     continue
             add = location_data["hotelInfo"]["hotelSummary"]["addresses"][0]
-            store.append(",".join(add["street"]))
-            if store[-1] in addresses:
+            street_address = ",".join(add["street"])
+            if street_address in addresses:
                 continue
-            addresses.append(store[-1])
-            store.append(add["cityName"] if add["cityName"] else "<MISSING>")
-            if "," + store[-1] + "," in store[2]:
-                store[2] = store[2].split("," + store[-1])[0]
-            store.append(add["subdivisionCode"] if add["subdivisionCode"] else "<MISSING>")
-            store.append(add["postalCode"] if add["postalCode"] else "<MISSING>")
-            store.append(add["countryCode"])
-            store.append("<MISSING>")
+            addresses.append(street_address)
+            city = add["cityName"] 
+            # if "," + store[-1] + "," in store[2]:
+            #     store[2] = store[2].split("," + store[-1])[0]
+            state = add["subdivisionCode"]
+            zipp = add["postalCode"]
+            country_code = add["countryCode"]
+            store_number = "<MISSING>"
             try:
-                store.append(location_data["hotelInfo"]["hotelSummary"]["phones"][1]["areaCode"] + location_data["hotelInfo"]["hotelSummary"]["phones"][1]["number"] if location_data["hotelInfo"]["hotelSummary"]["phones"] else "<MISSING>")
+                phone = phonenumbers.format_number(phonenumbers.parse(str(location_data["hotelInfo"]["hotelSummary"]["phones"][0]["areaCode"] + location_data["hotelInfo"]["hotelSummary"]["phones"][0]["number"]), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
+                # phone= location_data["hotelInfo"]["hotelSummary"]["phones"][0]["areaCode"] + location_data["hotelInfo"]["hotelSummary"]["phones"][0]["number"]
             except:
-                store.append(location_data["hotelInfo"]["hotelSummary"]["phones"][-1]["number"] if location_data["hotelInfo"]["hotelSummary"]["phones"] and len(location_data["hotelInfo"]["hotelSummary"]["phones"][-1]["number"]) != 7 else "<MISSING>")
-            store.append("<MISSING>")
-            store.append(store_data["geographicLocation"]["latitude"])
-            store.append(store_data["geographicLocation"]["longitude"])
+                phone = phonenumbers.format_number(phonenumbers.parse(str(location_data["hotelInfo"]["hotelSummary"]["phones"][0]["number"] ), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
+                # phone = location_data["hotelInfo"]["hotelSummary"]["phones"][0]["number"]
+            
+            latitude = store_data["geographicLocation"]["latitude"]
+            longitude = store_data["geographicLocation"]["longitude"]
             try:
-                store.append(location_data['hotelInfo']['policyCodes'][0]['policyDescription'][0].replace("Hotel Office Hours :","").replace("|","").strip())
+                hours_of_operation = location_data['hotelInfo']['policyCodes'][0]['policyDescription'][0].replace("Hotel Office Hours :","").replace("|","").strip()
             except:
-                store.append("<MISSING>")
-            store.append("https://www.woodspring.com/" + str(store_data["hotelId"]))
+                # print("hours ==== ","https://www.woodspring.com" + str(store_data["hotelUri"]))
+                # print("https://www-api.woodspring.com/v1/gateway/hotel/hotels/" + str(store_data["hotelId"]) + "?include=location,phones,amenities,contacts,occupancy,policies,rooms")
+                if "hoursOfOperation" in location_data["hotelInfo"]["hotelSummary"]["hotelAmenities"][-1]:
+                    hourslist = location_data["hotelInfo"]["hotelSummary"]["hotelAmenities"][-1]["hoursOfOperation"]
+                    h_list =[]
+
+                    for key,value in hourslist.items():
+                        if "entireDay" in str(value[0]):
+                            hours = "Daily 24 Hours"
+                            h_list.append(hours)
+                            
+                        else:
+
+                            hours = str(key)+": "+datetime.strptime(str(value[0]["startTime"]), "%H:%M").strftime("%I:%M %p")+" - "+datetime.strptime(str(value[0]["endTime"]), "%H:%M").strftime("%I:%M %p")
+                            h_list.append(hours)
+                        #     print(value[0][""])
+                    
+                    if "Daily 24 Hours" in " ".join(h_list):
+                        hours_of_operation = "Daily 24 Hours"
+                    else:
+                        hours_of_operation = " ".join(h_list)
+                    # print("hours ==== ","https://www.woodspring.com" + str(store_data["hotelUri"]))
+                    # print(hours_of_operation)
+                else:
+                    hours_of_operation = "<MISSING>"
+                
+                    
+                
+            page_url = "https://www.woodspring.com" + str(store_data["hotelUri"])
+            if "value-place" in page_url.split("/")[-1]:
+                location_type = "valueplace"
+            else:
+                location_type = "woodspring"
+
+            
+            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                                store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
             for i in range(len(store)):
                 if type(store[i]) == str:
                     store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
             yield store
+            #print(store)
+
         if len(data) < MAX_RESULTS:
             #print("max distance update")
             search.max_distance_update(MAX_DISTANCE)

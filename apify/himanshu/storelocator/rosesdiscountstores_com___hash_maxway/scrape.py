@@ -10,7 +10,7 @@ import json
 
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv',newline="", mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -30,9 +30,9 @@ def fetch_data():
 
     }
 
-    base_url = "https://www.rosesdiscountstores.com/#maxway"
+    base_url = "https://www.rosesdiscountstores.com/"
     link = "https://api.zenlocator.com/v1/apps/app_vfde3mfb/init?widget=MAP"
-    json_data = session.get(link, headers=headers).json()['locations']
+    json_data = requests.get(link, headers=headers).json()['locations']
     locator_domain = base_url
     location_name = ""
     street_address = ""
@@ -42,13 +42,15 @@ def fetch_data():
     country_code = "US"
     store_number = ""
     phone = ""
-    location_type = "maxway"
+    location_type = "Maxway"
     latitude = ""
     longitude = ""
     hours = ""
     page_url = "https://www.rosesdiscountstores.com/store-locator-index"
     for data in json_data:
         location_name = data['name']
+        if "Maxway" not in location_name:
+            continue
         addr = data['address'].split(",")
         if " US" == addr[-1]:
             del addr[-1]

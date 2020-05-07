@@ -109,41 +109,45 @@ def fetch_data():
         except:
             pass
         # soup1 = BeautifulSoup(r1.text, "lxml")
-        current_results_len= data_len+len(r1['DetailResponse'])
-        for data in r1['DetailResponse']:
-            state=data['Basic']['address'].split(",")[-2]
-            city = data['Basic']['address'].split(",")[-3]
-            street_address=(" ".join(data['Basic']['address'].split(",")[:-3]))
-            hour = ''
-            for h in data['Basic']['StoreHours']['hours']:
-                hour = hour + ' '+ h
-            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(data['Basic']['address']))
-            if us_zip_list:
-                zipp = us_zip_list[-1]
-                country_code = "US"
+        current_results_len= data_len
 
-            store_number=data['Basic']['facilityId']
-            store = []
-            store.append("https://www.napaonline.com/")
-            store.append(data['Basic']['facilityName'])
-            store.append(street_address)
-            store.append(city)
-            store.append(state.replace("00000","<MISSING>" if state else "<MISSING>"))
-            store.append(zipp if zipp else "<MISSING>")
-            store.append("US")
-            store.append(store_number)
-            store.append(data['Basic']['facilityPhoneNumber'] if data['Basic']['facilityPhoneNumber'] else "<MISSING>")
-            store.append("Auto Care")
-            store.append(data['Basic']['StoreGeoLocation']['latitude'])
-            store.append(data['Basic']['StoreGeoLocation']['longitude'])
-            store.append(hour.replace("|",":"))
-            store.append("https://www.napaonline.com/en/autocare/?facilityId="+str(store_number))
-            if store[2] in addresses5:
-                continue
-            addresses5.append(store[2])
-            # print("data ====="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-            yield store
+        if "DetailResponse" in r1:
+            current_results_len= data_len+len(r1['DetailResponse'])
+
+            for data in r1['DetailResponse']:
+                state=data['Basic']['address'].split(",")[-2]
+                city = data['Basic']['address'].split(",")[-3]
+                street_address=(" ".join(data['Basic']['address'].split(",")[:-3]))
+                hour = ''
+                for h in data['Basic']['StoreHours']['hours']:
+                    hour = hour + ' '+ h
+                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(data['Basic']['address']))
+                if us_zip_list:
+                    zipp = us_zip_list[-1]
+                    country_code = "US"
+
+                store_number=data['Basic']['facilityId']
+                store = []
+                store.append("https://www.napaonline.com/")
+                store.append(data['Basic']['facilityName'])
+                store.append(street_address)
+                store.append(city)
+                store.append(state.replace("00000","<MISSING>" if state else "<MISSING>"))
+                store.append(zipp if zipp else "<MISSING>")
+                store.append("US")
+                store.append(store_number)
+                store.append(data['Basic']['facilityPhoneNumber'] if data['Basic']['facilityPhoneNumber'] else "<MISSING>")
+                store.append("Auto Care")
+                store.append(data['Basic']['StoreGeoLocation']['latitude'])
+                store.append(data['Basic']['StoreGeoLocation']['longitude'])
+                store.append(hour.replace("|",":"))
+                store.append("https://www.napaonline.com/en/autocare/?facilityId="+str(store_number))
+                if store[2] in addresses5:
+                    continue
+                addresses5.append(store[2])
+                # print("data ====="+str(store))
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                yield store
         
        
         if current_results_len < MAX_RESULTS:

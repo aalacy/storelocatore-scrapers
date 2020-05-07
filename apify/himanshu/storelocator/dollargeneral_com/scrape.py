@@ -1,5 +1,5 @@
 import csv
-from sgrequests import SgRequests
+import requests
 from bs4 import BeautifulSoup
 import re
 import json
@@ -7,11 +7,8 @@ import time
 from datetime import  datetime
 import sgzip
 
-
-session = SgRequests()
-
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -46,9 +43,10 @@ def fetch_data():
         
         
         location_url = "http://hosted.where2getit.com/dollargeneral/rest/locatorsearch?like=0.9394142712975708"
+        
         try:
 
-            loc = session.post(location_url,headers=headers,data=data).json()
+            loc = requests.post(location_url,headers=headers,data=data).json()
         except:
             pass
       
@@ -89,7 +87,7 @@ def fetch_data():
                 page_url = "http://www2.dollargeneral.com/Savings/Circulars/Pages/index.aspx?store_code="+str(p)
                 result_coords.append((latitude, longitude))
                 store = [locator_domain, data['name'], data['address1'], data['city'], data['state'], data['postalcode'], country_code,
-                        store_number, data['phone'], location_type, data['latitude'], data['longitude'], hours_of_operation,page_url]
+                        store_number, data['phone'], location_type, data['latitude'], data['longitude'], hours_of_operation.replace(",",""),page_url]
 
                 if store[2] + store[-3] in addresses:
                     continue
@@ -97,8 +95,8 @@ def fetch_data():
                 addresses.append(store[2] + store[-3])
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                #print("data = " + str(store))
-                #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
                 yield store
           

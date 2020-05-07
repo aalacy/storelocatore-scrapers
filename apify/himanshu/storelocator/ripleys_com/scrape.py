@@ -10,7 +10,7 @@ import json
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
@@ -62,16 +62,14 @@ def fetch_data():
     base_url = "https://www.ripleys.com"
     addresses = []
 
-    r = request_wrapper("https://www.ripleys.com/attractions/", "get", headers=headers)
+    r = session.get("https://www.ripleys.com/attractions/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
 
-    # print("soup === "+ str(soup))
 
-    is_start = False
+    for location_img_tag in soup.find_all("div", {"class": "row vwpc-row"})[1].find_all("li"):
 
-    for location_img_tag in soup.find_all("i", {"class": "icon-entypo-location"}):
-
-        location_tag = location_img_tag.find_next_sibling("a")
+        location_tag = location_img_tag.find("a")
+        
 
         locator_domain = base_url
         location_name = ""
@@ -86,34 +84,21 @@ def fetch_data():
         latitude = ""
         longitude = ""
         hours_of_operation = ""
-        page_url = location_tag["href"]
-        # page_url = "http://www.ripleysdells.com/"
-
-        # if is_start == False:
-        #     if page_url == "http://www.ripleysdells.com/":
-        #         is_start = True
-        #     else:
-        #         continue
+        page_url = location_tag["href"].replace("https://marinersquare.com/","https://www.ripleys.com/newport/information/").replace("http://www.williamsburgripleys.com/","https://www.ripleys.com/williamsburg/")
+        
 
         location_name = location_tag.text
-
-        # print(location_name + " == " + str(page_url))
-
-        r_location = request_wrapper(page_url, "get", headers=headers)
+        
+        r_location = session.get(page_url, headers=headers)
 
         if r_location is None:
-            # print("############ SKIP #############")
             continue
         soup_location = BeautifulSoup(r_location.text, "lxml")
-
-        # print("soup_location 1=== "+ str(soup_location))
-        # print("soup_location 2=== "+ str(soup_location.find("span",{"id":"contact"})))
 
         full_address_list = []
         hours_list = []
         if soup_location.find("div", {"class": "large-4 medium-4 small-12 columns"}):
-            # print("11111111")
-            # https://www.ripleys.com/hollywood/
+        
             full_address_list = list(
                 soup_location.find("div", {"class": "large-4 medium-4 small-12 columns"}).stripped_strings)
             if soup_location.find("div", {"class": "medium-6 columns hide-for-small-only"}):
@@ -166,7 +151,10 @@ def fetch_data():
             # print(full_address_list[-2] + " ======= ripleysdells street_address ==== " + str(street_address))
             # print("splait array = "+ str(street_address.split(" ")))
             hours_tag = soup_location.find(lambda tag: (tag.name == "strong") and "Current Hours:" == tag.text.strip())
-            hours_list = list(hours_tag.parent.parent.stripped_strings)
+            try:
+                hours_list = list(hours_tag.parent.parent.stripped_strings)
+            except:
+                hours_list = ""
             hours_of_operation = " ".join(hours_list)
         elif soup_location.find("div", {"id": "text-2"}):
             # print("7777777777777")
@@ -206,10 +194,16 @@ def fetch_data():
                 street_address = full_address_list[0]
                 city = full_address_list[1].split(",")[0]
             # hours_list = list(soup_location.find("div",{"class":"mtphr-dnt-tick mtphr-dnt-default-tick mtphr-dnt-clearfix"}).stripped_strings)
+        elif soup_location.find("div",{"class":"contentParappa"}):
+            full_address_list = list(soup_location.find("div",{"class":"contentParappa"}).find_all("div",{"class":"cell medium-6"})[-1].find_all("p")[2].stripped_strings)
+            street_address = full_address_list[0]
+            city = full_address_list[1].split(",")[0]
+            hours_of_operation = " ".join(list(soup_location.find("div",{"class":"contentParappa"}).find_all("div",{"class":"cell medium-6"})[-1].find_all("p")[4].stripped_strings))
         else:
             continue
 
-        phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
+
+        phone_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"),
                                 str(full_address_list).replace("\xa0", " "))
         ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}',
                                  str(full_address_list).replace("\xa0", " "))
@@ -281,22 +275,18 @@ def fetch_data():
             city = "San Antonio"
             street_address = "329 Alamo Plaza"
         if "329 Alamo Plaza" in street_address:
-            r5 = request_wrapper("https://www.ripleys.com/phillips/", "get", headers=headers)
+            r5 = session.get("https://www.ripleys.com/phillips/", headers=headers)
             soup = BeautifulSoup(r5.text, "lxml")
             k2 = "".join(list(soup.find("div", {"class": "g1-block"}).stripped_strings))
             hours_of_operation = (k2.replace("pm","pm "))
             
         if "800 Parkway" in street_address:
-            r6 = request_wrapper("https://www.ripleys.com/gatlinburg/", "get", headers=headers)
+            r6 = session.get("https://www.ripleys.com/gatlinburg/",  headers=headers)
             soup6 = BeautifulSoup(r6.text, "lxml")
             hours_of_operation = (" ".join(list(soup6.find_all("li",{"class": "g1-column g1-one-half g1-valign-top"})[-2].stripped_strings)).split("*Weather")[0].replace("** ALL ATTRACTIONS WILL BE CLOSING EARLY AT 4PM ON WEDNESDAY, DECEMBER 4, 2019 FOR A CHRISTMAS PARTY** Believe It or Not!",""))
                 # for j1 in k1:
                 #     print(j1)
             # print(hours_of_operation.text)
-
-
-        if "THAILAND" in location_name or "ENGLAND" in location_name or "AUSTRALIA" in location_name or "NETHERLANDS" in location_name or "DENMARK" in location_name:
-            country_code = ""
 
         # print(str(street_address).encode('ascii', 'ignore').decode('ascii').strip()+ " !!! last street_address === "+ str(street_address))
         # print("hours_of_operation === "+ str(hours_of_operation))
