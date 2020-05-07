@@ -51,7 +51,9 @@ def fetch_data():
     for store_number in store_numbers:
         response = session.get(api_base + store_number).content
         cont = json.loads(response)
-        
+        print(cont)
+        print()
+        print()
         
         store_number = cont['StoreNumber']
         location_name = cont['Name']
