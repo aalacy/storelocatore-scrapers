@@ -1,6 +1,4 @@
 import csv
-import re
-import requests
 import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
