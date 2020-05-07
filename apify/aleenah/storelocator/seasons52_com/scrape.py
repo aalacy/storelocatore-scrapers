@@ -16,7 +16,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain","operating_info", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -42,7 +42,7 @@ def fetch_data():
     lat = []
     timing = []
     ulinks=[]
-    rlinks=[]
+    gms=[]
     urls=[]
     driver.get("https://www.seasons52.com/locations/all-locations")
     div=driver.find_element_by_class_name("fin_all_location_sec")
@@ -82,6 +82,12 @@ def fetch_data():
         """
         driver.get(url)
         div = driver.find_element_by_class_name("left-bar")
+        try:
+            gm=driver.find_element_by_id("globalMessage").text.replace("\r\n"," ").replace("\n"," ").strip()
+        except:
+            gm="<MISSING>"
+        print(gm)
+        gms.append(gm)
         p=div.find_element_by_tag_name("p")
         t=p.text.split("\n")
         street.append(t[0])
@@ -92,10 +98,10 @@ def fetch_data():
         i+=1
         lis=driver.find_elements_by_css_selector("li")
         tim=""
-        for li in lis:
-            id = li.get_attribute("class")
+        for lin in lis:
+            id = lin.get_attribute("class")
             if id =="weekday-active rolling-width" or id=="time rolling-hours-start"or id=="weekday rolling-width":
-                tim+=li.text
+                tim+=lin.text
         timing.append(tim.replace("FRI SEP 20","").replace("EDT 2019",""))
         latlong=driver.find_element_by_id("restLatLong").get_attribute("value").split(",")
         lat.append(latlong[0])
@@ -106,6 +112,7 @@ def fetch_data():
     for i in range(0, len(locs)):
         row=[]
         row.append("https://www.seasons52.com")
+        row.append(gms[i])
         row.append(locs[i])
         row.append(street[i])
         row.append(cities[i])
