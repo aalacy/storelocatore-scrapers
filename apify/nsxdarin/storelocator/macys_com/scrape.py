@@ -9,7 +9,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "operating_info", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -27,6 +27,7 @@ def fetch_data():
         typ = '<MISSING>'
         hours = ''
         name = ''
+        opinfo = '<MISSING>'
         country = 'US'
         city = ''
         add = ''
@@ -38,6 +39,8 @@ def fetch_data():
         store = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
+            if 'Thursday</td><td class="c-hours-details-row-intervals">Closed</td>' in line2:
+                opinfo = 'Closed'
             if name == '' and '<span class="LocationName-geo">' in line2:
                 name = "Macy's " + line2.split('<span class="LocationName-geo">')[1].split('<')[0]
             if '"address":' in line2:
@@ -70,7 +73,7 @@ def fetch_data():
             hours = '<MISSING>'
         if phone == '':
             phone = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        yield [website, loc, name, opinfo, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
