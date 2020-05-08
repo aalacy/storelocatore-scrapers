@@ -1,17 +1,15 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
-
-session = SgRequests()
+import http.client as http_client
+import ssl
+import gzip
+import certifi
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
@@ -19,14 +17,26 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+}
+
+def get_conn():
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS)
+    context.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
+    certs_path = certifi.where()
+    context.load_verify_locations(cafile=certs_path)
+    context.verify_mode = ssl.CERT_REQUIRED
+    context.check_hostname = True
+    conn = http_client.HTTPSConnection("unitedtkdcenters.com", context=context)
+    conn.connect()
+    return conn
 
 def fetch_data():
-    headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
-    }
-    base_url= "https://unitedtkdcenters.com/locations"
-    r = session.get(base_url,headers=headers)
-    soup= BeautifulSoup(r.text,"lxml")
+    conn = get_conn()
+    conn.request("GET", "/locations", headers = HEADERS)
+    res = conn.getresponse().read()
+    soup= BeautifulSoup(res,"lxml")
     store_name=[]
     store_detail=[]
     return_main_object=[]
@@ -34,8 +44,6 @@ def fetch_data():
     name3 = soup.find_all("h4",{"data-ux":"ContentCardHeading"})
     address = soup.find_all("div",{"data-ux":"ContentCardText"})
     url =[]
-    # for j in address:
-    #     print(j.text)
     for index,i in enumerate(name3):
         if "Hazlet" in  i or "North Bergen" in i or "Union City" in i:
             tem_var =[]
@@ -60,21 +68,19 @@ def fetch_data():
             tem_var.append("<MISSING>")
             tem_var.append("https://unitedtkdcenters.com/locations")
             return_main_object.append(tem_var)
-            
     for index,i in enumerate(k):
         if "http:" in i['href'] or  "https:" in i['href'] or "/locations" in i['href']:
             pass
         else:
             tem_var =[]
-            r = session.get("https://unitedtkdcenters.com"+i['href'],headers=headers)
+            conn.request("GET", i['href'], headers=HEADERS)
+            r = conn.getresponse().read()
             url.append("https://unitedtkdcenters.com"+i['href'])
-            soup2= BeautifulSoup(r.text,"lxml")
+            soup2= BeautifulSoup(r,"lxml")
             phone =soup2.find("a",{"data-aid":"CONTACT_INFO_PHONE_REND"}).text
             
             full_address =soup2.find("p",{"data-aid":"CONTACT_INFO_ADDRESS_REND"}).text.replace(", United States","").replace(", USA","")
             us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(full_address))
-            
-            
             if us_zip_list:
                 zipp = us_zip_list[-1]
             st = full_address.replace(zipp,"").split(',')[0]
@@ -88,16 +94,12 @@ def fetch_data():
                     for j in json1['structuredHours']:
                         if "openTime" in j and "closeTime" in j:
                             time = time + ' ' +j['day']+ ' '+j['openTime']+ ' '+j['closeTime']
-                        
-
-
             name1 = soup2.find("h2",{"data-aid":"CONTACT_SECTION_TITLE_REND","data-ux":"SectionSplitHeading"})
             if name1 != None:
                 name = (name1.text)
             else:
                 name2 = soup2.find("h1",{"data-aid":"CONTACT_SECTION_TITLE_REND","data-ux":"SectionSplitHeading"})
                 name = (name2.text)
-
             store_name.append(name)
             tem_var.append(st.replace("Goyang-si","Goyang-si, Gyeonggi-do. 10324"))
             tem_var.append(city)
@@ -108,7 +110,6 @@ def fetch_data():
             tem_var.append(phone)
             tem_var.append("<MISSING>")
             store_detail.append(tem_var)
-  
     for i in range(len(store_name)):
        store = list()
        store.append("https://unitedtkdcenters.com")
@@ -120,21 +121,15 @@ def fetch_data():
        store.append(url[i])
        if store[2] in address:
             continue
-        
        address.append(store[2])
        if "Ilsan, South Korea" in store:
            pass
        else:
             return_main_object.append(store)
-
     return return_main_object
-
 
 def scrape():
     data = fetch_data()
     write_output(data)
 
-
 scrape()
-
-
