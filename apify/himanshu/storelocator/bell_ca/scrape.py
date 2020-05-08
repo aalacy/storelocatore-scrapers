@@ -6,6 +6,7 @@ import re
 import json
 import sgzip
 import time
+import html5lib
 import unidecode
 
 # import pprint
@@ -80,9 +81,13 @@ def fetch_data():
         hours1 = []
         for time in hours:
             hours1.append(' '.join(list(time.stripped_strings)).replace(" ","").replace("p.m.","p.m. ").replace("Closed","Closed "))
-     
-        lat = r.text.split("poilat")[1].split(",")[0].replace('"',"").replace(":","")
-        lng = r.text.split("poilon")[1].split(",")[0].replace('"',"").replace(":","")
+        try:
+            lat = r.text.split("poilat")[1].split(",")[0].replace('"',"").replace(":","")
+            lng = r.text.split("poilon")[1].split(",")[0].replace('"',"").replace(":","")
+        except:
+            lat="<MISSING>"
+            lng="<MISSING>"
+
         for index,i in enumerate(data):
             json_data = json.loads(i.text)
             street_address = json_data['address']['streetAddress']
@@ -117,7 +122,7 @@ def fetch_data():
             #             store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
             #     store = [str(x).replace("\xe2","-").replace("\xe7",'') if x else "<MISSING>" for x in store]
             store = [unidecode.unidecode(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            #print(store)
+            # print(store)
             yield store
             # except:
             #     yield store

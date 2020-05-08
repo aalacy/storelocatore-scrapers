@@ -1,12 +1,13 @@
 import csv
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
+session = SgRequests()
 def write_output(data):
-    with open('data.csv', 'w') as output_file:
+    with open('data.csv', 'w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL)
 
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
@@ -28,10 +29,12 @@ def fetch_data():
 
     base_url = "https://www.pauldavis.com"
     # canada location
-    r = requests.get('https://pauldavis.ca/wp-json/locator/v1/list/?formattedAddress=&boundsNorthEast=&boundsSouthWest=',headers = headers).json()
+    r = session.get('https://pauldavis.ca/wp-json/locator/v1/list/?formattedAddress=&boundsNorthEast=&boundsSouthWest=',headers = headers).json()
 
     for loc in r:
         location_name = loc['name']
+        if "fr-Paul Davis Location" in location_name:
+            continue
         street_address = loc['address']
         city = loc['city']
         state = loc['state']
@@ -64,40 +67,43 @@ def fetch_data():
     # us location
     warnings.simplefilter('ignore',InsecureRequestWarning)
     links = []
-    us_r = requests.get("https://pauldavis.com/paul-davis-locations/", verify=False)
+    us_r = session.get("https://pauldavis.com/paul-davis-locations/", verify=False)
     soup1 = BeautifulSoup(us_r.text, "lxml")
     state_data = soup1.find_all('div', class_='cell tablet-4')
 
     for link in state_data:
         city_href = base_url + link.find("a")['href']
-        try:
-            city_r = requests.get(city_href, verify=False)
-        except:
-            continue
+        # try:
+        city_r = session.get(city_href, verify=False)
+        # except:
+        #     continue
         city_soup = BeautifulSoup(city_r.text, "lxml")
         city_data = city_soup.find('main', class_="main small-12 tablet-9 cell")
        
         for loc in city_data.find_all("div"):
             loc_href= base_url + loc.a['href']
-            try:
-                loc_r = requests.get(loc_href, verify=False)
-            except:
-                continue
+            # try:
+            loc_r = session.get(loc_href, verify=False)
+            # except:
+            #     continue
             loc_soup = BeautifulSoup(loc_r.text, "lxml")
-            try:
-                r_data = loc_soup.find('main', class_="main small-12 tablet-9 cell").find("div").a['href']
-            except:
-                r_data = "https://" + loc_soup.find('main', class_="main small-12 tablet-9 cell").find("div").a['href']
-            if r_data in links:
+            url = loc_soup.find('main', class_="main small-12 tablet-9 cell").find("div").a['href']
+            if "https:" in url:
+                page_url = url
+            elif "http:" in url:
+                page_url = url
+            else:
+                page_url = "https://" + url
+            # print("Page url is",page_url)
+            if page_url in links:
                 continue
-            links.append(r_data)            
-            try:
-                data_r = requests.get(r_data, verify=False)
-            except:
-                continue
+            links.append(page_url)     
+            
+            # try:
+            data_r = session.get(page_url, verify=False)
+            # except:
+            #     continue
             data_soup = BeautifulSoup(data_r.text, "lxml")
-            page_url = r_data
-            print(page_url)
 
             if len(data_soup.find_all('p',class_='info')) == 4:
                 street_address = data_soup.find_all('p',class_='info')[1].text

@@ -71,7 +71,7 @@ def fetch_data():
     driver = get_driver()
      # it will used in store data.
     addresses = []
-    main_arry=[]
+    
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
@@ -170,16 +170,16 @@ def fetch_data():
 
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                             store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                    duplicate =str(store[1])+" "+str(store[2])+" "+str(store[3])+" "+str(store[4])+" "+str(store[5])+" "+str(store[6])+" "+str(store[7])+" "+str(store[8])+" "+str(store[9])+" "+str(store[10])+" "+str(store[11])+" "+str(store[12])+" "+str(store[13])
+                    if str(duplicate)  in addresses:
+                        continue
+                    addresses.append(str(duplicate))
 
-                    if str(str(store[1])+str(store[2])+str(store[-5])+str(store[-1])) not in addresses:
-                        addresses.append(str(store[1])+str(store[2])+str(store[-5])+str(store[-1]))
-
-                        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                        main_arry.append(store)
-
-                        # print("data = " + str(store))
-                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                        # yield store
+                    
+                    #print("data = " + str(store))
+                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    yield store
             if soup_loc_list.find("a",{"onclick":"$get('FormAction').value='ExecuteSearch';"}):
                 if page-1 == vk:
                     # print("vk === ", vk)
@@ -192,15 +192,7 @@ def fetch_data():
                 page += 1
             else:
                 break
-    driver.close()     
-
-    for data in range(len(main_arry)):
-        if main_arry[data][2] in addresses:
-            continue
-        addresses.append(main_arry[data][2])
-        yield  main_arry[data]
-
-
+    driver.close()        
  
 def scrape():
     data = fetch_data()
