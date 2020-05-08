@@ -62,10 +62,16 @@ def fetch_data():
                     state = '<MISSING>'
                     zc = j.split('United Kingdom ')[1].strip().replace('\t','').replace('\n','').replace('\r','')
                 else:
-                    add = g.strip().replace('\t','').replace('\n','').replace('\r','')
-                    city = h.strip().replace('\t','').replace('\n','').replace('\r','').replace(',','')
-                    state = '<MISSING>'
-                    zc = i.split('United Kingdom ')[1].strip().replace('\t','').replace('\n','').replace('\r','')
+                    try:
+                        add = g.strip().replace('\t','').replace('\n','').replace('\r','')
+                        city = h.strip().replace('\t','').replace('\n','').replace('\r','').replace(',','')
+                        state = '<MISSING>'
+                        zc = i.split('United Kingdom ')[1].strip().replace('\t','').replace('\n','').replace('\r','')
+                    except:
+                        add = ''
+                        city = ''
+                        state = '<MISSING>'
+                        zc = ''
             if '<div class="map-canvas" data-position="' in line:
                 lat = line.split('<div class="map-canvas" data-position="')[1].split(',')[0]
                 lng = line.split('<div class="map-canvas" data-position="')[1].split(',')[1].split('"')[0].strip()
@@ -81,7 +87,7 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + '; ' + hrs
-            if '<div class="directions-panel">' in line:
+            if '<div class="directions-panel">' in line and add != '':
                 loc = '<MISSING>'
                 country = 'GB'
                 store = '<MISSING>'
