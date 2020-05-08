@@ -1,11 +1,14 @@
 import csv
 import urllib2
-from sgrequests import SgRequests
+import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
-session = SgRequests()
+driver = webdriver.Chrome("chromedriver")
+
+session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
-           'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-           'cookie': 'ASP.NET_SessionId=pvspsettljlu12yl2gr5oskr; BIGipServervaleromaps.valero.com_pool=723637002.47873.0000; TS01f7c95b=01353f239a3013bee49c7bdc49f403c0576db09e8dd05a3e33f149c4cf7959ae8e6567dfd20e63fac38c2f3282c7df909b7f9c707282c3f749a1b61c796b94644192db4aa958f4d8fd0839ef7c3f2b0f7728dc5e76; WT_FPC=id=10.211.46.226-1459936176.30801219:lv=1584545799435:ss=1584545768052'
+           'content-type': 'application/x-www-form-urlencoded; charset=UTF-8'
            }
 
 def write_output(data):
@@ -18,7 +21,11 @@ def write_output(data):
 def fetch_data():
     ids = []
     url = 'https://valeromaps.valero.com/Home/Search?SPHostUrl=https%3A%2F%2Fwww.valero.com%2Fen-us'
-    r = session.get('https://www.valero.com/en-us/ProductsAndServices/Consumers/StoreLocator', headers=headers)
+    driver.get('https://www.valero.com/en-us/ProductsAndServices/Consumers/StoreLocator')
+    cookies = driver.get_cookies()
+    #r = session.get('https://www.valero.com/en-us/ProductsAndServices/Consumers/StoreLocator', headers=headers)
+    for cookie in cookies:
+        session.cookies.set(cookie['name'], cookie['value'])
     for x in range(15, 50, 5):
         for y in range(-65, -120, -5):
             print('%s-%s...' % (str(x), str(y)))

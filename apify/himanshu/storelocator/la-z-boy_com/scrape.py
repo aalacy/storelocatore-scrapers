@@ -63,8 +63,8 @@ def fetch_data():
     while zip:
         try:
             result_coords = []
-            print("remaining zipcodes: " + str(len(search.zipcodes)))
-            print('Pulling zipcode  %s...' % (str(zip)))
+            #print("remaining zipcodes: " + str(len(search.zipcodes)))
+            #print('Pulling zipcode  %s...' % (str(zip)))
             WebDriverWait(driver, 10).until(
                 lambda x: x.find_element_by_xpath("//input[@id='locator']"))
             if temp_zip == "":
@@ -172,8 +172,8 @@ def fetch_data():
                          str else x for x in store]
                 store = [x.encode('ascii', 'ignore').decode(
                     'ascii').strip() if type(x) == str else x for x in store]
-                print(store)
-                print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                #print(store)
+                #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                 yield store
             if len(data) < MAX_RESULTS:
                 # print("max distance update")

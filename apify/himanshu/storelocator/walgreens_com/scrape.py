@@ -24,7 +24,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 600
-    MAX_DISTANCE = 10
+    MAX_DISTANCE = 20
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
     headers = {
@@ -89,7 +89,6 @@ def fetch_data():
 
                 if str(store[2]) in addresses:
                     continue
-
                 addresses.append(str(store[2]) )
 
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]

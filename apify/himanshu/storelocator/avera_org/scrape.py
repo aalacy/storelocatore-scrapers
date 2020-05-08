@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 session = SgRequests()
-import requests
+
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -16,16 +16,10 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
-        
-    }
-    
-    addressesess = []
     base_url = locator_domain = "https://www.avera.org"
     addresses=[]
     country_code = "US"
-    r = requests.get("https://www.avera.org/locations/search-results/?sort=13&page=1",headers=headers)
+    r = session.get("https://www.avera.org/locations/search-results/?sort=13&page=1")
     soup = BeautifulSoup(r.text, "lxml")
     option=soup.find("select",{"id":"ce9349e11bda4c59af2fe2dedcc42790_ddl"}).find_all("option")
     
@@ -33,13 +27,13 @@ def fetch_data():
         
         location_type = d.text
         # print(location_type)
-        r1 = requests.get("https://www.avera.org/locations/search-results/?termId="+d["value"]+"&zipCode=&sort=13&page=1",headers=headers)
+        r1 = session.get("https://www.avera.org/locations/search-results/?termId="+d["value"]+"&zipCode=&sort=13&page=1")
         soup1 = BeautifulSoup(r1.text, "lxml")        
         if soup1.find("select",{"class":"SuperShort"}): 
             for number in soup1.find("select",{"class":"SuperShort"}).find_all("option"):
                 # loc_list.append(d.text)
                 url1 = "https://www.avera.org/locations/search-results/?termId="+d['value']+"&zipCode=&sort=13&page="+str(number.text)
-                r2 = requests.get(url1,headers=headers)
+                r2 = session.get(url1)
                 soup2 = BeautifulSoup(r2.text, "lxml")
                 for index,url in enumerate(soup2.find("div",{"class":"LocationsList"}).find_all("li")):
                     link = 'https://www.avera.org/locations/'+url.find("a",{"class":"Name"})['href'].replace("..","")
@@ -47,13 +41,13 @@ def fetch_data():
                         store_number = link.split("&id=")[-1]
                     else:
                         store_number = "<MISSING>"
-                    r3 = requests.get(link,headers=headers)
+                    r3 = session.get(link)
                     soup3 = BeautifulSoup(r3.text, "lxml")
                     hp = soup3.find("div",{"class":"LocationProfile"})
                     if  hp != None:
                         links="https://www.avera.org/"+hp['id']+"&skipRedirect=true"
                         # print("new link===",links)
-                        r4 = requests.get(links,headers=headers)
+                        r4 = session.get(links)
                         soup4 = BeautifulSoup(r4.text, "lxml")
                         data = json.loads(soup4.find("script",{"type":"application/ld+json"}).text)
                         location_name = data['name']
@@ -95,18 +89,20 @@ def fetch_data():
                             hours = " ".join(list(soup3.find("div",{"id":"OfficeHourComment"}).stripped_strings)).replace("Avera QuickLabs Hours","")
                         else:
                             hours = "<MISSING>"
-                        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                                store_number, phone, location_type, latitude, longitude, hours,page_url]
-                        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                        if (store[1],store[2],store[-5],store[-1]) not in addresses:
-                            addresses.append((store[1],store[2],store[-5],store[-1]))
-                            yield store
-                            # print(store)
-
+                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                            store_number, phone, location_type, latitude, longitude, hours,page_url]
+                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                    duplicate =str(store[1])+" "+str(store[2])+" "+str(store[3])+" "+str(store[4])+" "+str(store[5])+" "+str(store[6])+" "+str(store[7])+" "+str(store[8])+" "+str(store[9])+" "+str(store[10])+" "+str(store[11])+" "+str(store[12])+" "+str(store[13])
+                    if str(duplicate)  in addresses:
+                        continue
+                    addresses.append(str(duplicate))
+                    #print("data = " + str(store))
+                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    yield store
                                         
         else:
             url1 = "https://www.avera.org/locations/search-results/?termId="+d["value"]+"&zipCode=&sort=13&page=1"
-            r2 = requests.get(url1,headers=headers)
+            r2 = session.get(url1)
             soup2 = BeautifulSoup(r2.text, "lxml")
             for index,url in enumerate(soup2.find("div",{"class":"LocationsList"}).find_all("li")):
                 link = 'https://www.avera.org/locations/'+url.find("a",{"class":"Name"})['href'].replace("..","")
@@ -114,13 +110,13 @@ def fetch_data():
                     store_number = link.split("&id=")[-1]
                 else:
                     store_number = "<MISSING>"
-                r3 = requests.get(link,headers=headers)
+                r3 = session.get(link)
                 soup3 = BeautifulSoup(r3.text, "lxml")
                 hp = soup3.find("div",{"class":"LocationProfile"})
                 if  hp != None:
                     links="https://www.avera.org/"+hp['id']+"&skipRedirect=true"
                     # print("new link===",links)
-                    r4 = requests.get(links,headers=headers)
+                    r4 = session.get(links)
                     soup4 = BeautifulSoup(r4.text, "lxml")
                     data = json.loads(soup4.find("script",{"type":"application/ld+json"}).text)
                     location_name = data['name']
@@ -162,13 +158,16 @@ def fetch_data():
                         hours = " ".join(list(soup3.find("div",{"id":"OfficeHourComment"}).stripped_strings)).replace("Avera QuickLabs Hours","")
                     else:
                         hours = "<MISSING>"
-                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                                store_number, phone, location_type, latitude, longitude, hours,page_url]
-                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                    # if (store[1],store[2],store[-5],store[-1]) not in addresses:
-                    #     addresses.append((store[1],store[2],store[-5],store[-1]))
-                    yield store
-                        # print(store)
+                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                            store_number, phone, location_type, latitude, longitude, hours,page_url]
+                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                duplicate =str(store[1])+" "+str(store[2])+" "+str(store[3])+" "+str(store[4])+" "+str(store[5])+" "+str(store[6])+" "+str(store[7])+" "+str(store[8])+" "+str(store[9])+" "+str(store[10])+" "+str(store[11])+" "+str(store[12])+" "+str(store[13])
+                if str(duplicate)  in addresses:
+                    continue
+                addresses.append(str(duplicate))
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                yield store       
 
 
 
