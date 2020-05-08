@@ -51,20 +51,20 @@ def fetch_data():
             if 'rel="canonical" href="https://paulmacs.com/location/' in lines[linenum]:
                 store = lines[linenum].split('rel="canonical" href="https://paulmacs.com/location/')[1].split('/')[0]
             if ',"name":"' in lines[linenum]:
-                typ = lines[linenum].split(',"name":"')[1].split('"')[0]
-                name = lines[linenum].split(',"name":"')[2].split(' |')[0]
+                typ = lines[linenum].split(',"name":"')[1].split('"')[0].encode('utf-8')
+                name = lines[linenum].split(',"name":"')[2].split(' |')[0].encode('utf-8')
             if '<div class="address_info">' in lines[linenum]:
                 g = lines[linenum + 1]
                 if '<br' not in g:
                     g = lines[linenum + 1]
                 if ',' in g.split('<br')[1]:
-                    add = g.split('<')[0].strip().replace('\t','')
-                    city = g.split('<br')[1].split('>')[1].split(',')[0]
+                    add = g.split('<')[0].strip().replace('\t','').encode('utf-8')
+                    city = g.split('<br')[1].split('>')[1].split(',')[0].encode('utf-8')
                     state = g.split('<br')[1].split('>')[1].split(',')[1].strip().split(' ')[0]
                     zc = g.split('<br')[1].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1]
                 else:
-                    add = g.split('<')[0].strip().replace('\t','')
-                    city = g.split('<br')[2].split('>')[1].split(',')[0]
+                    add = g.split('<')[0].strip().replace('\t','').encode('utf-8')
+                    city = g.split('<br')[2].split('>')[1].split(',')[0].encode('utf-8')
                     state = g.split('<br')[2].split('>')[1].split(',')[1].strip().split(' ')[0]
                     zc = g.split('<br')[2].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1]
                 try:
