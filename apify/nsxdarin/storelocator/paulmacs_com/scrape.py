@@ -49,7 +49,7 @@ def fetch_data():
         lines = driver.page_source.split('\n')
         for linenum in range(0, len(lines)):
             if 'rel="canonical" href="https://paulmacs.com/location/' in lines[linenum]:
-                store = lines[linenum].split('rel="canonical" href="https://paulmacs.com/location/')[1].split('/')[0]
+                store = lines[linenum].split('rel="canonical" href="https://paulmacs.com/location/')[1].split('/')[0].encode('utf-8')
             if ',"name":"' in lines[linenum]:
                 typ = lines[linenum].split(',"name":"')[1].split('"')[0].encode('utf-8')
                 name = lines[linenum].split(',"name":"')[2].split(' |')[0].encode('utf-8')
@@ -60,26 +60,26 @@ def fetch_data():
                 if ',' in g.split('<br')[1]:
                     add = g.split('<')[0].strip().replace('\t','').encode('utf-8')
                     city = g.split('<br')[1].split('>')[1].split(',')[0].encode('utf-8')
-                    state = g.split('<br')[1].split('>')[1].split(',')[1].strip().split(' ')[0]
-                    zc = g.split('<br')[1].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1]
+                    state = g.split('<br')[1].split('>')[1].split(',')[1].strip().split(' ')[0].encode('utf-8')
+                    zc = g.split('<br')[1].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1].encode('utf-8')
                 else:
                     add = g.split('<')[0].strip().replace('\t','').encode('utf-8')
                     city = g.split('<br')[2].split('>')[1].split(',')[0].encode('utf-8')
-                    state = g.split('<br')[2].split('>')[1].split(',')[1].strip().split(' ')[0]
-                    zc = g.split('<br')[2].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1]
+                    state = g.split('<br')[2].split('>')[1].split(',')[1].strip().split(' ')[0].encode('utf-8')
+                    zc = g.split('<br')[2].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1].encode('utf-8')
                 try:
-                    phone = g.split('<a href="tel: ')[1].split('"')[0]
+                    phone = g.split('<a href="tel: ')[1].split('"')[0].encode('utf-8')
                 except:
                     phone = '<MISSING>'
             if 'src="https://www.google.com/maps/' in lines[linenum]:
-                lat = lines[linenum].split('q=')[1].split(',')[0]
-                lng = lines[linenum].split('q=')[1].split(',')[1].split('&')[0]
+                lat = lines[linenum].split('q=')[1].split(',')[0].encode('utf-8')
+                lng = lines[linenum].split('q=')[1].split(',')[1].split('&')[0].encode('utf-8')
             if '<h4>HOURS</h4>' in lines[linenum]:
                 g = lines[linenum + 1]
                 if '<p>' not in g:
                     g = lines[linenum + 1]
                 try:
-                    hours = g.split('<p>',1)[1].split('</div>')[0].replace('</p><p>','; ').replace('</span><span>',' ').replace('<span>','').replace('</p>','').replace('</span>','').strip().replace('\t','')
+                    hours = g.split('<p>',1)[1].split('</div>')[0].replace('</p><p>','; ').replace('</span><span>',' ').replace('<span>','').replace('</p>','').replace('</span>','').strip().replace('\t','').encode('utf-8')
                 except:
                     hours = '<MISSING>'
         purl = loc
