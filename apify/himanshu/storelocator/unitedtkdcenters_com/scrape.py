@@ -2,10 +2,7 @@ import csv
 from bs4 import BeautifulSoup
 import re
 import json
-import http.client as http_client
-import ssl
-import gzip
-import certifi
+from sgrequests import SgHttpClient
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,21 +18,9 @@ HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
 }
 
-def get_conn():
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS)
-    context.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
-    certs_path = certifi.where()
-    context.load_verify_locations(cafile=certs_path)
-    context.verify_mode = ssl.CERT_REQUIRED
-    context.check_hostname = True
-    conn = http_client.HTTPSConnection("unitedtkdcenters.com", context=context)
-    conn.connect()
-    return conn
-
 def fetch_data():
-    conn = get_conn()
-    conn.request("GET", "/locations", headers = HEADERS)
-    res = conn.getresponse().read()
+    client = SgHttpClient("unitedtkdcenters.com")
+    res = client.get("/locations", headers = HEADERS)
     soup= BeautifulSoup(res,"lxml")
     store_name=[]
     store_detail=[]
@@ -73,8 +58,7 @@ def fetch_data():
             pass
         else:
             tem_var =[]
-            conn.request("GET", i['href'], headers=HEADERS)
-            r = conn.getresponse().read()
+            r = client.get(i['href'], headers=HEADERS)
             url.append("https://unitedtkdcenters.com"+i['href'])
             soup2= BeautifulSoup(r,"lxml")
             phone =soup2.find("a",{"data-aid":"CONTACT_INFO_PHONE_REND"}).text
