@@ -57,6 +57,8 @@ def fetch_data():
             long = jso["geo"]["longitude"]
             loc=jso['name']
             phone=jso['telephone']
+            if "MailDropOnly" in phone:
+                phone="<MISSING>"
             tim=jso['openingHours']
 
             all.append([
