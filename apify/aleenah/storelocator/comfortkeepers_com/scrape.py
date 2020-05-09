@@ -58,7 +58,7 @@ def fetch_data():
                 "US",
                 "<MISSING>",  # store #
                 phone,  # phone
-                type,  # type
+                type.strip(),  # type
                 lat,  # lat
                 long,  # long
                 tim,  # timing
