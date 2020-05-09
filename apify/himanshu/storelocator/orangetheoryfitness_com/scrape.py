@@ -43,8 +43,8 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ['us', 'ca'])
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 10
+    MAX_RESULTS = 150
+    MAX_DISTANCE = 50
     current_results_len = 0     # need to update with no of count.
 
     zip_code = search.next_zip()
@@ -63,6 +63,7 @@ def fetch_data():
             pass
         
         # print(len(json_data['markers']))
+        current_results_len= len(json_data['markers'])
         for i in json_data['markers']:
             hours_of_operation="<MISSING>"
             store_number = i['id']
