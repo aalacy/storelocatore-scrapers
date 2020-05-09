@@ -15,6 +15,7 @@ def write_output(data):
 
 def fetch_data():
     locs = []
+    canada = ['SK','ON','PQ','QC','AB','MB','BC','YT','NS','NF','NL','PEI','PE']
     url = 'https://www.amtrak.com/sitemap.xml'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
@@ -22,68 +23,61 @@ def fetch_data():
             items = line.split('<loc>https://www.amtrak.com/stations/')
             for item in items:
                 if '<?xml' not in item:
-                    lurl = 'https://www.amtrak.com/stations/' + item.split('<')[0]
+                    lurl = 'https://maps.amtrak.com/services/MapDataService/StationInfo/getStationInfo?stationCode=' + item.split('<')[0]
                     locs.append(lurl)
     for loc in locs:
-        LFound = True
-        while LFound:
-            LFound = False
-            try:
-                print('Pulling Location %s...' % loc)
-                website = 'amtrak.com'
-                typ = '<MISSING>'
-                hours = ''
-                name = ''
-                add = ''
-                city = ''
-                state = ''
-                zc = ''
-                country = 'US'
-                lat = '<MISSING>'
-                lng = '<MISSING>'
-                phone = '(800) 627-3999'
-                store = loc.rsplit('/',1)[1]
-                r2 = session.get(loc, headers=headers)
-                lines = r2.iter_lines()
-                for line2 in lines:
-                    if '"pageName": "' in line2:
-                        name = line2.split('"pageName": "')[1].split('"')[0]
-                    if '"hero-banner-and-info__card_station-type">' in line2:
-                        typ = line2.split('"hero-banner-and-info__card_station-type">')[1].split('<')[0]
-                    if '"hero-banner-and-info__card_block-address">' in line2 and add == '':
-                        add = line2.split('"hero-banner-and-info__card_block-address">')[1].split('<')[0]
-                        next(lines)
-                        g = next(lines)
-                        while '</span><br>-->' not in g:
-                            g = next(lines)
-                        g = next(lines)
-                        while '"hero-banner-and-info__card_block-address">' not in g:
-                            g = next(lines)
-                        csz = g.split('"hero-banner-and-info__card_block-address">')[1].split('<')[0]
-                        city = csz.split(',')[0]
-                        state = csz.split(',')[1].strip().split(' ')[0]
-                        zc = csz.rsplit(' ',1)[1]
-                    if '<a href="https://www.google.com/maps/dir//' in line2:
-                        lat = line2.split('<a href="https://www.google.com/maps/dir//')[1].split(',')[0]
-                        lng = line2.split('<a href="https://www.google.com/maps/dir//')[1].split(',')[1].split('"')[0]
-                hurl = 'https://www.amtrak.com/content/amtrak/en-us/stations/bos.stationTabContainer.' + store.upper() + '.json'
-                r3 = session.get(hurl, headers=headers)
-                for line3 in r3.iter_lines():
-                    if '"type":"stationhours","rangeData":[{' in line3:
-                        days = line3.split('"type":"stationhours","rangeData":[{')[1].split('}]}]},')[0].split('"day":"')
-                        for day in days:
-                            if 'timeSlot' in day:
-                                hrs = day.split('"')[0] + ': ' + day.split('"timeSlot":"')[1].split('"')[0]
-                                if hours == '':
-                                    hours = hrs
-                                else:
-                                    hours = hours + '; ' + hrs
-                if hours == '':
-                    hours = '<MISSING>'
-                if add != '':
-                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-            except:
-                LFound = True
+        print('Pulling Location %s...' % loc)
+        website = 'amtrak.com'
+        typ = '<MISSING>'
+        hours = ''
+        name = ''
+        add = ''
+        city = ''
+        state = ''
+        zc = ''
+        country = 'US'
+        lat = '<MISSING>'
+        lng = '<MISSING>'
+        phone = '215-856-7924'
+        store = loc.rsplit('=',1)[1]
+        lurl = 'https://www.amtrak.com/stations/' + store
+        r2 = session.get(loc, headers=headers)
+        lines = r2.iter_lines()
+        for line2 in lines:
+            if '"name":"' in line2:
+                name = line2.split('"name":"')[1].split('"')[0]
+            if '"latitude":"' in line2:
+                lat = line2.split('"latitude":"')[1].split('"')[0]
+            if '"longitude":"' in line2:
+                lng = line2.split('"longitude":"')[1].split('"')[0]
+            if '"stationType":"' in line2:
+                typ = line2.split('"stationType":"')[1].split('"')[0]
+            if '"addressLine":["' in line2:
+                add = line2.split('"addressLine":["')[1].split('"')[0]
+            if '"cityName":"' in line2:
+                city = line2.split('"cityName":"')[1].split('"')[0]
+            if '"postalCode":"' in line2:
+                zc = line2.split('"postalCode":"')[1].split('"')[0]
+            if '"stateProv":{"stateCode":"' in line2:
+                state = line2.split('"stateProv":{"stateCode":"')[1].split('"')[0]
+        hurl = 'https://www.amtrak.com/content/amtrak/en-us/stations/bos.stationTabContainer.' + store.upper() + '.json'
+        r3 = session.get(hurl, headers=headers)
+        for line3 in r3.iter_lines():
+            if '"type":"stationhours","rangeData":[{' in line3:
+                days = line3.split('"type":"stationhours","rangeData":[{')[1].split('}]}]},')[0].split('"day":"')
+                for day in days:
+                    if 'timeSlot' in day:
+                        hrs = day.split('"')[0] + ': ' + day.split('"timeSlot":"')[1].split('"')[0]
+                        if hours == '':
+                            hours = hrs
+                        else:
+                            hours = hours + '; ' + hrs
+        if hours == '':
+            hours = '<MISSING>'
+        if state in canada:
+            country = 'CA'
+        if add != '':
+            yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
