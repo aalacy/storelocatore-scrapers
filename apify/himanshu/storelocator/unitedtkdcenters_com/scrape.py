@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 from sgrequests import SgHttpClient
+import ssl
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
