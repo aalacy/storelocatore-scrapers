@@ -2,7 +2,6 @@ import csv
 import urllib2
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from sgrequests import SgRequests
 
 driver = webdriver.Chrome("chromedriver")
 
