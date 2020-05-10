@@ -20,7 +20,9 @@ def fetch_data():
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
         if '<loc>https://www.aamco.com/Auto-Repair-Center/' in line:
-            locs.append(line.split('<loc>')[1].split('<')[0])
+            lurl = line.split('<loc>')[1].split('<')[0]
+            if lurl.count('/') > 4:
+                locs.append(lurl)
     for loc in locs:
         print('Pulling Location %s...' % loc)
         website = 'aamco.com'
@@ -44,12 +46,14 @@ def fetch_data():
         lines = r2.iter_lines()
         HFound = False
         for line2 in lines:
-            if '<div class="row storehours">' in line2:
-                HFound = True
-            if HFound and '</div>' in line2:
-                HFound = False
-            if HFound and '<p><span>' in line2:
-                hrs = line2.split('<p><span>')[1].split('</p')[0].replace('</span>',':')
+            if 'day</span></p>' in line2:
+                hrs = line2.split('<span>')[1].split('<')[0]
+                next(lines)
+                next(lines)
+                g = next(lines)
+                if '<span>' not in g:
+                    g = next(lines)
+                hrs = hrs + ': ' + g.split('<span>')[1].split('<')[0]
                 if hours == '':
                     hours = hrs
                 else:
@@ -70,13 +74,14 @@ def fetch_data():
                 else:
                     if ',' not in g:
                         g = next(lines)
-                    addinfo = g.split('<')[0].strip().replace('\t','').replace(', Canada','').strip()
+                    addinfo = g.split('<')[0].strip().replace('\t','').replace(', Canada','')
                     add = addinfo.split(',')[0]
                     city = addinfo.split(',')[1].strip()
-                    if country == 'US':
-                        zc = addinfo.rsplit(' ',1)[1]
-                    else:
-                        zc = addinfo.rsplit(' ',2)[1] + ' ' + addinfo.rsplit(' ',1)[1]
+                    try:
+                        zc = addinfo.rsplit(',',1)[1].strip().split(' ',1)[1]
+                    except:
+                        state = loc.split('/')[4]
+                        zc = addinfo.rsplit(',',1)[1].strip()
             if 'Phone</span>' in line2:
                 try:
                     phone = next(lines).split('">')[1].split('<')[0]
@@ -105,6 +110,29 @@ def fetch_data():
             zc = '<MISSING>'
         if '/Canada/' in loc:
             country = 'CA'
+        city = loc.split('/')[5].replace('-',' ')
+        if loc == 'https://www.aamco.com/Auto-Repair-Center/Canada/Kitchener/Manitou-Drive,-Unit-4':
+            zc = 'N2C 1L4'
+        if loc == 'https://www.aamco.com/Auto-Repair-Center/Canada/Scarborough/Eglinton-Ave-E':
+            zc = 'M1J 2E5'
+        if loc == 'https://www.aamco.com/Auto-Repair-Center/Canada/Whitby/Hopkins-Street':
+            zc = 'L1N 2C1'
+        if loc == 'https://www.aamco.com/Auto-Repair-Center/CA/San-Diego/Morena-Boulevard':
+            zc = '<MISSING>'
+        if loc == 'https://www.aamco.com/Auto-Repair-Center/ID/Twin-Falls/Cheney-Drive':
+            zc = '83301'
+        if loc == 'https://www.aamco.com/Auto-Repair-Center/TX/Houston/Highway-6-N':
+            zc = '77084'
+        if loc == 'https://www.aamco.com/Auto-Repair-Center/TX/Stephenville/N-Floral-St':
+            zc = '<MISSING>'
+        if loc == 'https://www.aamco.com/Auto-Repair-Center/FL/Lauderhill/N-University-Drive':
+            zc = '33351'
+        if loc == 'https://www.aamco.com/Auto-Repair-Center/IL/Chicago/4710-South-Halsted-Street':
+            zc = '60609'
+        if loc == 'https://www.aamco.com/Auto-Repair-Center/MS/Jackson/Briarwood-Dr':
+            zc = '39206'
+        if loc == 'https://www.aamco.com/Auto-Repair-Center/VA/Winchester/S-Loudoun-St':
+            zc = '22601'
         if add != '':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
