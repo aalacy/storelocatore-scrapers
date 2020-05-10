@@ -68,6 +68,8 @@ def fetch_data():
                     state = 'NY'
                     zc = '11772'
                 else:
+                    if ',' not in g:
+                        g = next(lines)
                     addinfo = g.split('<')[0].strip().replace('\t','').replace(', Canada','').strip()
                     add = addinfo.split(',')[0]
                     city = addinfo.split(',')[1].strip()
