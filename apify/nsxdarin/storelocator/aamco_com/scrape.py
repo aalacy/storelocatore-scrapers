@@ -103,6 +103,8 @@ def fetch_data():
         if 'Eglinton' in add or 'Manitou' in add or 'Hopkins St' in add:
             state = 'ON'
             zc = '<MISSING>'
+        if '/Canada/' in loc:
+            country = 'CA'
         if add != '':
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
