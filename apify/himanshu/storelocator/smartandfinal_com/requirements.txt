@@ -1,5 +1,2 @@
-selenium==3.141.0
-lxml==4.3.4
-beautifulsoup4==4.7.1
 sgrequests
-
+requests_toolbelt
