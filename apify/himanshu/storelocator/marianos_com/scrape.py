@@ -5,6 +5,7 @@ import re
 import json
 import sgzip
 import time
+import requests
 
 session = SgRequests()
 
@@ -25,7 +26,7 @@ def request_wrapper(url, method, headers, data=None):
     if method == "get":
         while True:
             try:
-                r = session.get(url, headers=headers)
+                r = requests.get(url, headers=headers)
                 return r
                 break
             except:
@@ -38,9 +39,9 @@ def request_wrapper(url, method, headers, data=None):
         while True:
             try:
                 if data:
-                    r = session.post(url, headers=headers, data=data)
+                    r = requests.post(url, headers=headers, data=data)
                 else:
-                    r = session.post(url, headers=headers)
+                    r = requests.post(url, headers=headers)
                 return r
                 break
             except:
@@ -73,7 +74,7 @@ def fetch_data():
     base_url = "http://marianos.com/"
 
     while zip_code:
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
 
         # print("zip_code === " + zip_code)
@@ -134,17 +135,17 @@ def fetch_data():
             location_name = script["vanityName"]
             location_type = "<MISSING>"
             page_url = "https://www.marianos.com/stores/details/" +str(script["divisionNumber"]) +"/" + str(script["storeNumber"])
-            r_loc = session.get(page_url, headers=headers)
+            r_loc = requests.get(page_url, headers=headers)
             soup_loc = BeautifulSoup(r_loc.text, "lxml")
             try:
                 ltype = soup_loc.find("div", class_="logo").a["title"].strip()
                 # print(ltype)
                 if "Marianos" in ltype:
                     location_type = "Marianos"
-                    # print("loc_type === ",location_type)
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                    #print("loc_type === ",location_type)
+                    #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                 else:
-                    # print(ltype)
+                    #print(ltype)
                     continue
                 hours_of_operation = ""
                 for day_hours in script["ungroupedFormattedHours"]:
@@ -162,16 +163,13 @@ def fetch_data():
                     store = [str(x).encode('ascii', 'ignore').decode(
                         'ascii').strip() if x else "<MISSING>" for x in store]
 
-                    # print("data = " + str(store))
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    #print("data = " + str(store))
+                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     yield store
             except:
                 search.max_distance_update(MAX_DISTANCE)
-                
-                    
 
-            
-        
+
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)

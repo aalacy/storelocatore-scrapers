@@ -39,6 +39,7 @@ def fetch_data():
         # if us_zip_list:
         #     pass
         # else:
+        country_code="UK"
         name = list(data.stripped_strings)[0]
         address = list(data.stripped_strings)[1]
         zip1 =list(data.stripped_strings)[2].split(",")[-1].replace("BART1","<MISSING>") 
@@ -59,6 +60,11 @@ def fetch_data():
         if lat=="0":
             lat = "<MISSING>"
             log = "<MISSING>"
+        if city in ["Barcelona","Madrid"]   :
+        	country_code = "es"
+        if "El Altet" in state	:
+        	country_code	= "es"
+        
         tem_var =[]
         tem_var.append("https://eat.co.uk")
         tem_var.append(name)
@@ -66,7 +72,7 @@ def fetch_data():
         tem_var.append(city)
         tem_var.append(state)
         tem_var.append(zip1)
-        tem_var.append("UK")
+        tem_var.append(country_code)
         tem_var.append(store_number)
         tem_var.append("<MISSING>")
         tem_var.append("<MISSING>")
