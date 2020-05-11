@@ -75,7 +75,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
 
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         # print("zip_code === " + zip_code)
 
         # zip_code = "11576"
@@ -88,48 +88,50 @@ def fetch_data():
         try:
             locations_json = r_locations.json()["data"]["storeSearch"]["stores"]
             
-        
+        except:
+            continue
 
-            # print("current_results_len === " + str(current_results_len))
-            current_results_len = len(locations_json)
-            for script in locations_json:
+        # print("current_results_len === " + str(current_results_len))
+        current_results_len = len(locations_json)
+        for script in locations_json:
 
-                locator_domain = base_url
-                location_name = ""
-                street_address = ""
-                city = ""
-                state = ""
-                zipp = ""
-                country_code = "US"
-                store_number = ""
-                phone = ""
-                location_type = ""
-                latitude = ""
-                longitude = ""
-                raw_address = ""
-                page_url = ""
-                hours_of_operation = ""
+            locator_domain = base_url
+            location_name = ""
+            street_address = ""
+            city = ""
+            state = ""
+            zipp = ""
+            country_code = "US"
+            store_number = ""
+            phone = ""
+            location_type = ""
+            latitude = ""
+            longitude = ""
+            raw_address = ""
+            page_url = ""
+            hours_of_operation = ""
 
-                # do your logic here
-                street_address = script["address"]["addressLine1"]
-                if "addressLine2" in script["address"] and script["address"]["addressLine2"]:
-                    street_address += " " + script["address"]["addressLine2"]
-                city = script["address"]["city"]
-                country_code = script["address"]["countryCode"]
-                state = script["address"]["stateCode"]
-                zipp = script["address"]["zip"]
-                phone = script["phoneNumber"]
-                store_number = script["storeNumber"]
-                latitude = script["latitude"]
-                longitude = script["longitude"]
-                location_name = script["vanityName"]
-                p_url = "https://www.marianos.com/stores/details/" +str(script["divisionNumber"]) +"/" + str(script["storeNumber"])
-                page_url = "https://www.foodsco.net/stores/details/" +str(script["divisionNumber"]) +"/" + str(script["storeNumber"])
-                r_loc = session.get(p_url, headers=headers)
-                soup_loc = BeautifulSoup(r_loc.text, "lxml")
+            # do your logic here
+            street_address = script["address"]["addressLine1"]
+            if "addressLine2" in script["address"] and script["address"]["addressLine2"]:
+                street_address += " " + script["address"]["addressLine2"]
+            city = script["address"]["city"]
+            country_code = script["address"]["countryCode"]
+            state = script["address"]["stateCode"]
+            zipp = script["address"]["zip"]
+            phone = script["phoneNumber"]
+            store_number = script["storeNumber"]
+            latitude = script["latitude"]
+            longitude = script["longitude"]
+            location_name = script["vanityName"]
+            # p_url = "https://www.marianos.com/stores/details/" +str(script["divisionNumber"]) +"/" + str(script["storeNumber"])
+            page_url = "https://www.foodsco.net/stores/details/" +str(script["divisionNumber"]) +"/" + str(script["storeNumber"])
+            r_loc = session.get(page_url, headers=headers)
+            soup_loc = BeautifulSoup(r_loc.text, "lxml")
+            try:
                 ltype = soup_loc.find("div", class_="logo").a["title"].strip()
                 if "FoodsCo" in ltype:
-                    location_type = "FoodsCo Store"
+                    location_type = "FoodsCo"
                     # print("loc_type === ",location_type)
                     # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 
@@ -137,7 +139,6 @@ def fetch_data():
                     # pass
                     # print("ltype == ",ltype)
                     continue
-                
                 hours_of_operation = ""
                 for day_hours in script["ungroupedFormattedHours"]:
                     hours_of_operation += day_hours["displayName"] + \
@@ -158,17 +159,20 @@ def fetch_data():
                     # print("data = " + str(store))
                     # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                     yield store
-        except:
-            pass
+            except:
+                search.max_distance_update(MAX_DISTANCE)
+            
+            
+        
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif current_results_len == MAX_RESULTS:
             # print("max count update")
             search.max_count_update(result_coords)
-        # else:
-        #     raise Exception("expected at most " +
-        #                     str(MAX_RESULTS) + " results")
+        else:
+            raise Exception("expected at most " +
+                            str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
         
 

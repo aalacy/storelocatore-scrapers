@@ -9,7 +9,8 @@ options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument('--window-size=1920,1080')
-options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
+options.add_argument(
+    "user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
 
 #driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
 driver = webdriver.Chrome("chromedriver", options=options)
@@ -31,18 +32,17 @@ def addy_ext(addy):
     return city, state, zip_code
 
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip",
+                         "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
-
-
 
 
 def fetch_data():
@@ -58,7 +58,8 @@ def fetch_data():
 
     time.sleep(15)
 
-    stores = driver.find_elements_by_css_selector('a.location-list-item-actions__view-details__link')
+    stores = driver.find_elements_by_css_selector(
+        'a.location-list-item-actions__view-details__link')
 
     names = [stores[i].get_attribute("href") for i in range(0, len(stores))]
 
@@ -66,33 +67,35 @@ def fetch_data():
         driver2.get(names[i])
         time.sleep(5)
         page_url = names[i]
-        store_opening_hours = driver2.find_element_by_css_selector('ul.location-details-hours-content__list').text.replace('\n', ' ')
-        
-        phone_no = driver2.find_element_by_css_selector('span.location-details-contact__contacts__item__value').text
+        store_opening_hours = driver2.find_element_by_css_selector(
+            'ul.location-details-hours-content__list').text.replace('\n', ' ')
+
+        phone_no = driver2.find_element_by_css_selector(
+            'span.location-details-contact__contacts__item__value').text
         store_id = names[i].split("details/")[1]
-        store_name = driver2.find_element_by_css_selector('div.location-details-map__infobox__label').text
-        
+        store_name = driver2.find_element_by_css_selector(
+            'div.location-details-map__infobox__label').text
 
-        street_address = driver2.find_element_by_css_selector('div.location-address__line.location-address__line--line-1').text
-        city, state, zip_code = addy_ext(driver2.find_element_by_css_selector('div.location-address__line.location-address__line--region').text)
+        street_address = driver2.find_element_by_css_selector(
+            'div.location-address__line.location-address__line--line-1').text
+        city, state, zip_code = addy_ext(driver2.find_element_by_css_selector(
+            'div.location-address__line.location-address__line--region').text)
         data.append([
-             '"https://www.zehrs.ca/',
-              page_url,
-              store_name,
-              street_address,
-              city,
-              state,
-              zip_code,
-              'CA',
-              store_id,
-              phone_no,
-              '<MISSING>',
-              '<MISSING>',
-              '<MISSING>',
-              store_opening_hours, 
-              names[i]
-            ])
-
+            'https://www.zehrs.ca/',
+            page_url,
+            store_name,
+            street_address,
+            city,
+            state,
+            zip_code,
+            'CA',
+            store_id,
+            phone_no,
+            '<MISSING>',
+            '<MISSING>',
+            '<MISSING>',
+            store_opening_hours
+        ])
 
     time.sleep(3)
     driver.quit()
@@ -103,5 +106,6 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()

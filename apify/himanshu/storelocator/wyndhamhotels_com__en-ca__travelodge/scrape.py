@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time 
-
+import requests
 session = SgRequests()
 
 def write_output(data):
@@ -18,37 +18,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def request_wrapper(url,method,headers,data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = session.get(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:
-                if data:
-                    r = session.post(url,headers=headers,data=data)
-                else:
-                    r = session.post(url,headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None
+
 def fetch_data():
     addresses = []
     headers = {
@@ -57,19 +27,18 @@ def fetch_data():
     }
     base_url = "https://www.wyndhamhotels.com"
     location_url1 = "https://www.wyndhamhotels.com/en-uk/travelodge/locations"
-    try:
-        r = session.get(location_url1, headers=headers,  allow_redirects=False)
-    except Exception as e :
-        pass
+ 
+    r = requests.get(location_url1, headers=headers,  allow_redirects=False)
+  
     soup= BeautifulSoup(r.text,"lxml")
     a = soup.find("div",{"class":"aem-rendered-content"}).find_all("div",{"class":"state-container"})[0:45]
     for y in a:
-        e = (y.find_all("li",{"class":"property"}))
+        e = y.find_all("li",{"class":"property"})
         for b in e:
             k = (b.find('a')['href'])
             location_url = base_url+k
             try:
-                r1 = session.get(location_url, headers=headers,  allow_redirects=False)
+                r1 = requests.get(location_url, headers=headers,  allow_redirects=False)
             except Exception as e:
                 pass
             soup1= BeautifulSoup(r1.text,"lxml")
@@ -101,7 +70,8 @@ def fetch_data():
                     state = h['address']["addressRegion"]
                 else:
                     state = "<MISSING>"
-                phone = h['telephone']              
+                phone = h['telephone'].replace("+1-",'')
+                # print(phone)              
                 store = []
                 store.append("https://www.wyndhamhotels.com/en-ca/travelodge")
                 store.append(location_name if location_name else "<MISSING>") 
@@ -128,7 +98,7 @@ def fetch_data():
             k1 = (b1.find('a')['href'])
             location_url = base_url+k1
             try:
-                r2 = session.get(location_url, headers=headers,  allow_redirects=False)
+                r2 = requests.get(location_url, headers=headers,  allow_redirects=False)
             except Exception as e:
                 pass
             soup1= BeautifulSoup(r2.text,"lxml")
@@ -160,7 +130,8 @@ def fetch_data():
                     state = h1['address']["addressRegion"]
                 else:
                     state = "<MISSING>"
-                phone = h1['telephone']              
+                phone = h1['telephone'].replace("+1-",'')
+                # print(phone)              
                 store = []
                 store.append("https://www.wyndhamhotels.com/en-ca/travelodge")
                 store.append(location_name if location_name else "<MISSING>") 

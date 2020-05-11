@@ -85,16 +85,20 @@ def fetch_data():
                             name = name.replace('\\u0026','&')
                             add = add.replace('\\u0026','&')
                             if loc != '<MISSING>':
+                                if add == '':
+                                    add = '<MISSING>'
+                                if zc == '':
+                                    zc = '<MISSING>'
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                                 ids.append(storeinfo)
 
     url = ''
-    for x in range(240, 500, 5):
-        for y in range(-660, -1260, -5):
-            lats = float(x / 10)
-            latn = float(x / 10) + .5
-            lnge = float(y / 10)
-            lngw = float(y / 10) - .5
+    for x in range(240, 500, 2):
+        for y in range(-660, -1260, -2):
+            lats = float(float(x) / 10)
+            latn = float((float(x) / 10) + .2)
+            lnge = float(float(y) / 10)
+            lngw = float((float(y) / 10) - .2)
             print(str(lats) + ',' + str(lngw) + ',' + str(latn) + ',' + str(lnge))
             url = 'https://shellgsllocator.geoapp.me/api/v1/locations/within_bounds?sw%5B%5D=' + str(lats) + '&sw%5B%5D=' + str(lngw) + '&ne%5B%5D=' + str(latn) + '&ne%5B%5D=' + str(lnge) + '&selected=&autoload=true&travel_mode=driving&avoid_tolls=false&avoid_highways=false&avoid_ferries=false&corridor_radius=5&driving_distances=false&format=json'
             r = session.get(url, headers=headers)

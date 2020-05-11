@@ -57,7 +57,7 @@ def fetch_data():
             #         country_code = country_code
             country_code= "US"
             if "Location Name" in json_data["columnsData"][5]["name"]:
-                location_name = json_data["columnsData"][5]["value"]
+                location_name = json_data["columnsData"][5]["value"].strip()
             if "Phone" in json_data["columnsData"][6]["name"]:
                 phone_tag= json_data["columnsData"][6]["value"]
                 phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
@@ -65,11 +65,15 @@ def fetch_data():
                     phone = phone_list[0]
                 else:
                     phone = "<MISSING>"
+            
             try:
                 if "Company" in json_data["columnsData"][7]["name"]:
                     location_type = json_data["columnsData"][7]["value"]
             except:
-                location_type = "<MISSING>"
+                if "Huddle House" in location_name :
+                    location_type = "Huddle House"
+                else:
+                    location_type = "Car Wash"
             try:
                 if "Store Hours" in json_data["columnsData"][8]["name"]:
                     hours_of_operation = json_data["columnsData"][8]["value"]
@@ -79,16 +83,17 @@ def fetch_data():
             # store_number = location_name.split("#")[-1].strip()
             # print(store_number)
             page_url = "https://kentkwik.com/locations-2/"
+            if "Mr Payroll" != location_type:
+                
+                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+                if str(str(store[1])+str(store[2])) not in addresses :
+                    addresses.append(str(store[1])+str(store[2]))
 
-            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-            if str(str(store[1])+str(store[2])) not in addresses :
-                addresses.append(str(store[1])+str(store[2]))
+                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                yield store
+                    # print("data = " + str(store))
+                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                    yield store
         else:
             break
         no += 1
