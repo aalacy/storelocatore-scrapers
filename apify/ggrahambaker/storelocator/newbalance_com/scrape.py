@@ -33,7 +33,7 @@ def fetch_data():
         y = coord[1]
         #print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
         url = 'https://newbalance.locally.com/stores/conversion_data?has_data=true&company_id=41&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=' + str(x) + '&map_center_lng=' + str(y) + '&map_distance_diag=100&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=&zoom_level=10'
-        print(url)
+        #print(url)
         r = session.get(url, headers=HEADERS)
         
         res_json = json.loads(r.content)['markers']
@@ -52,10 +52,8 @@ def fetch_data():
                 else:
                     continue
 
-                # print(loc)
-
-                street_address = loc['address'].split('-')[-1].strip()
-                # print(street_address)
+           
+                street_address = loc['address'].split('--- ')[-1].strip()
 
                 city = loc['city']
                 state = loc['state']
@@ -87,7 +85,6 @@ def fetch_data():
                     location_type = '<MISSING>'
                 r = session.get(page_url, headers=HEADERS)
                 
-                # print(page_url)
                 if page_url == 'https://stores.newbalance.com/shop/new-balance':
                     hours = '<MISSING>'
                 else:    
@@ -115,8 +112,7 @@ def fetch_data():
                 all_store_data.append(store_data)
                 
                 
-            else:
-                print(loc)    
+         
             result_coords.append((lat, longit))
         
         
