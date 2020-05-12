@@ -55,7 +55,11 @@ def fetch_data():
                             city = item.split('"city":"')[1].split('"')[0].title()
                             lng = item.split('"coordinates":[')[1].split(',')[0]
                             lat = item.split('"coordinates":[')[1].split(',')[1].split(']')[0]
-                            phone = item.split('"phone":"')[1].split('"')[0]
+                            phone = '<MISSING>'
+                            try:
+                                phone = item.split('"branchPhone":"')[1].split('"')[0]
+                            except:
+                                pass
                             country = item.split('"country":"')[1].split('"')[0]
                             typ = 'Branch'
                             website = 'citi.com'
