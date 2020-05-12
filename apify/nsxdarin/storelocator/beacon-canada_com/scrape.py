@@ -21,34 +21,65 @@ def fetch_data():
     name = ''
     hours = ''
     for line in lines:
-        if 'Posi-' in line:
-            name = ''
-        if '<td width="33%"' in line and 'Posi-Slope' not in line and '><span style="font-weight: bold">' in line:
+        if '<td width="33%"' in line and '><span style="font-weight: bold">' in line:
+            if 'Posi-' in line:
+                hours = '<MISSING>'
             name = line.split('><span style="font-weight: bold">')[1].split('<')[0]
             if '<strong>(' in line:
-                name = name + ' ' + line.split('<strong>')[1].split('<')[0]
+                name = name + ' ' + line.split('<strong>')[1].split('<')[0].encode('utf-8')
             if '<strong> (' in line:
-                name = name + line.split('<strong>')[1].split('<')[0]
-            g = next(lines).split('<')[0].strip().replace('\t','')
-            h = next(lines).split('<')[0].strip().replace('\t','')
-            add = g
+                name = name + line.split('<strong>')[1].split('<')[0].encode('utf-8')
+            g = next(lines)
+            add = ''
+            if '<span itemprop="streetAddress">' in g:
+                add = '#1 - 7688 - 132 Street'
+                city = 'Surrey'
+                zc = 'V3W 4M9'
+            if '311 Chemin' in g:
+                g = '311 Chemin Saint Francois Xavier'
+            else:
+                g = g.split('<')[0].strip().replace('\t','').encode('utf-8')
+            h = next(lines)
+            if 'al, QC' in h:
+                h = 'Montreal, QC H1A 1A9'
+            else:
+                h = h.split('<')[0].strip().replace('\t','').encode('utf-8')
+            if '132 Street' not in add:
+                add = g
             loc = '<MISSING>'
             website = 'beacon-canada.com'
-            city = h.split(',')[0]
-            zc = h.strip().rsplit(' ',2)[1] + ' ' + h.rsplit(' ',1)[1]
+            if '132 Street' not in add:
+                city = h.split(',')[0]
+                zc = h.strip().rsplit(' ',2)[1] + ' ' + h.rsplit(' ',1)[1]
             country = 'CA'
             lat = '<MISSING>'
             lng = '<MISSING>'
             store = '<MISSING>'
             typ = '<MISSING>'
+        if 'Posi-Pentes</span><br />' in line:
+            add = '13145 Rue Prince Arthur'
+            city = 'Montreal'
+            state = 'Quebec'
+            zc = 'H1A 1A9'
+            name = 'Posi-Pentes'
+            phone = '(514) 642-8691'
+        if 'https://www.google.com/maps/place/' in line and '@' in line:
+            lat = line.split('@')[1].split(',')[0]
+            lng = line.split('@')[1].split(',')[1]
         if '<td scope="col"><span style="font-weight: bold">' in line and 'Posi-Slope' not in line and '><span style="font-weight: bold">' in line:
             name = line.split('><span style="font-weight: bold">')[1].split('<')[0]
             if '<strong>(' in line:
-                name = name + ' ' + line.split('<strong>')[1].split('<')[0]
+                name = name + ' ' + line.split('<strong>')[1].split('<')[0].encode('utf-8')
             if '<strong> (' in line:
-                name = name + line.split('<strong>')[1].split('<')[0]
-            g = next(lines).split('<')[0].strip().replace('\t','')
-            h = next(lines).split('<')[0].strip().replace('\t','')
+                name = name + line.split('<strong>')[1].split('<')[0].encode('utf-8')
+            g = next(lines).split('<')[0].strip().replace('\t','').encode('utf-8')
+            h = next(lines)
+            if 'Trois-R' in h:
+                h = 'Trois-Rivieres, QC G9C 1M6'
+            elif 'bec, QC G1P 3X2' in h:
+                h = 'Quebec, QC G1P 3X2'
+            else:
+                h = h.split('<')[0].strip().replace('\t','').encode('utf-8')
             add = g
             loc = '<MISSING>'
             website = 'beacon-canada.com'
@@ -60,15 +91,23 @@ def fetch_data():
             store = '<MISSING>'
             typ = '<MISSING>'
         if 'Locations </span>' in line:
-            state = line.split('<h2><span style="font-weight: bold">')[1].split(' Locations')[0]
+            if 'bec Locations' in line:
+                state = 'Quebec'
+            else:
+                state = line.split('<h2><span style="font-weight: bold">')[1].split(' Locations')[0].encode('utf-8')
         if 'PH: (' in line:
             phone = line.split('PH: ')[1].split('<')[0]
         if '">Open:' in line:
             hours = line.split('">Open:')[1].split('</span>')[0].strip().replace('&#8226;','; ').replace('  ',' ')
         if 'Get Driving Directions' in line:
-            hours = hours.replace('<span class="style3" style="font-weight: bold; font-size: 11px">','')
-            hours = hours.replace(' ;',';')
+            if hours != '<MISSING>':
+                hours = hours.replace('<span class="style3" style="font-weight: bold; font-size: 11px">','')
+                hours = hours.replace(' ;',';')
             if name != '':
+                if 'Mississauga' in city or 'Peterborough' in city:
+                    state = 'Ontario'
+                if 'Surrey' in city:
+                    state = 'British Columbia'
                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
