@@ -58,99 +58,116 @@ def fetch_data():
     session = SgRequests()
 
 
-    url = 'https://api-prod-gfp-us-a.tillster.com/mobilem8-web-service/rest/storeinfo/distance?_=1587766814072&disposition=DINE_IN&latitude=39.6961606&longitude=-105.0382076&maxResults=1000&radius=6000&statuses=ACTIVE,TEMP-INACTIVE,ORDERING-DISABLED&tenant=gfp-us'
+    urls = [
+        'https://api-prod-gfp-us-a.tillster.com/mobilem8-web-service/rest/storeinfo/distance?_=1587766814072&disposition=DINE_IN&latitude=39.6961606&longitude=-105.0382076&maxResults=1000&radius=6000&statuses=ACTIVE,TEMP-INACTIVE,ORDERING-DISABLED&tenant=gfp-us',
+        'https://api-prod-gfp-us-a.tillster.com/mobilem8-web-service/rest/storeinfo/distance?_=1587766814072&disposition=DELIVERY&latitude=39.6961606&longitude=-105.0382076&maxResults=1000&radius=6000&statuses=ACTIVE,TEMP-INACTIVE,ORDERING-DISABLED&tenant=gfp-us',
+        'https://api-prod-gfp-us-a.tillster.com/mobilem8-web-service/rest/storeinfo/distance?_=1587766814072&disposition=PICKUP&latitude=39.6961606&longitude=-105.0382076&maxResults=1000&radius=6000&statuses=ACTIVE,TEMP-INACTIVE,ORDERING-DISABLED&tenant=gfp-us'
+    ]
 
-    r = session.get(url, headers = HEADERS)
-
-
-    all_stores = json.loads(r.content)['getStoresResult']['stores']
     all_store_data = []
+    dup_tracker = set()
+    for url in urls:
+        r = session.get(url, headers = HEADERS)
 
-    for store in all_stores:
 
+        all_stores = json.loads(r.content)['getStoresResult']['stores']
         
-        if store['status'] == 'TEMP-INACTIVE':
-            continue
-        
-        location_name = store['storeName']
-        street_address = store['street']
-        state = store['state']
-        city = store['city']
-        zip_code = store['zipCode']
-        
-        if 'country' not in store:
-            country_code = 'US'
-        else:
-            country_code = store['country']
-        
-       
+
+        for store in all_stores:
+
+            
+            #if store['status'] == 'TEMP-INACTIVE':
+            #    continue
+            
+            location_name = store['storeName']
+            if location_name not in dup_tracker:
+                dup_tracker.add(location_name)
+            else:
+                continue
+            street_address = store['street']
+            state = store['state']
+            city = store['city']
+            zip_code = store['zipCode']
+            
+            if 'country' not in store:
+                country_code = 'US'
+            else:
+                country_code = store['country']
             
         
-        store_number = store['storeName'].replace('GFP-', '').strip()
-        
-        lat = store['latitude']
-        longit = store['longitude']
-        
-        phone_number = store['phoneNumber']
-
-        
-        hours = ''
-        location_type = ''
-        dine_in = -1
-        pick_up = -1
-        delvery = -1
-
-
-        if 'storeHours' not in store:
-            hours = '<MISSING>'
-        else:
-            for i, loc_type in enumerate(store['storeHours']):
-                location_type += loc_type['disposition'].replace('_', ' ') + ' '
-
-                if 'DINE_IN' in loc_type['disposition']:
-                    ## hours
-                    dine_in = i
-                if 'PICKUP' in loc_type['disposition']:
-                    pick_up = i
                 
-                if 'DELIVERY' in loc_type['disposition']:
-                    delvery = i
+            
+            store_number = store['storeName'].replace('GFP-', '').strip()
+            
+            lat = store['latitude']
+            longit = store['longitude']
+            
+            phone_number = store['phoneNumber']
+            if 'TEST' in  str(phone_number):
+                continue
+
+            if str(phone_number).strip() == '1':
+                phone_number = '<MISSING>'
+
+
+            
+            hours = ''
+            location_type = ''
+            dine_in = -1
+            pick_up = -1
+            delvery = -1
+
+
+            if 'storeHours' not in store:
+                hours = '<MISSING>'
+            else:
+                for i, loc_type in enumerate(store['storeHours']):
+                    location_type += loc_type['disposition'].replace('_', ' ') + ' '
+
+                    if 'DINE_IN' in loc_type['disposition']:
+                        ## hours
+                        dine_in = i
+                    if 'PICKUP' in loc_type['disposition']:
+                        pick_up = i
                     
+                    if 'DELIVERY' in loc_type['disposition']:
+                        delvery = i
+                        
 
-                
-   
-        if dine_in != -1:
-            hours = hours_ingest(store['storeHours'][dine_in])
-        elif pick_up != -1:
-            hours = hours_ingest(store['storeHours'][pick_up])
-        elif delvery != -1:
-            hours = hours_ingest(store['storeHours'][delvery])
-        else:
-            hours = '<MISSING>'
-            location_type = '<MISSING>'
-
-
-                
-        if hours == '':
-            print(store)
-            print()
-            print()
-            print()
-            print()
-            print()
-            
-        location_type = location_type.strip()
-        hours = hours.strip()
-        
+                    
     
-        page_url = '<MISSING>'
-        
-        
-        
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
-                    store_number, phone_number, location_type, lat, longit, hours, page_url]
+            if dine_in != -1:
+                hours = hours_ingest(store['storeHours'][dine_in])
+            elif pick_up != -1:
+                hours = hours_ingest(store['storeHours'][pick_up])
+            elif delvery != -1:
+                hours = hours_ingest(store['storeHours'][delvery])
+            else:
+                hours = '<MISSING>'
+                location_type = '<MISSING>'
 
-        all_store_data.append(store_data)
+
+                    
+            if hours == '':
+                print(store)
+                print()
+                print()
+                print()
+                print()
+                print()
+                
+            location_type = location_type.strip()
+            hours = hours.strip()
+            
+        
+            page_url = '<MISSING>'
+            
+            
+            
+            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
+                        store_number, phone_number, location_type, lat, longit, hours, page_url]
+
+            all_store_data.append(store_data)
 
         
         
