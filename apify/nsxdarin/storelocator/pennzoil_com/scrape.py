@@ -26,7 +26,7 @@ def fetch_data():
     locations = []
     coord = search.next_coord()
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
         y = coord[1]
         website = 'pennzoil.com'
@@ -60,7 +60,7 @@ def fetch_data():
                 if 'PENNZOIL' in name.upper():
                     yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         if len(array) <= MAX_RESULTS:
-            print("max distance update")
+            #print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
 ##        elif len(array) == MAX_RESULTS:
 ##            print("max count update")
