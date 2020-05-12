@@ -8,7 +8,7 @@ import json
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline= "") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -23,6 +23,7 @@ def fetch_data():
     r = session.get("https://api.zenlocator.com/v1/apps/app_vfde3mfb/locations/search?northeast=82.292271%2C90.127516&southwest=-57.393437%2C-180").json()
     for loc in r['locations']:
         name=loc['name'].strip()
+        location_type = name
         addr = loc['address'].split(",")
         if "United States" in addr[-1] or "US" in addr[-1]:
             del addr[-1]
@@ -40,7 +41,7 @@ def fetch_data():
         if "2606 Zion Road  Henderson" in street_address:
             state ='Kentucky'
             street_address = street_address.replace("Henderson",'')
-
+      
         
         country=loc['countryCode'].strip()
         try:
@@ -56,10 +57,10 @@ def fetch_data():
                     hour+=' '+hr+" : "+loc['hours']['hoursOfOperation'][hr]
 
         if "hrs_ywfef43p" in loc['hours']:
-            hour = 'Monday 9am-9pm Tuesday 9am-9pm Wednesday 9am-9pm Thursday 9am-9pm Friday 9am-9pm Saturday 9am-9pm Sunday 10am-8pm'
+            hour = 'Monday 9am-9pm  Tuesday 9am-9pm  Wednesday 9am-9pm  Thursday 9am-9pm  Friday 9am-9pm  Saturday 9am-9pm  Sunday 10am-8pm'
             
         if "hrs_a4db656x" in loc['hours']:
-            hour = 'Monday 9am-6pm Tuesday 9am-6pm Wednesday 9am-6pm Thursday 9am-6pm Friday 9am-6pm Saturday 9am-6pm Sunday 12pm-6pm'
+            hour = 'Monday 9am-6pm  Tuesday 9am-6pm  Wednesday 9am-6pm  Thursday 9am-6pm  Friday 9am-6pm  Saturday 9am-6pm  Sunday 12pm-6pm'
         
         storeno=''
         store=[]
@@ -72,12 +73,13 @@ def fetch_data():
         store.append(country if country else "<MISSING>")
         store.append(storeno if storeno else "<MISSING>")
         store.append(phone if phone else "<MISSING>")
-        store.append("rosesdiscountstores")
+        store.append(location_type if location_type else "<MISSING>")
         store.append(lat if lat else "<MISSING>")
         store.append(lng if lng else "<MISSING>")
         store.append(hour if hour else "<MISSING>")
         store.append("https://www.rosesdiscountstores.com/store-locator-index")
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        # print(store)
         yield store
 
 def scrape():

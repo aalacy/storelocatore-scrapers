@@ -3,10 +3,10 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
+from sgrequests import SgRequests
+session = SgRequests()
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -38,14 +38,20 @@ def fetch_data():
     raw_address = ""
     hours_of_operation = ""
     location_url = "https://www.lifecareservices-seniorliving.com/"
-    data="pg=1&action=get_communities&gd_nonce=ce7ea9f2e6"
+    # data="pg=1&action=get_communities&gd_nonce=ce7ea9f2e6"
     headers = {
-    'content-type': "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW",
+    'Accept':'*/*',
+    'Content-Type': "application/x-www-form-urlencoded; charset=UTF-8",
     'cache-control': "no-cache",
+    'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36'
+
     }
-    payload = "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"pg\"\r\n\r\n1\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"action\"\r\n\r\nget_communities\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"gd_nonce\"\r\n\r\nce7ea9f2e6\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--"
-    r = requests.post("https://www.lifecareservices-seniorliving.com/wp-admin/admin-ajax.php",headers=headers,data=payload).json()
-   
+    data = {"pg": "1",
+            "action": "get_communities",
+            "gd_nonce": "3064d22393"}
+    # payload = "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"pg\"\r\n\r\n1\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"action\"\r\n\r\nget_communities\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"gd_nonce\"\r\n\r\nce7ea9f2e6\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--"
+    r = session.post("https://www.lifecareservices-seniorliving.com/wp-admin/admin-ajax.php",headers=headers,data=data).json()
+    # print(r)
     for ut in r['results']:
         soup1 = BeautifulSoup(ut['html'], "html5lib")
         for data in soup1.find_all("div",{"class":"cmnty-results-address"}):

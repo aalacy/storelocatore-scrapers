@@ -1,7 +1,7 @@
 import csv
 from bs4 import BeautifulSoup
 import requests
-from sgrequests import SgRequests
+# from sgrequests import SgRequests
 from random import choice
 # import http.client
 import re
@@ -11,9 +11,8 @@ import ssl
 import urllib3
 
 
-session = SgRequests()
-
-session = SgRequests()
+session = requests.Session()
+# session = SgRequests()
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
@@ -33,7 +32,7 @@ def proxy_request(request_type, url, **kwargs):
     while 1:
         try:
             proxy = get_proxy()
-            # print("Using Proxy {}".format(proxy))
+            #print("Using Proxy {}".format(proxy))
             
             r = requests.request(request_type, url, proxies=proxy, timeout=3, **kwargs)
             if "CMSSiteMapList" not in r.text:
@@ -47,7 +46,7 @@ def proxy_request1(request_type, url, **kwargs):
     while 1:
         try:
             proxy = get_proxy()
-            # print("Using Proxy {}".format(proxy))
+            #print("Using Proxy {}".format(proxy))
             
             r = requests.request(request_type, url, proxies=proxy, timeout=3, **kwargs)
             if "channel-content full-width" not in r.text:
@@ -78,7 +77,7 @@ def fetch_data():
     
     # r = proxy_request("get","https://www.wawa.com/site-map", verify=False, headers=headers)
     # r = session.get(page_url, headers=r_headers, verify=False)
-    session = requests.Session()
+    
     response = session.get("https://www.wawa.com/site-map",verify= False)
     cookies_json = session.cookies.get_dict()
     cookies_string = str(cookies_json).replace("{", "").replace("}", "").replace("'", "").replace(": ", "=").replace(",", ";")
@@ -91,7 +90,7 @@ def fetch_data():
     }
     r = proxy_request("get","https://www.wawa.com/site-map", verify=False, headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    #print(soup.prettify())
+    # print(soup.prettify())
     addresses = []
     for link in soup.find_all("ul",{"class":"CMSSiteMapList"})[-1].find_all("a",{"class":"CMSSiteMapLink"}):
         locator_domain = base_url
@@ -150,8 +149,8 @@ def fetch_data():
         if str(store[2]) + str(store[-1]) not in addresses:
             addresses.append(str(store[2]) + str(store[-1]))
             store = [x if x else "<MISSING>" for x in store]
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            print("data = " + str(store))
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
     
