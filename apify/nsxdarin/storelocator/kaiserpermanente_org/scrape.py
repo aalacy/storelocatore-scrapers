@@ -25,7 +25,7 @@ def fetch_data():
             'https://healthy.kaiserpermanente.org/oregon-washington/facilities/sitemap'
             ]
     for url in urls:
-        print(url)
+        #print(url)
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
             if '<loc>https://healthy.kaiserpermanente.org/' in line:
@@ -36,7 +36,7 @@ def fetch_data():
                         locs.append(lurl)
     print('Found %s Locations...' % str(len(locs)))
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        #print('Pulling Location %s...' % loc)
         website = 'kaiserpermanente.org'
         typ = '<MISSING>'
         hours = ''
