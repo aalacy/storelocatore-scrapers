@@ -52,11 +52,11 @@ def fetch_data():
 
         if i < 3:
             location_type = 'Country Harvest Apple Markets'
-        elif i < 4:
-            location_type = "Jim's Foodliner Apple Market"
         elif i < 5:
+            location_type = "Jim's Foodliner Apple Market"
+        elif i < 7:
             location_type = 'Seabrook Apple Market'
-        elif i < 6:
+        elif i < 8:
             location_type = "Ray's Apple Markets"
 
         location_name = '<MISSING>'
