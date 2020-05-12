@@ -32,7 +32,7 @@ def fetch_data():
                     else:
                         states.append(lurl)
     for state in states:
-        print('Pulling State %s...' % state)
+        #print('Pulling State %s...' % state)
         r2 = session.get(state, headers=headers)
         for line2 in r2.iter_lines():
             if '<a class="c-directory-list-content-item-link" href="' in line2:
@@ -45,7 +45,7 @@ def fetch_data():
                         else:
                             cities.append(lurl)
     for city in cities:
-        print('Pulling City %s...' % city)
+        #print('Pulling City %s...' % city)
         r2 = session.get(city, headers=headers)
         for line2 in r2.iter_lines():
             if '<a itemprop="url" href="../' in line2:
@@ -60,7 +60,7 @@ def fetch_data():
         while LocFound:
             try:
                 LocFound = False
-                print('Pulling Location %s...' % loc)
+                #print('Pulling Location %s...' % loc)
                 website = 'riteaid.com'
                 typ = '<MISSING>'
                 name = ''
