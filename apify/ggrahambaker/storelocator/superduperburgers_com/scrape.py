@@ -83,7 +83,6 @@ def fetch_data():
         
         country_code = 'US'
         store_number = '<MISSING>'
-        phone_number = '<MISSING>'
         location_type = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
