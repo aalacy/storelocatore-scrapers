@@ -23,7 +23,7 @@ def fetch_data():
     url = 'https://locations.vitaminshoppe.com'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if 'title="Stores in ' in line:
+        if 'title="Stores in ' in line and '{{url' not in line:
             states.append(line.split('href="')[1].split('"')[0])
     for state in states:
         print('Pulling State %s...' % state)
@@ -39,7 +39,6 @@ def fetch_data():
                 lurl = line2.split('href="')[1].split('"')[0]
                 if lurl not in locs:
                     locs.append(lurl)
-    addinfos = []
     for loc in locs:
         PFound = True
         while PFound:
@@ -83,12 +82,7 @@ def fetch_data():
                 if name != '':
                     if phone == '':
                         phone = '<MISSING>'
-                    if typ == '':
-                        typ = '<MISSING>'
-                    addinfo = add + city + state
-                    if addinfo not in addinfos and lat != '':
-                        addinfos.append(addinfo)
-                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             except:
                 PFound = True
 
