@@ -43,7 +43,7 @@ def fetch_data():
         location_name = cols[1].text.replace('&amp;', '&')
         
         addy = [l for l in cols[2].prettify().split('\n') if '<' not in l]
-        street_address = addy[0].strip()
+        street_address = addy[0].strip().replace('&amp;', '&')
         city, state, zip_code = addy_ext(addy[1].strip())
         phone_number = cols[-1].text.strip()
         if phone_number == '':
