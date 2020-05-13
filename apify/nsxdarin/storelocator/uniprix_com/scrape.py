@@ -1,7 +1,10 @@
 import csv
 import urllib2
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from sgrequests import SgRequests
-import json
+
+driver = webdriver.Chrome("chromedriver")
 
 session = SgRequests()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -10,24 +13,30 @@ headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://www.uniprix.com/sitemap.xml'
     locs = []
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        if '<loc>https://www.uniprix.com/en/stores/' in line:
-            items = line.split('<loc>https://www.uniprix.com/en/stores/')
-            for item in items:
-                if '<urlset' not in item:
-                    lurl = 'https://www.uniprix.com/en/stores/' + item.split('<')[0]
+    cities = []
+    driver.get('https://www.uniprix.com/en/all-cities')
+    lines = driver.page_source.split('\n')
+    for linenum in range(0, len(lines)):
+        if '<a href="https://www.uniprix.com/en/stores/city/' in lines[linenum]:
+            cities.append(lines[linenum].split('href="')[1].split('"')[0])
+    for city in cities:
+        driver.get(city)
+        lines = driver.page_source.split('\n')
+        for linenum in range(0, len(lines)):
+            if '<a href="https://www.uniprix.com/en/stores/' in lines[linenum]:
+                lurl = lines[linenum].split('href="')[1].split('"')[0]
+                if lurl not in locs:
                     locs.append(lurl)
+    print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
         print('Pulling Location %s...' % loc)
-        r2 = session.get(loc, headers=headers)
+        r = session.get(loc, headers=headers)
         website = 'www.uniprix.com'
         typ = '<INACCESSIBLE>'
         store = '<MISSING>'
@@ -41,7 +50,7 @@ def fetch_data():
         hours = ''
         lat = ''
         lng = ''
-        lines = r2.iter_lines()
+        lines = r.iter_lines()
         for line2 in lines:
             if 'property="og:title" content="' in line2:
                 name = line2.split('property="og:title" content="')[1].split('"')[0]
@@ -72,7 +81,7 @@ def fetch_data():
                     hours = line2.split('<tr itemprop="openingHours" datetime="')[1].split('"')[0]
                 else:
                     hours = hours + '; ' + line2.split('<tr itemprop="openingHours" datetime="')[1].split('"')[0]
-        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
