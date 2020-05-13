@@ -18,34 +18,35 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    sitemaps = []
-    addinfos = []
-    url = 'https://locations.vitaminshoppe.com/sitemap/sitemap_index.xml'
+    states = []
+    cities = []
+    url = 'https://locations.vitaminshoppe.com'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
-        if '<loc>' in line:
-            sitemaps.append(line.split('>')[1].split('<')[0])
-    for sm in sitemaps:
-        print('Pulling Sitemap %s...' % sm)
-        smurl = sm
-        with open('branches.xml.gz','wb') as f:
-            f.write(urllib2.urlopen(smurl).read())
-            f.close()
-            with gzip.open('branches.xml.gz', 'rb') as f:
-                for line in f:
-                    if '<loc>https://locations.vitaminshoppe.com/' in line:
-                        lurl = line.split('<loc>')[1].split('<')[0]
-                        if '.html' in lurl and '.m.' not in lurl:
-                            if lurl not in locs:
-                                locs.append(lurl)
-        print(str(len(locs)) + ' Locations Found...')
-    stores = []
+        if 'title="Stores in ' in line:
+            states.append(line.split('href="')[1].split('"')[0])
+    for state in states:
+        print('Pulling State %s...' % state)
+        r2 = session.get(state, headers=headers)
+        for line2 in r2.iter_lines():
+            if 'title="Stores in ' in line2 and '<a href="https://locations.vitaminshoppe.com/' in line2:
+                cities.append(line2.split('href="')[1].split('"')[0])
+    for city in cities:
+        print('Pulling City %s...' % city)
+        r2 = session.get(city, headers=headers)
+        for line2 in r2.iter_lines():
+            if 'data-show-country="en-ca" data-gaq="Maplist, Location Link' in line2 and '<a href="https://locations.vitaminshoppe.com/' in line2:
+                lurl = line2.split('href="')[1].split('"')[0]
+                if lurl not in locs:
+                    locs.append(lurl)
+    addinfos = []
     for loc in locs:
         PFound = True
         while PFound:
             try:
                 PFound = False
                 r2 = session.get(loc, headers=headers)
+                print('Pulling Location %s...' % loc)
                 website = 'vitaminshoppe.com'
                 name = ''
                 add = ''
