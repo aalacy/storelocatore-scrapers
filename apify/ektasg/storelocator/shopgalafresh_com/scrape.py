@@ -7,6 +7,8 @@ import re
 options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
+options.add_argument("--disable-notifications")    
+options.add_argument('disable-infobars')
 options.add_argument('--disable-dev-shm-usage')
 
 
@@ -30,32 +32,38 @@ def parse_geo(url):
 
 def fetch_data():
     data = []
+    p = 0
     #driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-    driver = webdriver.Chrome("chromedriver", options=options)
-    driver.get("https://www.shopgalafresh.com/")
-    time.sleep(10)
-
-    driver.find_element_by_xpath("//a[contains(text(),'select')]").click()
-    clickElements = driver.find_elements_by_xpath("//button[text()='Choose']")
-    length = len(clickElements)
-    driver.quit()
-    for i in range(length):
-        #driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
+    
+   
+    i = 0 
+    while True:
+        #driver = webdriver.Chrome("c:\\Users\\Dell\\local\\chromedriver", options=options)
         driver = webdriver.Chrome("chromedriver", options=options)
         driver.get("https://www.shopgalafresh.com/")
-        page_url = "https://www.shopgalafresh.com/"
-        time.sleep(10)
-        driver.find_element_by_xpath("//a[contains(text(),'select')]").click()
-        time.sleep(10)
-        driver.find_element_by_xpath("(//button[text()='Choose'])[" + str(i + 1) + "]").click()
-        time.sleep(10)
-        driver.find_element_by_xpath(
-            "//span[contains(text(),'Store Info')][ancestor:: span[@ng-repeat='link in footerCtrl.links']]").click()
-        time.sleep(10)
+        time.sleep(2)
+       
+       
+       
+        driver.find_element_by_xpath("//button[contains(text(),'select')]").click()
+        time.sleep(2)
+        clickElements = driver.find_elements_by_xpath("//button[text()='Choose']")
+        clickElements[i].click()
+        length = len(clickElements)
+       
+        time.sleep(3)
+        driver.get("https://www.shopgalafresh.com/retailer/information")
+        #time.sleep(2)
+        #driver.find_element_by_xpath("//button[text()='OK']").click()
+        print('clicked;')
+        time.sleep(3)
+            
+        
+        
         locname = driver.find_element_by_xpath("//div[@class='branch-name']").text
         streetaddress1 = driver.find_element_by_xpath("//div[@class='branch-address']").text
         hour = driver.find_element_by_xpath("//span[@class='branch-hours']").text
-        time.sleep(10)
+        #time.sleep(10)
 
         phone = driver.find_element_by_xpath("//a[contains(text(),'(')]").text
         city = streetaddress1.split(',')[len(streetaddress1.split(',')) - 1].split(' ')[1]
@@ -73,7 +81,7 @@ def fetch_data():
 
         data.append([
             'https://www.shopgalafresh.com/',
-            page_url,
+            'https://www.shopgalafresh.com/retailer/information',
             locname,
             streetaddress,
             city,
@@ -87,19 +95,24 @@ def fetch_data():
             lng,
             hour
         ])
-        driver.quit()
-    return data
 
+        #print(i,data[i])
+        if i == length -1:
+            break
+        if i < length:
+            i += 1
+        else:
+            break
+
+        driver.quit()
+        
+    return data 
+  
 
 def scrape():
     data = fetch_data()
     write_output(data)
-    return data
+    
 
 
 data = scrape()
-
-
-
-
-
