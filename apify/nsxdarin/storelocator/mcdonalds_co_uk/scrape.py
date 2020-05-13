@@ -35,7 +35,7 @@ def get_session():
     # print(f'-- starting new session for thread id {threading.current_thread().ident} --')
     thread_local.session = SgRequests()
     # print out what the new IP is ...
-    r = thread_local.session.get('https://jsonip.com/')
+    # r = thread_local.session.get('https://jsonip.com/')
     # print(f"new IP for thread id {threading.current_thread().ident}: {r.json()['ip']}")
   if hasattr(thread_local, "request_count") and thread_local.request_count == 10:
     reset_request_count()
