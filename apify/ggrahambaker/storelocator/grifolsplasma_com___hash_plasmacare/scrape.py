@@ -39,7 +39,7 @@ def fetch_data():
     link_list = []
     for loc in locs:
         loc_type = loc.find('h5').text
-        if 'Talecris Plasma' not in loc_type:
+        if 'PlasmaCare' not in loc_type:
             continue
 
         link = loc.find('a')['href']
