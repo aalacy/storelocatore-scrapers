@@ -1,6 +1,19 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+
+def get_driver():
+    options = Options()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
+    return webdriver.Chrome('chromedriver', options=options)
+
+
+
 
 
 def write_output(data):
@@ -24,6 +37,8 @@ def addy_ext(addy):
 
 
 def fetch_data():
+    driver = get_driver()
+
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
 
@@ -42,7 +57,23 @@ def fetch_data():
     for link in link_list:
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
+
         
+
+        driver.get(link)
+        lat, longit = '', ''
+        source = str(driver.page_source)
+        for line in source.splitlines():
+            if 'initializeMap(' in line:                
+                coords = line.strip().split('(')[1].split(')')[0].replace('"', '').strip().split(',')
+                lat = coords[0]
+                longit = coords[1]
+                
+                
+                
+        if lat == '':
+            lat = '<MISSING>'
+            longit = '<MISSING>'
         
         location_name = soup.find('h3').text
 
@@ -55,7 +86,6 @@ def fetch_data():
             if 'Store Address' in a:
                 continue
                 
-            
             r_addy.append(a.strip())
             
         street_address = r_addy[0]
@@ -81,8 +111,7 @@ def fetch_data():
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
+   
         page_url = link
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
