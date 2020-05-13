@@ -51,9 +51,6 @@ def fetch_data():
     for store_number in store_numbers:
         response = session.get(api_base + store_number).content
         cont = json.loads(response)
-        print(cont)
-        print()
-        print()
         
         store_number = cont['StoreNumber']
         location_name = cont['Name']
@@ -73,7 +70,7 @@ def fetch_data():
 
         
         location_type = '<MISSING>'
-        phone_number = '<MISSING>'
+        phone_number = '1-800-786-1000'
         page_url = '<MISSING>'
         country_code = 'US'
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
