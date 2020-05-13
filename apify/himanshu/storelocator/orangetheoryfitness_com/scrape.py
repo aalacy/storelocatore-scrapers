@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-
+import requests
 
 session = SgRequests()
 
@@ -44,7 +44,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ['us', 'ca'])
     MAX_RESULTS = 150
-    MAX_DISTANCE = 50
+    MAX_DISTANCE = 100
     current_results_len = 0     # need to update with no of count.
 
     zip_code = search.next_zip()
@@ -54,10 +54,12 @@ def fetch_data():
     }
     while zip_code:
         result_coords = []
-        #print("zip_code === "+zip_code)
+        # print("zip_code === ",zip_code)
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print('Pulling Lat-Long %s...' % (str(zip_code)))
         base_url=  "https://www.orangetheoryfitness.com/service/directorylisting/filterMarkers?s="+str(zip_code)
         try:
-            r = session.get(base_url)
+            r = requests.get(base_url)
             json_data = r.json()
         except:
             pass
@@ -98,7 +100,7 @@ def fetch_data():
             longitude = i['lon']
             page_url = i['web_site']
             try:
-                r1 = session.get(page_url)
+                r1 = requests.get(page_url)
                 soup1 = BeautifulSoup(r1.text,"lxml")
                 try:
                     hours_of_operation =json.loads(soup1.find("script",{"type":"application/ld+json"}).text)['openingHours']
@@ -132,7 +134,7 @@ def fetch_data():
                 pass
             else:
                 yield store
-            # print("--------------------",store)
+            print("--------------------",store)
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)

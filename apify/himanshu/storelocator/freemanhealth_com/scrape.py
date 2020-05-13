@@ -6,7 +6,7 @@ import requests
 
 
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w',newline='', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
@@ -47,8 +47,8 @@ def fetch_data():
             for urls in page_url1:
                 response1 = requests.get(urls, headers=headers)
                 soup1 = BeautifulSoup(response1.text, "lxml")
-                latitude = str(soup1).split("center: {")[1].split("},")[0].split("lat: ")[1].split(",")[0]
-                longitude = str(soup1).split("center: {")[1].split("},")[0].split("lng: ")[1].split(",")[0]
+                # latitude = str(soup1).split("center: {")[1].split("},")[0].split("lat: ")[1].split(",")[0]
+                # longitude = str(soup1).split("center: {")[1].split("},")[0].split("lng: ")[1].split(",")[0]
                 street_address=(soup1.find("meta",{"itemprop":"streetAddress"})['content'])
                 name=soup1.find_all("meta",{"itemprop":'name'})[-1]['content']
                 # print(name)
@@ -69,8 +69,8 @@ def fetch_data():
                 store.append(store_number if store_number else "<MISSING>") 
                 store.append(phone if phone else "<MISSING>")
                 store.append("<MISSING>")
-                store.append(latitude if latitude else "<MISSING>")
-                store.append(longitude if longitude else "<MISSING>")
+                store.append("<MISSING>")
+                store.append("<MISSING>")
                 store.append("<MISSING>")
                 store.append(urls)
                 if store[2] in addressesess:

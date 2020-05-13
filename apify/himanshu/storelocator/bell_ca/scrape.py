@@ -1,23 +1,12 @@
 import csv
-from sgrequests import SgRequests
 import requests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import time
-import html5lib
 import unidecode
 
-# import pprint
-# from random import randrange
-# from random import choice
-# import unicodedata
-
-
-
-
-session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,24 +17,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-# def get_proxy():
-#     url = "https://www.sslproxies.org/"
-#     r = session.get(url)
-#     soup = BeautifulSoup(r.content, "html5lib")
-#     return {'https': (choice(list(map(lambda x:x[0]+':'+x[1],list(zip(map(lambda x:x.text,soup.findAll('td')[::8]),map(lambda x:x.text,soup.findAll('td')[1::8])))))))}
-
-    
-# def proxy_request(request_type, url, **kwargs):
-#     while 1:
-#         try:
-#             proxy = get_proxy()
-#             # print("Using Proxy {}".format(proxy))
-#             r = requests.request(request_type, url, proxies=proxy, timeout=5, **kwargs)
-#             break
-#         except:
-#             pass
-#     return r
-
 
 def fetch_data():
     headers = {
@@ -64,20 +35,21 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes= ["CA"])
     MAX_RESULTS = 25
-    MAX_DISTANCE = 75.0
+    MAX_DISTANCE = 40
     coord = search.next_coord()
     while coord:
         result_coords = []
         x = coord[0]
+        # x = "45.203238"
         y = coord[1]
+        # y = "-67.27968"
+
         # print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
-        # r = proxy_request("get","https://bellca.know-where.com/bellca/cgi/selection?lang=en&loadedApiKey=main&ll="+str(x)+"%2C"+str(y)+"&stype=ll&async=results&key", headers=headers)
         r = requests.get("https://bellca.know-where.com/bellca/cgi/selection?lang=en&loadedApiKey=main&ll="+str(x)+"%2C"+str(y)+"&stype=ll&async=results&key", headers=headers)
 
         soup = BeautifulSoup(r.text,"lxml")
         data = soup.find_all("script", {"type":"application/ld+json"})
         hours = soup.find_all("ul", {"class":"rsx-sl-store-list-hours"})
-        # print(hours)
         hours1 = []
         for time in hours:
             hours1.append(' '.join(list(time.stripped_strings)).replace(" ","").replace("p.m.","p.m. ").replace("Closed","Closed "))
@@ -116,16 +88,8 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # try:
-            #     for i in range(len(store)):
-            #         if type(store[i]) == str:
-            #             store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-            #     store = [str(x).replace("\xe2","-").replace("\xe7",'') if x else "<MISSING>" for x in store]
             store = [unidecode.unidecode(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # print(store)
             yield store
-            # except:
-            #     yield store
             # print("data == " + str(store))
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
 

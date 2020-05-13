@@ -1,6 +1,7 @@
-sgrequests
 sgzip
 beautifulsoup4==4.7.1
 lxml
 html5lib
 unidecode
+requests==2.11.1
+

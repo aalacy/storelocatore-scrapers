@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import sgzip
 import re
 import json
+# import unicodedata
 from sgrequests import SgRequests
 session = SgRequests()
 
@@ -23,8 +24,8 @@ def write_output(data):
 def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ["UK"])
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 10
+    MAX_RESULTS = 500
+    MAX_DISTANCE = 1
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
     addresses = []
@@ -34,7 +35,7 @@ def fetch_data():
         lat = coord[0]
         lng = coord[1]
         # print(search.current_zip)
-      # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         base_url = "https://www.waitrose.com/"
@@ -45,7 +46,7 @@ def fetch_data():
         current_results_len = len(json_data)
         for data in json_data:
             location_name = data['branchName']
-            street_address = data['addressLine1']
+            street_address = data['addressLine1'].replace("&#039;","'").strip()
             city = data['city']
             zipp = data['postCode']
             phone = data['phoneNumber']
@@ -78,12 +79,17 @@ def fetch_data():
             store.append(longitude if longitude else "<MISSING>")
             store.append(hours_of_operation if hours_of_operation else "<MISSING>")
             store.append(page_url if page_url else "<MISSING>")
-            if store[2] in addresses:
+            if (store[1]+store[2]+store[-1]) in addresses:
                     continue
-            addresses.append(store[2])
+            addresses.append(store[1]+store[2]+store[-1])
+            # for i in range(len(store)):
+            #     if type(store[i]) == str:
+            #         store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+            # store = [str(x).replace("\xe2","-").replace("\xe7",'') if x else "<MISSING>" for x in store]
+            # store = [unidecode.unidecode(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store
-
+            # print(store)
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
