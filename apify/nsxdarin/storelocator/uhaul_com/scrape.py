@@ -110,15 +110,19 @@ def get_locations_in_city(city_url):
                     pid = item.split('"entityNum":"')[1].split('"')[0]
                     coords.append(pid + '|' + lat + '|' + lng)
         if '<ul class="sub-nav ">' in line2:
-            next(lines)
-            g = next(lines)
-            if 'href="' not in g:
+            try:
+                next(lines)
                 g = next(lines)
-            lurl = g.split('href="')[1].split('/"')[0]
-            if 'http' not in lurl:
-                lurl = 'https://www.uhaul.com' + lurl
-            enum = lurl.rsplit('/', 1)[1]
-            alllocs.append(lurl + '|' + enum)
+                if 'href="' not in g:
+                    g = next(lines)
+                lurl = g.split('href="')[1].split('/"')[0]
+                if 'http' not in lurl:
+                    lurl = 'https://www.uhaul.com' + lurl
+                enum = lurl.rsplit('/', 1)[1]
+                alllocs.append(lurl + '|' + enum)
+            except StopIteration:
+                break
+
     for location in alllocs:
         for place in coords:
             if location.split('|')[1] == place.split('|')[0]:
