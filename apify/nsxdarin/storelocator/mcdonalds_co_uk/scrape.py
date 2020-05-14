@@ -7,9 +7,7 @@ import random
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-
 thread_local = threading.local()
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -20,48 +18,33 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def sleep(min=1, max=5):
     duration = random.randint(min, max)
-    # print('sleeping ' + str(duration))
     time.sleep(duration)
-
 
 def get_session():
   # give each thread its own session object.
   # when using proxy, each thread's session will have a unique IP
   #   and we'll switch IPs every 10 requests
   if (not hasattr(thread_local, "session")) or (hasattr(thread_local, "request_count") and thread_local.request_count == 10):
-    # print(f'-- starting new session for thread id {threading.current_thread().ident} --')
     thread_local.session = SgRequests()
-    # print out what the new IP is ...
-    # r = thread_local.session.get('https://jsonip.com/')
-    # print(f"new IP for thread id {threading.current_thread().ident}: {r.json()['ip']}")
   if hasattr(thread_local, "request_count") and thread_local.request_count == 10:
     reset_request_count()
 
   return thread_local.session
 
-
 def reset_request_count():
-  # print(f'-- reset request_count for thread id {threading.current_thread().ident} --')
   if hasattr(thread_local, "request_count"):
     thread_local.request_count = 0
-  # print(f'-- new request_count for thread id {threading.current_thread().ident}: {thread_local.request_count} --')
-
 
 def increment_request_count():
   if not hasattr(thread_local, "request_count"):
-    # print(f'-- initialize request_count for thread id {threading.current_thread().ident} --')
     thread_local.request_count = 1
   else:
-    # print(f'-- increment request_count for thread id {threading.current_thread().ident} --')
     thread_local.request_count += 1
-    # print(f'-- new request_count for thread id {threading.current_thread().ident}: {thread_local.request_count} --')
 
 
 def get_stores_from_coords(coord, radius, maxResults):
-
     headers = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "accept-encoding": "gzip, deflate, br",
@@ -87,16 +70,10 @@ def get_stores_from_coords(coord, radius, maxResults):
     r = session.get(url, headers=headers)
     json = r.json()
 
-    # print(url)
-    # print('status', r.status_code)
-    # print('num results', len(json['features']))
-
     store_results = []
 
     for item in json['features']:
         name = item['properties']['name']
-        # print('name', name)
-        # print(item)
         add = item['properties']['addressLine1']
         add = add + ' ' + item['properties']['addressLine2']
         add = add.strip()
@@ -152,13 +129,9 @@ def fetch_data():
     all_coords = []
     coord = search.next_coord()
     all_coords.append(coord)
-
     while coord:
       coord = search.next_coord()
       all_coords.append(coord)
-      search.max_count_update([])
-
-    # print('got all coords, starting scrape')
 
     with ThreadPoolExecutor(max_workers=8) as executor:
         futures = [executor.submit(
@@ -166,20 +139,16 @@ def fetch_data():
         for result in as_completed(futures):
             try:
               stores_returned = result.result()
-              # print('stores found: ', len(stores_returned))
               for store in stores_returned:
                   identifier = f'{store[8]}-{store[3]}'.replace(' ', '')
-                  # print('identifier: ', identifier)
                   if identifier not in unique_store_ids:
                       unique_store_ids.append(identifier)
                       yield store
             except Exception as exc:
               print('---- exception ----: %s' % (exc))
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()
