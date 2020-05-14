@@ -49,7 +49,7 @@ def fetch_data():
 
     driver = get_driver()
     driver.get(locator_domain + ext)
-    driver.find_element_by_css_selector('button.link-button').click()
+    #driver.find_element_by_css_selector('button.link-button').click()
     driver.implicitly_wait(5)
     all_store_data = []
 
@@ -67,9 +67,6 @@ def fetch_data():
             phone_number = '<MISSING>'
         else:
             phone_number = hrefs[0].text
-
-        print(location_name)
-        print(phone_number)
         street_address, city, state, zip_code = parse_address(addy)
         
         hours = loc.find_element_by_css_selector('div.locationListItemHours').text.replace('\n', ' ')
@@ -77,6 +74,8 @@ def fetch_data():
             operating_info = 'Closed until further notice'
         elif 'Temporarily closed until' in hours:
             operating_info = 'Temporarily closed until further notice.'
+        elif 'Open during' in hours:
+            operating_info = 'Open during Stadium Events'
         else:
             operating_info = 'Open'
             
