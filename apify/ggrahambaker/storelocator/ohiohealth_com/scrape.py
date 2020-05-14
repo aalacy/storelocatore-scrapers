@@ -57,20 +57,16 @@ def fetch_data():
         store_number = '<MISSING>'
         driver.get(page_url)
         driver.implicitly_wait(5)
-        print(page_url)
         try:
             location_type = driver.find_element_by_css_selector('span.name-title').text
         except:
             try:
                 location_type = driver.find_element_by_css_selector('span.specialty-title').text
             except:
-                print('\n\n\n\n\n\n\n\n')
-                print('NOTHING')
-                print('\n\n\n\n\n\n\n\n')
+       
 
                 location_type = '<MISSING>'
 
-        print(location_type)
         try:
             hours_soup = driver.find_element_by_css_selector('ul.hours-dropdown').get_attribute('innerHTML')
             
