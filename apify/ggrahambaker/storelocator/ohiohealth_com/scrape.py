@@ -40,13 +40,14 @@ def fetch_data():
     for loc in locs:
         location_name = loc['Name']
         street_address = loc['AddressLine1']
-        #if loc['AddressLine2'] != None:
-        #    street_address += ' ' + loc['AddressLine2']
+        
         city = loc['City']
         state = loc['State']
         zip_code = loc['ZipCode']
         
         phone_number = loc['Phone']
+        if phone_number == '':
+            phone_number = '<MISSING>'
         lat = loc['Latitude']
         longit = loc['Longitude']
         
@@ -54,9 +55,22 @@ def fetch_data():
         
         country_code = 'US'
         store_number = '<MISSING>'
-        location_type = '<MISSING>'
         driver.get(page_url)
         driver.implicitly_wait(5)
+        print(page_url)
+        try:
+            location_type = driver.find_element_by_css_selector('span.name-title').text
+        except:
+            try:
+                location_type = driver.find_element_by_css_selector('span.specialty-title').text
+            except:
+                print('\n\n\n\n\n\n\n\n')
+                print('NOTHING')
+                print('\n\n\n\n\n\n\n\n')
+
+                location_type = '<MISSING>'
+
+        print(location_type)
         try:
             hours_soup = driver.find_element_by_css_selector('ul.hours-dropdown').get_attribute('innerHTML')
             
