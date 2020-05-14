@@ -24,6 +24,7 @@ def fetch_data():
     MAX_DISTANCE = 500
 
     coord = search.next_coord()
+    dup_tracker = set()
     all_store_data = []
     while coord:
         x = coord[0]
@@ -66,19 +67,20 @@ def fetch_data():
             
             result_coords.append([lat, longit])
             
-            
             street_address = loc['addressLine']['0'] + ' ' + loc['addressLine']['1']
             city = loc['city'].strip()
             state = loc['stateOrProvinceName'].strip()
             zip_code = loc['postalCode'].strip()
             country_code = loc['country'].strip()
             
-            
             phone_number = loc['telephone1'].strip()
             store_number = loc['storeName']
             
             location_name = loc['description']['displayStoreName']
-            
+            if location_name not in dup_tracker:
+                dup_tracker.add(location_name)
+            else:
+                continue
             
             hours_obj = json.loads(loc['attribute']['displayValue'])['storehours']
             hours = ''
@@ -86,8 +88,6 @@ def fetch_data():
                 if i == 7:
                     break
                 hours += h['nick'] + ' ' + h['availability'][0]['status'] + ' '
-            
-            
             
             
             location_type = '<MISSING>'
