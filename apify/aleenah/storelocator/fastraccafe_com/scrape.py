@@ -1,7 +1,7 @@
 import csv
 import re
 from bs4 import BeautifulSoup
-import requests
+from sgrequests import SgRequests
 
 
 def write_output(data):
@@ -14,7 +14,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
+session = SgRequests()
 def fetch_data():
     # Your scraper here
     locs = []
@@ -31,7 +31,7 @@ def fetch_data():
     page_url=[]
     urls=[]
 
-    res=requests.get("https://fastraccafe.com/locations/")
+    res=session.get("https://fastraccafe.com/locations/")
     soup = BeautifulSoup(res.text, 'html.parser')
     trs= soup.find('table',{'class',"locationsTable"}).find('tbody').find_all('tr')
     print(len(trs))
