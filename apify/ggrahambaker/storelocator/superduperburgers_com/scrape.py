@@ -62,11 +62,16 @@ def fetch_data():
         page_url = a_tags[0].get_attribute('href')
         addy = a_tags[1].text
 
-        hrefs = loc.find_elements_by_xpath('//a[contains(@href,"tel:")]')
-        if len(hrefs) == 0:
+        hrefs = loc.find_elements_by_css_selector('a')
+        phone_number = ''
+        for href in hrefs:
+            if 'tel:' in href.get_attribute('href'):
+                phone_number = href.text
+                break
+
+        if phone_number == '':
             phone_number = '<MISSING>'
-        else:
-            phone_number = hrefs[0].text
+     
         street_address, city, state, zip_code = parse_address(addy)
         
         hours = loc.find_element_by_css_selector('div.locationListItemHours').text.replace('\n', ' ')
