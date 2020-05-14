@@ -27,6 +27,7 @@ def fetch_data():
     r = session.get("https://www.essentiahealth.org/find-facility/", headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for page in soup.find("div",{"class":"Pagination"}).find_all("option"):
+        # print(page['value'].replace("~",base_url))
         r1 = session.get(page['value'].replace("~",base_url))
         soup1 = BeautifulSoup(r1.text, "lxml")
         for script in soup1.find("div",{"class":"LocationsList"}).find_all("script"):
@@ -37,21 +38,49 @@ def fetch_data():
             city = data['address']['addressLocality']
             state = data['address']['addressRegion']
             zipp = data['address']['postalCode']
-            try:
-                phone = data['contactPoint']['telephone']
-            except:
-                phone = "<MISSING>"
-            latitude = data['geo']['latitude']
-            longitude = data['geo']['longitude']
             if "http" in script.find_next("li").find("a",{"class":"Name"})['href']:
                 page_url = script.find_next("li").find("a",{"class":"Name"})['href']
             else:
                 page_url = base_url + script.find_next("li").find("a",{"class":"Name"})['href']
+
+            try:
+                
+                phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(data['telephone']))
+                if phone_list:
+                    phone=phone_list[0]
+                    # print(phone)
+                else:
+                    # print("phone_list ==== ",page_url)
+                    phone = "<MISSING>"
+            except:
+                phone = "<MISSING>"
+                # print("phone_missing ==== ",page_url)
+            latitude = data['geo']['latitude']
+            longitude = data['geo']['longitude']
+            try:
+                store_number = page.split("id=")[1].split("&")[0].strip()
+            except:
+                store_number = "<MISSING>"
             r2 = session.get(page_url)
             soup2 = BeautifulSoup(r2.text, "lxml")
+            # try:
+            #     phone_tag = soup2.find("div",class_="MainTelephoneNumber").text.strip()
+            #     phone_list = re.findall(re.compile(".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone_tag))
+            #     if phone_list:
+            #         phone = phone_list[0]
+            #         print(phone)
+            #     else:
+            #         print(phone_tag)
+            #         phone= "<MISSING>"
+                
+            # except:
+            #     phone ="<MISSING>"
+                # print("phone_missing ==== ",page_url)
             try:
-                hours = " ".join(list(soup2.find("div",{"class":"HoursContent"}).find("p").stripped_strings))
+                hours = " ".join(list(soup2.find("div",{"class":"HoursContent"}).stripped_strings)).replace("Hours","").replace("Call for holiday hours","")
+                # print(hours)
             except:
+                # print("hours_missing ==== ",page_url)
                 hours = "<MISSING>"
     
             store = []
@@ -62,21 +91,24 @@ def fetch_data():
             store.append(state)
             store.append(zipp)
             store.append("US")
-            store.append("<MISSING>")
+            store.append(store_number)
             store.append(phone)
             store.append("<MISSING>")
             store.append(latitude)
             store.append(longitude)
             store.append(hours)
             store.append(page_url)
-            if store[2] in addresses:
+            duplicate =str(store[1])+" "+str(store[2])+" "+str(store[3])+" "+str(store[4])+" "+str(store[5])+" "+str(store[6])+" "+str(store[7])+" "+str(store[8])+" "+str(store[9])+" "+str(store[10])+" "+str(store[11])+" "+str(store[12])
+                    
+            if str(duplicate) in addresses:
                 continue
-            addresses.append(store[2])
+            addresses.append(str(duplicate))
             store = [x.replace("–","-") if type(x) == str else x for x in store]
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             # print("data == "+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            
             yield store
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 def scrape():
     data = fetch_data()
     write_output(data)

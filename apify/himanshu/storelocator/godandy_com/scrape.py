@@ -23,7 +23,7 @@ def get_driver():
     else:
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
 
@@ -80,13 +80,14 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(hours)
         store.append(page_url)
+        
+        for i in range(len(store)):
+            if type(store[i]) == str:
+                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
+        store = [x.replace("–","-") if type(x) == str else x for x in store]
+        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         # print("data ==="+str(store))
         # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~````")
-        for i in range(len(store)):
-                    if type(store[i]) == str:
-                        store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-        store = [x.replace("–","-") if type(x) == str else x for x in store]
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
         yield store
        
 def scrape():

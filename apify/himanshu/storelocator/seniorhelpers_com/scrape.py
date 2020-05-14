@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -69,7 +68,7 @@ def fetch_data():
             location_name = ut1.text.strip()
             full  = list(soup1.find(lambda tag: (tag.name == "span") and "Address" == tag.text.strip()).parent.parent.stripped_strings)
             for index,delq in enumerate(full):
-                if full[index][:7]=="License" or full[index][:6]== "Office":
+                if full[index][:7]=="License" or full[index][:6]== "Office" or full[index][:3]=="HHA":
                     del full[index]
             if full[-1] =="Directions"  :
                 del full[-1]

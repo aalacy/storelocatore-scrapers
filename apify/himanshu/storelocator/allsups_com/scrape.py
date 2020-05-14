@@ -59,7 +59,7 @@ def fetch_data():
             store.append('<MISSING>')
             store.append(latitude if latitude else '<MISSING>')
             store.append(longitude if longitude else '<MISSING>')
-            store.append('<MISSING>')
+            store.append('24-hour')
             store.append("<MISSING>")
             if store[2] in addresses:
                 continue

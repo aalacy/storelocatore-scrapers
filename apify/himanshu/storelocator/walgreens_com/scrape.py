@@ -1,13 +1,11 @@
 # coding=UTF-8
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
 import time
 import requests
-session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8", newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -40,7 +38,10 @@ def fetch_data():
         page = 1
         while True:
             data = '{"lat":'+str(lat)+',"lng":'+str(lng)+',"requestType":"dotcom","s":"1000","p":"'+str(page)+'"}'
-            r = requests.post("https://www.walgreens.com/locator/v1/stores/search", data=data, headers=headers).json()
+            try:
+                r = requests.post("https://www.walgreens.com/locator/v1/stores/search", data=data, headers=headers).json()
+            except:
+                continue
             if "results" not in r:
                 break
             current_results_len= len(r['results'])
@@ -75,8 +76,12 @@ def fetch_data():
                 else:
                     phone = "<MISSING>"  
 
+                
                 page_url = "https://www.walgreens.com"+location['storeSeoUrl']
-                r1 = requests.get(page_url ,headers=headers)
+                try:
+                    r1 = requests.get(page_url ,headers=headers)
+                except:
+                    pass
                 soup = BeautifulSoup(r1.text,"lxml")
                 try:
                     hours_of_operation = " ".join(list(soup.find("div",{"class":'service-section'}).find("li",{"class":'single-hours-lists'}).stripped_strings))
@@ -90,7 +95,6 @@ def fetch_data():
                 if str(store[2]) in addresses:
                     continue
                 addresses.append(str(store[2]) )
-
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                 # print("data =="+str(store))
                 # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")

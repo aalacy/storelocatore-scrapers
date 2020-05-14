@@ -54,7 +54,7 @@ def fetch_data():
         # print("https://eat.co.uk/"+data['href'])
         r1 = session.get("https://eat.co.uk"+data['href'],verify=False, headers =headers)
         soup1= BeautifulSoup(r1.text,"lxml")
-        hours = " ".join(list(soup1.find("table",{"class":"platopusOpeningHoursTable"}).stripped_strings))
+        hours = " ".join(list(soup1.find("table",{"class":"platopusOpeningHoursTable"}).stripped_strings)).replace("Opening Times","").strip()
         lat = soup1.find("a",{"class":"align-center dmButtonLink dmWidget dmWwr default dmOnlyButton dmDefaultGradient u_1454164222"})['href'].split("=")[-1].split(",")[0]
         log = soup1.find("a",{"class":"align-center dmButtonLink dmWidget dmWwr default dmOnlyButton dmDefaultGradient u_1454164222"})['href'].split("=")[-1].split(",")[1]
         if lat=="0":
@@ -64,7 +64,8 @@ def fetch_data():
         	country_code = "es"
         if "El Altet" in state	:
         	country_code	= "es"
-        
+        if "Paris" in city:
+            country_code = "fr"
         tem_var =[]
         tem_var.append("https://eat.co.uk")
         tem_var.append(name)

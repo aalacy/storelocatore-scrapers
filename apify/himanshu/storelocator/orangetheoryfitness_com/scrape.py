@@ -44,7 +44,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ['us', 'ca'])
     MAX_RESULTS = 150
-    MAX_DISTANCE = 100
+    MAX_DISTANCE = 50
     current_results_len = 0     # need to update with no of count.
 
     zip_code = search.next_zip()
@@ -54,9 +54,9 @@ def fetch_data():
     }
     while zip_code:
         result_coords = []
-        # print("zip_code === ",zip_code)
+        #print("zip_code === ",zip_code)
         print("remaining zipcodes: " + str(len(search.zipcodes)))
-        print('Pulling Lat-Long %s...' % (str(zip_code)))
+        # print('Pulling Lat-Long %s,%s...' % (str(zip_code)))
         base_url=  "https://www.orangetheoryfitness.com/service/directorylisting/filterMarkers?s="+str(zip_code)
         try:
             r = requests.get(base_url)
@@ -99,6 +99,7 @@ def fetch_data():
             latitude  = i['lat']
             longitude = i['lon']
             page_url = i['web_site']
+           
             try:
                 r1 = requests.get(page_url)
                 soup1 = BeautifulSoup(r1.text,"lxml")
@@ -108,7 +109,19 @@ def fetch_data():
                     hours_of_operation="<MISSING>"
             except:
                 hours_of_operation="<MISSING>"
+            page_url1=''
+            page_url1=page_url.replace("https://",'').strip().lstrip()
+            if page_url1:
+                page_url1="https://"+page_url1
 
+
+            if "55555" in str(zipp):
+                state="MN"
+                city ="Plymouth"
+            if "1234 Fifth St." in street_address:
+                city = "Plymouth"
+                state="MN"
+                
             if "Wichita West" in location_name:
                 street_address = "2835 N Maize Rd., Suite 161"
             result_coords.append((latitude, longitude))
@@ -118,15 +131,15 @@ def fetch_data():
             store.append(street_address+' '+street_address1 if street_address else "<MISSING>")
             store.append(city if city else "<MISSING>")
             store.append(state if state else "<MISSING>")
-            store.append(zipp)
+            store.append(zipp.replace("802090",'02090'))
             store.append(country_code)
             store.append(store_number.replace("37630","") if store_number else "<MISSING>") 
-            store.append(phone if phone else "<MISSING>")
+            store.append(str(phone).strip().lstrip().replace(" ",'') if phone else "<MISSING>")
             store.append("<MISSING>")
             store.append(latitude if latitude else "<MISSING>")
             store.append(longitude if longitude else "<MISSING>")
             store.append(hours_of_operation)
-            store.append(page_url)
+            store.append(page_url1 if page_url1 else "<MISSING>")
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
@@ -134,7 +147,7 @@ def fetch_data():
                 pass
             else:
                 yield store
-            print("--------------------",store)
+            # print("--------------------",store)
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)

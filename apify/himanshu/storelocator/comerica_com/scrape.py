@@ -22,18 +22,18 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 500
-    MAX_DISTANCE = 25
+    MAX_DISTANCE = 10
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
     base_url = "https://www.comerica.com"
 
     while zip_code:
         print("remaining zipcodes: " + str(len(search.zipcodes)))
-        print('Pulling Lat-Long %s...' % (str(zip_code)))
+        # print('Pulling Lat-Long %s...' % (str(zip_code)))
         result_coords = []
         page = 1
         while True:
-            
+            print(page)
             r = requests.get("https://locations.comerica.com/?q="+str(zip_code)+"&filter=all&page="+str(page))
             soup = BeautifulSoup(r.text, "lxml")
             data = soup.find(lambda tag: (tag.name == "script") and "var results" in tag.text)
@@ -96,16 +96,20 @@ def fetch_data():
                         store.append(longitude)
                         store.append(hours_of_operation.replace('PM','PM,').replace("Banking Center Hours","").replace("ATM Functionality Full Service Availability","").replace("Drive Through Hours","").strip())
                         store.append(page_url)
-
-                        if store[2] not in addressess:
+                        duplicate =str(store[1])+" "+str(store[2])+" "+str(store[3])+" "+str(store[4])+" "+str(store[5])+" "+str(store[6])+" "+str(store[7])+" "+str(store[8])+" "+str(store[9])+" "+str(store[10])+" "+str(store[11])+" "+str(store[12])+" "+str(store[13])
+                    
+                        if str(duplicate) not in addressess:
                             
-                            addressess.append(store[2])
-                            # print("data ===="+str(store))
-                            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                            addressess.append(str(duplicate))
+                            print("data ===="+str(store))
+                            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                             yield store 
 
             else:
                 break
+                search.max_distance_update(MAX_DISTANCE)
+                zip_code = search.next_zip()
+
             page += 1
 
                 
