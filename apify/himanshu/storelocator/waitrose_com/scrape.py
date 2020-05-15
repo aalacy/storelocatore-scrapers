@@ -3,10 +3,11 @@ from bs4 import BeautifulSoup
 import sgzip
 import re
 import json
+import phonenumbers
 # import unicodedata
 from sgrequests import SgRequests
 session = SgRequests()
-
+import requests
 
 
 def write_output(data):
@@ -25,7 +26,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ["UK"])
     MAX_RESULTS = 500
-    MAX_DISTANCE = 1
+    MAX_DISTANCE = 5
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
     addresses = []
@@ -35,14 +36,14 @@ def fetch_data():
         lat = coord[0]
         lng = coord[1]
         # print(search.current_zip)
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         # print('Pulling Lat-Long %s,%s...' % (str(lat), str(lng)))
 
         base_url = "https://www.waitrose.com/"
         headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36,'
         }
-        json_data = session.get("https://www.waitrose.com/shop/NearestBranchesCmd?latitude="+str(lat)+"&longitude="+str(lng)+"&fromMultipleBranch=true&_=1585897775137",headers=headers ).json()['branchList']
+        json_data = requests.get("https://www.waitrose.com/shop/NearestBranchesCmd?latitude="+str(lat)+"&longitude="+str(lng)+"&fromMultipleBranch=true&_=1585897775137",headers=headers ).json()['branchList']
         current_results_len = len(json_data)
         for data in json_data:
             location_name = data['branchName']
@@ -50,12 +51,13 @@ def fetch_data():
             city = data['city']
             zipp = data['postCode']
             phone = data['phoneNumber']
+            # phone = phonenumbers.format_number(phonenumbers.parse("8174842005", 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
             store_number = data['branchId']
             latitude = data['latitude']
             longitude = data['longitude']
             page_url = "https://www.waitrose.com/content/waitrose/en/bf_home/bf/"+str(store_number)+".html"
             # print(page_url)
-            r1 = session.get(page_url,headers=headers)
+            r1 = requests.get(page_url,headers=headers)
             soup1 = BeautifulSoup(r1.text, "lxml")
             # addr = soup1.find("div",{"class":"col branch-details"}).text.replace(street_address,"").replace(city,"").replace(zipp,"").replace(phone,"").strip()
             try:
@@ -89,7 +91,7 @@ def fetch_data():
             # store = [unidecode.unidecode(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store
-            # print(store)
+            print(store)
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)

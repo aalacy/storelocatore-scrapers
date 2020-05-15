@@ -124,6 +124,7 @@ def fetch_data():
                 
             if "Wichita West" in location_name:
                 street_address = "2835 N Maize Rd., Suite 161"
+            
             result_coords.append((latitude, longitude))
             store = []
             store.append("https://www.orangetheoryfitness.com/")
@@ -143,7 +144,7 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            if "Adjuntas" in store :
+            if "Adjuntas" in store or "Prince Saud Bin Mohammad Bin Muqrin Rd" in store[2]:
                 pass
             else:
                 yield store
