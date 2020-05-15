@@ -40,8 +40,8 @@ def get_open_hours(script):
         print("no hours found")
         return None
 
-def compute_key(street_address, city, state, zipp):
-    return '-'.join([street_address, city, state, zipp])
+def compute_key(street_address, city, state, zipp, page_url):
+    return '-'.join([street_address, city, state, zipp, page_url])
 
 def fetch_data():
     return_main_object = []
@@ -99,7 +99,7 @@ def fetch_data():
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                      store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 
-            key = compute_key(street_address, city, state, zipp)
+            key = compute_key(street_address, city, state, zipp, page_url)
             if key not in keys:
                 keys.add(key)
                 store = [str(x).encode('ascii', 'ignore').decode(
