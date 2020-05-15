@@ -50,7 +50,14 @@ def fetch_data():
         to_click = "showstore('" + loc['url_title'] + "');"
         
         street_address = loc['address'].replace('<p>', '').replace('</p>', '')
+ 
         city = loc['city']
+        if 'Mt Washington' in city or 'Southside' in city or 'Mt. Washington' in city or street_address.split(' ')[-1] == 'PITTSBURGH':
+            city = 'Pittsburg'
+            street_address = street_address.split('PITTSBURG')[0]
+        #1709 SAW MILL RUN BLVD PITTSBURGH
+        if '(' in city:
+            city = '<MISSING>'
         state = loc['state']
         zip_code = loc['zip']
         phone_number = loc['phone_number']
@@ -72,12 +79,9 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        print(store_data)
         all_store_data.append(store_data)
         
-        print()
-        print()
-        print()
+
 
 
     driver.quit()
