@@ -1,6 +1,7 @@
 import csv
 from bs4 import BeautifulSoup
 import requests
+from sgrequests import SgRequests
 import time
 import re
 import json
@@ -12,17 +13,18 @@ import platform
 system = platform.system()
 
 
-
+session = SgRequests()
 def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    if "linux" in system.lower():
+	options = Options()
+	options.add_argument('--headless')
+	options.add_argument('--no-sandbox')
+	options.add_argument('--disable-dev-shm-usage')
+	options.add_argument('--window-size=1920,1080')
+	if "linux" in system.lower():
         return webdriver.Firefox(executable_path='./geckodriver', options=options)        
     else:
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8",newline="") as output_file:
@@ -73,7 +75,7 @@ def fetch_data():
 	driver = get_driver()
 	 # it will used in store data.
 	addresses = []
-	
+	addresses1 = []
 	headers = {
 		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
 	}
@@ -173,15 +175,15 @@ def fetch_data():
 					store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
 							store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 					store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-					duplicate =str(store[1])+" "+str(store[2])+" "+str(store[3])+" "+str(store[4])+" "+str(store[5])+" "+str(store[6])+" "+str(store[7])+" "+str(store[8])+" "+str(store[9])+" "+str(store[10])+" "+str(store[11])+" "+str(store[12])+" "+str(store[13])
-					if (str(store[1])+" "+str(store[2])+" "+str(store[-7])) not in addresses:
+					if (str(store[-5])+" "+str(store[-7])) in addresses:
+						continue
+					addresses.append(str(store[-5])+" "+str(store[-7]))
+					# print("data = " + str(store))
+					# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+					yield store
+					# duplicate =str(store[1])+" "+str(store[2])+" "+str(store[3])+" "+str(store[4])+" "+str(store[5])+" "+str(store[6])+" "+str(store[7])+" "+str(store[8])+" "+str(store[10])+" "+str(store[11])+" "+str(store[12])+" "+str(store[13])
+					
 						
-						addresses.append(str(store[1])+" "+str(store[2])+" "+str(store[-7]))
-
-						
-						#print("data = " + str(store))
-						#print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-						yield store
 			if soup_loc_list.find("a",{"onclick":"$get('FormAction').value='ExecuteSearch';"}):
 				if page-1 == vk:
 					# print("vk === ", vk)
@@ -198,7 +200,7 @@ def fetch_data():
 
 	page_list=["https://www.aspirus.org/find-a-location/aspirus-rosewood-terrace-family-home-387","https://www.aspirus.org/find-a-location/aspirus-primrose-corner-family-home-386"]
 	for page_url in page_list:
-		r= requests.get(page_url)
+		r= session.get(page_url)
 		soup_location = BeautifulSoup(r.text,"lxml")  
 		store_number = page_url.split("-")[-1].strip()
 		full_address = list(soup_location.find("ul",{"class":"gen-info flex"}).stripped_strings)
@@ -236,8 +238,8 @@ def fetch_data():
 							store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 		store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 		
-		#print("data = " + str(store))
-		#print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+		# print("data = " + str(store))
+		# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 		yield store
 def scrape():
 	data = fetch_data()

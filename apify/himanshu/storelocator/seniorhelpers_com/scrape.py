@@ -92,9 +92,9 @@ def fetch_data():
             
             store = ["https://www.seniorhelpers.com", location_name, street_address.encode('ascii', 'ignore').decode('ascii').strip(), city, state, zipp, country_code,
                         store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
+            # if store[2] in addresses:
+            #     continue
+            # addresses.append(store[2])
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             # print("data = " + str(store))
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')

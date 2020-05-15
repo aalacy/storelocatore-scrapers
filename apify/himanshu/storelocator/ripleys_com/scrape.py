@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import requests
 
 
 
@@ -284,15 +285,17 @@ def fetch_data():
             r6 = session.get("https://www.ripleys.com/gatlinburg/",  headers=headers)
             soup6 = BeautifulSoup(r6.text, "lxml")
             hours_of_operation = (" ".join(list(soup6.find_all("li",{"class": "g1-column g1-one-half g1-valign-top"})[-2].stripped_strings)).split("*Weather")[0].replace("** ALL ATTRACTIONS WILL BE CLOSING EARLY AT 4PM ON WEDNESDAY, DECEMBER 4, 2019 FOR A CHRISTMAS PARTY** Believe It or Not!",""))
-                # for j1 in k1:
-                #     print(j1)
-            # print(hours_of_operation.text)
+
+        if "Mon - Sun" in street_address:
+            street_address="115 Broadway"
+            zipp="53965"
+            hours_of_operation="Mon - Sun	Closed"
 
         # print(str(street_address).encode('ascii', 'ignore').decode('ascii').strip()+ " !!! last street_address === "+ str(street_address))
         # print("hours_of_operation === "+ str(hours_of_operation))
 
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation.replace('\t',''), page_url]
 
         if str(store[2]) not in addresses and country_code:
             addresses.append(str(store[2]))

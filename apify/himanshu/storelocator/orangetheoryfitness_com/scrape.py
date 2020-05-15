@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-import requests
+
 
 session = SgRequests()
 
@@ -43,7 +43,7 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ['us', 'ca'])
-    MAX_RESULTS = 150
+    MAX_RESULTS = 50
     MAX_DISTANCE = 50
     current_results_len = 0     # need to update with no of count.
 
@@ -54,12 +54,12 @@ def fetch_data():
     }
     while zip_code:
         result_coords = []
-        #print("zip_code === ",zip_code)
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print("zip_code === ",zip_code)
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         # print('Pulling Lat-Long %s,%s...' % (str(zip_code)))
         base_url=  "https://www.orangetheoryfitness.com/service/directorylisting/filterMarkers?s="+str(zip_code)
         try:
-            r = requests.get(base_url)
+            r = session.get(base_url)
             json_data = r.json()
         except:
             pass
@@ -101,7 +101,7 @@ def fetch_data():
             page_url = i['web_site']
            
             try:
-                r1 = requests.get(page_url)
+                r1 = session.get(page_url)
                 soup1 = BeautifulSoup(r1.text,"lxml")
                 try:
                     hours_of_operation =json.loads(soup1.find("script",{"type":"application/ld+json"}).text)['openingHours']
@@ -124,6 +124,7 @@ def fetch_data():
                 
             if "Wichita West" in location_name:
                 street_address = "2835 N Maize Rd., Suite 161"
+            
             result_coords.append((latitude, longitude))
             store = []
             store.append("https://www.orangetheoryfitness.com/")
@@ -140,10 +141,11 @@ def fetch_data():
             store.append(longitude if longitude else "<MISSING>")
             store.append(hours_of_operation)
             store.append(page_url1 if page_url1 else "<MISSING>")
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            if "Adjuntas" in store :
+            if "Adjuntas" in store or "Prince Saud Bin Mohammad Bin Muqrin Rd" in store[2]:
                 pass
             else:
                 yield store
