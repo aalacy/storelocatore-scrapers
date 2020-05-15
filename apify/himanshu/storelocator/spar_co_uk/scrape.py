@@ -5,100 +5,50 @@ import re
 import json
 import datetime
 from datetime import datetime
-import requests
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "raw_address", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
-    
-   
     base_url = "https://www.spar.co.uk"
- 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     result_coords = []
-     
-
-    r = requests.get("https://www.spar.co.uk/sitemap-page",headers=headers)
-     
+    r = session.get("https://www.spar.co.uk/sitemap-page",headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for link in soup.find_all("a"):
         if "/store-locator/" in link['href']:
             page_url = base_url + link['href']
-            # print(page_url)
-
-            r1 = requests.get(page_url)
+            r1 = session.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
             if soup1.find("span",{"class":"page__notice-title"}):
                 continue
             addr = json.loads(soup1.find(lambda tag : (tag.name == "script") and "latitude" in tag.text).text)
-            
-            # exit()
             location_name = addr['name']
-           
             try:
-                street_address = addr['address']['streetAddress']         
+                street_address = addr['address']['streetAddress']
             except:
-                street_address  = "<MISSING>"
-            # # print()
+                street_address = "<MISSING>"
             try:
                 city = addr['address']['addressLocality']
             except:
-                city = "<MISSING>"
+                city = "<MISSINIG>"
             try:
                 state = addr['address']['addressRegion']
             except:
-                state = "<MISSING>"
+                state = "<MISSNG>"
             try:
                 zipp = addr['address']['postalCode']
             except:
                 zipp = "<MISSING>"
-            # raw_address = re.sub(r'\s+'," "," ".join(list(soup1.find("div",{"class":"store-details__contact"}).find_all("p")[-1].stripped_strings)))
-            
-            # data = raw_address.split(",")
-            # if len(data) == 1:
-            #     zipp = "<MISSING"
-            # else:
-            #     zipp = data[-1].strip()
-        
-            # raw_address = re.sub(r'\s+'," ",raw_address.replace(zipp,"").strip())
-            # if len(data) == 1:
-            #     street_address = data[0]
-            #     city = "<MISSING>"
-            #     state = "<MISSING>"
-            #     zipp = "<MISSING>"
-            # elif len(data) == 2:
-            #     street_address = data[0]
-            #     city = "<MISSING>"
-            #     state = "<MISSING>"
-            #     zipp = data[1]
-            # elif len(data) == 3:
-            #     street_address = data[0].strip()
-            #     city = data[1].strip()
-            #     state = "<MISSING>"
-            #     zipp = data[-1].strip()
-            # elif len(data) == 4:
-            #     street_address = data[0].strip()
-            #     city = data[1].strip()
-            #     state = data[2].strip()
-            #     zipp = data[3].strip()
-            # else:
-            #     street_address = re.sub(r'\s+'," "," ".join(data[:-3]).strip())
-            #     city = data[-3].strip()
-            #     state = data[-2].strip()
-            #     zipp = data[-1].strip()
             try:
                 phone = addr['telephone']
             except:
@@ -126,9 +76,7 @@ def fetch_data():
                 latitude = "<MISSING>"
             if longitude == "0":
                 longitude = "<MISSING>"
-            store_number = coord.split('storeId = ')[1].split(";")[0]
-                    
-                
+            store_number = coord.split('storeId = ')[1].split(";")[0]  
             store = []
             result_coords.append((latitude,longitude))
             store.append(base_url)
@@ -146,12 +94,7 @@ def fetch_data():
             store.append(hours)
             store.append(page_url)
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # print("data==="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
             yield store
-                
-       
-
 def scrape():
     data = fetch_data()
     write_output(data)
