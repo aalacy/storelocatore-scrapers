@@ -89,7 +89,7 @@ def fetch_data():
             store.append(hours if hours else "<MISSING>")
             if hours.count("- - -") >5:
                 continue
-            store.append("https://order.subway.com/en-US/restaurant/"+str(store_data['LocationId']['StoreNumber'])
+            store.append("https://order.subway.com/en-US/restaurant/"+str(store_data['LocationId']['StoreNumber']))
             yield store
         if len(location_list) == MAX_RESULTS:
             search.max_count_update(result_coords)
