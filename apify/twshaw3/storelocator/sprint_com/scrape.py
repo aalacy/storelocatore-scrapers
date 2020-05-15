@@ -8,7 +8,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "operating_info"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -64,8 +64,11 @@ def fetch_data():
                 location_type = handle_missing(data['Type'])
                 page_url = handle_missing(data['Url'])
                 phone = handle_missing(data['PhoneNumber'])
-                hours_of_operation = handle_missing(data['SalesHours'])
-                record = [locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
+                hours_of_operation = str(handle_missing(data['SalesHours']))
+                operating_info = '<MISSING>'
+                if hours_of_operation.lower().count('closed') == 7:
+                    operating_info = 'Temporarily Closed'
+                record = [locator_domain, page_url, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation, operating_info]
                 locations.append(record)
         if len(stores) < MAX_RESULTS:
             print("max distance update")
