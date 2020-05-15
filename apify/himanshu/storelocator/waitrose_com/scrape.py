@@ -26,7 +26,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ["UK"])
     MAX_RESULTS = 500
-    MAX_DISTANCE = 5
+    MAX_DISTANCE = 1
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
     addresses = []
@@ -43,7 +43,12 @@ def fetch_data():
         headers = {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36,'
         }
-        json_data = requests.get("https://www.waitrose.com/shop/NearestBranchesCmd?latitude="+str(lat)+"&longitude="+str(lng)+"&fromMultipleBranch=true&_=1585897775137",headers=headers ).json()['branchList']
+        try:
+            json_data = requests.get("https://www.waitrose.com/shop/NearestBranchesCmd?latitude="+str(lat)+"&longitude="+str(lng)+"&fromMultipleBranch=true&_=1585897775137",headers=headers ).json()['branchList']
+        except:
+            search.max_distance_update(MAX_DISTANCE)
+            coord = search.next_coord()
+            # continue
         current_results_len = len(json_data)
         for data in json_data:
             location_name = data['branchName']
