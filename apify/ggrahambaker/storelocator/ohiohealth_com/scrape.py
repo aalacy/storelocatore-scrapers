@@ -38,6 +38,9 @@ def fetch_data():
 
     all_store_data = []
     for loc in locs:
+        print(loc)
+        print()
+        print()
         location_name = loc['Name']
         street_address = loc['AddressLine1']
         
@@ -45,8 +48,8 @@ def fetch_data():
         state = loc['State']
         zip_code = loc['ZipCode']
         
-        phone_number = loc['Phone']
-        if phone_number == '':
+        phone_number = loc['Phone']#.strip()
+        if phone_number == None:
             phone_number = '<MISSING>'
         lat = loc['Latitude']
         longit = loc['Longitude']
@@ -63,8 +66,6 @@ def fetch_data():
             try:
                 location_type = driver.find_element_by_css_selector('span.specialty-title').text
             except:
-       
-
                 location_type = '<MISSING>'
 
         try:
@@ -80,7 +81,6 @@ def fetch_data():
                     hours += day + ' ' + time + ' '
             else:
                 hours = soup.text
-                #hours = 'For office hours at this location, please call the main phone number.'
         except:
             hours = '<MISSING>'
         if hours == '':
