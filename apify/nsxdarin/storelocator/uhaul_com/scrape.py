@@ -4,6 +4,7 @@ import time
 import random
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from ssl import SSLError
 
 
 thread_local = threading.local()
@@ -28,10 +29,10 @@ def random_sleep():
     time.sleep(random.random()*2)
 
 
-def get_session():
+def get_session(reset=False):
     # give each thread its own session object
     # if using proxy, each thread's session should have a unique IP
-    if not hasattr(thread_local, "session"):
+    if (not hasattr(thread_local, "session")) or (reset==True):
         thread_local.session = SgRequests()
     return thread_local.session
 
@@ -65,7 +66,11 @@ def get_cities_in_state(state_url):
 
     #print('Pulling State %s ...' % state_url)
     random_sleep()
-    r = session.get(state_url, headers=headers)
+    try:
+      r = session.get(state_url, headers=headers)
+    except SSLError:
+      session = get_session(reset=True)
+      r = session.get(state_url, headers=headers)
     #print('status: ', r.status_code)
 
     for line in r.iter_lines(decode_unicode=True):
@@ -97,7 +102,11 @@ def get_locations_in_city(city_url):
     coords = []
     alllocs = []
     #print('Pulling City %s ...' % city_url)
-    r2 = session.get(city_url, headers=headers)
+    try: 
+      r2 = session.get(city_url, headers=headers)
+    except SSLError:
+      session = get_session(reset=True)
+      r2=session.get(city_url, headers=headers)
     #print('status: ', r2.status_code)
     lines = r2.iter_lines(decode_unicode=True)
     for line2 in lines:
@@ -171,8 +180,14 @@ def get_location(loc):
     lng = loc.split('|')[2]
     lurl = loc.split('|')[0]
     store = lurl.rsplit('/', 1)[1]
-    r2 = session.get(lurl, headers=headers, timeout=5)
+
+    try:
+      r2 = session.get(lurl, headers=headers, timeout=5)
+    except SSLError:
+      session = get_session(reset=True)
+      r2 = session.get(lurl, headers=headers, timeout=5)
     #print('status: ', r2.status_code)
+
     for line2 in r2.iter_lines(decode_unicode=True):
         if '<small class="text-light">(' in line2 and 'all room' not in line2:
             typ = line2.split('<small class="text-light">(')[1].split(')')[0]
