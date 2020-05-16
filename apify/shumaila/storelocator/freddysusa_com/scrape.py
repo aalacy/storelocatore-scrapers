@@ -55,7 +55,7 @@ def fetch_data():
             if flag == 0:
                 title = soup.find('p',{'class':'storeName'}).text
                 address = str(soup.find('p',{'class':'storeAddress'}))
-                print(address)
+                #print(address)
                 start = address.find('>')+ 1
                 end = address.find('<',start)
                 street = address[start:end]
@@ -66,7 +66,7 @@ def fetch_data():
                 address = address.lstrip()
                 state,pcode = address.split(' ',1)
                 
-                print(city,state,pcode)   
+                #print(city,state,pcode)   
                 try:
                     phone = soup.find('p',{'class':'storePhone'}).text
                 except:
