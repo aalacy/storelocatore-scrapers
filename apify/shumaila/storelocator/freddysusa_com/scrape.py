@@ -92,7 +92,7 @@ def fetch_data():
                     phone = '<MISSING>'
                 if len(hours) < 2:
                     hours = '<MISSING>'
-                    
+                street = street.replace('&amp;','&')
                 data.append(['https://freddysusa.com/',link,title,street,city,state,pcode,'US',"<MISSING>",phone,"<MISSING>","<MISSING>","<MISSING>",hours])
                 #print(p,data[p])
                 #input()
