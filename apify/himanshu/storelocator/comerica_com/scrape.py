@@ -33,7 +33,7 @@ def fetch_data():
         result_coords = []
         page = 1
         while True:
-            print(page)
+            #print(page)
             r = requests.get("https://locations.comerica.com/?q="+str(zip_code)+"&filter=all&page="+str(page))
             soup = BeautifulSoup(r.text, "lxml")
             data = soup.find(lambda tag: (tag.name == "script") and "var results" in tag.text)
@@ -101,8 +101,8 @@ def fetch_data():
                         if str(duplicate) not in addressess:
                             
                             addressess.append(str(duplicate))
-                            print("data ===="+str(store))
-                            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                            #print("data ===="+str(store))
+                            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                             yield store 
 
             else:
