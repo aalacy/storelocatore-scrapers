@@ -46,51 +46,57 @@ def fetch_data():
             r = session.get(link, headers=headers, verify=False)
             ccode = 'US'
             soup = BeautifulSoup(r.text, "html.parser")
-           
-            title = soup.find('p',{'class':'storeName'}).text
-            address = str(soup.find('p',{'class':'storeAddress'}))
-            print(address)
-            start = address.find('>')+ 1
-            end = address.find('<',start)
-            street = address[start:end]
-            start = address.find('>',end)+ 1
-            end = address.find('<',start)
-            address = address[start:end]
-            city,address = address.split(',',1)
-            address = address.lstrip()
-            state,pcode = address.split(' ',1)
-            
-            print(city,state,pcode)   
-            try:
-                phone = soup.find('p',{'class':'storePhone'}).text
-            except:
-                phone = '<MISSING>'
+            coming = soup.findAll('img')
+            flag = 0
+            for mn in coming:
+                if mn['src'].find('coming-soon-restaurant') > -1:
+                    flag = 1
+                    break
+            if flag == 0:
+                title = soup.find('p',{'class':'storeName'}).text
+                address = str(soup.find('p',{'class':'storeAddress'}))
+                print(address)
+                start = address.find('>')+ 1
+                end = address.find('<',start)
+                street = address[start:end]
+                start = address.find('>',end)+ 1
+                end = address.find('<',start)
+                address = address[start:end]
+                city,address = address.split(',',1)
+                address = address.lstrip()
+                state,pcode = address.split(' ',1)
                 
-            hourlist = soup.findAll('p',{'class':'storeHours'})
+                print(city,state,pcode)   
+                try:
+                    phone = soup.find('p',{'class':'storePhone'}).text
+                except:
+                    phone = '<MISSING>'
+                    
+                hourlist = soup.findAll('p',{'class':'storeHours'})
 
-            hours= ''
-            for hr in hourlist:
-                hours = hours + hr.text + ' '
-            
-            hours = hours.replace('day', 'day ')
-            if len(street) < 2:
-                street = 'N/A'
-            
-           
-            street = street.strip()
-            pcode = pcode.strip()
-            city = city.strip()
-            state= state.strip()
-            phone = phone.strip()
-            if len(phone) < 2:
-                phone = '<MISSING>'
-            if len(hours) < 2:
-                hours = '<MISSING>'
+                hours= ''
+                for hr in hourlist:
+                    hours = hours + hr.text + ' '
                 
-            data.append(['https://freddysusa.com/',link,title,street,city,state,pcode,'US',"<MISSING>",phone,"<MISSING>","<MISSING>","<MISSING>",hours])
-            #print(p,data[p])
-            #input()
-            p += 1
+                hours = hours.replace('day', 'day ')
+                if len(street) < 2:
+                    street = 'N/A'
+                
+               
+                street = street.strip()
+                pcode = pcode.strip()
+                city = city.strip()
+                state= state.strip()
+                phone = phone.strip()
+                if len(phone) < 2:
+                    phone = '<MISSING>'
+                if len(hours) < 2:
+                    hours = '<MISSING>'
+                    
+                data.append(['https://freddysusa.com/',link,title,street,city,state,pcode,'US',"<MISSING>",phone,"<MISSING>","<MISSING>","<MISSING>",hours])
+                #print(p,data[p])
+                #input()
+                p += 1
                 
 
                 
