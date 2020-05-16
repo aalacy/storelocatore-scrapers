@@ -65,8 +65,9 @@ def fetch_data():
                             country = 'US'
                             if phone == '':
                                 phone = '<MISSING>'
-                            if store not in ids:
-                                ids.append(store)
+                            addinfo = name + '|' + add + '|' + phone
+                            if addinfo not in ids:
+                                ids.append(addinfo)
                                 print('Pulling Store ID #%s...' % store)
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
