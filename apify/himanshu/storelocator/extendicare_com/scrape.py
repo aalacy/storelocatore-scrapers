@@ -36,10 +36,13 @@ def fetch_data():
         zipp=loc["data-postal"]
         phone= loc["data-phone"]
         try:
-             location_type = loc["data-type"]
+            location_type = loc["data-type"]
         except:
             location_type = "<MISSING>"
-        page_url = loc["data-url"]
+        if "http://" == loc["data-url"].strip():
+            page_url = "<MISSING>"
+        else:
+            page_url = loc["data-url"]
         latitude = loc["data-latitude"]
         longitude =loc["data-longitude"]
         hours_of_operation = "<MISSING>"
@@ -55,7 +58,7 @@ def fetch_data():
         yield store
 
     
-    
+
    
    
 
