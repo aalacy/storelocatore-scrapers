@@ -36,7 +36,7 @@ def fetch_data():
         zipp=loc["data-postal"]
         phone= loc["data-phone"]
         try:
-            location_type = loc["data-type"]
+             location_type = loc["data-type"]
         except:
             location_type = "<MISSING>"
         page_url = loc["data-url"]

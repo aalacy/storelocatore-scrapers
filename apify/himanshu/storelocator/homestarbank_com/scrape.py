@@ -45,7 +45,7 @@ def fetch_data2():
         try:
             url = 'https://midlandsb.locatorsearch.com/GetItems.aspx'
             data = "lat=" + str(coords[0]) + "&lng=" + str(coords[1]) + \
-                "&searchby=FCS%7CFIATM%7CATMSF%7C&SearchKey=&rnd=1589454899459"
+                "&searchby=FIATM%7C&SearchKey=&rnd=1589454899459"
             # print(coords)
             s = requests.Session()
             r = session.post(

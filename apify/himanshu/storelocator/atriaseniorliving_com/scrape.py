@@ -23,7 +23,10 @@ def fetch_data():
             'content-type':'application/x-www-form-urlencoded; charset=UTF-8',
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
         }
-    locator_domain = "atriaseniorliving.com"
+    locator_domain = "https://www.atriaseniorliving.com/"
+
+    ############################ US location ###############################
+
     r= session.get("https://www.atriaseniorliving.com/retirement-communities/search-state/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     for state_link in soup.find("ul",{"id":"subpages"}).find_all("li"):
@@ -55,11 +58,44 @@ def fetch_data():
 
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
+            #print("data = " + str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            yield store
+
+    ############################ CA location ###############################
+
+    r= session.get("https://atriaretirementcanada-atria.icims.com/",headers = headers)
+    soup= BeautifulSoup(r.text,"lxml")
+    for state_url in soup.find("div",class_="row provinces").find_all("a"):
+        state_id = state_url["href"].split("=")[-1].strip()
+        r1 = session.get("https://www.atriaretirement.ca/wp-content/themes/aslblanktheme/script-getstatelocations.php?state="+str(state_id),headers=headers).json()
+        for loc in r1["communities"]:
+            store_number  = loc["community_number"]
+            location_name = loc["name"]
+            if "address_2" in loc :
+                street_address = loc["address_1"]+ " "+loc["address_2"] 
+            else:
+                street_address = loc["address_1"]
+            city = loc["city"]
+            state = loc["province"]
+            zipp = loc["postal_code"]
+            country_code = "CA"
+            phone = loc["phone"]
+            location_type = "<MISSING>"
+            latitude =loc["latitude"]
+            longitude = loc["longitude"]
+            hours_of_operation = "<MISSING>"
+            page_url = loc["url"]
+            store = [locator_domain, location_name, street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+            # if str(str(store[1])+str(store[2])) not in addresses :
+            #     addresses.append(str(store[1])+str(store[2]))
+
+            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+
             # print("data = " + str(store))
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
-
-    
+        
     
    
    
