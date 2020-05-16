@@ -28,7 +28,7 @@ def fetch_data():
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         #print(soup)
-        loc = soup.find('h2', {'class': 'itemTitle'}).text
+        loc = soup.find('h2', {'class': 'itemTitle'}).text.strip()
         data=soup.find_all('span', {'class': 'itemExtraFieldsValue'})
         print(data)
         street=data[1].text.strip()
