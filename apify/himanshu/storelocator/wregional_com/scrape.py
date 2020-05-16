@@ -8,7 +8,7 @@ import json
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w',newline= "") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -88,6 +88,7 @@ def fetch_data():
                 store.append(log)
                 store.append("<MISSING>")
                 store.append("https://www.wregional.com"+dt.find("a")['href'])
+                # print(store)
             else:
                 r3 = session.get("https://www.wregional.com"+dt.find("a")['href'])
                 soup3=BeautifulSoup(r3.text,'lxml')
@@ -114,14 +115,15 @@ def fetch_data():
                 store.append(log)
                 store.append("<MISSING>")
                 store.append("https://www.wregional.com"+dt.find("a")['href'])
+                # print(store)
         
         return_main_object.append(store)
     # return return_main_object
     for data in range(len(return_main_object)):
         # list1 = []
-        if return_main_object[data][2] in addresses:
+        if (return_main_object[data][2]+" "+return_main_object[data][-1]) in addresses:
             continue
-        addresses.append(return_main_object[data][2])
+        addresses.append(return_main_object[data][2]+" "+return_main_object[data][-1])
         yield  return_main_object[data]
 
 def scrape():
