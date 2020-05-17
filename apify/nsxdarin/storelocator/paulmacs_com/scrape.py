@@ -78,7 +78,10 @@ def fetch_data():
                         zc = g.split('<br')[1].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1].encode('utf-8')
                     if state in canada:
                         country = 'CA'
-                        zc = g.split('<br')[1].split('>')[1].split(',')[1].strip().split(' ',1)[1]
+                        if add == '475 Granville St. North':
+                            zc = 'C1N 4P7'
+                        else:
+                            zc = g.split('<br')[1].split('>')[1].split(',')[1].strip().split(' ',1)[1]
                 try:
                     phone = g.split('<a href="tel: ')[1].split('"')[0].encode('utf-8')
                 except:
