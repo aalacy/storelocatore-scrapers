@@ -1,5 +1,6 @@
 import time
 import csv
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import re
@@ -57,43 +58,71 @@ def fetch_data():
         #driver.find_element_by_xpath("//button[text()='OK']").click()
         print('clicked;')
         time.sleep(3)
-            
+   
+        soup =  str(BeautifulSoup(driver.page_source,'html.parser'))
+        #start = soup.find(':"House number","isChecked":false}],"branches":[')
+        start = 0
+        print(start)
+        for m in range(0,4):            
+            start = soup.find('branches":[{"id"',start)+1
+            temp = soup[start :100]
+            print(m,start,temp)
+        print(start)   
+        start = soup.find('"id"',start)
+        start = soup.find(':',start)+1
+        end = soup.find(',',start)
+        store = soup[start:end]
+        start = soup.find('"name"',end)
+        start = soup.find(':',start)
+        start = soup.find('"',start)+1
+        end = soup.find('"',start)
+        title = soup[start:end]
+        start = soup.find('"location"',end)
+        start = soup.find(':',start)
+        start = soup.find('"',start)+1
+        end = soup.find('"',start)
+        street = soup[start:end]
+        start = soup.find('"phone"',end)
+        start = soup.find(':',start)
+        start = soup.find('"',start)+1
+        end = soup.find('"',start)
+        phone = soup[start:end]
+        start = soup.find('"openHours"',end)
+        start = soup.find(':',start)
+        start = soup.find('"',start)+1
+        end = soup.find('"',start)
+        hours = soup[start:end]
+        start = soup.find('"city"',end)
+        start = soup.find(':',start)
+        start = soup.find('"',start)+1
+        end = soup.find('"',start)
+        city = soup[start:end]
+        city,state = city.split(' ')
+        start = soup.find('"zipCode"',end)
+        start = soup.find(':',start)
+        start = soup.find('"',start)+1
+        end = soup.find('"',start)
+        pcode = soup[start:end]
         
-        
-        locname = driver.find_element_by_xpath("//div[@class='branch-name']").text
-        streetaddress1 = driver.find_element_by_xpath("//div[@class='branch-address']").text
-        hour = driver.find_element_by_xpath("//span[@class='branch-hours']").text
-        #time.sleep(10)
-
-        phone = driver.find_element_by_xpath("//a[contains(text(),'(')]").text
-        city = streetaddress1.split(',')[len(streetaddress1.split(',')) - 1].split(' ')[1]
-        zipcode = "<MISSING>"
-        country = "USA"
-        if (i == 0 or i == 2):
-            state = streetaddress1.split(',')[len(streetaddress1.split(',')) - 1].split(' ')[2]
-        else:
-            city = streetaddress1.split(',')[len(streetaddress1.split(',')) - 2]
-            state = streetaddress1.split(',')[len(streetaddress1.split(',')) - 1].split(' ')[1]
-
         lat = '<MISSING>'
         lng = '<MISSING>'
-        streetaddress = streetaddress1.split(',')[0]
-
+        
+        hours = hours.replace('<br>','')
         data.append([
             'https://www.shopgalafresh.com/',
             'https://www.shopgalafresh.com/retailer/information',
-            locname,
-            streetaddress,
+            title,
+            street,
             city,
             state,
-            zipcode,
-            country,
-            '<MISSING>',
+            pcode,
+            'US',
+            store,
             phone,
             '<MISSING>',
             lat,
             lng,
-            hour
+            hours
         ])
 
         #print(i,data[i])
