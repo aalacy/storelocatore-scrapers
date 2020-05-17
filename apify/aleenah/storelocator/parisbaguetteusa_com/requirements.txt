@@ -1,3 +1,2 @@
 selenium==3.141.0
-sgrequests
 bs4==0.0.1
