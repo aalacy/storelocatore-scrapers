@@ -66,10 +66,16 @@ def fetch_data():
                         country = 'CA'
                         zc = g.split('<br')[2].split('>')[1].split(',')[1].strip().split(' ',1)[1]
                 else:
-                    add = g.split('<')[0].strip().replace('\t','').encode('utf-8')
-                    city = g.split('<br')[1].split('>')[1].split(',')[0].encode('utf-8')
-                    state = g.split('<br')[1].split('>')[1].split(',')[1].strip().split(' ')[0].encode('utf-8')
-                    zc = g.split('<br')[1].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1].encode('utf-8')
+                    if '475 Granville' in g:
+                        add = '475 Granville St. North'
+                        city = '<MISSING>'
+                        state = 'PEI'
+                        zc = 'C1N 4P7'
+                    else:
+                        add = g.split('<')[0].strip().replace('\t','').encode('utf-8')
+                        city = g.split('<br')[1].split('>')[1].split(',')[0].encode('utf-8')
+                        state = g.split('<br')[1].split('>')[1].split(',')[1].strip().split(' ')[0].encode('utf-8')
+                        zc = g.split('<br')[1].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1].encode('utf-8')
                     if state in canada:
                         country = 'CA'
                         zc = g.split('<br')[1].split('>')[1].split(',')[1].strip().split(' ',1)[1]
