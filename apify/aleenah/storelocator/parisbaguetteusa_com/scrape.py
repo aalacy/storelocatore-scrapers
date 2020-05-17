@@ -27,9 +27,9 @@ def fetch_data():
     driver.get('https://parisbaguette.com/locations/')
     driver.switch_to.frame(driver.find_element_by_tag_name('iframe'))
     soup = BeautifulSoup(driver.page_source, 'html.parser')
-    print(soup)
+    #print(soup)
     stores = soup.find_all('div', {'class': 'com_locator_address'})
-    print(len(stores))
+    #print(len(stores))
     for store in stores:
         loc=store.find('h2').find('a').text.strip()
         street = store.find('span', {'class': 'line_item address'}).text.strip()
