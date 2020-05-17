@@ -108,6 +108,10 @@ def fetch_data():
                     state = 'Ontario'
                 if 'Surrey' in city:
                     state = 'British Columbia'
+                if 'al, QC' in name:
+                    name = 'Montreal, QC'
+                if 'bec, QC' in name:
+                    name = 'Quebec, QC'
                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
