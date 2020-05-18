@@ -1,189 +1,168 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
-import time
-
+from sgrequests import SgRequests
+import phonenumbers
 session = SgRequests()
+
 
 def write_output(data):
     with open('data.csv', mode='w',newline="") as output_file:
-        writer = csv.writer(output_file, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_ALL)
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
 
-def request_wrapper(url, method, headers, data=None):
-    request_counter = 0
-    if method == "get":
-        while True:
-            try:
-                r = session.get(url, headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    elif method == "post":
-        while True:
-            try:
-                if data:
-                    r = session.post(url, headers=headers, data=data)
-                else:
-                    r = session.post(url, headers=headers)
-                return r
-                break
-            except:
-                time.sleep(2)
-                request_counter = request_counter + 1
-                if request_counter > 10:
-                    return None
-                    break
-    else:
-        return None
-
-
 def fetch_data():
-    return_main_object = []
+    states = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH",'OK',"OR","PA","RI","SC","SD",'TN',"TX","UT","VT","VA","WA","WV","WI","WY"]
     addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    # search.initialize(include_canadian_fsas = True)   # with canada zip
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 200
-    current_results_len = 0  # need to update with no of count.
-    zip_code = search.next_zip()
+    locator_domain = 'https://www.metromarket.net/'
 
     headers = {
-        # 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        'User-Agent': "PostmanRuntime/7.19.0",
-        "content-type": "application/json;charset=UTF-8",
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.100 Safari/537.36',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
     }
-
-    base_url = "https://www.metromarket.net/"
-
-    while zip_code:
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
-        result_coords = []
-
-        # print("zip_code === " + zip_code)
-
-        # zip_code = "11576"
-
-        data = "{\"query\":\"\\n      query storeSearch($searchText: String!, $filters: [String]!) {\\n        storeSearch(searchText: $searchText, filters: $filters) {\\n          stores {\\n            ...storeSearchResult\\n          }\\n          fuel {\\n            ...storeSearchResult\\n          }\\n          shouldShowFuelMessage\\n        }\\n      }\\n      \\n  fragment storeSearchResult on Store {\\n    banner\\n    vanityName\\n    divisionNumber\\n    storeNumber\\n    phoneNumber\\n    showWeeklyAd\\n    showShopThisStoreAndPreferredStoreButtons\\n    storeType\\n    distance\\n    latitude\\n    longitude\\n    tz\\n    ungroupedFormattedHours {\\n      displayName\\n      displayHours\\n      isToday\\n    }\\n    address {\\n      addressLine1\\n      addressLine2\\n      city\\n      countryCode\\n      stateCode\\n      zip\\n    }\\n    pharmacy {\\n      phoneNumber\\n    }\\n    departments {\\n      code\\n    }\\n    fulfillmentMethods{\\n      hasPickup\\n      hasDelivery\\n    }\\n  }\\n\",\"variables\":{\"searchText\":\"" + str(zip_code) + "\",\"filters\":[]},\"operationName\":\"storeSearch\"}"
-        locations_url = "https://www.marianos.com/stores/api/graphql"
-        r_locations = request_wrapper(
-            locations_url, "post", headers=headers, data=data)
-
-        # print("r_locations.text ==== " + r_locations.text)
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-
+    for state in states:
+        #print(state)
+        r = session.get("https://www.metromarket.net/stores/search?searchText="+str(state), headers=headers)
+        soup = BeautifulSoup(r.text, "lxml")
+        # json_data = json.loads(soup.find(lambda tag: (tag.name == "script") and "window.__INITIAL_STATE__ =" in tag.text).text.split("JSON.parse('")[1].split(',"contentHash"')[0].replace("Valentine\\'s","Valentine's").replace("What\'s","What's").replace(':"/"}]}}',':"/"}]}}}}}').replace("\\",""))['storeSearch']['storeSearchReducer']
+        str1 = '{"stores":'+soup.find(lambda tag: (tag.name == "script") and "window.__INITIAL_STATE__ =" in tag.text).text.split('"stores":')[1].split(',"shouldShowFuelMessage":true}')[0]+"}"
+        json_data = json.loads(str1.replace("\\",""))
+        # print(json_data)
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         
-
-        # it always need to set total len of record.
-        try:
-            locations_json = r_locations.json()["data"]["storeSearch"]["stores"]
-            
-        except:
-            continue
-
-        # print("current_results_len === " + str(current_results_len))
-        current_results_len = len(locations_json)
-        for script in locations_json:
-
-            locator_domain = base_url
-            location_name = ""
-            street_address = ""
-            city = ""
-            state = ""
-            zipp = ""
-            country_code = "US"
-            store_number = ""
-            phone = ""
-            location_type = ""
-            latitude = ""
-            longitude = ""
-            raw_address = ""
-            page_url = ""
-            hours_of_operation = ""
-
-            # do your logic here
-            # print('script["address"] === '+ str(script["address"]))
-
-            street_address = script["address"]["addressLine1"]
-            if "addressLine2" in script["address"] and script["address"]["addressLine2"]:
-                street_address += " " + script["address"]["addressLine2"]
-            city = script["address"]["city"]
-            country_code = script["address"]["countryCode"]
-            state = script["address"]["stateCode"]
-            zipp = script["address"]["zip"]
-            phone = script["phoneNumber"]
-            store_number = script["storeNumber"]
-            latitude = script["latitude"]
-            longitude = script["longitude"]
-            location_name = script["vanityName"]
-            location_type = "<MISSING>"
-            page_url = "https://www.metromarket.net/stores/details/" +str(script["divisionNumber"]) +"/" + str(script["storeNumber"])
-            r_loc = session.get(page_url, headers=headers)
-            soup_loc = BeautifulSoup(r_loc.text, "lxml")
+    ##### store
+    
+        datas = json_data['stores']
+        for key in datas:
             try:
-                ltype = soup_loc.find("div", class_="logo").a["title"].strip()
-                # print(ltype)
-                if "MetroMarket" in ltype:
-                    location_type = "MetroMarket"
-                    # print("loc_type === ",location_type)
-                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-                else:
-                    # print(ltype)
-                    continue
-                hours_of_operation = ""
-                for day_hours in script["ungroupedFormattedHours"]:
-                    hours_of_operation += day_hours["displayName"] +  " = " + day_hours["displayHours"] + "  "
-
-                # print("hours_of_operation == "+ hours_of_operation)
-
-                result_coords.append((latitude, longitude))
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-                if str(store[2]) not in addresses and country_code:
-                    addresses.append(str(store[2]))
-
-                    store = [str(x).encode('ascii', 'ignore').decode(
-                        'ascii').strip() if x else "<MISSING>" for x in store]
-
-                    # print("data = " + str(store))
-                    # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    yield store
+                location_type = key["banner"]+" store"
             except:
-                search.max_distance_update(MAX_DISTANCE)
+                location_type = "store"
+            # print(location_type)
+            location_name = key['vanityName']
+            street_address = key['address']['addressLine1'].capitalize()
+            city = key['address']['city'].capitalize()
+            state = key['address']['stateCode']
+            zipp =  key['address']['zip']
+            country_code = key['address']['countryCode']
+            store_number = key['storeNumber']
+            if key['phoneNumber']:
+                phone = phonenumbers.format_number(phonenumbers.parse(str(key['phoneNumber']), 'US'), phonenumbers.PhoneNumberFormat.NATIONAL)
+            else:
+                phone = "<MISSING>"
+            # location_type = "store"
+            latitude = key['latitude']
+            longitude = key['longitude']  
+            # for hr in key['ungroupedFormattedHours']:
+            #         hours_of_operation= " Sun - Sat:" +" "+hr['displayHours']
+            page_url = "https://www.metromarket.net/stores/details/"+str(key['divisionNumber'])+"/"+str(store_number)
+            hours_of_operation = ""
+            for day_hours in key["ungroupedFormattedHours"]:
+                hours_of_operation += day_hours["displayName"] +  " = " + day_hours["displayHours"] + "  "
+            r2 = session.get(page_url, headers=headers)
+            soup2 = BeautifulSoup(r2.text, "lxml")
+            # try:
+            #     location_type = soup2.find("div", class_="logo").a["title"].strip()+ " store"
+            #     print(location_type)
+            # except:
+            #     location_type = "<MISSING>"
+            #     print(page_url)
+            # try:
+            #     hours = " ".join(json.loads(soup2.find(lambda tag:(tag.name == "script") and "openingHours" in tag.text).text)['openingHours'])
+            # except:
+            #     hours = "<MISSING>"
 
+            store = []
+            store.append(locator_domain if locator_domain else '<MISSING>')
+            store.append(location_name if location_name else '<MISSING>')
+            store.append(street_address if street_address else '<MISSING>')
+            store.append(city if city else '<MISSING>')
+            store.append(state if state else '<MISSING>')
+            store.append(zipp if zipp else '<MISSING>')
+            store.append(country_code if country_code else '<MISSING>')
+            store.append(store_number if store_number else '<MISSING>')
+            store.append(phone if phone else '<MISSING>')
+            store.append(location_type if location_type else '<MISSING>')
+            store.append(latitude if latitude else '<MISSING>')
+            store.append(longitude if longitude else '<MISSING>')
+            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+            store.append(page_url)
+            if (store[-7]) in addresses:
+                continue
+            addresses.append(store[-7])
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
+            yield store
 
-        if current_results_len < MAX_RESULTS:
-            # print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " +
-                            str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
+    ########### fuel
+        datas1 = json_data['fuel']
+        for key1 in datas1:
+            try:
+                location_type = key["banner"]+" fuel"
+            except:
+                location_type = "fuel"
+            # print(location_type)
+            location_name = key1['vanityName']
+            street_address = key1['address']['addressLine1'].capitalize()
+            city = key1['address']['city'].capitalize()
+            state = key1['address']['stateCode']
+            zipp =  key1['address']['zip']
+            country_code = key1['address']['countryCode']
+            store_number = key1['storeNumber']
+            phone = key1['phoneNumber']
+            # location_type = "fuel"
+            latitude = key1['latitude']
+            longitude = key1['longitude']
+            hours_of_operation = ''
+            page_url = "https://www.metromarket.net/stores/details/"+str(key1['divisionNumber'])+"/"+str(store_number)
+            hours_of_operation = ""
+            for day_hours in key1["ungroupedFormattedHours"]:
+                hours_of_operation += day_hours["displayName"] +  " = " + day_hours["displayHours"] + "  "
+            r3 = session.get(page_url, headers=headers)
+            soup3 = BeautifulSoup(r3.text, "lxml")
+            # try:
+            #     location_type = soup3.find("div", class_="logo").a["title"].strip()+ " fuel"
+            #     print(location_type)
+            # except:
+            #     location_type = "<MISSING>"
+            #     print(page_url)
+            
+            # try:
+            #     hours = " ".join(json.loads(soup3.find(lambda tag:(tag.name == "script") and "openingHours" in tag.text).text)['openingHours'])
+            # except:
+            #     hours = "<MISSING>"
 
+            store = []
+            store.append(locator_domain if locator_domain else '<MISSING>')
+            store.append(location_name if location_name else '<MISSING>')
+            store.append(street_address if street_address else '<MISSING>')
+            store.append(city if city else '<MISSING>')
+            store.append(state if state else '<MISSING>')
+            store.append(zipp if zipp else '<MISSING>')
+            store.append(country_code if country_code else '<MISSING>')
+            store.append(store_number if store_number else '<MISSING>')
+            store.append(phone if phone else '<MISSING>')
+            store.append(location_type if location_type else '<MISSING>')
+            store.append(latitude if latitude else '<MISSING>')
+            store.append(longitude if longitude else '<MISSING>')
+            store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+            store.append(page_url)
+            if (store[-7]) in addresses:
+                continue
+            addresses.append(store[7])
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
+            yield store
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

@@ -21,7 +21,7 @@ def fetch_data():
     # search.initialize()
     search.initialize(include_canadian_fsas = True)
     MAX_RESULTS = 100
-    MAX_DISTANCE = 20
+    MAX_DISTANCE = 25
     current_results_len = 0 
     main_arr=[]
     coord = search.next_coord()
@@ -30,8 +30,11 @@ def fetch_data():
     }
     while coord:
         result_coords = []
-        lat = coord[0]
-        lng = coord[1]
+        lat = str(coord[0])
+        lng = str(coord[1])
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print('Pulling Lat-Long %s,%s..' % (lat,lng))
+        # print(lng)
         base_url="https://www.pizza73.com/Pizza73/proxy.php?lng="+str(lng)+"&lat="+str(lat)
         try:
             r = requests.get(base_url)
@@ -66,7 +69,7 @@ def fetch_data():
                 store.append(latitude if latitude else "<MISSING>")
                 store.append(longitude if longitude else "<MISSING>")
                 store.append(hours_of_operation.replace(" , ",' '))
-                print(store)
+                # print(store)
 
                 store.append(base_url)
                 main_arr.append(store)
@@ -74,8 +77,8 @@ def fetch_data():
                 # if store[2] in addresses:
                 #     continue
                 # addresses.append(store[2])
-                # print("data ==="+str(store))
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                print("data ==="+str(store))
+                print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                 # yield store
                  
        
@@ -88,7 +91,6 @@ def fetch_data():
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         coord = search.next_coord()
-    exit()
 
     base_url1='https://www.pizza73.com/Pizza73/proxy.php?lng=-113.9577884&lat=51.15473189999999'
     try:
@@ -127,12 +129,12 @@ def fetch_data():
         store.append(hours_of_operation.replace(",",' '))
         store.append(base_url)
         main_arr.append(store)
-        print(store)
+        # print(store)
         # if store[2] in addresses:
         #     continue
         # addresses.append(store[2])
-        # print("data ==="+str(store))
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+        print("data ==="+str(store))
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
         # yield store
     for data in range(len(main_arr)):
         if main_arr[data][2] in addresses:

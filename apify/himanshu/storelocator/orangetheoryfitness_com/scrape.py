@@ -43,8 +43,8 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ['us', 'ca'])
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 50
+    MAX_RESULTS = 250
+    MAX_DISTANCE = 40
     current_results_len = 0     # need to update with no of count.
 
     zip_code = search.next_zip()
@@ -56,7 +56,7 @@ def fetch_data():
         result_coords = []
         # print("zip_code === ",zip_code)
         # print("remaining zipcodes: " + str(len(search.zipcodes)))
-        # print('Pulling Lat-Long %s,%s...' % (str(zip_code)))
+        # print('Pulling Lat-Long %s...' % (str(zip_code)))
         base_url=  "https://www.orangetheoryfitness.com/service/directorylisting/filterMarkers?s="+str(zip_code)
         try:
             r = session.get(base_url)

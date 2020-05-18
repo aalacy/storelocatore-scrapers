@@ -121,9 +121,9 @@ def fetch_data():
     # return return_main_object
     for data in range(len(return_main_object)):
         # list1 = []
-        if (return_main_object[data][2]+" "+return_main_object[data][-1]) in addresses:
+        if (return_main_object[data][2]) in addresses:
             continue
-        addresses.append(return_main_object[data][2]+" "+return_main_object[data][-1])
+        addresses.append(return_main_object[data][2])
         yield  return_main_object[data]
 
 def scrape():
