@@ -40,9 +40,7 @@ def fetch_data():
     #print(soup)
     divlist = soup.findAll('marker')
     for div in divlist:
-        det = cleanr.sub(' ', str(divlist1[p]))
-        phone = det[det.find(':')+1:len(det)]
-        phone = phone.strip()
+       
         title = div['name']
         store = title[title.find('#')+1:len(title)]
         address= div['address']
@@ -79,7 +77,15 @@ def fetch_data():
         state = state.replace(',','')
         lat = div['lat']
         longt = div['lng']
-    
+        phone = ''
+        for det in divlist1:
+            if det.text.find(title) > -1:
+                phone = det
+                break
+        phone =  cleanr.sub(' ', str(phone))
+        phone = phone[phone.find(':')+1:len(phone)]
+        phone = phone.strip()
+        print(title,phone)
         data.append(['https://takinittothepump.com/','https://takinittothepump.com/location.php', title, street, city, state, pcode, 'US', store, phone, '<MISSING>', lat, longt, '<MISSING>'])
         #print(p,data[p])
         p += 1
