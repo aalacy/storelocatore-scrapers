@@ -36,7 +36,7 @@ def fetch_data():
     print("states = ",len(state_list))
     p = 0
     for state in state_list:
-        print(state.text)    
+        #print(state.text)    
         state = state['href']
         divlist = []
         linklist = []
@@ -94,8 +94,9 @@ def fetch_data():
                     pcode = pcode.lstrip()
                     city = city.lstrip()
                     state = state.lstrip()
+                    city = city.replace(',','')
                     link = div.find('a',{'class':'avia-button'})['href']
-                    print(link)
+                    #print(link)
                     r1 = session.get(link, headers=headers, verify=False)
                     soup1 = BeautifulSoup(r1.text, "html.parser")
                     coordlist = soup1.findAll('a')
@@ -127,7 +128,7 @@ def fetch_data():
                            lat = soup1[start:end]
                    
                     data.append(['https://nhccare.com',link,title,street,city,state,pcode,'US',"<MISSING>",phone,"<MISSING>",lat,longt,"<MISSING>"])
-                    print(p,data[p])
+                    #print(p,data[p])
                     p += 1
                     #input()
                         
