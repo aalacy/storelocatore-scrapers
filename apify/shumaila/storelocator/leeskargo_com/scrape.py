@@ -67,7 +67,7 @@ def fetch_data():
             end = coord.find('&',start)
             lat = coord[start:end]
             #print(street,city,state,pcode,hours,lat,longt)
-            data.append(['http://leeskargo.com/','http://leeskargo.com/find-us.html', 'title', street, city, state, pcode, 'US', '<MISSING>', phone, '<MISSING>', lat, longt, hours])
+            data.append(['http://leeskargo.com/','http://leeskargo.com/find-us.html', '<MISSING>', street, city, state, pcode, 'US', '<MISSING>', phone, '<MISSING>', lat, longt, hours])
             print(p,data[p])
             p += 1
             
