@@ -48,7 +48,7 @@ def fetch_data():
                             website = 'cvs.com'
                             typ = '<MISSING>'
                             hours = ''
-                            name = ''
+                            name = 'CVS Pharmacy'
                             add = ''
                             city = ''
                             state = ''
@@ -61,10 +61,8 @@ def fetch_data():
                             Found = False
                             r3 = session.get(loc, headers=headers)
                             for line3 in r3.iter_lines():
-                                if name == '' and '"name": "' in line3:
-                                    name = line3.split('"name": "')[1].split('"')[0]
-                                    LFound = False
                                 if add == '' and '"streetAddress": "' in line3:
+                                    LFound = False
                                     add = line3.split('"streetAddress": "')[1].split('"')[0]
                                 if city == '' and '"addressLocality": "' in line3:
                                     city = line3.split('"addressLocality": "')[1].split('"')[0]
@@ -95,7 +93,7 @@ def fetch_data():
                             if phone == '':
                                 phone = '<MISSING>'
                             hours = hours.replace(':00:00',':00').replace(':30:00',':30')
-                            if loc not in donelocs:
+                            if loc not in donelocs and add != '':
                                 donelocs.append(loc)
                                 yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
                         except:
