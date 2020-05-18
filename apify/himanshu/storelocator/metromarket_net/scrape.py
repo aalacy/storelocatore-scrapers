@@ -66,8 +66,8 @@ def fetch_data():
             hours_of_operation = ""
             for day_hours in key["ungroupedFormattedHours"]:
                 hours_of_operation += day_hours["displayName"] +  " = " + day_hours["displayHours"] + "  "
-            r2 = session.get(page_url, headers=headers)
-            soup2 = BeautifulSoup(r2.text, "lxml")
+            # r2 = session.get(page_url, headers=headers)
+            # soup2 = BeautifulSoup(r2.text, "lxml")
             # try:
             #     location_type = soup2.find("div", class_="logo").a["title"].strip()+ " store"
             #     print(location_type)
@@ -125,8 +125,8 @@ def fetch_data():
             hours_of_operation = ""
             for day_hours in key1["ungroupedFormattedHours"]:
                 hours_of_operation += day_hours["displayName"] +  " = " + day_hours["displayHours"] + "  "
-            r3 = session.get(page_url, headers=headers)
-            soup3 = BeautifulSoup(r3.text, "lxml")
+            # r3 = session.get(page_url, headers=headers)
+            # soup3 = BeautifulSoup(r3.text, "lxml")
             # try:
             #     location_type = soup3.find("div", class_="logo").a["title"].strip()+ " fuel"
             #     print(location_type)
