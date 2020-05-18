@@ -18,7 +18,7 @@ headers = {
     }
 
 MAX_RESULTS = 50
-MAX_DISTANCE = 200
+MAX_DISTANCE = 25
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
