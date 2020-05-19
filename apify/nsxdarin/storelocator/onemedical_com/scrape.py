@@ -29,9 +29,11 @@ def fetch_data():
                     items = line2.split('"latitude\\": ')
                     for item in items:
                         if '"slug\\": \\"' in item:
+                            iadd = item.split('"address1\\": \\"')[1].split('\\')[0] + ' ' + item.split('"address2\\": \\"')[1].split('\\')[0]
+                            iadd = iadd.strip()
                             ilat = item.split(',')[0]
                             ilng = item.split('\\"longitude\\": ')[1].split(',')[0]
-                            locs.append('https://www.onemedical.com/locations/' + code + '/' + item.split('"slug\\": \\"')[1].split('\\')[0] + '|' + ilat + '|' + ilng)
+                            locs.append('https://www.onemedical.com/locations/' + code + '/' + item.split('"slug\\": \\"')[1].split('\\')[0] + '|' + ilat + '|' + ilng + '|' + iadd)
     for loc in locs:
         print('Pulling Location %s...' % loc.split('|')[0])
         website = 'onemedical.com'
@@ -45,6 +47,7 @@ def fetch_data():
         country = 'US'
         lat = loc.split('|')[1]
         lng = loc.split('|')[2]
+        add = loc.split('|')[3]
         store = '<MISSING>'
         hours = ''
         phone = ''
@@ -55,8 +58,6 @@ def fetch_data():
                 name = line2.split('<title>')[1].split(' |')[0]
             if '<p itemprop="telephone"><a href="tel:' in line2:
                 phone = line2.split('<p itemprop="telephone"><a href="tel:')[1].split('"')[0]
-            if '<p itemprop="streetAddress">' in line2:
-                add = line2.split('<p itemprop="streetAddress">')[1].split('<')[0]
             if '<span itemprop="addressLocality">' in line2:
                 city = line2.split('<span itemprop="addressLocality">')[1].split('<')[0]
             if '<span itemprop="addressRegion">' in line2:
