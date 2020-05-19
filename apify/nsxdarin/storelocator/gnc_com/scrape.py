@@ -44,7 +44,10 @@ def fetch_data():
                         add = item.split('"address1":"')[1].split('"')[0]
                         if '"address2":"' in item:
                             add = add + ' ' + item.split('"address2":"')[1].split('"')[0]
-                        zc = item.split('"postalCode":"')[1].split('"')[0]
+                        try:
+                            zc = item.split('"postalCode":"')[1].split('"')[0]
+                        except:
+                            zc = '<MISSING>'
                         city = item.split('"city":"')[1].split('"')[0]
                         state = item.split('"state":"')[1].split('"')[0]
                         lat = item.split('"coordinates":[')[1].split(',')[0]
