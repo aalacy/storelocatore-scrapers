@@ -38,9 +38,6 @@ def fetch_data():
 
     all_store_data = []
     for loc in locs:
-        print(loc)
-        print()
-        print()
         location_name = loc['Name']
         street_address = loc['AddressLine1']
         
