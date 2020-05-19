@@ -105,6 +105,7 @@ def fetch_data():
             yield store
         
         try:
+            r1=''
             r1 = session.get("https://www.napaonline.com/api/storelocator/nearby-stores?storeType=ACMEC&location="+str(zip_code)+"&sortBy=1&language=en", headers=headers).json()
         except:
             pass

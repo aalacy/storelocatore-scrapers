@@ -21,27 +21,40 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
-    MAX_RESULTS = 600
-    MAX_DISTANCE = 20
+    MAX_RESULTS = 1000
+    MAX_DISTANCE = 50
     current_results_len = 0  # need to update with no of count.
     coord = search.next_coord()
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        'Content-Type':'application/json',
-    }
+                'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.92 Safari/537.36",
+                'Accept': "application/json, text/plain, */*",
+                'Content-Type': "application/json; charset=UTF-8",
+                'Cache-Control': "no-cache",
+                'Postman-Token': "b15101fa-fad9-40bd-ae46-a16720e8afc8,59f80690-1b85-4654-adee-313ecbdfd7d6",
+                'Host': "www.walgreens.com",
+                'Accept-Encoding': "gzip, deflate",
+                'Content-Length': "101",
+                # 'Cookie': "dtCookie=6$A3425DF8397009D51DBAAA43E235903D; bm_sz=F124BF48E16D20D9D57CDBC52FD9C434~YAAQdzYauK+WoglyAQAAXQ9mJwesiiUOaw4YE4q30HDpCIiq2pitnMem0H9mz2D8rYmMd9rOQCtFHN8qj9AW9GjvNCqGEtnokcC2TnCNKqH/pe4wKyv5NFQuB1lWD/cdulHeRlH0IVHW9071vRsqNmFwAuaIHH18RSjUaQxdVMpNjJWTZptV+bCLGFRKDNc8LH0T; _abck=5A86A806EC7840014A3875C784EF84EA~-1~YAAQdzYauLCWoglyAQAAXQ9mJwMLS6oEE75LWvrjEqe00QAWRF+GNIGc+41AMs4q60iQMir0xCjU4thqnvSltFyOcVrGbsN+r94vzGlKwtQJ3AGyNhXSatWR4iS/OHFV6hoa+GULFQWaUyRoEYZXo7IsdL0VEtweS90nH/5kR3tB0GeGcPqdLHmlNNFx5jQAsvwGgLxP1YYrQGbNG9KVCXp6g9vsOzHsSJCG/IbMwcpxozAvfc25ObkMBQIN1+xJekV2ZWKCWF7pKHm5x1WVR9F6/8kQrT/CJJaoQ8xSd7+b0ZwlgZKuppUbyNxT~-1~-1~-1",
+                'Connection': "keep-alive",
+                'cache-control': "no-cache"
+                }
     base_url = "https://www.walgreens.com"
     while coord:
         result_coords = []
         lat = coord[0]
         lng = coord[1]
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print(search.zipcode)
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         page = 1
         while True:
-            data = '{"lat":'+str(lat)+',"lng":'+str(lng)+',"requestType":"dotcom","s":"1000","p":"'+str(page)+'"}'
-            try:
-                r = requests.post("https://www.walgreens.com/locator/v1/stores/search", data=data, headers=headers).json()
-            except:
-                continue
+            url = "https://www.walgreens.com/locator/v1/stores/search"
+
+            querystring = {"requestor":"search"}
+
+            payload = "{\"q\":\"\",\"r\": \"50\", \"lat\": "+str(lat)+", \"lng\":"+str(lng)+", \"requestType\": \"dotcom\", \"s\": \"20\", \"p\": "+str(page)+"}"
+            
+            r = requests.request("POST", url, data=payload, headers=headers, params=querystring).json()
+            
             if "results" not in r:
                 break
             current_results_len= len(r['results'])
@@ -92,9 +105,9 @@ def fetch_data():
                 store = [locator_domain, location_name, location['store']['address']['street'].capitalize(), location['store']['address']['city'].capitalize(), location['store']['address']['state'], zipp, country_code,
                         storeNumber, phone.strip(), location_type, latitude, longitude, hours_of_operation,page_url]
 
-                if str(store[2]) in addresses:
+                if str(store[-7]) in addresses:
                     continue
-                addresses.append(str(store[2]) )
+                addresses.append(str(store[-7]) )
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                 # print("data =="+str(store))
                 # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
@@ -107,6 +120,8 @@ def fetch_data():
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         coord = search.next_coord()
+
+        
 def scrape():
     data = fetch_data()
     write_output(data)
