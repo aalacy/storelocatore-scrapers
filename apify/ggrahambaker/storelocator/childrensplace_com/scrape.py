@@ -64,6 +64,7 @@ def fetch_data():
         for loc in res_json:
             lat = loc['latitude']
             longit = loc['longitude']
+
             
             result_coords.append([lat, longit])
             
@@ -74,7 +75,7 @@ def fetch_data():
             country_code = loc['country'].strip()
             
             phone_number = loc['telephone1'].strip()
-            store_number = loc['storeName']
+            store_number = loc['uniqueId']
             
             location_name = loc['description']['displayStoreName']
             if location_name not in dup_tracker:
@@ -91,7 +92,9 @@ def fetch_data():
             
             
             location_type = '<MISSING>'
-            page_url = '<MISSING>'
+            page_url = 'https://www.childrensplace.com/us/store/' + location_name.replace(' ', '') + '-' + state + '-' + city.replace(' ', '') + '-' + zip_code.replace(' ', '') + '-' + store_number
+
+            #https://www.childrensplace.com/us/store/{displayStoreName without spaces}-{state or province code}-{city without spaces}-{zip or postal code}-{uniqueId}
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
