@@ -103,7 +103,7 @@ def fetch_data():
         start = soup.find('"',start)+1
         end = soup.find('"',start)
         pcode = soup[start:end]
-        
+        city = city.replace(',','')
         lat = '<MISSING>'
         lng = '<MISSING>'
         
