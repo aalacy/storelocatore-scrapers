@@ -5,9 +5,9 @@ import re
 import json
 import sgzip
 import time
+import requests
 from datetime import datetime
 session = SgRequests()
-import requests
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -25,7 +25,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 50
-    MAX_DISTANCE = 50
+    MAX_DISTANCE = 100
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
 
@@ -40,8 +40,8 @@ def fetch_data():
     }
     while zip_code:
         result_coords = []
-
-        location_url = " https://www.safeway.com/abs/pub/storelocator/api/accounts/me/locations/geosearch?api_key=843b2f10cedf121969b2e44eab5f15aa&v=20180530&location="+str(zip_code)+"&limit=10&radius=200&filters=%5B%7B%22custom95965%22%3A%20%7B%22equalTo%22%3A%5B%22safeway%22%5D%7D%7D%5D"
+        location_url = "https://www.safeway.com/abs/pub/storelocator/api/accounts/me/locations/geosearch?api_key=843b2f10cedf121969b2e44eab5f15aa&v=20180530&location="+str(zip_code)+"&limit=50&radius=200&filters=%5B%7B%22custom95965%22%3A%20%7B%22equalTo%22%3A%5B%22safeway%22%5D%7D%7D%5D"
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         
         r = requests.get(location_url).json()
         current_results_len = len(r['response']['locations'])

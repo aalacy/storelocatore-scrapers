@@ -5,7 +5,7 @@ import json
 from sgrequests import SgRequests
 import phonenumbers
 session = SgRequests()
-
+import requests
 
 def write_output(data):
     with open('data.csv', mode='w',newline="") as output_file:
@@ -28,10 +28,9 @@ def fetch_data():
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
     }
     for state in states:
-        # print(state)
-        r = session.get("https://www.foodsco.net/stores/search?searchText="+str(state), headers=headers)
+        print(state)
+        r = requests.get("https://www.foodsco.net/stores/search?searchText="+str(state), headers=headers)
         soup = BeautifulSoup(r.text, "lxml")
-        # json_data = json.loads(soup.find(lambda tag: (tag.name == "script") and "window.__INITIAL_STATE__ =" in tag.text).text.split("JSON.parse('")[1].split(',"contentHash"')[0].replace("Valentine\\'s","Valentine's").replace("What\'s","What's").replace(':"/"}]}}',':"/"}]}}}}}').replace("\\",""))['storeSearch']['storeSearchReducer']
         str1 = '{"stores":'+soup.find(lambda tag: (tag.name == "script") and "window.__INITIAL_STATE__ =" in tag.text).text.split('"stores":')[1].split(',"shouldShowFuelMessage":true}')[0]+"}"
         json_data = json.loads(str1.replace("\\",""))
         # print(json_data)
@@ -44,9 +43,9 @@ def fetch_data():
             if key["banner"]:
                 if "FOODSCO" not in key["banner"]:
                     continue
-                   # print("ltype == ",key["banner"])
+                    # print("ltype == ",key["banner"])
                 location_type = "foodsco"
-                #print(location_type)
+                # print(location_type)
                 location_name = key['vanityName']
                 street_address = key['address']['addressLine1'].capitalize()
                 city = key['address']['city'].capitalize()
@@ -84,8 +83,8 @@ def fetch_data():
                 if (store[-7]) in addresses:
                     continue
                 addresses.append(store[-7])
-                # print("data = " + str(store))
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
+                print("data = " + str(store))
+                print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
                 yield store
 
     
