@@ -2,7 +2,7 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-import json
+# import json
 session = SgRequests()
 
 def write_output(data):
@@ -40,7 +40,7 @@ def fetch_data():
             state = location_soup.find("span",{"itemprop":"addressRegion"}).text
             zipp = location_soup.find("span",{"itemprop":"postalCode"}).text
             phone = location_soup.find("span",{"itemprop":"telephone"}).text
-            location_type = "Urgent Care"
+            location_type = page_url.split("/")[-3].strip().replace("-"," ").capitalize()
             coord = location_soup.find("div",{"class":"phone-directions"}).find_all("a")[-1]['href']
             
             latitude = coord.split("=")[1].split(",")[0]
