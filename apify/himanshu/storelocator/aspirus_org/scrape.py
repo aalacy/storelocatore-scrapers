@@ -12,7 +12,6 @@ from selenium.webdriver.support.wait import WebDriverWait
 import platform
 system = platform.system()
 
-
 session = SgRequests()
 def get_driver():
     options = Options()
@@ -24,6 +23,7 @@ def get_driver():
         return webdriver.Firefox(executable_path='./geckodriver', options=options)        
     else:
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+
 
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8",newline="") as output_file:
@@ -174,11 +174,11 @@ def fetch_data():
 					store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
 							store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 					store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-					if (str(store[-5])+" "+str(store[-7])) in addresses:
-						continue
-					addresses.append(str(store[-5])+" "+str(store[-7]))
-					# print("data = " + str(store))
-					# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+					# if (str(store[-5])+" "+str(store[-7])) in addresses:
+					# 	continue
+					# addresses.append(str(store[-5])+" "+str(store[-7]))
+					#print("data = " + str(store))
+					#print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 					yield store
 					# duplicate =str(store[1])+" "+str(store[2])+" "+str(store[3])+" "+str(store[4])+" "+str(store[5])+" "+str(store[6])+" "+str(store[7])+" "+str(store[8])+" "+str(store[10])+" "+str(store[11])+" "+str(store[12])+" "+str(store[13])
 					
@@ -237,8 +237,8 @@ def fetch_data():
 							store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
 		store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 		
-		# print("data = " + str(store))
-		# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+		#print("data = " + str(store))
+		#print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 		yield store
 def scrape():
 	data = fetch_data()
