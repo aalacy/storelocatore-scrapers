@@ -8,11 +8,11 @@ import json
 session = SgRequests()
 
 def write_output(data):
-    with open('data.csv', mode='w',encoding="utf-8") as output_file:
+    with open('data.csv',newline='', mode='w',encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -28,8 +28,9 @@ def fetch_data():
     r = session.post("https://www.carespot.com/wp-admin/admin-ajax.php",headers=headers,data=data)
     return_main_object = []
     for location in r.json()["data"]:
-        print(BeautifulSoup(location["info"],"lxml").find("a")["href"])
-        location_request = session.get(BeautifulSoup(location["info"],"lxml").find("a")["href"])
+        page_url = BeautifulSoup(location["info"],"lxml").find("a")["href"]
+        location_type = page_url.split("/")[-3].strip().replace("-"," ").capitalize()
+        location_request = session.get(page_url)
         location_soup = BeautifulSoup(location_request.text,"lxml")
         if location_soup.find("p",text=re.compile("coming soon!",re.IGNORECASE)) != None:
             continue
@@ -52,11 +53,12 @@ def fetch_data():
         store.append("US")
         store.append(location["id"])
         store.append(phone if phone != "" else "<MISSING>")
-        store.append("care spot")
+        store.append(location_type)
         store.append(location["lat"])
         store.append(location["lng"])
         store.append(location_hours if location_hours != "" else "<MISSING>")
-        print(store)
+        store.append(page_url)
+        # print(store)
         return_main_object.append(store)
     return return_main_object
 

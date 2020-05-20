@@ -66,7 +66,7 @@ def fetch_data():
                 time.sleep(3)
                 soup1 = BeautifulSoup(driver.page_source,"lxml")
             except Exception as e:
-                #print(e)
+                # print(e)
                 continue
             try:
                 loc_section = soup1.find("div",{"id":"location-cards-wrapper"})
@@ -103,8 +103,8 @@ def fetch_data():
 
                         store = [x if x else "<MISSING>" for x in store]
 
-                        #print("data = " + str(store))
-                        #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        # print("data = " + str(store))
+                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                         yield store
             except:
                 continue
