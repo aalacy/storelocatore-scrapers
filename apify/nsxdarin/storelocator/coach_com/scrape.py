@@ -128,7 +128,7 @@ def fetch_data():
                                     add = ''
                                     city = ''
                                     state = ''
-                                country = 'US'
+                                country = 'CA'
                                 try:
                                     hours = sitem.split('<span itemprop="openingHours">')[1].split('<br/> </span>')[0].replace('<br/>','; ').replace('\t','').replace('  ',' ').replace('  ',' ')
                                 except:
