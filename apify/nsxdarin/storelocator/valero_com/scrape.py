@@ -4,8 +4,10 @@ import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import usaddress
+chrome_options = Options()
 
-driver = webdriver.Chrome("chromedriver")
+chrome_options.add_argument("--headless")
+driver = webdriver.Chrome(chrome_options=chrome_options)
 
 session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
