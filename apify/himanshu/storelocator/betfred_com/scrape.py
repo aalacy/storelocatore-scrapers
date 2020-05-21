@@ -7,21 +7,20 @@ import sgzip
 # from datetime import datetime
 import requests
 
-
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url","raw_address"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    
+    #print("start")
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ["UK"])
     MAX_RESULTS = 500
@@ -57,53 +56,57 @@ def fetch_data():
             'Connection': "keep-alive",
             'cache-control': "no-cache"
             }
-
-        response = requests.request("POST", url, data=payload, headers=headers).json()
+        try:
+            response = requests.request("POST", url, data=payload, headers=headers).json()
         
-        if response["Stores"]:
-            current_results_len=len(response["Stores"])
-            for loc in response["Stores"]:
-                store_number = loc["ShopNumber"]
-                location_name = loc["Title"]
-                if len(loc["Address"].split(",")) > 1:
-                    street_address = loc["Address"].split(",")[0].strip()
-                    city = loc["Address"].split(",")[-1].strip()
-                    # raw_address = "<MISSING>"
-                elif len(loc["Address"].split("  ")) > 1:
+        
+            if response["Stores"]:
+                current_results_len=len(response["Stores"])
+                for loc in response["Stores"]:
+                    store_number = loc["ShopNumber"]
+                    location_name = loc["Title"]
+                    if len(loc["Address"].split(",")) > 1:
+                        street_address = loc["Address"].split(",")[0].strip()
+                        city = loc["Address"].split(",")[-1].strip()
+                        # raw_address = "<MISSING>"
+                    elif len(loc["Address"].split("  ")) > 1:
+                        
+                        # Berryden Retail Park  Berryden
+                        street_address =" ".join(loc["Address"].split("  ")[:-1]).strip()
+                        city = loc["Address"].split("  ")[-1]
+                    else:
+                        #print(loc["Address"])
+                        street_address = loc["Address"]
+                        city = "<MISSING>"
+                        
+                    # street_address = "<INACCESSIBLE>"
+                    # city = "<INACCESSIBLE>"
+                    state = "<MISSING>"
+                    zipp = loc["Postcode"]
+                    country_code = "UK"
+                    phone = "<MISSING>"
+                    latitude = loc["Location"]["Latitude"]
+                    longitude = loc["Location"]["Longitude"]
+                    hours_of_operation = loc["OpeningHoursDescription"].replace("\r\n","").strip()
+                    location_type = "<MISSING>"
+                    page_url = "https://www.betfred.com/shop-locator"
+                    # raw_address = loc["Address"]
                     
-                    # Berryden Retail Park  Berryden
-                    street_address =" ".join(loc["Address"].split("  ")[:-1]).strip()
-                    city = loc["Address"].split("  ")[-1]
-                else:
-                    #print(loc["Address"])
-                    street_address = loc["Address"]
-                    city = "<MISSING>"
-                    
-                # street_address = "<INACCESSIBLE>"
-                # city = "<INACCESSIBLE>"
-                state = "<MISSING>"
-                zipp = loc["Postcode"]
-                country_code = "UK"
-                phone = "<MISSING>"
-                latitude = loc["Location"]["Latitude"]
-                longitude = loc["Location"]["Longitude"]
-                hours_of_operation = loc["OpeningHoursDescription"].replace("\r\n","").strip()
-                location_type = "<MISSING>"
-                page_url = "https://www.betfred.com/shop-locator"
-                # raw_address = loc["Address"]
-                
-                result_coords.append((latitude, longitude))
-                store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-                if store_number not in addresses:
-                    addresses.append(store_number)
+                    result_coords.append((latitude, longitude))
+                    store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                             store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+                    if store_number not in addresses:
+                        addresses.append(store_number)
 
-                    store = [str(x).encode('ascii','ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                        store = [str(x).encode('ascii','ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                    #print("data = " + str(store))
-                    #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                    yield store
-                
+                        #print("data = " + str(store))
+                        #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        yield store
+        except:
+            # print(response)
+            search.max_distance_update(MAX_DISTANCE)
+            # continue        
                 
 
 
