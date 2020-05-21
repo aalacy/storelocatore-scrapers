@@ -82,6 +82,10 @@ def fetch_data():
             if '<ul class="fd--no-bullets fd--no-padding-margin">' in line2:
                 g = next(lines)
                 hours = g.split('>')[1].split('<')[0]
+                next(lines)
+                g = next(lines)
+                if 'day' in g and '<li>' in g:
+                    hours = hours + '; ' + g.split('>')[1].split('<')[0]
         if hours == '':
             hours = '<MISSING>'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
