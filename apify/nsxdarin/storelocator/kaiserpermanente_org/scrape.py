@@ -85,7 +85,9 @@ def fetch_data():
                 next(lines)
                 g = next(lines)
                 if 'day' in g and '<li>' in g:
-                    hours = hours + '; ' + g.split('>')[1].split('<')[0]
+                    hours = hours + '; ' + g.split('>')[1].split('<')[0].strip()
+            if '> Holidays' in line2:
+                hours = hours + '; ' + line2.split('>')[1].split('<')[0].strip()
         if hours == '':
             hours = '<MISSING>'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
