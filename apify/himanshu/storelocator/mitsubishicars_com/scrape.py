@@ -1,10 +1,8 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-session = SgRequests()
 import requests
 def write_output(data):
     with open('data.csv', mode='w',newline='') as output_file:
@@ -32,14 +30,12 @@ def fetch_data():
 
     while zip_code:
         result_coords = []
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
-        print(zip_code)
-
-       
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print(zip_code)
         try:
             json_data = requests.get('https://www.mitsubishicars.com/rs/dealers?bust=1569242590201&zipCode='+str(zip_code)+'&idealer=false&ecommerce=false').json()
         except:
-            continue
+            pass
         current_results_len = len(json_data)  
         for loc in json_data:
             # if loc['zipcode']:
@@ -59,7 +55,7 @@ def fetch_data():
 
             if link:
                 page_url = "http://"+link.lower()
-                print(page_url)
+                # print(page_url)
                 if "http://www.verneidemitsubishi.com" in page_url or "http://www.kingautomitsubishi.com" in page_url or "http://www.verhagemitsubishi.com" in page_url or "http://www.sisbarro-mitsubishi.com" in page_url or "http://www.delraymitsu.net" in page_url:
                     hours_of_operation = "<INACCESSIBLE>"
                 else:
