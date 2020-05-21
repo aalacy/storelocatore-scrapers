@@ -1,6 +1,9 @@
 import csv
 from seleniumwire import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.expected_conditions import presence_of_element_located
 import re
 import os
 
@@ -41,6 +44,8 @@ def get_chromedriver(use_proxy=False, user_agent=None):
 user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1309.0 Safari/537.17'
 
 driver = get_chromedriver(use_proxy=True, user_agent=user_agent)
+
+wait = WebDriverWait(driver, 30)
 
 # to check that the proxy is working ..
 # driver.get("https://jsonip.com/")
@@ -87,8 +92,16 @@ def fetch_data():
     urls = []
 
     driver.get("https://www.seasons52.com/locations/all-locations")
-    # print(driver.page_source)
-    div = driver.find_element_by_class_name("fin_all_location_sec")
+
+    try:
+      # div = driver.find_element_by_class_name("fin_all_location_sec")
+      div = wait.until(presence_of_element_located((By.CSS_SELECTOR, ".fin_all_location_sec")))
+    except:
+      body = wait.until(presence_of_element_located((By.TAG_NAME, "body")))
+      print(url)
+      print(body.text[0:1000])
+      raise SystemExit
+
     uls = div.find_elements_by_css_selector("ul")
     for ul in uls:
         lis = ul.find_elements_by_css_selector("li")
@@ -124,8 +137,16 @@ def fetch_data():
         url="https://www.seasons52.com/locations/"+abv[states[i].lower()]+"/"+loc1+"/"+loc2
         """
         driver.get(url)
-        print(url)
-        div = driver.find_element_by_class_name("left-bar")
+
+        try:
+          div = wait.until(presence_of_element_located((By.CSS_SELECTOR, ".left-bar")))
+          # div = driver.find_element_by_class_name("left-bar")
+        except:
+          body = wait.until(presence_of_element_located((By.TAG_NAME, "body")))
+          print(url)
+          print(body.text[0:1000])
+          raise SystemExit
+
         try:
             gm = driver.find_element_by_id("globalMessage").text.replace(
                 "\r\n", " ").replace("\n", " ").strip()
