@@ -41,7 +41,6 @@ def get_chromedriver(use_proxy=False, user_agent=None):
 user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1309.0 Safari/537.17'
 
 driver = get_chromedriver(use_proxy=True, user_agent=user_agent)
-driver.implicitly_wait(10)
 
 # to check that the proxy is working ..
 # driver.get("https://jsonip.com/")
