@@ -42,7 +42,7 @@ def fetch_data():
         if location_soup.find("div",{'class':"hours"}) == None:
             location_hours = "<MISSING>"
         else:
-            location_hours = " ".join(list(location_soup.find("div",{'class':"hours"}).stripped_strings))
+            location_hours = " ".join(list(location_soup.find("div",{'class':"hours"}).stripped_strings)).replace("Location Hours","")
         store = []
         store.append("https://www.carespot.com")
         store.append(location["title"])
@@ -58,6 +58,7 @@ def fetch_data():
         store.append(location["lng"])
         store.append(location_hours if location_hours != "" else "<MISSING>")
         store.append(page_url)
+        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         # print(store)
         return_main_object.append(store)
     return return_main_object
