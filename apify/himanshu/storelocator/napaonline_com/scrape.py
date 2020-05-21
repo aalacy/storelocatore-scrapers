@@ -5,6 +5,7 @@ import json
 import time
 import sgzip
 from sgrequests import SgRequests
+import requests
 
 
 session = SgRequests()
@@ -30,6 +31,7 @@ def fetch_data():
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
     while zip_code:
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
         base_url = "https://www.napaonline.com"
         headers = {
@@ -38,7 +40,7 @@ def fetch_data():
         }
         #print("https://www.napaonline.com/en/store-finder?q="+str(zip_code)+"&sort=true")
         try:
-            r = session.get("https://www.napaonline.com/en/store-finder?q="+str(zip_code)+"&sort=true", headers=headers)
+            r = requests.get("https://www.napaonline.com/en/store-finder?q="+str(zip_code)+"&sort=true", headers=headers)
         except:
             pass
         soup = BeautifulSoup(r.text, "lxml")
@@ -106,7 +108,7 @@ def fetch_data():
         
         try:
             r1=''
-            r1 = session.get("https://www.napaonline.com/api/storelocator/nearby-stores?storeType=ACMEC&location="+str(zip_code)+"&sortBy=1&language=en", headers=headers).json()
+            r1 = requests.get("https://www.napaonline.com/api/storelocator/nearby-stores?storeType=ACMEC&location="+str(zip_code)+"&sortBy=1&language=en", headers=headers).json()
         except:
             pass
         # soup1 = BeautifulSoup(r1.text, "lxml")

@@ -5,7 +5,7 @@ import json
 from sgrequests import SgRequests
 import phonenumbers
 session = SgRequests()
-import requests
+
 
 def write_output(data):
 	with open('data.csv', mode='w',newline="") as output_file:
@@ -28,8 +28,8 @@ def fetch_data():
 		'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
 	}
 	for state in states:
-		print(state)
-		r = requests.get("https://www.metromarket.net/stores/search?searchText="+str(state), headers=headers)
+		# print(state)
+		r = session.get("https://www.metromarket.net/stores/search?searchText="+str(state), headers=headers)
 		soup = BeautifulSoup(r.text, "lxml")
 		# json_data = json.loads(soup.find(lambda tag: (tag.name == "script") and "window.__INITIAL_STATE__ =" in tag.text).text.split("JSON.parse('")[1].split(',"contentHash"')[0].replace("Valentine\\'s","Valentine's").replace("What\'s","What's").replace(':"/"}]}}',':"/"}]}}}}}').replace("\\",""))['storeSearch']['storeSearchReducer']
 		str1 = '{"stores":'+soup.find(lambda tag: (tag.name == "script") and "window.__INITIAL_STATE__ =" in tag.text).text.split('"stores":')[1].split(',"shouldShowFuelMessage":true}')[0]+"}"
@@ -72,11 +72,21 @@ def fetch_data():
 			
 			
 			try:
-				r2 = requests.get(page_url, headers=headers)
+				r2 = session.get(page_url, headers=headers)
 				soup2 = BeautifulSoup(r2.text, "lxml")
-				hours_of_operation = " ".join(json.loads(soup2.find(lambda tag:(tag.name == "script") and "openingHours" in tag.text).text)['openingHours'])
+				script =json.loads(soup2.find(lambda tag:(tag.name == "script") and "openingHours" in tag.text).text)
+				if script["openingHours"]:
+					hours_of_operation = " ".join(script["openingHours"])
+				elif script["department"][0]["openingHours"]:
+					hours_of_operation = " ".join(script["department"][0]["openingHours"])
+				else:
+					hours_of_operation = "<MISSING>"
+					# print("page_url")
+				# hours_of_operation = " ".join(json.loads(soup3.find(lambda tag:(tag.name == "script") and "openingHours" in tag.text).text)['openingHours'])
 			except:
 				hours_of_operation = "<MISSING>"
+				# print("except ==== ",page_url)
+			# print(hours_of_operation)
 
 			store = []
 			store.append(locator_domain if locator_domain else '<MISSING>')
@@ -98,8 +108,8 @@ def fetch_data():
 			if str(store[-1]) in addresses:
 				continue
 			addresses.append(str(store[-1]))
-			#print("data = " + str(store))
-			#print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
+			# print("data = " + str(store))
+			# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
 			yield store
 
 	########### fuel
@@ -127,11 +137,21 @@ def fetch_data():
 			# for day_hours in key1["ungroupedFormattedHours"]:
 			# 	hours_of_operation += day_hours["displayName"] +  " = " + day_hours["displayHours"] + "  "
 			try:
-				r3 = requests.get(page_url, headers=headers)
+				r3 = session.get(page_url, headers=headers)
 				soup3 = BeautifulSoup(r3.text, "lxml")
-				hours_of_operation = " ".join(json.loads(soup3.find(lambda tag:(tag.name == "script") and "openingHours" in tag.text).text)['openingHours'])
+				script =json.loads(soup3.find(lambda tag:(tag.name == "script") and "openingHours" in tag.text).text)
+				if script["openingHours"]:
+					hours_of_operation = " ".join(script["openingHours"])
+				elif script["department"][0]["openingHours"]:
+					hours_of_operation = " ".join(script["department"][0]["openingHours"])
+				else:
+					hours_of_operation = "<MISSING>"
+					# print("page_url")
+				# hours_of_operation = " ".join(json.loads(soup3.find(lambda tag:(tag.name == "script") and "openingHours" in tag.text).text)['openingHours'])
 			except:
 				hours_of_operation = "<MISSING>"
+			# 	print("except ==== ",page_url)
+			# print(hours_of_operation)
 
 			store = []
 			store.append(locator_domain if locator_domain else '<MISSING>')
@@ -154,8 +174,8 @@ def fetch_data():
 				continue
 			addresses.append(str(store[-1]))
 
-			#print("data = " + str(store))
-			#print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
+			# print("data = " + str(store))
+			# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
 			yield store
 
 def scrape():
