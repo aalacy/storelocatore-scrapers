@@ -3,6 +3,7 @@ import urllib2
 import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import usaddress
 
 driver = webdriver.Chrome("chromedriver")
 
@@ -14,7 +15,7 @@ headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "raw_address", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -58,18 +59,42 @@ def fetch_data():
                             typ = '<MISSING>'
                             addinfo = item.split('"Address":"')[1].split('"')[0]
                             zc = addinfo.rsplit(' ',1)[1]
-                            add = addinfo.split(',')[0]
-                            city = '<MISSING>'
+                            rawadd = addinfo.split(',')[0]
+                            try:
+                                add = usaddress.tag(rawadd)
+                                baseadd = add[0]
+                                if 'AddressNumber' not in baseadd:
+                                    baseadd['AddressNumber'] = ''
+                                if 'StreetName' not in baseadd:
+                                    baseadd['StreetName'] = ''
+                                if 'StreetNamePostType' not in baseadd:
+                                    baseadd['StreetNamePostType'] = ''
+                                if 'PlaceName' not in baseadd:
+                                    baseadd['PlaceName'] = '<INACCESSIBLE>'
+                                if 'StateName' not in baseadd:
+                                    baseadd['StateName'] = '<INACCESSIBLE>'
+                                if 'ZipCode' not in baseadd:
+                                    baseadd['ZipCode'] = '<INACCESSIBLE>'
+                                address = add[0]['AddressNumber'] + ' ' + add[0]['StreetName'] + ' ' + add[0]['StreetNamePostType']
+                                address = address.encode('utf-8')
+                                if address == '':
+                                    address = '<INACCESSIBLE>'
+                                city = add[0]['PlaceName'].encode('utf-8')
+                                ##zc = add[0]['ZipCode'].encode('utf-8')
+                            except:
+                                city = '<MISSING>'
                             state = addinfo.split(',')[1].strip().split(' ')[0]
                             hours = '<MISSING>'
                             country = 'US'
                             if phone == '':
                                 phone = '<MISSING>'
-                            addinfo = name + '|' + add + '|' + phone
+                            if address == '':
+                                address = '<INACCESSIBLE>'
+                            addinfo = name + '|' + rawadd + '|' + phone
                             if addinfo not in ids:
                                 ids.append(addinfo)
                                 print('Pulling Store ID #%s...' % store)
-                                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                                yield [website, loc, name, rawadd, address, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
