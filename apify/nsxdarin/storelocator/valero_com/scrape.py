@@ -94,7 +94,7 @@ def fetch_data():
                                 phone = '<MISSING>'
                             key = name + '|' + addinfo + '|' + phone
                             if keys not in keys:
-                                keys.append(key)
+                                keys.add(key)
                                 yield [website, loc, name, addinfo, address, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
