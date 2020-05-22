@@ -68,11 +68,13 @@ def fetch_data():
 
                 street_address += parsed_add['StreetName'] + ' '
                 if 'StreetNamePostType' in parsed_add:
-                    street_address += parsed_add['StreetNamePostType']
+                    street_address += parsed_add['StreetNamePostType'] + ' '
                 if 'OccupancyType' in parsed_add:
-                    street_address += parsed_add['OccupancyType']
+                    street_address += parsed_add['OccupancyType'] + ' '
                 if 'OccupancyIdentifier' in parsed_add:
-                    street_address += parsed_add['OccupancyIdentifier']
+                    street_address += parsed_add['OccupancyIdentifier'] + ' '
+
+                street_address = street_address.strip()
                 city = parsed_add['PlaceName']
                 state = parsed_add['StateName']
                 zip_code = parsed_add['ZipCode']
