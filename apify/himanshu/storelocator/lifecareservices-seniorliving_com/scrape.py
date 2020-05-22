@@ -18,7 +18,7 @@ def write_output(data):
 
 
 def fetch_data():
-    return_main_object = []
+    
     addresses = []
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
@@ -40,18 +40,18 @@ def fetch_data():
     location_url = "https://www.lifecareservices-seniorliving.com/"
     # data="pg=1&action=get_communities&gd_nonce=ce7ea9f2e6"
     headers = {
-    'Accept':'*/*',
-    'Content-Type': "application/x-www-form-urlencoded; charset=UTF-8",
-    'cache-control': "no-cache",
-    'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36'
-
+    'Accept': '*/*',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
+    
+# 
     }
-    data = {"pg": "1",
-            "action": "get_communities",
-            "gd_nonce": "3064d22393"}
+    data = {
+        'pg': '1',
+        'action': 'get_communities',
+        'gd_nonce': 'eef8cb073c'
+    }
     # payload = "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"pg\"\r\n\r\n1\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"action\"\r\n\r\nget_communities\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"gd_nonce\"\r\n\r\nce7ea9f2e6\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--"
     r = session.post("https://www.lifecareservices-seniorliving.com/wp-admin/admin-ajax.php",headers=headers,data=data).json()
-    # print(r)
     for ut in r['results']:
         soup1 = BeautifulSoup(ut['html'], "html5lib")
         for data in soup1.find_all("div",{"class":"cmnty-results-address"}):
@@ -82,8 +82,8 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            #print("data = " + str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
         
 def scrape():
