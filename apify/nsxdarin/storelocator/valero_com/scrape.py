@@ -27,22 +27,40 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def parse_address(raw_address):
+    try:
+        return parse_address_with_usaddress(raw_address)
+    except:
+        return parse_address_with_heuristics(raw_address)
+
+def parse_address_with_usaddress(raw_address):
+    parsed = usaddress.tag(raw_address)[0]
+    city = parsed['PlaceName'].encode('utf-8')
+    address = raw_address.rsplit(city, 1)[0].strip()
+    return { "city": city, "address": address }
+
+def parse_address_with_heuristics(raw_address):
+    try:
+        without_zip_and_state = raw_address.rsplit(',', 1)[0].strip()
+        city = without_zip_and_state.rsplit(' ', 1)[1].strip()
+        address = without_zip_and_state.rsplit(' ', 1)[0].strip()
+        return { "city": city, "address": address }
+    except:
+        return { "city": "<INACCESSIBLE", "state": "<INACCESSIBLE>" }
+
 def fetch_data():
-    ids = []
+    keys = set()
     url = 'https://valeromaps.valero.com/Home/Search?SPHostUrl=https%3A%2F%2Fwww.valero.com%2Fen-us'
     driver.get('https://www.valero.com/en-us/ProductsAndServices/Consumers/StoreLocator')
     cookies = driver.get_cookies()
-    #r = session.get('https://www.valero.com/en-us/ProductsAndServices/Consumers/StoreLocator', headers=headers)
     for cookie in cookies:
         session.cookies.set(cookie['name'], cookie['value'])
     for x in range(15, 50, 5):
         for y in range(-65, -120, -5):
-            print('%s-%s...' % (str(x), str(y)))
             nelat = float(x) + 5
             swlat = float(x) - 5
             nelng = float(y) + 5
             swlng = float(y) - 5
-            print('Pulling Lat-Long %s,%s...' % (str(x), str(y)))
             payload = {'NEBound_Lat': str(nelat),
                        'NEBound_Long': str(nelng),
                        'SWBound_Lat': str(swlat),
@@ -54,7 +72,6 @@ def fetch_data():
             for line in r.iter_lines():
                 if 'UniqueID":"' in line:
                     items = line.split('UniqueID":"')
-                    print(len(items))
                     for item in items:
                         if '"DetailName":"' in item:
                             name = item.split('"StationName":"')[1].split('"')[0]
@@ -67,42 +84,18 @@ def fetch_data():
                             typ = '<MISSING>'
                             addinfo = item.split('"Address":"')[1].split('"')[0]
                             zc = addinfo.rsplit(' ',1)[1]
-                            rawadd = addinfo.split(',')[0]
-                            try:
-                                add = usaddress.tag(rawadd)
-                                baseadd = add[0]
-                                if 'AddressNumber' not in baseadd:
-                                    baseadd['AddressNumber'] = ''
-                                if 'StreetName' not in baseadd:
-                                    baseadd['StreetName'] = ''
-                                if 'StreetNamePostType' not in baseadd:
-                                    baseadd['StreetNamePostType'] = ''
-                                if 'PlaceName' not in baseadd:
-                                    baseadd['PlaceName'] = '<INACCESSIBLE>'
-                                if 'StateName' not in baseadd:
-                                    baseadd['StateName'] = '<INACCESSIBLE>'
-                                if 'ZipCode' not in baseadd:
-                                    baseadd['ZipCode'] = '<INACCESSIBLE>'
-                                address = add[0]['AddressNumber'] + ' ' + add[0]['StreetName'] + ' ' + add[0]['StreetNamePostType']
-                                address = address.encode('utf-8')
-                                if address == '':
-                                    address = '<INACCESSIBLE>'
-                                city = add[0]['PlaceName'].encode('utf-8')
-                                ##zc = add[0]['ZipCode'].encode('utf-8')
-                            except:
-                                city = '<MISSING>'
-                            state = addinfo.split(',')[1].strip().split(' ')[0]
+                            state = addinfo.split(',')[-1].strip().split(' ')[0]
+                            parsed = parse_address(addinfo)
+                            city = parsed["city"] if parsed["city"].strip() else "<INACCESSIBLE>"
+                            address = parsed["address"] if parsed["address"].strip() else "<INACCESSIBLE>"
                             hours = '<MISSING>'
                             country = 'US'
                             if phone == '':
                                 phone = '<MISSING>'
-                            if address == '':
-                                address = '<INACCESSIBLE>'
-                            addinfo = name + '|' + rawadd + '|' + phone
-                            if addinfo not in ids:
-                                ids.append(addinfo)
-                                print('Pulling Store ID #%s...' % store)
-                                yield [website, loc, name, rawadd, address, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                            key = name + '|' + addinfo + '|' + phone
+                            if keys not in keys:
+                                keys.append(key)
+                                yield [website, loc, name, addinfo, address, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
