@@ -23,7 +23,6 @@ def get_driver():
     else:
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
 
-
 def write_output(data):
 	with open('data.csv', mode='w', encoding="utf-8",newline="") as output_file:
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -139,8 +138,7 @@ def fetch_data():
 	vk=10
 	page = 2
 	while True:
-		if page >= 47:
-			break
+		
 		page_v="Page "+str(page)
 		
 		soup_loc_list = BeautifulSoup(driver.page_source, "lxml")
@@ -163,7 +161,7 @@ def fetch_data():
 				page_url = ""
 
 				page_url = base_url + location.find("a")["href"]
-				#print(page_url)
+				# print(page_url)
 				store_number = page_url.split("-")[-1].strip()
 				r_location = request_wrapper(page_url,"get", headers=headers)
 				soup_location = BeautifulSoup(r_location.text, "lxml")
@@ -215,8 +213,8 @@ def fetch_data():
 				if (str(store[-1])) in addresses:
 					continue
 				addresses.append(str(store[-1]))
-				#print("data = " + str(store))
-				#print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+				# print("data = " + str(store))
+				# print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 				yield store
 		# 		duplicate =str(store[1])+" "+str(store[2])+" "+str(store[3])+" "+str(store[4])+" "+str(store[5])+" "+str(store[6])+" "+str(store[7])+" "+str(store[8])+" "+str(store[10])+" "+str(store[11])+" "+str(store[12])+" "+str(store[13])
 				
@@ -225,11 +223,12 @@ def fetch_data():
 		if page-1 == vk:
 			# print("vk === ", vk)
 			vk +=10
+			
 			driver.find_element_by_xpath("//a[@title='"+str('Next 10')+"']").click()
-			
-			
-		
-		driver.find_element_by_xpath("//a[@title='"+str(page_v)+"']").click()
+		try:
+			driver.find_element_by_xpath("//a[@title='"+str(page_v)+"']").click()
+		except:
+			break
 		
 		page += 1
 		# else:
