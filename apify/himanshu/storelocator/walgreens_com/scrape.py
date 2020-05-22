@@ -6,8 +6,6 @@ import json
 import sgzip
 import time
 import requests
-from concurrent.futures import ThreadPoolExecutor
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8", newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -16,27 +14,8 @@ def write_output(data):
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
-        
         for row in data:
             writer.writerow(row)
-
-
-def get_url(data):
-    headers = {
-        'Content-Type': 'application/json'
-    }
-    url = "https://www.walgreens.com/locator/v1/stores/search?requestor=search"
-    data = requests.post(url,data=data,headers=headers)
-    try:
-        return data
-    except:
-        pass
-
-def _send_multiple_rq(vk):
-    with ThreadPoolExecutor(max_workers=len(vk)) as pool:
-        # for data in list(pool.map(get_url,list_of_urls)):
-        return list(pool.map(get_url,vk))
-                # print(data.text)
 
 def fetch_data():
     return_main_object = []
@@ -56,31 +35,25 @@ def fetch_data():
                 'Host': "www.walgreens.com",
                 'Accept-Encoding': "gzip, deflate",
                 'Content-Length': "101",
+                # 'Cookie': "dtCookie=6$A3425DF8397009D51DBAAA43E235903D; bm_sz=F124BF48E16D20D9D57CDBC52FD9C434~YAAQdzYauK+WoglyAQAAXQ9mJwesiiUOaw4YE4q30HDpCIiq2pitnMem0H9mz2D8rYmMd9rOQCtFHN8qj9AW9GjvNCqGEtnokcC2TnCNKqH/pe4wKyv5NFQuB1lWD/cdulHeRlH0IVHW9071vRsqNmFwAuaIHH18RSjUaQxdVMpNjJWTZptV+bCLGFRKDNc8LH0T; _abck=5A86A806EC7840014A3875C784EF84EA~-1~YAAQdzYauLCWoglyAQAAXQ9mJwMLS6oEE75LWvrjEqe00QAWRF+GNIGc+41AMs4q60iQMir0xCjU4thqnvSltFyOcVrGbsN+r94vzGlKwtQJ3AGyNhXSatWR4iS/OHFV6hoa+GULFQWaUyRoEYZXo7IsdL0VEtweS90nH/5kR3tB0GeGcPqdLHmlNNFx5jQAsvwGgLxP1YYrQGbNG9KVCXp6g9vsOzHsSJCG/IbMwcpxozAvfc25ObkMBQIN1+xJekV2ZWKCWF7pKHm5x1WVR9F6/8kQrT/CJJaoQ8xSd7+b0ZwlgZKuppUbyNxT~-1~-1~-1",
                 'Connection': "keep-alive",
                 'cache-control': "no-cache"
                 }
     base_url = "https://www.walgreens.com"
-    list_of_urls=[]
-    # list_of_urls.append( "{\"r\":\"1000\",\"zip\":%s,\"requestType\":\"dotcom\",\"s\":\"1000\"}"%('"{}"'.format(str(85029))))
     while zip_code:
         result_coords = []
-        print(zip_code)
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
-        # page = 1
-        list_of_urls.append( "{\"r\":\"1000\",\"zip\":%s,\"requestType\":\"dotcom\",\"s\":\"1000\"}"%('"{}"'.format(str(zip_code))))        
-        if current_results_len < MAX_RESULTS:
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
-
-    # print("len---- ",len(list_of_urls))
-    data = _send_multiple_rq(list_of_urls)
-    for q in data:
-        r= q.json()
+        # print(zip_code)
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        page = 1
+        url = "https://www.walgreens.com/locator/v1/stores/search?requestor=search"
+        payload = "{\"r\":\"1000\",\"zip\":%s,\"requestType\":\"dotcom\",\"s\":\"1000\"}"%('"{}"'.format(str(zip_code)))
+        headers = {
+        'Content-Type': 'application/json'
+        }
+        r = requests.post( url, headers=headers, data = payload).json()
         if "results" in r:
+            current_results_len= len(r['results'])
+            # print(current_results_len)
             locator_domain = base_url
             location_name = ""
             street_address = ""
@@ -112,16 +85,17 @@ def fetch_data():
                 else:
                     phone = "<MISSING>"  
                 page_url = "https://www.walgreens.com"+location['storeSeoUrl']
-                # try:
-                #     r1 = requests.get(page_url ,headers=headers)
-                # except:
-                #     pass
-                # soup = BeautifulSoup(r1.text,"lxml")
-                # try:
-                #     hours_of_operation = " ".join(list(soup.find("div",{"class":'service-section'}).find("li",{"class":'single-hours-lists'}).stripped_strings))
-                # except:
-                hours_of_operation = "<MISSING>"
+                try:
+                    r1 = requests.get(page_url ,headers=headers)
+                except:
+                    pass
+                soup = BeautifulSoup(r1.text,"lxml")
+                try:
+                    hours_of_operation = " ".join(list(soup.find("div",{"class":'service-section'}).find("li",{"class":'single-hours-lists'}).stripped_strings))
+                except:
+                    hours_of_operation = "<MISSING>"
 
+                result_coords.append((latitude, longitude))
                 store = [locator_domain, location_name, location['store']['address']['street'].capitalize(), location['store']['address']['city'].capitalize(), location['store']['address']['state'], zipp, country_code,
                         storeNumber, phone.strip(), location_type, latitude, longitude, hours_of_operation,page_url]
 
@@ -129,11 +103,18 @@ def fetch_data():
                     continue
                 addresses.append(str(store[2]) )
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                print("data =="+str(store))
-                print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+                # print("data =="+str(store))
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
                 yield store
+        if current_results_len < MAX_RESULTS:
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        zip_code = search.next_zip()
 
-
+        
 def scrape():
     data = fetch_data()
     write_output(data)
