@@ -74,6 +74,7 @@ def fetch_data():
         city = city.lstrip()
         state = state.lstrip()
         city = city.replace(',','')
+        street = street.replace(',','')
         state = state.replace(',','')
         lat = div['lat']
         longt = div['lng']
