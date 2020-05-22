@@ -78,8 +78,8 @@ def fetch_data():
             store_number = loc['uniqueId']
             
             location_name = loc['description']['displayStoreName']
-            if location_name not in dup_tracker:
-                dup_tracker.add(location_name)
+            if store_number not in dup_tracker:
+                dup_tracker.add(store_number)
             else:
                 continue
             
