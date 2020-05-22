@@ -91,7 +91,7 @@ def fetch_data():
     gms = []
     urls = []
 
-    starting_url - "https://www.seasons52.com/locations/all-locations"
+    starting_url = "https://www.seasons52.com/locations/all-locations"
     driver.get(starting_url)
 
     try:
