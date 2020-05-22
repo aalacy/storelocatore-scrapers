@@ -91,14 +91,15 @@ def fetch_data():
     gms = []
     urls = []
 
-    driver.get("https://www.seasons52.com/locations/all-locations")
+    starting_url - "https://www.seasons52.com/locations/all-locations"
+    driver.get(starting_url)
 
     try:
       # div = driver.find_element_by_class_name("fin_all_location_sec")
       div = wait.until(presence_of_element_located((By.CSS_SELECTOR, ".fin_all_location_sec")))
     except:
       body = wait.until(presence_of_element_located((By.TAG_NAME, "body")))
-      print(url)
+      print(starting_url)
       print(body.text[0:1000])
       raise SystemExit
 
