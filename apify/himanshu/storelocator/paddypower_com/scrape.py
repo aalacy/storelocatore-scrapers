@@ -21,7 +21,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ["UK"])
     MAX_RESULTS = 500
-    MAX_DISTANCE = 25
+    MAX_DISTANCE = 10
     current_results_len = 0  # need to update with no of countc.
     coord = search.next_coord()
     addressess=[]
@@ -31,9 +31,9 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     returnres=[]
-    base_url="https://www.altamed.org/"
+    base_url="https://www.paddypower.com/"
     while coord:
-        # print(search.current_zip)
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
         if coord != None:
             lat = coord[0]
@@ -90,6 +90,6 @@ def fetch_data():
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         coord = search.next_coord()
 def scrape():
-    data = fetch_data();
+    data = fetch_data()
     write_output(data)
 scrape()
