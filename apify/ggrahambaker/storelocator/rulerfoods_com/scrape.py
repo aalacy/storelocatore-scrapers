@@ -56,9 +56,9 @@ def fetch_data():
         for li in lis:
             content = li.find_element_by_css_selector('div.results_entry.location_primary').text.split('\n')
             if len(content) > 1:
-                hours = '8AM - 9PM'
-                phone_number = content[1].replace('HOURS: 8AM - 9PM', '').strip()
-
+                phone_hours = content[1].split('PM')#.strip()
+                hours = phone_hours[0] + ' PM'
+                phone_number = phone_hours[1]
                 parsed_add = usaddress.tag(content[0])[0]
 
                 street_address = ''
