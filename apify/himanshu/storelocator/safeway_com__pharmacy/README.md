@@ -9,6 +9,3 @@ Please make sure that:
 * Your scraper can be run successfully by executing https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/run_scraper.sh 
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
-address with no number , address contains state name , same lat & lng  and i checked all data is true
-
-data is coming from api and there are some hours of operation are twicely in same row beacause in api hours are given twicely.
