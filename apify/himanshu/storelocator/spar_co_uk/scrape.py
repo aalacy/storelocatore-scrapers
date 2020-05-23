@@ -7,13 +7,15 @@ import datetime
 from datetime import datetime
 session = SgRequests()
 
+
+
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -21,7 +23,8 @@ def write_output(data):
 
 def fetch_data():
     
-   
+      
+    list_of_urls=[]
     base_url = "https://www.spar.co.uk"
  
     headers = {
@@ -30,24 +33,36 @@ def fetch_data():
     result_coords = []
     r = session.get("https://www.spar.co.uk/sitemap-page",headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    for link in soup.find_all("a"):
+    for inex,link in enumerate(soup.find_all("a")):
         if "/store-locator/" in link['href']:
             page_url = base_url + link['href']
-            # print(page_url)
-
-            r1 = session.get(page_url)
+            # list_of_urls.append(page_url)
+            r1= session.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
+            # print("---",len(list_of_urls))
+            # data1 = _send_multiple_rq(list_of_urls)
+            # for index,q in enumerate(data1):
+            # print("----------------qqqqqq",q)
+            
+            full = list(soup1.find("div",{"class":"store-details__contact"}).stripped_strings)
             if soup1.find("span",{"class":"page__notice-title"}):
                 continue
-            addr = json.loads(soup1.find(lambda tag : (tag.name == "script") and "latitude" in tag.text).text)
-            location_name = addr['name']
-            try:
-                # print("------",page_url)
-                street_address = addr['address']['streetAddress']
-                # print(street_address)
-            except:
-                # print(page_url)
-                street_address = "<MISSING>"
+            for index,w in enumerate(full):
+                if  "Phone" in w:
+                    full= full[index+2:]
+
+            for index,w in enumerate(full):
+                if  "Contact us" in w:
+                    del full[index]
+                    # full= full[index]
+                    
+            full1 = [re.sub(r"\s+", " ",x).replace('\n', '').replace("\r",'').replace('\t','').strip().lstrip().rstrip() for x in full]
+            stopwords=','
+            new_words = [word for word in full1 if word not in stopwords]
+            stopwords='Address'
+            full2 = [word for word in new_words if word not in stopwords]
+            city="<MISSING>"
+            state = "<MISSNG>"
             try:
                 city = addr['address']['addressLocality']
             except:
@@ -56,60 +71,68 @@ def fetch_data():
                 state = addr['address']['addressRegion']
             except:
                 state = "<MISSNG>"
+            if len(full2)==4:
+                state = full2[-2]
+                city = full2[-2]
+
+                # print(page_url)
+                street_address = " ".join(full2[:-2])
+                # print(street_address)
+                # print("--------------------44444 ",full2)
+            elif len(full2)==5:
+                # 
+                city=full2[-3]
+                state=full2[-2]
+                street_address = " ".join(full2[:-3])
+                # print("--------------------555555 ",full2)
+            elif len(full2)==3:
+                street_address  = " ".join(full2[:-2])
+                city = full2[-2]
+                # print(page_url)
+                city_state=full2[-2].split(",")
+                if len(city_state)==0:
+                    city = city_state[0]
+                elif len(city_state)==4:
+                    city = city_state[2]
+                    state = city_state[3]
+                else:
+                    city = " ".join(city_state).strip()
+
+                # print(full2[-2].split(","))
+                # print("--------------------333333333333 ",full2)
+
+
+            addr = json.loads(soup1.find(lambda tag : (tag.name == "script") and "latitude" in tag.text).text)
+            location_name = addr['name']
+            street_address = street_address.replace(location_name,'')
+            # try:
+            #     street_address = addr['address']['streetAddress']
+            # except:
+            #     street_address = "<MISSING>"
+            
+            
             try:
                 zipp = addr['address']['postalCode']
             except:
                 zipp = "<MISSING>"
-            # raw_address = re.sub(r'\s+'," "," ".join(list(soup1.find("div",{"class":"store-details__contact"}).find_all("p")[-1].stripped_strings)))
-            
-            # data = raw_address.split(",")
-            # if len(data) == 1:
-            #     zipp = "<MISSING"
-            # else:
-            #     zipp = data[-1].strip()
-        
-            # raw_address = re.sub(r'\s+'," ",raw_address.replace(zipp,"").strip())
-            # if len(data) == 1:
-            #     street_address = data[0]
-            #     city = "<MISSING>"
-            #     state = "<MISSING>"
-            #     zipp = "<MISSING>"
-            # elif len(data) == 2:
-            #     street_address = data[0]
-            #     city = "<MISSING>"
-            #     state = "<MISSING>"
-            #     zipp = data[1]
-            # elif len(data) == 3:
-            #     street_address = data[0].strip()
-            #     city = data[1].strip()
-            #     state = "<MISSING>"
-            #     zipp = data[-1].strip()
-            # elif len(data) == 4:
-            #     street_address = data[0].strip()
-            #     city = data[1].strip()
-            #     state = data[2].strip()
-            #     zipp = data[3].strip()
-            # else:
-            #     street_address = re.sub(r'\s+'," "," ".join(data[:-3]).strip())
-            #     city = data[-3].strip()
-            #     state = data[-2].strip()
-            #     zipp = data[-1].strip()
             try:
                 phone = addr['telephone']
             except:
                 phone = "<MISSING>"
             location_type = addr['@type']
-
             time = " ".join(list(soup1.find("table",{"class":"table"}).find("tbody").stripped_strings))
             if "24h" in time:
                 hours = time
             elif "CLOSED" in time:
                 hours = time
             else:
+                # print(time)
                 data = re.findall(r'\d{1,3}:\d{1,3}\s+\d{1,3}:\d{1,3}',time)
+                # print(data)
                 hours = ''
                 day = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
                 for hour in range(len(data)):
+                    # print(data[hour].split(" ")[-1])
                     start_time = datetime.strptime(data[hour].split(" ")[0],"%H:%M").strftime("%I:%M:%p")
                     end_time = datetime.strptime(data[hour].split(" ")[-1],"%H:%M").strftime("%I:%M:%p")
                     hours+= day[hour] +" "+ str(start_time) +" "+ str(end_time) +" "
@@ -128,7 +151,7 @@ def fetch_data():
             result_coords.append((latitude,longitude))
             store.append(base_url)
             store.append(location_name if location_name else "<MISSING>")
-            store.append(street_address)
+            store.append(street_address.replace("Ettington",'').replace(",",''))
             store.append(city)
             store.append(state)
             store.append(zipp if zipp else "<MISSING>")   
@@ -144,7 +167,7 @@ def fetch_data():
             # print("data==="+str(store))
             # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
             yield store
-                
+            
        
 
 def scrape():
