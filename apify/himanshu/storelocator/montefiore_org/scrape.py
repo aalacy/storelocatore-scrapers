@@ -4,8 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 import time
-
-
+ 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -56,41 +55,17 @@ def fetch_data():
     r = request_wrapper(location_url,"get",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     data = (soup.find("div",{"class":"content"}))
-    # phone = soup.find("div",{"class":"content"}).find("p").text.split(",")[1].split("Phone: ")[1]
-    # zipp = soup.find("div",{"class":"content"}).find("p").text.split(",")[1].split("Phone: ")[0].split(" ")[2]
-    # state = soup.find("div",{"class":"content"}).find("p").text.split(",")[1].split("Phone: ")[0].split(" ")[1]
-    # street_address = soup.find("div",{"class":"content"}).find("p").text.split(",")[0].split("Care")[1].split("Bronx")[0]
-    # city = soup.find("div",{"class":"content"}).find("p").text.split(",")[0].split("Care")[1].split("Street")[1]
-    # location_name = soup.find("div",{"class":"content"}).find("p").text.split(",")[0].split("111")[0]
-    # store = []
-    # store.append(base_url if base_url else "<MISSING>")
-    # store.append(location_name if location_name else "<MISSING>") 
-    # store.append(street_address if street_address else "<MISSING>")
-    # store.append(city if city else "<MISSING>")
-    # store.append(state if state else "<MISSING>")
-    # store.append(zipp if zipp else "<MISSING>")
-    # store.append("US")
-    # store.append("<MISSING>") 
-    # store.append(phone if phone else "<MISSING>")
-    # store.append("<MISSING>")
-    # store.append("<MISSING>")
-    # store.append("<MISSING>")
-    # store.append("<MISSING>")
-    # store.append(location_url if location_url else "<MISSING>")
-    # yield store 
     data2 = data.find("table")
     mp = (data2.find_all("tr"))
     for i in mp:
         mp1 = (i.find_all("td"))
         link = i.find("a")
-        
         for j in mp1  :
             full = list(j.stripped_strings)
             if len(full)!= 1 and full !=[]:
                 
                 try:
                     if link !=  None:
-                        # print(link['href'])
                         pass
                     else:
                         pass
@@ -101,16 +76,11 @@ def fetch_data():
                     zipp = full[1].split(",")[1].split( )[1]
                     phone = full[3]
                 except:
-                    
                     street_address = full[1]
                     if link != None:
-                        # print(link['href'])
-
                         ku = (link['href'].split("sll=")[-1].split("&sspn=")[0])
                         latitude = ku.split(",")[0].replace("http://goo.gl/maps/Hdejr","<MISSING>")
-                        longitude =  ku.split(",")[-1].replace("http://goo.gl/maps/Hdejr","<MISSING>")
-                        # print(longitude)
-                        
+                        longitude =  ku.split(",")[-1].replace("http://goo.gl/maps/Hdejr","<MISSING>") 
                     if "Bronx River Medical Associates" in full:
                         pass
                     else:
@@ -144,8 +114,7 @@ def fetch_data():
                 store.append(latitude if latitude else "<MISSING>")
                 store.append(longitude if longitude else "<MISSING>")
                 store.append("<MISSING>")
-                store.append("<MISSING>")
-                # store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                store.append("https://www.montefiore.org/cancer-contact")
                 if store[2] in address :
                     continue
                 address.append(store[2])

@@ -1,12 +1,10 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
 import datetime
 from datetime import datetime
-session = SgRequests()
-
+import requests
 
 
 def write_output(data):
@@ -31,13 +29,13 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     result_coords = []
-    r = session.get("https://www.spar.co.uk/sitemap-page",headers=headers)
+    r = requests.get("https://www.spar.co.uk/sitemap-page",headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     for inex,link in enumerate(soup.find_all("a")):
         if "/store-locator/" in link['href']:
             page_url = base_url + link['href']
             # list_of_urls.append(page_url)
-            r1= session.get(page_url)
+            r1= requests.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
             # print("---",len(list_of_urls))
             # data1 = _send_multiple_rq(list_of_urls)
@@ -62,15 +60,15 @@ def fetch_data():
             stopwords='Address'
             full2 = [word for word in new_words if word not in stopwords]
             city="<MISSING>"
-            state = "<MISSNG>"
+            state = "<MISSING>"
             try:
                 city = addr['address']['addressLocality']
             except:
-                city = "<MISSINIG>"
+                city = "<MISSING>"
             try:
                 state = addr['address']['addressRegion']
             except:
-                state = "<MISSNG>"
+                state = "<MISSING>"
             if len(full2)==4:
                 state = full2[-2]
                 city = full2[-2]
