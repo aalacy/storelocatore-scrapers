@@ -49,7 +49,7 @@ def request_wrapper(url,method,headers,data=None):
        return None
 
 def fetch_data():
-    base_url ="https://www.mitsbishicars.com"
+    base_url ="https://www.mitsubishicars.com/"
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
