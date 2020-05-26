@@ -6,19 +6,13 @@ import sgzip
 # import datetime
 # from datetime import datetime
 import requests
-
 def write_output(data):
-    with open('data.csv', mode='w', newline='') as output_file:
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url","raw_address"])
-        # Body
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
     #print("start")
     search = sgzip.ClosestNSearch()
@@ -36,12 +30,9 @@ def fetch_data():
     result_coords = []
     while zip_code:
         result_coords = []
-        # print("zip_code === " + str(zip_code))
+        print("zip_code === " + str(zip_code))
         #print("remaining zip =====" + str(len(search.zipcodes)))
-        
-
         url = "https://www.betfred.com/services/gis/searchstores"
-
         payload = "{\"SearchLocation\":\" "+str(zip_code)+", UK\",\"MaximumShops\":10,\"MaximumDistance\":5}"
         headers = {
             'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.92 Safari/537.36",
@@ -58,8 +49,6 @@ def fetch_data():
             }
         try:
             response = requests.request("POST", url, data=payload, headers=headers).json()
-        
-        
             if response["Stores"]:
                 current_results_len=len(response["Stores"])
                 for loc in response["Stores"]:
@@ -78,7 +67,6 @@ def fetch_data():
                         #print(loc["Address"])
                         street_address = loc["Address"]
                         city = "<MISSING>"
-                        
                     # street_address = "<INACCESSIBLE>"
                     # city = "<INACCESSIBLE>"
                     state = "<MISSING>"
@@ -91,7 +79,6 @@ def fetch_data():
                     location_type = "<MISSING>"
                     page_url = "https://www.betfred.com/shop-locator"
                     # raw_address = loc["Address"]
-                    
                     result_coords.append((latitude, longitude))
                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                              store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
@@ -107,11 +94,6 @@ def fetch_data():
             # print(response)
             search.max_distance_update(MAX_DISTANCE)
             # continue        
-                
-
-
-        
-
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
@@ -121,11 +103,6 @@ def fetch_data():
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
-
-
-    
-                
-       
 
 def scrape():
     data = fetch_data()

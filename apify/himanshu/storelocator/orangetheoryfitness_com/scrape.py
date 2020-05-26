@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
+import requests
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -18,7 +18,7 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
     base_url=  "https://www.orangetheory.com/bin/otf/studios?latitude=26.4029696&longitude=-80.1172975&distance=20000000" 
-    r = session.get(base_url)   
+    r = requests.get(base_url)   
     json_data = r.json()
     for j in json_data['data']:
         for i in j:
@@ -55,8 +55,32 @@ def fetch_data():
             else:
                 page_url1 = "https://www.orangetheory.com/en-us/locations/"+str(add2)+"/"+str(add1)+"/"+str(add)+"/"
             page_url = page_url1.replace("--","-")
-            # print(page_url)
-            # page_url=''
+            if zipp == "N1R 7N7":
+                page_url = page_url.replace("road","rd") 
+            if zipp =='32771':
+                page_url = page_url.replace("/&","").replace("&","").replace(";","-")
+            if zipp =='V7P 1S8':
+                page_url = page_url.replace("107-1171-marine-drive","1171-marine-drive-107")
+            if zipp =='V3W 2M1':
+                page_url = page_url.replace("12101-72","1210172").replace("ontario","british-columbia")
+            if zipp =='V6K 2G9':
+                page_url = page_url.replace("3055","3097").replace("broadway","broadwayrnvancouver-bc-v6k-2g9")
+            if zipp == "L6J 7S8":
+                page_url = page_url.replace("oakville","toronto")
+            if zipp == "V3H 0E6":
+                page_url = page_url.replace("unit-","")
+            if zipp == "V9B 5E3":
+                page_url = page_url.replace("victoria/2945-jacklin-road-unit-133/","langford/unit-133-2956-jacklin-road/")
+            if zipp == "V2N 2S9":
+                page_url = "<MISSING>"
+            if zipp == "T8V 4E9":
+                page_url = page_url.replace("grande-prairie/102-11510-westgate-drive/","grand-prairie/unit-102-11510-westgate-dr/")
+            if zipp == "V3W 2M1":
+                page_url = page_url.replace("avenue","ave")
+            if zipp == "V4A 2H9":
+                page_url = page_url.replace("surrey/540-15355-24th-avenue/","richmond-hill/15355-24th-avenue-unit-540/")
+            if zipp == "V2T 0B5":
+                page_url = page_url.replace("abbotsford/110-2653-tretheway-st/","vancouver/110-2653-tretheway-street/") 
             store = []
             store.append(base_url if base_url else "<MISSING>")
             store.append(location_name if location_name else "<MISSING>") 
@@ -85,3 +109,4 @@ def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
+
