@@ -8,7 +8,7 @@ import json
 import requests
 
 def write_output(data):
-    with open('data.csv', mode='w',newline='') as output_file:
+    with open('data.csv', mode='w',newline='\n') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -39,32 +39,21 @@ def fetch_data():
     longitude = ""
     raw_address = ""
     hours_of_operation = ""
-    # location_url = "https://www.lifecareservices-seniorliving.com/"
+    r2 = requests.get("https://www.lifecareservices-seniorliving.com/",headers=headers)
+    soup2 = BeautifulSoup(r2.text, "lxml")
+    gd_nonce = soup2.find(lambda tag: (tag.name == "script" ) and "var gd_ajax_vars" in tag.text.strip()).text.split("var gd_ajax_vars =")[-1].replace("};",'}').split("nonce:")[-1].split("url:")[0].replace("',",'').replace("'",'').strip()
+    # print(gd_nonce)
+    # exit()
     url = "https://www.lifecareservices-seniorliving.com/wp-admin/admin-ajax.php"
 
     data = {
             'pg': '1',
             'action': 'get_communities',
-            'gd_nonce': '1a8e7200c4'
+            'gd_nonce': gd_nonce
         }
-
-    # payload = 'pg=%201&action=%20get_communities&gd_nonce=%201a8e7200c4'
     headers = {
-    #   'Accept': '*/*',
-    #   'Accept-Encoding': 'gzip, deflate, br',
-    #   'Accept-Language': 'en-US,en;q=0.9',
-    #   'Connection': 'keep-alive',
-    #   'Content-Length': '47',
-    #   'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-    #   'Cookie': 'PHPSESSID=b4802e21f7b7fd12016652baa283117e; resolution=1600; _gcl_au=1.1.1322420874.1590408589; _ga=GA1.2.1900899838.1590408590; _gid=GA1.2.1086599991.1590408590; __insp_wid=117628331; __insp_nv=true; __insp_targlpu=aHR0cHM6Ly93d3cubGlmZWNhcmVzZXJ2aWNlcy1zZW5pb3JsaXZpbmcuY29tLw%3D%3D; __insp_targlpt=RW5oYW5jaW5nIFNlbmlvciBMaXZpbmcgRXhwZXJpZW5jZXMgfCBMaWZlIENhcmUgU2VydmljZXM%3D; _fbp=fb.1.1590408589954.63631529; __insp_norec_sess=true; hustle_module_show_count-slidein-2=3; inc_optin_slide_in_long_hidden-2=2; _dc_gtm_UA-7355654-8=1; _gat_UA-7355654-8=1; __insp_slim=1590408877184',
-    #   'Origin': 'https://www.lifecareservices-seniorliving.com',
-    #   'Referer': 'https://www.lifecareservices-seniorliving.com/find-a-community/',
-    #   'Sec-Fetch-Dest': 'empty',
-    #   'Sec-Fetch-Mode': 'cors',
-    #   'Sec-Fetch-Site': 'same-origin',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
-    #   'X-Requested-With': 'XMLHttpRequest',
-    #   'Content-Type': 'application/x-www-form-urlencoded'
+  
     }
 
     response = requests.request("POST", url, headers=headers, data = data).json()
