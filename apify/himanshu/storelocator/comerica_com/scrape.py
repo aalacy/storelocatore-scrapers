@@ -5,9 +5,10 @@ import re
 import json
 import sgzip
 import time
+from sgrequests import SgRequests
 import requests
 from concurrent.futures import ThreadPoolExecutor
-
+session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8", newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -37,28 +38,33 @@ def _send_multiple_rq(vk):
                 # print(data.text)
 
 def fetch_data():
+    list_of_urls=[]
     return_main_object = []
     addressess = []
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 500
-    MAX_DISTANCE = 10
+    MAX_DISTANCE = 25
     current_results_len = 0  # need to update with no of count.
     zip_code = search.next_zip()
-    
     base_url = "https://www.comerica.com"
-    list_of_urls=[]
+    
     # list_of_urls.append( "{\"r\":\"1000\",\"zip\":%s,\"requestType\":\"dotcom\",\"s\":\"1000\"}"%('"{}"'.format(str(85029))))
     while zip_code:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
-        #print('Pulling zip %s...' % (str(zip_code)))
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        # print('Pulling zip %s...' % (str(zip_code)))
         result_coords = []
         page = 1
+        # if len(list_of_urls)==10:
+        #     break
         while True:
-            print(page)
-            r= requests.get("https://locations.comerica.com/?q="+str(zip_code)+"&filter=all&page="+str(page))
+            #print(page)
+            # if len(list_of_urls)==10:
+            #     break
+            r= session.get("https://locations.comerica.com/?q="+str(zip_code)+"&filter=all&page="+str(page))
             soup = BeautifulSoup(r.text, "lxml")
             data = soup.find(lambda tag: (tag.name == "script") and "var results" in tag.text)
+     
             if data:
                 list_of_urls.append("https://locations.comerica.com/?q="+str(zip_code)+"&filter=all&page="+str(page))
             else:
@@ -73,7 +79,7 @@ def fetch_data():
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
 
-    #print("len---- ",len(list_of_urls))
+    # print("len---- ",len(list_of_urls))
     data = _send_multiple_rq(list_of_urls)
     for r in data:
         try:
@@ -97,7 +103,7 @@ def fetch_data():
                         latitude = i['location']['lat']
                         longitude = i['location']['lng']
 
-                        r1 = requests.get(page_url)
+                        r1 = session.get(page_url)
                         soup1 = BeautifulSoup(r1.text, "lxml")
                         if soup1.find("h4",{"property":"name"}):
                             location_name = soup1.find("h4",{"property":"name"}).text.strip()
@@ -142,8 +148,8 @@ def fetch_data():
                         if store[-1] not in addressess:
                             
                             addressess.append(store[-1])
-                            #print("data ===="+str(store))
-                            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                            # print("data ===="+str(store))
+                            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                             yield store 
         except:
             continue

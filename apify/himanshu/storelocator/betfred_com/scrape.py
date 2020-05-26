@@ -30,8 +30,8 @@ def fetch_data():
     result_coords = []
     while zip_code:
         result_coords = []
-        print("zip_code === " + str(zip_code))
-        #print("remaining zip =====" + str(len(search.zipcodes)))
+        #print("zip_code === " + str(zip_code))
+        print("remaining zip =====" + str(len(search.zipcodes)))
         url = "https://www.betfred.com/services/gis/searchstores"
         payload = "{\"SearchLocation\":\" "+str(zip_code)+", UK\",\"MaximumShops\":10,\"MaximumDistance\":5}"
         headers = {
