@@ -4,17 +4,11 @@ import ssl
 import json
 import os
 import requests
-
-#proxy_url = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/".format(os.environ['PROXY_PASSWORD'])
+from sgrequests import SgRequests
+import urllib
 
 session = requests.Session()
-session.mount('https://', SSLAdapter(ssl.PROTOCOL_TLSv1))
-
-#proxies = {
-#    'http': proxy_url,
-#    'https': proxy_url
-#}
-#session.proxies = proxies
+sgsession = SgRequests()
 
 DOMAIN = 'https://6-dot-fedexlocationstaging-1076.appspot.com'
 
@@ -45,11 +39,12 @@ def fetch_data():
             loc_id = feature['properties']['LOC_ID']
             locs.add(loc_id)
 
-    print('%s Locations Found...' % str(len(locs)))
-
     for loc in locs:
-        lpath = '/rest/search/stores?&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=detail%7CLOC_ID%3D%27' + loc + '%27'
-        r2 = session.get(DOMAIN + lpath, headers=headers).json()['features'][0]
+        url = 'https://local.fedex.com/en-us/info-window/?locids=' + urllib.parse.quote_plus('[' + loc + ']')
+        print(url)
+        #lpath = '/rest/search/stores?&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=detail%7CLOC_ID%3D%27' + loc + '%27'
+        r2 = sgsession.get(url, headers=headers)
+        print(r2.content)
         array = r2['properties']
         lat = r2['geometry']["coordinates"][1]
         lng = r2['geometry']["coordinates"][0]
