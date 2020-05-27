@@ -1,8 +1,9 @@
 import csv
-from sgrequests import SgRequests
+from sgrequests import SgHttpClient
 import json
 
-session = SgRequests()
+client = SgHttpClient('6-dot-fedexlocationstaging-1076.appspot.com')
+
 headers = {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
         'Connection':'Keep-Alive'
@@ -22,69 +23,24 @@ def fetch_data():
           "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
           "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
     canada = ['NF','NS','PE','NB','SK','ON','QC','PQ','YK','NT','NU','AB']
-    locs = []
-    url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
-    r = session.get(url, headers=headers)
-    for raw_line in r.iter_lines():
-        line = str(raw_line)
-        if 'LOC_ID' in line:
-            items = line.split('{"LOC_ID":"')
-            for item in items:
-                if '{"features":' not in item:
-                    lid = item.split('"')[0]
-                    if lid not in locs:
-                        locs.append(lid)
-    url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-120.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
-    r = session.get(url, headers=headers)
-    for raw_line in r.iter_lines():
-        line = str(raw_line)
-        if 'LOC_ID' in line:
-            items = line.split('{"LOC_ID":"')
-            for item in items:
-                if '{"features":' not in item:
-                    lid = item.split('"')[0]
-                    if lid not in locs:
-                        locs.append(lid)
-    url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-157.9859414%2C+20.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
-    r = session.get(url, headers=headers)
-    for raw_line in r.iter_lines():
-        line = str(raw_line)
-        if 'LOC_ID' in line:
-            items = line.split('{"LOC_ID":"')
-            for item in items:
-                if '{"features":' not in item:
-                    lid = item.split('"')[0]
-                    if lid not in locs:
-                        locs.append(lid)
-    url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-105.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
-    r = session.get(url, headers=headers)
-    for raw_line in r.iter_lines():
-        line = str(raw_line)
-        if 'LOC_ID' in line:
-            items = line.split('{"LOC_ID":"')
-            for item in items:
-                if '{"features":' not in item:
-                    lid = item.split('"')[0]
-                    if lid not in locs:
-                        locs.append(lid)
-    url = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-157.9859414%2C+55.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266'
-    r = session.get(url, headers=headers)
-    for raw_line in r.iter_lines():
-        line = str(raw_line)
-        if 'LOC_ID' in line:
-            items = line.split('{"LOC_ID":"')
-            for item in items:
-                if '{"features":' not in item:
-                    lid = item.split('"')[0]
-                    if lid not in locs:
-                        locs.append(lid)
+    paths = ['/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266', '/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-120.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266', '/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-157.9859414%2C+20.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266', '/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-105.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266', '/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-157.9859414%2C+55.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266']
+    locs = set()
+    for path in paths:
+        data = json.loads(client.get(path, headers=headers).decode("utf-8"))
+        for feature in data['features']:
+            loc_id = feature['properties']['LOC_ID']
+            locs.add(loc_id)
+
     print('%s Locations Found...' % str(len(locs)))
+
+    i = 0
     for loc in locs:
-        lurl = 'https://6-dot-fedexlocationstaging-1076.appspot.com/rest/search/stores?&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=detail%7CLOC_ID%3D%27' + loc + '%27'
-        r2 = session.get(lurl, headers=headers)
-        array = json.loads(r2.content.split('"properties":')[1].split('}]')[0])
-        lat = r2.content.split('"coordinates":[')[1].split(',')[0]
-        lng = r2.content.split('"coordinates":[')[1].split(',')[1].split(']')[0]
+        i += 1
+        lpath = '/rest/search/stores?&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=detail%7CLOC_ID%3D%27' + loc + '%27'
+        r2 = json.loads(client.get(lpath, headers=headers).decode('utf-8'))['features'][0]
+        array = r2['properties']
+        lat = r2['geometry']["coordinates"][1]
+        lng = r2['geometry']["coordinates"][0]
         website = 'fedex.com'
         name = array['ENG_DISPLAY_NAME']
         add = array['ENG_ADDR_LINE_1']
