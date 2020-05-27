@@ -1,8 +1,10 @@
 import csv
-from sgrequests import SgHttpClient
+from sgrequests import SgRequests
 import json
 
-client = SgHttpClient('6-dot-fedexlocationstaging-1076.appspot.com')
+session = SgRequests()
+
+DOMAIN = 'https://6-dot-fedexlocationstaging-1076.appspot.com'
 
 headers = {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
@@ -26,7 +28,7 @@ def fetch_data():
     paths = ['/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266', '/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-120.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266', '/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-157.9859414%2C+20.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266', '/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-105.9859414%2C+40.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266', '/rest/search/stores?&projectId=13284125696592996852&where=ST_DISTANCE(geometry%2C+ST_POINT(-157.9859414%2C+55.7135097))%3C1609000&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=list&select=geometry%2C+LOC_ID%2C+PROMOTION_ID%2C+SEQUENCE_ID%2CST_DISTANCE(geometry%2C+ST_POINT(-73.9859414%2C+40.7135097))as+distance&orderBy=distance+ASC&limit=100000&maxResults=100000&_=1566253089266']
     locs = set()
     for path in paths:
-        data = json.loads(client.get(path, headers=headers).decode("utf-8"))
+        data = session.get(DOMAIN + path, headers=headers).json()
         for feature in data['features']:
             loc_id = feature['properties']['LOC_ID']
             locs.add(loc_id)
@@ -37,7 +39,7 @@ def fetch_data():
     for loc in locs:
         i += 1
         lpath = '/rest/search/stores?&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=detail%7CLOC_ID%3D%27' + loc + '%27'
-        r2 = json.loads(client.get(lpath, headers=headers).decode('utf-8'))['features'][0]
+        r2 = session.get(DOMAIN + lpath, headers=headers).json()['features'][0]
         array = r2['properties']
         lat = r2['geometry']["coordinates"][1]
         lng = r2['geometry']["coordinates"][0]
