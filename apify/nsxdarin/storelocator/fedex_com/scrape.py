@@ -1,8 +1,20 @@
 import csv
-from sgrequests import SgRequests
+from requests_toolbelt import SSLAdapter
+import ssl
 import json
+import os
+import requests
 
-session = SgRequests()
+#proxy_url = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/".format(os.environ['PROXY_PASSWORD'])
+
+session = requests.Session()
+session.mount('https://', SSLAdapter(ssl.PROTOCOL_TLSv1))
+
+#proxies = {
+#    'http': proxy_url,
+#    'https': proxy_url
+#}
+#session.proxies = proxies
 
 DOMAIN = 'https://6-dot-fedexlocationstaging-1076.appspot.com'
 
@@ -35,9 +47,7 @@ def fetch_data():
 
     print('%s Locations Found...' % str(len(locs)))
 
-    i = 0
     for loc in locs:
-        i += 1
         lpath = '/rest/search/stores?&version=published&key=AIzaSyD5KLv9-3X5egDdfTI24TVzHerD7-IxBiE&clientId=WDRP&service=detail%7CLOC_ID%3D%27' + loc + '%27'
         r2 = session.get(DOMAIN + lpath, headers=headers).json()['features'][0]
         array = r2['properties']
