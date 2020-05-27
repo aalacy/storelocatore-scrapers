@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+import time 
+
 import requests
 def write_output(data):
     with open('data.csv', mode='w',newline='') as output_file:
@@ -14,8 +16,40 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+def request_wrapper(url,method,headers,data=None):
+   request_counter = 0
+   if method == "get":
+       while True:
+           try:
+               r = requests.get(url,headers=headers)
+               return r
+               break
+           except:
+               time.sleep(2)
+               request_counter = request_counter + 1
+               if request_counter > 10:
+                   return None
+                   break
+   elif method == "post":
+       while True:
+           try:
+               if data:
+                   r = requests.post(url,headers=headers,data=data)
+               else:
+                   r = requests.post(url,headers=headers)
+               return r
+               break
+           except:
+               time.sleep(2)
+               request_counter = request_counter + 1
+               if request_counter > 10:
+                   return None
+                   break
+   else:
+       return None
+
 def fetch_data():
-    base_url ="https://www.mitsbishicars.com"
+    base_url ="https://www.mitsubishicars.com/"
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize()
@@ -30,10 +64,13 @@ def fetch_data():
 
     while zip_code:
         result_coords = []
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         # print(zip_code)
+        
         try:
-            json_data = requests.get('https://www.mitsubishicars.com/rs/dealers?bust=1569242590201&zipCode='+str(zip_code)+'&idealer=false&ecommerce=false').json()
+            link = "https://www.mitsubishicars.com/rs/dealers?bust=1569242590201&zipCode="+str(zip_code)+'&idealer=false&ecommerce=false'
+            json_data = request_wrapper(link,"get",headers=headers).json()
+        #     json_data = requests.get('').json()
         except:
             pass
         current_results_len = len(json_data)  
@@ -52,14 +89,16 @@ def fetch_data():
             lng = loc['longitude']
             link = loc['dealerUrl'] 
             storeno = loc['bizId']
-
             if link:
                 page_url = "http://"+link.lower()
                 # print(page_url)
                 if "http://www.verneidemitsubishi.com" in page_url or "http://www.kingautomitsubishi.com" in page_url or "http://www.verhagemitsubishi.com" in page_url or "http://www.sisbarro-mitsubishi.com" in page_url or "http://www.delraymitsu.net" in page_url:
                     hours_of_operation = "<INACCESSIBLE>"
                 else:
-                    r1 = requests.get(page_url, headers=headers)
+                    try:
+                        r1 = requests.get(page_url, headers=headers)
+                    except:
+                        pass
             
                     soup1 = BeautifulSoup(r1.text, "lxml")
                     
@@ -77,7 +116,8 @@ def fetch_data():
                         hours_of_operation = "<INACCESSIBLE>"
             else:
                 hours_of_operation = "<MISSING>"
-
+            if city == "Little rock" or city == "Charlottesville":
+                page_url = "<MISSING>"
             result_coords.append((lat,lng))
             store=[]
             store.append(base_url)
@@ -94,16 +134,13 @@ def fetch_data():
             store.append(lng)
             store.append(hours_of_operation)
             store.append(page_url)
-            # print("data == "+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
+            #print("data == "+str(store))
+            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
             if store[2] in addressess:
                 continue
             addressess.append(store[2])
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store
-
-
-
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
@@ -112,9 +149,7 @@ def fetch_data():
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
-
-           
+        zip_code = search.next_zip()       
 def scrape():
     data = fetch_data()
     write_output(data)

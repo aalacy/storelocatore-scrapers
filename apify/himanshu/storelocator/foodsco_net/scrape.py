@@ -4,8 +4,8 @@ import re
 import json
 from sgrequests import SgRequests
 import phonenumbers
+
 session = SgRequests()
-import requests
 
 def write_output(data):
     with open('data.csv', mode='w',newline="") as output_file:
@@ -29,7 +29,7 @@ def fetch_data():
     }
     for state in states:
         print(state)
-        r = requests.get("https://www.foodsco.net/stores/search?searchText="+str(state), headers=headers)
+        r = session.get("https://www.foodsco.net/stores/search?searchText="+str(state), headers=headers)
         soup = BeautifulSoup(r.text, "lxml")
         str1 = '{"stores":'+soup.find(lambda tag: (tag.name == "script") and "window.__INITIAL_STATE__ =" in tag.text).text.split('"stores":')[1].split(',"shouldShowFuelMessage":true}')[0]+"}"
         json_data = json.loads(str1.replace("\\",""))
@@ -83,8 +83,8 @@ def fetch_data():
                 if (store[-7]) in addresses:
                     continue
                 addresses.append(store[-7])
-                print("data = " + str(store))
-                print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
+                # print("data = " + str(store))
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
                 yield store
 
     

@@ -3,10 +3,12 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-from sgrequests import SgRequests
-session = SgRequests()
+# from sgrequests import SgRequests
+# session = SgRequests()
+import requests
+
 def write_output(data):
-    with open('data.csv', mode='w',newline='') as output_file:
+    with open('data.csv', mode='w',newline='\n') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -23,7 +25,7 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
-    locator_domain = "https://www.lifecareservices-seniorliving.com/"
+    # locator_domain = "https://www.lifecareservices-seniorliving.com/"
     location_name = ""
     street_address = ""
     city = ""
@@ -37,22 +39,25 @@ def fetch_data():
     longitude = ""
     raw_address = ""
     hours_of_operation = ""
-    location_url = "https://www.lifecareservices-seniorliving.com/"
-    # data="pg=1&action=get_communities&gd_nonce=ce7ea9f2e6"
-    headers = {
-    'Accept': '*/*',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
-    
-# 
-    }
+    r2 = requests.get("https://www.lifecareservices-seniorliving.com/",headers=headers)
+    soup2 = BeautifulSoup(r2.text, "lxml")
+    gd_nonce = soup2.find(lambda tag: (tag.name == "script" ) and "var gd_ajax_vars" in tag.text.strip()).text.split("var gd_ajax_vars =")[-1].replace("};",'}').split("nonce:")[-1].split("url:")[0].replace("',",'').replace("'",'').strip()
+    # print(gd_nonce)
+    # exit()
+    url = "https://www.lifecareservices-seniorliving.com/wp-admin/admin-ajax.php"
+
     data = {
-        'pg': '1',
-        'action': 'get_communities',
-        'gd_nonce': 'eef8cb073c'
+            'pg': '1',
+            'action': 'get_communities',
+            'gd_nonce': gd_nonce
+        }
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
+  
     }
-    # payload = "------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"pg\"\r\n\r\n1\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"action\"\r\n\r\nget_communities\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; name=\"gd_nonce\"\r\n\r\nce7ea9f2e6\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--"
-    r = session.post("https://www.lifecareservices-seniorliving.com/wp-admin/admin-ajax.php",headers=headers,data=data).json()
-    for ut in r['results']:
+
+    response = requests.request("POST", url, headers=headers, data = data).json()
+    for ut in response['results']:
         soup1 = BeautifulSoup(ut['html'], "html5lib")
         for data in soup1.find_all("div",{"class":"cmnty-results-address"}):
             full = list(data.find("p",{"class":"address"}).stripped_strings)
@@ -78,12 +83,12 @@ def fetch_data():
             hours_of_operation="<MISSING>"
             store = ["https://www.lifecareservices-seniorliving.com", location_name, street_address.encode('ascii', 'ignore').decode('ascii').strip(), city, state, zipp.replace("IL","<MISSING>"), country_code,
                         store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
+            # if store[2] in addresses:
+            #     continue
+            # addresses.append(store[2])
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            #print("data = " + str(store))
-            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # print("data = " + str(store))
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
         
 def scrape():

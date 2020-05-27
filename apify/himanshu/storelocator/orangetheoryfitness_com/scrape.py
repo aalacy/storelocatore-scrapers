@@ -1,167 +1,112 @@
-# coding=UTF-8
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
-
-
+import requests
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-        # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
-        # Body
         for row in data:
             writer.writerow(row)
-def getDecodedPhoneNo(encoded_phone_no):
-    _dict = {}
-    _dict["2"] = "ABC"
-    _dict["3"] = "DEF"
-    _dict["4"] = "GHI"
-    _dict["5"] = "JKL"
-    _dict["6"] = "MNO"
-    _dict["7"] = "PQRS"
-    _dict["8"] = "TUV"
-    _dict["9"] = "WXYZ"
-
-    _real_phone = ""
-    for _dg in encoded_phone_no:
-        for key in _dict:
-            if _dg in _dict[key]:
-                _dg = key
-        _real_phone += _dg
-    return _real_phone
-
 def fetch_data():
-    return_main_object = []
-    addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize(country_codes = ['us', 'ca'])
-    MAX_RESULTS = 250
-    MAX_DISTANCE = 40
-    current_results_len = 0     # need to update with no of count.
-
-    zip_code = search.next_zip()
-
+    address = []
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
     }
-    while zip_code:
-        result_coords = []
-        # print("zip_code === ",zip_code)
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
-        # print('Pulling Lat-Long %s...' % (str(zip_code)))
-        base_url=  "https://www.orangetheoryfitness.com/service/directorylisting/filterMarkers?s="+str(zip_code)
-        try:
-            r = session.get(base_url)
-            json_data = r.json()
-        except:
-            pass
-        
-        # print(len(json_data['markers']))
-        current_results_len= len(json_data['markers'])
-        for i in json_data['markers']:
-            hours_of_operation="<MISSING>"
-            store_number = i['id']
-            location_name = i['name']
-            street_address = i['address1']
-            street_address1=i['address2']
-            try:
-                if street_address1 != None:
-                    street_address1 = street_address1
-                else:
-                    street_address1=''
-            except:
-                street_address1=''
-            
+    base_url=  "https://www.orangetheory.com/bin/otf/studios?latitude=26.4029696&longitude=-80.1172975&distance=20000000" 
+    r = requests.get(base_url)   
+    json_data = r.json()
+    for j in json_data['data']:
+        for i in j:
+            base_url = "https://www.orangetheory.com/"
+            hours_of_operation = "<MISSING>"
+            store_number = i['studioId']
+            street_address = i['studioLocation']['physicalAddress']
             if street_address == None:
-                street_address = "<MISSING>"
-
-
-            city = i['city']
-            state = i['state']
-            zipp = i['zip'].replace("0209","80209").replace("880209","80209").replace("2550","12550").replace("125504","25504").replace("2145","02145").encode('ascii', 'ignore').decode('ascii').strip()
-            ca_zip_list = re.findall(r'[A-Z]{1}[0-9]{1}[A-Z]{1}\s*[0-9]{1}[A-Z]{1}[0-9]{1}', str(zipp))
-            if ca_zip_list:
-                zipp = ca_zip_list[-1]
-                country_code = "CA"
-            us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(zipp))
-            if us_zip_list:
-                zipp = us_zip_list[-1]
-                country_code = "US"
-            phone = getDecodedPhoneNo(i['phone']).replace("08837","<MISSING>").replace("(2683)","").encode('ascii', 'ignore').decode('ascii').strip()
-            latitude  = i['lat']
-            longitude = i['lon']
-            page_url = i['web_site']
-           
-            try:
-                r1 = session.get(page_url)
-                soup1 = BeautifulSoup(r1.text,"lxml")
-                try:
-                    hours_of_operation =json.loads(soup1.find("script",{"type":"application/ld+json"}).text)['openingHours']
-                except:
-                    hours_of_operation="<MISSING>"
-            except:
-                hours_of_operation="<MISSING>"
-            page_url1=''
-            page_url1=page_url.replace("https://",'').strip().lstrip()
-            if page_url1:
-                page_url1="https://"+page_url1
-
-
-            if "55555" in str(zipp):
-                state="MN"
-                city ="Plymouth"
-            if "1234 Fifth St." in street_address:
-                city = "Plymouth"
-                state="MN"
-                
-            if "Wichita West" in location_name:
-                street_address = "2835 N Maize Rd., Suite 161"
-            
-            result_coords.append((latitude, longitude))
+                continue
+            city  = i['studioLocation']['physicalCity']
+            if city == "Ithaca":
+                street_address = street_address.replace("\r\n","").split("Ithaca")[0]
+            state  =  i['studioLocation']['physicalState']
+            zipp  = i['studioLocation']['physicalPostalCode']
+            if zipp == "20009":
+                street_address = street_address.replace("\r\n","")
+            if zipp == "29715":
+                street_address = street_address.replace("\r\n","")
+            latitude   = i['studioLocation']['latitude']
+            if latitude == "1":
+                latitude = "<MISSING>"
+            longitude  = i['studioLocation']['longitude']
+            if longitude == "1":
+                longitude = "<MISSING>"
+            location_name = i['studioName']
+            country_code = i['studioLocation']['physicalCountry']
+            phone = i['studioLocation']['phoneNumber']
+            location_type ="Orangetheory Fitness"
+            add = street_address.replace(" ","-").replace(".","").replace(",","").replace(" - ","-").replace("--","-").lower().replace("#","")
+            add1 = city.lower().replace(" ","-").replace(".","").replace(",","").replace("#","")
+            add2 = state.replace(" ","-").replace("QC","quebec").replace("BC","british-columbia").replace("MB","Manitoba").replace("AB","alberta").replace("NB","new-brunswick").replace("ON","ontario").replace("SK","saskatchewan").replace("YT","yukon").replace("NU","Nunavut").replace("QC","nova-scotia")
+            if country_code == "Canada":
+                page_url1 = "https://www.orangetheory.com/en-ca/locations/"+str(add2)+"/"+str(add1)+"/"+str(add)+"/"
+            else:
+                page_url1 = "https://www.orangetheory.com/en-us/locations/"+str(add2)+"/"+str(add1)+"/"+str(add)+"/"
+            page_url = page_url1.replace("--","-")
+            if zipp == "N1R 7N7":
+                page_url = page_url.replace("road","rd") 
+            if zipp =='32771':
+                page_url = page_url.replace("/&","").replace("&","").replace(";","-")
+            if zipp =='V7P 1S8':
+                page_url = page_url.replace("107-1171-marine-drive","1171-marine-drive-107")
+            if zipp =='V3W 2M1':
+                page_url = page_url.replace("12101-72","1210172").replace("ontario","british-columbia")
+            if zipp =='V6K 2G9':
+                page_url = page_url.replace("3055","3097").replace("broadway","broadwayrnvancouver-bc-v6k-2g9")
+            if zipp == "L6J 7S8":
+                page_url = page_url.replace("oakville","toronto")
+            if zipp == "V3H 0E6":
+                page_url = page_url.replace("unit-","")
+            if zipp == "V9B 5E3":
+                page_url = page_url.replace("victoria/2945-jacklin-road-unit-133/","langford/unit-133-2956-jacklin-road/")
+            if zipp == "V2N 2S9":
+                page_url = "<MISSING>"
+            if zipp == "T8V 4E9":
+                page_url = page_url.replace("grande-prairie/102-11510-westgate-drive/","grand-prairie/unit-102-11510-westgate-dr/")
+            if zipp == "V3W 2M1":
+                page_url = page_url.replace("avenue","ave")
+            if zipp == "V4A 2H9":
+                page_url = page_url.replace("surrey/540-15355-24th-avenue/","richmond-hill/15355-24th-avenue-unit-540/")
+            if zipp == "V2T 0B5":
+                page_url = page_url.replace("abbotsford/110-2653-tretheway-st/","vancouver/110-2653-tretheway-street/") 
             store = []
-            store.append("https://www.orangetheoryfitness.com/")
+            store.append(base_url if base_url else "<MISSING>")
             store.append(location_name if location_name else "<MISSING>") 
-            store.append(street_address+' '+street_address1 if street_address else "<MISSING>")
+            store.append(street_address if street_address else "<MISSING>")
             store.append(city if city else "<MISSING>")
             store.append(state if state else "<MISSING>")
-            store.append(zipp.replace("802090",'02090'))
-            store.append(country_code)
-            store.append(store_number.replace("37630","") if store_number else "<MISSING>") 
-            store.append(str(phone).strip().lstrip().replace(" ",'') if phone else "<MISSING>")
-            store.append("<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")
+            store.append(country_code if country_code else "<MISSING>")
+            store.append(store_number if store_number else"<MISSING>") 
+            store.append(phone if phone else "<MISSING>")
+            store.append(location_type if location_type else "<MISSING>")
             store.append(latitude if latitude else "<MISSING>")
             store.append(longitude if longitude else "<MISSING>")
-            store.append(hours_of_operation)
-            store.append(page_url1 if page_url1 else "<MISSING>")
-            store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            if store[2] in addresses:
+            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+            store.append(page_url if page_url else "<MISSING>")
+            if country_code == 'Mexico' or country_code == 'China'or country_code == 'Singapore'or country_code == 'Australia'or country_code == 'Guatemala'or country_code == 'Israel'or country_code == 'Poland'or country_code == 'Germany'or country_code == 'Spain'or country_code == 'India'or country_code == 'Hong Kong'or country_code == 'New Zealand'or country_code == 'United Arab Emirates'or country_code == 'Japan'or country_code == 'Chile'or country_code == 'United Kingdom' or country_code == 'Saudi Arabia'or country_code == '966551603333'or country_code == 'Kuwait'or country_code == 'Puerto Rico'or country_code == 'Peru'or country_code == 'Colombia'or country_code == 'Dominican Republic':
                 continue
-            addresses.append(store[2])
-            if "Adjuntas" in store or "Prince Saud Bin Mohammad Bin Muqrin Rd" in store[2]:
-                pass
-            else:
-                yield store
-            # print("--------------------",store)
-        if current_results_len < MAX_RESULTS:
-            # print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
-
-
+            if location_name == "Corporate Test Jose" or location_name == 'Test HR'or location_name == 'Perezidente'or location_name == 'Test OTbeat 006' or location_name == 'Test Nighthawk'or location_name == 'Test Nighthawk 2'or location_name == 'NPE'or location_name == 'Test 001'or location_name == 'Test 003'or location_name == 'VM009'or location_name == 'Test 004'or location_name == 'OTbeat MAV' or location_name == 'Test 005':
+                continue
+            if store[2] in address :
+                continue
+            address.append(store[2])
+            store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
+            yield store
 def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
+

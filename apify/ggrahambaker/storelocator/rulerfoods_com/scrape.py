@@ -56,9 +56,9 @@ def fetch_data():
         for li in lis:
             content = li.find_element_by_css_selector('div.results_entry.location_primary').text.split('\n')
             if len(content) > 1:
-                hours = '8AM - 9PM'
-                phone_number = content[1].replace('HOURS: 8AM - 9PM', '').strip()
-
+                phone_hours = content[1].split('PM')#.strip()
+                hours = phone_hours[0] + ' PM'
+                phone_number = phone_hours[1]
                 parsed_add = usaddress.tag(content[0])[0]
 
                 street_address = ''
@@ -68,11 +68,13 @@ def fetch_data():
 
                 street_address += parsed_add['StreetName'] + ' '
                 if 'StreetNamePostType' in parsed_add:
-                    street_address += parsed_add['StreetNamePostType']
+                    street_address += parsed_add['StreetNamePostType'] + ' '
                 if 'OccupancyType' in parsed_add:
-                    street_address += parsed_add['OccupancyType']
+                    street_address += parsed_add['OccupancyType'] + ' '
                 if 'OccupancyIdentifier' in parsed_add:
-                    street_address += parsed_add['OccupancyIdentifier']
+                    street_address += parsed_add['OccupancyIdentifier'] + ' '
+
+                street_address = street_address.strip()
                 city = parsed_add['PlaceName']
                 state = parsed_add['StateName']
                 zip_code = parsed_add['ZipCode']

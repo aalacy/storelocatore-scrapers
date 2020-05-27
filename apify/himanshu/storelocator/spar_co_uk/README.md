@@ -10,4 +10,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-invalid zip and address hard to parse so i hava add raw_address cloumn 
+invalid zip and same lat & lng this website 

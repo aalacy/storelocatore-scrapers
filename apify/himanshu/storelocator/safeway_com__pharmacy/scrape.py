@@ -1,15 +1,13 @@
 import csv
-from sgrequests import SgRequests
+import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import sgzip
 import time
-import requests
 from datetime import datetime
-session = SgRequests()
+
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv',newline='', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -22,54 +20,64 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
-    search = sgzip.ClosestNSearch()
-    search.initialize()
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 100
-    current_results_len = 0     # need to update with no of count.
-    zip_code = search.next_zip()
 
-   
-    base_url= "https://www.safeway.com/pharmacy.html"
+    page_url_list =[]
+    base_url= "https://www.safeway.com/pharmacy"
 
     
-    headers = {   
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',        
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
-        'accept': 'application/json'
+    headers = {           
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
+    
     }
-    while zip_code:
-        result_coords = []
-        location_url = "https://www.safeway.com/abs/pub/storelocator/api/accounts/me/locations/geosearch?api_key=843b2f10cedf121969b2e44eab5f15aa&v=20180530&location="+str(zip_code)+"&limit=50&radius=200&filters=%5B%7B%22custom95965%22%3A%20%7B%22equalTo%22%3A%5B%22safeway%22%5D%7D%7D%5D"
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+    r = requests.get("https://local.safeway.com/index.html", headers=headers)
+    soup = BeautifulSoup(r.text, "lxml")
+
+    content = soup.find_all("a",{"class":"Directory-listLink"})
+    url1 = "https://local.safeway.com/"+content[0]['href']
+    r3 = requests.get(url1,headers=headers)
+    soup3 = BeautifulSoup(r3.text, "lxml")
+    all_link = soup3.find_all("a",{"class":"Directory-listLink"})
+    for link in all_link:
+        state_link = "https://local.safeway.com/"+link['href']
+        r4 = requests.get(state_link, headers=headers)
+        soup4 = BeautifulSoup(r4.text, "lxml")
+        city_data = soup4.find_all("a",{"class":"Directory-listLink"})
+        for i in city_data:
+            location_link = i['href'].replace("../safeway/","https://local.pharmacy.safeway.com/")
+            # print(location_link)
         
-        r = requests.get(location_url).json()
-        current_results_len = len(r['response']['locations'])
-
-        for i in r['response']['locations']:
-
-            street_address = i['address']
-            city = i['city']
-            state = i['state']
-            zipp = i['zip']
-            location_type = "Pharmacy "
-            phone = i['phone']
-            country_code = i['countryCode']
-            latitude = i['yextDisplayLat']
-            longitude = i['yextDisplayLng']	
-            page_url = "https://local.pharmacy.safeway.com/"+str(state.lower())+"/"+str(city.lower().replace(" ","-"))+"/"+str(street_address.lower().replace(" ","-").replace("#","-"))+".html"
-            r1 = requests.get(page_url)
-            soup1 = BeautifulSoup(r1.text, "lxml")
-            if soup1.find("h1",{"class":"ContentBanner-h1"}):
-                location_name = soup1.find("h1",{"class":"ContentBanner-h1"}).text
-
-                hours_of_operation = " ".join(list(soup1.find("table",{"class":"c-hours-details"}).stripped_strings)).replace("Day of the Week Hours","").strip()
+            if "(1)" in i['data-count']:
+                page_urls = location_link
+                # print(page_urls)
+                page_url_list.append(page_urls)
             else:
-                location_name = "<MISSING>"
-                hours_of_operation = "<MISSING>"
-            
         
-            result_coords.append((latitude, longitude))
+                r6 = requests.get(location_link, headers=headers)
+                soup6 = BeautifulSoup(r6.text, "lxml")
+                data_link = soup6.find_all("a",{"class":"Teaser-titleLink"})
+                for j in data_link:
+                    page_urls = j['href'].replace("../","https://local.pharmacy.safeway.com/")
+                    # print(page_urls)
+                    page_url_list.append(page_urls)
+    # print(page_url_list)
+    for page_url in page_url_list:
+        # print(page_url)
+        r5 = requests.get(page_url, headers=headers)
+        soup5 = BeautifulSoup(r5.text, "lxml")
+        try:
+            location_name = soup5.find("h1",{"class":"ContentBanner-h1"}).text
+            street_address = soup5.find("span",{"class":"c-address-street-1"}).text
+            city = soup5.find("span",{"class":"c-address-city"}).text
+            state = soup5.find("abbr",{"class":"c-address-state"}).text
+            zipp = soup5.find("span",{"class":"c-address-postal-code"}).text
+            phone = soup5.find("div",{"class":"Phone-display Phone-display--withLink"}).text.strip()
+            hours = " ".join(list(soup5.find("table",{"class":"c-hours-details"}).stripped_strings)).replace("Day of the Week","").replace("Hours","").strip()
+            latitude = soup5.find("meta",{"itemprop":"latitude"})['content']
+            longitude = soup5.find("meta",{"itemprop":"longitude"})['content']
+            location_type = "Pharmacy"
+            country_code = "US"
+            
             store = []
             store.append(base_url)
             store.append(location_name)
@@ -83,26 +91,111 @@ def fetch_data():
             store.append(location_type)
             store.append(latitude)
             store.append(longitude)
-            store.append(hours_of_operation)
+            store.append(hours)
             store.append(page_url)
-            if store[2] in addresses:
+            if store[-1] in addresses:
                 continue
-            addresses.append(store[2])
-            #print("data =="+str(store))
-            #print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            addresses.append(store[-1])
+            # print("data =="+str(store))
+            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
             yield store
-    
-        if current_results_len < MAX_RESULTS:
-            # print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
+        except:
+            # print(page_url)
+            continue
+
+            
 
 
+
+
+
+
+
+
+
+
+
+
+
+                    # r7 = requests.get(page_url, headers=headers)
+                    # soup7 = BeautifulSoup(r7.text, "lxml")
+                    # location_name = soup7.find("h1",{"class":"ContentBanner-h1"}).text
+                    # street_address = soup7.find("span",{"class":"c-address-street-1"}).text
+                    # city = soup7.find("span",{"class":"c-address-city"}).text
+                    # state = soup7.find("abbr",{"class":"c-address-state"}).text
+                    # zipp = soup7.find("span",{"class":"c-address-postal-code"}).text
+                    # phone = soup7.find("div",{"class":"Phone-display Phone-display--withLink"}).text.strip()
+                    # hours = soup7.find("table",{"class":"c-hours-details"}).text.replace("Day of the Week","").replace("Hours","")
+                    # latitude = soup7.find("meta",{"itemprop":"latitude"})['content']
+                    # longitude = soup7.find("meta",{"itemprop":"longitude"})['content']
+                    # location_type = "Pharmacy"
+                    # country_code = "US"
+                    # store = []
+                    # store.append(base_url)
+                    # store.append(location_name)
+                    # store.append(street_address)
+                    # store.append(city)
+                    # store.append(state)
+                    # store.append(zipp)
+                    # store.append(country_code)
+                    # store.append("<MISSING>")
+                    # store.append(phone )
+                    # store.append(location_type)
+                    # store.append(latitude)
+                    # store.append(longitude)
+                    # store.append(hours)
+                    # store.append(page_url)
+                    # # if store[2] in addresses:
+                    # #     continue
+                    # # addresses.append(store[2])
+                    # # print("data =="+str(store))
+                    # # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                    # yield store
+
+    # url = "https://local.safeway.com/"+content[1]['href']
+    # r1 = requests.get(url, headers=headers)
+    # soup1 = BeautifulSoup(r1.text, "lxml")
+    # list_link = soup1.find_all("a",{"class":"Directory-listLink"})
+    # for link in list_link:
+    #     location_link = link['href'].replace("..","https://local.pharmacy.safeway.com/")
+
+    #     r2 = requests.get(location_link, headers=headers)
+    #     soup2 = BeautifulSoup(r2.text,"lxml")
+    #     location_name = soup2.find("h1",{"class":"ContentBanner-h1"}).text
+    #     street_address = soup2.find("span",{"class":"c-address-street-1"}).text
+    #     city = soup2.find("span",{"class":"c-address-city"}).text
+    #     state = soup2.find("abbr",{"class":"c-address-state"}).text
+    #     zipp = soup2.find("span",{"class":"c-address-postal-code"}).text
+    #     phone = soup2.find("div",{"class":"Phone-display Phone-display--withLink"}).text.strip()
+    #     hours = soup2.find("table",{"class":"c-hours-details"}).text.replace("Day of the Week","").replace("Hours","")
+    #     latitude = soup2.find("meta",{"itemprop":"latitude"})['content']
+    #     longitude = soup2.find("meta",{"itemprop":"longitude"})['content']
+    #     page_url = location_link
+    #     print(page_url)
+    #     location_type = "Pharmacy"
+    #     country_code = "US"
+
+    #     store = []
+    #     store.append(base_url)
+    #     store.append(location_name)
+    #     store.append(street_address)
+    #     store.append(city)
+    #     store.append(state)
+    #     store.append(zipp)
+    #     store.append(country_code)
+    #     store.append("<MISSING>")
+    #     store.append(phone )
+    #     store.append(location_type)
+    #     store.append(latitude)
+    #     store.append(longitude)
+    #     store.append(hours)
+    #     store.append(page_url)
+    #     # print("data =="+str(store))
+    #     # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    #     yield store
+        
+       
+        
 def scrape():
     data = fetch_data()
     write_output(data)
