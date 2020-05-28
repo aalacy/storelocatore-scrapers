@@ -24,6 +24,76 @@ def fetch_data():
 	headers = {
 		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
 	}
+
+	rr= session.get("https://www.wregional.com/main/dialysis-centers",headers=headers)
+	soup0 = BeautifulSoup(rr.text,"lxml")
+	full = str(soup0.find("div",{"class":"clinics"})).split("</h3>")[-1].split("</strong>")
+	names=[]
+	names = soup0.find_all("strong")
+
+	names.insert(0,'')
+
+	for index,f in enumerate(full):
+		soups = BeautifulSoup(f,"lxml")
+		full1 = list(soups.stripped_strings)
+		if len(full1) != 1:
+			address1 = full1[:-1][0]
+			location_name=(names[index].text.strip())
+			city = full1[:-1][1].split(",")[0]
+			state = full1[:-1][1].split(",")[1].strip().split( )[0]
+			zipcode = full1[:-1][1].split(",")[1].strip().split( )[-1]
+			phone = full1[:-1][2].replace("Phone ",'')
+			hours = ( " ".join(full1[:-1][4:]).replace("or later as needed for patient care",'').replace("(will soon open Tuesday, Thursday, Saturday)",'').replace("or later as needed for patient care",''))
+			location_type="Facilities"
+			storeNumber='<MISSING>'
+			country_code="US"
+			latitude="<MISSING>"
+			longitude="<MISSING>"
+			store = [locator_domain, location_name,address1,city , state, zipcode, country_code,
+				storeNumber, phone.strip(), "Facilities", latitude, longitude, hours,"https://www.wregional.com/main/dialysis-centers"]
+			yield store	
+			
+			
+	urls=["https://www.wregional.com/main/sleep-disorders",'https://www.wregional.com/main/springdale-center-for-health','https://www.wregional.com/main/medical-plaza']
+
+	for index,u in enumerate(urls):
+		u1= session.get(u,headers=headers)
+		soupp = BeautifulSoup(u1.text,"lxml")
+		if index==0:
+			full = list(soupp.find("div",{"class":"clinics"}).find_all("p")[-1].stripped_strings)
+			location_name = full[0]
+			address1 = full[1]
+			city = full[2].split(',')[0]
+			zipcode = full[2].split(',')[1].strip().split( )[-1]
+			state = full[2].split(',')[1].strip().split( )[-2]
+			phone = full[3].replace("Phone ",'')
+			hours = "<MISSING>"
+		if index==1:
+			full = list(soupp.find("main",{"id":"inside-page"}).find("div",{"class":"page-content"}).find_all("p")[-2].stripped_strings)
+			location_name = full[0]
+			address1 = full[1]
+			city = full[2].split(',')[0]
+			zipcode = full[2].split(',')[1].strip().split( )[-1]
+			state = full[2].split(',')[1].strip().split( )[-2]
+			hours = full[-2]
+			phone="479-463-5464"
+		if index==2:
+			full = str(soupp.find("main",{"id":"inside-page"}).find("div",{"class":"page-content"})).split("</strong>")[-1]
+			location_name = soupp.find("strong").text
+			soupp = BeautifulSoup(full,"lxml")
+			address1 = list(soupp.stripped_strings)[0]
+			city = list(soupp.stripped_strings)[1].split(",")[0]
+			state = list(soupp.stripped_strings)[1].split(",")[1].strip().split( )[0]
+			zipcode = list(soupp.stripped_strings)[1].split(",")[1].strip().split( )[1]
+			phone="<MISSING>"
+			hours = "<MISSING>"
+		storeNumber='<MISSING>'
+		country_code="US"
+		latitude="<MISSING>"
+		longitude="<MISSING>"
+		store = [locator_domain, location_name,address1,city , state, zipcode, country_code,
+				storeNumber, phone.strip(), "Facilities", latitude, longitude, hours,u]
+		yield store	
 	r= session.get("https://www.wregional.com/main/find-a-facility-or-clinic",headers=headers)
 	soup = BeautifulSoup(r.text,"lxml")
 	for ul in soup.find("div",class_="template2-row-1").find_all("ul"):
@@ -80,7 +150,7 @@ def fetch_data():
 								longitude="<MISSING>"
 								
 								store = [locator_domain, location_name,address01,city , state, zipp, country_code,
-									storeNumber, phone.strip(), location_type, latitude, longitude, Hours,page_url]
+									storeNumber, phone.replace('Phone: ','').strip(), location_type, latitude, longitude, Hours,page_url]
 								yield store
 								# print(store)
 							except:
@@ -108,7 +178,7 @@ def fetch_data():
 								longitude="<MISSING>"
 								
 								store = [locator_domain, location_name,address01,city , state, zipp, country_code,
-									storeNumber, phone.strip(), location_type, latitude, longitude, Hours,page_url]
+									storeNumber, phone.replace('Phone: ','').strip(), location_type, latitude, longitude, Hours,page_url]
 								yield store
 								# print(store)
 	
@@ -141,7 +211,7 @@ def fetch_data():
 						latitude="<MISSING>"
 						longitude="<MISSING>"
 						store = [locator_domain, location_name,address01,city , state, zipp, country_code,
-							storeNumber, phone.strip(), location_type, latitude, longitude, Hours,page_url]
+							storeNumber, phone.replace('Phone: ','').strip(), location_type, latitude, longitude, Hours,page_url]
 						yield store
 						# print(store)
 					except:
