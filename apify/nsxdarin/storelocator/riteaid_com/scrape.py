@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from ssl import SSLError
 import html
 from bs4 import BeautifulSoup
+import re
 
 
 thread_local = threading.local()
@@ -42,6 +43,8 @@ def write_output(data):
 
 def enqueue_links(url):
 
+    # print('getting links from ' + url)
+
     locs = []
     cities = []
     states = []
@@ -62,7 +65,8 @@ def enqueue_links(url):
 
     store_links = soup.select('h5.c-location-grid-item-title a')
     for link in store_links:
-        lurl = 'https://locations.riteaid.com.yext-cdn.com/' + link['href']
+        lurl = 'https://locations.riteaid.com.yext-cdn.com/' + \
+            re.sub(r'^\.\.\/', '', link['href'])  # remove "../" at beginning
         locs.append(lurl)
 
     d = dict()
@@ -153,13 +157,16 @@ def get_location(loc):
                         '<span class="c-address-street-2">')[1].split('<')[0].strip()
     if hours == '':
         hours = '<MISSING>'
-    if store != '' and 'closed' not in name.lower():
-        hours = hours.replace('-0', '-0000')
-        if phone == '':
-            phone = '<MISSING>'
-        if 'RediClinic' in name:
-            typ = 'RediClinic'
-        return [website, loc.replace('https://locations.riteaid.com.yext-cdn.com/', 'https://www.riteaid.com/locations/'), name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+    if 'closed' in name.lower():
+        # print('skipping closed store: ', loc)
+    else:
+        if store != '':
+            hours = hours.replace('-0', '-0000')
+            if phone == '':
+                phone = '<MISSING>'
+            if 'RediClinic' in name:
+                typ = 'RediClinic'
+            return [website, loc.replace('https://locations.riteaid.com.yext-cdn.com/', 'https://www.riteaid.com/locations/'), name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 
 def fetch_data():
@@ -173,6 +180,8 @@ def fetch_data():
     scrape_state_urls(state_urls, city_urls, loc_urls)
 
     scrape_city_urls(city_urls, loc_urls)
+
+    # print('loc_urls: ', len(loc_urls))
 
     with ThreadPoolExecutor(max_workers=8) as executor:
         futures = [executor.submit(get_location, loc) for loc in loc_urls]
