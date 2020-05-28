@@ -18,7 +18,6 @@ def write_output(data):
 def fetch_data():
     locs = []
     for code in sgzip.for_radius(50):
-        print('Pulling Zip Code %s...' % code)
         url = 'https://www.securityfinance.com/wp-admin/admin-ajax.php?action=tba_locator_search&zip=' + code + '&radius=100&results=100'
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
@@ -31,7 +30,6 @@ def fetch_data():
                             locs.append(lurl)
     for loc in locs:
         r2 = session.get(loc, headers=headers)
-        print('Pulling Location %s...' % loc)
         website = 'www.security-finance.com'
         typ = ''
         store = ''
