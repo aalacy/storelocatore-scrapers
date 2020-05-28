@@ -1,1 +1,1 @@
-selenium-wire
+sgselenium

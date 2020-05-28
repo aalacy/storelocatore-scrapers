@@ -1,57 +1,16 @@
 import csv
-from seleniumwire import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.expected_conditions import presence_of_element_located
 import re
 import os
-
-
-def get_chromedriver(use_proxy=False, user_agent=None):
-
-    chrome_options = webdriver.ChromeOptions()
-    seleniumwire_options = {}
-
-    if use_proxy and 'PROXY_PASSWORD' in os.environ:
-        DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
-        proxy_password = os.environ["PROXY_PASSWORD"]
-        url = os.environ["PROXY_URL"] if 'PROXY_URL' in os.environ else DEFAULT_PROXY_URL
-        proxy_url = url.format(proxy_password)
-        # print('proxy_url', proxy_url)
-        seleniumwire_options = {
-            'proxy': {
-                'https': proxy_url
-            }
-        }
-
-    if user_agent:
-        chrome_options.add_argument('--user-agent=%s' % user_agent)
-
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
-
-    # driver = webdriver.Chrome('C:\chromedriver.exe', chrome_options=chrome_options, seleniumwire_options=seleniumwire_options)
-    driver = webdriver.Chrome(
-        'chromedriver', chrome_options=chrome_options, seleniumwire_options=seleniumwire_options)
-
-    driver.implicitly_wait(10)
-
-    return driver
-
+from sgselenium import SgSelenium
 
 user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1309.0 Safari/537.17'
 
-driver = get_chromedriver(use_proxy=True, user_agent=user_agent)
+driver = SgSelenium().chrome(user_agent=user_agent)
 
 wait = WebDriverWait(driver, 30)
-
-# to check that the proxy is working ..
-# driver.get("https://jsonip.com/")
-# print(driver.page_source)
-# raise SystemExit
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -65,16 +24,12 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def parse_geo(url):
     lon = re.findall(r'll=[-?\d\.]*\,([-?\d\.]*)', url)[0]
     lat = re.findall(r'll=(-?[\d\.]*)', url)[0]
     return lat, lon
 
-
 def fetch_data():
-    # Your scraper here
-    # print('user agent: ', driver.execute_script("return navigator.userAgent;"))
     abv = {'alabama': 'AL', 'arizona': 'AZ', 'california': 'CA', 'colorado': 'CO', 'florida': 'FL', 'georgia': 'GA', 'illinois': 'IL', 'indiana': 'IN', 'maryland': 'MD', 'massachusetts': 'MA', 'michigan': 'MI',
            'missouri': 'MO', 'new jersey': 'NJ', 'new mexico': 'NM', 'new york': 'NY', 'north carolina': 'NC', 'ohio': 'OH', 'pennsylvania': 'PA', 'tennessee': 'TN', 'texas': 'TX', 'virginia': 'VA', }
     locs = []
@@ -123,20 +78,6 @@ def fetch_data():
     i = 0
 
     for url in urls:
-        """
-        loc=loc.lower()
-        if "-" in loc:
-            lo = loc.split("-")
-            loc1=lo[0].strip().replace(" ","-")
-            loc2=loc.replace("- ","").replace(" ","-")
-        else:
-            if " " in loc:
-                loc1=loc.replace(" ","-")
-                loc2=loc1
-            else:
-                loc1=loc2=loc
-        url="https://www.seasons52.com/locations/"+abv[states[i].lower()]+"/"+loc1+"/"+loc2
-        """
         driver.get(url)
 
         try:
@@ -196,10 +137,8 @@ def fetch_data():
         all.append(row)
     return(all)
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()
