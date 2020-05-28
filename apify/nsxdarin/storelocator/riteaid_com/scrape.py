@@ -5,6 +5,8 @@ import random
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from ssl import SSLError
+import html
+from bs4 import BeautifulSoup
 
 
 thread_local = threading.local()
@@ -40,43 +42,35 @@ def write_output(data):
 
 def enqueue_links(url):
 
-  locs = []
-  cities = []
-  states = []
+    locs = []
+    cities = []
+    states = []
 
-  # print('getting links from: ' + url)
+    session = get_session()
+    r = session.get(url, headers=headers)
 
-  session = get_session()
-  r = session.get(url, headers=headers)
+    soup = BeautifulSoup(r.text, 'html.parser')
+    dir_links = soup.select('a.c-directory-list-content-item-link')
+    for link in dir_links:
+        lurl = 'https://locations.riteaid.com.yext-cdn.com/' + link['href']
+        if lurl.count('/') == 5:
+            locs.append(lurl)
+        elif lurl.count('/') == 4:
+            cities.append(lurl)
+        else:
+            states.append(lurl)
 
-  for line in r.iter_lines(decode_unicode=True):
-      if '<a class="c-directory-list-content-item-link" href="' in line:
-          items = line.split(
-              '<a class="c-directory-list-content-item-link" href="')
-          for item in items:
-              if '<div class="container bread-crumbs-container hidden-xs">' not in item:
-                  lurl = 'https://locations.riteaid.com.yext-cdn.com/' + \
-                      item.split('"')[0]
-                  if lurl.count('/') == 5:
-                      locs.append(lurl)
-                  elif lurl.count('/') == 4:
-                      cities.append(lurl)
-                  else:
-                      states.append(lurl)
-      elif '<a itemprop="url" href="../' in line:
-          items = line.split('<a itemprop="url" href="../')
-          for item in items:
-              if '<div class="container bread-crumbs-container hidden-xs">' not in item and ' - Closed ' not in item:
-                  lurl = 'https://locations.riteaid.com.yext-cdn.com/' + \
-                      item.split('"')[0]
-                  locs.append(lurl)
+    store_links = soup.select('h5.c-location-grid-item-title a')
+    for link in store_links:
+        lurl = 'https://locations.riteaid.com.yext-cdn.com/' + link['href']
+        locs.append(lurl)
 
-  d = dict()
-  d['locs'] = locs
-  d['cities'] = cities
-  d['states'] = states
+    d = dict()
+    d['locs'] = locs
+    d['cities'] = cities
+    d['states'] = states
 
-  return d
+    return d
 
 
 def scrape_state_urls(state_urls, city_urls, loc_urls):
@@ -102,7 +96,7 @@ def get_location(loc):
     # print('Pulling Location %s ...' % loc)
     session = get_session()
     website = 'riteaid.com'
-    typ = '<MISSING>'
+    typ = 'RiteAid'
     name = ''
     add = ''
     city = ''
@@ -132,6 +126,7 @@ def get_location(loc):
             zc = line2.split("dimension5', '")[1].split("'")[0]
             state = line2.split("'dimension2', '")[1].split("'")[0]
             city = line2.split("'dimension3', '")[1].split("'")[0]
+            city = html.unescape(city)
         if 'itemprop="telephone" id="telephone">' in line2:
             phone = line2.split('itemprop="telephone" id="telephone">')[
                 1].split('<')[0]
@@ -158,10 +153,12 @@ def get_location(loc):
                         '<span class="c-address-street-2">')[1].split('<')[0].strip()
     if hours == '':
         hours = '<MISSING>'
-    if store != '':
+    if store != '' and 'closed' not in name.lower():
         hours = hours.replace('-0', '-0000')
         if phone == '':
             phone = '<MISSING>'
+        if 'RediClinic' in name:
+            typ = 'RediClinic'
         return [website, loc.replace('https://locations.riteaid.com.yext-cdn.com/', 'https://www.riteaid.com/locations/'), name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 
