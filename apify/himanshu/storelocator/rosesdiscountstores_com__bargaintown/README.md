@@ -12,4 +12,4 @@ Please make sure that:
 
 address with no number,address contains state name,zipcode not in state this website
 
-and i checked all datai is true this website
+and i checked all data is true this website
