@@ -19,7 +19,7 @@ def get_driver():
     options.add_argument('--window-size=1920,1080')
 
     # profile = webdriver.FirefoxProfile('C:\\Users\\01\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\3fz3yyhy.default-release')
-    profile = webdriver.FirefoxProfile('./5u22rp88.default-release-1')
+    profile = webdriver.FirefoxProfile()
 
     PROXY_HOST = "12.12.12.123"
     PROXY_PORT = "1234"

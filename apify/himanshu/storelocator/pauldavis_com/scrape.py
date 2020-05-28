@@ -7,7 +7,6 @@ import certifi # This should be already installed as a dependency of 'requests'
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
 session = SgRequests()
-import requests
 def write_output(data):
     with open('data.csv', 'w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL)
@@ -28,7 +27,7 @@ def fetch_data():
         }
     base_url = "https://www.pauldavis.com"
     # canada location
-    r = requests.get('https://pauldavis.ca/wp-json/locator/v1/list/?formattedAddress=&boundsNorthEast=&boundsSouthWest=',headers = headers).json()
+    r = session.get('https://pauldavis.ca/wp-json/locator/v1/list/?formattedAddress=&boundsNorthEast=&boundsSouthWest=',headers = headers).json()
 
     for loc in r:
         location_name = loc['name']
@@ -65,14 +64,14 @@ def fetch_data():
     # us location
     warnings.simplefilter('ignore',InsecureRequestWarning)
     links = []
-    us_r = requests.get("https://pauldavis.com/paul-davis-locations/", verify=False)
+    us_r = session.get("https://pauldavis.com/paul-davis-locations/", verify=False)
     soup1 = BeautifulSoup(us_r.text, "lxml")
     state_data = soup1.find_all('div', class_='cell tablet-4')
 
     for link in state_data:
         city_href = base_url + link.find("a")['href']
         # try:
-        city_r = requests.get(city_href, verify=False)
+        city_r = session.get(city_href, verify=False)
         # except:
         #     continue
         city_soup = BeautifulSoup(city_r.text, "lxml")
@@ -81,7 +80,7 @@ def fetch_data():
         for loc in city_data.find_all("div"):
             loc_href= base_url + loc.a['href']
             # try:
-            loc_r = requests.get(loc_href, verify=False)
+            loc_r = session.get(loc_href, verify=False)
             # except:
             #     continue
             loc_soup = BeautifulSoup(loc_r.text, "lxml")
@@ -92,7 +91,7 @@ def fetch_data():
                 page_url = url
             else:
                 page_url = "https://" + url
-            print("Page url is",page_url)
+            #print("Page url is",page_url)
             if page_url == "https://pauldavis.com":
                 continue
             if page_url in links:
@@ -100,7 +99,7 @@ def fetch_data():
             links.append(page_url)     
             
             # try:
-            data_r = requests.get(page_url, verify=False)
+            data_r = session.get(page_url, verify=False)
             # except:
             #     continue
             data_soup = BeautifulSoup(data_r.text, "lxml")
@@ -112,7 +111,7 @@ def fetch_data():
                 state = data_soup.find("span",{"itemprop":"addressRegion"}).text
                 zipp = data_soup.find("span",{"itemprop":"postalCode"}).text
                 phone = data_soup.find("span",{"itemprop":"telephone"}).text
-                coord = requests.get(data_soup.find("link",{"itemprop":"hasMap"})['href']).url
+                coord = session.get(data_soup.find("link",{"itemprop":"hasMap"})['href']).url
                 latitude = coord.split("@")[1].split(",")[0]
                 longitude = coord.split("@")[1].split(",")[1]
 
@@ -135,7 +134,9 @@ def fetch_data():
                     city = data_soup.find_all('p',class_='info')[2].text.split(",")[0]
                     state = data_soup.find_all('p',class_='info')[2].text.split(",")[1].replace(".","").split()[0]
                     zipp = data_soup.find_all('p',class_='info')[2].text.split(",")[1].replace(".","").split()[1]
-
+                
+                phone_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone))[-1]
+  
                 location_name = "<MISSING>"
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
@@ -151,7 +152,7 @@ def fetch_data():
             store.append(zipp)
             store.append(country_code)
             store.append("<MISSING>") 
-            store.append(phone)
+            store.append(phone_list)
             store.append("<MISSING>")
             store.append(latitude)
             store.append(longitude)
