@@ -15,7 +15,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 session = SgRequests()
 all=[]
 def fetch_data():
@@ -36,7 +35,6 @@ def fetch_data():
         data = soup.find('table').find_all('script')[2].text
         jsonValue = '{%s}' % (data.partition('{')[2].rpartition('}')[0],)
         #print("["+jsonValue.replace("\'", "\"").replace(':"','":"').replace('",','","').replace('{','{"').replace(',"{',',{').replace(',Lng:','","Lng":"').replace('"Lat:','"Lat":"').replace(',fillcolor','","fillcolor')+"]")
-
 
         js_list = json.loads("["+jsonValue.replace("\'", "\"").replace(':"','":"').replace('",','","').replace('{','{"').replace(',"{',',{').replace(',Lng:','","Lng":"').replace('"Lat:','"Lat":"').replace(',fillcolor','","fillcolor')+"]")
         for js in js_list:
@@ -75,6 +73,5 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

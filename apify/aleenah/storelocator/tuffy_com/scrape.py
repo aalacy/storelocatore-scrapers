@@ -4,7 +4,6 @@ import re
 from pyzipcode import ZipCodeDatabase
 import time
 
-
 driver = SgSelenium().chrome()
 
 def write_output(data):
@@ -17,12 +16,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def parse_geo(url):
     lon = re.findall(r'll=[-?\d\.]*\,([-?\d\.]*)', url)[0]
     lat = re.findall(r'll=(-?[\d\.]*)', url)[0]
     return lat, lon
-
 
 def fetch_data():
     # Your scraper here
@@ -95,11 +92,8 @@ def fetch_data():
                 long.append(z.longitude)
                 page_url.append(url)
 
-
         except:
            continue
-
-
 
     all = []
     for i in range(0, len(locs)):
@@ -122,10 +116,8 @@ def fetch_data():
         all.append(row)
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

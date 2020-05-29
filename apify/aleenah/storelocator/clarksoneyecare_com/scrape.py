@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import json
 import sgzip
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -17,13 +16,11 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 session = SgRequests()
 all=[]
 def fetch_data():
     # Your scraper here
     page_url=[]
-
 
     key_set=set([])
     coords = sgzip.coords_for_radius(50)
@@ -64,16 +61,12 @@ def fetch_data():
                 tim.replace( u'\u200b',''),  # timing
                 url.replace( u'\u200b','')])
 
-
     return all
 
-
     # query the store locator using lat, lng
-
 
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

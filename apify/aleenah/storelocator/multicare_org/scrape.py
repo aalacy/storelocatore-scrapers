@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -16,10 +15,8 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 session = SgRequests()
 all = []
-
 
 def fetch_data():
     # Your scraper here

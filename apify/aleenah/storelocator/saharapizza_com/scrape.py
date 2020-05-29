@@ -5,7 +5,6 @@ from sgrequests import SgRequests
 
 session = SgRequests()
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +14,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def fetch_data():
     # Your scraper here
@@ -42,8 +40,6 @@ def fetch_data():
         tds=tr.find_all('td')
         if len(tds) <2:
             continue
-
-
 
         addr= tds[1].text.replace("\t"," ").strip()
         if "Catering" in tds[0].find('b').text.strip():
@@ -77,7 +73,6 @@ def fetch_data():
                 if l == "Bolivia":
                     continue
 
-
                 if "Hours:" in addr:
                     addr = addr.split("Hours:")[0].strip()
                 street.append(addr)
@@ -102,7 +97,6 @@ def fetch_data():
         else:
 
             phones.append(ph)
-
 
         #print(tds[0].find('b').text.strip())
 

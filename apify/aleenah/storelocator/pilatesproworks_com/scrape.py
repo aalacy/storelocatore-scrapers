@@ -109,10 +109,8 @@ def fetch_data():
             all.append(row)
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

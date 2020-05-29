@@ -33,7 +33,6 @@ def fetch_data():
         zip=store.find('span', {'class': 'line_item postalcode'}).text.strip()
         phone=store.find('span', {'class': 'line_item phone'}).text.strip()
 
-
         all.append([
             "https://parisbaguette.com/",
             loc,

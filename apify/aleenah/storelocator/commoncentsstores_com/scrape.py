@@ -13,7 +13,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
     # Your scraper here
     locs = []
@@ -84,7 +83,6 @@ def fetch_data():
 
         else:
             phones.append("<MISSING>")
-
 
     all = []
     for i in range(0, len(locs)):

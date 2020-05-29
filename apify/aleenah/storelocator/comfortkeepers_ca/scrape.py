@@ -14,7 +14,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = [ 'ca'])
@@ -94,7 +93,6 @@ def fetch_data():
             print("max count update")
             search.max_count_update(result_coords)
 
-
         postcode = search.next_coord()
     print("count = ",count)
     return all
@@ -102,6 +100,5 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

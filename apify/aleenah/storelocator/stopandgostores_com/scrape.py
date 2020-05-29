@@ -3,7 +3,6 @@ import re
 from bs4 import BeautifulSoup
 import requests
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -13,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def fetch_data():
     # Your scraper here
@@ -85,7 +83,6 @@ def fetch_data():
         #print(te)
         street.append(re.sub(r"(\w)([A-Z][a-z]+)", r"\1 \2",te.replace(c,"").replace(s,"")).strip().strip(","))
 
-
         #break
     print(len(tex))
     all = []
@@ -108,10 +105,8 @@ def fetch_data():
         all.append(row)
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

@@ -14,7 +14,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
     # Your scraper here
     locs = []
@@ -93,10 +92,8 @@ def fetch_data():
         all.append(row)
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

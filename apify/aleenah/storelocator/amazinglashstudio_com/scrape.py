@@ -21,7 +21,6 @@ session = SgRequests()
 def fetch_data():
     # Your scraper here
 
-
     res=session.get("https://www.amazinglashstudio.com/find-a-studio?searchVal=54000")
     soup = BeautifulSoup(res.text, 'html.parser')
     #print(soup)
@@ -37,8 +36,6 @@ def fetch_data():
      #   print(url)
         url="https://www.amazinglashstudio.com"+re.findall('(/studios/.*)',yrl)[0]
 
-
-        
         res=session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         #print(soup)
@@ -93,6 +90,5 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

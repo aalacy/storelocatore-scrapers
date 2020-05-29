@@ -14,7 +14,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 session = SgRequests()
 all=[]
 def fetch_data():
@@ -49,7 +48,6 @@ def fetch_data():
                 timl=timl.split("\n")
             else:
                 timl = soup.find_all('table', {'class': 'hours_table'})[1].text.split("\n")
-
 
         except:
             #only one case http://airu-amarillo.com/ which redirects to a new website
@@ -93,6 +91,5 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

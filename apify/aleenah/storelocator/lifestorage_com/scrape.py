@@ -9,7 +9,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import time
 
-
 driver = SgSelenium().chrome()
 
 def write_output(data):
@@ -24,9 +23,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 session = SgRequests()
-
 
 def fetch_data():
     # Your scraper here
@@ -89,7 +86,6 @@ def fetch_data():
             long.append(js["geo"]["longitude"])
             types.append(js["@type"])
             
-
     all = []
     for i in range(0, len(locs)):
         row = []
@@ -112,10 +108,8 @@ def fetch_data():
 
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

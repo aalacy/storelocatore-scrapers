@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +14,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 session = SgRequests()
 all=[]
@@ -67,7 +65,5 @@ def scrape():
     data = fetch_data()
     write_output(data)
 
-
 scrape()
-
 

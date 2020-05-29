@@ -13,7 +13,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
     # Your scraper here
     locs = []
@@ -37,7 +36,6 @@ def fetch_data():
     for opt in opts:
         urls.append(opt.text.strip().replace(" ","").replace("D.C.",""))
         ids.append(opt.get("value"))
-
 
     for url in urls:
         url="https://www.theoceanaire.com/Locations/"+url+"/Locations.aspx"
@@ -74,8 +72,6 @@ def fetch_data():
         long.append(re.findall(r'!2d(-?[\d\.]*)',a)[0])
         lat.append(re.findall(r'!3d(-?[\d\.]*)',a)[0])
 
-
-
     all = []
     for i in range(0, len(locs)):
         row = []
@@ -97,10 +93,8 @@ def fetch_data():
         all.append(row)
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

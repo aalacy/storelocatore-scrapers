@@ -20,7 +20,6 @@ def write_output(data):
                 row[-2]=row[-2].replace("\u0335","")
                 writer.writerow(row)
 
-
 def fetch_data():
     # Your scraper here
     locs = []
@@ -53,7 +52,6 @@ def fetch_data():
         #divs=div.fnd_all('div',{'class':'sabai-entity sabai-entity-type-content sabai-entity-bundle-name-directory-listing sabai-entity-bundle-type-directory-listing sabai-entity-mode-summary sabai-clearfix sabai-directory-no-image'})
         #print(len(divs))
 
-
         lat += re.findall(r'"lat":(-?[\d\.]*)', script)
         long += re.findall(r'"lng":(-?[\d\.]*)', script)
         lids = re.findall(r'"#sabai-entity-content-([0-9]+) .sabai-directory-title', script)
@@ -62,12 +60,10 @@ def fetch_data():
         print(len(lids))
         for id in lids:
 
-
             div = driver.find_element_by_id('sabai-entity-content-'+id)
             #div = div.find('div', {'class': "sabai-entity sabai-entity-type-content sabai-entity-bundle-name-directory-listing sabai-entity-bundle-type-directory-listing sabai-entity-mode-summary sabai-clearfix sabai-directory-no-image"})
             urll = div.find_element_by_class_name('sabai-directory-title').find_element_by_tag_name("a").get_attribute("href")
             page_url.append(urll)
-
 
             locs.append(div.find_element_by_class_name('sabai-directory-title').text)
             addr= div.find_element_by_class_name('sabai-directory-location').text.replace(", USA","").replace(", United States","")
@@ -106,7 +102,6 @@ def fetch_data():
             except:
                 timing.append("<MISSING>")
 
-
     all = []
     for i in range(0, len(locs)):
         row = []
@@ -128,10 +123,8 @@ def fetch_data():
         all.append(row)
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

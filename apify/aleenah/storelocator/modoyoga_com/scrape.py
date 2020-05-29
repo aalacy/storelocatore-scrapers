@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import requests
 from sgselenium import SgSelenium
 
-
 driver = SgSelenium().chrome(user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36")
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -15,7 +14,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def fetch_data():
     # Your scraper here
@@ -177,7 +175,6 @@ def fetch_data():
             phones.append(ph)
             page_url.append(url)
             countries.append(count[urls.index(url)])
-
 
     print(len(locs),len(street))
     all = []

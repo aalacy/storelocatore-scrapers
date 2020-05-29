@@ -14,7 +14,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 session = SgRequests()
 all=[]
 def fetch_data():
@@ -32,8 +31,6 @@ def fetch_data():
     del ldivs[0]
     del ldivs[-1]
     del ldivs[-1]
-    
-    
     
     for div in divs:
         #print(div)
@@ -77,7 +74,6 @@ def fetch_data():
                 if "Mon-Thu:" not in tim or tim=="" :
                     tim="<MISSING>"
             
-
         all.append([
             "http://jerrysusa.com",
             loc,
@@ -99,6 +95,5 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

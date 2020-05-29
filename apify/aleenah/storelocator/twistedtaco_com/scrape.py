@@ -15,12 +15,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def parse_geo(url):
     lon = re.findall(r'll=[-?\d\.]*\,([-?\d\.]*)', url)[0]
     lat = re.findall(r'll=(-?[\d\.]*)', url)[0]
     return lat, lon
-
 
 def fetch_data():
     # Your scraper here
@@ -40,8 +38,6 @@ def fetch_data():
     driver.get("https://www.twistedtaco.com/locations#")
     #lis=driver.find_elements_by_css_selector("li ")
 
-
-
     ast=driver.find_element_by_id("1833213139").find_elements_by_tag_name("a")
     for a in ast:
         if a.text=='FULL SERVICE RESTAURANTS':
@@ -56,7 +52,6 @@ def fetch_data():
             break
         rlinks.append(a.get_attribute("href"))
         locs.append(a.text)
-
 
     ast = driver.find_element_by_id("1682398545").find_elements_by_tag_name("a")
     for a in ast:
@@ -152,8 +147,6 @@ def fetch_data():
             street.append(st)
         timing.append(t.replace("\n", ""))
         phones.append("<MISSING>")
-
-
 
     all = []
     for i in range(0, len(locs)):
