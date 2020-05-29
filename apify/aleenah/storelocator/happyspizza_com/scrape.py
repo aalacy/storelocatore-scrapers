@@ -2,8 +2,7 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -19,11 +18,7 @@ def write_output(data):
 
 session = SgRequests()
 
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome("chromedriver", options=options)
+driver = SgSelenium().chrome()
 
 all=[]
 def fetch_data():
