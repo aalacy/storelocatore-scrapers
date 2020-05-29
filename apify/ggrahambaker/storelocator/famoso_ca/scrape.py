@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -101,13 +99,10 @@ def fetch_data():
         if zip_code == '':
             zip_code = '<MISSING>'
 
-
-
         hours = driver.find_element_by_css_selector('ul.hours-list').text.replace('\n', ' ')
 
         start_idx = link.find('s/')
         location_name = link[start_idx + 2:-1].replace('-', ' ')
-
 
         country_code = 'CA'
         store_number = '<MISSING>'

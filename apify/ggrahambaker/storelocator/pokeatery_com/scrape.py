@@ -39,9 +39,6 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -69,7 +66,6 @@ def fetch_data():
     for l in locs:
         link_list.append(l.find_element_by_css_selector('a').get_attribute('href'))
 
-
     all_store_data = []
     for link in link_list:
         driver.get(link)
@@ -79,7 +75,6 @@ def fetch_data():
         location_name = link[start:-1].replace('-', ' ')
 
         main = driver.find_element_by_css_selector('div.grid__item.eight-twelfths.palm-one-whole').text.split('\n')
-
 
         if 'Coming Soon' in main[0]:
             continue
@@ -108,7 +103,6 @@ def fetch_data():
             hours = main[1] + ' ' + main[2] + ' ' + main[3]
             street_address, city, state, zip_code = parse_addy(main[4])
             phone_number = '<MISSING>'
-
 
         else:
             hours = main[1] + ' ' + main[2]

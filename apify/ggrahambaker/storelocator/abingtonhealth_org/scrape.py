@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -47,7 +44,6 @@ def fetch_data():
         else:
             page_url = locator_domain[:-1] + loc['url']
             
-            
         country_code = 'US'
         store_number = '<MISSING>'
         hours = '<MISSING>'
@@ -56,7 +52,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

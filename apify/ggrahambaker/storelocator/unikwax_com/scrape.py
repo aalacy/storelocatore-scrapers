@@ -4,12 +4,6 @@ from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 import usaddress
 
-
-
-
-
-
-
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
 
@@ -79,7 +73,6 @@ def fetch_data():
                 continue
             link_list.append(page_url)
  
-
     all_store_data = []
     for link in link_list:
         driver.get(link)
@@ -110,7 +103,6 @@ def fetch_data():
         else:
             street_address, city, state, zip_code = parse_address(addy)
 
-        
         hours = cols[1].text.replace('\n', ' ').replace('Studio Hours', '').strip()
 
         obj = driver.execute_script('return gmwMapObjects')['unik']['locations'][0]
@@ -126,9 +118,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
-
-
 
     driver.quit()
     return all_store_data

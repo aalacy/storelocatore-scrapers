@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -24,8 +21,6 @@ def addy_extractor(src):
         zip_code = prov_zip[2]
 
     return city, state, zip_code
-
-
 
 def fetch_data():
     locator_domain = 'https://www.b2rmusic.com/'
@@ -75,7 +70,6 @@ def fetch_data():
             coords = href[start_idx + 2: end_idx].split(',')
             lat = coords[0]
             longit = coords[1]
-
 
         country_code = 'US'
         store_number = '<MISSING>'

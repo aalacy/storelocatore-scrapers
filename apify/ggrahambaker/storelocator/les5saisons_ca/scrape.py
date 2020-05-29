@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -21,7 +18,6 @@ def fetch_data():
 
     driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
-
 
     names = driver.find_elements_by_xpath('//span[@itemprop="name"]')
     street_addresses = driver.find_elements_by_xpath('//span[@itemprop="streetAddress"]')

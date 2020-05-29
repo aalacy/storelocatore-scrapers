@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,7 +11,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_extractor(src):
     arr = src.split(',')
@@ -26,8 +22,6 @@ def addy_extractor(src):
         zip_code = '0' + zip_code
 
     return city, state, zip_code
-
-
 
 def fetch_data():
     locator_domain = 'https://wingsover.com/'

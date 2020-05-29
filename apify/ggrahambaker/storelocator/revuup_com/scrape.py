@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -19,7 +16,6 @@ def fetch_data():
     driver = SgSelenium().chrome()
     locator_domain = 'https://www.revuup.com/'
     exts = ['brewers-hill', 'mchenry-row']
-
 
     all_store_data = []
     for ext in exts:

@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 session = SgRequests()
 
 def write_output(data):
@@ -21,7 +20,6 @@ def fetch_data():
 
     to_scrape = locator_domain + ext
 
-
     page = session.get(to_scrape)
     assert page.status_code == 200
 
@@ -34,7 +32,6 @@ def fetch_data():
         
         location_name = content.find('h3').text
         
-
         addy = content.find('p', {'class': 'street-address'})
         
         addy_arr =  addy.text.strip().split('\n')
@@ -48,7 +45,6 @@ def fetch_data():
         state = addy_info_rest[1]
         zip_code = addy_info_rest[2]
         
-        
         hours_temp = content.find('p', {'class': 'hours'})
         # print(hours_temp.text.strip().split('\n'))
         hours = ''
@@ -61,22 +57,16 @@ def fetch_data():
         #print(phone_temp.text.strip())
         phone_number = phone_temp.text.strip()
         
-        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = 'resturant'
         lat = '<MISSING>'
         longit = '<MISSING>'
         
-        
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                  store_number, phone_number, location_type, lat, longit, hours ]
         all_store_data.append(store_data)
 
-
-
-    
     return all_store_data
 
 def scrape():

@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -22,7 +21,6 @@ def fetch_data():
     ext = '/locator/search/states'
     r = session.get(locator_domain + ext, headers = HEADERS)
 
-
     soup = BeautifulSoup(r.content, 'html.parser')
 
     states = soup.find('main', {'class': 'locations-wrapper'}).find_all('a')
@@ -34,7 +32,6 @@ def fetch_data():
             continue
         
         state_links.append(link)
-
 
     city_list = []
     for state in state_links:
@@ -58,7 +55,6 @@ def fetch_data():
             
             link_list.append(link)
         
-
     all_store_data = []
     for link in link_list:
         r = session.get(link, headers = HEADERS)
@@ -89,7 +85,6 @@ def fetch_data():
                 close = 'Midnight'
             hours = 'Open ' + hours_obj['opens'] + ' - ' + close
             
-            
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         
@@ -97,9 +92,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         
         all_store_data.append(store_data)
-
-
-            
 
     return all_store_data
 

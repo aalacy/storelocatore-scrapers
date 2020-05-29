@@ -47,7 +47,6 @@ def fetch_data():
             state = addy[2].strip()
             zip_code = addy[3].strip()
             
-            
         hours = loc['opentime'].replace('\u3000', ' ')
         phone_number = loc['tel'].replace('\u3000', ' ').strip()
         if phone_number == '':
@@ -55,7 +54,6 @@ def fetch_data():
         lat = loc['latitude']
         longit = loc['longitude']
         
-
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         page_url = '<MISSING>'
@@ -64,12 +62,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
-
-
-
-
-
 
     return all_store_data
 

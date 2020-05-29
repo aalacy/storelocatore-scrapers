@@ -4,9 +4,6 @@ from sgselenium import SgSelenium
 import json
 import re
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -24,8 +21,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
-
 
 def fetch_data():
     locator_domain = 'https://ilovejuicebar.com/'
@@ -134,8 +129,6 @@ def fetch_data():
             if re.search('([\-\+]{0,1}\d[\d\.\,]*[\.\,][\d\.\,]*\d+)', h):
                 phone_number = re.search('([\-\+]{0,1}\d[\d\.\,]*[\.\,][\d\.\,]*\d+)', h).group()
 
-
-
         hours = hours.strip()
 
         if hours == '':
@@ -155,7 +148,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

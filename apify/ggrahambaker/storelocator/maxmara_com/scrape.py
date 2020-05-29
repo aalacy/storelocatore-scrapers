@@ -50,8 +50,6 @@ def fetch_data():
             
             street_address = props['formattedAddress'].split(',')[0]
       
-
-            
             hours = ''
                 
             for day, val in props['openingHours'].items():
@@ -59,8 +57,6 @@ def fetch_data():
                 hours += day + ' ' + val[0] +  ' '       
         
             hours = hours.strip()
-
-
 
             page_url = 'https://world.maxmara.com/store/' + str(props['name'])
             location_type = '<MISSING>'
@@ -70,8 +66,6 @@ def fetch_data():
                      store_number, phone_number, location_type, lat, longit, hours, page_url]
 
             all_store_data.append(store_data)
-
-
 
     return all_store_data
 

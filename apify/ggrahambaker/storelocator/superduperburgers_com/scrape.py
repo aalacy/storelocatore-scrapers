@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,7 +11,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def parse_address(addy_string):
     addy = addy_string.split(',')
@@ -31,9 +27,7 @@ def parse_address(addy_string):
         state = state_zip[0]
         zip_code = state_zip[1]
         
-    
     return street_address, city, state, zip_code
-
 
 def fetch_data():
     locator_domain = 'https://www.superduperburgers.com/'
@@ -44,7 +38,6 @@ def fetch_data():
     #driver.find_element_by_css_selector('button.link-button').click()
     driver.implicitly_wait(5)
     all_store_data = []
-
 
     locs = driver.find_elements_by_css_selector('div.locationListItem')
 
@@ -76,17 +69,14 @@ def fetch_data():
         else:
             operating_info = 'Open'
             
-        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url, operating_info]
-
 
         all_store_data.append(store_data)
 

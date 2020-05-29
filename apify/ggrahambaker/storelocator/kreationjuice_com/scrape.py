@@ -3,9 +3,6 @@ import os
 from sgselenium import SgSelenium
 import usaddress
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)

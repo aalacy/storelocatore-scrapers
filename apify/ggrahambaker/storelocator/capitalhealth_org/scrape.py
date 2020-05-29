@@ -3,9 +3,6 @@ import os
 from sgselenium import SgSelenium
 import time
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -29,7 +26,6 @@ def fetch_data():
         driver.implicitly_wait(5)
         time.sleep(3)
         
-        
         locs = driver.find_elements_by_css_selector('div.view-empty')
         if len(locs) > 0:
             break
@@ -49,9 +45,7 @@ def fetch_data():
         driver.implicitly_wait(5)
         time.sleep(3)
         
-        
         location_name = driver.find_element_by_css_selector('h1').text
-        
         
         street_address = driver.find_element_by_css_selector('span.address-line1').text
         street_address = street_address.split(',')[0]
@@ -61,17 +55,12 @@ def fetch_data():
         
         phone_number = driver.find_element_by_css_selector('div.field--name-field-phone').find_element_by_css_selector('div.field__item').text
         
-        
-        
         hours_div = driver.find_elements_by_css_selector('div.field--name-field-office-hours')
         if len(hours_div) == 0:
             hours = '<MISSING>'
         else:
             hours = hours_div[0].text.replace('\n', ' ')
 
-            
-
-        
         google_link = driver.find_elements_by_xpath('//a[contains(@href,"/maps/")]')
         if len(google_link) == 0:
             lat, longit = '<MISSING>', '<MISSING>'
@@ -83,9 +72,6 @@ def fetch_data():
             lat = coords[0]
             longit = coords[1]
         
-        
-        
-        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -93,10 +79,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
         
-
     driver.quit()
     return all_store_data
 

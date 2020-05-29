@@ -3,10 +3,6 @@ import os
 from sgselenium import SgSelenium
 import json
 
-
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -31,8 +27,6 @@ def fetch_data():
 
     hrefs = usa.find_elements_by_xpath("//a[contains(@href, '/locations/')]")
 
-
-
     link_list = []
     for href in hrefs:
         link = href.get_attribute('href')
@@ -47,7 +41,6 @@ def fetch_data():
     canada_as = canada.find_elements_by_css_selector('a.all-location-link')
     for a in canada_as:
         link_list.append(a.get_attribute('href'))
-
 
     all_store_data = []
 
@@ -84,7 +77,6 @@ def fetch_data():
         else:
             phone_number = '<MISSING>'
 
-
         geo = driver.find_element_by_css_selector('div.list__item.loc_item')
         lat = geo.get_attribute('data-lat')
         longit = geo.get_attribute('data-lon')
@@ -96,7 +88,6 @@ def fetch_data():
             country_code = 'CA'
         else:
             country_code = 'US'
-
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

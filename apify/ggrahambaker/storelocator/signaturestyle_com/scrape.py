@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -51,7 +49,6 @@ def fetch_data():
         except NoSuchElementException:
             print('closed')
             continue
-
 
         if phone_number not in duplicate_checker:
             duplicate_checker.append(phone_number)

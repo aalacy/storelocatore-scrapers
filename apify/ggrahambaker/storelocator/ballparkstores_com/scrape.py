@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -23,7 +20,6 @@ def addy_extractor(src):
     zip_code = prov_zip[1].strip()
 
     return city, state, zip_code
-
 
 def fetch_data():
     # Your scraper here
@@ -69,8 +65,6 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                           store_number, phone_number, location_type, lat, longit, hours]
             all_store_data.append(store_data)
-
-
 
     driver.quit()
     return all_store_data

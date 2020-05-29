@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -22,7 +19,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
 
 def usc_parse(driver, link, locator_domain):
     driver.get(link)
@@ -74,7 +70,6 @@ def sunset_parse(driver, link, locator_domain):
 
             return store_data
 
-
 def vegas_parse(driver, link, locator_domain):
     # las vegas
     driver.get(link)
@@ -93,7 +88,6 @@ def vegas_parse(driver, link, locator_domain):
 
     phone_number = driver.find_element_by_css_selector('div.footer-item').text.split('\n')[-1]
 
-
     location_name = 'Las Vegas'
     country_code = 'US'
     location_type = '<MISSING>'
@@ -105,7 +99,6 @@ def vegas_parse(driver, link, locator_domain):
                   store_number, phone_number, location_type, lat, longit, hours]
 
     return store_data
-
 
 def fetch_data():
     locator_domain = 'rockandreillys.com/'
@@ -119,9 +112,6 @@ def fetch_data():
     usc_list = usc_parse(driver, usc, locator_domain)
 
     all_store_data = [vegas_list, sunset_list, usc_list]
-
-
-
 
     driver.quit()
     return all_store_data

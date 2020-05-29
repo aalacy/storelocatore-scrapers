@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 import time
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,8 +13,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -24,8 +20,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
-
 
 def fetch_data():
     locator_domain = 'https://www.burgerville.com/'
@@ -55,9 +49,7 @@ def fetch_data():
         zip_code = driver.find_element_by_css_selector('span#slp_bubble_zip').text
         phone_number = driver.find_element_by_css_selector('span#slp_bubble_phone').text.replace('Phone', '').strip()
 
-
         hours = driver.find_element_by_css_selector('span.location_detail_hours').text.replace('\n', ' ').replace('\\n', ' ').strip()
-
 
         cont = l.text.split('\n')
         cut = cont[0].find('(')

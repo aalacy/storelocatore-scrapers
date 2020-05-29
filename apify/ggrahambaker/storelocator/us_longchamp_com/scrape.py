@@ -6,8 +6,6 @@ from bs4 import BeautifulSoup
 import usaddress
 #
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -17,8 +15,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
 
 def parse_addy(addy):
     parsed_add = usaddress.tag(addy)[0]
@@ -46,8 +42,6 @@ def parse_addy(addy):
     else:
         city = '<MISSING>'
 
-    
-    
     state = '<MISSING>'
     zip_code = '<MISSING>'
 
@@ -83,7 +77,6 @@ def fetch_data():
         if longit == '':
             longit = '<MISSING>'
 
-
         hours_html = driver.find_element_by_css_selector('div.js-to_expand.animated-expandmore').get_attribute(
             'innerHTML')
 
@@ -94,14 +87,11 @@ def fetch_data():
         else:
             hours = hours.replace('\n', ' ').strip()
 
-
         location_name = driver.find_element_by_css_selector('h2.title-gamma.upper.pt-1.pb-05').text
         cont = driver.find_element_by_css_selector(
             'div.ff-light.mt-05.mb-1.js-accordion.accordion--beta.accordion').text.split('\n')
 
-        
         phone_number = cont[-2].replace('(','').replace(')', '').replace('+1', '').replace('+', '')
-
 
         addy = cont[0]
 

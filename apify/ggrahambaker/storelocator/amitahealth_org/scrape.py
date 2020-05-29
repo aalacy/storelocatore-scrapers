@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 import time
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -27,7 +25,6 @@ def addy_ext(addy):
         zip_code = state_zip[1]
     return city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'https://www.amitahealth.org/'
     ext = 'our-locations/'
@@ -48,7 +45,6 @@ def fetch_data():
         else:
             break
             
-            
         locs = driver.find_elements_by_css_selector('div.stacked-md')
         for loc in locs:
             link = loc.find_element_by_css_selector('a').get_attribute('href')
@@ -57,7 +53,6 @@ def fetch_data():
             else:
                 continue
 
-    
     all_store_data = []
     for link in link_list:
         if link == 'https://www.amitahealth.org/location/amita-health-medical-group':
@@ -72,7 +67,6 @@ def fetch_data():
         coords = google_link[start + 6:].split('%2C')
         lat = coords[0]
         longit = coords[1]
-        
         
         addy = driver.find_element_by_xpath('//strong[contains(text(),"Address")]').find_element_by_xpath('..').text.split('\n')
         
@@ -92,7 +86,6 @@ def fetch_data():
             else:
                 street_address = street_address
 
-   
         city, state, zip_code = addy_ext(addy[2])
 
         phone_number = driver.find_element_by_xpath('//strong[contains(text(),"Phone")]').find_element_by_xpath('..').text
@@ -113,12 +106,7 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-                
         all_store_data.append(store_data)
-
-
-
-
 
     driver.quit()
     return all_store_data

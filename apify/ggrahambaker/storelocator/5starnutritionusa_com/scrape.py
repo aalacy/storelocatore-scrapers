@@ -3,7 +3,6 @@ import os
 from sgselenium import SgSelenium
 import re
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -25,7 +24,6 @@ def addy_ext(addy):
         state = state_zip[0]
         zip_code = state_zip[1]
     return city, state, zip_code
-
 
 def fetch_data():
     locator_domain = 'https://5starnutritionusa.com/'
@@ -56,15 +54,12 @@ def fetch_data():
                 state = state_zip[0]
                 zip_code = state_zip[1]
 
-
-
         phone_number = street_address = li.find_element_by_css_selector('div.stockist-result-phone').text
 
         try:
             hours = li.find_element_by_css_selector('div.stockist-result-notes').text.replace('\n', ' ')
         except:
             hours = '<MISSING>'
-
 
         country_code = 'US'
         store_number = '<MISSING>'

@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 import re
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,13 +13,11 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def script_search(scripts, driver):
     for s in scripts:
         cont = s.get_attribute('innerHTML')
         if 'var gmwMapObjects' in cont:
             return driver.execute_script('return gmwMapObjects')
-
 
 def fetch_data():
     locator_domain = 'https://www.xtendbarre.com/'
@@ -77,10 +73,7 @@ def fetch_data():
         else:
             country_code = 'CA'
 
-
-
         phone_number = driver.find_element_by_css_selector('span.add_info.phone').find_element_by_css_selector('a').text
-
 
         scripts = driver.find_elements_by_xpath('//script[@type="text/javascript"]')
 
@@ -91,8 +84,6 @@ def fetch_data():
 
         lat = result_lat.split(':')[1].strip()[1:-2]
         longit = result_lng.split(':')[1].strip()[1:-2]
-
-
 
         store_number = '<MISSING>'
         location_type = '<MISSING>'

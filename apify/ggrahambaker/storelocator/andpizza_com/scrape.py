@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 import json
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -17,7 +16,6 @@ def fetch_data():
     locator_domain = 'https://andpizza.com/' 
     ext = 'https://api.andpizza.com/webapi/v100/shops'
     session = SgRequests()
-
 
     HEADERS = {'Host': 'api.andpizza.com',
     'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0',
@@ -34,7 +32,6 @@ def fetch_data():
     'Connection': 'keep-alive',
     'Cache-Control': 'max-age=0',
     'TE': 'Trailers'}
-
 
     r = session.get(ext, headers = HEADERS)
 
@@ -59,7 +56,6 @@ def fetch_data():
         for day in loc['service_schedule']['general']:
             hours += day['label'] + ' ' + day['value'] + ' '
             
-
         country_code = 'US'
         page_url = '<MISSING>'
         store_number = loc['id']
@@ -68,11 +64,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-
-
-
-
-
 
     return all_store_data
 

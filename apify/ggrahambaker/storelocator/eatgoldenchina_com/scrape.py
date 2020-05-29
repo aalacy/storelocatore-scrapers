@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -47,8 +44,6 @@ def fetch_data():
                       store_number, phone_number, location_type, lat, longit, hours]
 
         all_store_data.append(store_data)
-
-
 
     driver.quit()
     return all_store_data

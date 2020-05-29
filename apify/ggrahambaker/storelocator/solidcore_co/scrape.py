@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +12,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -23,7 +19,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
 
 def fetch_data():
     locator_domain = 'https://www.solidcore.co/'
@@ -39,7 +34,6 @@ def fetch_data():
         if len(href.get_attribute('href')) > 24:
             link_list.append(href.get_attribute('href'))
 
-
     all_store_data = []
     for link in link_list:
         driver.get(link)
@@ -49,9 +43,7 @@ def fetch_data():
         if 'coming' in main.text:
             continue
 
-
         location_name = main.find_element_by_css_selector('h1').text.replace('\n', ' ')
-
 
         addy = main.find_element_by_css_selector('li.studio-address').text.split('\n')
 

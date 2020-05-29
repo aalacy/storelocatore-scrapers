@@ -3,8 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -25,15 +23,12 @@ def fetch_data():
     assert page.status_code == 200
     soup = BeautifulSoup(page.content, 'html.parser')
 
-
     main = soup.find('div', {'class':'tlsmap_list'})
 
     locs = main.find_all('a', {'class', 'gaq-link'})
     state_list = []
     for loc in locs:
         state_list.append(loc['href'])
-
-
 
     city_list = []
 
@@ -47,7 +42,6 @@ def fetch_data():
             link = city['href']
             city_list.append(link)
         
-
     link_list = []
     for link in city_list:
         page = session.get(link)
@@ -66,12 +60,9 @@ def fetch_data():
             if "@context" in loc.text:
                 loc_json = json.loads(loc.text)[0]
 
-            
-
         coords = loc_json['geo']
         lat = coords['latitude']
         longit = coords['longitude']
-        
         
         addy = loc_json['address']
         phone_number = addy['telephone']
@@ -82,8 +73,6 @@ def fetch_data():
 
         hours = loc_json['openingHours']
 
-
-        
         location_name = loc_json['name'].replace('Welcome to your Petco in ', '').replace('Welcome to your ', '').replace('!', '').strip()
         country_code = 'US'
         page_url = link
@@ -95,11 +84,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
                 
-                
-        
-
-
-
     return all_store_data
 
 def scrape():

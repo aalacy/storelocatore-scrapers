@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 
-
 session = SgRequests()
 
 def write_output(data):
@@ -38,7 +37,6 @@ def addy_extractor(src):
     
     return [city, state, zip_code]
 
-
 def fetch_data():
     locator_domain = 'http://paulmacs.com/' 
     ext = 'store-locator'
@@ -50,7 +48,6 @@ def fetch_data():
     soup = BeautifulSoup(page.content, 'html.parser')
     stores = soup.find('div', {'id': 'list_view'})
     lis = stores.find_all('li')
-
 
     all_store_data = []
 
@@ -91,8 +88,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                      store_number, phone_number, location_type, lat, longit, hours ]
         all_store_data.append(store_data)
-
-   
 
     return all_store_data
 

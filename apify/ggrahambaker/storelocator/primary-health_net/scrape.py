@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -24,7 +21,6 @@ def parse_addy(addy):
     state_zip = arr[2].strip().split(' ')
     state = state_zip[0]
     zip_code = state_zip[1]
-    
     
     return street_address, city, state, zip_code
 
@@ -49,14 +45,11 @@ def fetch_data():
         if hours == '':
             hours = '<MISSING>'
         
-            
-            
         phone_number = driver.find_element_by_css_selector('span#PageTitle_SiteList2_PhoneLabel_0').text
             
         addy = driver.find_element_by_css_selector('span#PageTitle_SiteList2_AddressLabel_0').text
         street_address, city, state, zip_code = parse_addy(addy)
 
-        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -66,11 +59,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
         
-
-
     driver.quit()
     return all_store_data
 

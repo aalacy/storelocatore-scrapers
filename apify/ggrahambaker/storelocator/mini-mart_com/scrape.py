@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -23,14 +20,12 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'http://mini-mart.com/'
     ext = 'locations.php'
 
     driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
-
 
     table = driver.find_element_by_css_selector('table')
     rows = table.find_elements_by_css_selector('tr')
@@ -60,16 +55,9 @@ def fetch_data():
         page_url = '<MISSING>'
         country_code = 'US'
 
-
-
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-
-
-
-
-
 
     driver.quit()
     return all_store_data

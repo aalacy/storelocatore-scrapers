@@ -40,8 +40,6 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -61,7 +59,6 @@ def fetch_data():
 
     driver.implicitly_wait(20)
     locs = driver.execute_script('return locations')
-
 
     all_store_data = []
     for loc in locs:
@@ -92,16 +89,11 @@ def fetch_data():
 
         location_type = '<MISSING>'
         
-        
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
-        
         all_store_data.append(store_data)
         
-
     driver.quit()
     return all_store_data
 

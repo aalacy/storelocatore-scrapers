@@ -3,8 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -64,7 +62,6 @@ def fetch_data():
                     print(store_data)
                     all_store_data.append(store_data)
 
-
                 elif '300 Skipper' in ps[1].text:
                     location_name = 'UNC CHAPEL HILL BASKETBALL'
                     brs = ps[1].find_all('br')
@@ -84,7 +81,6 @@ def fetch_data():
                     print(store_data)
                     all_store_data.append(store_data)
 
-
                 elif '235 Ridge Road' in ps[1].text:
                     location_name = 'UNC CHAPEL HILL BASEBALL'
                     brs = ps[1].find_all('br')
@@ -103,8 +99,6 @@ def fetch_data():
                                   store_number, phone_number, location_type, lat, longit, hours]
                     print(store_data)
                     all_store_data.append(store_data)
-
-
 
             p = ps[0]
 
@@ -168,7 +162,6 @@ def fetch_data():
                         city, state, zip_code = addy_extractor(brs[0].nextSibling)
                         phone_number = div.find_all('p', {'class': 'fp-el'})[1].text
 
-
             elif len(brs) == 3:
                 street_address = brs[0].previousSibling + ' ' + brs[1].previousSibling[:-1]
                 location_name = street_address
@@ -181,7 +174,6 @@ def fetch_data():
                 location_name = street_address
                 city, state, zip_code = addy_extractor(p[1].text)
                 phone_number = p[2].text.replace('Store Phone:', '')
-
 
             country_code = 'US'
             store_number = '<MISSING>'
@@ -220,7 +212,6 @@ def fetch_data():
                           store_number, phone_number, location_type, lat, longit, hours]
 
             all_store_data.append(store_data)
-
 
     # canada now!
     page = session.get(locator_domain + ext_arr[1])
@@ -304,7 +295,6 @@ def fetch_data():
             all_store_data.append(store_data)
 
     return all_store_data
-
 
 def scrape():
     data = fetch_data()

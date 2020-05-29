@@ -4,11 +4,6 @@ from sgselenium import SgSelenium
 import usaddress
 from selenium.common.exceptions import NoSuchElementException
 
-
-
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -19,7 +14,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def can_addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -27,7 +21,6 @@ def can_addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1] + ' ' + state_zip[2]
     return city, state, zip_code
-
 
 def fetch_data():
     locator_domain = 'https://www.lumberliquidators.com/'
@@ -50,7 +43,6 @@ def fetch_data():
         else:
             state_link_list.append(href)
 
-
     for state_link in state_link_list:
         driver.get(state_link)
         driver.implicitly_wait(10)
@@ -66,11 +58,8 @@ def fetch_data():
 
     hrefs = driver.find_elements_by_xpath("//a[contains(@href, 'ON-')]")
 
-
     for h in hrefs:
         store_link_list.append(h.get_attribute('href'))
-
-
 
     all_store_data = []
     for i, link in enumerate(store_link_list):
@@ -101,7 +90,6 @@ def fetch_data():
             print(addy)
             street_address = addy[0]
             city, state, zip_code = can_addy_ext(addy[1])
-
 
         else:
             country_code = 'US'

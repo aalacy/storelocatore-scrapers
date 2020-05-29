@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -21,7 +20,6 @@ def fetch_data():
     ext = 'contact-us/locations/'
     r = session.get(locator_domain + ext, headers = HEADERS)
 
-
     soup = BeautifulSoup(r.content, 'html.parser')
 
     locs = soup.find_all('div', {'class': 'article'})
@@ -35,10 +33,8 @@ def fetch_data():
             lis = uls[0].find_all('li')
             addy = lis[0].find_all('span')
 
-            
             phone_number = lis[1].text.strip()
             
-
             page_url = locator_domain[:-1] + uls[1].find_all('li')[1].find('a')['href']
             
         else:
@@ -46,13 +42,11 @@ def fetch_data():
             lis = uls[0].find_all('li')
             addy = lis[0].find_all('span')
 
-            
             phone_number = lis[0].find('a').text.strip()
             if 'Get Directions' in phone_number:
                 phone_number = '<MISSING>'
             page_url = '<MISSING>'
             
-
         if len(addy) == 5:
             street_address = addy[0].text
             city = addy[2].text
@@ -71,20 +65,10 @@ def fetch_data():
         lat = '<MISSING>'
         longit = '<MISSING>'
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        
         all_store_data.append(store_data)
-
-
-
-
-
-
-
-
 
     return all_store_data
 

@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -18,7 +16,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-  
 ## helpter  
 def addy_extractor(src):
     arr = src.split(',')
@@ -28,9 +25,7 @@ def addy_extractor(src):
         state = prov_zip[1]
         zip_code = prov_zip[2]
     
-    
     return [city, state, zip_code]
-
 
 def fetch_data():
     locator_domain = 'http://www.pendletonpilates.com/' 
@@ -47,11 +42,9 @@ def fetch_data():
     
     all_store_data = []   
 
-
     for store in stores[1:]:
         location_name = store.find('h3').text.upper()
         
-
         json_data = json.loads(store.find('div', {'class':'sqs-block'})['data-block-json'])
         
         lat = json_data['location']['markerLat']

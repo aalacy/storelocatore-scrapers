@@ -4,7 +4,6 @@ from sgselenium import SgSelenium
 from selenium.webdriver.common.action_chains import ActionChains
 import re
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +14,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_extractor(src):
     arr = src.split(',')
     city = arr[0]
@@ -25,7 +23,6 @@ def addy_extractor(src):
         zip_code = prov_zip[2]
 
     return city, state, zip_code
-
 
 def fetch_data():
     locator_domain = 'https://cobbtheatres.com/'
@@ -52,7 +49,6 @@ def fetch_data():
                 name = name[:-5]
             else:
                 name = name.split('/')[-1].replace('-', ' ')
-
 
         href_arr.append([href, name])
 
@@ -147,7 +143,6 @@ def fetch_data():
 
         all_store_data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code,
                                store_number, phone_number, location_type, lat, longit, hours])
-
 
     driver.quit()
     return all_store_data

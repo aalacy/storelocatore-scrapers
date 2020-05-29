@@ -4,8 +4,6 @@ from sgselenium import SgSelenium
 import json
 import usaddress
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -77,7 +75,6 @@ def fetch_data():
         coords = json_geo['map_start_location'].split(',')
         lat = coords[0]
         longit = coords[1]
-
 
         country_code = 'US'
         location_type = '<MISSING>'

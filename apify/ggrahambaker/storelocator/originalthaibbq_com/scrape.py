@@ -3,9 +3,6 @@ import os
 from sgselenium import SgSelenium
 import usaddress
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def clean_arr(arr):
     to_ret = []
@@ -29,8 +25,6 @@ def clean_arr(arr):
 
         to_ret.append(a)
     return to_ret
-
-
 
 def fetch_data():
     locator_domain = 'http://originalthaibbq.com/'

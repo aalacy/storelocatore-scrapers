@@ -3,9 +3,6 @@ import os
 from sgselenium import SgSelenium
 import time
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -16,7 +13,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -25,13 +21,11 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
 def loc_ext(driver, locator_domain, ext, all_store_data):
     link = ext[0]
     ids = ext[1]
     driver.get(locator_domain + link)
     driver.implicitly_wait(1200)
-
 
     while (driver.execute_script("return typeof mapu143149 === 'undefined' && typeof mapu144269 === 'undefined'")):
         time.sleep(10)
@@ -54,12 +48,10 @@ def loc_ext(driver, locator_domain, ext, all_store_data):
 
     hours = driver.find_element_by_css_selector('div' + ids[1]).text.replace('\n', ' ').replace('HOURS', '').strip()
 
-
     location_name = '<MISSING>'
     country_code = 'US'
     location_type = '<MISSING>'
     store_number = '<MISSING>'
-
 
     if 'Claremont' in city:
         lat = c_lat
@@ -68,13 +60,9 @@ def loc_ext(driver, locator_domain, ext, all_store_data):
         lat = s_lat
         longit = s_longit
 
-
-
-
     store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                   store_number, phone_number, location_type, lat, longit, hours]
     all_store_data.append(store_data)
-
 
 def fetch_data():
     locator_domain = 'https://www.gussbbq.com/'

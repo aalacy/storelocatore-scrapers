@@ -5,9 +5,6 @@ import json
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -26,7 +23,6 @@ def fetch_data():
     driver.get(url)
 
     driver.implicitly_wait(10)
-
 
     country_links = []
 
@@ -55,14 +51,11 @@ def fetch_data():
         for city in cities:
             city_list.append(city.get_attribute('href'))
             
-            
-            
     link_list = []
 
     for city in city_list:
         driver.get(city)
         driver.implicitly_wait(10)
-        
         
         locs = driver.find_elements_by_css_selector('div.address')
         for loc in locs:
@@ -83,7 +76,6 @@ def fetch_data():
         info = soup.find('script', {'type': 'application/ld+json'}).text
         loc = json.loads(info)[0]
 
-        
         addy = loc['address']
         
         street_address = addy['streetAddress']
@@ -93,17 +85,13 @@ def fetch_data():
         
         phone_number = addy['telephone']
         
-        
         coords = loc['geo']
         lat = coords['latitude']
         longit = coords['longitude']
         
-        
         hours = loc['openingHours']
         
-        
         location_name = loc['mainEntityOfPage']['headline']
-        
         
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -111,11 +99,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        
         all_store_data.append(store_data)
         
-    
-
     driver.quit()
     return all_store_data
 

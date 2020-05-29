@@ -4,9 +4,6 @@ from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 import usaddress
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -16,8 +13,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
 
 def parse_addy(addy):
     parsed_add = usaddress.tag(addy)[0]
@@ -46,8 +41,6 @@ def parse_addy(addy):
     
     return street_address, city, state, zip_code
 
-
-
 def fetch_data():    
     locator_domain = 'https://amazon.com/bookstore'
     loc_url = 'https://www.amazon.com/b/ref=s9_acss_bw_cg_ABFYSA_3a1_w?node=17608448011&pf_rd_m=ATVPDKIKX0DER&pf_rd_s=merchandised-search-1&pf_rd_r=8HQ2M9JF7X3W70NENWPB&pf_rd_t=101&pf_rd_p=051f1019-a5e5-4cba-8c2a-13a383a7cfd2&pf_rd_i=17608448011#AmazonBooksLocations'
@@ -61,7 +54,6 @@ def fetch_data():
         link = href.get_attribute('href')
 
         link_list.append(link)
-
 
     all_store_data = []
     for link in link_list:
@@ -94,8 +86,6 @@ def fetch_data():
 
         street_address, city, state, zip_code = parse_addy(addy)
         
-
-            
         hours = ''
         
         for h in cont[2:]:
@@ -106,7 +96,6 @@ def fetch_data():
             
             hours += h.text + ' '
             
-
         country_code = 'US'
 
         page_url = link
@@ -117,7 +106,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-        
         
     driver.quit()
     return all_store_data

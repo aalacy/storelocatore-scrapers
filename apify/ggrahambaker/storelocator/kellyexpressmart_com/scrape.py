@@ -2,8 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -25,7 +23,6 @@ def fetch_data():
     headers = {'User-Agent': 
                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'}
 
-
     to_scrape = locator_domain + ext
     page = session.get(to_scrape, headers = headers)
     assert page.status_code == 200
@@ -43,7 +40,6 @@ def fetch_data():
         location_name = split_info[1]
         street_address = split_info[1]
 
-        
         to_split_more = split_info[2].replace('\xa0', '')
         
         split_arr = to_split_more.split(',')
@@ -70,7 +66,6 @@ def fetch_data():
         if len(split_info) == 6:
             phone_number = split_info[5]
             
-        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -91,8 +86,6 @@ def fetch_data():
                     data[11] = g.find('span',{'class': 'longitude'}).text
                     continue
                     
-
-
     return all_store_data
 
 def scrape():

@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 import json
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -22,14 +20,12 @@ def fetch_data():
     driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
-
     states = driver.find_elements_by_css_selector('li.Directory-listItem')
     state_links = []
     for state in states:
         link = state.find_element_by_css_selector('a').get_attribute('href')
         state_links.append(link)
 
-    
     url_list = []
     for link in state_links:
         driver.get(link)
@@ -44,8 +40,6 @@ def fetch_data():
             
             url_list.append([url, lat, longit])
             
-
-
     link_list = []
     for url_ext in url_list:
         
@@ -91,7 +85,6 @@ def fetch_data():
 
         hours = hours.strip()
 
-
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         country_code = 'US'
@@ -101,8 +94,6 @@ def fetch_data():
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
-        
 
     driver.quit()
     return all_store_data

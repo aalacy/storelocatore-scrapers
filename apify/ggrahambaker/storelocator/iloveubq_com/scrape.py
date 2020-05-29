@@ -3,9 +3,6 @@ import os
 from sgselenium import SgSelenium
 import usaddress
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -22,8 +19,6 @@ def fetch_data():
 
     driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
-
-
 
     main = driver.find_element_by_css_selector('div#collapseMaryland')
     locs = main.find_elements_by_css_selector('div.location-store')
@@ -78,7 +73,6 @@ def fetch_data():
                 zip_code = '<MISSING>'
 
             phone_number = driver.find_element_by_css_selector('div.phone').text
-
 
         details = driver.find_element_by_css_selector('div.store-details')
         hours = details.text.replace('Store Hours', '').replace('\n', ' ').strip()

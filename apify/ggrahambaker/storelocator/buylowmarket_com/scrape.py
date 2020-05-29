@@ -3,7 +3,6 @@ import os
 from sgselenium import SgSelenium
 import re
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -13,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_extractor(src):
     arr = src.split(',')
@@ -30,7 +28,6 @@ def addy_extractor(src):
             zip_code = prov_zip[2]
 
     return city, state, zip_code
-
 
 def get_info(driver, tag, locator_domain, all_store_data):
     div = driver.find_element_by_css_selector('div' + tag)
@@ -89,7 +86,6 @@ def get_info(driver, tag, locator_domain, all_store_data):
                               store_number, phone_number, location_type, lat, longit, hours]
                 all_store_data.append(store_data)
 
-
 def fetch_data():
     driver = SgSelenium().chrome()
     locator_domain = 'http://buylowmarket.com/'
@@ -108,7 +104,6 @@ def fetch_data():
         print(i)
         li.click()
         get_info(driver, targets[i], locator_domain, all_store_data)
-
 
     driver.quit()
 

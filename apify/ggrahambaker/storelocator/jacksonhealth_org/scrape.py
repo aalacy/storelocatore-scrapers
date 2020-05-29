@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 import usaddress
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,8 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
 
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
@@ -54,7 +50,6 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'https://jacksonhealth.org/' 
     ext = 'locations/'
@@ -81,7 +76,6 @@ def fetch_data():
         
         links = loc.find_elements_by_css_selector('a')
 
-    
         for l in links:
             if '/directions/' in l.get_attribute('href'):
                 if '#' not in l.get_attribute('href'):
@@ -101,22 +95,16 @@ def fetch_data():
             if 'tel:' in l.get_attribute('href'):
                 phone_number = l.get_attribute('href').replace('tel:', '')
         
-    
-        
         country_code = 'US'
         store_number = '<MISSING>'
         hours = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
         
-        
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
-
 
     driver.quit()
     return all_store_data

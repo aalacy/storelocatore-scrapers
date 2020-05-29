@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 import usaddress
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -74,7 +72,6 @@ def fetch_data():
         else:
             continue
 
-
     for i, b in enumerate(brook):
         content = b.text.split('\n')
 
@@ -120,8 +117,6 @@ def fetch_data():
             all_store_data.append(store_data)
         else:
             continue
-
-
 
     driver.quit()
     return all_store_data

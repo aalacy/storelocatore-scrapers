@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -31,7 +30,6 @@ def fetch_data():
         if link not in link_list:
             link_list.append(link)
 
-
     all_store_data = []
     for link in link_list:
         r = session.get(link, headers = HEADERS)
@@ -45,7 +43,6 @@ def fetch_data():
         if state == '':
             state = '<MISSING>'
 
-            
         zip_code = soup.find('span', {'itemprop': 'postalCode'}).text.strip()
 
         phone_number = soup.find('span', {'itemprop': 'telephone'}).text.strip()
@@ -55,7 +52,6 @@ def fetch_data():
         for h in hour_spans:
             hours += h['content'].strip() + ' '
             
-                
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -65,13 +61,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
             
-
-
-
-
     return all_store_data
 
 def scrape():

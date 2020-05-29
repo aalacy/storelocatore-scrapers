@@ -6,9 +6,6 @@ import re
 import json
 import _jsonnet
 
-
-
-
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
 
@@ -25,16 +22,12 @@ def parse_address(addy_string):
     if 'StreetNamePostType' in parsed_add:
         street_address += parsed_add['StreetNamePostType'] + ' '
         
-
-        
     if 'ZipCode' not in parsed_add:
         zip_code = '<MISSING>'
     else:
         zip_code = parsed_add['ZipCode']
 
     return street_address, zip_code
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -64,8 +57,6 @@ def fetch_data():
         lat = place_py['position']['lat']
         longit = place_py['position']['lng']
         html_to_parse = place_py['infowin_html']  
-        
-
         
         if float(longit) > -10:
             continue
@@ -110,18 +101,9 @@ def fetch_data():
         if 'Visit' in phone_number:
             phone_number = '<MISSING>'
         
-        
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-
-
-
-
-
-
-
 
     return all_store_data
 

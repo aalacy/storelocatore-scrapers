@@ -4,9 +4,6 @@ from sgselenium import SgSelenium
 import usaddress
 import time
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -17,10 +14,8 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def parse_addy(addy):
     parsed_add = usaddress.tag(addy)[0]
-
 
     street_address = ''
 
@@ -46,15 +41,12 @@ def parse_addy(addy):
     
     return street_address, city, state, zip_code
 
-
-
 def fetch_data():
     locator_domain = 'https://houseofair.com/'
     ext = 'locations/'
 
     driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
-
 
     main = driver.find_element_by_css_selector('section#content-locations')
     locs = main.find_elements_by_css_selector('div.col-md-3')
@@ -64,7 +56,6 @@ def fetch_data():
         if '.pl/' in link:
             continue
         link_list.append(link)
-
 
     all_store_data = []
     for link in link_list:
@@ -84,7 +75,6 @@ def fetch_data():
         
         hrefs = driver.find_elements_by_xpath("//iframe[contains(@src, 'www.google.com/maps/')]")
         
-
         if len(hrefs) == 0:
             lat = '<MISSING>'
             longit = '<MISSING>'
@@ -100,7 +90,6 @@ def fetch_data():
             lat = coords[1]
             longit = coords[0]
             
-            
         page_url = link
         location_name = 'House of Air ' + city
         
@@ -113,7 +102,6 @@ def fetch_data():
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
             
-
     driver.quit()
     return all_store_data
 

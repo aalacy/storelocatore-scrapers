@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 import json
 
-
 session = SgRequests()
 
 def write_output(data):
@@ -43,7 +42,6 @@ def fetch_data():
         city = loc['city']
         zip_code = loc['postal']
         
-        
         country_code = 'US'
 
         location_type = '<MISSING>'
@@ -52,8 +50,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-
-
 
     return all_store_data
 

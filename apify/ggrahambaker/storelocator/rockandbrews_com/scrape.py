@@ -3,11 +3,6 @@ import os
 from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 
-
-
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -70,7 +65,6 @@ def fetch_data():
         
         zip_code = driver.find_element_by_xpath('//span[@itemprop="postalCode"]').text
 
-
         try:
             hours_div = driver.find_element_by_css_selector('div#LocalMapAreaOpenHourBanner').get_attribute('innerHTML')
             
@@ -93,8 +87,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
         
-        
-
     driver.quit()
     return all_store_data
 

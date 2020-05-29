@@ -2,8 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -15,7 +13,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 #helper for getting address
 def addy_extractor(src):
@@ -34,7 +31,6 @@ def fetch_data():
 
     ext = 'locations/'
     to_scrape = locator_domain + ext
-
 
     page = session.get(to_scrape)
     assert page.status_code == 200
@@ -61,7 +57,6 @@ def fetch_data():
             for hou in hours_split:
                 hours += hou + ' '
             hours = hours.strip()
-            
             
         country_code = 'US'
         store_number = '<MISSING>'

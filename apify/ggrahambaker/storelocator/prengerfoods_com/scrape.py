@@ -2,8 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -26,8 +24,6 @@ def validator(all_store_data):
             addresses.append(data[2])
     return all_store_data_clean
             
-            
-
 def fetch_data():
     locator_domain = 'https://prengerfoods.com/'
     ext = 'Home/Locations'
@@ -46,10 +42,8 @@ def fetch_data():
         loc_name_cut = items[0].split('<b>')[1].index('<')
         location_name = items[0].split('<b>')[1][:loc_name_cut].strip()
         
-        
         st_addy_cut = items[1].index('>') + 1
         street_address = items[1][st_addy_cut:].strip()
-        
         
         addy_info_cut = items[2].index('>') + 1
         addy_info_clean = items[2][addy_info_cut:].strip()
@@ -77,7 +71,6 @@ def fetch_data():
         country_code = 'US'
         store_number = '<MISSING>'
         
-        
         phone_cut = items[3].index('>') + 1
         phone_number = items[3][phone_cut:].strip()
         
@@ -91,7 +84,6 @@ def fetch_data():
         else:
             hours = items[5].split('</b>')[1].split('</p>')[0].strip()
             
-            
         # done parsing, lets push it to an array
         # should be like this
         # locator_domain, location_name, street_address, city, state, zip, country_code,
@@ -99,10 +91,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                      store_number, phone_number, location_type, lat, longit, hours ]
         all_store_data.append(store_data)
-    
-
-
-
     
     return validator(all_store_data)
 

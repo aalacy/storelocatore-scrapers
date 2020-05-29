@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 import xml.etree.ElementTree as ET
 import usaddress
 
-
 session = SgRequests()
 
 def write_output(data):
@@ -65,12 +64,9 @@ def fetch_data():
             else:
                 continue
 
-
-
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
-
 
     return all_store_data
 

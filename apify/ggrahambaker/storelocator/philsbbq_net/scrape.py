@@ -2,8 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -15,7 +13,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 #helper for getting address
 def addy_extractor(src):
@@ -35,11 +32,9 @@ def fetch_data():
     ext = 'phils-bbq-locations.html'
     to_scrape = locator_domain + ext
 
-
     page = session.get(to_scrape)
     assert page.status_code == 200
     soup = BeautifulSoup(page.content, 'html.parser')
-
 
     stores = soup.find_all('div', {'class': 'locationinfo'})
 
@@ -60,7 +55,6 @@ def fetch_data():
         else:
             street_address = brs.previousSibling
             
-
         if brs.nextSibling.name == 'span':
             addy_info_arr = addy_extractor(brs.nextSibling.text)
         else:
@@ -98,9 +92,6 @@ def fetch_data():
     store_data = [locator_domain, 'Petco Park', '<MISSING>', 'San Diego', 'CA', '<MISSING>', 'US',
                      '<MISSING>', '<MISSING>', '<MISSING>', '<MISSING>', '<MISSING>', '<MISSING>' ]
     all_store_data.append(store_data)
-
-
-        
 
     return all_store_data
 

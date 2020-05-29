@@ -3,9 +3,6 @@ import os
 from sgselenium import SgSelenium
 import time
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def state_zip_parser(country_code, state_zip):
     if country_code == 'US':
@@ -35,7 +31,6 @@ def state_zip_parser(country_code, state_zip):
             zip_code = state_zip[2] + ' ' + state_zip[3]
             
     return state, zip_code
-
 
 def fetch_data():
     locator_domain = 'https://deciem.com/'
@@ -58,7 +53,6 @@ def fetch_data():
         if country_name == 'USA':
             country_code = 'US'
         
-        
         location_span = loc.find_element_by_css_selector('span.location-name')
         on_click = location_span.get_attribute('onclick')
         location_name = location_span.get_attribute('innerHTML')
@@ -69,7 +63,6 @@ def fetch_data():
         
         driver.execute_script(on_click)
         driver.implicitly_wait(5)
-        
         
         addy = driver.find_element_by_css_selector('div.address').text.split('\n')
         if len(addy) == 3:
@@ -88,26 +81,21 @@ def fetch_data():
             
             state, zip_code = state_zip_parser(country_code, state_zip)
             
-
         phone_number = driver.find_element_by_css_selector('div.tele-container').text.replace('TELEPHONE', '').replace('+1-', '').strip()
         
         hours = driver.find_element_by_css_selector('div.hours-container').text.replace('\n', ' ').replace('HOURS', '').strip()
 
-        
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         lat = '<MISSING>'
         longit = '<MISSING>'
         page_url = '<MISSING>'
 
-
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
         
-        
         time.sleep(2)
-
 
     driver.quit()
     return all_store_data

@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -22,7 +19,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
 
 def fetch_data():
     locator_domain = 'http://www.hopewellhealth.org/' 
@@ -50,10 +46,8 @@ def fetch_data():
                 if 'Perry County WIC Program' in i:
                     continue
     
-                
                 info.append(i)
   
-            
             location_name = info[0]
             if '2541 Panther Drive' in location_name:
                 continue
@@ -85,8 +79,6 @@ def fetch_data():
                 else:
                     lat, longit = '<MISSING>', '<MISSING>'
                 
-                
-
             country_code = 'US'
             store_number = '<MISSING>'
             location_type = '<MISSING>'
@@ -100,8 +92,6 @@ def fetch_data():
 
             all_store_data.append(store_data)
        
-
-
     driver.quit()
     return all_store_data
 

@@ -2,8 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -29,8 +27,6 @@ def fetch_data():
 
     div = soup.find('div', {"id": "comp-jn2281qa"})
     
-
-
     ps = div.find_all('p')
     ## inconsistent formatting
     case_1 = [[ps[0], ps[1], ps[2]], [ps[4], ps[5], ps[6]], [ps[8], ps[9], ps[10]] ]
@@ -38,7 +34,6 @@ def fetch_data():
     case_3 = [ps[29], ps[30]]
 
     all_store_data = []
-
 
     ## case 1
     for case in case_1:
@@ -64,7 +59,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                      store_number, phone_number, location_type, lat, longit, hours ]
         all_store_data.append(store_data)
-
 
     ## case 2
     for case in case_2:
@@ -95,9 +89,6 @@ def fetch_data():
                      store_number, phone_number, location_type, lat, longit, hours ]
         all_store_data.append(store_data)
         
-
-
-
     ## case 3
     location_name = case_3[0].text
     info = case_3[1].text.split('\n')
@@ -121,9 +112,6 @@ def fetch_data():
     store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                  store_number, phone_number, location_type, lat, longit, hours ]
     all_store_data.append(store_data)
-
-
-
 
     return all_store_data
 

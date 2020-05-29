@@ -21,7 +21,6 @@ def fetch_data():
     ext = 'api/location-search-lookup?&proximity[value]=25'
     r = session.get(locator_domain + ext, headers = HEADERS)
 
-
     locs = json.loads(r.content)
     all_store_data = []
     for loc in locs:
@@ -61,7 +60,6 @@ def fetch_data():
             for h in hours_p:
                 hours += h.text + ' '
                 
-
             hours = hours.split('Lab Hours')[0]
             hours = hours.split('Holiday Hours')[0]
             
@@ -70,16 +68,11 @@ def fetch_data():
         except:
             hours = '<MISSING>'
 
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
-
-        
         all_store_data.append(store_data)
         
-
     return all_store_data
 
 def scrape():

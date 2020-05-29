@@ -4,10 +4,6 @@ from sgselenium import SgSelenium
 import usaddress
 import time
 
-
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -30,10 +26,8 @@ def fetch_data():
     element = driver.find_element_by_css_selector('span.popup-close')
     driver.execute_script("arguments[0].click();", element)
 
-
     all_store_data = []
     # ten pages
-
 
     inputElement = driver.find_element_by_id("addressInput")
     inputElement.send_keys('kentuky')
@@ -82,7 +76,6 @@ def fetch_data():
                               store_number, phone_number, location_type, lat, longit, hours]
                 all_store_data.append(store_data)
 
-
         time.sleep(2)
 
         element = driver.find_element_by_css_selector('a.next_link')
@@ -90,7 +83,6 @@ def fetch_data():
         driver.execute_script("arguments[0].click();", element)
 
     driver.quit()
-
 
     return all_store_data
 

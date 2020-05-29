@@ -3,7 +3,6 @@ import os
 from sgselenium import SgSelenium
 import time
 
-
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -11,9 +10,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -39,8 +35,6 @@ def fetch_data():
         state_link = state.find_element_by_css_selector('a').get_attribute('href')
         state_list.append(state_link)
 
-
-
     link_list = []
     for state in state_list:
         driver.get(state)
@@ -50,14 +44,12 @@ def fetch_data():
             link = loc.find_element_by_css_selector('a').get_attribute('href')
             link_list.append(link)
 
-
     all_store_data = []
     for i, link in enumerate(link_list):
         driver.get(link)
         time.sleep(2)
         driver.implicitly_wait(60)
 
-        
         loc_info = driver.find_element_by_css_selector('h1').text.split('#')
         if len(loc_info) == 1:
             location_name = loc_info[0].strip()
@@ -83,7 +75,6 @@ def fetch_data():
 
         phone_number = driver.find_element_by_css_selector('div.phone').text.replace('Phone', '').strip()
 
-
         if 'No number available' in phone_number:
             phone_number = '<MISSING>'
 
@@ -104,13 +95,11 @@ def fetch_data():
         country_code = 'US'
         location_type = '<MISSING>'
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         
         all_store_data.append(store_data)
         
-
     driver.quit()
     return all_store_data
 

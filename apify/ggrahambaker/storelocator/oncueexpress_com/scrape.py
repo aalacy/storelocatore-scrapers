@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 import time
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -39,7 +37,6 @@ def fetch_data():
             
             street_address= loc.find_element_by_css_selector('div.thoroughfare').text
             
-            
             city = loc.find_element_by_css_selector('span.locality').text
             state = loc.find_element_by_css_selector('span.state').text
             zip_code = loc.find_element_by_css_selector('span.postal-code').text
@@ -57,7 +54,6 @@ def fetch_data():
             else:
                 phone_number = '<MISSING>'
 
-
             if store_number not in dup_tracker:
                 if phone_number == '<MISSING>':
                     continue
@@ -65,17 +61,11 @@ def fetch_data():
             else:
                 continue
             
-            
-            
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
             all_store_data.append(store_data)
             
-
-        
-
-
     driver.quit()
     return all_store_data
 

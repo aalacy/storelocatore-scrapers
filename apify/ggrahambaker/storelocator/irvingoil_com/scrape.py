@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,7 +11,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext_us(addy):
     addy = addy.split(',')
@@ -27,7 +23,6 @@ def addy_ext_us(addy):
         state = state_zip[0]
         zip_code = state_zip[1]
     return city, state, zip_code, 'US'
-
 
 def addy_ext_can(addy):
     addy = addy.split(',')
@@ -58,9 +53,6 @@ def addy_ext_can(addy):
 
     return city, state, zip_code, 'CA'
 
-
-
-
 def fetch_data():
     locator_domain = 'https://www.irvingoil.com/'
     ext = 'en-US/location'
@@ -73,7 +65,6 @@ def fetch_data():
     for loc in locs:
         link = loc.get_attribute('href')
         link_list.append(link)
-
 
     all_store_data = []
     for link in link_list:
@@ -95,8 +86,6 @@ def fetch_data():
         else:
             city, state, zip_code, country_code = addy_ext_us(addy[1])
             
-
-        
         hours_div = driver.find_elements_by_css_selector('div.location__hours')
         hours = ''
         for h in hours_div:
@@ -106,7 +95,6 @@ def fetch_data():
                 hours = 'Open 24 Hours'
                 break
             hours = h.text.replace('\n', ' ').replace('Store Hours', '').strip()
-
 
         if hours == '':
             hours = '<MISSING>'
@@ -122,7 +110,6 @@ def fetch_data():
         if store_number.isdigit() == False:
             store_number = '<MISSING>'
 
-
         page_url = link
         location_type = '<MISSING>'
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
@@ -130,8 +117,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
         
-
-
     driver.quit()
     return all_store_data
 

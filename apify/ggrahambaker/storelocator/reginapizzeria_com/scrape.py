@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -31,7 +28,6 @@ def addy_ext(addy):
     
     return city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'http://reginapizzeria.com/'
     ext = 'southshore_plaza.html'
@@ -56,11 +52,9 @@ def fetch_data():
         if 'Regina Pizz' in addy[0]:
             del addy[0]
 
-        
         street_address = addy[0]
         city, state, zip_code = addy_ext(addy[1])
 
-    
         if len(divs) == 2:
             hours = addy[3]
             phone_number = addy[4].replace('Telephone number:', '').strip()

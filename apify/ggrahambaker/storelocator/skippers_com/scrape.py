@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import json
 import usaddress
 
-
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
 
@@ -41,11 +40,6 @@ def parse_address(addy_string):
         zip_code = parsed_add['ZipCode']
 
     return street_address, city, state, zip_code
-
-
-
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -94,13 +88,7 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
-
-
-
-
-
 
     driver.quit()
     return all_store_data

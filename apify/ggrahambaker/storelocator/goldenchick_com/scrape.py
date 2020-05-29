@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -21,7 +20,6 @@ def fetch_data():
     locator_domain = 'http://goldenchick.com/' 
     url = 'http://locations.goldenchick.com/'
     r = session.get(url, headers = HEADERS)
-
 
     soup = BeautifulSoup(r.content, 'html.parser')
 
@@ -41,8 +39,6 @@ def fetch_data():
             if len(loc['href'].split('/')) == 6:                
                 city_list.append(loc['href'])
             
-        
-
     link_list = []
     for link in city_list:
         r = session.get(link, headers = HEADERS)
@@ -67,8 +63,6 @@ def fetch_data():
         country_code = soup.find('meta', {'property': 'business:contact_data:country_name'})['content']
         phone_number = soup.find('meta', {'property': 'business:contact_data:phone_number'})['content']
         
-        
-        
         lat = soup.find('meta', {'property': 'place:location:latitude'})['content']
         longit = soup.find('meta', {'property': 'place:location:longitude'})['content']
         
@@ -79,7 +73,6 @@ def fetch_data():
                 break
             hours += day.text.strip() + ' '
 
-
         hours = ' '.join( hours.split())
         store_number = link.split('/')[-2]
         location_type = '<MISSING>'
@@ -89,8 +82,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
-
 
     return all_store_data
 

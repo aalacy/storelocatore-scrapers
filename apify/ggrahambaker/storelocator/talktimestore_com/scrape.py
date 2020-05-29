@@ -13,9 +13,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-
-
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
 
@@ -39,11 +36,9 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-
 def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
-
 
     locator_domain = 'https://www.talktimestore.com/' 
     ext = 'storelocator/'    
@@ -59,7 +54,6 @@ def fetch_data():
         
         r = session.get(page_url, headers = HEADERS)
         
-        
         source = str(r.content.decode())
         for line in source.split('\n'):
             if line.strip().startswith("var storeLat"):
@@ -67,7 +61,6 @@ def fetch_data():
             if line.strip().startswith("var storeLong"):
                 longit = line.strip().replace('var storeLong =', '').replace(';', '').strip()
             
-                
         soup = BeautifulSoup(r.content, 'html.parser')
         location_name = soup.find('h1', {'class': 'page-header'}).text
         
@@ -120,7 +113,6 @@ def fetch_data():
             if 'Phone' in td.text:
                 phone_number = tds[i + 1].text
             
-            
             if 'Monday' in td.text:
                 hours_table = tds[i].parent.parent.find_all('tr')
                 hours = ''
@@ -129,21 +121,13 @@ def fetch_data():
                     for td in tds:
                         hours += td.text + ' '
                         
-                        
-                
-        
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
-
-
-
-
 
     return all_store_data
 

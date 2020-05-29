@@ -4,10 +4,7 @@ from sgselenium import SgSelenium
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 session = SgRequests()
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -56,7 +53,6 @@ def fetch_data():
             if '00pm' in p.text or '00am' in p.text:
                 hours += p.text + ' '
 
-
         hours = hours.strip()
         if len(address) == 4:
             street_address = address[1]
@@ -82,7 +78,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

@@ -2,10 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
-
 def addy_ext(addy):
     addy = addy.split(',')
     city = addy[0]
@@ -30,14 +26,12 @@ def fetch_data():
     driver = SgSelenium().chrome()
     driver.get(locator_domain)
 
-
     hrefs = driver.find_elements_by_xpath('//a[contains(@href,"/hours")]')
     link_list = []
     for h in hrefs:
         link = h.get_attribute('href')
         if len(link.split('.')) == 3:
             link_list.append(link)
-
 
     all_store_data = []
     for link in link_list:
@@ -51,15 +45,11 @@ def fetch_data():
         
         street_address = main[1]
         
-        
         city, state, zip_code = addy_ext(main[2])
         
         phone_number = main[3].replace('Phone:', '').strip()
         
-        
         hours = driver.find_element_by_css_selector('div.et_pb_text_3').text.replace('\n', ' ')
-        
-        
         
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -73,9 +63,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
         
-
-
-
     driver.quit()
     return all_store_data
 

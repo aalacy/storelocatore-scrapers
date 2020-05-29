@@ -2,8 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -39,7 +37,6 @@ def fetch_data():
             country_code = 'CA'
         else:
             country_code = 'US'
-
 
         if 'S' in data['b']:
             store_info = data['b']['S'][0]

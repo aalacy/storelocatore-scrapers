@@ -5,9 +5,6 @@ from selenium.common.exceptions import NoSuchElementException
 import json
 import time
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -24,7 +21,6 @@ def fetch_data():
 
     driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
-
 
     link_list = []
     locs = driver.find_elements_by_css_selector('div.eslStore.ml-storelocator-headertext')
@@ -57,8 +53,6 @@ def fetch_data():
         else:
             store_number = '<MISSING>'
 
-
-        
         street_address = driver.find_element_by_xpath('//span[@itemprop="streetAddress"]').text.replace('\n', ' ')
         if street_address not in dup_tracker:
             dup_tracker.add(street_address)
@@ -76,7 +70,6 @@ def fetch_data():
         except NoSuchElementException:
             phone_number = '<MISSING>'
 
-
         loc_j = driver.find_elements_by_xpath('//script[@type="text/javascript"]')
         for i, loc in enumerate(loc_j):
             if 'MarketLive.StoreLocator.storeLocatorDetailPageReady' in loc.get_attribute('innerHTML'):
@@ -91,7 +84,6 @@ def fetch_data():
                 lat = coords['latitude']
                 longit = coords['longitude']
         
-
         country_code = 'US'
         location_type = '<MISSING>'
         page_url = link
@@ -100,10 +92,6 @@ def fetch_data():
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         
         all_store_data.append(store_data)
-
-        
-
-
 
     driver.quit()
     return all_store_data

@@ -3,7 +3,6 @@ import os
 from sgselenium import SgSelenium
 import time
 
-
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -11,9 +10,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -57,7 +53,6 @@ def fetch_data():
         phone_number = row.find_element_by_css_selector('div.map-text').find_element_by_css_selector('a').text
 
         hours = row.find_element_by_css_selector('div.map-hours').text.replace('\n', ' ')
-
 
         map_div = row.find_element_by_css_selector('div.et_pb_map')
         lat = map_div.get_attribute('data-center-lat')

@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 session = SgRequests()
 
 def addy_ext(addy):
@@ -12,7 +11,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -53,13 +51,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url ]
             all_store_data.append(store_data)
             
-
-
-
-
-
-
-
     return all_store_data
 
 def scrape():

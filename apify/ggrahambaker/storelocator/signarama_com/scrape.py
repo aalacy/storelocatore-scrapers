@@ -4,8 +4,6 @@ from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -45,7 +43,6 @@ def fetch_data():
         except NoAlertPresentException:
             nothing = 0
 
-
         start_idx = link.find('.com/') + 5
 
         location_name = link[start_idx:].replace('-', ' ')
@@ -54,7 +51,6 @@ def fetch_data():
         city = driver.find_element_by_xpath('//span[@itemprop="addressLocality"]').text.replace(',', '').strip()
         state = driver.find_element_by_xpath('//span[@itemprop="addressRegion"]').text
         zip_code = driver.find_element_by_xpath('//span[@itemprop="postalCode"]').text
-
 
         if "365 Broad Street, New London" in street_address:
             street_address = '365 Broad Street'

@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +12,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -23,9 +19,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
-
-
 
 def fetch_data():
     locator_domain = 'https://www.redorestaurant.com/'
@@ -45,7 +38,6 @@ def fetch_data():
 
         cont = loc.text.split('\n')
 
-
         href = loc.find_element_by_css_selector('a').get_attribute('href')
 
         start_idx = href.find('/@')
@@ -64,7 +56,6 @@ def fetch_data():
             for h in cont[8:-3]:
                 hours += h + ' '
 
-
         else:
             if len(cont) == 19:
                 off = 2
@@ -80,8 +71,6 @@ def fetch_data():
             for h in cont[off + 6:-3]:
                 hours += h + ' '
 
-
-
         location_name = city
         country_code = 'US'
         store_number = '<MISSING>'
@@ -89,8 +78,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
-
-
 
     driver.quit()
     return all_store_data

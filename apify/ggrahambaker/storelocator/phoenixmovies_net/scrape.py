@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import usaddress
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -13,10 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
-
-
 
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
@@ -53,7 +48,6 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-
 def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
@@ -77,15 +71,12 @@ def fetch_data():
         a_tag = main.find('p', {'class': 'address'}).find('a')
         google_link = a_tag['href']
         
-        
         start = google_link.find('@')
         coords = google_link[start+1:].split(',')
         lat = coords[0]
         longit = coords[1]
         
-        
         street_address, city, state, zip_code = parse_address(a_tag.text.strip())
-        
         
         phone_number = soup.find('p', {'class': 'phone'}).text
         country_code = 'US'
@@ -99,10 +90,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
         
-
-
-
-
     return all_store_data
 
 def scrape():

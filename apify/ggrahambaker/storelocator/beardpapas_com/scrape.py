@@ -4,8 +4,6 @@ from sgselenium import SgSelenium
 import usaddress
 import time
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -55,7 +53,6 @@ def fetch_data():
                 state = addy[4].replace(',', '')
                 zip_code = addy[5] + ' ' + addy[6].replace(',', '')
                 country_code = 'CA'
-
 
             else:
                 if 'Suite 200 Unit 103' in content[2]:

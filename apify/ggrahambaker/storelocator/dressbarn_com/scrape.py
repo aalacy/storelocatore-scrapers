@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -23,7 +20,6 @@ def fetch_data():
     driver = SgSelenium().chrome()
     driver.get(url)
     
-
     link_list = []
     state_list = []
     city_list = []
@@ -41,8 +37,6 @@ def fetch_data():
         else:
             state_list.append(link)
         
-        
-    
     for state in state_list:
         driver.get(state)
         driver.implicitly_wait(10)
@@ -56,7 +50,6 @@ def fetch_data():
 
                 link_list.append(link)
                 
-        
     for city in city_list:
         driver.get(city)
         driver.implicitly_wait(10)
@@ -66,7 +59,6 @@ def fetch_data():
             link = loc.get_attribute('href')
             link_list.append(link)
     
-
     all_store_data = []
     for link in link_list:
         
@@ -93,9 +85,6 @@ def fetch_data():
         
         all_store_data.append(store_data)
         
-
-
-
     driver.quit()
     return all_store_data
 

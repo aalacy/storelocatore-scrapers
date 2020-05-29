@@ -18,7 +18,6 @@ def fetch_data():
 
     locator_domain = 'https://calibercollision.com/' 
 
-
     url = 'https://calibercollision.com/api/locations'
     r = session.get(url, headers = HEADERS)
     loc_json = json.loads(r.content)['entries']
@@ -44,8 +43,6 @@ def fetch_data():
                     else:
                         hours += loc['newTime_open_saturday'] + '-' + loc['newTime_closed_saturday']
                         
-
-
         elif loc['hours'].strip() == '':
             hours = loc['newTime_open'] + '-' + loc['newTime_closed'] + ' M-F ' 
             hours += loc['newTime_open_saturday'] + '-' + loc['newTime_closed_saturday']
@@ -56,12 +53,10 @@ def fetch_data():
             if 'SAT' not in hours:
                 hours += ' ' + loc['newTime_open_saturday'] + '-' + loc['newTime_closed_saturday']
 
-            
         if 'SUN' not in hours:
             if 'Appointment' not in hours:
                 hours += ' CLOSED SUN'
         hours = hours.strip().replace('&amp;', '&').replace('SUN-', 'SUN')
-
 
         addy = loc['address_info'][0]
         street_address = addy['address']
@@ -81,14 +76,10 @@ def fetch_data():
         
         page_url = locator_domain[:-1] + loc['url']
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
-
-
 
     return all_store_data
 

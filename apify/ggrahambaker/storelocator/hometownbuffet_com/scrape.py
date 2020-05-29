@@ -4,11 +4,6 @@ from bs4 import BeautifulSoup
 from sgselenium import SgSelenium
 import json
 
-
-
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -27,14 +22,11 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
 def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
     locator_domain = 'http://www.hometownbuffet.com/'
     all_store_data = []
-
-
 
     map_url = 'http://www.hometownbuffet.com/locator/'
     driver = SgSelenium().chrome()
@@ -42,13 +34,10 @@ def fetch_data():
 
     map_data = driver.execute_script('return usahtml5map_map_cfg_0')['map_data']
 
-
     skip_states = set()
     for state, info in map_data.items():
         if info['comment'] == '':
             skip_states.add(info['id'])
-
-    
 
     driver.quit()
     for i in range(50):
@@ -64,8 +53,6 @@ def fetch_data():
             if len(locations) == 0:
                 continue
 
-
-
             location_type = div.find('div').text
             addy_br = div.find('br')
             street_address = addy_br.previous.strip()
@@ -73,8 +60,6 @@ def fetch_data():
             
             location_name = city
  
-                
-
             google_href = div.find('a')['href']
             coords = google_href[google_href.find('@') + 1:].split(',')
 
@@ -94,7 +79,6 @@ def fetch_data():
                 
                 hours += h + ' '
                 
-            
             hours = hours.strip()
             phone_number = div.find('i', {'class': 'icon-call'}).next.strip()
             
@@ -107,7 +91,6 @@ def fetch_data():
 
             all_store_data.append(store_data)
             
-
     return all_store_data
 
 def scrape():

@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 import sgzip 
 import json
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -23,7 +22,6 @@ def fetch_data():
     search.initialize()
 
     MAX_DISTANCE = 25
-
 
     store_ids = set()
     zip_code = search.next_zip()
@@ -54,14 +52,12 @@ def fetch_data():
             else:
                 continue
             
-            
             addy = loc['address']
             
             street_address = addy['line1'] 
     
             if addy['line2'] != None:
                 street_address += ' ' + addy['line2']
-                
                 
             city = addy['town']
             state = addy['region']['name']
@@ -70,7 +66,6 @@ def fetch_data():
             zip_code = addy['postalCode'].split('-')[0]
             
             phone_number = addy['phone']
-            
             
             hours = ''
             for h in loc['openingHours']['weekDaysList']:
@@ -85,33 +80,19 @@ def fetch_data():
                 else:
                     hours += day + ' ' + str(start) + ' ' + str(end) + ' '
                 
-                
             hours = hours.strip()
-            
-            
             
             store_number = '<MISSING>'
             location_type = '<MISSING>'
-            
-            
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
             all_store_data.append(store_data)
             
-
-            
-
-        
         search.max_distance_update(MAX_DISTANCE)
         zip_code = search.next_zip()
         
-        
-        
-
-
-
     return all_store_data
 
 def scrape():

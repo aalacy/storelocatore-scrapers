@@ -4,7 +4,6 @@ from sgselenium import SgSelenium
 from selenium.webdriver.support.ui import Select
 import time
 
-
 def addy_ext(addy):
     addy = addy.split(',')
     city = addy[0]
@@ -36,7 +35,6 @@ def fetch_data():
 
     time.sleep(5)
 
-
     to_click = driver.find_element_by_css_selector('div.ui-menu-item-wrapper')
     driver.execute_script("arguments[0].click();", to_click)
     time.sleep(2)
@@ -59,15 +57,11 @@ def fetch_data():
         driver.implicitly_wait(5)
         time.sleep(1)
         
-        
         location_name = driver.find_element_by_css_selector('h1.titlebar').find_element_by_css_selector('span').text
-        
         
         addy = driver.find_element_by_css_selector('div.address').text.split('\n')
         street_address = addy[0]
         city, state, zip_code = addy_ext(addy[1])
-        
-        
         
         phone_number = driver.find_element_by_css_selector('div.phone').text.replace('+1', '').strip()
         
@@ -85,16 +79,11 @@ def fetch_data():
         longit = '<MISSING>'
         page_url = link
         
-        
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
         
-
-
     driver.quit()
     return all_store_data
 

@@ -5,9 +5,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 import re
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -18,7 +15,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 # helper for getting address
 def addy_extractor(src):
@@ -35,7 +31,6 @@ def addy_extractor(src):
         zip_code = arr[3]
 
     return street_address, city, state, zip_code
-
 
 def fetch_data():
     data = []
@@ -81,10 +76,8 @@ def fetch_data():
     driver.quit()
     return all_store_data
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

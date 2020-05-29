@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 import json
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -39,7 +37,6 @@ def fetch_data():
         
             city_list.append(c.get_attribute('href'))
 
-
     all_store_data = []
     dup_tracker = []
     for i, link in enumerate(city_list):
@@ -47,13 +44,11 @@ def fetch_data():
         driver.implicitly_wait(10)
         loc_info = driver.execute_script('return storeListJson')[0]
 
-
         if loc_info['Address2'] == None:
             street_address = loc_info['Address1']
         else:
             street_address = loc_info['Address1'] + ' ' + loc_info['Address2']
 
-        
         city = loc_info['City']
         state = loc_info['State']
         zip_code = loc_info['ZipCode']
@@ -84,7 +79,6 @@ def fetch_data():
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

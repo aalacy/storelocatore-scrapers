@@ -20,9 +20,7 @@ def fetch_data():
     locator_domain = 'https://www.grabbagreen.com/' 
     ext = 'locator/index.php?brand=34&mode=desktop&pagesize=10000&q=california'
 
-    
     r = session.get(locator_domain + ext, headers = HEADERS)
-
 
     soup = BeautifulSoup(r.content, 'html.parser')
 
@@ -69,8 +67,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
-
 
     return all_store_data
 

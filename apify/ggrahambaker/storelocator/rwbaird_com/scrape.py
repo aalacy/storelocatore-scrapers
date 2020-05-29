@@ -3,8 +3,6 @@ from sgrequests import SgRequests
 import json
 from sgzip import ClosestNSearch
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -67,7 +65,6 @@ def fetch_data():
             'settings': '{"AuthenticatedMethods":[]}'
         }
         
-
         r = session.post('http://www.locatebaird.com/locator/api/InternalSearch', headers=HEADERS, data=json.dumps(PARAMS), cookies=COOKIES)
         res_json = json.loads(r.content)['Results']
         if res_json == None:
@@ -113,12 +110,8 @@ def fetch_data():
 
             all_store_data.append(store_data)
 
-        
-        
         search.max_distance_update(MAX_DISTANCE)
         zip_code = search.next_zip()
-
-
 
     return all_store_data
 

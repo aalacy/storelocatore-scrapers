@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 import time
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext(addy):
     addy = addy.split(',')
@@ -28,8 +25,6 @@ def addy_ext(addy):
         state = state_zip[0]
         zip_code = state_zip[1]
     return city, state, zip_code
-
-
 
 def fetch_data():
     locator_domain = 'https://www.wegmans.com/'
@@ -63,7 +58,6 @@ def fetch_data():
         
         hours = main.find_element_by_xpath('..').find_elements_by_css_selector('div.row')[2].text
         
-        
         source = str(driver.page_source)
         for line in source.split('\n'):
             if "new google.maps.LatLng" in line.strip():
@@ -72,8 +66,6 @@ def fetch_data():
                 lat = coords[0]
                 longit = coords[1][:-1]
                 
-        
-        
         country_code = 'US'
         location_type = '<MISSING>'
         page_url = link
@@ -82,8 +74,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
         
-
-
     driver.quit()
     return all_store_data
 

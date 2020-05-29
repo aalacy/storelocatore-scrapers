@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,7 +11,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_extractor(src):
     arr = src.split(',')
@@ -30,7 +26,6 @@ def addy_extractor(src):
 
     return city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'https://www.thepizzapress.com/'
     ext = 'locations/'
@@ -44,7 +39,6 @@ def fetch_data():
     link_list = []
     for link in links:
         link_list.append(link.get_attribute('href'))
-
 
     all_store_data = []
     for link in link_list:
@@ -94,8 +88,6 @@ def fetch_data():
         lat = '<MISSING>'
         longit = '<MISSING>'
         store_number = '<MISSING>'
-
-
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

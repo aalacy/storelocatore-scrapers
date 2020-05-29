@@ -3,7 +3,6 @@ import os
 from sgselenium import SgSelenium
 import re
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -22,15 +21,12 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
-
 def fetch_data():
     locator_domain = 'https://www.wingsetc.com/'
     ext = 'locations/'
 
     driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
-
 
     element = driver.find_element_by_css_selector('a.view-all')
     driver.execute_script("arguments[0].click();", element)

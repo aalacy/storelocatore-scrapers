@@ -4,8 +4,6 @@ from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 import usaddress
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,8 +13,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
 
 def parse_addy(addy):
     if '10250 Santa Monica Blvd Suite 9255' in addy:
@@ -49,8 +45,6 @@ def parse_addy(addy):
         zip_code = parsed_add['ZipCode'].strip()
         
     return street_address, city, state, zip_code
-
-
 
 def fetch_data():
     locator_domain = 'https://amazon.com/presentedbyamazon'
@@ -108,7 +102,6 @@ def fetch_data():
             
             hours += h.text + ' '
             
-    
         country_code = 'US'
 
         page_url = link
@@ -119,10 +112,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-        
-        
-        
-        
         
     driver.quit()
     return all_store_data

@@ -50,7 +50,6 @@ def fetch_data():
             else:
                 continue
             
-            
             street_address = loc['address']
             city = loc['city']
             state = loc['state']
@@ -65,7 +64,6 @@ def fetch_data():
             
             store_number = loc['id']
             
-            
             phone_number = loc['phone']
             hours = ''
             
@@ -78,14 +76,10 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
             
-            
             all_store_data.append(store_data)
         
-
         search.max_count_update(result_coords)
         coord = search.next_coord()  
-
-
 
     return all_store_data
 

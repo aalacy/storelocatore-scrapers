@@ -6,8 +6,6 @@ from bs4 import BeautifulSoup
 import json
 import time
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -63,7 +61,6 @@ def fetch_data():
         
         hours = driver.find_element_by_css_selector('div.loc-head').text.replace('\n', ' ').replace('Business Hours', '').strip()        
         
-        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -73,9 +70,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
         
-
-
-
     driver.quit()
     return all_store_data
 

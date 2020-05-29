@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from sgzip import ClosestNSearch
 import json
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -47,7 +46,6 @@ def fetch_data():
 
     search = ClosestNSearch()
     search.initialize(country_codes = {'ca'})
-
 
     MAX_DISTANCE = 150
 
@@ -101,30 +99,22 @@ def fetch_data():
             else:
                 phone_number = loc['phone']
             
-            
             location_type = '<MISSING>'
-            
             
             hours = '<MISSING>'
             page_url = 'https://www.lush.ca/en/shop?StoreID=' + store_number 
          
-            
-            
-            
             result_coords.append((lat, longit))
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
             all_store_data.append(store_data)
         
-
         if len(res_json) == 0:
             search.max_distance_update(MAX_DISTANCE)
         else:
             search.max_count_update(result_coords)
         coord = search.next_coord()  
-
-
 
     return all_store_data
 

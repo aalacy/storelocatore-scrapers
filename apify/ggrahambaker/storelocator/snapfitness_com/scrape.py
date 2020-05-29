@@ -5,9 +5,6 @@ from selenium.common.exceptions import NoSuchElementException
 import usaddress
 import time
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -53,7 +50,6 @@ def parse_addy(addy):
     
     return street_address, city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'https://www.snapfitness.com/'
 
@@ -78,8 +74,6 @@ def fetch_data():
             if href not in link_list:
                 link_list.append(href)
 
-
-
         for i, link in enumerate(link_list):
             
             driver.get(link)
@@ -99,7 +93,6 @@ def fetch_data():
 
             addy = conts[1 + off].text
 
-
             if '/ca/' in url:
                 country_code = 'CA'
                 addy = addy.split('\n')
@@ -108,7 +101,6 @@ def fetch_data():
             else:
                 country_code = 'US'
                 
-
                 if '1433 B (68 Place) Highway 68 North' in addy:
                     street_address = '1433 B (68 Place) Highway 68 North' 
                     city = 'Oak Ridge'
@@ -133,8 +125,6 @@ def fetch_data():
                 else:
                     street_address, city, state, zip_code = parse_addy(addy)
             
-            
-            
             google_href = driver.find_element_by_css_selector('a#map').get_attribute('href')
             
             start = google_href.find('&query=')
@@ -147,8 +137,6 @@ def fetch_data():
             except NoSuchElementException:
                 hours = 'Open 24/7 to members'
             
-            
-
             location_type = '<MISSING>'
             page_url = link
 
@@ -157,10 +145,7 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                             store_number, phone_number, location_type, lat, longit, hours, page_url]
             
-            
             all_store_data.append(store_data)
-
-
 
     driver.quit()
     return all_store_data

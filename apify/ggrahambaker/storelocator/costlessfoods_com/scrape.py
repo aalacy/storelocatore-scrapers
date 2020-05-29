@@ -2,8 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -16,8 +14,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-
 def addy_extractor(src):
     arr = src.split(',')
     city = arr[0]
@@ -27,8 +23,6 @@ def addy_extractor(src):
         zip_code = prov_zip[2]
 
     return city, state, zip_code
-
-
 
 def fetch_data():
     locator_domain = 'https://costlessfoods.com/'

@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -20,7 +19,6 @@ def fetch_data():
     locator_domain = 'https://www.gapcanada.ca/' 
     ext = 'stores#browse-by-state-section'
     r = session.get(locator_domain + ext, headers = HEADERS)
-
 
     soup = BeautifulSoup(r.content, 'html.parser')
     ul = soup.find('ul', {'id': 'browse-content'})
@@ -49,7 +47,6 @@ def fetch_data():
     
             link_list.append(locator_domain[:-1] + link)
         
-        
     dup_tracker = set()
     all_store_data = []
     for link in link_list:
@@ -72,14 +69,12 @@ def fetch_data():
         if phone_number == '':
             phone_number = '<MISSING>'
     
-        
         hours_div = soup.find('div', {'class': 'hours'})
         dayparts = hours_div.find_all('span', {'class': 'daypart'})
         times = hours_div.find_all('span', {'class': 'time'})
         hours = ''
         for i, day in enumerate(dayparts):
             hours += dayparts[i].text.strip() + ' ' + times[i].text.strip() + ' ' 
-        
         
         country_code = 'CA'
         store_number = '<MISSING>'
@@ -94,11 +89,7 @@ def fetch_data():
 
         all_store_data.append(store_data)
 
-
-
-
     return all_store_data
-
 
 def addy_ext(addy):
     addy = addy.split(',')
@@ -110,7 +101,6 @@ def addy_ext(addy):
         state = state_zip[0]
         zip_code = state_zip[1] + ' ' + state_zip[2]
     return city, state, zip_code
-
 
 def scrape():
     data = fetch_data()

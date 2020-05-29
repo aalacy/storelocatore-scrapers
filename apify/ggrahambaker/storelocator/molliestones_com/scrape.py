@@ -3,11 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 from sgselenium import SgSelenium
 
-
-
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -18,7 +13,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     addy = addy.split(',')
     city = addy[0]
@@ -26,7 +20,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
 
 def fetch_data():
     driver = SgSelenium().chrome()
@@ -50,8 +43,6 @@ def fetch_data():
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
 
-        
-
         driver.get(link)
         lat, longit = '', ''
         source = str(driver.page_source)
@@ -61,15 +52,12 @@ def fetch_data():
                 lat = coords[0]
                 longit = coords[1]
                 
-                
-                
         if lat == '':
             lat = '<MISSING>'
             longit = '<MISSING>'
         
         location_name = soup.find('h3').text
 
-        
         addy = soup.find('p', {'class': 'Address'}).prettify().split('\n')
         r_addy = []
         for a in addy:
@@ -110,11 +98,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
         
-
-
-
-
-
     return all_store_data
 
 def scrape():

@@ -3,8 +3,6 @@ import os
 from sgrequests import SgRequests
 import json
 
-
-
 session = SgRequests()
 
 def write_output(data):

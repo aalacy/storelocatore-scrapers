@@ -2,10 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
-
 def addy_ext(addy):
     addy = addy.split(',')
     city = addy[0]
@@ -13,7 +9,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -44,9 +39,6 @@ def fetch_data():
         street_address = addy[0]
         city, state, zip_code = addy_ext(addy[1])
 
-
-
-        
         phone_number = '<MISSING>'
 
         country_code = 'US'

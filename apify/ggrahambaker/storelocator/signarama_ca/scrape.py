@@ -3,9 +3,6 @@ import os
 from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -83,7 +80,6 @@ def fetch_data():
             phone_number_a = driver.find_element_by_xpath("//a[contains(@href, 'tel:')]").get_attribute('href')
             phone_number = phone_number_a.replace('tel:', '')
 
-
             try:
                 href = driver.find_element_by_xpath("//a[contains(@href, 'maps.google.com')]").get_attribute('href')
 
@@ -130,9 +126,6 @@ def fetch_data():
                 state = addy_split[3].strip()
                 zip_code = addy_split[4].strip()
 
-            
-            
-            
             lat = '<MISSING>'
             longit = '<MISSING>'
 
@@ -145,7 +138,6 @@ def fetch_data():
                 lat = coords[1].split('!2m')[0]
                 longit = coords[0]
             
-
         if street_address not in duplicate_tracker:
             duplicate_tracker.append(street_address)
         else:
@@ -155,7 +147,6 @@ def fetch_data():
         if len(zip_code.split(' ')) == 3:
             zip_code_ar = zip_code.split(' ')
             zip_code = zip_code_ar[1] + ' ' + zip_code_ar[2]
-
 
         country_code = 'CA'
         store_number = '<MISSING>'
@@ -168,7 +159,6 @@ def fetch_data():
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
         
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

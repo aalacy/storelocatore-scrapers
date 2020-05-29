@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -32,8 +29,6 @@ def fetch_data():
         hours = ''
         for h in open_hours[2:]:
             hours += h + ' '
-
-
 
         lat = driver.find_element_by_xpath('//meta[@property="og:latitude"]').get_attribute('content').strip()
 

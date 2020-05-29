@@ -4,9 +4,6 @@ from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 import re
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -48,7 +45,6 @@ def fetch_data():
             addy_raw = addy_raw_first.split('Teléfono')[0]
         else:
             addy_raw = addy_raw_first
-
 
         zip_code_r = re.search('\d{5}', addy_raw)
         if zip_code_r:

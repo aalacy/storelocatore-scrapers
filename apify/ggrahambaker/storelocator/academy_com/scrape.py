@@ -5,9 +5,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import time
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -41,10 +38,8 @@ def fetch_data():
                 link = n_link.get_attribute('href')         
                 link_list.append(link)
 
-
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
-
 
     all_store_data = []
     for link in link_list:
@@ -58,7 +53,6 @@ def fetch_data():
             soup = BeautifulSoup(r.content, 'html.parser')
             loc = soup.find('input', {'id': 'params'})
 
-
         street_address = loc['data-address']
         city = loc['data-city']
         state = loc['data-state'].title()
@@ -67,7 +61,6 @@ def fetch_data():
         longit = loc['data-lng']
         location_name = loc['data-neighborhood']
 
-        
         phone_number = loc['data-phone']
         
         hours = ''
@@ -83,17 +76,7 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        
         all_store_data.append(store_data)
-
-        
-            
-            
-
-        
-        
-
-
 
     driver.quit()
     return all_store_data

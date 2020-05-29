@@ -3,9 +3,6 @@ import os
 from sgselenium import SgSelenium
 import json
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -24,7 +21,6 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
 def addy_ext_can(addy):
     address = addy.split(',')
     city = address[0]
@@ -32,8 +28,6 @@ def addy_ext_can(addy):
     state = state_zip[0]
     zip_code = state_zip[1] + ' ' + state_zip[2]
     return city, state, zip_code
-
-
 
 def fetch_data():
     locator_domain = 'https://fullypromoted.com/'
@@ -48,7 +42,6 @@ def fetch_data():
     link_list = []
     for loc in locs:
         link_list.append(loc.find_element_by_css_selector('a').get_attribute('href'))
-
 
     ## canada locs
     ## they dont have individual pages for canada locs
@@ -96,8 +89,6 @@ def fetch_data():
         location_type = '<MISSING>'
 
         hours = driver.find_element_by_css_selector('tbody').text.replace('\n', ' ')
-
-
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

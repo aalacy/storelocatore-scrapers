@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 import json
 import sgzip 
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -67,7 +65,6 @@ def fetch_data():
             phone_number = loc['phoneAreaCode'] + ' ' + loc['phone']
             phone_number = phone_number.replace('+1', '').strip()
             
-            
             hours = ''
             
             hours_soup = loc['storeHoursHTML']
@@ -79,7 +76,6 @@ def fetch_data():
             for i, d in enumerate(days_li):
                 hours += days_li[i].text + ' ' + hours_li[i].text + ' '
                 
-
             store_number = '<MISSING>'
             location_type = '<MISSING>'
             page_url = '<MISSING>'
@@ -87,14 +83,10 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-            
             all_store_data.append(store_data)
         
-    
         search.max_distance_update(MAX_DISTANCE)
         coord = search.next_coord()  
-
-
 
     return all_store_data
 

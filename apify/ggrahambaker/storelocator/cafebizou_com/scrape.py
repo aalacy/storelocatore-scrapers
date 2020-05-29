@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 import time
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -23,9 +21,6 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
-
-
 def fetch_data():
     locator_domain = 'https://www.cafebizou.com/'
     ext = 'location/agoura-hills/'
@@ -34,7 +29,6 @@ def fetch_data():
     driver.get(locator_domain + ext)
     driver.execute_script("window.scrollTo(0, 1000)")
     time.sleep(10)
-
 
     main = driver.find_element_by_css_selector('section#intro').text.split('\n')
     all_store_data = []

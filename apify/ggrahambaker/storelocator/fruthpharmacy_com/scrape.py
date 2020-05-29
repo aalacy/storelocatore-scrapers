@@ -4,9 +4,6 @@ from sgselenium import SgSelenium
 from selenium.webdriver.support.ui import Select
 import time
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -30,7 +27,6 @@ def fetch_data():
     select.select_by_value('500')
     time.sleep(2)
 
-
     states = ['Kentucky', 'virginia', 'west virginia']
     all_store_data = []
     dup_tracker = set()
@@ -38,7 +34,6 @@ def fetch_data():
 
         addy_input = driver.find_element_by_css_selector('input#addressInput')
         addy_input.send_keys(state)
-
 
         driver.find_element_by_id('addressSubmit').click()
 

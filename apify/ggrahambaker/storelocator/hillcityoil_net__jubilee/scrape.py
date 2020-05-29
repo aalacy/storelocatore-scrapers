@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -12,7 +11,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext(addy):
     addy = addy.split(',')
@@ -30,9 +28,7 @@ def fetch_data():
     ext = '/stores.htm'
     r = session.get(locator_domain + ext, headers = HEADERS)
 
-
     soup = BeautifulSoup(r.content, 'html.parser')
-
 
     rows = soup.find('p').find_all('tr')[1:]
     all_store_data = []
@@ -52,7 +48,6 @@ def fetch_data():
         if len(phone_number.split('(')) > 1:
             phone_number = phone_number.split('P')[0]        
         
-        
         country_code = "US"
         location_type = '<MISSING>'
         lat = '<MISSING>'
@@ -62,10 +57,7 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
-
-
 
     return all_store_data
 

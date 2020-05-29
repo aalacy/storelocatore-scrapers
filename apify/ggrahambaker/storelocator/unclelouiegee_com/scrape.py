@@ -4,9 +4,6 @@ from sgselenium import SgSelenium
 import re
 import usaddress
 
-
-
-
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
 
@@ -41,8 +38,6 @@ def parse_address(addy_string):
         zip_code = '<MISSING>'
 
     return street_address, city, state, zip_code
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -103,7 +98,6 @@ def fetch_data():
                 if not get_more_info:
                     street_address, city, state, zip_code = parse_address(addy)
 
-
                 phone_number = ''
                 cont = conts[i].text.split('\n')
                 for c in cont:
@@ -129,7 +123,6 @@ def fetch_data():
                                     if len(codes) == 1:
                                         street_address, city, state, zip_code = parse_address(v.text)
 
-
             if phone_number == '':
                 phone_number = '<MISSING>'
             location_name = '<MISSING>'
@@ -143,10 +136,7 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-            
-         
             all_store_data.append(store_data)
-        
         
         next_span = driver.find_element_by_css_selector('span.next')
         a_tags = next_span.find_elements_by_css_selector('a')
@@ -157,9 +147,6 @@ def fetch_data():
         else:
             not_done = False
         
-        
-
-
     driver.quit()
     return all_store_data
 

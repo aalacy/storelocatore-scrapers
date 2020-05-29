@@ -40,7 +40,6 @@ def fetch_data():
             page_url = locator_domain[:-1] + links[i]['href']
             #street_address = street_addresses[i].text
             
-
             info = json.loads(loc.text)
             
             location_name = info['name']
@@ -57,14 +56,12 @@ def fetch_data():
                 else:
                     street_address = street_addy[1].strip()
 
-
             city = addy['addressLocality']
             state = addy['addressRegion']
             zip_code = addy['postalCode']
             coords = info['geo']
             lat = coords['latitude']
             longit = coords['longitude']
-            
             
             country_code = 'US'
             store_number = '<MISSING>'
@@ -84,11 +81,7 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-            
-
             all_store_data.append(store_data)
-
-
 
     return all_store_data
 

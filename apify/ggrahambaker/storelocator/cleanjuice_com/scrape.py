@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 import re
 
-
-
 def addy_ext(addy):
     address = addy.split(',')
     if len(address) == 1:
@@ -16,7 +14,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -82,18 +79,14 @@ def fetch_data():
                 else:
                     city, state, zip_code = addy_ext(content[3])
 
-                
                 if 'COMING' in phone_number:
                     phone_number = '<MISSING>'
-
-                
 
                 hours_arr = content[5:]
                 hours = ''
                 for ele in hours_arr:
                     hours += ele + ' '
                 hours = hours.strip()
-
 
                 country_code = 'US'
                 store_number = '<MISSING>'

@@ -68,24 +68,17 @@ def fetch_data():
             hours += full_loc['THURSDAY_HOURS_FORMATTED'] + ' ' + full_loc['FRIDAY_HOURS_FORMATTED'] + ' ' + full_loc['SATURDAY_HOURS_FORMATTED'] + ' ' 
             hours += full_loc['SUNDAY_HOURS_FORMATTED']
             
-            
             page_url = '<MISSING>'
             #'https://www.potterybarn.com/stores/' + country_code.lower() + '/' + state.lower() + '/' + city.lower().replace(' ', '-') + '-' + location_name.strip().lower().replace(' ', '-')
             #print(page_url)
             
-            
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
- 
             all_store_data.append(store_data)
 
-        
-        
         search.max_distance_update(MAX_DISTANCE)
         coord = search.next_coord()  
-
-
 
     return all_store_data
 

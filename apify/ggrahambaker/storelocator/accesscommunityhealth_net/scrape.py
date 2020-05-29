@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -36,7 +35,6 @@ def fetch_data():
         
         h_days = soup.find('div', {'class': 'location-hours'})
         
-        
         if h_days == None:
             hours = '<MISSING>'
         else:
@@ -45,7 +43,6 @@ def fetch_data():
             for h in h_days:
                 hours += h.text + ' '
 
-        
         street_address = soup.find('div', {'itemprop': 'streetAddress'}).text
         if 'closed' in street_address:
             continue
@@ -70,17 +67,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
         
-        
-
-        
-
-
-
-
-
-
-
-
     return all_store_data
 
 def scrape():

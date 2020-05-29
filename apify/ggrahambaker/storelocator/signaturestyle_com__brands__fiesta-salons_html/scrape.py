@@ -14,9 +14,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-
-
 def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
@@ -108,7 +105,6 @@ def fetch_data():
                 
             phone_number = loc['phonenumber']
                 
-            
             hours_obj = loc['store_hours']
             hours = ''
             for part in hours_obj:
@@ -117,7 +113,6 @@ def fetch_data():
                 
                 hours += day + ' ' + hour_range + ' '            
             
-
             if hours == '':
                 hours = '<MISSING>'
             
@@ -126,18 +121,14 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-            
             all_store_data.append(store_data)
             
-
         if len(res_json) == 0:
             search.max_distance_update(MAX_DISTANCE)
         else:
             search.max_count_update(result_coords)
         
         coord = search.next_coord()    
-
-
 
     return all_store_data
 

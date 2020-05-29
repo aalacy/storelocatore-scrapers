@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +12,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_extractor(src):
     arr = src.split(',')
     city = arr[0]
@@ -24,8 +20,6 @@ def addy_extractor(src):
     zip_code = prov_zip[1].strip()
 
     return city, state, zip_code
-
-
 
 def fetch_data():
     locator_domain = 'https://www.ycmc.com/'
@@ -38,7 +32,6 @@ def fetch_data():
     pop_up = driver.find_element_by_xpath("//a[@title='Close']")
     driver.execute_script("arguments[0].click();", pop_up)
 
-
     divs = driver.find_elements_by_css_selector('div.ycmc_store_detail')
 
     all_store_data = []
@@ -46,16 +39,13 @@ def fetch_data():
 
         ps = div.find_elements_by_css_selector('p')
 
-
         location_name = ps[0].text
 
         addy = ps[1].text.split('\n')
 
-
         street_address = addy[0]
         city, state, zip_code = addy_extractor(addy[1])
         phone_number = addy[2].replace('Phone:', '').strip()
-
 
         hour_split = ps[2].text.split('\n')
         hours = hour_split[1] + ' ' + hour_split[2]

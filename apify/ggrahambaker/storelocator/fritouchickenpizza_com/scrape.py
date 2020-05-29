@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -33,7 +30,6 @@ def fetch_data():
     zip_code = '<MISSING>'
     phone_number = cont[6]
     hours = cont[9] + ' ' + cont[10]
-
 
     store_number = '<MISSING>'
     location_type = '<MISSING>'

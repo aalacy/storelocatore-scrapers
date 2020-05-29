@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 
-
 session = SgRequests()
 
 def write_output(data):
@@ -16,7 +15,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 # helper for getting address
 def addy_extractor(src):
     arr = src.split(',')
@@ -28,7 +26,6 @@ def addy_extractor(src):
 
     return city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'http://rooflinesupply.com/'
     to_scrape = locator_domain
@@ -39,11 +36,7 @@ def fetch_data():
     pattern = re.compile('(([\-\+]{0,1}\d[\d\.\,]*[\.\,][\d\.\,]*\d+)\,\s+([\-\+]{0,1}\d[\d\.\,]*[\.\,][\d\.\,]*\d+))')
     pair_pattern = re.compile('((\w+)=\"([^\"]+)\")')
 
-
-
-
     script = soup.find('script', text=pattern)
-
 
     results_locs = re.findall(pair_pattern, script.text)
     loc_arr = []
@@ -56,8 +49,6 @@ def fetch_data():
     results = re.findall(pattern, script.text)
     for i, loc in enumerate(loc_arr):
         loc.append(results[i][0])
-
-
 
     stores = soup.find_all('div', {'class': 'locations'})
     all_store_data = []
@@ -105,10 +96,8 @@ def fetch_data():
 
     return all_store_data
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

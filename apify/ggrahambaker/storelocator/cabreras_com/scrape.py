@@ -2,9 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +12,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -23,9 +19,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
-
-
 
 def fetch_data():
     locator_domain = 'https://www.cabreras.com/'
@@ -65,7 +58,6 @@ def fetch_data():
         phone_number = contents[4].text
 
         hours = contents[8].text + ' ' + contents[9].text + ' ' + contents[10].text + ' ' + contents[11].text
-
 
         country_code = 'US'
         store_number = '<MISSING>'

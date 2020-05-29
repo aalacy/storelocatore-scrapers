@@ -6,10 +6,6 @@ from selenium.webdriver.common.keys import Keys
 import time
 import json
 
-
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -28,7 +24,6 @@ def fetch_data():
     driver.get(locator_domain + ext)
     element = driver.find_element_by_css_selector('button.age-continue')
     driver.execute_script("arguments[0].click();", element)
-
 
     main = driver.find_element_by_css_selector('div.sitemap-list')
     hrefs = main.find_elements_by_css_selector('a')
@@ -94,7 +89,6 @@ def fetch_data():
 
                 country_code = 'US'
 
-
         coords = loc_json['geo']
         lat = coords['latitude']
         longit = coords['longitude']
@@ -110,8 +104,6 @@ def fetch_data():
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
-
 
     driver.quit()
     return all_store_data

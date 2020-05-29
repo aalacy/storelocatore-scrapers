@@ -4,8 +4,6 @@ from sgselenium import SgSelenium
 import re
 import time
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -24,7 +22,6 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'https://www.511tactical.com/'
     ext = 'store-locator'
@@ -36,8 +33,6 @@ def fetch_data():
     element = driver.find_elements_by_xpath('//button[@data-click="close"]')
     if len(element) != 0:
         driver.execute_script("arguments[0].click();", element[0])
-
-
 
     stores = driver.find_elements_by_css_selector('div.info-location')
     # 58

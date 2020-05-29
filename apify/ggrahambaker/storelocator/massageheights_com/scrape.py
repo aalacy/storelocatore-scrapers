@@ -3,7 +3,6 @@ import os
 from sgrequests import SgRequests
 import json
 
-
 session = SgRequests()
 
 def write_output(data):
@@ -16,8 +15,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-
 def fetch_data():
     locator_domain = 'https://www.massageheights.com'
     ext = '/locations/?CallAjax=GetLocations'
@@ -27,7 +24,6 @@ def fetch_data():
 
     locs = json.loads(page.content)
     all_store_data = []
-
 
     for a in locs:
         location_name = a['FranchiseLocationName']
@@ -60,7 +56,6 @@ def fetch_data():
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         
-
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)

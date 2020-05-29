@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 import time
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext(addy):
     address = addy.split(',')
@@ -32,14 +29,12 @@ def addy_ext(addy):
             zip_code = '0' + zip_code
     return city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'https://www.patelbros.com/'
     ext = 'locations'
 
     driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
-
 
     all_store_data = []
     done = False
@@ -50,29 +45,21 @@ def fetch_data():
             if loc.text == '':
                 continue
             
-         
             addy = loc.find_element_by_css_selector('div.store-address').text.split('\n')
             if '1357 Oaktree Rd' in addy[0]:
                 done = True
             
-            
             street_address = addy[0]
             city, state, zip_code = addy_ext(addy[1])
-            
-
             
             phone_number = loc.find_element_by_css_selector('div.store-tel').text
             if phone_number == '----':
                 phone_number = '<MISSING>'
                 
-        
             hours = loc.find_element_by_css_selector('div.store-operating-hours').text.replace('\n', ' ').strip()
             if hours == '':
                 hours = '<MISSING>'
 
-            
-            
-            
             goog_href = loc.find_element_by_css_selector('a.infobox__row.infobox__cta.ssflinks').get_attribute('href')
             
             start_idx = goog_href.find('(') + 1
@@ -83,9 +70,6 @@ def fetch_data():
             lat = coords[0]
             longit = coords[1]
 
-            
-            
-            
             location_name = '<MISSING>'
             country_code = 'US'
             store_number = '<MISSING>'
@@ -99,13 +83,11 @@ def fetch_data():
             #print()
             all_store_data.append(store_data)
 
-
         if done:
             break
         element = driver.find_element_by_css_selector('a#ssf_next_link')
         driver.execute_script("arguments[0].click();", element)
         time.sleep(2)
-
 
     driver.quit()
     return all_store_data

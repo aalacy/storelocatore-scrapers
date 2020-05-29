@@ -3,9 +3,6 @@ from sgselenium import SgSelenium
 import json
 from bs4 import BeautifulSoup
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -32,15 +29,12 @@ def fetch_data():
         url = 'http://alliedbuilding.com/About/AlliedBranches?stval=' + state.text
         link_list.append(url)
 
-
-
     all_store_data = []
     for link in link_list:
         driver.get(link)
         driver.implicitly_wait(5)
         
         locs = driver.find_elements_by_css_selector('div.BranchBizCard')
-        
         
         for loc in locs:
             loc_html = loc.get_attribute('innerHTML')
@@ -72,12 +66,8 @@ def fetch_data():
                 else:
                     hours = '<MISSING>'
     
-            
-        
-                
             lat_tag = soup.find('meta', {'itemprop': 'latitude'})
             longit_tag = soup.find('meta', {'itemprop': 'longitude'})
-
 
             try:
                 lat = lat_tag['content']
@@ -89,19 +79,15 @@ def fetch_data():
             except:
                 longit = '<MISSING>'
 
-
             country_code = 'US'
             store_number = '<MISSING>'
             location_type = '<MISSING>'
             
-
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
             all_store_data.append(store_data)
         
-
-
     return all_store_data
 
 def scrape():

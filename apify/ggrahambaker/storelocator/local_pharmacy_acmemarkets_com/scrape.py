@@ -5,11 +5,7 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 import json
 
-
-
 session = SgRequests()
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,7 +20,6 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://local.pharmacy.acmemarkets.com/'
 
-
     driver = SgSelenium().chrome()
     driver.get(locator_domain)
 
@@ -32,7 +27,6 @@ def fetch_data():
     state_list = []
     for state in states:
         state_list.append(state.get_attribute('href'))
-
 
     city_list = []
     loc_list = []
@@ -48,9 +42,6 @@ def fetch_data():
             else:
                 city_list.append(city.get_attribute('href'))
                 
-                
-
-
     for city in city_list:
         driver.get(city)
         driver.implicitly_wait(10)
@@ -59,9 +50,6 @@ def fetch_data():
             print(loc.get_attribute('href'))
             loc_list.append(loc.get_attribute('href'))
         
-
-
-
     all_store_data = []
 
     for i, link in enumerate(loc_list):
@@ -80,14 +68,12 @@ def fetch_data():
         
         city = soup.find('meta', itemprop='addressLocality')['content']
         
-        
         state = soup.find('abbr', itemprop="addressRegion").text
         
         zip_code = soup.find('span', itemprop="postalCode").text
     
         phone_number = soup.find('span', itemprop="telephone").text
     
-        
         hours_json = json.loads(soup.find('div', {'class': 'c-location-hours-details-wrapper'})['data-days'])
     
         hours = ''
@@ -101,20 +87,15 @@ def fetch_data():
             
             hours += day + ' ' + str(start) + ' : ' + str(end) + ' '
             
-        
-        
         country_code = 'US'
 
         location_type = '<MISSING>'
         page_url = link
         store_number = '<MISSING>'
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                             store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-
-        
 
     driver.quit()
     return all_store_data

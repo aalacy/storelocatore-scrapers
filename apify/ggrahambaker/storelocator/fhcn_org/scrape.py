@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -12,7 +11,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext(addy):
     addy = addy.split(',')
@@ -27,7 +25,6 @@ def addy_ext(addy):
         state = state_zip[0]
         zip_code = state_zip[1]
     return city, state, zip_code
-
 
 def fetch_data():
     session = SgRequests()
@@ -52,7 +49,6 @@ def fetch_data():
         if 'Mobile' in location_name:
             continue
         
-        
         addy_raw = loc.find('div', {'class': 'address-wrapper'}).prettify().split('\n')
         addy = [a.strip() for a in addy_raw if '<' not in a]
 
@@ -76,8 +72,6 @@ def fetch_data():
             street_address = addy[1]
             city, state, zip_code = addy_ext(addy[2])
         
-        
-        
         hours_raw = loc.find('div', {'class': 'hours-wrapper'}).find('div').prettify().split('\n')
         hours_arr = [h for h in hours_raw if '<' not in h]
         hours = ''
@@ -87,7 +81,6 @@ def fetch_data():
             hours += h.strip().replace('&amp;', '&') + ' '
         
         hours = hours.strip()
-        
         
         phone_number = loc.find('div', {'class': 'phone-wrapper'}).find('span').text
 
@@ -101,7 +94,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
 
     return all_store_data
 

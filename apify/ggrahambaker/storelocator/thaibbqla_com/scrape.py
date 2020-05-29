@@ -3,9 +3,6 @@ import os
 from sgselenium import SgSelenium
 import usaddress
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
@@ -50,9 +46,7 @@ def clean_arr(arr):
 
         to_ret.append(a)
 
-
     return to_ret
-
 
 def fetch_data():
     locator_domain = 'http://thaibbqla.com/'
@@ -126,13 +120,11 @@ def fetch_data():
 
                 spin += 1
 
-
         else:
             if 'CATERING and PARTY TRAYS' in cont[0]:
                 break
             if len(cont) < 2:
                 continue
-
 
             location_name = cont[0]
             if location_name in duplicate_tracker:
@@ -151,8 +143,6 @@ def fetch_data():
                 street_address, city, state, zip_code = parse_address(cont[1])
                 cut_idx = cont[2].find('FAX:')
                 phone_number = cont[2][:cut_idx].replace('TEL:', '').strip()
-
-
 
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                           store_number, phone_number, location_type, lat, longit, hours]

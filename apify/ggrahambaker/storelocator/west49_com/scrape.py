@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 import time
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext(addy):
     address = addy.split(',')
@@ -28,7 +25,6 @@ def addy_ext(addy):
         state = state_zip[0]
 
     return city, state, zip_code
-
 
 def fetch_data():
     locator_domain = 'https://west49.com/'
@@ -68,13 +64,11 @@ def fetch_data():
             for h in cont[5 + off:]:
                 hours += h + ' '
 
-
             if 'Trois Rivieres' in location_name:
                 if not switch:
                     switch = True
                 else:
                     continue
-
 
             store_number = '<MISSING>'
 

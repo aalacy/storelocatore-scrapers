@@ -23,9 +23,7 @@ def fetch_data():
 
     r = session.get(url, headers = HEADERS)
 
-
     store_json = json.loads(r.content)
-
 
     all_store_data = []
     for store in store_json['items']:
@@ -43,7 +41,6 @@ def fetch_data():
         page_url = store['website']
         lat = store['lat']
         longit = store['lng']
-        
         
         r = session.get(page_url, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
@@ -64,15 +61,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
         
-
-
-
-
-
-
     return all_store_data
 
 def scrape():

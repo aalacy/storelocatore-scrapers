@@ -13,7 +13,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     com_split = addy.split(',')
     city = com_split[0]
@@ -22,7 +21,6 @@ def addy_ext(addy):
     zip_code = state_zip[1]
 
     return city, state, zip_code
-
 
 def fetch_data():
     session = SgRequests()
@@ -69,12 +67,8 @@ def fetch_data():
                 else:
                     phone_number = cont.text.split('\n')[1]
                 
-                
             if 'Hours' in cont.text:
                 hours = str(cont.find('p')).split('</strong>')[1].replace('<br/>', ' ').replace('</p>', '')
-            
-            
-            
             
         map_div = json.loads(soup.find('div', {'class': 'map-block'})['data-block-json'])
         lat = map_div['location']['markerLat']
@@ -85,19 +79,12 @@ def fetch_data():
         location_type = '<MISSING>'
         page_url = link
 
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)        
         print('-----')
         
-
-
-
-
-
-
     return all_store_data
 
 def scrape():

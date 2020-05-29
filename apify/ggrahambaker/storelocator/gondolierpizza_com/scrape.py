@@ -5,8 +5,6 @@ from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 import usaddress
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -16,8 +14,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
 
 def add_to_arr(street_address, city, state, zip_code, phone_number):
     locator_domain = 'https://gondolierpizza.com/'
@@ -32,8 +28,6 @@ def add_to_arr(street_address, city, state, zip_code, phone_number):
 
     return [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                   store_number, phone_number, location_type, lat, longit, hours, page_url]
-
-
 
 def parse_addy(addy):
     parsed_add = usaddress.tag(addy)[0]
@@ -62,7 +56,6 @@ def parse_addy(addy):
     
     return street_address, city, state, zip_code
     
-                      
 def fetch_data():
     locator_domain = 'https://gondolierpizza.com/'
     ext = 'gondolier-pizza-locations/'
@@ -93,12 +86,6 @@ def fetch_data():
             else:
                 continue
             
-            
-            
-            
-
-
-
     driver.quit()
     return all_store_data
 

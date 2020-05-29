@@ -14,8 +14,6 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -25,7 +23,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def hours_extract(addy):
     # returns hours string
@@ -49,7 +46,6 @@ def hours_extract(addy):
             hours_string += ele + ' '
 
     return hours_string.replace('Hours:', '').replace('Regular', '').strip()
-
 
 def fetch_data():
     locator_domain = 'http://www.jgumbos.com/'
@@ -126,7 +122,6 @@ def fetch_data():
                         if m.group():
                             to_break = True
 
-
                 parsed_add = usaddress.tag(addy_string)[0]
 
                 street_address = ''
@@ -156,9 +151,7 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                           store_number, phone_number, location_type, lat, longit, hours]
 
-
             all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

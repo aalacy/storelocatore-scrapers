@@ -4,8 +4,6 @@ from sgselenium import SgSelenium
 from selenium.common.exceptions import NoAlertPresentException
 import time
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +13,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext(addy):
     address = addy.split(',')
@@ -30,8 +27,6 @@ def addy_ext(addy):
         state = state_zip[0]
         zip_code = state_zip[1]
     return city, state, zip_code
-
-
 
 def fetch_data():
     locator_domain = 'https://www.xsportfitness.com/'
@@ -50,8 +45,6 @@ def fetch_data():
         except NoAlertPresentException:
             time.sleep(5)
 
-
-
     locs = driver.find_element_by_css_selector('ul.list').find_elements_by_css_selector('li')
     link_list = []
     for l in locs:
@@ -69,7 +62,6 @@ def fetch_data():
         cont = sub_main.find_element_by_css_selector('div.large-3.columns')
         location_name = cont.find_element_by_css_selector('h1').text.split('\n')[0]
 
-
         addy_and_phone = cont.find_elements_by_css_selector('p')
 
         addy = addy_and_phone[0].text.split('\n')
@@ -85,16 +77,12 @@ def fetch_data():
             street_address = addy[0]
             city, state, zip_code = addy_ext(addy[1])
 
-
-
         phone_number = addy_and_phone[1].text
-
 
         hours = cont.find_element_by_css_selector('h5').text
 
         if 'OPEN 24/7' not in hours:
             hours = addy_and_phone[2].text.replace('\n', ' ')
-
 
         country_code = 'US'
         store_number = '<MISSING>'

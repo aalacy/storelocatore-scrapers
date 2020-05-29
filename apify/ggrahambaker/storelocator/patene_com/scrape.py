@@ -3,8 +3,6 @@ import os
 from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext(addy):
     address = addy.split(',')
@@ -30,7 +27,6 @@ def addy_ext(addy):
         zip_code = state_zip[1] + ' ' + state_zip[2]
 
     return city, state, zip_code
-
 
 def fetch_data():
     locator_domain = 'https://www.patene.com/'
@@ -77,8 +73,6 @@ def fetch_data():
             else:
                 lat = '<MISSING>'
                 longit = '<MISSING>'
-
-
 
         country_code = 'CA'
         store_number = '<MISSING>'

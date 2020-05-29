@@ -31,7 +31,6 @@ def fetch_data():
         if loc['isSubDealer']:
             continue
             
-        
         location_name = loc['dealerLocationName'].strip()
         if location_name not in dup_tracker:
             dup_tracker.add(location_name)
@@ -52,11 +51,8 @@ def fetch_data():
         else:
             phone_number = loc['locationPhone']
 
-        
         location_type = loc['type']
 
-        
-        
         lat = loc['latitude']
         longit = loc['longitude']
         
@@ -69,16 +65,10 @@ def fetch_data():
         
         page_url = '<MISSING>'
 
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
-
-
-
-
 
     return all_store_data
 

@@ -3,10 +3,6 @@ import os
 from sgselenium import SgSelenium
 import usaddress
 
-
-
-
-
 def addy_parser(addy):
     parsed_add = usaddress.tag(addy)[0]
 
@@ -43,7 +39,6 @@ def addy_parser(addy):
     
     return street_address, city, state, zip_code
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -64,7 +59,6 @@ def fetch_data():
     all_store_data = []
     for loc in locs:
         loc_div = loc.find_element_by_xpath('..')
-        
         
         if 'Mon–' in loc_div.text:
             cont = loc_div.text.split('\n')
@@ -95,7 +89,6 @@ def fetch_data():
                     hours = cont[3]
                     location_type = cont[4]
 
-            
             elif len(cont) == 3:
                 location_name = cont[0]
                 street_address, city, state, zip_code = addy_parser(cont[1])
@@ -130,11 +123,6 @@ def fetch_data():
                             store_number, phone_number, location_type, lat, longit, hours, page_url]
             all_store_data.append(store_data)
         
-        
-        
-        
-
-
     driver.quit()
     return all_store_data
 

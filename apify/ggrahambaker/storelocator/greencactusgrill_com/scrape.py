@@ -2,7 +2,6 @@ import csv
 import os
 from sgselenium import SgSelenium
 
-
 def addy_ext(addy):
     addy = addy.split(',')
     city = addy[0]
@@ -10,8 +9,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,7 +28,6 @@ def fetch_data():
     driver.get(locator_domain + ext)
     driver.implicitly_wait(20)
 
-
     loc_links = driver.find_elements_by_xpath('//a[contains(text(),"Green Cactus Grill")]')
 
     link_list = []
@@ -40,7 +36,6 @@ def fetch_data():
         if url not in link_list:
             link_list.append(url)
     
-
     all_store_data = []
     for link in link_list:
         driver.get(link)
@@ -53,7 +48,6 @@ def fetch_data():
         
         city, state, zip_code = addy_ext(cont[2])
         phone_number = cont[3]
-        
         
         google_href = driver.find_element_by_xpath('//a[contains(@href,"www.google.com/maps/")]').get_attribute('href')
         start = google_href.find('?q=')
@@ -73,9 +67,6 @@ def fetch_data():
         
         #"https://www.google.com/maps/?q=40.8885994,-73.37299347" 
         
-        
-
-
     driver.quit()
     return all_store_data
 

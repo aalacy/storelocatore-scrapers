@@ -5,7 +5,6 @@ import json
 import usaddress
 import re
 
-
 def addy_parser(addy):
     parsed_add = usaddress.tag(addy)[0]
 
@@ -33,10 +32,6 @@ def addy_parser(addy):
     
     return street_address, city, state, zip_code
 
-
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -53,7 +48,6 @@ def fetch_data():
     driver = SgSelenium().chrome()
     driver.get(locator_domain)
 
-
     link_list = []
     states = driver.find_elements_by_css_selector('div.fusion-builder-row.fusion-builder-row-inner.fusion-row' )
     for state in states:
@@ -62,8 +56,6 @@ def fetch_data():
             link = loc.find_elements_by_css_selector('a')
             if len(link) > 0:
                 link_list.append(link[0].get_attribute('href'))
-
-
 
     all_store_data = []
     for link in link_list:
@@ -98,14 +90,11 @@ def fetch_data():
                 phone_number = num.group().strip()
                 break
 
-        
-        
         # hours_link
         driver.get(link + hours_link)
         driver.implicitly_wait(10)
         
         hours = driver.find_element_by_css_selector('div.fusion-text').text.replace('\n', ' ')
-        
         
         country_code = 'US'
 
@@ -116,13 +105,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-
-        
-
-        
-        
-        
-
 
     driver.quit()
     return all_store_data

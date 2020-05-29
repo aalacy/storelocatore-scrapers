@@ -3,9 +3,6 @@ import os
 from sgselenium import SgSelenium
 import json
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -24,12 +21,10 @@ def fetch_data():
 
     url = 'https://www.harmondiscount.com/api/commerce/storefront/locationUsageTypes/SP/locations/?startIndex=0&pageSize=500'
 
-
     driver.get(url)
     driver.implicitly_wait(10)
 
     locs = json.loads(driver.find_element_by_css_selector('body').text)['items']
-
 
     all_store_data = []
     for loc in locs:
@@ -65,20 +60,15 @@ def fetch_data():
                     
                 hours += day + ' ' + val['label'] + ' '
                 
-            
             store_number = '<MISSING>'
             location_type = '<MISSING>'
             page_url = '<MISSING>'
             
-            
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         
-
             all_store_data.append(store_data)
             
-            
-
     driver.quit()
     return all_store_data
 

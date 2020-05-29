@@ -7,9 +7,6 @@ import time
 from bs4 import BeautifulSoup
 import usaddress
 
-
-
-
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
 
@@ -42,9 +39,6 @@ def parse_address(addy_string):
         zip_code = parsed_add['ZipCode']
 
     return street_address, city, state, zip_code
-
-
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -88,7 +82,6 @@ def fetch_data():
                 info = str(line.strip()).replace('var locations = ', '').replace(';', '')
                 j_loc = json.loads(info)
 
-    
         for loc in j_loc:
             lat = loc[2]
             longit = loc[3]
@@ -108,7 +101,6 @@ def fetch_data():
 
             if ',' in city:
                 city = city.split(',')[1]
-
 
             phone_number = rows[2].find_all('td')[1].text.strip()
             

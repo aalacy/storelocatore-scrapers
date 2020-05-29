@@ -4,8 +4,6 @@ from sgselenium import SgSelenium
 
 from bs4 import BeautifulSoup
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -28,7 +26,6 @@ def fetch_data():
     driver.quit()
 
     soup = BeautifulSoup(page_source, 'html.parser')
-
 
     locs = soup.find_all('div', {'class': 'box-wrap'})
 
@@ -55,13 +52,10 @@ def fetch_data():
                 else:
                     nice = 0
                     
-                    
-                
             else:
                 end = google_link.find(',17z')
                 coords = google_link[start + 1:end].split(',')[:2]
 
-                
             pop_up_link = links[1]['href'].replace('#', '').strip()
 
         if pop_up_link not in pop_up_tracker:
@@ -69,7 +63,6 @@ def fetch_data():
         else:
             continue
 
- 
         pop = soup.find('div', {'id': pop_up_link})
         location_name = pop.find('h3').text
         tds = pop.find_all('td')
@@ -84,8 +77,6 @@ def fetch_data():
             if 'HOURS' in td.text:
                 hours = td.text.replace('HOURS OF OPERATION', '')
                 hours = ' '.join(hours.split())  
-                
-                
                 
         if hours == '':
             hours = '<MISSING>'
@@ -170,8 +161,6 @@ def fetch_data():
             if '840 Stelzer Rd' in addy:
                 addy = '840 Stelzer Rd, Columbus, Ohio 43219'
             
-           
-
             addy = addy.split(',')
             if len(addy) > 1:
                 if len(addy) == 4:
@@ -222,7 +211,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
         
-
     return all_store_data
 
 def scrape():
