@@ -33,13 +33,14 @@ def fetch_data():
     country_code = "US"
     store_number = ""
     phone = ""
-    location_type = "bargaintown"
+    location_type = ""
     latitude = ""
     longitude = ""
-    hours = ""
+    hours_of_operation = ""
     page_url = "https://www.rosesdiscountstores.com/store-locator-index"
     for data in json_data:
         location_name = data['name']
+        location_type = data['name']
         addr = data['address'].split(",")
         if " US" == addr[-1]:
             del addr[-1]
@@ -72,6 +73,10 @@ def fetch_data():
             hours1 = data['hours']['hoursOfOperation']
             hours2 = "Monday"+" : "+hours1['mon']+", "+"Tueday"+" : "+hours1['tue']+", "+"Wednesday"+" : "+hours1['wed']+", "+"Thurseday"+" : "+hours1['thu']+", "+"Friday"+" : "+hours1['fri']+", "+"Saturday"+" : "+hours1['sat']+", "+"Sunday"+" : "+hours1['sun']
             hours_of_operation = hours2.replace("20","08").replace("21","09").replace("22","10").replace("19","07").replace("18","06").replace(":00-"," AM - ").replace(":00"," PM")
+        elif data["hours"] == "hrs_a4db656x":
+            hours_of_operation = "Monday : 09 AM - 06 PM, Tueday : 09 AM - 06 PM, Wednesday : 09 AM - 06 PM, Thurseday : 09 AM - 06 PM, Friday : 09 AM - 06 PM, Saturday : 09 AM - 06 PM, Sunday : 12 AM - 06 PM"
+        elif data["hours"] == "hrs_ywfef43p":
+            hours_of_operation = "Monday : 09 AM - 09 PM, Tueday : 09 AM - 09 PM, Wednesday : 09 AM - 09 PM, Thurseday : 09 AM - 09 PM, Friday : 09 AM - 09 PM, Saturday : 09 AM - 09 PM, Sunday : 10 AM - 08 PM"
         else:
             hours_of_operation = "<MISSING>"
         store = []
