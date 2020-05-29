@@ -16,12 +16,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def parse_geo(url):
     lon = re.findall(r'll=[-?\d\.]*\,([-?\d\.]*)', url)[0]
     lat = re.findall(r'll=(-?[\d\.]*)', url)[0]
     return lat, lon
-
 
 def fetch_data():
     # Your scraper here
@@ -205,10 +203,6 @@ def fetch_data():
                 else:
                     long.append(lo)
 
-
-
-
-
     """
         divs = driver.find_elements_by_xpath("//div[@class='Store-headerDetails']")
         #diva= driver.find_element_by_xpath('//div[@class="StoreLocator-resultsContainer StoreLocator-resultsContainer--fullHeight"]')
@@ -223,8 +217,6 @@ def fetch_data():
 
             name = div.find_element_by_class_name("Store-name").text
             locs.append(name)
-
-
 
             ad = div.find_element_by_class_name("Store-address").text
             #ad=ad.split(",")
@@ -280,8 +272,6 @@ def fetch_data():
 
                 countries.append("US")
 
-
-
             if c == "":
                 cities.append("<MISSING>")
             else:
@@ -326,8 +316,6 @@ def fetch_data():
 
         all.append(row)
     return all
-
-
 
 def scrape():
     data = fetch_data()

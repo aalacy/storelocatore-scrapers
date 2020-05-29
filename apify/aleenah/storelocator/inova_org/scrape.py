@@ -3,8 +3,6 @@ from sgselenium import SgSelenium
 import re
 from bs4 import BeautifulSoup
 
-
-
 driver = SgSelenium().chrome()
 
 def write_output(data):
@@ -17,12 +15,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def parse_geo(url):
     lon = re.findall(r'll=[-?\d\.]*\,([-?\d\.]*)', url)[0]
     lat = re.findall(r'll=(-?[\d\.]*)', url)[0]
     return lat, lon
-
 
 def fetch_data():
     # Your scraper here
@@ -101,13 +97,8 @@ def fetch_data():
         else:
             timing.append("<MISSING>")
             
-        
         urls.append(div.find_element_by_tag_name("h2").find_element_by_tag_name("a").get_attribute("href"))
 
-
-
-
-    
     for url in urls:
         driver.get(url)
         div = driver.find_element_by_id("block-inova-content").find_element_by_class_name("content")
@@ -170,7 +161,6 @@ def fetch_data():
     idss=list.split('"indexExtra"')
     del idss[-1]
     print(len(idss))
-
 
     for tex in idss:
 
@@ -253,10 +243,6 @@ def fetch_data():
         if row not in all:
             all.append(row)
         
-        
-    
-
-
     return all
 
 def scrape():

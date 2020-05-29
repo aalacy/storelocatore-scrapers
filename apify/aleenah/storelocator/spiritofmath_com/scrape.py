@@ -4,7 +4,6 @@ import re
 #import reverse_geocoder
 #from slimit.parser import Parser
 
-
 driver = SgSelenium().chrome()
 
 def write_output(data):
@@ -17,12 +16,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def parse_geo(url):
     lon = re.findall(r'll=[-?\d\.]*\,([-?\d\.]*)', url)[0]
     lat = re.findall(r'll=(-?[\d\.]*)', url)[0]
     return lat, lon
-
 
 def fetch_data():
     # Your scraper here
@@ -126,8 +123,6 @@ def fetch_data():
         countries.append(reverse_geocoder.search(cord)[0]["cc"])
     """
 
-
-
     all = []
     for i in range(0, len(locs)):
         row = []
@@ -147,9 +142,6 @@ def fetch_data():
 
         all.append(row)
     return all
-
-
-
 
 def scrape():
     data = fetch_data()

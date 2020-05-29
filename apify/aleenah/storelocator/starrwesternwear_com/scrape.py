@@ -15,7 +15,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 session = SgRequests()
 all=[]
 def fetch_data():
@@ -63,7 +62,5 @@ def scrape():
         write_output(data)
 
 scrape()
-
-
 
 fetch_data()

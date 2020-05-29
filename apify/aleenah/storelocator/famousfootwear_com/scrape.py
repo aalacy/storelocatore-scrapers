@@ -85,7 +85,6 @@ def fetch_data():
             zips.append(z)
             #print(locs)
 
-
     all = []
     for i in range(0, len(locs)):
         row = []
@@ -111,6 +110,5 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

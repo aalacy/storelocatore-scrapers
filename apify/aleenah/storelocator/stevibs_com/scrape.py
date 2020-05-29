@@ -65,9 +65,6 @@ def fetch_data():
             long.append("<MISSING>")
         timing.append(soup.find('span', {'id':'single-sidebar'}).find_all('p')[2].text)
 
-
-
-
     all = []
     for i in range(0, len(locs)):
         row = []
@@ -89,10 +86,8 @@ def fetch_data():
         all.append(row)
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

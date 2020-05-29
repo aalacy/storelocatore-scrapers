@@ -19,7 +19,6 @@ def fetch_data():
 
     all=[]
 
-
     res= session.get("https://www.sunriseseniorliving.com/communities.aspx?zip=10001&radius=10000&cat=csb")
     soup = BeautifulSoup(res.text, 'html.parser')
     stores = soup.find_all('a', {'class': 'btn-primary--small-reverse'})
@@ -110,6 +109,5 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

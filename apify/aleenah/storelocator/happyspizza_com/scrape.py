@@ -83,7 +83,6 @@ def fetch_data():
         else:
             lat,long=re.findall(r'!1d[\d]+(-?\d{2}\.[\d]+)!2d(-?[\d\.]+)',iframes[0].get('src'))[0]
 
-
         all.append([
             "https://www.happyspizza.com",
             loc,

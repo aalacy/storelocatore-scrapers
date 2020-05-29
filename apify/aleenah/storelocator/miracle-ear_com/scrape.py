@@ -15,12 +15,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def parse_geo(url):
     lon = re.findall(r'destination=[-?\d\.]*\,([-?\d\.]*)', url)[0]
     lat = re.findall(r'destination=(-?[\d\.]*)', url)[0]
     return lat, lon
-
 
 def fetch_data():
     # Your scraper here
@@ -126,10 +124,8 @@ def fetch_data():
         all.append(row)
     return (all)
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

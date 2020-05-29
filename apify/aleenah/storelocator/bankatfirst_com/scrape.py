@@ -4,8 +4,6 @@ import requests
 import time
 import sgzip
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -16,9 +14,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
-
 
     # Your scraper here
     locs = []
@@ -61,8 +57,6 @@ def fetch_data():
         r = requests.post("https://bankatfirst.locatorsearch.com/GetItems.aspx", headers=headers,
                       data="lat="+str(lati)+"&lng="+str(longi)+"&searchby=FCS%7C")
     
-
-
         data=str(r.content)
         branches=data.split("</marker>")
         del branches[-1]
@@ -154,11 +148,9 @@ def fetch_data():
     unique_data = [list(x) for x in set(tuple(x) for x in all)]
     return unique_data
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()
 

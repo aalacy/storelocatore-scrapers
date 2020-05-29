@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -61,7 +60,6 @@ def fetch_data():
                 long.replace('\u200b',''),  # long
                 "<MISSING>",  # timing
                 url])
-
 
         try:
             url=soup.find('a', {'aria-label': 'Next'}).get('href')

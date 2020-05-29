@@ -2,8 +2,6 @@ import csv
 import re
 import requests
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -13,7 +11,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def fetch_data():
     # Your scraper here
@@ -81,7 +78,6 @@ def fetch_data():
             zips.append("<MISSING>")
             continue
 
-
         add=add[0].replace("US","")
         if "</div><div class=" in add:
             add=add.split("</div><div class=")[0].strip()
@@ -120,7 +116,6 @@ def fetch_data():
         states.append(s)
         street.append(st.replace(",","").strip())
 
-
     all = []
     for i in range(0, len(locs)):
         row = []
@@ -141,10 +136,8 @@ def fetch_data():
         all.append(row)
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

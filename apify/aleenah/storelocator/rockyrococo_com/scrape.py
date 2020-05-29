@@ -7,8 +7,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -18,7 +16,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def fetch_data():
     # Your scraper here
@@ -93,10 +90,8 @@ def fetch_data():
         time.sleep(1)
         tex=element.text
 
-
         tim = re.findall(r'Hours:(.*pm)',tex,re.DOTALL)[0].strip().replace("\n"," ")
         timing.append(tim)
-
 
     all = []
     for i in range(0, len(locs)):
@@ -119,10 +114,8 @@ def fetch_data():
         all.append(row)
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

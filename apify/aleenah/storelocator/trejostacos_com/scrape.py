@@ -15,7 +15,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 session = SgRequests()
 all=[]
 def fetch_data():
@@ -24,7 +23,6 @@ def fetch_data():
     res=session.get("https://www.yelp.com/search?find_desc=Trejos+Tacos&find_loc=Los+Angeles%2C+CA")
     soup = BeautifulSoup(res.text, 'html.parser')
     urls = soup.find_all('a', {'class': 'lemon--a__373c0__IEZFH link__373c0__1G70M link-color--inherit__373c0__3dzpk link-size--inherit__373c0__1VFlE'})
-
 
     for url in urls:
         if "Trejos" in url.text or "Trejo’s" in url.text:
@@ -85,6 +83,5 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

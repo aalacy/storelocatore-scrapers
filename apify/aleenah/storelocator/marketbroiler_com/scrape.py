@@ -4,8 +4,6 @@ import re
 from bs4 import BeautifulSoup
 import csv
 
-
-
 def parse_geo(url):
     lon = re.findall(r' ll=[-?\d\.]*\,([-?\d\.]*)', url)[0]
     lat = re.findall(r'll=(-?[\d\.]*) ', url)[0]

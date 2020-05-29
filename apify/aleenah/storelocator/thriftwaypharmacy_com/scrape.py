@@ -14,12 +14,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def parse_geo(url):
     lon = re.findall(r'll=[-?\d\.]*\,([-?\d\.]*)', url)[0]
     lat = re.findall(r'll=(-?[\d\.]*)', url)[0]
     return lat, lon
-
 
 def fetch_data():
     # Your scraper here
@@ -33,7 +31,6 @@ def fetch_data():
     long = []
     lat = []
     timing = []
-
 
     driver.get("http://www.thriftwaypharmacy.com/store_locations.html")
     div=driver.find_element_by_xpath("/html/body/table[2]/tbody/tr[2]/td[1]/table/tbody/tr[2]/td")
@@ -85,7 +82,6 @@ def fetch_data():
         timing.append(tim)
         types.append("<MISSING>")
 
-
         if i ==1:
             locs.append(loc)
             zips.append(z)
@@ -134,15 +130,10 @@ def fetch_data():
         all.append(row)
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
 
-
 scrape()
-
-
-
 
 fetch_data()

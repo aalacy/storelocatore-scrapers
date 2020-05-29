@@ -3,7 +3,6 @@ import csv
 from sgselenium import SgSelenium
 import re
 
-
 driver = SgSelenium().chrome()
 
 def write_output(data):
@@ -16,12 +15,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def parse_geo(url):
     lon = re.findall(r'll=[-?\d\.]*\,([-?\d\.]*)', url)[0]
     lat = re.findall(r'll=(-?[\d\.]*)', url)[0]
     return lat, lon
-
 
 def fetch_data():
     # Your scraper here

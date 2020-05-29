@@ -2,7 +2,6 @@ import csv
 from sgselenium import SgSelenium
 import re
 
-
 driver = SgSelenium().chrome()
 
 def write_output(data):
@@ -15,12 +14,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def parse_geo(url):
     lon = re.findall(r'destination=[-?\d\.]*\,([-?\d\.]*)', url)[0]
     lat = re.findall(r'destination=(-?[\d\.]*)', url)[0]
     return lat, lon
-
 
 def fetch_data():
     # Your scraper here
@@ -35,8 +32,6 @@ def fetch_data():
     lat = []
     timing = []
     types=[]
-
-
 
     links = ["https://www.mystricklands.com/akron-ellet", "https://www.mystricklands.com/akron-montrose",
              "https://www.mystricklands.com/streetsboro-1", "https://www.mystricklands.com/cuyahoga-falls-1",
@@ -55,7 +50,6 @@ def fetch_data():
         timing.append(re.findall(r'(Hours.*pm|Hours.*PM)',tex,re.DOTALL)[0].replace("\n"," "))
         #tex.replace(tim,"")
         phones.append(re.findall(r'Phone:*([0-9\-\(\) ]+).*',tex,re.DOTALL)[0].strip())
-
 
         tex=tex.split("\n")
 
@@ -80,7 +74,6 @@ def fetch_data():
                 states.append(t[1].strip().split(" ")[0])
         print(street)
 
-
     all = []
     for i in range(0, len(locs)):
         row = []
@@ -102,11 +95,9 @@ def fetch_data():
         all.append(row)
     return (all)
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()
 

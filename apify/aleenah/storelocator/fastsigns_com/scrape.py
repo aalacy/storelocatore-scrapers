@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 from sgrequests import SgRequests
 import time
 
-
 driver = SgSelenium().chrome()
 
 def write_output(data):
@@ -121,6 +120,5 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

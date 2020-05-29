@@ -2,7 +2,6 @@ import csv
 import sgzip
 import requests
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,8 +13,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
 
 all=[]
 def fetch_data():
@@ -59,7 +56,6 @@ def fetch_data():
             search.max_count_update(result_coords)
         else:
             search.max_distance_update(MAX_DISTANCE)
-
 
         postcode = search.next_zip()"""
     search = sgzip.ClosestNSearch()
@@ -159,11 +155,9 @@ def fetch_data():
     print(count)
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()
 

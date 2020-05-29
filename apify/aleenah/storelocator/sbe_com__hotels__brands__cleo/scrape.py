@@ -15,7 +15,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 session = SgRequests()
 all=[]
 def fetch_data():
@@ -65,7 +64,6 @@ def fetch_data():
             tim,  # timing
             url])
 
-
     #print(len(divs))
     for i in range(2,4): #south beach & las vegas
 
@@ -75,7 +73,6 @@ def fetch_data():
         city=addr[0].replace(',','')
         state=addr[1].strip()
         zip=addr[2].strip()
-
 
         all.append([
             "https://www.sbe.com/restaurants/brands/cleo",
@@ -97,6 +94,5 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

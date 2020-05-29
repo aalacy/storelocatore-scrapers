@@ -15,12 +15,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def parse_geo(url):
     lon = re.findall(r'll=[-?\d\.]*\,([-?\d\.]*)', url)[0]
     lat = re.findall(r'll=(-?[\d\.]*)', url)[0]
     return lat, lon
-
 
 def fetch_data():
     # Your scraper here
@@ -35,7 +33,6 @@ def fetch_data():
     lat = []
     timing = []
     ids=[]
-
 
     driver.get("https://www.tillys.com/stores")
     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -59,8 +56,6 @@ def fetch_data():
         ids.append(re.findall(r'.*"id":"([^"]*)"', tex)[0])
         timing.append("<MISSING>")
 
-
-
     driver.get("https://www.tillys.com/store-list")
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     divs= soup.find_all('div',{'class':'col-6 col-sm-3 sl__stores-list_item'})
@@ -74,9 +69,6 @@ def fetch_data():
             timing[ids.index(span.text)]=time.text.replace("\n"," ").strip().strip(">")
         except:
             k=0
-
-
-
 
     all = []
     for i in range(0, len(locs)):
@@ -99,10 +91,8 @@ def fetch_data():
         all.append(row)
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

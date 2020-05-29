@@ -15,7 +15,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
     # Your scraper here
     locs = []
@@ -51,8 +50,6 @@ def fetch_data():
         except:
             lat.append("<MISSING>")
             long.append("<MISSING>")
-
-
 
     for div in divs:
         tex = div.text.strip().split("\n")
@@ -101,10 +98,8 @@ def fetch_data():
         all.append(row)
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

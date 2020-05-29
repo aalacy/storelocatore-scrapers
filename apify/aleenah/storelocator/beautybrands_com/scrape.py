@@ -3,7 +3,6 @@ import re
 from bs4 import BeautifulSoup
 import requests
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -13,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def fetch_data():
     # Your scraper here
@@ -59,7 +57,6 @@ def fetch_data():
         long.append(re.findall(r'"longitude":(-?[\d\.]+)',strsoup)[0])
         ids.append(re.findall(r'"code":"([\d]+)","address"',strsoup)[0])
 
-
     all = []
     for i in range(0, len(locs)):
         row = []
@@ -81,10 +78,8 @@ def fetch_data():
         all.append(row)
     return all
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()
