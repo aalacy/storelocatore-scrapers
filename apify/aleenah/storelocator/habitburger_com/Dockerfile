@@ -1,5 +1,5 @@
   
-FROM safegraph/apify-python3:latest
+FROM safegraph/apify-python3-chromedriver-upgrade:latest
 
 COPY . ./
 
