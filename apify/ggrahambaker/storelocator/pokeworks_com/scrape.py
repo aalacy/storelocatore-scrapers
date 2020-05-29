@@ -1,15 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import json
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -70,7 +63,7 @@ def addy_ext(addy):
 def fetch_data():
     locator_domain = 'https://www.pokeworks.com/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain)
     id_tags = ['block-yui_3_17_2_4_1518209608912_11294', 'block-yui_3_17_2_2_1518468705387_45075',
                'block-yui_3_17_2_8_1504639122263_32449']

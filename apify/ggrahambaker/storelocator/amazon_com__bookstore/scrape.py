@@ -1,18 +1,10 @@
 import os
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 import usaddress
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -59,7 +51,7 @@ def parse_addy(addy):
 def fetch_data():    
     locator_domain = 'https://amazon.com/bookstore'
     loc_url = 'https://www.amazon.com/b/ref=s9_acss_bw_cg_ABFYSA_3a1_w?node=17608448011&pf_rd_m=ATVPDKIKX0DER&pf_rd_s=merchandised-search-1&pf_rd_r=8HQ2M9JF7X3W70NENWPB&pf_rd_t=101&pf_rd_p=051f1019-a5e5-4cba-8c2a-13a383a7cfd2&pf_rd_i=17608448011#AmazonBooksLocations'
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(loc_url)
 
     hrefs = driver.find_elements_by_xpath("//a[contains(@href, 'm=ATVPDKIKX0DER&pf_rd_s=merchandised-search-4&pf_rd_r=')]")

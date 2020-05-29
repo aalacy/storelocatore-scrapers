@@ -1,18 +1,11 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 import re
 
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -38,7 +31,7 @@ def addy_extractor(src):
 
 
 def fetch_data():
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     locator_domain = 'https://www.qcsupply.com/'
     ext = 'locations/'
 

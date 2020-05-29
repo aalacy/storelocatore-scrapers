@@ -1,15 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import re
 
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def addy_ext(addy):
@@ -39,7 +32,7 @@ def fetch_data():
     locator_domain = 'https://cleanjuice.com/'
     ext = 'locations/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     main_div = driver.find_element_by_css_selector('div.et_pb_row.et_pb_row_2')

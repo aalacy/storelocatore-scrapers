@@ -1,7 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.keys import Keys
 import time
@@ -9,13 +8,6 @@ import json
 
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -32,7 +24,7 @@ def fetch_data():
     locator_domain = 'https://www.buildabear.com/'
     ext = 'stores-sitemap'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     element = driver.find_element_by_css_selector('button.age-continue')
     driver.execute_script("arguments[0].click();", element)

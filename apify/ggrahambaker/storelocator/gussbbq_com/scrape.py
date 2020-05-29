@@ -1,16 +1,9 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import time
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -87,7 +80,7 @@ def fetch_data():
     locator_domain = 'https://www.gussbbq.com/'
     exts = [['claremont-lunch-dinner.html', ['#u144292-13', '#u144271-12']],
             ['southpasadena-lunch-dinner.html', ['#u143184-14', '#u143145-12']]]
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     all_store_data = []
     for ext in exts:
         loc_ext(driver, locator_domain, ext, all_store_data)

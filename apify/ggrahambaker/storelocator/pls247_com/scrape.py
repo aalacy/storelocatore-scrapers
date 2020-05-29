@@ -1,17 +1,9 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import time
 import usaddress
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -58,7 +50,7 @@ def parse_addy(addy):
 def fetch_data():
     locator_domain = 'https://pls247.com/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain)
 
     state_list = driver.find_element_by_id('state_list').find_elements_by_css_selector('option')

@@ -1,16 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -120,7 +112,7 @@ def fetch_data():
     las_vegas = 'http://www.rockandreillyslv.com/'
     sunset = 'https://rockandreillys.com/'
     usc = 'https://rockandreillys.com/usc/'
-    driver = get_driver()
+    driver = SgSelenium().chrome()
 
     vegas_list = vegas_parse(driver, las_vegas, locator_domain)
     sunset_list = sunset_parse(driver, sunset, locator_domain)

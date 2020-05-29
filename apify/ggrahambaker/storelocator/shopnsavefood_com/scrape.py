@@ -1,16 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -37,7 +29,7 @@ def addy_ext(addy):
 def fetch_data():
     locator_domain = 'https://www.shopnsavefood.com/' 
     ext = 'StoreLocator/Search/?ZipCode=10001&miles=10000'
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     main = driver.find_element_by_css_selector('div#StoreLocator')

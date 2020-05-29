@@ -1,6 +1,5 @@
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 import json
 import usaddress
@@ -44,13 +43,6 @@ def parse_address(addy_string):
     return street_address, city, state, zip_code
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 
@@ -69,7 +61,7 @@ def fetch_data():
     locator_domain = 'https://skippers.com/'
     url = 'https://skippers.com/wp-json/wpgmza/v1/markers/base64eJyrVkrLzClJLVKyUqqOUcpNLIjPTIlRsopRMoxR0gEJFGeUgsSKgYLRsbVKtQCV7hBN'
         
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain)
     driver.get(url)
     driver.implicitly_wait(10)

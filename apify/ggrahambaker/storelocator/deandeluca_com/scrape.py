@@ -1,15 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -26,7 +19,7 @@ def fetch_data():
     locator_domain = 'https://www.deandeluca.com/'
     ext = 'new-page-1'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     main = driver.find_element_by_css_selector('div#page-5d1254918618110001ee3953')
     locs = main.find_elements_by_css_selector('div.row.sqs-row')

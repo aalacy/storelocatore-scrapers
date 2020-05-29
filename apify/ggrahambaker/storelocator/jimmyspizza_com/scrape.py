@@ -1,7 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 import time
@@ -42,13 +41,6 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -65,7 +57,7 @@ def fetch_data():
     locator_domain = 'https://jimmyspizza.com/'
     ext = 'locator.php'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     select = Select(driver.find_element_by_id('state'))

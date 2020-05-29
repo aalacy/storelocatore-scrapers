@@ -1,16 +1,8 @@
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import json
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 
@@ -45,7 +37,7 @@ def fetch_data():
 
 
     map_url = 'http://www.hometownbuffet.com/locator/'
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(map_url)
 
     map_data = driver.execute_script('return usahtml5map_map_cfg_0')['map_data']

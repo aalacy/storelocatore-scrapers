@@ -1,19 +1,11 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 import usaddress
 import time
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -65,7 +57,7 @@ def parse_addy(addy):
 def fetch_data():
     locator_domain = 'https://www.snapfitness.com/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     urls = ['https://www.snapfitness.com/ca/gyms/?q=canada', 'https://www.snapfitness.com/us/gyms/?q=united%20states']
     all_store_data = []
     for url in urls:

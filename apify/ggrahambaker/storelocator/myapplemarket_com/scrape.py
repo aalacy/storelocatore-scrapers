@@ -1,15 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -36,7 +29,7 @@ def addy_ext(addy):
 def fetch_data():
     locator_domain = 'https://www.myapplemarket.com/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain)
 
     stores = driver.find_elements_by_css_selector('p')

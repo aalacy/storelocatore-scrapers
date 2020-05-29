@@ -1,16 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
 
 def addy_ext(addy):
     addy = addy.split(',')
@@ -34,7 +26,7 @@ def fetch_data():
     locator_domain = 'https://www.inspirahealthnetwork.org/' 
     ext = 'locations/?sid=1&searchtypeID=0&latitude=39.4787827&longitude=-75.0377502&searchzip=08360&searchdistance=250#search'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     locs = driver.find_elements_by_css_selector('div.location-card-txt')
     link_list = []

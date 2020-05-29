@@ -1,7 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 
 import re
@@ -15,13 +14,6 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
 
 
 def write_output(data):
@@ -63,7 +55,7 @@ def fetch_data():
     locator_domain = 'http://www.jgumbos.com/'
     ext = 'location/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     loc_wrap = driver.find_element_by_css_selector('div.fusion-column-wrapper')
 
