@@ -2,17 +2,10 @@ import csv
 import re
 from bs4 import BeautifulSoup
 import requests
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36")
 
-#driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-driver = webdriver.Chrome("chromedriver", options=options)
+driver = SgSelenium().chrome(user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.87 Safari/537.36")
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)

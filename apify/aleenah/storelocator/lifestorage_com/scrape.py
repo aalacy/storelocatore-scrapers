@@ -2,8 +2,7 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -11,11 +10,7 @@ from selenium.webdriver.common.by import By
 import time
 
 
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome("chromedriver", options=options)
+driver = SgSelenium().chrome()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
