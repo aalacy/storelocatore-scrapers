@@ -1,21 +1,13 @@
 import csv
 import re
 import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 
 
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--no-sandbox')
-options.add_argument('--disable-dev-shm-usage')
-options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36")
-#driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
-#driver = webdriver.Chrome("chromedriver", options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -50,7 +42,7 @@ def fetch_data():
     timing = []
     ids=[]
     page_url=[]
-    driver = webdriver.Chrome("chromedriver", options=options)
+    driver = SgSelenium().chrome(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36")
     driver.get("https://rockyrococo.com/locations")
 
     time.sleep(15)
