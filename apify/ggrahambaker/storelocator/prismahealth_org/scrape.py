@@ -1,22 +1,11 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import json
 from selenium.webdriver.support.ui import Select
 import time
 from bs4 import BeautifulSoup
 import usaddress
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
@@ -51,9 +40,6 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -68,7 +54,7 @@ def fetch_data():
     locator_domain = 'https://www.palmettohealth.org/'
     ext = 'locations-directions'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     driver.implicitly_wait(10)
     time.sleep(5)
@@ -96,7 +82,6 @@ def fetch_data():
                 info = str(line.strip()).replace('var locations = ', '').replace(';', '')
                 j_loc = json.loads(info)
 
-    
         for loc in j_loc:
             lat = loc[2]
             longit = loc[3]
@@ -116,7 +101,6 @@ def fetch_data():
 
             if ',' in city:
                 city = city.split(',')[1]
-
 
             phone_number = rows[2].find_all('td')[1].text.strip()
             

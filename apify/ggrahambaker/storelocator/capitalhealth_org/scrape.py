@@ -1,18 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import time
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +14,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    driver = get_driver()
+    driver = SgSelenium().chrome()
 
     link_list = []
 
@@ -36,7 +25,6 @@ def fetch_data():
         driver.get(url)
         driver.implicitly_wait(5)
         time.sleep(3)
-        
         
         locs = driver.find_elements_by_css_selector('div.view-empty')
         if len(locs) > 0:
@@ -57,9 +45,7 @@ def fetch_data():
         driver.implicitly_wait(5)
         time.sleep(3)
         
-        
         location_name = driver.find_element_by_css_selector('h1').text
-        
         
         street_address = driver.find_element_by_css_selector('span.address-line1').text
         street_address = street_address.split(',')[0]
@@ -69,17 +55,12 @@ def fetch_data():
         
         phone_number = driver.find_element_by_css_selector('div.field--name-field-phone').find_element_by_css_selector('div.field__item').text
         
-        
-        
         hours_div = driver.find_elements_by_css_selector('div.field--name-field-office-hours')
         if len(hours_div) == 0:
             hours = '<MISSING>'
         else:
             hours = hours_div[0].text.replace('\n', ' ')
 
-            
-
-        
         google_link = driver.find_elements_by_xpath('//a[contains(@href,"/maps/")]')
         if len(google_link) == 0:
             lat, longit = '<MISSING>', '<MISSING>'
@@ -91,9 +72,6 @@ def fetch_data():
             lat = coords[0]
             longit = coords[1]
         
-        
-        
-        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -101,10 +79,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
         
-
     driver.quit()
     return all_store_data
 

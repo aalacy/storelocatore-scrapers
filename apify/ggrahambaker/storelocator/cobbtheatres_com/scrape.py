@@ -1,16 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.common.action_chains import ActionChains
 import re
-
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +14,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_extractor(src):
     arr = src.split(',')
     city = arr[0]
@@ -33,12 +24,11 @@ def addy_extractor(src):
 
     return city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'https://cobbtheatres.com/'
     ext = 'theatres.asp'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     a_tags = driver.find_elements_by_css_selector("a.drop")
@@ -59,7 +49,6 @@ def fetch_data():
                 name = name[:-5]
             else:
                 name = name.split('/')[-1].replace('-', ' ')
-
 
         href_arr.append([href, name])
 
@@ -154,7 +143,6 @@ def fetch_data():
 
         all_store_data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code,
                                store_number, phone_number, location_type, lat, longit, hours])
-
 
     driver.quit()
     return all_store_data

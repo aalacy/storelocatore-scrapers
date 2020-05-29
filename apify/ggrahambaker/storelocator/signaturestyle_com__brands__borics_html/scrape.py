@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import json
 from sgzip import ClosestNSearch
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -14,9 +13,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
-
 
 def fetch_data():
 
@@ -111,7 +107,6 @@ def fetch_data():
                 
             phone_number = loc['phonenumber']
                 
-            
             hours_obj = loc['store_hours']
             hours = ''
             for part in hours_obj:
@@ -120,7 +115,6 @@ def fetch_data():
                 
                 hours += day + ' ' + hour_range + ' '            
             
-
             if hours == '':
                 hours = '<MISSING>'
             
@@ -136,9 +130,7 @@ def fetch_data():
         else:
             search.max_count_update(result_coords)
        
-        
         coord = search.next_coord()    
-
 
     return all_store_data
 

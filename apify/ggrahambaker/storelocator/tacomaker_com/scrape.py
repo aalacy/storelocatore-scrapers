@@ -1,19 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
 import re
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,7 +18,7 @@ def fetch_data():
     locator_domain = 'http://tacomaker.com'
     ext = '/donde-estamos'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     loc = driver.execute_script('return tm_locations')
@@ -56,7 +45,6 @@ def fetch_data():
             addy_raw = addy_raw_first.split('Teléfono')[0]
         else:
             addy_raw = addy_raw_first
-
 
         zip_code_r = re.search('\d{5}', addy_raw)
         if zip_code_r:

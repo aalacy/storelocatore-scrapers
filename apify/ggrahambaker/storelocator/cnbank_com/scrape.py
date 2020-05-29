@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -21,7 +20,6 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
 def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
@@ -29,7 +27,6 @@ def fetch_data():
     locator_domain = 'https://www.cnbank.com/' 
     ext = 'locations.aspx'
     r = session.get(locator_domain + ext, headers = HEADERS)
-
 
     soup = BeautifulSoup(r.content, 'html.parser')
 
@@ -40,7 +37,6 @@ def fetch_data():
             continue
         if locator_domain[:-1] + link['href'] not in link_list:
             link_list.append(locator_domain[:-1] + link['href'])
-
 
     all_store_data = []
     for link in link_list:
@@ -77,14 +73,12 @@ def fetch_data():
             time = col[1].text.strip() if col[1].text.strip() != '' else 'Closed'
             hours += day + ' ' + time + ' '
         
-        
         for line in soup.prettify().split('\n'):
             if 'center:' in line.strip():
                 coords = line.strip().split('(')[1].split(')')[0].split(',')
                 lat = coords[0]
                 longit = coords[1].strip()
                 
-        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -93,12 +87,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
             
-
-
-
-
-
-
     return all_store_data
 
 def scrape():

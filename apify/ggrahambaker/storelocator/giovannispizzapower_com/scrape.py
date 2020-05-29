@@ -1,17 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext(addy):
     address = addy.split(',')
@@ -36,12 +25,11 @@ def addy_ext(addy):
         zip_code = state_zip[1]
     return city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'https://giovannispizzapower.com/'
     ext = 'stores-sitemap.xml'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     links = driver.find_element_by_css_selector('tbody').find_elements_by_css_selector('tr')
@@ -74,12 +62,10 @@ def fetch_data():
         except NoSuchElementException:
             hours = '<MISSING>'
 
-
         country_code = 'US'
         page_url = link
         location_type = '<MISSING>'
         store_number = '<MISSING>'
-
 
         print(link)
 

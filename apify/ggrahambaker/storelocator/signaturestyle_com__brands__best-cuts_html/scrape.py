@@ -14,9 +14,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-
-
 def fetch_data():
 
     session = SgRequests()
@@ -84,10 +81,6 @@ def fetch_data():
             else:
                 location_type = '<MISSING>'
 
-    
-
-
-
             store_number = loc['storeID']
             
             if store_number not in dup_tracker:
@@ -101,7 +94,6 @@ def fetch_data():
         
             loc = json.loads(r.content)
 
-            
             location_name = loc['name']
             street_address = loc['address']
             city = loc['city']
@@ -114,7 +106,6 @@ def fetch_data():
                 
             phone_number = loc['phonenumber']
                 
-            
             hours_obj = loc['store_hours']
             hours = ''
             for part in hours_obj:
@@ -123,7 +114,6 @@ def fetch_data():
                 
                 hours += day + ' ' + hour_range + ' '            
             
-
             if hours == '':
                 hours = '<MISSING>'
             
@@ -132,18 +122,14 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-            
             all_store_data.append(store_data)
             
-
         if len(res_json) == 0:
             search.max_distance_update(MAX_DISTANCE)
         else:
             search.max_count_update(result_coords)
         
-        
         coord = search.next_coord()    
-
 
     return all_store_data
 

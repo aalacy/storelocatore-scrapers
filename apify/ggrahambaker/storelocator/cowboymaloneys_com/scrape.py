@@ -1,18 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
-
-
+from sgselenium import SgSelenium
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +11,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext(addy):
     address = addy.split(',')
@@ -39,7 +26,7 @@ def fetch_data():
     locator_domain = 'https://www.cowboymaloneys.com/'
     ext = 'store_finder.html'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     locations = driver.find_elements_by_css_selector('div.location-result')

@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -20,7 +19,6 @@ def fetch_data():
     locator_domain = 'https://pridegasstations.com' 
     ext = ''
     r = session.get(locator_domain + ext, headers = HEADERS)
-
 
     soup = BeautifulSoup(r.content, 'html.parser')
 
@@ -48,7 +46,6 @@ def fetch_data():
         
         phone_number = info[1].text.replace('Phone:', '').strip()
         
-        
         script = soup.find('script', {'class': 'av-php-sent-to-frontend'}).text.split('\n')
         for s in script:
             if "av_google_map['av_gmap_0']['marker']['0']" not in s:
@@ -71,15 +68,12 @@ def fetch_data():
                 if city == '':
                     city = '<MISSING>'
             
-                
             if 'lat' in s:
                 lat = s.split('=')[1][:-1].strip()
             
             if 'long' in s:
                 longit = s.split('=')[1][:-1].strip()
             
-            
-
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -87,15 +81,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
  
-
-
-
-
-
-
     return all_store_data
 
 def scrape():

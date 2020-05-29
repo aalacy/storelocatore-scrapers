@@ -78,7 +78,6 @@ def fetch_data():
                 
             phone_number = loc['phonenumber']
                 
-            
             hours_obj = loc['store_hours']
             hours = ''
             for part in hours_obj:
@@ -94,31 +93,19 @@ def fetch_data():
             else:
                 continue
 
-           
-
             if hours == '':
                 hours = '<MISSING>'
             location_type = '<MISSING>'
             page_url = '<MISSING>'
-            
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
             all_store_data.append(store_data)
             
-
-
         search.max_distance_update(MAX_DISTANCE)
     
         coord = search.next_coord()  
-
-
-
-
-
-
-
 
     return all_store_data
 

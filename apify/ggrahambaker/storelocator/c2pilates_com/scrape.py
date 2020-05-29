@@ -2,8 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -63,7 +61,6 @@ def fetch_data():
             all_store_data.append(store_data)
 
     return  all_store_data
-
 
 def scrape():
     data = fetch_data()

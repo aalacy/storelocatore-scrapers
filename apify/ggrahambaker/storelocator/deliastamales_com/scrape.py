@@ -1,17 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
+from sgselenium import SgSelenium
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +12,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -32,13 +20,11 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
-
 def fetch_data():
     locator_domain = 'https://deliastamales.com/'
     ext = 'locations/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     alert_obj = driver.switch_to.alert
@@ -55,7 +41,6 @@ def fetch_data():
         street_address = content[1]
         city, state, zip_code = addy_ext(content[2])
         phone_number = content[3]
-
 
         href = loc.find_element_by_css_selector('a').get_attribute('href')
         start_idx = href.find('/@')
@@ -74,7 +59,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

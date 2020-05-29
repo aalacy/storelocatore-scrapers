@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -22,7 +21,6 @@ def fetch_data():
     ext = 'locations'
     r = session.get(locator_domain + ext, headers = HEADERS)
 
-
     soup = BeautifulSoup(r.content, 'html.parser')
 
     main = soup.find('section', {'class': 'accordion'})
@@ -39,12 +37,9 @@ def fetch_data():
         if 'tel:' in href:
             continue
             
-
         link_list.append(href)
 
-
     hours_map = {'1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday'}
-
 
     all_store_data = []
     for link in link_list:
@@ -57,17 +52,14 @@ def fetch_data():
             continue
         slug = slug['location_id']
         
-        
         url = 'https://momentfeed-prod.apigee.net/lf/location/store-info/' + slug + '?auth_token=IFWKRODYUFWLASDC'
 
         r = session.get(url, headers = HEADERS)
         loc = json.loads(r.content)
 
-
         if loc['status'] == 'coming soon':
             continue
 
-        
         street_address = loc['address'] + ' ' + loc['addressExtended']
         phone_number = loc['phone']
         hours_unformatted = loc['hours'].split(';')
@@ -78,7 +70,6 @@ def fetch_data():
                 continue
             day = hours_map[day_info[0]]
             hours += day + ' ' + day_info[1] + '-' + day_info[2] + ' '
-
 
         if hours == '':
             hours = '<MISSING>'
@@ -92,10 +83,7 @@ def fetch_data():
         state = loc['region']
         zip_code = loc['postcode']
         
-        
         store_number = loc['corporateId']
-        
-        
         
         country_code = 'US'
         location_type = '<MISSING>'
@@ -104,17 +92,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, link]
 
-
-
-        
         all_store_data.append(store_data)
         
-        
-
-
-
-
-
     return all_store_data
 
 def scrape():

@@ -1,18 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import time
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +17,7 @@ def fetch_data():
     locator_domain = 'https://www.krispykreme.ca/'
     ext = 'find-a-store/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     time.sleep(4)
     driver.implicitly_wait(30)
@@ -46,11 +35,6 @@ def fetch_data():
         # Wait to load page
         time.sleep(SCROLL_PAUSE_TIME)
 
-
-        
-
-
-    
     locs = driver.find_elements_by_css_selector('div.location')
 
     all_store_data = []
@@ -63,11 +47,9 @@ def fetch_data():
         else:
             off = 0
 
-
         location_name = cont[0]
         street_address = cont[1].split('(')[0].strip()
 
-                
         city_state = cont[off + 2].split(' ')
         if len(city_state) == 3:
             city = city_state[0] + ' ' + city_state[1]
@@ -80,11 +62,9 @@ def fetch_data():
         
         phone_number = cont[off + 5].replace('Tel:', '').strip()
 
-
         hours = ''
         for h in cont[off + 6:]:
             hours += h + ' '
-        
         
         gmap_script = loc.find_element_by_css_selector('div.location__map').find_element_by_css_selector('iframe').get_attribute('src')
         start = gmap_script.find('!2d')
@@ -96,19 +76,16 @@ def fetch_data():
         lat = coords[1]
         longit = coords[0]
 
-        
         country_code = 'CA'
 
         location_type = '<MISSING>'
         page_url = '<MISSING>'
         store_number = '<MISSING>'
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
     
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

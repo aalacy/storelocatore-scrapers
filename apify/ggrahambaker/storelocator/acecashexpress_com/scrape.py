@@ -13,7 +13,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def ul_extractor(ul, link_list):
     locator_domain = 'https://www.acecashexpress.com/' 
 
@@ -22,9 +21,6 @@ def ul_extractor(ul, link_list):
         link = loc.find('a')['href']
         link_list.append(locator_domain[:-1] + link)
     
-    
-
-
 def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
@@ -33,12 +29,10 @@ def fetch_data():
     r = session.get(locator_domain + ext, headers = HEADERS)
     soup = BeautifulSoup(r.content, 'html.parser')
 
-
     locs = soup.find('ul', {'class': 'states'}).find_all('a')
     state_list = []
     for loc in locs:
         state_list.append(locator_domain[:-1] + loc['href'])
-
 
     city_list = []
     for state in state_list:
@@ -56,7 +50,6 @@ def fetch_data():
             time.sleep(10)
             r = session.get(city, headers = HEADERS)
 
-            
         soup = BeautifulSoup(r.content, 'html.parser')
         
         page_count = soup.find_all('p', {'class': 'page-count'})
@@ -73,7 +66,6 @@ def fetch_data():
                 soup = BeautifulSoup(r.content, 'html.parser')
                 ul = soup.find('div',{'class': 'available-stores'}).find('ul', {'class': 'stores'})
                 ul_extractor(ul, link_list)
-
 
     all_store_data = []
     dup_tracker = set()
@@ -126,7 +118,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
         
-
     return all_store_data
 
 def scrape():

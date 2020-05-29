@@ -1,11 +1,9 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import json
 import usaddress
 import re
-
 
 def addy_parser(addy):
     parsed_add = usaddress.tag(addy)[0]
@@ -34,17 +32,6 @@ def addy_parser(addy):
     
     return street_address, city, state, zip_code
 
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -58,9 +45,8 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://www.adventurelanding.com/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain)
-
 
     link_list = []
     states = driver.find_elements_by_css_selector('div.fusion-builder-row.fusion-builder-row-inner.fusion-row' )
@@ -70,8 +56,6 @@ def fetch_data():
             link = loc.find_elements_by_css_selector('a')
             if len(link) > 0:
                 link_list.append(link[0].get_attribute('href'))
-
-
 
     all_store_data = []
     for link in link_list:
@@ -106,14 +90,11 @@ def fetch_data():
                 phone_number = num.group().strip()
                 break
 
-        
-        
         # hours_link
         driver.get(link + hours_link)
         driver.implicitly_wait(10)
         
         hours = driver.find_element_by_css_selector('div.fusion-text').text.replace('\n', ' ')
-        
         
         country_code = 'US'
 
@@ -124,13 +105,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-
-        
-
-        
-        
-        
-
 
     driver.quit()
     return all_store_data

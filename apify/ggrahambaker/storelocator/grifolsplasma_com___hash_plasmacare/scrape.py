@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -13,15 +12,12 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     addy = addy.split(',')
     city = addy[0]
     state = addy[1]
     zip_code = addy[2]
     return city, state, zip_code
-
-
 
 def fetch_data():
     session = SgRequests()
@@ -30,7 +26,6 @@ def fetch_data():
     locator_domain = 'https://www.grifolsplasma.com/' 
     ext = 'en/locations/find-a-donation-center'
     r = session.get(locator_domain + ext, headers = HEADERS)
-
 
     soup = BeautifulSoup(r.content, 'html.parser')
 
@@ -81,7 +76,6 @@ def fetch_data():
             
             hours += day + ' ' + time + ' '
             
-            
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = link[1]
@@ -92,11 +86,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
-            
-
-
-
 
     return all_store_data
 

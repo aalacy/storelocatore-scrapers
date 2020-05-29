@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import re
 import json
 
-
 session = SgRequests()
 
 def write_output(data):
@@ -17,7 +16,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 #helper for getting address
 def addy_extractor(src):
     arr = src.split(',')
@@ -28,7 +26,6 @@ def addy_extractor(src):
         zip_code = prov_zip[2]
     
     return city, state, zip_code
-
 
 def fetch_data():
 
@@ -65,7 +62,6 @@ def fetch_data():
     sunrise_plaza = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                      store_number, phone_number, location_type, lat, longit, hours ]
 
-
     to_scrape2 = locator_domain + ext2
     page2 = session.get(to_scrape2)
     assert page2.status_code == 200
@@ -79,10 +75,7 @@ def fetch_data():
     lat = poi['latitude']
     longit = poi['longitude']
 
-
     store = soup.find('div', {'class': 'result_LocationContainer'})
-
-
 
     location_name = store.find('div', {'class': 'result_MallName'}).text
 
@@ -98,7 +91,6 @@ def fetch_data():
     cim_center = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                      store_number, phone_number, location_type, lat, longit, hours ]
 
-        
     all_store_data = [sunrise_plaza, cim_center]
     
     return all_store_data

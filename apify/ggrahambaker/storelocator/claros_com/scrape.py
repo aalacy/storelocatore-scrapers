@@ -1,16 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
+from sgselenium import SgSelenium
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +12,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -31,11 +20,10 @@ def addy_ext(addy):
     zip_code = state_zip[2]
     return city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'https://www.claros.com/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain)
 
     hrefs = driver.find_elements_by_xpath("//a[contains(@href, 'contact-')]")
@@ -52,7 +40,6 @@ def fetch_data():
         address = txts[1].text.split('\n')
         street_address = address[0]
         city, state, zip_code = addy_ext(address[1])
-
 
         phone_number = txts[3].text.split('\n')[1]
         hours = txts[4].text.replace('\n', ' ')

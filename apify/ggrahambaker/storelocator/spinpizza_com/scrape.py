@@ -1,16 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
+from sgselenium import SgSelenium
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,7 +16,7 @@ def fetch_data():
     locator_domain = 'https://www.spinpizza.com/'
     ext = 'locations/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     # close popup
@@ -80,7 +70,6 @@ def fetch_data():
                       store_number, phone_number, location_type, lat, longit, hours]
 
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

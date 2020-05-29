@@ -21,18 +21,14 @@ def fetch_data():
     ext = 'storelocator-sitemap.xml'
     r = session.get(locator_domain + ext, headers = HEADERS)
 
-
     soup = BeautifulSoup(r.content, 'html.parser')
     loc_urls = soup.find_all('loc')
-
 
     link_list = []
     for loc in loc_urls:
         if '/search' in loc.text:
             continue
         link_list.append(loc.text)
-
-
 
     all_store_data = []
     for link in link_list:
@@ -62,27 +58,17 @@ def fetch_data():
         for span in hours_spans:
             hours += span.text + ' '
             
-            
         country_code = 'US'
         page_url = link
         
         location_type = '<MISSING>'
         store_number = '<MISSING>'
         
-
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        
         all_store_data.append(store_data)
         
-        
-
-
-
-
-
-
     return all_store_data
 
 def scrape():

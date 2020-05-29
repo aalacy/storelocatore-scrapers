@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from sgzip import ClosestNSearch
 import json
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -57,7 +56,6 @@ def fetch_data():
 
         r = session.get(url, headers=HEADERS)
         
-
         result_coords = []
         res_json = r.json()['PhysicalStore'][0]
         
@@ -65,7 +63,6 @@ def fetch_data():
             lat = loc['latitude']
             longit = loc['longitude']
 
-            
             result_coords.append([lat, longit])
             
             street_address = loc['addressLine']['0'] + ' ' + loc['addressLine']['1']
@@ -90,7 +87,6 @@ def fetch_data():
                     break
                 hours += h['nick'] + ' ' + h['availability'][0]['status'] + ' '
             
-            
             location_type = '<MISSING>'
             page_url = 'https://www.childrensplace.com/us/store/' + location_name.replace(' ', '') + '-' + state + '-' + city.replace(' ', '') + '-' + zip_code.replace(' ', '') + '-' + store_number
 
@@ -99,20 +95,14 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-     
             all_store_data.append(store_data)
 
-
-        
         if len(res_json) == 0:
             search.max_distance_update(MAX_DISTANCE)
         else:
             search.max_count_update(result_coords)
             
-            
         coord = search.next_coord()  
-
-
 
     return all_store_data
 

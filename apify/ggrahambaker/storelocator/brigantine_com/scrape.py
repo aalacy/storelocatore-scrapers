@@ -1,18 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,7 +16,7 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'http://www.brigantine.com/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain)
 
     locs = driver.find_elements_by_css_selector('div.location')
@@ -51,7 +40,6 @@ def fetch_data():
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
-
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]

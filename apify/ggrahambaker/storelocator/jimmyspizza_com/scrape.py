@@ -1,7 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 import time
@@ -42,15 +41,6 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -65,7 +55,7 @@ def fetch_data():
     locator_domain = 'https://jimmyspizza.com/'
     ext = 'locator.php'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     select = Select(driver.find_element_by_id('state'))
@@ -119,12 +109,10 @@ def fetch_data():
         street_address, city, state, zip_code = parse_address(addy)
         print(street_address, city, state, zip_code)
         
-        
         phone_number = link[2]
         
         curr_link = driver.current_url 
         
-    
         if '/sterling/' in curr_link or '/rice/' in curr_link or 'silverbay/' in curr_link or 'stcharles' in curr_link or 'winsted' in curr_link:
             cont = driver.find_element_by_css_selector('div.header-text').text.split('\n')
             hours = ''
@@ -136,7 +124,6 @@ def fetch_data():
                 if take_more:
                     hours += c + ' '
         
-        
         elif 'jimmyspizzaannandale' in curr_link or 'jimmyspizzacoldspring' in curr_link or 'jimmyspizzahawley' in curr_link or 'immyspizzalitchfield' in curr_link:
             days = driver.find_elements_by_css_selector('div.p.af')
             hours = ''
@@ -146,12 +133,10 @@ def fetch_data():
         elif 'jimmyspizzahutch' in curr_link:
             hours = 'Lunch Mon - Fri 11am-1:30pm Dinner Mon - Thurs 4pm-9pm Fri - Sat 4pm-10pm ​Closed Sunday'
             
-        
         elif 'jimmysaberdeen' in curr_link:
             
             hours = 'Monday – Sunday: 4pm – 9pm'
 
-        
         else:
             
             hours = driver.find_elements_by_xpath('//div[contains(text(),"STORE HOURS")]')
@@ -163,11 +148,8 @@ def fetch_data():
                 except NoSuchElementException:
                     hours = 'Sunday-Thursday 4pm-10pm Friday & Saturday 4pm-11pm'
                 
-                
-                
         hours = hours.replace('STORE HOURS', '').replace('VIEW MENU', '').replace('\n', ' ').strip()
 
-        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -179,11 +161,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        
         all_store_data.append(store_data)
             
-        
-
     driver.quit()
     return all_store_data
 

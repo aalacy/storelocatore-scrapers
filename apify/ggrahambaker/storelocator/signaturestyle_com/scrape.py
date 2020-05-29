@@ -1,17 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +18,7 @@ def fetch_data():
     loc_domain = 'https://www.signaturestyle.com/'
     ext = 'salon-directory.html'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(loc_domain + ext)
 
     sections = driver.find_elements_by_css_selector('div.acs-commons-resp-colctrl-row')
@@ -59,7 +49,6 @@ def fetch_data():
         except NoSuchElementException:
             print('closed')
             continue
-
 
         if phone_number not in duplicate_checker:
             duplicate_checker.append(phone_number)

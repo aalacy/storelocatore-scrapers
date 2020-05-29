@@ -1,18 +1,7 @@
 import csv
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import json
 from bs4 import BeautifulSoup
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +17,7 @@ def fetch_data():
     locator_domain = 'http://alliedbuilding.com/'
     ext = 'About/AlliedBranches?div=all#all'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     state_opts = driver.find_element_by_css_selector('select#stval').find_elements_by_css_selector('option')
@@ -40,15 +29,12 @@ def fetch_data():
         url = 'http://alliedbuilding.com/About/AlliedBranches?stval=' + state.text
         link_list.append(url)
 
-
-
     all_store_data = []
     for link in link_list:
         driver.get(link)
         driver.implicitly_wait(5)
         
         locs = driver.find_elements_by_css_selector('div.BranchBizCard')
-        
         
         for loc in locs:
             loc_html = loc.get_attribute('innerHTML')
@@ -80,12 +66,8 @@ def fetch_data():
                 else:
                     hours = '<MISSING>'
     
-            
-        
-                
             lat_tag = soup.find('meta', {'itemprop': 'latitude'})
             longit_tag = soup.find('meta', {'itemprop': 'longitude'})
-
 
             try:
                 lat = lat_tag['content']
@@ -97,19 +79,15 @@ def fetch_data():
             except:
                 longit = '<MISSING>'
 
-
             country_code = 'US'
             store_number = '<MISSING>'
             location_type = '<MISSING>'
             
-
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
             all_store_data.append(store_data)
         
-
-
     return all_store_data
 
 def scrape():

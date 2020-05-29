@@ -1,17 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from bs4 import BeautifulSoup
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,7 +17,7 @@ def fetch_data():
     locator_domain = 'https://ca.longchamp.com/'
     ext = 'en/stores'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     driver.implicitly_wait(10)
 
@@ -46,7 +36,6 @@ def fetch_data():
         lat = map_div.get_attribute('data-lat')
         longit = map_div.get_attribute('data-lon')
 
-
         hours_html = driver.find_element_by_css_selector('div.js-to_expand.animated-expandmore').get_attribute(
             'innerHTML')
 
@@ -57,7 +46,6 @@ def fetch_data():
         else:
             hours = hours.replace('\n', ' ').strip()
 
-
         location_name = driver.find_element_by_css_selector('h2.title-gamma.upper.pt-1.pb-05').text
         cont = driver.find_element_by_css_selector(
             'div.ff-light.mt-05.mb-1.js-accordion.accordion--beta.accordion').text.split('\n')
@@ -65,7 +53,6 @@ def fetch_data():
         street_address = ' '.join(addy[:-1])
         city = ' '.join(addy[-1:])
         phone_number = cont[-2]
-
 
         state = '<MISSING>'
         zip_code = '<MISSING>'

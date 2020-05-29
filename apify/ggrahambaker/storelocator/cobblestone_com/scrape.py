@@ -1,15 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import re
-
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,12 +21,11 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'https://cobblestone.com/'
     ext = 'locations/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     all_store_data = []

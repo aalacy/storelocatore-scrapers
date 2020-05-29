@@ -1,17 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import time
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext(addy):
     addy = addy.split(',')
@@ -37,13 +26,11 @@ def addy_ext(addy):
         zip_code = state_zip[1]
     return city, state, zip_code
 
-
-
 def fetch_data():
     locator_domain = 'https://www.wegmans.com/'
     ext = 'stores/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     hrefs = driver.find_elements_by_xpath('//a[contains(@href,"/stores/")]')
@@ -71,7 +58,6 @@ def fetch_data():
         
         hours = main.find_element_by_xpath('..').find_elements_by_css_selector('div.row')[2].text
         
-        
         source = str(driver.page_source)
         for line in source.split('\n'):
             if "new google.maps.LatLng" in line.strip():
@@ -80,8 +66,6 @@ def fetch_data():
                 lat = coords[0]
                 longit = coords[1][:-1]
                 
-        
-        
         country_code = 'US'
         location_type = '<MISSING>'
         page_url = link
@@ -90,8 +74,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
         
-
-
     driver.quit()
     return all_store_data
 

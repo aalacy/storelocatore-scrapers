@@ -1,17 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import time
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,7 +17,7 @@ def fetch_data():
     locator_domain = 'https://www.hawaiianbarbecue.com/'
     ext = 'locations-list/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     time.sleep(4)
     driver.implicitly_wait(30)
@@ -44,7 +34,6 @@ def fetch_data():
         else:
             link_list.append(link)
 
-
     all_store_data = []
     dup_tracker = []
     for link in link_list:
@@ -52,7 +41,6 @@ def fetch_data():
         if 'undefined' in link:
             continue
 
-        
         driver.get(link)
 
         time.sleep(4)
@@ -76,12 +64,10 @@ def fetch_data():
             break
         zip_code = driver.find_element_by_css_selector('span.zip').text
         
-        
         phone_number = driver.find_element_by_css_selector('li.location-detail__phone').text
         if phone_number == '':
             phone_number = '<MISSING>'
 
-        
         hours = driver.find_element_by_css_selector('div.location-detail__hours').text.replace('\n', ' ').strip()
         if hours == '':
             hours = '<MISSING>'
@@ -99,13 +85,11 @@ def fetch_data():
         store_number = '<MISSING>'
         location_type = '<MISSING>'
 
-            
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
 
-        
     driver.quit()
     return all_store_data
 

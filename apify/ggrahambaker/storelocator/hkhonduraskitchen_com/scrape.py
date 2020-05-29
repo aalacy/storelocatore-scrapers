@@ -1,17 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import json
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +13,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -32,12 +21,10 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
-
 def fetch_data():
     locator_domain = 'http://www.hkhonduraskitchen.com/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain)
 
     id_list = ['#page-5caff4cb9b747a373a62dd8f', '#page-5caff8c8ee6eb05e9cd85bd3']

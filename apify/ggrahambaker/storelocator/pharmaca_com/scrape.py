@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 import json
 
-
 session = SgRequests()
 
 def write_output(data):
@@ -14,7 +13,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def hours_maker(obj):
     day_dict = {'1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Friday'}
@@ -54,7 +52,6 @@ def fetch_data():
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
         
-
     return all_store_data
 
 def scrape():

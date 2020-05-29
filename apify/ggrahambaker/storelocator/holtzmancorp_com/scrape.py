@@ -2,8 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -20,15 +18,12 @@ def fetch_data():
     # return 2D array to be written to csv
     locator_domain = 'https://holtzmancorp.com/'
 
-
     to_scrape = locator_domain
     page = session.get(to_scrape)
     soup = BeautifulSoup(page.content, 'html.parser')
     div = soup.find('div', {"id": "pl-w5cfeac7473594"})
     panel = div.find_all('div', {'class': 'panel-grid-cell'})
     
-
-
     all_store_data = []
 
     oil_divs = [panel[2], panel[3], panel[4]]
@@ -53,8 +48,6 @@ def fetch_data():
                      store_number, phone_number, location_type, lat, longit, hours ]
         all_store_data.append(store_data)
 
-
-
     propane_divs = [ panel[7], panel[8], panel[9], panel[10]]
     for div in propane_divs:
         ps = div.find_all('p')
@@ -76,8 +69,6 @@ def fetch_data():
                      store_number, phone_number, location_type, lat, longit, hours ]
         all_store_data.append(store_data)
         
-
-
     return all_store_data
 
 def scrape():

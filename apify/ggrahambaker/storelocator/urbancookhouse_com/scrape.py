@@ -1,16 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import time
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,13 +21,11 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
-
 def fetch_data():
     locator_domain = 'http://www.urbancookhouse.com/'
     ext = 'location/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     time.sleep(3)
     driver.implicitly_wait(30)
@@ -54,7 +43,6 @@ def fetch_data():
         street_address = address.text.split('\n')[0]
         city, state, zip_code = addy_ext(address.text.split('\n')[1])
 
-
         href = address.get_attribute('href')
         start_idx = href.find('/@')
         end_idx = href.find('z/data')
@@ -69,7 +57,6 @@ def fetch_data():
         else:
             hours = loc.find_element_by_css_selector('span.hours').text.replace('\n', ' ')
 
-
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -78,8 +65,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-
-
 
     driver.quit()
     return all_store_data

@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -20,7 +19,6 @@ def fetch_data():
     locator_domain = 'http://www.mauiwowi.com/' 
     ext = 'Locations'
     r = session.get(locator_domain + ext, headers = HEADERS)
-
 
     soup = BeautifulSoup(r.content, 'html.parser')
     locs = soup.find_all('div', {'class': 'divOpLLItemDescTopName'})
@@ -45,7 +43,6 @@ def fetch_data():
         
         state = link.split('/')[-3].replace('-', ' ')
         
-        
         has_phone_number = soup.find_all('div', {'class': 'divSdCmsLBPhone'})
         if len(has_phone_number) > 0:
             phone_number = has_phone_number[0].text.strip()
@@ -54,7 +51,6 @@ def fetch_data():
 
         if phone_number == '':
             phone_number = '<MISSING>'
-        
         
         lines = soup.prettify().split('\n')
         for line in lines:
@@ -68,8 +64,6 @@ def fetch_data():
             lat = '<MISSING>'
             longit = '<MISSING>'
         
-        
-        
         country_code = 'US'
         street_address = '<MISSING>'
         zip_code = '<MISSING>'
@@ -80,10 +74,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
 
-    
     return all_store_data
 
 def scrape():

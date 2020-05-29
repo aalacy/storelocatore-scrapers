@@ -1,19 +1,9 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 
 from bs4 import BeautifulSoup
 import usaddress
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,8 +14,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
 
 def add_to_arr(street_address, city, state, zip_code, phone_number):
     locator_domain = 'https://gondolierpizza.com/'
@@ -40,8 +28,6 @@ def add_to_arr(street_address, city, state, zip_code, phone_number):
 
     return [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                   store_number, phone_number, location_type, lat, longit, hours, page_url]
-
-
 
 def parse_addy(addy):
     parsed_add = usaddress.tag(addy)[0]
@@ -70,12 +56,11 @@ def parse_addy(addy):
     
     return street_address, city, state, zip_code
     
-                      
 def fetch_data():
     locator_domain = 'https://gondolierpizza.com/'
     ext = 'gondolier-pizza-locations/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     source = str(driver.page_source.encode("utf-8"))
@@ -101,12 +86,6 @@ def fetch_data():
             else:
                 continue
             
-            
-            
-            
-
-
-
     driver.quit()
     return all_store_data
 

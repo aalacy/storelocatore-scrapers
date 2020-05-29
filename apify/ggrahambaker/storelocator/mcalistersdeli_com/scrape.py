@@ -1,19 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 import usaddress
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,7 +13,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def parse_addy(addy):
     parsed_add = usaddress.tag(addy)[0]
@@ -53,23 +41,19 @@ def parse_addy(addy):
     
     return street_address, city, state, zip_code
 
-
-
 def fetch_data():
     locator_domain = 'https://www.mcalistersdeli.com/'
     ext = 'locations'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     driver.implicitly_wait(10)
-
 
     states = driver.find_element_by_css_selector('div.national-list').find_elements_by_css_selector('a')
     state_links = []
     for state in states:
         state_link = state.get_attribute('href')
         state_links.append(state_link)
-
 
     loc_list = []
     for state in state_links:
@@ -80,8 +64,6 @@ def fetch_data():
             city_link = city.get_attribute('href')
             loc_list.append(city_link)    
             
-
-
     link_list = []
     for loc in loc_list:
         driver.get(loc)
@@ -97,8 +79,6 @@ def fetch_data():
             
             link_list.append([link, loc_name, phone_number])    
 
-            
-        
     all_store_data = []
     dup_tracker = []
     for i, data in enumerate(link_list):
@@ -115,7 +95,6 @@ def fetch_data():
         print(str(i) + '/' + str(len(link_list)))
         print()
 
-        
         addy_a = driver.find_element_by_xpath("//a[contains(@href, 'maps.google.com/?daddr')]")
         map_href = addy_a.get_attribute('href')
         map_link_start = map_href.find('?daddr=')
@@ -157,7 +136,6 @@ def fetch_data():
         
         map_link = driver.find_element_by_xpath('//a[contains(text(),"see map")]')
 
-    
         lat = map_link.get_attribute('data-lat')
         longit = map_link.get_attribute('data-long')
         days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -182,11 +160,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         
-        
         all_store_data.append(store_data)
         
-        
-
     driver.quit()
     return all_store_data
 

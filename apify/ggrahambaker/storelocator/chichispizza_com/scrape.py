@@ -1,16 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
+from sgselenium import SgSelenium
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,8 +12,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-
 def addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -32,14 +20,12 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
-
 def fetch_data():
     # Your scraper here
     locator_domain = 'https://www.chichispizza.com/'
     ext = 'locations'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     hours_div = driver.find_element_by_css_selector('div#WRchTxt2-hrv')
@@ -47,7 +33,6 @@ def fetch_data():
     hours = ''
     for h in hours_div.text.split('\n')[1:]:
         hours += h.replace(' ', '') + ' '
-
 
     main = driver.find_element_by_css_selector('div#vtsikinlineContent-gridContainer')
     divs = main.find_elements_by_css_selector('div.txtNew')
@@ -81,8 +66,6 @@ def fetch_data():
                           store_number, phone_number, location_type, lat, longit, hours]
             all_store_data.append(store_data)
             switch = True
-
-
 
     driver.quit()
     return all_store_data

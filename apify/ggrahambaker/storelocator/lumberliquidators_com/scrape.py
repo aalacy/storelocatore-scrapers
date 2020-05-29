@@ -1,21 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import usaddress
 from selenium.common.exceptions import NoSuchElementException
-
-
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,7 +14,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def can_addy_ext(addy):
     address = addy.split(',')
     city = address[0]
@@ -36,12 +22,11 @@ def can_addy_ext(addy):
     zip_code = state_zip[1] + ' ' + state_zip[2]
     return city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'https://www.lumberliquidators.com/'
     ext = 'll/stores/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     #main = driver.find_element_by_css_selector('ul.Directory-listLinks')
@@ -58,7 +43,6 @@ def fetch_data():
         else:
             state_link_list.append(href)
 
-
     for state_link in state_link_list:
         driver.get(state_link)
         driver.implicitly_wait(10)
@@ -74,11 +58,8 @@ def fetch_data():
 
     hrefs = driver.find_elements_by_xpath("//a[contains(@href, 'ON-')]")
 
-
     for h in hrefs:
         store_link_list.append(h.get_attribute('href'))
-
-
 
     all_store_data = []
     for i, link in enumerate(store_link_list):
@@ -109,7 +90,6 @@ def fetch_data():
             print(addy)
             street_address = addy[0]
             city, state, zip_code = can_addy_ext(addy[1])
-
 
         else:
             country_code = 'US'

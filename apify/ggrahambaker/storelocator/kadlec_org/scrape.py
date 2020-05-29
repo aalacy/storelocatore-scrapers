@@ -1,20 +1,9 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support.ui import Select
 import time
 import usaddress
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,9 +14,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
-
 
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
@@ -62,14 +48,11 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-
-
-
 def fetch_data():
     locator_domain = 'https://www.kadlec.org/'
     ext = 'location-directory/search-results?type=6AE71E0E461F48429DCE5A11C5EC0CF2'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
 
     driver.get(locator_domain + ext)
     driver.implicitly_wait(5)
@@ -83,7 +66,6 @@ def fetch_data():
             continue
         types.append([o, opt.text])
 
-    
     link_list = []
     for t in types:
         select = Select(driver.find_element_by_id('psjh_body_1_psjh_twocol_cellone_0_locationType'))
@@ -93,9 +75,6 @@ def fetch_data():
         driver.implicitly_wait(5)
         time.sleep(3)
 
-        
-
-        
         while True: 
             main = driver.find_element_by_css_selector('ul.list-unstyled.row')
             lis = main.find_elements_by_css_selector('li')
@@ -107,7 +86,6 @@ def fetch_data():
             if len(eles) == 0:
                 break
                                     
-            
             next_link = driver.find_elements_by_xpath('//a[contains(text(),"Next")]')[0].get_attribute('href')
             driver.get(next_link)
             driver.implicitly_wait(5)
@@ -135,7 +113,6 @@ def fetch_data():
             else:
                 hours = '<MISSING>'
                 
-            
             phone_numbers = sec.find_elements_by_css_selector('div#psjh_body_2_psjh_twocol_cellone_0_locationPhoneContainer')
             if len(phone_numbers) > 0:
                 phone_number = phone_numbers[0].text.replace('Phone:', '').strip()
@@ -153,7 +130,6 @@ def fetch_data():
             
             hours = driver.find_element_by_css_selector('div#psjh_body_2_psjh_twocol_cellone_0_locationHoursContainer').text.replace('Hours:', '').strip()
     
-
         if '780 Swift Blvd.' in addy:
             addy = ' 780 Swift Blvd. Richland, WA 99352'
         if '1100 Goethals Drive, ' in addy:
@@ -167,7 +143,6 @@ def fetch_data():
         longit = '<MISSING>'
         page_url = link[0]
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
@@ -176,9 +151,6 @@ def fetch_data():
         print()
         print()
         
-        
-
-
     driver.quit()
     return all_store_data
 

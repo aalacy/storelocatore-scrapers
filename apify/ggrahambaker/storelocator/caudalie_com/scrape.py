@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 import json
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -12,7 +11,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext(addy):
     addy = addy.split(',')
@@ -40,7 +38,6 @@ def addy_ext(addy):
         country_code = 'CA'
         
     return city, state, zip_code, country_code
-
 
 def fetch_data():
     url = 'https://us.caudalie.com/store-locator/ajax?center_latitude=42.969949561664386&center_longitude=-107.22321733749999&south_west_latitude=13.279324422548623&north_east_latitude=63.09318012402013&south_west_longitude=-158.0679439&north_east_longitude=-56.378490774999996&current_zoom=4&_=1585583274185'
@@ -80,25 +77,12 @@ def fetch_data():
         if location_type == '':
             location_type = '<MISSING>'
         
-      
         page_url = '<MISSING>'
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
         
-            
-            
-        
-
-
-
-
-
-
-
-
     return all_store_data
 
 def scrape():

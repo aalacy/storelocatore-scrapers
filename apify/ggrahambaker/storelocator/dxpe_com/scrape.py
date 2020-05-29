@@ -1,16 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import time
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -21,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext(addy):
     addy = addy.replace(',,', ',')
@@ -45,7 +35,6 @@ def addy_ext(addy):
 
     return city, state, zip_code, country_code
 
-
 def peel_info(driver, locator_domain, all_store_data, dup_list):
     main = driver.find_element_by_css_selector('div#map_sidebar')
     locs = main.find_elements_by_css_selector('div.results_entry')
@@ -68,7 +57,6 @@ def peel_info(driver, locator_domain, all_store_data, dup_list):
         
         location_name = '<MISSING>'
         
-
         street_address = content[3 + off]
         if 'Carretera a Nogales' in street_address:
             continue
@@ -84,7 +72,6 @@ def peel_info(driver, locator_domain, all_store_data, dup_list):
         else:
             city, state, zip_code, country_code = addy_ext(content[4 + off])
         
-        
         phone_number = content[5 + off]
         if 'Email' in phone_number:
             phone_number = '<MISSING>'
@@ -99,19 +86,16 @@ def peel_info(driver, locator_domain, all_store_data, dup_list):
                          store_number, phone_number, location_type, lat, longit, hours, page_url ]
         all_store_data.append(store_data)
         
-
-
 def fetch_data():
     locator_domain = 'https://www.dxpe.com/'
     ext = 'locations/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     zip_array = ['T1R 1C1', '97062', '92807', '77565', '78664', '75662', 'B3B 1L5', 'L8E 3N9', '50401',
                  '44133', '74146', '79602', '32837', '37210', '68850', '80524', '58801', 'T2C 3H2', 'V1A 2J5',
                  '88240', '79336', '46706', '55121', '68127', '66214']
-
 
     all_store_data = []
     dup_list = []

@@ -1,18 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import usaddress
 from selenium.common.exceptions import NoSuchElementException
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +18,7 @@ def fetch_data():
     locator_domain = 'https://www.sirspeedy.com/'
     ext = 'find-locator/#all_locations'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     main = driver.find_element_by_css_selector('div#locations_columns')
@@ -48,7 +38,6 @@ def fetch_data():
         try:
             addy = driver.find_element_by_css_selector('p.location_address').text.replace('\n', ' ').replace('-', ' ')
 
-
             if '375 Worcester Rd.' in addy:
                 street_address = '375 Worcester Rd. Route 9 West'
                 city = 'Framingham'
@@ -60,7 +49,6 @@ def fetch_data():
                     addy = addy.replace('at Bard', '').strip()
                 if '5505 North Crescent Blvd' in addy:
                     addy = addy.replace('Located on Route 130', '').strip()
-
 
                 parsed_add = usaddress.tag(addy)[0]
 
@@ -122,16 +110,12 @@ def fetch_data():
                                                                                                              '').strip()
                 phone_number = driver.find_element_by_xpath('//span[@itemprop="telephone"]').text.replace('P:', '').strip()
 
-
                 longit = driver.find_element_by_css_selector('input.hiddenCenterLong').get_attribute('value')
                 lat = driver.find_element_by_css_selector('input.hiddenCenterLat').get_attribute('value')
                 location_type = 'Pip'
             except NoSuchElementException:
                 ## no location
                 continue
-
-
-
 
         location_name = '<MISSING>'
         store_number = '<MISSING>'

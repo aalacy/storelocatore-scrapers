@@ -23,14 +23,11 @@ def fetch_data():
     r = session.get(base_url + ext, headers = HEADERS)
     soup = BeautifulSoup(r.content, 'html.parser')
 
-
     links = soup.find_all('a', {'class': 'Directory-listLink'})
 
     state_list = []
     for li in links:
         state_list.append(base_url + li['href'])
-
-
 
     store_list = []
     more_stores = []
@@ -47,8 +44,6 @@ def fetch_data():
             else:
                 store_list.append(link)
 
-
-
     for more in more_stores:
         r = session.get(more, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
@@ -62,7 +57,6 @@ def fetch_data():
     for link in store_list:
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
-        
         
         print(link)
 
@@ -107,12 +101,10 @@ def fetch_data():
 
         page_url = link
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
         
-
     return all_store_data
 
 def scrape():

@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -12,7 +11,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext(addy):
     addy = addy.split(',')
@@ -27,8 +25,6 @@ def addy_ext(addy):
         state = state_zip[0]
         zip_code = state_zip[1]
     return city, state, zip_code
-
-
 
 def fetch_data():
     session = SgRequests()
@@ -64,13 +60,11 @@ def fetch_data():
             if a == '':
                 continue
             
-                
             addy.append(a.strip())
         
         if loc_moved:
             loc_moved = False
             continue
-            
             
         if len(addy) == 3:
             addy = [addy[0], addy[2]]
@@ -78,7 +72,6 @@ def fetch_data():
         street_address = addy[0].strip().split(',')[0]
         city, state, zip_code = addy_ext(addy[1].strip())
         
-
         frames = soup.find_all('iframe')
         for f in frames:
             if '/maps/' in f['src']:
@@ -91,7 +84,6 @@ def fetch_data():
         longit = coords[1]
         lat = coords[0]
 
-        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -102,9 +94,7 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
-
 
     return all_store_data
 

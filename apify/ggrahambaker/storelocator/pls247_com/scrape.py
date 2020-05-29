@@ -1,18 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import time
 import usaddress
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +13,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def parse_addy(addy):
     parsed_add = usaddress.tag(addy)[0]
@@ -52,13 +41,10 @@ def parse_addy(addy):
     
     return street_address, city, state, zip_code
 
-
-
-
 def fetch_data():
     locator_domain = 'https://pls247.com/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain)
 
     state_list = driver.find_element_by_id('state_list').find_elements_by_css_selector('option')
@@ -97,26 +83,21 @@ def fetch_data():
             if all_locs_collected:
                 break
 
-
     all_store_data = []
     dup_tracker = []
     for link in link_list:
         driver.get(link)
         driver.implicitly_wait(10)
         
-        
         lat = driver.find_element_by_xpath('//meta[@itemprop="latitude"]').get_attribute('content')
         longit = driver.find_element_by_xpath('//meta[@itemprop="longitude"]').get_attribute('content')
         
-            
         phone_number = driver.find_element_by_xpath('//span[@itemprop="telephone"]').text
         if phone_number in dup_tracker:
             continue
         else:
             dup_tracker.append(phone_number)
             
-
-        
         hours = ''
         
         hour_metas = driver.find_elements_by_xpath('//meta[@itemprop="openingHours"]')
@@ -129,8 +110,6 @@ def fetch_data():
         if hours == '':
             hours = 'Open 24/7'
             
-            
-        
         addy = driver.find_element_by_xpath('//h1[@itemprop="address"]').text
         street_address, city, state, zip_code = parse_addy(addy)
         
@@ -145,10 +124,6 @@ def fetch_data():
         
         all_store_data.append(store_data)
         
-
-            
-            
-
     driver.quit()
     return all_store_data
 

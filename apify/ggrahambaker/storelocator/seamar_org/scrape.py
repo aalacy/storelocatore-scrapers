@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -12,7 +11,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def addy_ext(addy):
     addy = addy.split(',')
@@ -31,11 +29,9 @@ def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
 
-        
     locator_domain = 'https://seamar.org/' 
     ext = 'seamar-clinics.html'
     r = session.get(locator_domain + ext, headers = HEADERS)
-
 
     soup = BeautifulSoup(r.content, 'html.parser')
 
@@ -53,18 +49,15 @@ def fetch_data():
 
             link_list.append(link)
 
-
     all_store_data = []
     for link in link_list:
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
         cats = soup.find_all('section', {'class': 'detailed-services'})
         
-        
         for cat in cats:
             location_type = cat.find('div', {'class': 'widget-title'}).text
    
-            
             dls = cat.find_all('dl')
             for d in dls:
                 location_name = d.find('dt').text
@@ -91,7 +84,6 @@ def fetch_data():
                     else:
                         page_url = locator_domain + cols[1].find('a')['href']
                         
-                        
                     if '228 W First Street' in info[1].text:
                         street_address = info[1].text.strip()
                         city, state, zip_code = addy_ext(info[2].text.strip())
@@ -106,7 +98,6 @@ def fetch_data():
                         addy_raw = info[1 + off].prettify().split('\n')
                         addy = [a.strip() for a in addy_raw if '<' not in a]
 
-
                         street_address = addy[0]
                         if '12835 Bel-Red Rd, Suite 145' in street_address:
                             city, state, zip_code = addy_ext(addy[2])
@@ -120,13 +111,11 @@ def fetch_data():
                         else:
                             city, state, zip_code = addy_ext(addy[1])
 
-
                         if len(addy) > 3:
                             phone_number = addy[2].replace('P:', '').strip()
                         else:
                             phone_number = info[2 + off].text.replace('P:', '').strip()
                 
-
                 else:
                     info_raw = cols[0].prettify().split('\n')
                     
@@ -134,7 +123,6 @@ def fetch_data():
                     
                     if info[-1] == '':
                         info = info[:-1]
-                        
                         
                     if len(info) == 2:
                         continue
@@ -157,8 +145,6 @@ def fetch_data():
                             phone_number = info[start + 2].replace('P:', '').strip()
                             hours = '<MISSING>'
                             
-                        
-    
                 country_code = 'US'
                 store_number = '<MISSING>'
                 lat ='<MISSING>'
@@ -181,30 +167,15 @@ def fetch_data():
                 if '2000 Tower Street' in street_address:
                     phone_number = '425.259.8738'
 
-
                 street_address = street_address.split(',')[0].split('Suite')[0].strip()
 
-              
                 phone_number = phone_number.split('F')[0].strip()
                 
                 store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                             store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
                 all_store_data.append(store_data)
                 
-                
-        
-        
-        
-        
-
-
-
-
-
-
-
     return all_store_data
 
 def scrape():

@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import json
 from sgzip import ClosestNSearch
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -62,7 +61,6 @@ def fetch_data():
             
             result_coords.append((lat, longit))
         
-        
             country_code = 'US'
             location_type = '<MISSING>'
             
@@ -78,14 +76,10 @@ def fetch_data():
             else:
                 hours += 'Sunday ' + loc['Sunday_Open'] + ' - ' + loc['Sunday_Close'] + ' '
                 
-            
             page_url = '<MISSING>'
                 
-            
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
-
-
 
             all_store_data.append(store_data)
         
@@ -95,10 +89,6 @@ def fetch_data():
             search.max_count_update(result_coords)
         
         coord = search.next_zip()  
-
-
-
-
 
     return all_store_data
 

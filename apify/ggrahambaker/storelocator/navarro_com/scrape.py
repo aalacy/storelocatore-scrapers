@@ -1,20 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import usaddress
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
-
-
-
 
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
@@ -39,7 +26,6 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -54,7 +40,7 @@ def fetch_data():
     locator_domain = 'https://www.navarro.com/'
     next_link = 'store-locator.htm'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
    
     still_scrolling = True
 
@@ -96,15 +82,12 @@ def fetch_data():
             
             phone_number = cont[2 + off].replace('STORE:', '').strip()
             
-            
             hours = ''
             for c in cont[3 + off:]:
                 if 'PHARMACY' in c:
                     break
             
                 hours += c + ' '
-            
-            
             
             country_code = 'US'
             store_number = '<MISSING>'
@@ -114,7 +97,6 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        
             all_store_data.append(store_data)
         
         nexts = driver.find_elements_by_xpath('//span[contains(text(),"Next")]')
@@ -126,11 +108,6 @@ def fetch_data():
             still_scrolling = False
             continue
             
-        
-            
-            
-
-
     driver.quit()
     return all_store_data
 

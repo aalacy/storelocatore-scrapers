@@ -1,18 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 import usaddress
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,8 +13,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
 
 def parse_addy(addy):
     if '10250 Santa Monica Blvd Suite 9255' in addy:
@@ -58,13 +46,11 @@ def parse_addy(addy):
         
     return street_address, city, state, zip_code
 
-
-
 def fetch_data():
     locator_domain = 'https://amazon.com/presentedbyamazon'
     loc_url = 'https://www.amazon.com/b/ref=s9_acss_bw_cg_ABFYSA_3d1_w?node=17608448011&pf_rd_m=ATVPDKIKX0DER&pf_rd_s=merchandised-search-1&pf_rd_r=7W7N7KDK6FD75SGKEXEC&pf_rd_t=101&pf_rd_p=051f1019-a5e5-4cba-8c2a-13a383a7cfd2&pf_rd_i=17608448011#AmazonPopUpLocations'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(loc_url)
 
     hrefs = driver.find_elements_by_xpath("//a[contains(@href, 'pf_rd_m=ATVPDKIKX0DER&pf_rd_s=merchandised-search-10&')]")
@@ -116,7 +102,6 @@ def fetch_data():
             
             hours += h.text + ' '
             
-    
         country_code = 'US'
 
         page_url = link
@@ -127,10 +112,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-        
-        
-        
-        
         
     driver.quit()
     return all_store_data

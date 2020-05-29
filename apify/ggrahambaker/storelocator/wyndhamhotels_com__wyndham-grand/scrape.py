@@ -1,18 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import json
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,12 +15,11 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
     locator_domain = 'https://www.wyndhamhotels.com/'
     ext = 'wyndham-grand/locations'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     main = driver.find_element_by_css_selector('div.aem-rendered-content')
@@ -67,7 +55,6 @@ def fetch_data():
         if 'United States' in country_name:
             country_code = 'US'
 
-
         phone_number = loc_json['telephone']
 
         page_url = link
@@ -83,10 +70,8 @@ def fetch_data():
     driver.quit()
     return all_store_data
 
-
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()

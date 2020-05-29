@@ -1,17 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import time
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def addy_extractor(state_city):
     city = state_city.split(',')[0]
@@ -24,7 +14,6 @@ def addy_extractor(state_city):
         zip_code = state_zip[1] + ' ' + state_zip[2]
     
     return city.strip(), state.strip(), zip_code.strip()
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -40,7 +29,7 @@ def fetch_data():
     locator_domain = 'https://www.firehousesubs.ca/'
     ext = 'all-locations/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     main = driver.find_element_by_css_selector('section.locations_wrap')
@@ -82,15 +71,11 @@ def fetch_data():
         longit = '<MISSING>'
         lat = '<MISSING>'
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         
         all_store_data.append(store_data)
         
-
-        
-
     driver.quit()
     return all_store_data
 

@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 import json
 session = SgRequests()
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -13,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def hours_ingest(loc_type):
     hours_json = loc_type
@@ -27,23 +25,17 @@ def hours_ingest(loc_type):
     wed = 'Wednesday ' + hours_json['wednesday']['openTime']['timeString'].split(',')[0]
     wed += ' - ' + hours_json['wednesday']['closeTime']['timeString'].split(',')[0]
 
-
     thur = 'Thursday ' + hours_json['thursday']['openTime']['timeString'].split(',')[0]
     thur += ' - ' + hours_json['thursday']['closeTime']['timeString'].split(',')[0]
-
 
     fri = 'Friday ' + hours_json['friday']['openTime']['timeString'].split(',')[0]
     fri += ' - ' + hours_json['friday']['closeTime']['timeString'].split(',')[0]
 
-
     sat = 'Saturday ' + hours_json['saturday']['openTime']['timeString'].split(',')[0]
     sat += ' - ' + hours_json['saturday']['closeTime']['timeString'].split(',')[0]
 
-
     sun = 'Sunday ' + hours_json['sunday']['openTime']['timeString'].split(',')[0]
     sun += ' - ' + hours_json['sunday']['closeTime']['timeString'].split(',')[0]
-
-
 
     hours = mon + ' ' + tues + ' ' + wed + ' ' + thur + ' ' + fri + ' ' + sat + ' ' + sun     
 
@@ -57,7 +49,6 @@ def fetch_data():
 
     session = SgRequests()
 
-
     urls = [
         'https://api-prod-gfp-us-a.tillster.com/mobilem8-web-service/rest/storeinfo/distance?_=1587766814072&disposition=DINE_IN&latitude=39.6961606&longitude=-105.0382076&maxResults=1000&radius=6000&statuses=ACTIVE,TEMP-INACTIVE,ORDERING-DISABLED&tenant=gfp-us',
         'https://api-prod-gfp-us-a.tillster.com/mobilem8-web-service/rest/storeinfo/distance?_=1587766814072&disposition=DELIVERY&latitude=39.6961606&longitude=-105.0382076&maxResults=1000&radius=6000&statuses=ACTIVE,TEMP-INACTIVE,ORDERING-DISABLED&tenant=gfp-us',
@@ -69,13 +60,10 @@ def fetch_data():
     for url in urls:
         r = session.get(url, headers = HEADERS)
 
-
         all_stores = json.loads(r.content)['getStoresResult']['stores']
         
-
         for store in all_stores:
 
-            
             #if store['status'] == 'TEMP-INACTIVE':
             #    continue
             
@@ -94,9 +82,6 @@ def fetch_data():
             else:
                 country_code = store['country']
             
-        
-                
-            
             store_number = store['storeName'].replace('GFP-', '').strip()
             
             lat = store['latitude']
@@ -109,14 +94,11 @@ def fetch_data():
             if str(phone_number).strip() == '1':
                 phone_number = '<MISSING>'
 
-
-            
             hours = ''
             location_type = ''
             dine_in = -1
             pick_up = -1
             delvery = -1
-
 
             if 'storeHours' not in store:
                 hours = '<MISSING>'
@@ -133,9 +115,6 @@ def fetch_data():
                     if 'DELIVERY' in loc_type['disposition']:
                         delvery = i
                         
-
-                    
-    
             if dine_in != -1:
                 hours = hours_ingest(store['storeHours'][dine_in])
             elif pick_up != -1:
@@ -146,8 +125,6 @@ def fetch_data():
                 hours = '<MISSING>'
                 location_type = '<MISSING>'
 
-
-                    
             if hours == '':
                 print(store)
                 print()
@@ -159,22 +136,12 @@ def fetch_data():
             location_type = location_type.strip()
             hours = hours.strip()
             
-        
             page_url = '<MISSING>'
-            
-            
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
             all_store_data.append(store_data)
-
-        
-        
-
-
-
-
 
     return all_store_data
 

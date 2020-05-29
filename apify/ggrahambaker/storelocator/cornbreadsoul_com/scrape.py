@@ -1,17 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import usaddress
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
@@ -47,13 +36,11 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-
-
 def fetch_data():
     locator_domain = 'https://cornbreadsoul.com/'
     ext = 'cornbread_soul_locations/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     loc_list = driver.find_element_by_css_selector('ul#menu-locations').find_elements_by_css_selector('a')
@@ -62,14 +49,12 @@ def fetch_data():
     for loc in loc_list:
         link_list.append(loc.get_attribute('href'))
 
-
     all_store_data = []
     for link in link_list:
         driver.get(link)
         
         location_name = driver.find_element_by_css_selector('div.page-title-wrapper').text
 
-        
         addy = driver.find_element_by_css_selector('i.fa.fa-map-marker').find_element_by_xpath('../../../..').find_element_by_css_selector('p').text.replace('\n', ' ')
 
         street_address, city, state, zip_code = parse_address(addy)
@@ -85,14 +70,10 @@ def fetch_data():
         longit = '<MISSING>'
         page_url = link
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
-
-
 
     driver.quit()
     return all_store_data

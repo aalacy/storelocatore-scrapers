@@ -1,19 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import usaddress
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
-
-
 
 def addy_parser(addy):
     parsed_add = usaddress.tag(addy)[0]
@@ -51,7 +39,6 @@ def addy_parser(addy):
     
     return street_address, city, state, zip_code
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -65,14 +52,13 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://amazon.com/go'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain)
 
     locs = driver.find_elements_by_css_selector('h4')
     all_store_data = []
     for loc in locs:
         loc_div = loc.find_element_by_xpath('..')
-        
         
         if 'Mon–' in loc_div.text:
             cont = loc_div.text.split('\n')
@@ -103,7 +89,6 @@ def fetch_data():
                     hours = cont[3]
                     location_type = cont[4]
 
-            
             elif len(cont) == 3:
                 location_name = cont[0]
                 street_address, city, state, zip_code = addy_parser(cont[1])
@@ -138,11 +123,6 @@ def fetch_data():
                             store_number, phone_number, location_type, lat, longit, hours, page_url]
             all_store_data.append(store_data)
         
-        
-        
-        
-
-
     driver.quit()
     return all_store_data
 

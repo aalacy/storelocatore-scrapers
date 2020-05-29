@@ -1,22 +1,11 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from sgrequests import SgRequests
 import json
 import time
 
-
 session = SgRequests()
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,7 +20,7 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://in-n-out.com/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get('https://locations.in-n-out.com/map/')
     driver.implicitly_wait(30)
     all_store = driver.find_element_by_css_selector('li#tabAll')
@@ -45,7 +34,6 @@ def fetch_data():
         
         store_numbers.append(store_number)
 
-
     api_base = 'https://locations.in-n-out.com/api/finder/get/'
     all_store_data = []
     for store_number in store_numbers:
@@ -56,8 +44,6 @@ def fetch_data():
         location_name = cont['Name']
         street_address = cont['StreetAddress']
 
-
-
         city = cont['City']
         state = cont['State']
         zip_code = cont['ZipCode']
@@ -67,8 +53,6 @@ def fetch_data():
         for day in cont['DiningRoomNormalHours']:
             hours += day['Name'] + ': ' + day['Hours'] + ' '
 
-
-        
         location_type = '<MISSING>'
         phone_number = '1-800-786-1000'
         page_url = '<MISSING>'
@@ -76,8 +60,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url, cont['DiningRoomHours']]
         all_store_data.append(store_data)
-
-        
 
     driver.quit()
     return all_store_data

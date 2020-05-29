@@ -1,17 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,7 +17,7 @@ def fetch_data():
     locator_domain = 'https://www.carrabbas.com/'
     ext = 'locations/all'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     main = driver.find_element_by_css_selector('section.location-directory')
@@ -42,7 +32,6 @@ def fetch_data():
         if '/fl/oviedo' in link:
             link = 'https://www.carrabbas.com/locations/fl/winter-springs-(oviedo)'
         link_list.append(link)
-
 
     all_store_data = []
     for link in link_list:
@@ -59,7 +48,6 @@ def fetch_data():
                 end_lat = start_string.find(',')
                 
                 lat = start_string[1:end_lat - 1]
-                
                 
                 start_longit = raw_line.find('"Longitude":')
                 start_string = raw_line[start_longit + len('"Longitude":'):]
@@ -80,14 +68,12 @@ def fetch_data():
         
         zip_code = driver.find_element_by_xpath('//span[@itemprop="postalCode"]').text
         
-        
         phone_number = driver.find_element_by_xpath('//span[@itemprop="telephone"]').text
         if len(phone_number) == 11:
             phone_number = '<MISSING>'
         
         main_loc = driver.find_element_by_css_selector('section.l-location-details.desktop-only')
         hours = main_loc.find_elements_by_css_selector('p')[1].text.replace('\n', ' ').split('Happy')[0].strip()
-        
         
         country_code = 'US'
         store_number = '<MISSING>'
@@ -96,13 +82,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-
-
-        
-
-        
-
-
 
     driver.quit()
     return all_store_data

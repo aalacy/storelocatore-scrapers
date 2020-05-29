@@ -3,8 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -20,12 +18,10 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://code3er.com/'
 
-
     url = 'https://code3er.com/wp-admin/admin-ajax.php?action=store_search&lat=33.179969&lng=-96.69589400000001&max_results=25&search_radius=500&autoload=1'
     page = session.get(url)
     assert page.status_code == 200
     loc_json = json.loads(page.content)
-
 
     all_store_data = []
     for loc in loc_json:
@@ -44,7 +40,6 @@ def fetch_data():
         for day in days:
             hours += day.text + ' '
 
-        
         store_number = '<MISSING>'
         location_type = ''
         if 'ER' in location_name or 'Emergency Room' in location_name:
@@ -59,14 +54,6 @@ def fetch_data():
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
         
-        
-
-
-
-
-
-
-
     return all_store_data
 
 def scrape():

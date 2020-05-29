@@ -1,19 +1,9 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -34,7 +24,7 @@ def fetch_data():
     r = session.get(url, headers = HEADERS)
 
     locs = json.loads(r.content)['results']
-    driver = get_driver()
+    driver = SgSelenium().chrome()
 
     all_store_data = []
     for loc in locs:
@@ -86,13 +76,11 @@ def fetch_data():
         if phone_number == '':
             phone_number = '<MISSING>'
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
   
-
     driver.quit()
     return all_store_data
 

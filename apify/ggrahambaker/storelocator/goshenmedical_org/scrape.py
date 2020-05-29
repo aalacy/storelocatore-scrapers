@@ -1,17 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
+from sgselenium import SgSelenium
 
 def addy_ext(addy):
     addy = addy.split(',')
@@ -20,7 +9,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -36,7 +24,7 @@ def fetch_data():
     locator_domain = 'http://goshenmedical.org/' 
     ext = 'allcounties.html'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
 
     driver.get(locator_domain + ext)
     main = driver.find_element_by_css_selector('table.table-padding')
@@ -60,7 +48,6 @@ def fetch_data():
             link = links[0].find_element_by_xpath('..').get_attribute('href')
             link_list.append([link, location_name, street_address, city, state, zip_code])
             
-        
     all_store_data = []
     for link in link_list:
         driver.get(link[0])
@@ -81,11 +68,9 @@ def fetch_data():
         
         hours = ' '.join(hours.split())
         
-        
         phone_number = driver.find_element_by_xpath('//u[contains(text(),"Phone Number")]').find_element_by_xpath('../..').text.split('\n')[1]
         page_url, location_name, street_address, city, state, zip_code = link
         street_address = street_address.split('Suite')[0].strip().replace(',', '').strip()
-        
         
         country_code = 'US'
         store_number = '<MISSING>'
@@ -98,9 +83,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
         
-
-
-
     driver.quit()
     return all_store_data
 

@@ -1,19 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import re
 import usaddress
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
-
 
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
@@ -50,8 +39,6 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -66,7 +53,7 @@ def fetch_data():
     locator_domain = 'http://unclelouiegee.com/'
     ext = 'locations/?wpbdp_view=all_listings'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
 
     driver.get(locator_domain + ext)
     not_done = True
@@ -111,7 +98,6 @@ def fetch_data():
                 if not get_more_info:
                     street_address, city, state, zip_code = parse_address(addy)
 
-
                 phone_number = ''
                 cont = conts[i].text.split('\n')
                 for c in cont:
@@ -137,7 +123,6 @@ def fetch_data():
                                     if len(codes) == 1:
                                         street_address, city, state, zip_code = parse_address(v.text)
 
-
             if phone_number == '':
                 phone_number = '<MISSING>'
             location_name = '<MISSING>'
@@ -151,10 +136,7 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-            
-         
             all_store_data.append(store_data)
-        
         
         next_span = driver.find_element_by_css_selector('span.next')
         a_tags = next_span.find_elements_by_css_selector('a')
@@ -165,9 +147,6 @@ def fetch_data():
         else:
             not_done = False
         
-        
-
-
     driver.quit()
     return all_store_data
 

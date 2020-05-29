@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 session = SgRequests()
 
 def write_output(data):
@@ -15,12 +14,10 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
 
     locator_domain = 'http://ladiesworkoutexpress.com/'
     ext = 'findAClub.asp'
-
 
     to_scrape = locator_domain + ext
     print(to_scrape)
@@ -89,7 +86,6 @@ def fetch_data():
                      store_number, phone_number, location_type, lat, longit, hours ]
         all_store_data.append(store_data)
 
-
     ## extra info in 1 col
     ps = div[2].find_all('p')
 
@@ -114,7 +110,6 @@ def fetch_data():
             state = addy_info2[1]
             zip_code = addy_info2[2]
             phone_number = brs[3].previousSibling
-
 
         location_type = 'loa fitness for women'
         

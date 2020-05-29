@@ -1,19 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 import usaddress
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -29,7 +18,7 @@ def fetch_data():
     locator_domain = 'https://airbornesports.com/'
     ext = 'hours-and-pricing/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     section = driver.find_element_by_css_selector('section#content')
@@ -67,7 +56,6 @@ def fetch_data():
 
         span = driver.find_element_by_xpath("//span[contains(text(),'WAIVER')]")
         href_waiv = span.find_element_by_xpath('..').get_attribute('href')
-
 
         carry_on_list.append([href_waiv, hours, lat, longit, phone_number])
 
@@ -110,7 +98,6 @@ def fetch_data():
         location_type = '<MISSING>'
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
-
 
         all_store_data.append(store_data)
 

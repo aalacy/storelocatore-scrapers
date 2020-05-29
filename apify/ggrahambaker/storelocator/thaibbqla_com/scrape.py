@@ -1,18 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import usaddress
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
@@ -58,15 +46,13 @@ def clean_arr(arr):
 
         to_ret.append(a)
 
-
     return to_ret
-
 
 def fetch_data():
     locator_domain = 'http://thaibbqla.com/'
     ext = 'location.html'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     strong = driver.find_element_by_xpath("//strong[contains(text(),'THAI ORIGINAL BBQ on 3RD STREET')]")
@@ -134,13 +120,11 @@ def fetch_data():
 
                 spin += 1
 
-
         else:
             if 'CATERING and PARTY TRAYS' in cont[0]:
                 break
             if len(cont) < 2:
                 continue
-
 
             location_name = cont[0]
             if location_name in duplicate_tracker:
@@ -159,8 +143,6 @@ def fetch_data():
                 street_address, city, state, zip_code = parse_address(cont[1])
                 cut_idx = cont[2].find('FAX:')
                 phone_number = cont[2][:cut_idx].replace('TEL:', '').strip()
-
-
 
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                           store_number, phone_number, location_type, lat, longit, hours]

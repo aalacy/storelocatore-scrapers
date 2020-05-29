@@ -1,17 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
+from sgselenium import SgSelenium
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,7 +19,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
 
 def usc_parse(driver, link, locator_domain):
     driver.get(link)
@@ -82,7 +70,6 @@ def sunset_parse(driver, link, locator_domain):
 
             return store_data
 
-
 def vegas_parse(driver, link, locator_domain):
     # las vegas
     driver.get(link)
@@ -101,7 +88,6 @@ def vegas_parse(driver, link, locator_domain):
 
     phone_number = driver.find_element_by_css_selector('div.footer-item').text.split('\n')[-1]
 
-
     location_name = 'Las Vegas'
     country_code = 'US'
     location_type = '<MISSING>'
@@ -114,22 +100,18 @@ def vegas_parse(driver, link, locator_domain):
 
     return store_data
 
-
 def fetch_data():
     locator_domain = 'rockandreillys.com/'
     las_vegas = 'http://www.rockandreillyslv.com/'
     sunset = 'https://rockandreillys.com/'
     usc = 'https://rockandreillys.com/usc/'
-    driver = get_driver()
+    driver = SgSelenium().chrome()
 
     vegas_list = vegas_parse(driver, las_vegas, locator_domain)
     sunset_list = sunset_parse(driver, sunset, locator_domain)
     usc_list = usc_parse(driver, usc, locator_domain)
 
     all_store_data = [vegas_list, sunset_list, usc_list]
-
-
-
 
     driver.quit()
     return all_store_data

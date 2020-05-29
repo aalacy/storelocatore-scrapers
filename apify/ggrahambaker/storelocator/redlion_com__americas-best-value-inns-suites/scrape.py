@@ -16,9 +16,7 @@ def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
 
-
     locator_domain = 'https://www.redlion.com/americas-best-value-inns-suites' 
-
 
     full_list = 'https://www.redlion.com/api/properties/all.js'
     r = session.get(full_list, headers = HEADERS)
@@ -38,7 +36,6 @@ def fetch_data():
         loc_string = str(r.content.decode())
         loc_json = json.loads(loc_string)[0]
         
-
         if 'Best Value' not in loc_json['Name']:
             continue
             
@@ -60,7 +57,6 @@ def fetch_data():
         else:
             country_code = 'US'
             
-            
         hours = '<MISSING>'
             
         location_type = '<MISSING>'
@@ -69,9 +65,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         
         all_store_data.append(store_data)
-
-
-
 
     return all_store_data
 

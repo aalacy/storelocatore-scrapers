@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -22,7 +21,6 @@ def fetch_data():
     r = session.get(locator_domain + ext, headers = HEADERS)
     soup = BeautifulSoup(r.content, 'html.parser')
     regions = soup.find('ul', {'class': 'slide-list'}).find_all('li', {'class': 'level1'})
-
 
     links = [locator_domain[:-1] + reg.find('a')['href'] for reg in regions]
 
@@ -47,8 +45,6 @@ def fetch_data():
             location_name = location_name.text
         street_address = soup.find('span', {'itemprop': 'streetAddress'}).text.split(',')[0]
 
-
-
         city = soup.find('span', {'itemprop': 'addressLocality'})
         
         if city == None:
@@ -61,9 +57,7 @@ def fetch_data():
         zip_code = soup.find('span', {'itemprop': 'postalCode'}).text
         page_url = soup.find('a', {'class': 'v5'})['href']
         
-        
         phone_number = soup.find('a', {'class': 'phone'}).text
-        
         
         country_code = 'US'
         store_number = '<MISSING>'
@@ -74,20 +68,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
         
-        
-        
-                
-
-
-
-
-
-
-
-
     return all_store_data
 
 def scrape():

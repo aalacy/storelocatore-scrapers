@@ -1,17 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import usaddress
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -22,9 +12,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
-
 
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
@@ -49,11 +36,10 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'https://www.perfectlooksalons.com/'
     ext = 'family-haircare/'
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     main = driver.find_element_by_css_selector('ul.side-locations')
@@ -62,7 +48,6 @@ def fetch_data():
     for link in links:
         state_list.append(link.get_attribute('href'))
         
-
     link_list = []
     for state in state_list:
         driver.get(state)
@@ -72,9 +57,6 @@ def fetch_data():
         for loc in locs:
             link = loc.find_element_by_css_selector('a').get_attribute('href')
             link_list.append(link)
-        
-        
-    
         
     all_store_data = []
     for link in link_list:
@@ -95,7 +77,6 @@ def fetch_data():
         lat = coords[0]
         longit = coords[1].split('&')[0]
         
-        
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         country_code = 'US'
@@ -106,7 +87,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
         
-
     driver.quit()
     return all_store_data
 

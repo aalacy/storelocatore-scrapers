@@ -14,7 +14,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
 
@@ -52,7 +51,6 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-
 def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
@@ -78,7 +76,6 @@ def fetch_data():
         else:
             location_type = 'Resturant'
             
-        
         lat = loc['lat']
         longit = loc['lng']
         
@@ -86,7 +83,6 @@ def fetch_data():
             page_url = loc['URL']
         else:
             page_url = locator_domain[:-1] + loc['URL']
-            
             
         addy = BeautifulSoup(loc['Address'], 'html.parser').text.strip()
         if 'Delivery' in addy:
@@ -97,9 +93,7 @@ def fetch_data():
         if phone_number == '':
             phone_number = '<MISSING>'
 
-        
         hours = "Su-Th 11:30-22:30 Fr-Sa 11:30-22:30"
-        
         
         country_code = 'US'
         store_number = '<MISSING>'
@@ -107,11 +101,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        
         all_store_data.append(store_data)
         
-
-
     return all_store_data
 
 def scrape():

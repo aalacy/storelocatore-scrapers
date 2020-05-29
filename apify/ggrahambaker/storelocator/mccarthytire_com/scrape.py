@@ -1,17 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
+from sgselenium import SgSelenium
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,12 +20,11 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'http://www.mccarthytire.com/'
     ext = 'Locations'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     locs = driver.execute_script('return locListings')
@@ -53,11 +41,9 @@ def fetch_data():
                 longit = loc['lon']
                 break
 
-
         if lat == 0.00:
             lat = '<MISSING>'
             longit = '<MISSING>'
-
 
         page_url = l.find_element_by_css_selector('a.DetailLink').get_attribute('href')
         addy = l.find_element_by_css_selector('div.locationInfo').text.split('\n')
@@ -79,7 +65,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

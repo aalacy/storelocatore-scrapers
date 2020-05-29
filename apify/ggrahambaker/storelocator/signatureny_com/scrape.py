@@ -1,19 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
-
-
-
+from sgselenium import SgSelenium
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,7 +12,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_extractor(src):
     arr = src.split(',')
     city = arr[0]
@@ -35,14 +21,12 @@ def addy_extractor(src):
 
     return city, state, zip_code
 
-
-
 def fetch_data():
     # Your scraper here
     locator_domain = 'https://www.signatureny.com/'
     ext = 'contact/private-client-offices'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     tables = driver.find_elements_by_css_selector('table.table.table-striped.table-bordered')
@@ -77,15 +61,12 @@ def fetch_data():
                 location_name = '<MISSING>'
                 city, state, zip_code = addy_extractor(address[1])
 
-
-
                 hours_arr = cols[2].text.split('\n')
                 hours = hours_arr[0]
 
                 store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                               store_number, phone_number, location_type, lat, longit, hours]
                 all_store_data.append(store_data)
-
 
                 street_address = address[4]
                 location_type = address[3]
@@ -111,7 +92,6 @@ def fetch_data():
                           store_number, phone_number, location_type, lat, longit, hours]
 
             all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

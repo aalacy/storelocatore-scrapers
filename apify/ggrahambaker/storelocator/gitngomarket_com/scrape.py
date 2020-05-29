@@ -1,9 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import time
-
 
 def addy_ext(addy):
     address = addy.split(',')
@@ -12,16 +10,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -37,7 +25,7 @@ def fetch_data():
     locator_domain = 'https://gitngomarket.com/'
     ext = 'locations/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     SCROLL_PAUSE_TIME = 0.5
@@ -65,7 +53,6 @@ def fetch_data():
         phone_number = row.find_element_by_css_selector('div.map-text').find_element_by_css_selector('a').text
 
         hours = row.find_element_by_css_selector('div.map-hours').text.replace('\n', ' ')
-
 
         map_div = row.find_element_by_css_selector('div.et_pb_map')
         lat = map_div.get_attribute('data-center-lat')

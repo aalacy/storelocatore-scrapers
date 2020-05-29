@@ -1,17 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -27,7 +17,7 @@ def fetch_data():
     locator_domain = 'https://www.traderjoes.com/'
     url = 'https://locations.traderjoes.com/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(url)
 
     locs = driver.find_elements_by_css_selector('div.itemlist')
@@ -37,18 +27,15 @@ def fetch_data():
         state_url = loc.find_element_by_css_selector('a').get_attribute('href')        
         state_list.append(state_url)
 
-
     city_list = []
     for state in state_list:
         driver.get(state)
         driver.implicitly_wait(10)
         locs = driver.find_elements_by_css_selector('div.itemlist')
 
-        
         for loc in locs:
             city_url = loc.find_element_by_css_selector('a').get_attribute('href')
             city_list.append(city_url)
-
 
     store_list = []
     for city in city_list:
@@ -56,11 +43,9 @@ def fetch_data():
         driver.implicitly_wait(10)
         locs = driver.find_elements_by_css_selector('div.itemlist')
 
-        
         for loc in locs:
             store_url = loc.find_element_by_css_selector('a').get_attribute('href')
             store_list.append(store_url)
-
 
     all_store_data = []
     for i, link in enumerate(store_list):
@@ -76,13 +61,9 @@ def fetch_data():
         lat = driver.find_element_by_xpath('//meta[@property="place:location:latitude"]').get_attribute('content')
         longit = driver.find_element_by_xpath('//meta[@property="place:location:longitude"]').get_attribute('content')
 
-        
         location_name = driver.find_element_by_css_selector('h2.h1text').text
         
-            
-
         start = location_name.find('(')
-
 
         store_number = location_name[start + 1: -1]
         if not store_number.isdigit():
@@ -99,7 +80,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-        
         
     driver.quit()
     return all_store_data

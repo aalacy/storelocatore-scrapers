@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 
-
 session = SgRequests()
 
 def write_output(data):
@@ -27,7 +26,6 @@ def fetch_data():
 
     soup = BeautifulSoup(page.content, 'html.parser')
 
-
     stores = soup.find_all('p')
 
     # dont do the last one or the first one!
@@ -38,7 +36,6 @@ def fetch_data():
             store_info = store.text.strip().split('\n')
             location_name = store_info[0].strip()
             street_address = store_info[0].strip()
-            
             
             addy_info = store_info[1].strip().split(' ')
             # there might be trailing comma
@@ -54,7 +51,6 @@ def fetch_data():
                     #print(city)
             #city = addy_info[0].replace(',','')
             #state = addy_info[1]
-            
             
             city = city.replace(',','')
             
@@ -90,8 +86,6 @@ def fetch_data():
         
             hours = phone_and_hours[12:]
         
-        
-        
         country_code = 'US'
         zip_code = '<MISSING>'
         store_number = '<MISSING>'
@@ -106,8 +100,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                      store_number, phone_number, location_type, lat, long, hours ]
         all_store_data.append(store_data)
-
-    
 
     return all_store_data
 

@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 session = SgRequests()
 
 def write_output(data):
@@ -31,7 +30,6 @@ def fetch_data():
     for st in stores:
         hours_arr.append(st.text)
 
-
     stores = soup.find('table')
 
     all_store_data = []
@@ -53,17 +51,11 @@ def fetch_data():
 
             phone_number = cols[6].text
         
-     
-        
         country_code = 'US'
         location_type = '<MISSING>'
         lat = '<MISSING>'
         long = '<MISSING>'
         hours = '<MISSING>'
-        
-
-            
-        
         
         # done parsing, lets push it to an array
         # should be like this
@@ -88,9 +80,6 @@ def fetch_data():
         
     del all_store_data[to_del]
 
-
-
-    
     return all_store_data
 
 def scrape():

@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 
-
 session = SgRequests()
 
 def write_output(data):
@@ -49,7 +48,6 @@ def fetch_data():
             else:
                 link_list.append(link)
 
-
     for city in city_list:
         page = session.get(city)
         assert page.status_code == 200
@@ -59,7 +57,6 @@ def fetch_data():
         for loc in locs:
             link = loc['href']
             link_list.append(link)
-
 
     all_store_data = []
 
@@ -77,7 +74,6 @@ def fetch_data():
         
         city = soup.find('span', itemprop='addressLocality').text.strip()
         
-        
         state = soup.find('abbr', itemprop="addressRegion")
         if state == None:
             state = soup.find('abbr', itemprop="addressCountry")
@@ -87,7 +83,6 @@ def fetch_data():
         zip_code = soup.find('span', itemprop="postalCode").text.strip()
         
         phone_number = soup.find('a', {'class': 'Nap-phoneLink'}).text.strip()
-        
         
         hours_json = json.loads(soup.find('div', {'class': 'c-location-hours-details-wrapper'})['data-days'])
         
@@ -103,10 +98,8 @@ def fetch_data():
             end_temp = str(day_of_week['intervals'][0]['end'])
             end = end_temp[:-2] + ':' + end_temp[-2:]
 
-         
             hours += day + ' ' + str(start) + ' : ' + str(end) + ' '
 
-        
         hours = hours.strip()
         
         country_code = 'US'
@@ -115,12 +108,10 @@ def fetch_data():
         page_url = link
         store_number = '<MISSING>'
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                             store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
 
     return all_store_data
 

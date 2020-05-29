@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -13,7 +12,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     addy = addy.split(',')
     city = addy[0]
@@ -21,7 +19,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
 
 def fetch_data():
     session = SgRequests()
@@ -52,21 +49,15 @@ def fetch_data():
             street_address = addy[0].text
             city, state, zip_code = addy_ext(addy[1].text)
     
-
-
         phone_number = loc.find('p', {'class': 'phone-number'}).find('a').text
         if 'Bryant, AR' in location_name:
             phone_number = '(501) 651-0778'
-        
-        
         
         hours_div = loc.find_all('div', {'class': 'ffo-store-hours'})
         if len(hours_div) > 0:
             hours = hours_div[0].find('p').text.replace('mS', 'm S').replace('dS', 'd S')
         else:
             hours = loc.find('div', {'class': 'ffo_store_address'}).find_all('p')[1].text.replace('mS', 'm S').replace('dS', 'd S')
-
-            
 
         country_code = 'US'
         store_number = '<MISSING>'
@@ -75,11 +66,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
         
-
-
     return all_store_data
 
 def scrape():

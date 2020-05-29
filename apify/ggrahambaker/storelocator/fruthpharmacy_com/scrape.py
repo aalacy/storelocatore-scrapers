@@ -1,18 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support.ui import Select
 import time
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +18,7 @@ def fetch_data():
     locator_domain = 'https://fruthpharmacy.com/'
     ext = 'locations/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     driver.implicitly_wait(10)
     time.sleep(2)
@@ -37,7 +27,6 @@ def fetch_data():
     select.select_by_value('500')
     time.sleep(2)
 
-
     states = ['Kentucky', 'virginia', 'west virginia']
     all_store_data = []
     dup_tracker = set()
@@ -45,7 +34,6 @@ def fetch_data():
 
         addy_input = driver.find_element_by_css_selector('input#addressInput')
         addy_input.send_keys(state)
-
 
         driver.find_element_by_id('addressSubmit').click()
 

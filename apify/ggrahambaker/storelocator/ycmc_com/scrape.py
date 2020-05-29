@@ -1,17 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
+from sgselenium import SgSelenium
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +12,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_extractor(src):
     arr = src.split(',')
     city = arr[0]
@@ -33,19 +21,16 @@ def addy_extractor(src):
 
     return city, state, zip_code
 
-
-
 def fetch_data():
     locator_domain = 'https://www.ycmc.com/'
     ext = 'locator'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     driver.implicitly_wait(30)
 
     pop_up = driver.find_element_by_xpath("//a[@title='Close']")
     driver.execute_script("arguments[0].click();", pop_up)
-
 
     divs = driver.find_elements_by_css_selector('div.ycmc_store_detail')
 
@@ -54,16 +39,13 @@ def fetch_data():
 
         ps = div.find_elements_by_css_selector('p')
 
-
         location_name = ps[0].text
 
         addy = ps[1].text.split('\n')
 
-
         street_address = addy[0]
         city, state, zip_code = addy_extractor(addy[1])
         phone_number = addy[2].replace('Phone:', '').strip()
-
 
         hour_split = ps[2].text.split('\n')
         hours = hour_split[1] + ' ' + hour_split[2]

@@ -1,18 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support.ui import Select
 import time
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,7 +14,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     addy = addy.split(',')
     city = addy[0]
@@ -33,18 +22,15 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
-
 def fetch_data():
     locator_domain = 'https://www.swedish.org/'
     ext = 'locations/list-view?loctype=birth+center&within=5000'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
 
     driver.get(locator_domain + ext)
     driver.implicitly_wait(5)
     time.sleep(5)
-
 
     opts = driver.find_element_by_id('main_0_leftpanel_0_ddlLocationType').find_elements_by_css_selector('option')
     types = []
@@ -76,7 +62,6 @@ def fetch_data():
                 if 'Next' in eles[0].text:
                     break
 
-
             nexts = driver.find_elements_by_css_selector('a#main_0_contentpanel_1_tablocationlisting_0_ucPagingTop_hlNext')
 
             if len(nexts) > 0:
@@ -87,9 +72,6 @@ def fetch_data():
             else:
                 break    
 
-            
-            
-            
     all_store_data = []
     for i, link in enumerate(link_list):
         page_url = link[0]
@@ -123,10 +105,8 @@ def fetch_data():
                             print('error')
                             print('\n\n\n\n\n\n\n')
 
-
         if len(addy) == 1:
             addy = ['1101 Madison St.', 'Seattle, WA 98104']
-
 
         if len(addy) == 3:
             street_address = addy[0]
@@ -137,13 +117,11 @@ def fetch_data():
             
         phone_numbers = driver.find_element_by_css_selector('div.phones').find_elements_by_css_selector('a')
 
-        
         if len(phone_numbers) > 0:
             phone_number = phone_numbers[0].text
         else:
             phone_number = '<MISSING>'
             
-        
         hours_raw = driver.find_elements_by_css_selector('div.module-lc-hours')
         if len(hours_raw) == 1:
             hours_raw = hours_raw[0].text.replace('\n', ' ').replace('Office hours', '').strip()
@@ -163,10 +141,7 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
-
-
 
     driver.quit()
     return all_store_data

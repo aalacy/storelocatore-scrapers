@@ -40,7 +40,6 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -58,7 +57,6 @@ def fetch_data():
     locator_domain = 'https://texasdebrazil.com/' 
     ext = 'locations/'
     r = session.get(locator_domain + ext, headers = HEADERS)
-
 
     soup = BeautifulSoup(r.content, 'html.parser')
 
@@ -85,7 +83,6 @@ def fetch_data():
 
         street_address, city, state, zip_code = parse_address(addy)
         
-        
         glink = soup.find('a', {'class': 'location-info__link'})['href']
         
         start = glink.find('@')
@@ -101,8 +98,6 @@ def fetch_data():
             
         hours = hours.strip()
 
-        
-        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -111,13 +106,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        
         all_store_data.append(store_data)
         
-
-
-
-
     return all_store_data
 
 def scrape():

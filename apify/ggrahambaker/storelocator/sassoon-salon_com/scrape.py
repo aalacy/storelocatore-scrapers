@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -13,7 +12,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     addy = addy.split(',')
     city = addy[0]
@@ -22,14 +20,12 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
 def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
     locator_domain = 'https://www.sassoon-salon.com/'
     ext = 'en/salon/us/salons-(1)'
     r = session.get(locator_domain + ext, headers = HEADERS)
-
 
     soup = BeautifulSoup(r.content, 'html.parser')
 
@@ -58,7 +54,6 @@ def fetch_data():
                 continue
             addy_arr.append(a.strip())
             
-    
         if len(addy_arr) == 3:
             if '3333' in addy_arr[0]:
                 street_address = addy_arr[0] + ' ' + addy_arr[1]
@@ -87,7 +82,6 @@ def fetch_data():
                 city, state, zip_code = addy_ext(addy_arr[1])
                 country_code = 'US'
                 
-
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         
@@ -106,8 +100,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
     
-
-
     return all_store_data
 
 def scrape():

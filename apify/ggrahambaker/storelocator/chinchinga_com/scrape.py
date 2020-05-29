@@ -1,16 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import usaddress
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,7 +17,7 @@ def fetch_data():
     locator_domain = 'https://www.chinchinga.com/'
     ext = 'locations/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     bottom = driver.find_element_by_css_selector('section.bottom').find_element_by_css_selector('div')
@@ -81,7 +72,6 @@ def fetch_data():
         else:
             continue
 
-
     for i, b in enumerate(brook):
         content = b.text.split('\n')
 
@@ -127,8 +117,6 @@ def fetch_data():
             all_store_data.append(store_data)
         else:
             continue
-
-
 
     driver.quit()
     return all_store_data

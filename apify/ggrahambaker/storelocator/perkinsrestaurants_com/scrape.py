@@ -28,7 +28,6 @@ def fetch_data():
     for c in countries:
         c_list.append(url + c.find('a')['href'])
         
-
     state_list = []
     city_list = []
     link_list = []
@@ -58,7 +57,6 @@ def fetch_data():
             else:
                 link_list.append(link)
     
-
     for city in city_list:
         r = session.get(city, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
@@ -67,14 +65,12 @@ def fetch_data():
             link = url + loc.find('a')['href'].replace('../', '')
             link_list.append(link)
         
-
     all_store_data = []
     for link in link_list:
         r = session.get(link, headers = HEADERS)
         soup = BeautifulSoup(r.content, 'html.parser')
   
         location_name = soup.find('h1', {'class': 'c-location-title'}).text
-        
         
         lat = soup.find('meta', {'itemprop': 'latitude'})['content']
         longit = soup.find('meta', {'itemprop': 'longitude'})['content']
@@ -109,7 +105,6 @@ def fetch_data():
         if hours == '':
             hours = '<MISSING>'
        
-        
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         page_url = link
@@ -118,10 +113,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
-        
-    
-
 
     return all_store_data
 

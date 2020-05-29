@@ -1,17 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
+from sgselenium import SgSelenium
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,12 +20,11 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
 def fetch_data():
     locator_domain = 'http://www.hopewellhealth.org/' 
     ext = 'locations.htm'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     locs = driver.find_elements_by_css_selector('table.content')
@@ -58,10 +46,8 @@ def fetch_data():
                 if 'Perry County WIC Program' in i:
                     continue
     
-                
                 info.append(i)
   
-            
             location_name = info[0]
             if '2541 Panther Drive' in location_name:
                 continue
@@ -93,8 +79,6 @@ def fetch_data():
                 else:
                     lat, longit = '<MISSING>', '<MISSING>'
                 
-                
-
             country_code = 'US'
             store_number = '<MISSING>'
             location_type = '<MISSING>'
@@ -108,8 +92,6 @@ def fetch_data():
 
             all_store_data.append(store_data)
        
-
-
     driver.quit()
     return all_store_data
 

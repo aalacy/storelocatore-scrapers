@@ -2,8 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -16,7 +14,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 #helper for getting address
 def addy_extractor(src):
     arr = src.split(',')
@@ -28,14 +25,11 @@ def addy_extractor(src):
     
     return city, state, zip_code
 
-
 def fetch_data():
 
-    
     locator_domain = 'https://www.projectjuice.com/'
 
     ext = 'locations'
-
 
     to_scrape = locator_domain + ext
     page = session.get(to_scrape)
@@ -51,7 +45,6 @@ def fetch_data():
         location_name = store.find('h2').text.strip()
         
         street_address = addy_info[1].replace(',', '').replace('\r', '').strip()
-        
         
         addy_ect = addy_info[2].replace('\r', '').strip()
         
@@ -77,7 +70,6 @@ def fetch_data():
         
         all_store_data.append(store_data)
 
-
     stores = soup.find('div', {'class': 'partner-locations'})
     cols = stores.find_all('div', {'class': 'col'})
     
@@ -87,7 +79,6 @@ def fetch_data():
         addy_info = col.find('div', {'class': 'location-address'}).text.split('\n')
         
         street_address = addy_info[1].replace(',', '').replace('\r', '').strip()
-        
         
         addy_ect = addy_info[2].replace('\r', '').strip()
         
@@ -100,7 +91,6 @@ def fetch_data():
             phone_number = phone_number.text.strip()
             if not phone_number[-1].isdigit():
                 phone_number = '<MISSING>'
-        
         
         h_arr = col.find('div', {'class': 'location-hours'})
         
@@ -115,7 +105,6 @@ def fetch_data():
             
             hours = hours.replace('   ', '').strip()
             
-        
         country_code = 'US'
         location_type = 'partner location'
         store_number = '<MISSING>'
@@ -127,8 +116,6 @@ def fetch_data():
         
         all_store_data.append(store_data)
         
-        
-
     return all_store_data
 
 def scrape():

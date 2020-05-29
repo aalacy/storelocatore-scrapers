@@ -73,7 +73,6 @@ def fetch_data():
             
             clean_info.append(i.strip())
 
-     
         if len(clean_info) == 6:
             phone_number = clean_info[1]
             location_type = clean_info[3]
@@ -84,7 +83,6 @@ def fetch_data():
             location_type = clean_info[4]
             addy = clean_info[5]
         
-        
         street_address, city, state, zip_code = parse_address(addy)
         
         hours = '<MISSING>'
@@ -92,18 +90,10 @@ def fetch_data():
         page_url = '<MISSING>'
         country_code = 'US'
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
-
-
-
-
-
-
 
     return all_store_data
 

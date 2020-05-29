@@ -2,8 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -53,12 +51,10 @@ def fetch_data():
     fishers = soup.find('section', {'id': 'contact_info-3'})
     store_list = [carmel, fishers]
 
-
     all_store_data = []
     for store in store_list:
         all_store_data.append(pull_info(store, locator_domain))
         
-
     return all_store_data
 
 def scrape():

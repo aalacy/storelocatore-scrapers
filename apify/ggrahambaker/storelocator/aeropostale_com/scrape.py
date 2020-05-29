@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 import sgzip 
 import json
 
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -19,7 +17,6 @@ def write_output(data):
 def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ['us'])
-
 
     MAX_RESULTS = 1000
     MAX_DISTANCE = 1000
@@ -62,7 +59,6 @@ def fetch_data():
             if phone_number == '':
                 phone_number = '<MISSING>'
             
-                
             soup = BeautifulSoup(loc['storeHours'], 'html.parser')
             hours = soup.text.replace('Store Hours', '').replace('\n', ' ').strip()
             divs = soup.find_all('div')            
@@ -76,8 +72,6 @@ def fetch_data():
            
             all_store_data.append(store_data)
         
-        
-        
         if len(res_json) < MAX_RESULTS:
             print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
@@ -87,7 +81,6 @@ def fetch_data():
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
         coord = search.next_coord()  
-
 
     return all_store_data
 

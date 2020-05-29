@@ -5,7 +5,6 @@ import sgzip
 import json
 import time
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,7 +14,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def fetch_data():
     session = SgRequests()
@@ -67,7 +65,6 @@ def fetch_data():
                     continue
                 loc_info = json.loads(loc_jsons[0].text)[0]
 
-
                 street_address = loc_info['address']['streetAddress']
                 city = loc_info['address']['addressLocality']
                 state = loc_info['address']['addressRegion']
@@ -89,14 +86,8 @@ def fetch_data():
                             store_number, phone_number, location_type, lat, longit, hours, page_url]
                 all_store_data.append(store_data)
             
-        
-        
         search.max_count_update(coords)
         coord = search.next_coord()
-
-
-
-
 
     return all_store_data
 

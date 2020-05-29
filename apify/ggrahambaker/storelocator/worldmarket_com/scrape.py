@@ -1,19 +1,9 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 import json
 import time
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,9 +18,8 @@ def write_output(data):
 def fetch_data():
     url = 'https://stores.worldmarket.com/index.html'
     locator_domain = 'https://www.worldmarket.com'
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(url)
-
 
     locs = driver.find_elements_by_css_selector('a.c-directory-list-content-item-link')
     link_list = []
@@ -48,13 +37,11 @@ def fetch_data():
         else:
             state_list.append(link)
 
-
     for link in state_list:
         driver.get(link)
         driver.implicitly_wait(10)
         cities = driver.find_elements_by_css_selector('a.c-directory-list-content-item-link')
         for city in cities:      
-            
             
             city_link = city.get_attribute('href')
 
@@ -63,7 +50,6 @@ def fetch_data():
             else:
                 city_list.append(city_link)
 
-        
     for link in city_list:
         driver.get(link)
 
@@ -72,7 +58,6 @@ def fetch_data():
         for loc in in_cities:
             link = loc.get_attribute('href')
             link_list.append(link)
-
 
     all_store_data = []
     for link in link_list:
@@ -116,7 +101,6 @@ def fetch_data():
                     continue
                 hours += day_hours + ' '
 
-        
         street_address = driver.find_element_by_xpath('//span[@itemprop="streetAddress"]').text
         city = driver.find_element_by_xpath('//span[@itemprop="addressLocality"]').text.replace(',', '').strip()
         
@@ -125,13 +109,9 @@ def fetch_data():
         location_type = '<MISSING>'
         page_url = link
 
-        
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-
-
 
     driver.quit()
     return all_store_data

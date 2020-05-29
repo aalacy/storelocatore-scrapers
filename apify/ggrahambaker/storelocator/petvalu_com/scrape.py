@@ -15,7 +15,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def unpack(loc):
         locator_domain = 'https://petvalu.com/'
         location_name = loc['na'].replace('&amp;', '&')
@@ -23,23 +22,18 @@ def unpack(loc):
         lat = loc['lat']
         longit = loc['lng']
         
-
-
         street_address = loc['st'].replace('<br>', ' ').strip()
         zip_code = loc['zp']
         
-
         city = loc['ct']
         country_code = loc['co'].strip()
         state = loc['rg']
         phone_number = loc['te'].strip()
         
-
         if phone_number == '':
             phone_number = '<MISSING>'
         else:
             phone_number = re.sub("[^0-9]", "", phone_number)
-
 
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -48,7 +42,6 @@ def unpack(loc):
         return [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         
-
 def fetch_data():
 
     session = SgRequests()
@@ -65,7 +58,6 @@ def fetch_data():
     'DNT': '1',
     'Connection': 'keep-alive',
     'Cookie': 'tk_ai=woo%3ApLgeTii%2Be43iIzeJv3ESzKfM'}
-
 
     search = sgzip.ClosestNSearch()
     search.initialize()
@@ -113,12 +105,7 @@ def fetch_data():
 
             search.max_count_update(result_coords)
             
-    
-        
-        
         coord = search.next_coord()  
-
-
 
     #### canada 
     search = sgzip.ClosestNSearch()
@@ -138,10 +125,8 @@ def fetch_data():
     'Connection': 'keep-alive',
     'Cookie': 'tk_ai=woo%3ApLgeTii%2Be43iIzeJv3ESzKfM'}
 
-
     coord = search.next_coord()
   
-    
     while coord:
         #print("remaining zipcodes: " + str(len(search.zipcodes)))
         x = coord[0]
@@ -157,13 +142,8 @@ def fetch_data():
             print('done')
             r = session.post('https://petvalu.com/wp-admin/admin-ajax.php', headers = headers, data = c_data)
 
-
-
-    
-            
         res_json = json.loads(r.content)
 
-        
         result_coords = []
         if len(res_json) == 0:
             search.max_distance_update(MAX_DISTANCE)
@@ -187,8 +167,6 @@ def fetch_data():
             search.max_count_update(result_coords)
 
         coord = search.next_coord()
-
-
 
     return all_store_data
 

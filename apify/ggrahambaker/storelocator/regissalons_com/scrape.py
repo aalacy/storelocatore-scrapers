@@ -21,7 +21,6 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ['ca', 'us'])
 
-
     MAX_RESULTS = 25
     MAX_DISTANCE = 500
 
@@ -29,7 +28,6 @@ def fetch_data():
     all_store_data = []
 
     dup_tracker = []
-
 
     while coord:
         #print("remaining zipcodes: " + str(len(search.zipcodes)))
@@ -44,13 +42,11 @@ def fetch_data():
         result_coords = []
         result_coords.append((x, y))
   
-        
         for loc in res_json:
             lat = loc['lat']
             longit = loc['lng']
             result_coords.append((lat, longit))
             
-        
             location_name = loc['store'].replace('&#8211;', '').replace('&#8217;', "'").replace('&#038;', '&')
            
             phone_number = loc['phone']
@@ -59,24 +55,19 @@ def fetch_data():
             else:
                 continue
 
-                
             street_address = loc['address2']
             city = loc['city']
             state = loc['state']
             zip_code = loc['zip']
 
-            
             if len(zip_code.split(' ')) == 2:
                 country_code = 'CA'
             else:
                 country_code = 'US'
             
-                
-                    
             store_number = loc['id']
             
             hours_obj = loc['hours']
-            
             
             soup = BeautifulSoup(hours_obj, 'html.parser')
             
@@ -87,26 +78,20 @@ def fetch_data():
                 for td in tds:
                     hours += td.text + ' '
 
-            
             page_url = loc['permalink']
             
             location_type = '<MISSING>'
-            
             
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
             all_store_data.append(store_data)
             
-        
         if len(res_json) == 0:
             search.max_distance_update(MAX_DISTANCE)
         else:
             search.max_count_update(result_coords)
         coord = search.next_coord()  
-
-
-
 
     return all_store_data
 

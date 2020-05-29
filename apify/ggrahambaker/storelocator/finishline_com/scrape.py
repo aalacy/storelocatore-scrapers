@@ -103,9 +103,7 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
             all_store_data.append(store_data)
-            
             
     for link in link_list:
         if '../' in link:
@@ -130,7 +128,6 @@ def fetch_data():
 
         hours = hours.strip()
 
-
         street_address = soup.find('span', {'class': 'c-address-street-1'}).text
         street_2 = soup.find_all('span', {'class': 'c-address-street-2'})
         if len(street_2) == 2:
@@ -142,7 +139,6 @@ def fetch_data():
 
         phone_number = soup.find('span', {'class': 'c-phone-number-span'}).text
         
-
         store_number = '<MISSING>'
         location_type = name_brand
         lat = soup.find('meta', {'itemprop': 'latitude'})['content']
@@ -152,15 +148,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
   
-                
-            
-
-
-
-
     return all_store_data
 
 def scrape():

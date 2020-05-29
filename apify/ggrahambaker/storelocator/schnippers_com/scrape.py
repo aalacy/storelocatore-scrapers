@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -27,7 +26,6 @@ def fetch_data():
     for loc in locs:
         link = loc.find('a', {'class': 'location'})['href']
         loc_list.append(link)
-
 
     all_store_data = []
     for url in loc_list:
@@ -54,10 +52,8 @@ def fetch_data():
         
         coords = google_src[start + 3 : end].split('!3d')
         
-        
         lat = coords[1].split('!')[0]
         longit = coords[0]
-        
         
         city = '<MISSING>'
         state = '<MISSING>'
@@ -66,17 +62,10 @@ def fetch_data():
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-        
         all_store_data.append(store_data)
-
-
-
-
-
 
     return all_store_data
 

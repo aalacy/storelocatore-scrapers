@@ -1,11 +1,9 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support.ui import Select
 import time
 import usaddress
-
 
 def parse_addy(addy):
     parsed_add = usaddress.tag(addy)[0]
@@ -32,16 +30,6 @@ def parse_addy(addy):
 
     return street_address, city, state, zip_code
 
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -56,9 +44,8 @@ def fetch_data():
     locator_domain = 'https://mission-bbq.com/'
     ext = 'locations'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
-
 
     divs = driver.find_elements_by_css_selector('div.hidden-phone')
     hours = ''
@@ -66,7 +53,6 @@ def fetch_data():
     for div in divs:
         if 'Restaurant Hours:' in div.text:
             hours = div.text.replace('Restaurant Hours:', '').replace('\n', ' ').strip()
-
 
     drop_down = driver.find_element_by_id('categories-1')
     options = drop_down.find_elements_by_css_selector('option')
@@ -129,9 +115,7 @@ def fetch_data():
             if longit == '':
                 longit = '<MISSING>'
 
-
             phone_number = divs[2].text.replace('Restaurant', '').strip()
-
 
             country_code = 'US'
 

@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -40,19 +39,13 @@ def fetch_data():
         for h in hours_obj:
             hours += h + ' ' + hours_obj[h] + ' '
             
-
         page_url = '<MISSING>'
 
-        
         country_code = 'CA'
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
-
-
-
 
     return all_store_data
 

@@ -13,9 +13,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-
-
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
 
@@ -59,7 +56,6 @@ def fetch_data():
     ext = '#LOCATIONS'
     r = session.get(locator_domain + ext, headers = HEADERS)
 
-
     soup = BeautifulSoup(r.content, 'html.parser')
 
     locs = soup.find('div', {'id': 'LOCATIONS'}).find_all('a')
@@ -71,7 +67,6 @@ def fetch_data():
         
         link_list.append(locator_domain[:-1] + link)
 
-
     all_store_data = []
     for link in link_list:
         r = session.get(link, headers = HEADERS)
@@ -79,21 +74,17 @@ def fetch_data():
         
         location_name = soup.find('h1', {'class': 'hero-heading'}).text
         
-        
         addy_tag = soup.find('a', {'class': 'addresslink'})
         addy = addy_tag.txt
         
         street_address, city, state, zip_code = parse_address(addy_tag.findNext('p').text)
         
-        
         phone_number = addy_tag.findNext('p').findNext('p').text
-        
         
         hours = ''
         hours_divs = soup.find_all('div', {'class': 'schedule-text'})
         for div in hours_divs:
             hours += div.text.strip() + ' '
-            
             
         country_code = 'US'
         store_number = '<MISSING>'
@@ -106,15 +97,7 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
-
-        
-
-
-
-
-
 
     return all_store_data
 

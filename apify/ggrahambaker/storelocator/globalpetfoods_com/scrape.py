@@ -19,7 +19,6 @@ def fetch_data():
     session = SgRequests()
     HEADERS = { 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36' }
 
-
     all_store_data = []
     last_seen = 0
     for i in range(300):
@@ -38,11 +37,9 @@ def fetch_data():
         if 'Opening' in location_name:
             continue
 
-
         raw_json = soup.find('script', {'type': 'application/ld+json'}).text.replace('\r\n', '').replace("\\\\\\\'", "'")
         formatted_json = raw_json.replace("\\", "")
     
-
         loc_json = json.loads(formatted_json)
         
         hours = ''
@@ -62,7 +59,6 @@ def fetch_data():
             phone_number = '<MISSING>'
         location_name = addy['name']
 
-        
         country_code = 'CA'
         
         store_number = i
@@ -73,10 +69,8 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
         all_store_data.append(store_data)
         last_seen = i
-
 
     return all_store_data
 

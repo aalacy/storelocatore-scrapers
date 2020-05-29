@@ -31,7 +31,6 @@ def fetch_data():
         location_name = loc['shopname']
         addy = loc['shopaddress'].split(',')
         
-            
         if len(addy) == 6:
             street_address = addy[3].strip()
             city = addy[4].strip()
@@ -81,7 +80,6 @@ def fetch_data():
         lat = loc['latitude']
         longit = loc['longitude']
         
-
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         page_url = '<MISSING>'
@@ -90,9 +88,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
                     
         all_store_data.append(store_data)
-
-
-
 
     return all_store_data
 

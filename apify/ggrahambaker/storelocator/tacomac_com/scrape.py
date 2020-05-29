@@ -21,7 +21,6 @@ def fetch_data():
     locator_domain = 'https://tacomac.com/' 
     r = session.get(url, headers = HEADERS)
 
-
     locs = json.loads(r.content)
 
     all_store_data = []
@@ -50,8 +49,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
 
         all_store_data.append(store_data)
-
-
 
     return all_store_data
 

@@ -1,19 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import json
-
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,7 +16,7 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'http://stores.redwing.com/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain)
 
     countries = driver.find_elements_by_css_selector('a.cities')
@@ -45,8 +33,6 @@ def fetch_data():
         for s in states:
             state_list.append(s.get_attribute('href'))
 
-
-
     city_list = []
     for state in state_list:
         driver.get(state)
@@ -54,7 +40,6 @@ def fetch_data():
         cities = driver.find_elements_by_css_selector('a.cities')
         for c in cities:
             city_list.append(c.get_attribute('href'))
-
 
     location_list = []
 
@@ -64,7 +49,6 @@ def fetch_data():
         store_links = driver.find_elements_by_css_selector('a.website.pull-right')
         for link in store_links:
             location_list.append(link.get_attribute('href'))
-
 
     all_store_data = []
     for i, link in enumerate(location_list):
@@ -107,7 +91,6 @@ def fetch_data():
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
-
 
         all_store_data.append(store_data)
 

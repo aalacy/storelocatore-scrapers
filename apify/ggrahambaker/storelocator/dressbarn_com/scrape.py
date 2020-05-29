@@ -1,17 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
+from sgselenium import SgSelenium
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -28,10 +17,9 @@ def fetch_data():
     locator_domain = 'https://www.dressbarn.com/'
     url = 'https://locations.dressbarn.com/index.html'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(url)
     
-
     link_list = []
     state_list = []
     city_list = []
@@ -49,8 +37,6 @@ def fetch_data():
         else:
             state_list.append(link)
         
-        
-    
     for state in state_list:
         driver.get(state)
         driver.implicitly_wait(10)
@@ -64,7 +50,6 @@ def fetch_data():
 
                 link_list.append(link)
                 
-        
     for city in city_list:
         driver.get(city)
         driver.implicitly_wait(10)
@@ -74,7 +59,6 @@ def fetch_data():
             link = loc.get_attribute('href')
             link_list.append(link)
     
-
     all_store_data = []
     for link in link_list:
         
@@ -101,9 +85,6 @@ def fetch_data():
         
         all_store_data.append(store_data)
         
-
-
-
     driver.quit()
     return all_store_data
 

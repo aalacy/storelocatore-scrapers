@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -13,7 +12,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def addy_ext(addy):
     com_split = addy.split(',')
     city = com_split[0]
@@ -22,7 +20,6 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     
     return city, state, zip_code
-
 
 def fetch_data():
     session = SgRequests()
@@ -47,8 +44,6 @@ def fetch_data():
 
         location_name = soup.find('span', {'id': 'header-location'}).text.strip()
         
-        
-        
         google_link = soup.find('div', {'class': 'google-map'}).find('iframe')['src']
         start = google_link.find('!2d')
         end = google_link.find('!2m')
@@ -56,7 +51,6 @@ def fetch_data():
         coords = google_link[start + 3 : end].split('!3d')
         lat = coords[1]
         longit = coords[0]
-        
         
         conts = soup.find_all('div', {'class': 'footer-address'})
 
@@ -72,7 +66,6 @@ def fetch_data():
             else:
                 continue
 
-                
         days = soup.find_all('div', {'class': 'Footer-Hours'})
         
         hours = ''
@@ -81,21 +74,14 @@ def fetch_data():
 
             hours += day
         
-        
-        
         country_code = '<MISSING>'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         page_url = link
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-
-
-
-
 
     return all_store_data
 

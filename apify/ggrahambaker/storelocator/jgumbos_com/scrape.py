@@ -1,7 +1,6 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.common.exceptions import NoSuchElementException
 
 import re
@@ -15,15 +14,6 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -33,7 +23,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 def hours_extract(addy):
     # returns hours string
@@ -58,12 +47,11 @@ def hours_extract(addy):
 
     return hours_string.replace('Hours:', '').replace('Regular', '').strip()
 
-
 def fetch_data():
     locator_domain = 'http://www.jgumbos.com/'
     ext = 'location/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     loc_wrap = driver.find_element_by_css_selector('div.fusion-column-wrapper')
 
@@ -134,7 +122,6 @@ def fetch_data():
                         if m.group():
                             to_break = True
 
-
                 parsed_add = usaddress.tag(addy_string)[0]
 
                 street_address = ''
@@ -164,9 +151,7 @@ def fetch_data():
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                           store_number, phone_number, location_type, lat, longit, hours]
 
-
             all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

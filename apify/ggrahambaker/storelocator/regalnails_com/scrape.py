@@ -25,8 +25,6 @@ def fetch_data():
 
     locator_domain = 'https://www.regalnails.com/'
 
-
-
     coord = search.next_coord()
     all_store_data = []
     dup_tracker = []
@@ -53,7 +51,6 @@ def fetch_data():
             longit = loc['lng']
             if phone_number not in dup_tracker:
                 dup_tracker.append(phone_number)
-                
                 
             else:
                 result_coords.append((lat, longit))
@@ -88,24 +85,16 @@ def fetch_data():
             location_type = '<MISSING>'
             hours = '<MISSING>'
             
-            
             store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                         store_number, phone_number, location_type, lat, longit, hours, page_url]
 
-
             all_store_data.append(store_data)
-        
-        
-        
         
         if len(res_json) == 0:
             search.max_distance_update(MAX_DISTANCE)
         else:
             search.max_count_update(result_coords)
         coord = search.next_coord()  
-
-
-
 
     return all_store_data
 

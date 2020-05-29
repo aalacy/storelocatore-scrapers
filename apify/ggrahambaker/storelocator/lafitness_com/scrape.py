@@ -1,20 +1,10 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import json
 from selenium.webdriver.support.ui import Select
 import time
 from bs4 import BeautifulSoup
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,8 +20,7 @@ def fetch_data():
     locator_domain = 'https://lafitness.com/' 
     ext = 'Pages/findclub.aspx'
 
-
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     state_select = driver.find_element_by_xpath('//*[@title="Select a State"]')
 
@@ -43,7 +32,6 @@ def fetch_data():
         if val == '-1':
             continue
         abbrs.append(val)
-
 
     link_list = []
 
@@ -74,7 +62,6 @@ def fetch_data():
             else:
                 break
                 
-
     all_store_data = []
     for link in link_list:
         print(link)
@@ -90,7 +77,6 @@ def fetch_data():
             continue
         else:
             location_type = '<MISSING>'
-        
         
         driver.find_element_by_id('lnkClubHours').click()
         time.sleep(1)
@@ -110,7 +96,6 @@ def fetch_data():
 
         hours = ' '.join(hours.split())
     
-
         street_address = driver.find_element_by_id('ctl00_MainContent_lblClubAddress').text
         
         city = driver.find_element_by_id('ctl00_MainContent_lblClubCity').text
@@ -121,12 +106,9 @@ def fetch_data():
         else:
             country_code = 'US'
             
-            
         phone_number = driver.find_element_by_id('ctl00_MainContent_lblClubPhone').text.split('\n')
         
         phone_number = phone_number[0]
-        
-        
         
         bing_map = driver.find_element_by_id('aClubmap').get_attribute('href')
         start = bing_map.find('cp=')
@@ -138,15 +120,11 @@ def fetch_data():
         page_url = link
         store_number = link[link.find('=') + 1:].split('&')[0]
         
-        
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         
         all_store_data.append(store_data)
         
-        
-    
-
     driver.quit()
     return all_store_data
 

@@ -22,7 +22,6 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes = ['ca', 'us'])
 
-
     coord = search.next_coord()
     dup_tracker = set()
 
@@ -52,7 +51,6 @@ def fetch_data():
                 else:
                     continue
 
-           
                 street_address = loc['address'].split('--- ')[-1].strip()
 
                 city = loc['city']
@@ -65,18 +63,15 @@ def fetch_data():
                 except:
                     phone_number = '<MISSING>'
 
-
                 if phone_number == '':
                     phone_number = '<MISSING>'
 
-                
                 slug = loc['slug']
                 if slug == '':
                     page_url = 'https://stores.newbalance.com/shop/' + str(loc['id']) + '/' + location_name.lower().split('|')[0].replace(' ', '-')
                 else:
                     page_url = 'https://stores.newbalance.com/shop/' + slug
                 
-
                 cat = str(loc['enhanced_categories']).split(':')[0].replace('{', '').replace("'", '')
                 
                 try:
@@ -101,27 +96,17 @@ def fetch_data():
 
                         hours = hours.strip()
                 
-    
                 store_number = '<MISSING>'
           
-                
-                
                 store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                             store_number, phone_number, location_type, lat, longit, hours, page_url]
 
                 all_store_data.append(store_data)
                 
-                
-         
             result_coords.append((lat, longit))
-        
-        
         
         search.max_count_update(result_coords)
         coord = search.next_coord()  
-
-
-
 
     return all_store_data
 

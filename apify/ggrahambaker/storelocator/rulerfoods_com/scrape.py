@@ -1,22 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import usaddress
 import time
-
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    options.add_argument("--use--fake-ui-for-media-stream")
-
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -31,7 +17,7 @@ def write_output(data):
 def fetch_data():
     locator_domain = 'https://rulerfoods.com/'
     ext = 'locations/'
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     obj = driver.switch_to.alert
@@ -40,10 +26,8 @@ def fetch_data():
     element = driver.find_element_by_css_selector('span.popup-close')
     driver.execute_script("arguments[0].click();", element)
 
-
     all_store_data = []
     # ten pages
-
 
     inputElement = driver.find_element_by_id("addressInput")
     inputElement.send_keys('kentuky')
@@ -92,7 +76,6 @@ def fetch_data():
                               store_number, phone_number, location_type, lat, longit, hours]
                 all_store_data.append(store_data)
 
-
         time.sleep(2)
 
         element = driver.find_element_by_css_selector('a.next_link')
@@ -100,7 +83,6 @@ def fetch_data():
         driver.execute_script("arguments[0].click();", element)
 
     driver.quit()
-
 
     return all_store_data
 

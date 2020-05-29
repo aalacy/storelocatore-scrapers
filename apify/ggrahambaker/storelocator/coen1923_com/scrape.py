@@ -1,20 +1,10 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 import time
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -30,7 +20,7 @@ def fetch_data():
     locator_domain = 'https://coen1923.com/'
     ext = 'locations'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     session = SgRequests()
@@ -71,7 +61,6 @@ def fetch_data():
         
         hours = driver.find_element_by_css_selector('div.loc-head').text.replace('\n', ' ').replace('Business Hours', '').strip()        
         
-        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -81,9 +70,6 @@ def fetch_data():
 
         all_store_data.append(store_data)
         
-
-
-
     driver.quit()
     return all_store_data
 

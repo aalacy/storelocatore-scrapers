@@ -1,19 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import json
 import re
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -33,13 +22,11 @@ def addy_ext(addy):
     zip_code = state_zip[1]
     return city, state, zip_code
 
-
-
 def fetch_data():
     locator_domain = 'https://ilovejuicebar.com/'
     ext = 'locations-1'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     states = driver.find_elements_by_css_selector('section.Index-page')
     link_list = []
@@ -142,8 +129,6 @@ def fetch_data():
             if re.search('([\-\+]{0,1}\d[\d\.\,]*[\.\,][\d\.\,]*\d+)', h):
                 phone_number = re.search('([\-\+]{0,1}\d[\d\.\,]*[\.\,][\d\.\,]*\d+)', h).group()
 
-
-
         hours = hours.strip()
 
         if hours == '':
@@ -163,7 +148,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours]
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

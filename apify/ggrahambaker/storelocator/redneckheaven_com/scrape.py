@@ -2,8 +2,6 @@ import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 
-
-
 session = SgRequests()
 
 def write_output(data):
@@ -15,7 +13,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 #helper for getting address
 def addy_extractor(src):
@@ -31,7 +28,6 @@ def addy_extractor(src):
 def fetch_data():
     locator_domain = 'http://redneckheaven.com/'
     ext = 'redneck-location/'
-
 
     to_scrape = locator_domain + ext
     page = session.get(to_scrape)
@@ -52,7 +48,6 @@ def fetch_data():
 
         phone_number = a_tags[1].text.strip()
 
-        
         country_code = 'US'
         location_type = '<MISSING>'
         store_number = '<MISSING>'
@@ -64,7 +59,6 @@ def fetch_data():
                      store_number, phone_number, location_type, lat, longit, hours ]
         all_store_data.append(store_data)
         
-
     return all_store_data
 
 def scrape():

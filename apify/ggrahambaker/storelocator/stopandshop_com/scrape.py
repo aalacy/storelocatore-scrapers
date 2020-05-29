@@ -3,7 +3,6 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import json
 
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -21,7 +20,6 @@ def fetch_data():
     locator_domain = 'https://stopandshop.com/' 
     url = 'https://stores.stopandshop.com/'
     r = session.get(url, headers = HEADERS)
-
 
     soup = BeautifulSoup(r.content, 'html.parser')
     hrefs = soup.find_all('a', {'class': 'DirectoryList-itemLink'})
@@ -51,7 +49,6 @@ def fetch_data():
             link = url + h['href'].replace('../', '')
             link_list.append(link)
             
-            
     all_store_data = []
     for link in link_list:
         
@@ -61,7 +58,6 @@ def fetch_data():
         is_closed = soup.find_all('div', {'class': 'NAP-closedMessage'})
         if len(is_closed) > 0:
             continue
-
 
         location_name = soup.find('meta', {'itemprop': 'name'})['content']
         
@@ -74,10 +70,8 @@ def fetch_data():
         
         phone_number = soup.find('span', {'itemprop': 'telephone'}).text
 
-        
         store_number = soup.find('div', {'class': 'StoreDetails-storeNum'}).text.replace('Store Number', '').replace('#', '').strip()
 
-            
         hours_json = json.loads(soup.find('div', {'class': 'js-location-hours'})['data-days'])
         hours = ''
         for h in hours_json:
@@ -100,14 +94,6 @@ def fetch_data():
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
         
-        
-
-
-
-
-
-
-
     return all_store_data
 
 def scrape():

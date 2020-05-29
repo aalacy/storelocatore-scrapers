@@ -2,7 +2,6 @@ import csv
 from sgrequests import SgRequests
 import json
 
-
 session = SgRequests()
 
 def write_output(data):
@@ -25,7 +24,6 @@ def fetch_data():
     for i in range(0, 10):
         url = locator_domain + ext + str(i) + ext2
      
-
         page = session.get(url)
         assert page.status_code == 200
 
@@ -33,8 +31,6 @@ def fetch_data():
             break
         locs = json.loads(page.content)['data']
   
-        
-        
         for loc in locs:
             location_name = loc['displayName']
             phone_number = loc['phone']
@@ -48,12 +44,10 @@ def fetch_data():
             else:
                 state = loc['region']
 
-
                 state = 'KY'
             zip_code = loc['postalCode']
             lat = loc['latitude']
             longit = loc['longitude']
-            
             
             hours = ''
 
@@ -75,9 +69,6 @@ def fetch_data():
                             store_number, phone_number, location_type, lat, longit, hours, page_url]
             all_store_data.append(store_data)
         
-
-
-
     return all_store_data
 
 def scrape():

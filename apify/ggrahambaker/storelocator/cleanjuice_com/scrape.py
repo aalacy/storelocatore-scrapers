@@ -1,16 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import re
-
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def addy_ext(addy):
     address = addy.split(',')
@@ -23,7 +14,6 @@ def addy_ext(addy):
     state = state_zip[0]
     zip_code = state_zip[1]
     return city, state, zip_code
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -39,7 +29,7 @@ def fetch_data():
     locator_domain = 'https://cleanjuice.com/'
     ext = 'locations/'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     main_div = driver.find_element_by_css_selector('div.et_pb_row.et_pb_row_2')
@@ -89,18 +79,14 @@ def fetch_data():
                 else:
                     city, state, zip_code = addy_ext(content[3])
 
-                
                 if 'COMING' in phone_number:
                     phone_number = '<MISSING>'
-
-                
 
                 hours_arr = content[5:]
                 hours = ''
                 for ele in hours_arr:
                     hours += ele + ' '
                 hours = hours.strip()
-
 
                 country_code = 'US'
                 store_number = '<MISSING>'

@@ -1,18 +1,8 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import time
 from bs4 import BeautifulSoup
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -24,13 +14,11 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
-
 def fetch_data():
     locator_domain = 'https://www.drivetime.com/'
     ext = 'used-car-dealers'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
     driver.implicitly_wait(10)
     time.sleep(2)
@@ -66,10 +54,8 @@ def fetch_data():
         #print(content)
         soup = BeautifulSoup(content, 'html.parser')
 
-
         location_name = soup.find('h1', {'class': 'dealer-top-header'}).text
         location_name += ' ' + soup.find('h2', {'class': 'dealer-sub-header'}).text
-
 
         street_address = soup.find('span', {'itemprop': 'streetAddress'}).text
         city = soup.find('span', {'itemprop': 'addressLocality'}).text
@@ -89,14 +75,12 @@ def fetch_data():
         for meta in hours_metas:
             hours += meta['content'] + ' '
             
-      
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours, link]
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data

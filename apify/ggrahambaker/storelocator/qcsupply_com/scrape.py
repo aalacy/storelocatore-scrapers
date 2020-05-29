@@ -1,18 +1,10 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 import re
-
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,7 +15,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 
 #helper for getting address
 def addy_extractor(src):
@@ -36,18 +27,14 @@ def addy_extractor(src):
     
     return city, state, zip_code
 
-
 def fetch_data():
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     locator_domain = 'https://www.qcsupply.com/'
     ext = 'locations/'
 
     driver.get(locator_domain + ext)
     all_store_data = []
 
-
-
-    
     wrapper = driver.find_element_by_css_selector('div#amlocator_left')
     spans = wrapper.find_elements_by_name('leftLocation')
 
@@ -61,7 +48,6 @@ def fetch_data():
         if '/' in phone_number:
             phone_number = phone_number.split('/')[0].strip()
 
-        
         country_code = 'US'
         location_type = '<MISSING>'
         store_number = '<MISSING>'
@@ -72,11 +58,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                          store_number, phone_number, location_type, lat, longit, hours ]
         all_store_data.append(store_data)
-
-
-
-
-                
 
     # End scraper
 

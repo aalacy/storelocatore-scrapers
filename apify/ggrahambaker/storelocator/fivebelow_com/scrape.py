@@ -63,7 +63,6 @@ def fetch_data():
         if len(notifs) > 0:
             continue
     
-
         location_name = soup.find('span', {'class': 'Hero-locationGeo'}).text
         street_address = soup.find('meta', {'itemprop': 'streetAddress'})['content']
         city = soup.find('meta', {'itemprop': 'addressLocality'})['content']
@@ -81,7 +80,6 @@ def fetch_data():
         else:
             phone_number = '<MISSING>'
 
-        
         hours_json = json.loads(soup.find('div', {'class': 'js-hours-table'})['data-days'])
         hours = ''
         for hour in hours_json:
@@ -102,10 +100,7 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
         
-
         all_store_data.append(store_data)
-
-
 
     return all_store_data
 

@@ -1,17 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import usaddress
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    return webdriver.Chrome('chromedriver', options=options)
-
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -50,13 +40,11 @@ def parse_addy(addy):
     
     return street_address, city, state, zip_code
 
-
-
 def fetch_data():    
     locator_domain = 'http://sabortropical.net/'
     ext = 'tiendas.php'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     source = str(driver.page_source)
@@ -64,7 +52,6 @@ def fetch_data():
         if 'var location_string' in line.strip():
             loc_arr = driver.execute_script(line + "; return location_string").split(';')
             
-    
     coord_dict = {}
     for loc in loc_arr:
         loc_info = loc.split(',')
@@ -79,9 +66,6 @@ def fetch_data():
         index = loc_info[0][start + len(search): start + len(search) + 1]
         coord_dict[index] = [loc_info[1].strip(), loc_info[2].strip()]
 
-
-
-
     all_store_data = []
     main = driver.find_element_by_css_selector('div#comidas')
     locs = main.find_elements_by_css_selector('div.col-xl-4.col-sm-6.col-md-4.aligncenter')
@@ -94,8 +78,6 @@ def fetch_data():
         else:
             location_type = 'STORE'
             store_number = location_name.split('#')[1]
-            
-            
             
         if len(cont) == 5:
             off = 0
@@ -115,10 +97,8 @@ def fetch_data():
             lat = coord_dict[store_number][0]
             longit = coord_dict[store_number][1]
         
-        
         country_code = 'US'
         page_url = '<MISSING>'
-
 
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                             store_number, phone_number, location_type, lat, longit, hours, page_url]

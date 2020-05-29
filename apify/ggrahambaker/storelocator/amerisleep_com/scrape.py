@@ -1,18 +1,7 @@
 import csv
 import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgselenium import SgSelenium
 import usaddress
-
-
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', options=options)
-
-
 
 def parse_address(addy_string):
     parsed_add = usaddress.tag(addy_string)[0]
@@ -37,9 +26,6 @@ def parse_address(addy_string):
 
     return street_address, city, state, zip_code
 
-
-
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -54,7 +40,7 @@ def fetch_data():
     locator_domain = 'https://www.amerisleep.com/'
     ext = 'retail'
 
-    driver = get_driver()
+    driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
 
     states = driver.find_elements_by_css_selector('div.o-grid__item')
@@ -70,7 +56,6 @@ def fetch_data():
             else:
                 link_href.append(link.get_attribute('href'))
 
-
     all_store_data = []
     for link in link_href:
         if 'careers' in link:
@@ -78,15 +63,12 @@ def fetch_data():
         driver.implicitly_wait(10)
         driver.get(link)
 
-
         location_name = driver.find_element_by_css_selector('.o-title--bemma').text
-
 
         addy = driver.find_element_by_css_selector('div.local-page__address').text.replace('\n', ' ')
         
         street_address, city, state, zip_code = parse_address(addy)
         
-
         hours = driver.find_element_by_css_selector('div.store-hours').text.replace('\n', ' ').strip()
         
         phone_numbers = driver.find_elements_by_xpath("//a[contains(@href, 'tel:')]")
@@ -99,7 +81,6 @@ def fetch_data():
         if phone_number == '':
             phone_number = temp_num
 
-    
         href = driver.find_element_by_css_selector('div#map-canvas').find_element_by_css_selector('iframe').get_attribute('src')
         start_idx = href.find('!2d')
         end_idx = href.find('!2m')
@@ -114,7 +95,6 @@ def fetch_data():
             lat = '<MISSING>'
             longit = '<MISSING>'
 
-        
         country_code = 'US'
         store_number = '<MISSING>'
         location_type = '<MISSING>'
@@ -122,7 +102,6 @@ def fetch_data():
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
                       store_number, phone_number, location_type, lat, longit, hours, page_url]
         all_store_data.append(store_data)
-
 
     driver.quit()
     return all_store_data
