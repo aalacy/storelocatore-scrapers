@@ -36,4 +36,4 @@ def run(root):
     else:
         process(root)
 
-run('/Users/tenzing/code/crawl-service/apify/ggrahambaker/storelocator')
+run('/Users/tenzing/code/crawl-service/apify/aleenah/storelocator')
