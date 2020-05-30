@@ -1,10 +1,9 @@
 import csv
 import re
 from bs4 import BeautifulSoup
-import requests
-from sgselenium import SgSelenium
+from sgrequests import SgRequests
 
-driver = SgSelenium().chrome()
+session = SgRequests()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -15,6 +14,14 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
+def get_stores():
+    HEADERS = {
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36'
+    }
+    response = session.get('https://www.gosarpinos.com/api/stores', headers=HEADERS).json()
+    return [('https://www.gosarpinos.com/' + x['storeUrl'], x['state'], x['name'], x['id']) for x in response]
 
 def fetch_data():
     # Your scraper here
@@ -29,34 +36,16 @@ def fetch_data():
     lat = []
     timing = []
     ids=[]
-    page_url=[]
+    page_urls = []
 
-    driver.get("https://www.gosarpinos.com")
-    driver.find_element_by_class_name("location-link__caption").click()
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-    #print(soup)
-    lis = soup.find('select', {'class': 'select2 select2_restaurant form-control select2-hidden-accessible'}).find_all("option")
-    del lis[0]
-    print(len(lis))
-    for li in lis:
-
-        ids.append(li.get("value"))
-        tex= li.text.split("-")
-        #print(tex)
-        states.append(tex[0].strip())
-        t=tex[0]+"- "
-
-        l=li.text.replace(t,"")
-
-        locs.append(l)
-        if "Lee's" in l:
-            l=l.replace("Lee's","lee-s")
-
-        page_url.append("https://www.gosarpinos.com/pizza-delivery/"+l.replace("'","").replace("& ","").replace(" - ","-").replace("- ","-").replace(" ","-"))
-
-    for url in page_url:
-        print(url)
-        res = requests.get(url)
+    stores = get_stores()
+    for store in stores:
+        states.append(store[1])
+        locs.append(store[2])
+        ids.append(store[3])
+        url = store[0]
+        page_urls.append(url)
+        res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         script = soup.find_all("script")[-1].text.split('"intId"')
         days = re.findall(r'"day":"([^"]+)"', script[0])
@@ -76,7 +65,7 @@ def fetch_data():
         long.append(re.findall(r'"longitude":(-?[\d\.]*)',script)[0])
 
     all = []
-    for i in range(0, len(locs)):
+    for i in range(0, len(stores)):
         row = []
         row.append("https://www.gosarpinos.com")
         row.append(locs[i])
@@ -91,7 +80,7 @@ def fetch_data():
         row.append(lat[i])  # lat
         row.append(long[i])  # long
         row.append(timing[i])  # timing
-        row.append(page_url[i])  # page url
+        row.append(page_urls[i])  # page url
 
         all.append(row)
     return all
