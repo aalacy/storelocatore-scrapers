@@ -10,7 +10,7 @@ def freeze_beautifulsoup(base_path):
             content = oldfile.readlines()
             for line in content:
                 if 'bs4' in line:
-                    newfile.write('beautifulsoup4==4.8.0')
+                    newfile.write('beautifulsoup4==4.8.0\n')
                 else:
                     newfile.write(line)
     replace_files(base_path)
