@@ -110,7 +110,7 @@ def fetch_data():
                             state.lstrip(),
                             pcode.lstrip(),
                             'US',
-                            store,
+                            '<MISSING>',
                             phone,
                             '<MISSING>',
                             lat,
