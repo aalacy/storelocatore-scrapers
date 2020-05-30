@@ -1,4 +1,3 @@
-
 import csv
 from bs4 import BeautifulSoup
 import time
@@ -7,7 +6,8 @@ from selenium.webdriver import DesiredCapabilities
 from selenium.webdriver import Firefox
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
-
+import platform
+system = platform.system()
 
 
 def get_driver():
@@ -80,11 +80,17 @@ def fetch_data():
             index1=0
             pass
         else:
-            for data1 in range(index1,q+1):
+            for data1 in range(index1,q):
                 if data1 in dict_urls:
+                    #print("index1 == ",index1,"q == ",q)
                     #print(dict_urls[data1])
-                    driver.get(dict_urls[data1])
-                    time.sleep(2) 
+                    try:
+                        driver.get(dict_urls[data1])
+                        time.sleep(2)
+                    except:
+                        #print("-------",dict_urls[data1])
+                        continue
+                     
                     soup1 = BeautifulSoup(driver.page_source,"lxml")
                     loc_section = soup1.find("div",{"id":"location-cards-wrapper"})
                     for loc_block in loc_section.find_all("div",class_="owl-item"):
