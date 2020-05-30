@@ -47,7 +47,6 @@ def fetch_data():
 
     for sl in sls:
         url = "https://www.lifestorage.com"+sl.get('href')
-        #print(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         sa = soup.find_all('a', {'class': 'btn store'})
@@ -59,10 +58,11 @@ def fetch_data():
             element_present = EC.presence_of_element_located((By.TAG_NAME, 'script'))
             WebDriverWait(driver, 180).until(element_present)
             
-            #print(driver.page_source)
             soup = BeautifulSoup(driver.page_source, 'html.parser')
-            data = soup.find_all('script', {'type': 'application/ld+json'})[-1].contents
-            js=json.loads("".join(data))["@graph"][0]
+            data = "".join(soup.find_all('script', {'type': 'application/ld+json'})[-1].contents)
+            if '[,' in data:
+                data = data.replace('[,', '[')
+            js=json.loads(data)["@graph"][0]
             if "coming soon" in js["image"]["name"].lower() or "opening soon" in js["image"]["name"].lower():
                 continue
             page_url.append(url)
