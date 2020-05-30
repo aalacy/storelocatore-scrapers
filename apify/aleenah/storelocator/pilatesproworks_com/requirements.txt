@@ -1,4 +1,4 @@
 sgselenium
-bs4==0.0.1
+beautifulsoup4==4.8.0
 requests==2.22.0
 pyzipcode3==2.2
