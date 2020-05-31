@@ -7,7 +7,11 @@ import re, time, usaddress
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
+from sgrequests import SgRequests
 
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -25,8 +29,8 @@ def get_driver():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument("--disable-notifications")
-    #return webdriver.Chrome('chromedriver', chrome_options=options)
-    return webdriver.Chrome('C:\\Users\\Dell\\local\\chromedriver.exe', chrome_options=options)
+    return webdriver.Chrome('chromedriver', chrome_options=options)
+    #return webdriver.Chrome('C:\\Users\\Dell\\local\\chromedriver.exe', chrome_options=options)
 
 def fetch_data():
     # Your scraper here
@@ -38,17 +42,14 @@ def fetch_data():
     driver1.get(url)
     time.sleep(2)
     soup = BeautifulSoup(driver1.page_source, "html.parser")
-
     repo_list = soup.findAll('li', {'class': 'marker'})
-
-
     cleanr = re.compile('<.*?>')
     pattern = re.compile(r'\s\s+')
-    p = 1
+    p = 0
     for repo in repo_list:
         link = repo.find('a',{'class':'btn btn-hollow'})
         link = link['href']
-        print(link)
+        #print(link)
         title = repo.find('h2').text
         address = repo.find('address').text
         address = re.sub(pattern, " ", address)
@@ -70,7 +71,7 @@ def fetch_data():
 
         lat = repo['data-lat']
         longt = repo['data-lng']
-        print(address)
+        #print(address)
         address = usaddress.parse(address)
 
         i = 0
@@ -110,25 +111,25 @@ def fetch_data():
         else:
             ltype = ltype[0:len(ltype)-1]
 
-        
-        data.append([
-            'https://www.raleys.com/',
-            link,
-            title,
-            street,
-            city,
-            state,
-            pcode,
-            "US",
-            "<MISSING>",
-            phone,
-            ltype,
-            lat,
-            longt,
-            hours
-        ])
-        #print(p,data[p])
-        p += 1
+        if title.find('Bel-Air') > -1 or title.find('Bel Air') > -1:
+            data.append([
+                'https://www.raleys.com/stores/bel-air',
+                link,
+                title,
+                street,
+                city,
+                state,
+                pcode,
+                "US",
+                "<MISSING>",
+                phone,
+                ltype,
+                lat,
+                longt,
+                hours
+            ])
+            #print(p,data[p])
+            p += 1
 
     return data
 
