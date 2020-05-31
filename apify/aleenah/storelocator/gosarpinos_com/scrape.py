@@ -23,6 +23,14 @@ def get_stores():
     response = session.get('https://www.gosarpinos.com/api/stores', headers=HEADERS).json()
     return [('https://www.gosarpinos.com/' + x['storeUrl'], x['state'], x['name'], x['id']) for x in response]
 
+def handle_missing(x):
+    if not x.strip():
+        return '<MISSING>'
+    return x
+
+def sanitize(x):
+    return handle_missing(x.strip().replace("’", "'"))
+
 def fetch_data():
     # Your scraper here
     locs = []
@@ -68,19 +76,19 @@ def fetch_data():
     for i in range(0, len(stores)):
         row = []
         row.append("https://www.gosarpinos.com")
-        row.append(locs[i])
-        row.append(street[i])
-        row.append(cities[i])
-        row.append(states[i])
-        row.append(zips[i])
+        row.append(sanitize(locs[i]))
+        row.append(sanitize(street[i]))
+        row.append(sanitize(cities[i]))
+        row.append(sanitize(states[i]))
+        row.append(sanitize(zips[i]))
         row.append("US")
         row.append(ids[i])  # store #
-        row.append(phones[i])  # phone
+        row.append(sanitize(phones[i]))  # phone
         row.append("<MISSING>")  # type
-        row.append(lat[i])  # lat
-        row.append(long[i])  # long
-        row.append(timing[i])  # timing
-        row.append(page_urls[i])  # page url
+        row.append(sanitize(lat[i]))  # lat
+        row.append(sanitize(long[i]))  # long
+        row.append(sanitize(timing[i]))  # timing
+        row.append(handle_missing(page_urls[i]))  # page url
 
         all.append(row)
     return all
