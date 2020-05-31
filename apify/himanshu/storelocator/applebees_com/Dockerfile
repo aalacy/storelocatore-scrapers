@@ -10,6 +10,12 @@ RUN apt-get update
 
 RUN apt-get install -y curl wget
 
+RUN GECKODRIVER_VERSION=`curl https://github.com/mozilla/geckodriver/releases/latest | grep -Po 'v[0-9]+.[0-9]+.[0-9]+'` && \
+    wget https://github.com/mozilla/geckodriver/releases/download/$GECKODRIVER_VERSION/geckodriver-$GECKODRIVER_VERSION-linux64.tar.gz && \
+    tar -zxf geckodriver-$GECKODRIVER_VERSION-linux64.tar.gz -C /usr/local/bin && \
+    chmod +x /usr/local/bin/geckodriver && \
+    rm geckodriver-$GECKODRIVER_VERSION-linux64.tar.gz
+
 RUN FIREFOX_SETUP=firefox-setup.tar.bz2 && \
     apt-get purge firefox && \
     wget -O $FIREFOX_SETUP "https://download.mozilla.org/?product=firefox-latest&os=linux64" && \

@@ -58,7 +58,7 @@ def fetch_data():
                 for xip in xip_list:                    
                     try:
                         pcode = xip.text
-                        #print('http://www.primerica.com'+xip['href'])
+                        print('http://www.primerica.com'+xip['href'])
                         page2 = session.get('http://www.primerica.com'+xip['href'], headers=headers, verify=False)                    
                         time.sleep(1)
                         soup2 = BeautifulSoup(page2.text, "html.parser")                   
@@ -67,15 +67,19 @@ def fetch_data():
                         #print(len(li_list))
                         for m in range(0, len(li_list)):
                             try:
+                                address = ''
                                 alink = li_list[m].find('a')                       
                                 title = alink.text
-                                alink = alink['href']     
+                                alink = alink['href']
+                                #alink = 'http://www.primerica.com/dmchoury'
                                 page3 = session.get(alink, headers=headers, verify=False)                    
                                 time.sleep(1)
                                 soup3 = BeautifulSoup(page3.text, "html.parser")                            
-                                 
-                                address = soup3.find('div',{'class':'officeInfoDataWidth'}).text
-                                address = re.sub(pattern,'',address)
+                                address = soup3.find('div',{'class':'officeInfoDataWidth'})
+                                cleanr = re.compile(r'<[^>]+>')
+                                address = cleanr.sub(' ', str(address))
+                                address = re.sub(pattern,' ',address).lstrip()
+                                #print(address)
                                 street = address[0:address.find('\n')]
                                 state = address[address.find('\n')+1:len(address)]                    
                                 city,state = state.split(', ',1)
