@@ -29,7 +29,7 @@ def handle_missing(x):
     return x
 
 def sanitize(x):
-    return handle_missing(x.strip().replace("’", "'"))
+    return handle_missing(x.strip().replace("’", "'").replace("&#39;", "'"))
 
 def fetch_data():
     # Your scraper here
