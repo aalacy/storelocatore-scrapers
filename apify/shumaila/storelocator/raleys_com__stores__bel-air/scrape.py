@@ -67,6 +67,9 @@ def fetch_data():
 
         hours = re.sub(pattern," ", hours)
         hours = hours.replace("\n", "")
+        hours = hours.replace('Store Hours ','').replace('am',' am ').replace('pm', ' pm ').rstrip()
+       
+        
         phone = re.sub(pattern,"",phone)
 
         lat = repo['data-lat']
