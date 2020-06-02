@@ -90,6 +90,8 @@ def fetch_data():
                 hours = hours + '; ' + line2.split('>')[1].split('<')[0].strip()
         if hours == '':
             hours = '<MISSING>'
+        if 'day' not in hours and 'MISSING' not in hours:
+            hours = hours + ' - 7 days'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
