@@ -159,6 +159,7 @@ def get_location(loc):
         hours = '<MISSING>'
     if 'closed' in name.lower():
         # print('skipping closed store: ', loc)
+        pass
     else:
         if store != '':
             hours = hours.replace('-0', '-0000')
