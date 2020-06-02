@@ -1,7 +1,7 @@
 import csv
 import urllib2
-import json
 from sgrequests import SgRequests
+import json
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
@@ -15,15 +15,17 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    urls = ['https://www.wholefoodsmarket.com/sitemap/stores-sitemap.xml']
+    urls = ['https://www.wholefoodsmarket.com/sitemap/sitemap-stores.xml']
     locs = []
     for url in urls:
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
             if '<loc>https://www.wholefoodsmarket.com/stores/' in line:
-                lurl = line.split('<loc>')[1].split('</loc>')[0]
-                if lurl not in locs:
-                    locs.append(lurl)
+                items = line.split('<loc>')
+                for item in items:
+                    if 'https://www.wholefoodsmarket.com/stores/' in item:
+                        lurl = item.split('<')[0]
+                        locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
         print('Pulling Location %s...' % loc)
