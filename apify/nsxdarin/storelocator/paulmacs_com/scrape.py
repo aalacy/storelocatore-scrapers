@@ -32,77 +32,83 @@ def fetch_data():
                 locs.append(lurl)
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
-        driver.get(loc)
-        Found = True
-        name = ''
-        add = ''
-        city = ''
-        state = ''
-        store = ''
-        zc = ''
-        phone = ''
-        print('Pulling Location %s...' % loc)
-        website = 'paulmacs.com'
-        typ = 'Store'
-        hours = ''
-        lat = ''
-        country = 'US'
-        lng = ''
-        lines = driver.page_source.split('\n')
-        for linenum in range(0, len(lines)):
-            if 'rel="canonical" href="https://paulmacs.com/location/' in lines[linenum]:
-                store = lines[linenum].split('rel="canonical" href="https://paulmacs.com/location/')[1].split('/')[0].encode('utf-8')
-            if ',"name":"' in lines[linenum]:
-                typ = lines[linenum].split(',"name":"')[1].split('"')[0].encode('utf-8')
-                name = lines[linenum].split(',"name":"')[2].split(' |')[0].encode('utf-8')
-            if '<div class="address_info">' in lines[linenum]:
-                g = lines[linenum + 1]
-                if '<br' not in g:
+        LocFound = True
+        while LocFound:
+            LocFound = False
+            driver.get(loc)
+            Found = True
+            name = ''
+            add = ''
+            city = ''
+            state = ''
+            store = ''
+            zc = ''
+            phone = ''
+            print('Pulling Location %s...' % loc)
+            website = 'paulmacs.com'
+            typ = 'Store'
+            hours = ''
+            lat = ''
+            country = 'US'
+            lng = ''
+            lines = driver.page_source.split('\n')
+            for linenum in range(0, len(lines)):
+                if 'rel="canonical" href="https://paulmacs.com/location/' in lines[linenum]:
+                    store = lines[linenum].split('rel="canonical" href="https://paulmacs.com/location/')[1].split('/')[0].encode('utf-8')
+                if ',"name":"' in lines[linenum]:
+                    typ = lines[linenum].split(',"name":"')[1].split('"')[0].encode('utf-8')
+                    name = lines[linenum].split(',"name":"')[2].split(' |')[0].encode('utf-8')
+                if '<div class="address_info">' in lines[linenum]:
                     g = lines[linenum + 1]
-                if ',' in g.split('<br')[2]:
-                    add = g.split('<')[0].strip().replace('\t','').encode('utf-8')
-                    city = g.split('<br')[2].split('>')[1].split(',')[0].encode('utf-8')
-                    state = g.split('<br')[2].split('>')[1].split(',')[1].strip().split(' ')[0].encode('utf-8')
-                    zc = g.split('<br')[2].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1].encode('utf-8')
-                    if state in canada:
-                        country = 'CA'
-                        zc = g.split('<br')[2].split('>')[1].split(',')[1].strip().split(' ',1)[1]
-                else:
-                    if '475 Granville' in g:
-                        add = '475 Granville St. North'
-                        city = '<MISSING>'
-                        state = 'PEI'
-                        zc = 'C1N 4P7'
-                    else:
+                    if '<br' not in g:
+                        g = lines[linenum + 1]
+                    if ',' in g.split('<br')[2]:
                         add = g.split('<')[0].strip().replace('\t','').encode('utf-8')
-                        city = g.split('<br')[1].split('>')[1].split(',')[0].encode('utf-8')
-                        state = g.split('<br')[1].split('>')[1].split(',')[1].strip().split(' ')[0].encode('utf-8')
-                        zc = g.split('<br')[1].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1].encode('utf-8')
-                    if state in canada:
-                        country = 'CA'
-                        if add == '475 Granville St. North':
+                        city = g.split('<br')[2].split('>')[1].split(',')[0].encode('utf-8')
+                        state = g.split('<br')[2].split('>')[1].split(',')[1].strip().split(' ')[0].encode('utf-8')
+                        zc = g.split('<br')[2].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1].encode('utf-8')
+                        if state in canada:
+                            country = 'CA'
+                            zc = g.split('<br')[2].split('>')[1].split(',')[1].strip().split(' ',1)[1]
+                    else:
+                        if '475 Granville' in g:
+                            add = '475 Granville St. North'
+                            city = '<MISSING>'
+                            state = 'PEI'
                             zc = 'C1N 4P7'
                         else:
-                            zc = g.split('<br')[1].split('>')[1].split(',')[1].strip().split(' ',1)[1]
-                try:
-                    phone = g.split('<a href="tel: ')[1].split('"')[0].encode('utf-8')
-                except:
-                    phone = '<MISSING>'
-            if 'src="https://www.google.com/maps/' in lines[linenum]:
-                lat = lines[linenum].split('q=')[1].split(',')[0].encode('utf-8')
-                lng = lines[linenum].split('q=')[1].split(',')[1].split('&')[0].encode('utf-8')
-            if '<h4>HOURS</h4>' in lines[linenum]:
-                g = lines[linenum + 1]
-                if '<p>' not in g:
+                            add = g.split('<')[0].strip().replace('\t','').encode('utf-8')
+                            city = g.split('<br')[1].split('>')[1].split(',')[0].encode('utf-8')
+                            state = g.split('<br')[1].split('>')[1].split(',')[1].strip().split(' ')[0].encode('utf-8')
+                            zc = g.split('<br')[1].split('>')[1].split(',')[1].strip().split('<')[0].split(' ',1)[1].encode('utf-8')
+                        if state in canada:
+                            country = 'CA'
+                            if add == '475 Granville St. North':
+                                zc = 'C1N 4P7'
+                            else:
+                                zc = g.split('<br')[1].split('>')[1].split(',')[1].strip().split(' ',1)[1]
+                    try:
+                        phone = g.split('<a href="tel: ')[1].split('"')[0].encode('utf-8')
+                    except:
+                        phone = '<MISSING>'
+                if 'src="https://www.google.com/maps/' in lines[linenum]:
+                    lat = lines[linenum].split('q=')[1].split(',')[0].encode('utf-8')
+                    lng = lines[linenum].split('q=')[1].split(',')[1].split('&')[0].encode('utf-8')
+                if '<h4>HOURS</h4>' in lines[linenum]:
                     g = lines[linenum + 1]
-                try:
-                    hours = g.split('<p>',1)[1].split('</div>')[0].replace('</p><p>','; ').replace('</span><span>',' ').replace('<span>','').replace('</p>','').replace('</span>','').strip().replace('\t','').encode('utf-8')
-                except:
-                    hours = '<MISSING>'
-        purl = loc
-        if state in canada:
-            country = 'CA'
-        yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                    if '<p>' not in g:
+                        g = lines[linenum + 1]
+                    try:
+                        hours = g.split('<p>',1)[1].split('</div>')[0].replace('</p><p>','; ').replace('</span><span>',' ').replace('<span>','').replace('</p>','').replace('</span>','').strip().replace('\t','').encode('utf-8')
+                    except:
+                        hours = '<MISSING>'
+            purl = loc
+            if state in canada:
+                country = 'CA'
+            if add != '':
+                yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            else:
+                LocFound = True
 
 def scrape():
     data = fetch_data()
