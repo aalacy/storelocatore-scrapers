@@ -125,7 +125,11 @@ def fetch_data():
             hours = 'Mo, Tu, We, Th, Fr, Sa, Su, 10:00-19:50'
         if 'edgewater-marijuana-dispensary' in loc:
             hours = 'Mo, Tu, We, Th, Fr, Sa, Su, 9:00-22:00'
+        if 'colorado-blvd-marijuana-dispensary' in loc:
+            hours = 'Mo, Tu, We, Th, Fr, Sa, Su, 9:00-22:00'
         if city != '':
+            if phone == '':
+                phone = '<MISSING>'
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
