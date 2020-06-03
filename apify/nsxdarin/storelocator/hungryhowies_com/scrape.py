@@ -54,8 +54,8 @@ def fetch_data():
                             hours = item.split('<')[0] + ' ' + item.split('<dd class="time">')[1].split('<')[0]
                         else:
                             hours = hours + '; ' + item.split('<')[0] + ' ' + item.split('<dd class="time">')[1].split('<')[0]
-            if '<meta about="/store/hungry-howies-' in line2:
-                store = line2.split('<meta about="/store/hungry-howies-')[1].split('"')[0]
+            if '"url":"https://www.hungryhowies.com/store/hungry-howies-' in line2:
+                store = line2.split('"url":"https://www.hungryhowies.com/store/hungry-howies-')[1].split('"')[0]
         if hours == '':
             hours = '<MISSING>'
         if lat == '':
