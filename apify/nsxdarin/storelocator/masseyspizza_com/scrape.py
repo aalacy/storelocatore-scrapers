@@ -20,7 +20,7 @@ def fetch_data():
     lines = r.iter_lines()
     state = 'OH'
     for line in lines:
-        if 'South Carolina' in line:
+        if 'South Carolina</span>' in line:
             state = 'SC'
         if '>Ohio Sports Bars' in line:
             state = 'OH'
@@ -41,11 +41,22 @@ def fetch_data():
             lat = '<MISSING>'
             lng = '<MISSING>'
             g = next(lines)
-            if '</strong><br />' not in g:
-                add = g.split('<')[0]
+            if name == 'DELAWARE':
+                city = 'Delaware'
+                add = '219 S. Sandusky Street'
             else:
-                city = g.split('<')[0]
-                add = next(lines).split('<')[0]
+                if '</strong><br />' not in g:
+                    add = g.split('<')[0]
+                else:
+                    city = g.split('<')[0]
+                    add = next(lines).split('<')[0]
+        if 'pm<' in line or 'idnight<' in line or 'am<' in line:
+            hrs = line.split('<')[0]
+            if hours == '':
+                hours = hrs
+            else:
+                hours = hours + '; ' + hrs
+            hours = hours.replace('&amp;','&')
         if '/@' in line:
             lat = line.split('/@')[1].split(',')[0]
             lng = line.split('/@')[1].split(',')[1]
