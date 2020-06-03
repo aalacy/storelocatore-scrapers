@@ -60,6 +60,8 @@ def fetch_data():
         if '/@' in line:
             lat = line.split('/@')[1].split(',')[0]
             lng = line.split('/@')[1].split(',')[1]
+            if ',+OH+' in line:
+                zc = line.split(',+OH+')[1].split('/')[0]
         if '<a href="tel:+' in line:
             phone = line.split('<a href="tel:+')[1].split('"')[0]
         if '<a href="https://www.google.com/' in line:
