@@ -61,24 +61,17 @@ def fetch_data():
             if '<img class="w-map" src=' in line2:
                 lat = line2.split('%7C')[1].split(',')[0]
                 lng = line2.split('%7C')[1].split(',')[1].split('&')[0]
-            if 'Open:</div><div class= "w-hours-of-operation--store-hours w-body-short-form">' in line2:
-                today = line2.split('Open:</div><div class= "w-hours-of-operation--store-hours w-body-short-form">')[1].split('<')[0].split(' today')[0]
+            if '<div class= "w-hours-of-operation--store-day w-body-short-form-bold">' in line2:
+                hours = line2.split('<div class= "w-hours-of-operation--store-hours w-body-short-form">')[1].split('<')[0]
             if '<div class= "w-hours-of-operation--store-day w-body-short-form">' in line2:
                 days = line2.split('<div class= "w-hours-of-operation--store-day w-body-short-form">')
-                dnames = []
                 for day in days:
-                    if '</div>' in day:
-                        dname = day.split('</div>')[0]
-                        dhrs = day.split('body-short-form">')[1].split('<')[0]
-                        dnames.append(dname)
+                    if ':</div><div class= "w-hours' in day:
+                        hrs = day.split('<')[0] + ' ' + day.split('form">')[1].split('<')[0]
                         if hours == '':
-                            hours = dname + ' ' + dhrs
+                            hours = hrs
                         else:
-                            hours = hours + '; ' + dname + ' ' + dhrs
-                alldays = ['Sun:','Mon:','Tue:','Wed:','Thu:','Fri:','Sat:']
-                for ditem in alldays:
-                    if ditem not in dnames:
-                        hours = hours + '; ' + ditem + ' ' + today
+                            hours = hours + '; ' + hrs                
         if hours == '':
             hours = '<MISSING>'
         if phone == '':
@@ -133,24 +126,17 @@ def fetch_data():
             if '<img class="w-map" src=' in line2:
                 lat = line2.split('%7C')[1].split(',')[0]
                 lng = line2.split('%7C')[1].split(',')[1].split('&')[0]
-            if 'Open:</div><div class= "w-hours-of-operation--store-hours w-body-short-form">' in line2:
-                today = line2.split('Open:</div><div class= "w-hours-of-operation--store-hours w-body-short-form">')[1].split('<')[0].split(' today')[0]
+            if '<div class= "w-hours-of-operation--store-day w-body-short-form-bold">' in line2:
+                hours = line2.split('<div class= "w-hours-of-operation--store-hours w-body-short-form">')[1].split('<')[0]
             if '<div class= "w-hours-of-operation--store-day w-body-short-form">' in line2:
                 days = line2.split('<div class= "w-hours-of-operation--store-day w-body-short-form">')
-                dnames = []
                 for day in days:
-                    if '</div>' in day:
-                        dname = day.split('</div>')[0]
-                        dhrs = day.split('body-short-form">')[1].split('<')[0]
-                        dnames.append(dname)
+                    if ':</div><div class= "w-hours' in day:
+                        hrs = day.split('<')[0] + ' ' + day.split('form">')[1].split('<')[0]
                         if hours == '':
-                            hours = dname + ' ' + dhrs
+                            hours = hrs
                         else:
-                            hours = hours + '; ' + dname + ' ' + dhrs
-                alldays = ['Sun:','Mon:','Tue:','Wed:','Thu:','Fri:','Sat:']
-                for ditem in alldays:
-                    if ditem not in dnames:
-                        hours = hours + '; ' + ditem + ' ' + today
+                            hours = hours + '; ' + hrs                
         if hours == '':
             hours = '<MISSING>'
         if phone == '':
@@ -206,24 +192,18 @@ def fetch_data():
             if '<img class="w-map" src=' in line2:
                 lat = line2.split('%7C')[1].split(',')[0]
                 lng = line2.split('%7C')[1].split(',')[1].split('&')[0]
-            if 'Open:</div><div class= "w-hours-of-operation--store-hours w-body-short-form">' in line2:
-                today = line2.split('Open:</div><div class= "w-hours-of-operation--store-hours w-body-short-form">')[1].split('<')[0].split(' today')[0]
+            if '<div class= "w-hours-of-operation--store-day w-body-short-form-bold">' in line2:
+                hours = line2.split('<div class= "w-hours-of-operation--store-hours w-body-short-form">')[1].split('<')[0]
             if '<div class= "w-hours-of-operation--store-day w-body-short-form">' in line2:
                 days = line2.split('<div class= "w-hours-of-operation--store-day w-body-short-form">')
-                dnames = []
                 for day in days:
-                    if '</div>' in day:
-                        dname = day.split('</div>')[0]
-                        dhrs = day.split('body-short-form">')[1].split('<')[0]
-                        dnames.append(dname)
+                    if ':</div><div class= "w-hours' in day:
+                        hrs = day.split('<')[0] + ' ' + day.split('form">')[1].split('<')[0]
                         if hours == '':
-                            hours = dname + ' ' + dhrs
+                            hours = hrs
                         else:
-                            hours = hours + '; ' + dname + ' ' + dhrs
-                alldays = ['Sun:','Mon:','Tue:','Wed:','Thu:','Fri:','Sat:']
-                for ditem in alldays:
-                    if ditem not in dnames:
-                        hours = hours + '; ' + ditem + ' ' + today
+                            hours = hours + '; ' + hrs                
+
         if hours == '':
             hours = '<MISSING>'
         if phone == '':
