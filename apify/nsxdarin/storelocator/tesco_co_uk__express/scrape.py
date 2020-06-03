@@ -15,66 +15,69 @@ def write_output(data):
 
 def fetch_data():
     for x in range(1999, 8000):
-        url = 'https://www.tesco.com/store-locator/uk/?bid=' + str(x)
-        r = session.get(url, headers=headers)
-        Found = True
-        website = 'tesco.com'
-        name = ''
-        add = ''
-        loc = url
-        city = ''
-        state = '<MISSING>'
-        zc = ''
-        country = 'UK'
-        store = str(x)
-        phone = ''
-        typ = '<MISSING>'
-        lat = ''
-        lng = ''
-        hours = ''
-        for line in r.iter_lines():
-            if '<h1 class="store-name"' in line:
-                name = line.split('<h1 class="store-name"')[1].split('aria-label="')[1].split('"')[0]
-            if 'find any stores that match your search.' in line:
-                Found = False
-            if '"storeDetails":' in line:
-                addinfo = line.split('"address":"')[1].split('"')[0]
-                if addinfo.count(',') == 4:
-                    add = addinfo.split(',')[0].strip() + ' ' + addinfo.split(',')[1].strip() + ' ' + addinfo.split(',')[2].strip()
-                    city = addinfo.split(',')[3].strip()
-                    zc = addinfo.split(',')[4].strip()
-                elif addinfo.count(',') == 3:
-                    add = addinfo.split(',')[0].strip() + ' ' + addinfo.split(',')[1].strip()
-                    city = addinfo.split(',')[2].strip()
-                    zc = addinfo.split(',')[3].strip()
-                else:
-                    add = addinfo.split(',')[0].strip()
-                    city = addinfo.split(',')[1].strip()
-                    zc = addinfo.split(',')[2].strip()
-                try:
-                    phone = line.split('"tel":"')[1].split('"')[0]
-                except:
-                    phone = '<MISSING>'
-                try:
-                    lat = line.split('"lat":')[1].split(',')[0]
-                    lng = line.split('"lng":')[1].split(',')[0]
-                except:
-                    lat = '<MISSING>'
-                    lng = '<MISSING>'
-                days = line.split('"openingHours":[')[1].split('}],"exceptions":')[0].split('"timing":"')
-                for day in days:
-                    if '"day":"' in day:
-                        hrs = day.split('"day":"')[1].split('"')[0] + ': ' + day.split('"')[0]
-                        if hours == '':
-                            hours = hrs
-                        else:
-                            hours = hours + '; ' + hrs
-        if hours == '':
-            hours = '<MISSING>'
-        if phone == '':
-            phone = '<MISSING>'
-        if Found and name != '':
-            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        try:
+            url = 'https://www.tesco.com/store-locator/uk/?bid=' + str(x)
+            r = session.get(url, headers=headers)
+            Found = True
+            website = 'tesco.com'
+            name = ''
+            add = ''
+            loc = url
+            city = ''
+            state = '<MISSING>'
+            zc = ''
+            country = 'UK'
+            store = str(x)
+            phone = ''
+            typ = '<MISSING>'
+            lat = ''
+            lng = ''
+            hours = ''
+            for line in r.iter_lines():
+                if '<h1 class="store-name"' in line:
+                    name = line.split('<h1 class="store-name"')[1].split('aria-label="')[1].split('"')[0]
+                if 'find any stores that match your search.' in line:
+                    Found = False
+                if '"storeDetails":' in line:
+                    addinfo = line.split('"address":"')[1].split('"')[0]
+                    if addinfo.count(',') == 4:
+                        add = addinfo.split(',')[0].strip() + ' ' + addinfo.split(',')[1].strip() + ' ' + addinfo.split(',')[2].strip()
+                        city = addinfo.split(',')[3].strip()
+                        zc = addinfo.split(',')[4].strip()
+                    elif addinfo.count(',') == 3:
+                        add = addinfo.split(',')[0].strip() + ' ' + addinfo.split(',')[1].strip()
+                        city = addinfo.split(',')[2].strip()
+                        zc = addinfo.split(',')[3].strip()
+                    else:
+                        add = addinfo.split(',')[0].strip()
+                        city = addinfo.split(',')[1].strip()
+                        zc = addinfo.split(',')[2].strip()
+                    try:
+                        phone = line.split('"tel":"')[1].split('"')[0]
+                    except:
+                        phone = '<MISSING>'
+                    try:
+                        lat = line.split('"lat":')[1].split(',')[0]
+                        lng = line.split('"lng":')[1].split(',')[0]
+                    except:
+                        lat = '<MISSING>'
+                        lng = '<MISSING>'
+                    days = line.split('"openingHours":[')[1].split('}],"exceptions":')[0].split('"timing":"')
+                    for day in days:
+                        if '"day":"' in day:
+                            hrs = day.split('"day":"')[1].split('"')[0] + ': ' + day.split('"')[0]
+                            if hours == '':
+                                hours = hrs
+                            else:
+                                hours = hours + '; ' + hrs
+            if hours == '':
+                hours = '<MISSING>'
+            if phone == '':
+                phone = '<MISSING>'
+            if Found and name != '':
+                yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        except:
+            pass
 
 def scrape():
     data = fetch_data()
