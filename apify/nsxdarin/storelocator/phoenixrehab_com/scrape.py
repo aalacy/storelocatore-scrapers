@@ -67,7 +67,11 @@ def fetch_data():
         if 'chambersburg' in city.lower():
             lat = '39.9284938'
             lng = '-77.6305067'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if add != '':
+            if lat == '':
+                lat = '<MISSING>'
+                lng = '<MISSING>'
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
     url = 'https://www.phoenixrehab.com/ohio/'
     r = session.get(url, headers=headers)
     lines = r.iter_lines()
@@ -88,8 +92,13 @@ def fetch_data():
             csz = h.strip().replace('\t','').replace('\r','').replace('\n','')
             if '<' in csz:
                 csz = csz.split('<')[0]
+            csz = csz.replace(' ',' ')
             city = csz.split(',')[0]
-            zc = csz.rsplit(' ',1)[1]
+            if 'Warren' in name:
+                city = 'Cortland'
+                zc = '44410'
+            else:
+                zc = csz.rsplit(' ',1)[1]
             state = 'OH'
         if '<a href="tel:+1-' in line:
             phone = line.split('<a href="tel:+1-')[1].split('"')[0]
@@ -103,6 +112,9 @@ def fetch_data():
                 if 'HOURS: </strong>' in line2:
                     hours = line2.split('HOURS: </strong>')[1].split('</p>')[0].replace('<br />','; ').replace('&#8211;','-')
         if '</main><!-- #main -->' in line:
+            if lat == '':
+                lat = '<MISSING>'
+                lng = '<MISSING>'
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
