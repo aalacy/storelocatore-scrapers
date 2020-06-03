@@ -1,8 +1,8 @@
 import csv
 import urllib2
-from sgrequests import SgRequests
+import requests
 
-session = SgRequests()
+session = requests.Session()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
 
@@ -33,23 +33,24 @@ def fetch_data():
         website = 'bekins.com'
         typ = 'Agent'
         r2 = session.get(loc, headers=headers)
-        for line2 in r2.iter_lines():
+        lines = r2.iter_lines()
+        for line2 in lines:
             if '<h2>' in line2:
                 name = line2.split('<h2>')[1].split('<')[0].replace('\t','')
-            if '<div class=agent-address>' in line2:
-                add = line2.split('<div class=agent-address>')[1].split('<')[0].strip().replace('\t','')
-                city = line2.split('<div class=agent-address>')[1].split('<br>')[1].strip().split(',')[0].replace('\t','')
-                state = line2.split('<div class=agent-address>')[1].split('<br>')[1].strip().split(',')[1].strip().split('&')[0].replace('\t','')
-                zc = line2.split('<div class=agent-address>')[1].split('&nbsp;&nbsp;')[1].split('<')[0].strip().replace('\t','')
-            if 'Phone:' in line2:
-                phone = line2.split('Phone:')[1].split('href=tel:')[1].split('>')[0].replace('/','')
+            if '<div class="agent-address">' in line2:
+                g = next(lines)
+                add = g.split('<')[0].strip().replace('\t','')
+                g = next(lines)
+                city = g.split(',')[0].strip().replace('\t','')
+                state = g.split(',')[1].split('&nbsp')[0].strip().replace('\t','')
+                zc = g.split('&nbsp;&nbsp;')[1].split('<')[0].strip().replace('\t','')
+            if 'Phone:' in line2 and 'href="tel:' in line2:
+                phone = line2.split('href="tel:')[1].split('"')[0].replace('/','')
         country = 'US'
         store = '<MISSING>'
         hours = '<MISSING>'
         lat = '<MISSING>'
         lng = '<MISSING>'
-        if 'Sales office only' in add:
-            add = add.split('Sales office only')[0].strip(', ')
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
