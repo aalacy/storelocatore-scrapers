@@ -1,0 +1,59 @@
+import csv
+import urllib2
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        for row in data:
+            writer.writerow(row)
+
+def fetch_data():
+    infos = []
+    locs = []
+    urls = ['https://spatial.virtualearth.net/REST/v1/data/1652026ff3b247cd9d1f4cc12b9a080b/FordEuropeDealers_Transition/Dealer?spatialFilter=nearby(53.4807593,-2.2426305,160.934)&$select=*,__Distance&$filter=CountryCode%20Eq%20%27GBR%27&$top=250&$format=json&key=Al1EdZ_aW5T6XNlr-BJxCw1l4KaA0tmXFI_eTl1RITyYptWUS0qit_MprtcG7w2F&Jsonp=collectResults&$skip=0','https://spatial.virtualearth.net/REST/v1/data/1652026ff3b247cd9d1f4cc12b9a080b/FordEuropeDealers_Transition/Dealer?spatialFilter=nearby(53.4807593,-2.2426305,160.934)&$select=*,__Distance&$filter=CountryCode%20Eq%20%27GBR%27&$top=250&$format=json&key=Al1EdZ_aW5T6XNlr-BJxCw1l4KaA0tmXFI_eTl1RITyYptWUS0qit_MprtcG7w2F&Jsonp=collectResults&$skip=250']
+    for url in urls:
+        r = session.get(url, headers=headers)
+        for line in r.iter_lines():
+            if '"DealerID":"' in line:
+                items = line.split('"DealerID":"')
+                for item in items:
+                    if '"Brand":"' in item:
+                        website = 'ford.co.uk'
+                        typ = item.split('"Brand":"')[1].split('"')[0]
+                        lat = item.split('"Latitude":')[1].split(',')[0]
+                        lng = item.split('"Longitude":')[1].split(',')[0]
+                        name = item.split('"DealerName":"')[1].split('"')[0]
+                        add = item.split('"AddressLine1":"')[1].split('"')[0] + ' ' + item.split('"AddressLine2":"')[1].split('"')[0]
+                        add = add.strip()
+                        city = item.split('"Locality":"')[1].split('"')[0]
+                        country = 'GB'
+                        loc = '<MISSING>'
+                        state = '<MISSING>'
+                        zc = item.split('"PostCode":"')[1].split('"')[0]
+                        store = item.split('"')[0]
+                        phone = item.split('"PrimaryPhone":"')[1].split('"')[0]
+                        hours = '<MISSING>'
+                        if phone == '':
+                            phone = '<MISSING>'
+                        if city == '':
+                            city = '<MISSING>'
+                        if add == '':
+                            add = '<MISSING>'
+                        if zc == '':
+                            zc = '<MISSING>'
+                        addinfo = name + '|' + add + '|' + zc
+                        if addinfo not in infos:
+                            infos.append(addinfo)
+                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()
