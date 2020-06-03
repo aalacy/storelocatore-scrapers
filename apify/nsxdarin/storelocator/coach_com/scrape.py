@@ -51,7 +51,7 @@ def fetch_data():
                                     hours = ''
                                     website = 'coach.com'
                                     try:
-                                        add = sitem.split('<span itemprop="streetAddress">')[1].split('<')[0].strip()
+                                        add = sitem.split('<span itemprop="streetAddress">')[1].split('<')[0].strip().replace('&#35;','#')
                                         city = sitem.split('<span itemprop="addressLocality">')[1].split('<')[0]
                                         state = sitem.split('<span itemprop="addressRegion">')[1].split('<')[0]
                                     except:
@@ -121,7 +121,7 @@ def fetch_data():
                                 hours = ''
                                 website = 'coach.com'
                                 try:
-                                    add = sitem.split('<span itemprop="streetAddress">')[1].split('<')[0].strip()
+                                    add = sitem.split('<span itemprop="streetAddress">')[1].split('<')[0].strip().replace('&#35;','#')
                                     city = sitem.split('<span itemprop="addressLocality">')[1].split('<')[0]
                                     state = sitem.split('<span itemprop="addressRegion">')[1].split('<')[0]
                                 except:
