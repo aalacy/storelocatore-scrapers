@@ -20,7 +20,7 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
-        if 'page"><a href="https://villageinnpizza.com/locations/' in line:
+        if 'page"><a href="https://villageinnpizza.com/locations/' in line and 'food-truck' not in line:
             locs.append(line.split('href="')[1].split('"')[0])
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
