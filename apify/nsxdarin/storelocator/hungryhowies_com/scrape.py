@@ -54,14 +54,13 @@ def fetch_data():
                             hours = item.split('<')[0] + ' ' + item.split('<dd class="time">')[1].split('<')[0]
                         else:
                             hours = hours + '; ' + item.split('<')[0] + ' ' + item.split('<dd class="time">')[1].split('<')[0]
-            if '"url":"https://www.hungryhowies.com/store/hungry-howies-' in line2:
-                store = line2.split('"url":"https://www.hungryhowies.com/store/hungry-howies-')[1].split('"')[0]
         if hours == '':
             hours = '<MISSING>'
         if lat == '':
             lat = '<MISSING>'
         if lng == '':
             lng = '<MISSING>'
+        store = name.split('#')[1]
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
