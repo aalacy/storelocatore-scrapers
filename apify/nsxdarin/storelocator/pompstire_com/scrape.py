@@ -19,9 +19,11 @@ def fetch_data():
     locs = []
     r = session.get(url, headers=headers, verify=False)
     lines = r.iter_lines()
+    website = 'pompstire.com'
+    hours = ''
     for line in lines:
-        if '<p class="subtitle"><strong>' in line:
-            name = line.split('<p class="subtitle"><strong>')[1].split('<')[0].replace('&apos;',"'")
+        if 'Use This Location</span><strong>' in line:
+            name = line.split('Use This Location</span><strong>')[1].split('<')[0].replace('&apos;',"'")
             website = 'pompstire.com'
             loc = line.split("href='")[1].split("'")[0]
             hours = ''
@@ -43,7 +45,7 @@ def fetch_data():
             next(lines)
             g = next(lines)
             h = next(lines)
-            if '1' not in g and '.' not in g and '0' not in g and ' St' not in g and '9' not in g and '3' not in g and '4' not in g:
+            if '1' not in g and '.' not in g and '0' not in g and '2' not in g and '7' not in g and ' St' not in g and '9' not in g and '3' not in g and '4' not in g and '5' not in g and '3' not in g and '6' not in g:
                 g = h
                 h = next(lines)
             add = g.split('<')[0].strip().replace('\t','')
@@ -61,6 +63,7 @@ def fetch_data():
         if 'lon="' in line:
             lng = line.split('lon="')[1].split('"')[0]
             lat = line.split('lat="')[1].split('"')[0]
+            loc = '<MISSING>'
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
