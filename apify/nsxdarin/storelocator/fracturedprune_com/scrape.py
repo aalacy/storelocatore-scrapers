@@ -2,8 +2,6 @@ import csv
 import urllib2
 from sgrequests import SgRequests
 
-requests.packages.urllib3.disable_warnings()
-
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -21,8 +19,8 @@ def fetch_data():
     website = 'fracturedprune.com'
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
-        if 'Stores</h2>' in line:
-            typ = line.split('h2>')[1].split(' Store')[0] + ' Store'
+        if '<br><h2>' in line:
+            typ = line.split('<h2>')[1].split('<')[0]
         if '<h3><a href="https://fracturedprune.com/location/' in line:
             locs.append(line.split('href="')[1].split('"')[0] + '|' + typ)
     print('Found %s Locations.' % str(len(locs)))
@@ -40,30 +38,33 @@ def fetch_data():
         country = ''
         zc = ''
         phone = ''
-        print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % lurl)
         r2 = session.get(lurl, headers=headers)
-        for line2 in r2.iter_lines():
+        lines = r2.iter_lines()
+        for line2 in lines:
             if '<title>' in line2:
                 name = line2.split('<title>')[1].split(' |')[0].replace('&#8211;','-')
             if 'Phone: ' in line2:
                 phone = line2.split('Phone: ')[1].split('<')[0]
             if '<span class="address">' in line2:
-                addinfo = line2.split('<span class="address">')[1].split('</span>')[0].replace('\t','').strip()
-                if addinfo.count('<br />') == 1:
+                g = next(lines)
+                addinfo = g.split('</span>')[0].replace('\t','').strip()
+                if addinfo.count('<br/>') == 1:
                     add = addinfo.split('<')[0]
-                    city = addinfo.split('<br />')[1].strip().split(',')[0]
-                    state = addinfo.split('<br />')[1].strip().split(',')[1].split('<')[0].strip().rsplit(' ',1)[0]
-                    zc = addinfo.split('<br />')[1].strip().split(',')[1].split('<')[0].strip().rsplit(' ',1)[1]
+                    city = addinfo.split('<br/>')[1].strip().split(',')[0]
+                    state = addinfo.split('<br/>')[1].strip().split(',')[1].split('<')[0].strip().rsplit(' ',1)[0]
+                    zc = addinfo.split('<br/>')[1].strip().split(',')[1].split('<')[0].strip().rsplit(' ',1)[1]
                 else:
-                    add = addinfo.split('<')[0] + ' ' + addinfo.split('<br />')[1].strip()
-                    city = addinfo.split('<br />')[2].strip().split(',')[0]
-                    state = addinfo.split('<br />')[2].strip().split(',')[1].split('<')[0].strip().rsplit(' ',1)[0]
-                    zc = addinfo.split('<br />')[2].strip().split(',')[1].split('<')[0].strip().rsplit(' ',1)[1]
+                    add = addinfo.split('<')[0] + ' ' + addinfo.split('<br/>')[1].strip()
+                    city = addinfo.split('<br/>')[2].strip().split(',')[0]
+                    state = addinfo.split('<br/>')[2].strip().split(',')[1].split('<')[0].strip().rsplit(' ',1)[0]
+                    zc = addinfo.split('<br/>')[2].strip().split(',')[1].split('<')[0].strip().rsplit(' ',1)[1]
                 country = 'US'
                 store = '<MISSING>'
             if '<span class="day">' in line2:
                 day = line2.split('<span class="day">')[1].split('<')[0]
-                hrs = line2.split('<span>')[1].split('<')[0]
+                g = next(lines)
+                hrs = g.split('<span>')[1].split('<')[0]
                 if hours == '':
                     hours = day + ': ' + hrs
                 else:
