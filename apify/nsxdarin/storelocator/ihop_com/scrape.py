@@ -32,10 +32,11 @@ def fetch_data():
                'UserLatitude': '',
                'UserLongitude': '',
                'SearchQuery': '10002',
-               '__RequestVerificationToken': 'DbXWx84ilJf9Oz1msCUt5bTS3RhtLVIHdp3A6AEsVnbNvzH-WQxbGBw8umdLornvdMJ5qkx9oVBCCXD9QdzY27n7YJDC6wZ0Tdhwl5IzWzU1'
+               '__RequestVerificationToken': 'IPW5pXDKbmqnfuVlNv3KEbNEn-S08AUd8V5fBrsJ1VK7-Zmy8Aowf003XyRrl8ccG4IMiN5CnjPD5YyUlfXyxfhrXByMHvhCvWh_Qtyp6H41'
                }
     locs = []
     r = session.post(url, headers=headers, data=payload)
+    print(r.content)
     array = json.loads(r.content)
     Found = True
     for item in array['Locations']:
