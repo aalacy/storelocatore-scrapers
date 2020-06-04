@@ -74,17 +74,20 @@ def fetch_data():
             if '-lead ContentBanner-title">' in line2:
                 name = line2.split('-lead ContentBanner-title">')[1].split('<')[0]
                 days = line2.split("days='[{")[1].split("}]'")[0].split('"day":"')
-                for day in days:
-                    if '"intervals"' in day:
-                        dname = day.split('"')[0]
-                        if '"isClosed":true' in day:
-                            hrs = dname + ': Closed'
-                        else:
-                            hrs = dname + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
-                        if hours == '':
-                            hours = hrs
-                        else:
-                            hours = hours + '; ' + hrs
+                try:
+                    for day in days:
+                        if '"intervals"' in day:
+                            dname = day.split('"')[0]
+                            if '"isClosed":true' in day:
+                                hrs = dname + ': Closed'
+                            else:
+                                hrs = dname + ': ' + day.split('"start":')[1].split('}')[0] + '-' + day.split('"end":')[1].split(',')[0]
+                            if hours == '':
+                                hours = hrs
+                            else:
+                                hours = hours + '; ' + hrs
+                except:
+                    hours = '<MISSING>'
             if add == '' and 'address-street-1">' in line2:
                 add = line2.split('address-street-1">')[1].split('<')[0]
                 city = line2.split('"c-address-city">')[1].split('<')[0]
