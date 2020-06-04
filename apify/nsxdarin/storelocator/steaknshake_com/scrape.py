@@ -15,7 +15,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://www.steaknshake.com/zsapi/locations/'
+    url = 'https://www.steaknshake.com/wp-admin/admin-ajax.php?action=get_location_data_from_plugin'
     r = session.get(url, headers=headers)
     for item in json.loads(r.content):
         store = item['brandChainId']
@@ -42,6 +42,11 @@ def fetch_data():
             lat = item['address']['loc'][0]
             lng = item['address']['loc'][1]
         else:
+            lat = '<MISSING>'
+            lng = '<MISSING>'
+        if phone == '':
+            phone = '<MISSING>'
+        if lat == '':
             lat = '<MISSING>'
             lng = '<MISSING>'
         yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
