@@ -31,12 +31,16 @@ def fetch_data():
                 items = line.split('"id":"')
                 for item in items:
                     if '"website":"' in item:
-                        lurl = item.split('"website":"')[1].split('?')[0]
+                        lurl = item.split('"website":"')[1].split(',"covid19InformationUrl":"')[0]
+                        if '?' in lurl:
+                            lurl = lurl.split('?')[0]
+                        if '\\u0026utm_source=' in lurl:
+                            lurl = lurl.split('\\u0026utm_source=')[0]
                         locs.append(lurl)
                         print(lurl)
     print('Found %s Locations...' % str(len(locs)))
     for loc in locs:
-        #print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc)
         website = 'aspendental.com'
         typ = 'Office'
         hours = ''
@@ -48,8 +52,8 @@ def fetch_data():
         zc = ''
         phone = ''
         store = ''
-        lat = ''
-        lng = ''
+        lat = '<MISSING>'
+        lng = '<MISSING>'
         HFound = False
         LocFound = True
         while LocFound:
@@ -77,9 +81,9 @@ def fetch_data():
                         zc = line2.split("'postalCode':'")[1].split("'")[0]
                         add = line2.split(",'streetAddress':'")[1].split("'")[0]
                         phone = line2.split("'telephone':'")[1].split("'")[0]
-                    if 'href="https://www.google.com/maps/dir/' in line2 and lat == '':
-                        lat = line2.split('href="https://www.google.com/maps/dir/')[1].split(',')[0]
-                        lng = line2.split('href="https://www.google.com/maps/dir/')[1].split(',')[1].split('/')[0]
+                    if '" target="_blank">GET DIRECTIONS</a>' in line2:
+                        lat = line2.split('" target="_blank">GET DIRECTIONS</a>')[0].rsplit('/',1)[1].split(',')[0]
+                        lng = line2.split('" target="_blank">GET DIRECTIONS</a>')[0].rsplit('/',1)[1].split(',')[1]
                 if hours == '':
                     hours = '<MISSING>'
                 if store not in ids:
