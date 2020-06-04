@@ -58,7 +58,7 @@ def fetch_data():
                 for xip in xip_list:                    
                     try:
                         pcode = xip.text
-                        print('http://www.primerica.com'+xip['href'])
+                        #print('http://www.primerica.com'+xip['href'])
                         page2 = session.get('http://www.primerica.com'+xip['href'], headers=headers, verify=False)                    
                         time.sleep(1)
                         soup2 = BeautifulSoup(page2.text, "html.parser")                   
@@ -161,7 +161,7 @@ def fetch_data():
                                         ])
                                     
                                 #print(street,city,state,pcode,phone)
-                                    print(p,data[p])
+                                    #print(p,data[p])
                                     p += 1
                                 #input()
                                 
