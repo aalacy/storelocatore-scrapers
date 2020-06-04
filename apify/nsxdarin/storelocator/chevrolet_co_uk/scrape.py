@@ -49,6 +49,9 @@ def fetch_data():
                     lng = item.split('"longitude":')[1].split(',')[0]
                     lat = item.split(',"latitude":')[1].split('}')[0]
                     hours = '<MISSING>'
+                    if 'Parts USA' in name:
+                        city = 'Stockport'
+                    state = state.replace('England, ','')
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
