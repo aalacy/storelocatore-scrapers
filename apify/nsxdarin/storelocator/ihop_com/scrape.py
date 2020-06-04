@@ -36,7 +36,6 @@ def fetch_data():
                }
     locs = []
     r = session.post(url, headers=headers, data=payload)
-    print(r.content)
     array = json.loads(r.content)
     Found = True
     for item in array['Locations']:
