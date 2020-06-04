@@ -17,24 +17,23 @@ def fetch_data():
     locs = []
     ids = []
     cities = []
-    Found = False
-    url = 'https://www.aspendental.com/find-an-office'
-    r = session.get(url, headers=headers)
-    for line in r.iter_lines():
-        if '<li class="collection-index">A</li>' in line:
-            Found = True
-        if Found and '<li><a href="/dentist/' in line:
-            lurl = 'https://www.aspendental.com' + line.split('<a href="')[1].split('"')[0]
-            cities.append(lurl)
-    print('Found %s Cities...' % str(len(cities)))
-    for city in cities:
-        #print('Pulling City %s...' % city)
-        r2 = session.get(city, headers=headers)
-        for line2 in r2.iter_lines():
-            if '<li><a href="/dentist/' in line2:
-                locurl = 'https://www.aspendental.com' + line2.split('<a href="')[1].split('"')[0]
-                if locurl not in locs:
-                    locs.append(locurl)
+    Found = True
+    x = 0
+    while Found:
+        print(x)
+        Found = False
+        url = 'https://liveapi.yext.com/v2/accounts/me/answers/vertical/query?v=20190101&api_key=5568aa1809f16997ec2ac0c1ed321f59&jsLibVersion=v0.12.1&sessionTrackingEnabled=true&input=dentist%20near%20me&experienceKey=aspen_dental_answers&version=PRODUCTION&verticalKey=locations&limit=50&offset=' + str(x) + '&queryId=878323fa-cfa8-42f2-836f-975b7b1837b9&locale=en'
+        r = session.get(url, headers=headers)
+        for line in r.iter_lines():
+            if '"id":"' in line:
+                Found = True
+                x = x + 50
+                items = line.split('"id":"')
+                for item in items:
+                    if '"website":"' in item:
+                        lurl = item.split('"website":"')[1].split('?')[0]
+                        locs.append(lurl)
+                        print(lurl)
     print('Found %s Locations...' % str(len(locs)))
     for loc in locs:
         #print('Pulling Location %s...' % loc)
