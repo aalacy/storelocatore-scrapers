@@ -1,17 +1,17 @@
-# Import libraries
+
 import requests
 from bs4 import BeautifulSoup
 import csv
 import string
-import re, time, usaddress
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
+import re, time
+import usaddress
 from sgrequests import SgRequests
 
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
+
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -23,124 +23,180 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument("--disable-notifications")
-    return webdriver.Chrome('chromedriver', chrome_options=options)
-    #return webdriver.Chrome('C:\\Users\\Dell\\local\\chromedriver.exe', chrome_options=options)
 
 def fetch_data():
     # Your scraper here
-    data = []
-
-
-    url = 'https://www.raleys.com/store-locator/?search=all'
-    driver1 = get_driver()
-    driver1.get(url)
-    time.sleep(2)
-    soup = BeautifulSoup(driver1.page_source, "html.parser")
-    repo_list = soup.findAll('li', {'class': 'marker'})
-    cleanr = re.compile('<.*?>')
-    pattern = re.compile(r'\s\s+')
+    data = []    
     p = 0
-    for repo in repo_list:
-        link = repo.find('a',{'class':'btn btn-hollow'})
-        link = link['href']
-        #print(link)
-        title = repo.find('h2').text
-        address = repo.find('address').text
-        address = re.sub(pattern, " ", address)
-        phone = repo.find('a').text
-        det = repo.findAll('div', {'class': 'box'})
-        hours = det[0].text
-        mainltype = det[1]
-        try:
-            li_list = mainltype.findAll('li')
-            ltype = ""
-            for locs in li_list:
-                ltype = ltype + locs.text + "|"
-        except:
-            ltype = "<MISSING>"
+    url = 'http://www.primerica.com/public/locations.html'
+    page = session.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(page.text, "html.parser")
+    maidiv = soup.find('main')
+    mainsection = maidiv.findAll('section',{'class':'content locList'})
+    #print(len(mainsection))
+    sec = 0
+    while sec < 2:
+        if sec == 0:
+            ccode = "US"
+        if sec == 1:
+            ccode = "CA"
+        rep_list = mainsection[sec].findAll('a')       
+        cleanr = re.compile('<.*?>')
+        pattern = re.compile(r'\s\s+')
+        for rep in rep_list:            
+            link = "http://www.primerica.com/public/" + rep['href']            
+            #print(link)           
+            try:
+               
+                page1 = session.get(link, headers=headers, verify=False)                    
+                time.sleep(1)
+                soup1 = BeautifulSoup(page1.text, "html.parser")
+                maindiv = soup1.find('main')
+                xip_list = maindiv.findAll('a')
+                print("len = ",len(xip_list))
+               
+                for xip in xip_list:                    
+                    try:
+                        pcode = xip.text
+                        print('http://www.primerica.com'+xip['href'])
+                        page2 = session.get('http://www.primerica.com'+xip['href'], headers=headers, verify=False)                    
+                        time.sleep(1)
+                        soup2 = BeautifulSoup(page2.text, "html.parser")                   
+                        mainul = soup2.find('ul',{'class':'agent-list'})
+                        li_list = mainul.findAll('li')
+                        #print(len(li_list))
+                        for m in range(0, len(li_list)):
+                            try:
+                                address = ''
+                                alink = li_list[m].find('a')                       
+                                title = alink.text
+                                alink = alink['href']
+                                #alink = 'http://www.primerica.com/dmchoury'
+                                page3 = session.get(alink, headers=headers, verify=False)                    
+                                time.sleep(1)
+                                soup3 = BeautifulSoup(page3.text, "html.parser")                            
+                                address = soup3.find('div',{'class':'officeInfoDataWidth'})
+                                cleanr = re.compile(r'<[^>]+>')
+                                address = cleanr.sub(' ', str(address))
+                                address = re.sub(pattern,' ',address).lstrip()
+                                #print(address)
+                                address = usaddress.parse(address)
+                                i = 0
+                                street = ""
+                                city = ""
+                                state = ""
+                                pcode = ""
+                                while i < len(address):
+                                    temp = address[i]
+                                    if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or \
+                                            temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
+                                        "USPSBoxID") != -1:
+                                        street = street + " " + temp[0]
+                                    if temp[1].find("PlaceName") != -1:
+                                        city = city + " " + temp[0]
+                                    if temp[1].find("StateName") != -1:
+                                        state = state + " " + temp[0]
+                                    if temp[1].find("ZipCode") != -1:
+                                        pcode = pcode + " " + temp[0]
+                                    i += 1
 
-        hours = re.sub(pattern," ", hours)
-        hours = hours.replace("\n", "")
-        hours = hours.replace('Store Hours ','').replace('am',' am ').replace('pm', ' pm ').rstrip()
-       
-        
-        phone = re.sub(pattern,"",phone)
+                               
+                                street = street.lstrip().replace(',','')
+                                city = city.lstrip().replace(',','')
+                                state = state.lstrip().replace(',','')
+                                pcode = pcode.lstrip().replace(',','')
+                                
+                                phone = soup3.find('div',{'class':'telephoneLabel'}).text
+                                phone = phone.replace('Office: ','')
+                                phone = phone.replace("Mobile","")
+                                phone = phone.replace(":","")
+                                phone = phone.strip()
+                                if len(phone) < 2:
+                                    phone = "<MISSING>"
+                                if len(street) < 2 :
+                                    street = "<MISSING>"
+                                if len(city) < 2:
+                                    city  = "<MISSING>"                        
+                                if len(state) < 2 :
+                                    state = "<MISSING>"
 
-        lat = repo['data-lat']
-        longt = repo['data-lng']
-        #print(address)
-        address = usaddress.parse(address)
+                                if len(pcode) < 2:
+                                    pcode = "<MISSING>"
 
-        i = 0
-        street = ""
-        city = ""
-        state = ""
-        pcode = ""
-        ccode = ""
+                                if len(phone) < 11:
+                                    phone = "<MISSING>"
+                                i = 0
+                                flag = True
+                                #print("Data", len(data))
+                                try:
+                                    for i in range(0,len(data)):                                        
+                                        #print(i, pcode,data[i][6])
+                                        if pcode == data[i][6]:
+                                            #print("exist")
+                                            flag = False
+                                            break
+                                    
+                                except Exception as e:
+                                    print(e)
+                                if state == "NF":
+                                    state = "NL"
+                                if state == "PQ":
+                                    state = "QC"
+                                if flag:
+                                    data.append([
+                                            'http://www.primerica.com/',
+                                            alink,
+                                            title,
+                                            street,
+                                            city,
+                                            state,
+                                            pcode,
+                                            ccode,
+                                            "<MISSING>",
+                                            phone,
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                            "<MISSING>",
+                                        ])
+                                    
+                                #print(street,city,state,pcode,phone)
+                                    print(p,data[p])
+                                    p += 1
+                                #input()
+                                
+                            except Exception as e:
+                                print(e)
+                                pass
+                               
+                    except Exception as e:
+                        print(e)
+                        pass
+                        
 
-        while i < len(address):
-            temp = address[i]
-            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or \
-                    temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
-                "USPSBoxID") != -1 or temp[1].find("LandmarkName") != -1:
-                street = street + " " + temp[0]
-            if temp[1].find("PlaceName") != -1:
-                city = city + " " + temp[0]
-            if temp[1].find("StateName") != -1:
-                state = state + " " + temp[0]
-            if temp[1].find("ZipCode") != -1:
-                pcode = pcode + " " + temp[0]
-            if temp[1].find("CountryName") != -1:
-                ccode = "US"
-            i += 1
 
-        street = street.lstrip()
-        city = city.lstrip()
-        state = state.lstrip()
-        state = state.replace(",","")
-        street = street.replace(",","")
-        city = city.replace(",","")
-        pcode = pcode.lstrip()
-        if len(phone) < 5:
-            phone = "<MISSING>"
-        if len(ltype) < 3:
-            ltype = "<MISSING>"
-        else:
-            ltype = ltype[0:len(ltype)-1]
+                    #break
+            except Exception as e:
+                print(e)
+                pass
 
-        if title.find('Bel-Air') > -1 or title.find('Bel Air') > -1:
-            data.append([
-                'https://www.raleys.com/stores/bel-air',
-                link,
-                title,
-                street,
-                city,
-                state,
-                pcode,
-                "US",
-                "<MISSING>",
-                phone,
-                ltype,
-                lat,
-                longt,
-                hours
-            ])
-            #print(p,data[p])
-            p += 1
+            #driver1.quit()
+            #break
+        sec += 1
+        #if sec == 1:
+            #break
 
     return data
 
 
 
+
 def scrape():
+
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 
 scrape()
