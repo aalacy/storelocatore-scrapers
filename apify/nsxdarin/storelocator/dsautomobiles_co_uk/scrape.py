@@ -26,8 +26,7 @@ def fetch_data():
                     website = 'dsautomobiles.co.uk'
                     typ = '<MISSING>'
                     country = 'GB'
-                    hours = '<MISSING>'
-                    loc = '<MISSING>'
+                    hours = ''
                     addinfo = item.split('"address":"')[1].split('"')[0]
                     add = addinfo.split('<br')[0]
                     city = addinfo.rsplit('&nbsp;',1)[1]
@@ -35,9 +34,24 @@ def fetch_data():
                     zc = addinfo.split('<br \\/>')[1].split('&')[0]
                     phone = item.split(',"phone":"')[1].split('"')[0]
                     store = item.split('"')[0]
+                    try:
+                        stub = item.split('review.dsautomobiles.co.uk\\/en\\/')[1].split('\\')[0]
+                    except:
+                        stub = ''
+                    if stub == '':
+                        loc = '<MISSING>'
+                    else:
+                        loc = 'https://dealer.dsautomobiles.co.uk/' + stub
                     lat = item.split('"lat":')[1].split(',')[0]
                     lng = item.split('"lng":')[1].split(',')[0]
                     add = add.replace('&nbsp;-','').replace('&nbsp;',' ').replace('\\/','/')
+                    durl = 'https://www.dsautomobiles.co.uk/_/Layout_DSPP_DealerLocator/getDealer?id=' + store
+                    r2 = session.get(durl, headers=headers)
+                    for line2 in r2.iter_lines():
+                        if '"timetable":"' in line2:
+                            hours = line2.split('"timetable":"')[1].replace('<br \\/>",','"').split('"')[0].replace('<br \\/>','; ')
+                        if hours == '':
+                            hours = '<MISSING>'
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
