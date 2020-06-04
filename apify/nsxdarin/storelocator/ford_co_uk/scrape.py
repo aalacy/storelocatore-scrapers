@@ -21,22 +21,22 @@ def fetch_data():
         r = session.get(url, headers=headers)
         for line in r.iter_lines():
             if '"DealerID":"' in line:
-                items = line.split('"DealerID":"')
+                items = line.split(',"EntityID":"')
                 for item in items:
-                    if '"Brand":"' in item:
+                    if '"DealerID":"' in item:
                         website = 'ford.co.uk'
                         typ = item.split('"Brand":"')[1].split('"')[0]
                         lat = item.split('"Latitude":')[1].split(',')[0]
                         lng = item.split('"Longitude":')[1].split(',')[0]
                         name = item.split('"DealerName":"')[1].split('"')[0]
-                        add = item.split('"AddressLine1":"')[1].split('"')[0] + ' ' + item.split('"AddressLine2":"')[1].split('"')[0]
+                        add = item.split('"AddressLine1":"')[1].split('"')[0] + ' ' + item.split('"')[0]
                         add = add.strip()
                         city = item.split('"Locality":"')[1].split('"')[0]
                         country = 'GB'
-                        loc = '<MISSING>'
+                        loc = 'https://www.ford.co.uk/dealer-locator#/dealer/' + item.split('"')[0]  
                         state = '<MISSING>'
                         zc = item.split('"PostCode":"')[1].split('"')[0]
-                        store = item.split('"')[0]
+                        store = item.split('"DealerID":"')[1].split('"')[0]
                         phone = item.split('"PrimaryPhone":"')[1].split('"')[0]
                         hours = '<MISSING>'
                         if phone == '':
@@ -47,6 +47,14 @@ def fetch_data():
                             add = '<MISSING>'
                         if zc == '':
                             zc = '<MISSING>'
+                        if '"ServiceMondayOpenTime":""' not in item:
+                            hours = 'Mon: ' + item.split('"ServiceMondayOpenTime":"')[1].split('"')[0] + '-' + item.split('"ServiceMondayCloseTime":"')[1].split('"')[0]
+                            hours = hours + '; ' + 'Tue: ' + item.split('"ServiceTuesdayOpenTime":"')[1].split('"')[0] + '-' + item.split('"ServiceTuesdayOpenTime":"')[1].split('"')[0]
+                            hours = hours + '; ' + 'Wed: ' + item.split('"ServiceWednesdayOpenTime":"')[1].split('"')[0] + '-' + item.split('"ServiceWednesdayOpenTime":"')[1].split('"')[0]
+                            hours = hours + '; ' + 'Thu: ' + item.split('"ServiceThursdayOpenTime":"')[1].split('"')[0] + '-' + item.split('"ServiceThursdayOpenTime":"')[1].split('"')[0]
+                            hours = hours + '; ' + 'Fri: ' + item.split('"ServiceFridayOpenTime":"')[1].split('"')[0] + '-' + item.split('"ServiceFridayOpenTime":"')[1].split('"')[0]
+                            hours = hours + '; ' + 'Sat: ' + item.split('"ServiceSaturdayOpenTime":"')[1].split('"')[0] + '-' + item.split('"ServiceSaturdayOpenTime":"')[1].split('"')[0]
+                            hours = hours + '; ' + 'Sun: ' + item.split('"ServiceSundayOpenTime":"')[1].split('"')[0] + '-' + item.split('"ServiceSundayOpenTime":"')[1].split('"')[0]
                         addinfo = name + '|' + add + '|' + zc
                         if addinfo not in infos:
                             infos.append(addinfo)
