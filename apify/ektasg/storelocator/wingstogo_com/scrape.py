@@ -53,8 +53,11 @@ def fetch_data():
             city = state_city_zip.split(",")[0]
             phone = driver.find_element_by_css_selector('span.detail-phone').text
             hours_of_op = driver.find_element_by_css_selector('div.location-hours').text
-            geomap = driver.find_element_by_css_selector('div.loc-details-map > iframe').get_attribute('src')
-            lat, lon = parse_geo(geomap)
+            try:
+                geomap = driver.find_element_by_css_selector('div.loc-details-map > iframe').get_attribute('src')
+                lat, lon = parse_geo(geomap)
+            except:
+                lat=lon="<MISSING>"
             data.append([
                 'https://wingstogo.com/',
                 page_url,
