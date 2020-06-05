@@ -8,9 +8,6 @@ import time
 from datetime import datetime
 import time
 from sgrequests import SgRequests
-
-session = SgRequests()
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -86,16 +83,28 @@ def fetch_data():
             latitude = json_data['geo']['latitude']
             longitude = json_data['geo']['longitude']
             page_url= json_data['url']
+            # print(page_url)
             store_number = json_data['@id']
+            # print(store_number)
             phone = json_data['telephone']
             location_type = json_data['@type'][0]
             location_name = json_data['name']
             hours_of_operation1 = json_data['openingHoursSpecification']
             hours_of_operation =''
             for mp1 in hours_of_operation1:
-                start_time = datetime.strptime(mp1['opens'], "%H:%M").strftime("%I:%M %p")
-                end_time = datetime.strptime(mp1['closes'], "%H:%M").strftime("%I:%M %p")
-                hours_of_operation += mp1['dayOfWeek'] +" "+str(start_time)+" - "+str(end_time)
+                # print(mp1)
+                if "dayOfWeek" in mp1:
+                    start_time = datetime.strptime(mp1['opens'], "%H:%M").strftime("%I:%M %p")
+                    end_time = datetime.strptime(mp1['closes'], "%H:%M").strftime("%I:%M %p")
+                    hours_of_operation += mp1['dayOfWeek'] +" "+str(start_time)+" - "+str(end_time)+" "
+                else:
+                    soup = BeautifulSoup(session.get(page_url).text,"lxml")
+                    try:
+                        hours_of_operation = " ".join(list(soup.find("tbody",{"class":"hours-body"}).stripped_strings))
+                    except:
+                        hours_of_operation = "<MISSING>"
+            # print(hours_of_operation.strip())
+            # print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
             store = []
             store.append(base_url if base_url else "<MISSING>")
             store.append(location_name if location_name else "<MISSING>") 

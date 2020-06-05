@@ -4,9 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 # import sgzip
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', 'w') as output_file:
         writer = csv.writer(output_file, delimiter=",")
@@ -21,15 +19,11 @@ def fetch_data():
     # zips = sgzip.for_radius(50)
     return_main_object = []
     addresses = []
-
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3',
         # 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-
-
     }
-
     # it will used in store data.
     base_url = 'https://bluemartini.com/'
     locator_domain = "https://www.bluemartinilounge.com/"
@@ -73,12 +67,10 @@ def fetch_data():
                 ist_hours = list(hours.stripped_strings)
                 hours_of_operation = " ".join(" ".join(list_hours).strip().split(':')[1:]).strip()
             details = cont.find(lambda tag: (tag.name == 'p') and "Call:" in tag.text)
-
             if details !=None:
                 list_details= list(details.stripped_strings)
                 if len(list_details) >1:
                     phone = list_details[1].strip()
-
                 else:
                     phone = "<MISSING>"
                 address = list_details[-1].split(',')
@@ -87,17 +79,15 @@ def fetch_data():
                 state = address[-1].split()[0].strip()
                 zipp = address[-1].split()[-1].strip()
                 # print(street_address + " | "+city+ " | "+state+" | "+zipp)
-
-
-
             else:
                 details = cont.find_all('p',class_='f30')[2]
+                # print(details)
                 if "Event Manager" not in details.text:
+                    zipp = "34108"
                     list_details= list(details.stripped_strings)
-                    street_address = list_details[0].split(',')[0].strip()
-                    city = list_details[0].split(',')[-2].strip()
-                    state = list_details[0].split(',')[-1].split()[0].strip()
-                    zipp = list_details[0].split(',')[-1].split()[-1].strip()
+                    street_address = "9114 Strada Place #12105"
+                    city = "Naples"
+                    state = "FL"
                     phone ="<MISSING>"
                 else:
                     details = cont.find(lambda tag: (tag.name == 'p') and "Contact:" in tag.text)
@@ -110,8 +100,6 @@ def fetch_data():
         else:
             # comming soon location
             continue
-
-
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
              store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
         store = [x if x else "<MISSING>" for x in store]
@@ -119,14 +107,9 @@ def fetch_data():
         if store[2] in addresses:
             continue
         addresses.append(store[2])
-
         #print("data = " + str(store))
         #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return_main_object.append(store)
-
-
-
-
     return return_main_object
 def scrape():
     data = fetch_data()
