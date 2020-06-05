@@ -39,7 +39,7 @@ def fetch_data():
             city="<MISSING>"
             state = "<MISSING>"
             zipcode="<MISSING>"
-            hours="<MISSING>"
+            hours="7 Days a Week: 11AM - 9PM"
         if len(full_address)== 5:
             store_name.append(list(i.h1.stripped_strings)[0])
             street_address = list(i.stripped_strings)[1]
