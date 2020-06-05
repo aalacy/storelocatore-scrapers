@@ -41,7 +41,7 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     # print("soup === "+ str(soup))
     for script in soup.find_all("div", {"class": "panel panel-default"}):
-        hours_of_operation = script.find("div", {"class": "col-md-6 text-center"}).text
+        hours_of_operation = script.find("div", {"class": "col-md-6 text-center"}).text.replace('Store Hours:','')
         phone = script.find("i", {"class": "fa fa-phone"}).nextSibling
         location_name = script.find("div", {"class": "panel-heading"}).text
         full_address = script.find("i", {"class": "fa fa-map-marker"}).parent.text

@@ -10,3 +10,5 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 same lat & lng and address,invalid zip  this website
+
+all data come by api so there will come be some errors come in validate

@@ -10,6 +10,3 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-
-
-zipcode not in state from this site

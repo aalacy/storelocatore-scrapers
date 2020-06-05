@@ -10,6 +10,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-
-
-zipcode not in state from this site
+same lat and lng from this site,and i checked all data is true this website
