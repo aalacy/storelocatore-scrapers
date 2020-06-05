@@ -103,8 +103,8 @@ def get_stores_from_coords(coord, radius, maxResults):
         typ = 'Restaurant'
         loc = '<MISSING>'
         store_number = item['properties']['identifiers']['storeIdentifier'][1]['identifierValue']
-        lat = item['geometry']['coordinates'][0]
-        lng = item['geometry']['coordinates'][1]
+        lat = item['geometry']['coordinates'][1]
+        lng = item['geometry']['coordinates'][0]
         if phone == '':
             phone = '<MISSING>'
         if city == '':
