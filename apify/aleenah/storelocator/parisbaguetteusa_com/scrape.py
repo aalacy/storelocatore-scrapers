@@ -27,7 +27,7 @@ def fetch_data():
     #print(len(stores))
     for store in stores:
         loc=store.find('h2').find('a').text.strip()
-        street = store.find('span', {'class': 'line_item address'}).text.strip()
+        street = store.find('span', {'class': 'line_item address'}).text.strip().strip(',')
         city=store.find('span', {'class': 'line_item city'}).text.strip()
         state=store.find('span', {'class': 'line_item state'}).text.strip()
         zip=store.find('span', {'class': 'line_item postalcode'}).text.strip()
