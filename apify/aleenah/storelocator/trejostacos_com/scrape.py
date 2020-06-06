@@ -15,6 +15,7 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
 session = SgRequests()
 all=[]
 def fetch_data():
@@ -24,9 +25,11 @@ def fetch_data():
     soup = BeautifulSoup(res.text, 'html.parser')
     urls = soup.find_all('a', {'class': 'lemon--a__373c0__IEZFH link__373c0__1G70M link-color--inherit__373c0__3dzpk link-size--inherit__373c0__1VFlE'})
 
+
     for url in urls:
         if "Trejos" in url.text or "Trejo’s" in url.text:
             url="https://www.yelp.com"+url.get('href')
+            print(url)
             res = session.get(url)
             soup = BeautifulSoup(res.text, 'html.parser')
             tim = soup.find('table', {'class': 'lemon--table__373c0__2clZZ hours-table__373c0__2cULu table__373c0__3JVzr table--simple__373c0__3lyDA'}).text.replace("Mon"," Mon ").replace("Tue"," Tue ").replace("Wed"," Wed ").replace("Thu"," Thu ").replace("Fri"," Fri ").replace("Sat"," Sat ").replace("Sun"," Sun ").strip()
@@ -40,7 +43,8 @@ def fetch_data():
             country=soup.find('meta', {'itemprop': 'addressCountry'}).get('content')
             zip=soup.find('span', {'itemprop': 'postalCode'}).text
             phone=soup.find('span', {'itemprop': 'telephone'}).text.strip()
-            loc = soup.find('h1', {'class': 'lemon--h1__373c0__2ZHSL heading--h1__373c0__1VUMO heading--no-spacing__373c0__1PzQP heading--inline__373c0__1F-Z6'}).text
+            loc = soup.find('h1').text.strip()
+            #print(loc)
             img=soup.find('img', {'alt': 'Map'}).get('src')
             lat,long=re.findall(r'center=([\d\.]+)%2C([\d\.\-]+)&',img)[0]
             #print(lat,long)
@@ -83,5 +87,6 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
