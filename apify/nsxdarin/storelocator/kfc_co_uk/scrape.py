@@ -1,83 +1,98 @@
-import time
 import csv
-import urllib2
-from sgrequests import SgRequests
+import requests
 import json
-import gzip
 
-session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
-           'authority': 'www.kfc.co.uk',
-           'sec-fetch-mode': 'cors',
-           'referer': 'https://www.kfc.co.uk/choose-restaurant',
-           'sec-fetch-site': 'same-origin',
-           'method': 'GET',
-           'scheme': 'https',
-           'accept': 'application/json, text/plain, */*',
-           'countrycode': 'GB'
-           }
+session = requests.Session()
+headers = {
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'}
+days = ['Sunday', 'Monday', 'Tuesday',
+        'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip",
+                         "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_streration"])
         for row in data:
             writer.writerow(row)
+
+
+def format_hours(hours_dict):
+    formatted = [f'{day}: {hours_dict[day.lower()]["open"]} - {hours_dict[day.lower()]["close"]}' for day in days]
+    return ', '.join(formatted)
+
+
+def get_hours_all_closed():
+    # some locations have store hours listed but status 'unavailable'
+    # example as of 2020-06-06: https://www.kfc.co.uk/kfc-near-me/bristol-eastgate-retail-park
+    hours = [f'{day}: Closed' for day in days]
+    return ', '.join(hours)
+
+
+def get_hours(hours, status):
+    # hours argument is a list of dicts
+    hours_str = ''
+
+    if status == 'unavailable' or len(hours) == 0:
+        hours_str = get_hours_all_closed()
+    else:
+        # for the store hours, find the dict with type="Standard"
+        store_hours = next(
+            (item for item in hours if item['type'] == "Standard"), None)
+        if store_hours:
+            hours_str = f'Restaurant: {format_hours(store_hours)}'
+
+        # for the drive thru hours, find the dict with type="Drivethru"
+        drive_thru_hours = next(
+            (item for item in hours if item['type'] == "Drivethru"), None)
+        if drive_thru_hours:
+            hours_str += '. ' if len(hours_str) > 0 else ''
+            hours_str += f'Drive Thru: {format_hours(drive_thru_hours)}'
+
+        # for the delivery hours, find the dict with type="Delivery"
+        delivery_hours = next(
+            (item for item in hours if item['type'] == "Delivery"), None)
+        if delivery_hours:
+            hours_str += '. ' if len(hours_str) > 0 else ''
+            hours_str += f'Delivery: {format_hours(delivery_hours)}'
+
+    if not hours_str:
+        hours_str = '<MISSING>'
+
+    return hours_str
+
 
 def fetch_data():
     locs = []
     url = 'https://www.kfc.co.uk/cms/api/data/restaurants_all'
-    Found = True
-    rc = 0
-    while Found:
-##        try:
-        rc = rc + 1
-        time.sleep(1)
-        #print('Try %s...' % str(rc))
-        r = session.get(url, headers=headers, timeout=15)
-        for line in r.iter_lines():
-            if '"id":' in r.content:
-                items = r.content.split('"id":')
-                for item in items:
-                    if '"sfid":"' in item:
-                        name = item.split('"name":"')[1].split('"')[0].encode('utf-8')
-                        Found = False
-                        website = 'kfc.co.uk'
-                        typ = '<MISSING>'
-                        store = item.split(',')[0]
-                        hours = ''
-                        country = 'GB'
-                        add = item.split(',"shippingstreet":"')[1].split('"')[0].encode('utf-8')
-                        try:
-                            city = item.split('"shippingcity":"')[1].split('"')[0].encode('utf-8')
-                        except:
-                            city = name.split('-')[0].strip()
-                        state = '<MISSING>'
-                        zc = item.split('"shippingpostalcode":"')[1].split('"')[0]
-                        lat = item.split('"latitude":')[1].split(',')[0]
-                        lng = item.split('"longitude":')[1].split(',')[0]
-                        hours = 'Sun: ' + item.split('"kfc_sundayopening__c":"')[1].split('"')[0] + '-' + item.split('"kfc_sundayclosing__c":"')[1].split('"')[0]
-                        hours = hours + '; ' + 'Mon: ' + item.split('"kfc_mondayopening__c":"')[1].split('"')[0] + '-' + item.split('"kfc_mondayclosing__c":"')[1].split('"')[0]
-                        hours = hours + '; ' + 'Tue: ' + item.split('"kfc_tuesdayopening__c":"')[1].split('"')[0] + '-' + item.split('"kfc_tuesdayclosing__c":"')[1].split('"')[0]
-                        hours = hours + '; ' + 'Wed: ' + item.split('"kfc_wednesdayopening__c":"')[1].split('"')[0] + '-' + item.split('"kfc_wednesdayclosing__c":"')[1].split('"')[0]
-                        hours = hours + '; ' + 'Thu: ' + item.split('"kfc_thursdayopening__c":"')[1].split('"')[0] + '-' + item.split('"kfc_thursdayclosing__c":"')[1].split('"')[0]
-                        hours = hours + '; ' + 'Fri: ' + item.split('"kfc_fridayopening__c":"')[1].split('"')[0] + '-' + item.split('"kfc_fridayclosing__c":"')[1].split('"')[0]
-                        hours = hours + '; ' + 'Sat: ' + item.split('"kfc_satursdayopening__c":"')[1].split('"')[0] + '-' + item.split('"kfc_satursdayclosing__c":"')[1].split('"')[0]
-                        if hours == '':
-                            hours = '<MISSING>'
-                        try:
-                            loc = 'https://www.kfc.co.uk' + item['link'].replace('\\','')
-                        except:
-                            loc = '<MISSING>'
-                        if loc == 'https://www.kfc.co.uk':
-                            loc = '<MISSING>'
-                        phone = '<MISSING>'
-                        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
-##        except:
-##            Found = True
+    r = session.get(url, headers=headers)
+
+    data = r.json()
+    for item in data:
+        name = item['name']
+        website = 'kfc.co.uk'
+        typ = '<MISSING>'
+        store = item['storeid']
+        hours = ''
+        country = 'GB'
+        street = item['street'].replace('\n', ' ')
+        city = item['city']
+        state = '<MISSING>'
+        zc = item['postalcode']
+        lat = item['geolocation']['latitude']
+        lng = item['geolocation']['longitude']
+        hours = get_hours(item['hours'], item['status'])
+        page_url = f'https://{website}{item["link"]}' if item["link"] else '<MISSING>'
+        phone = '<MISSING>'
+
+        yield [website, page_url, name, street, city, state, zc, country, store, phone, typ, lat, lng, hours]
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
