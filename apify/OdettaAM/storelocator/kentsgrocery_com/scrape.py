@@ -36,13 +36,12 @@ def fetch_data():
     data=[]
     driver.get("http://kentsgrocery.com/all")
     time.sleep(10)
-    stores = driver.find_elements_by_css_selector('div.list-content')
-    print(stores)
-    name = [stores[i].find_element_by_css_selector('div.loc-moreInfo > a').get_attribute('href') for i in range(0, len(stores))]
-    print(name)
-    time.sleep(5)
-    for i in range(0, len(name)):
-        driver.get(name[i])
+    stores = driver.find_element_by_class_name("dropdown-menu").find_elements_by_tag_name('li')
+
+    for i in stores:
+        url=i.find_element_by_tag_name('a').get_attribute('href')
+        driver.get(url)
+        print(url)
         time.sleep(5)
         location_name = driver.find_element_by_id('theStoreName').text
         raw_address = driver.find_element_by_css_selector('#storeInfoContain > p:nth-child(2)').text
@@ -50,7 +49,10 @@ def fetch_data():
         try:
             street_addr = tagged['AddressNumber'] + " " + tagged['StreetNamePreDirectional'] + " " + tagged['StreetName'] + " " + tagged['StreetNamePostType'].split('\n')[0]
         except:
-            street_addr = tagged['AddressNumber'] + " " + tagged['StreetNamePreDirectional'] + " " + tagged['StreetName'].replace('\n', '')
+            try:
+                street_addr = tagged['AddressNumber'] + " " + tagged['StreetNamePreDirectional'] + " " + tagged['StreetName'].replace('\n', '')
+            except:
+                street_addr = tagged['StreetNamePreDirectional'] + " " + tagged['StreetName'].replace('\n', '')
         state = tagged['StateName']
         city = tagged['PlaceName'].replace('\n', '')
         zipcode = tagged['ZipCode']
