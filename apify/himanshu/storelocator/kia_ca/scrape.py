@@ -44,6 +44,7 @@ def fetch_data():
 
         SalesHours = ''
         ServiceHours = ''
+        
         try:
             for hr in json_data['WorkingHours']['DealerTiming']:
                 SalesHours+= " " + hr['Day']+" "+ hr['SalesHours'] + " "
@@ -51,6 +52,10 @@ def fetch_data():
             hours = "Sales Hours : "+SalesHours.strip() +" Parts & Service Hours : "+ ServiceHours.strip()
         except:
             hours = "<MISSING>"
+
+        if page_url == 'http://www.kiamegantic.com/fr':
+            soup = bs(session.get(page_url).text, "lxml")
+            hours= re.sub(r'\s+'," "," ".join(list(soup.find("div",{"id":"sales"}).stripped_strings)) +" "+ " ".join(list(soup.find("div",{"id":"service"}).stripped_strings))).replace("Lundi","Monday").replace("Mardi","Tuesday").replace("Mercredi","Wednesday").replace("Jeudi","Thursday").replace("Vendredi","Friday").replace("Samedi","Saturday").replace("Dimanche","Sunday").replace("Fermé","Closed").replace("à","to").replace("sur appel","on call").replace("Ventes","Sales")
         store = []
         store.append(base_url)
         store.append(location_name)

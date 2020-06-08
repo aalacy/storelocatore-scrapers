@@ -3,16 +3,13 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","pafe_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -39,6 +36,7 @@ def fetch_data():
             soup2=BeautifulSoup(r2.text,'lxml')
             if soup2.find('script',{"type":'application/ld+json'}) != None:
                 loc=json.loads(soup2.find('script',{"type":'application/ld+json'}).text,strict=False)
+                # print(loc)
                 store=[]
                 hour=' '.join(loc['openingHours'])
                 lt=soup2.find('div',{"class":'responsive-embed widescreen'}).find('iframe')['src']
@@ -49,7 +47,9 @@ def fetch_data():
                 else:
                     zip=list(soup2.find('div',{"class":'insideThing'}).find_all('div')[1].stripped_strings)[-1].split('\n')[-1].strip()
                 store.append(base_url)
-                store.append(loc['name'].strip())
+                store.append(loc['name'].strip().lstrip().rstrip().replace("\n","").replace("\t","").replace("\n "," "))
+                link = (loc['name'].split("Wahlburgers ")[-1].replace("\n","").replace("Wahlburgers  ","").lower().replace(" ","-").replace("@-hyvee-","").replace("west-des-moines","westdesmoines").replace('-(fenway)',"").replace('-village',"").replace('the-battery,-',"").replace('downtown-atlanta',"atlanta-peachtree").replace('pearson-airport',"pearson").replace('---the-block-northway',"").replace("pittsburgh---the-mall-at-robinson","pittsburghrobinson").replace("boston-logan-airport","logan-airport"))
+                # print(link)
                 store.append(loc['address']['streetAddress'].strip())
                 store.append(loc['address']['addressLocality'].strip())
                 store.append(loc['address']['addressRegion'].strip())
@@ -60,13 +60,16 @@ def fetch_data():
                     store.append(loc['telephone'])
                 else:
                     store.append("<MISSING>")
-                store.append("wahlburgers")
+                store.append("<MISSING>")
                 store.append(lat)
                 store.append(lng)
                 if hour:
                     store.append(hour)
                 else:
                     store.append("<MISSING>")
+                store.append("https://wahlburgers.com/"+str(link))
+                if "66877" in zip:
+                    continue
                 return_main_object.append(store)
     return return_main_object
 

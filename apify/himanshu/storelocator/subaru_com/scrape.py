@@ -30,7 +30,17 @@ def fetch_data():
         lat = data['dealer']['location']['latitude']
         lng = data['dealer']['location']['longitude']
         page_url = data['dealer']['siteUrl']
-
+        url = session.get(page_url).url
+        soup = bs(session.get(url).text, "lxml")
+        if soup.find("div",{"id":"hours1-app-root"}):
+            hours = " ".join(list(soup.find("div",{"id":"hours1-app-root"}).stripped_strings))
+        else:
+            soup = bs(session.get(url+"navigation-fragments/service-hours.htm?referrer=%2F").text, "lxml")
+            try:
+                hours = " ".join(list(soup.find("ul",{"class":"ddc-list-columns ddc-hours consolidated ddc-list-items list-unstyled"}).stripped_strings))
+            except:
+                hours = " ".join(list(soup.find("ul",{"class":"ddc-list-columns ddc-hours ddc-list-items list-unstyled"}).stripped_strings))
+        
    
         store = []
         store.append(base_url)
@@ -45,7 +55,7 @@ def fetch_data():
         store.append("<MISSING>")
         store.append(lat)
         store.append(lng)
-        store.append("<MISSING>")
+        store.append(hours)
         store.append(page_url)     
     
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
