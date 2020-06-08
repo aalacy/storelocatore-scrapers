@@ -19,11 +19,11 @@ def fetch_data():
     r = session.get(url, headers=headers, verify=False)
     Found = False
     for line in r.iter_lines():
-        if 'Locations</a>' in line:
+        if '<ul class="sub-menu">' in line and len(locs) == 0:
             Found = True
-        if Found and '</ul>' in line:
+        if Found and 'Menus</a>' in line:
             Found = False
-        if Found and '<a href="https://aspencreekgrill.com/' in line:
+        if Found and 'href="https://aspencreekgrill.com/' in line:
             locs.append(line.split('href="')[1].split('"')[0])
     print('Found %s Locations.' % str(len(locs)))
     for loc in locs:
@@ -73,7 +73,7 @@ def fetch_data():
                 phone = line2.split('CALL AHEAD:')[1].split('<')[0].strip()
         if '<' in zc:
             zc = zc.split('<')[0]
-        hours = hours.replace('&amp;','&')
+        hours = hours.replace('&amp;','&').replace('&#8211;','-')
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
