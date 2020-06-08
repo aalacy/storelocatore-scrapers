@@ -2,8 +2,6 @@ import csv
 import urllib2
 from sgrequests import SgRequests
 
-requests.packages.urllib3.disable_warnings()
-
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
            }
@@ -16,59 +14,71 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    url = 'https://www.puccinissmilingteeth.com/locations-2/'
+    url = 'https://www.puccinispizzapasta.com'
     locs = []
     Found = False
     r = session.get(url, headers=headers, verify=False)
     for line in r.iter_lines():
-        if 'Our Locations</h3>' in line:
-            Found = True
-        if Found and '</div>' in line:
-            Found = False
-        if Found and '<a href="https://www.puccinissmilingteeth.com/' in line:
-            locs.append(line.split('href="')[1].split('"')[0] + '|' + cs)
-        if '<p><strong>' in line:
-            cs = line.split('<p><strong>')[1].split('<')[0]
-    print('Found %s Locations.' % str(len(locs)))
-    for loc in locs:
-        HFound = False
-        lurl = loc.split('|')[0]
-        city = loc.split('|')[1].split(',')[0]
-        state = loc.split('|')[1].split(',')[1].strip()
-        name = ''
-        add = ''
-        store = '<MISSING>'
-        lat = '<MISSING>'
-        lng = '<MISSING>'
-        hours = ''
-        country = 'US'
-        zc = '<MISSING>'
-        phone = ''
-        print('Pulling Location %s...' % loc)
-        website = 'puccinissmilingteeth.com'
-        typ = 'Restaurant'
-        r2 = session.get(lurl, headers=headers)
-        for line2 in r2.iter_lines():
-            if '<title>' in line2:
-                name = line2.split('<title>')[1].split('<')[0].replace('&#8211;','-').replace('&#039;',"'").rsplit(' - ',1)[0]
-            if '<p><strong>' in line2:
-                add = line2.split('<p><strong>')[1].split('<')[0].strip().replace('\t','')
-                try:
-                    phone = line2.split('tel:')[1].split('"')[0]
-                except:
-                    phone = line2.split('<strong>')[2].split('<')[0]
-            if 'Hours:</big></h5>' in line2:
-                HFound = True
-            if HFound and '<br />' in line2:
-                hrs = line2.split('<br')[0].replace('<p>','').replace('<small>','')
-                if hours == '':
-                    hours = hrs
-                else:
-                    hours = hours + '; ' + hrs
-            if HFound and '</small>' in line2:
-                HFound = False
-        hours = hours.replace('&#8211;','-')
-        yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if 'INDIANAPOLIS, IN<br /></strong>' in line:
+            line = line.replace('</a>Oaklandon','</a><strong>Oaklandon')
+            items = line.split('<strong>')
+            state = 'IN'
+            city = 'Indianapolis'
+            for item in items:
+                if '<a href="https://goo.gl/maps/' in item:
+                    website = 'puccinissmilingteeth.com'
+                    name = item.split('<')[0]
+                    lat = '<MISSING>'
+                    lng = '<MISSING>'
+                    hours = '<MISSING>'
+                    store = '<MISSING>'
+                    typ = '<MISSING>'
+                    lurl = '<MISSING>'
+                    zc = '<MISSING>'
+                    add = item.split('target="_blank">')[1].split('<')[0]
+                    phone = item.split('href="tel:')[1].split('"')[0]
+                    country = 'US'
+                    name = name.replace(' at ','')
+                    yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if 'LEXINGTON, KY<br /></strong>' in line:
+            items = line.split('<strong>')
+            state = 'KY'
+            city = 'Lexington'
+            for item in items:
+                if '<a href="https://goo.gl/maps/' in item:
+                    website = 'puccinissmilingteeth.com'
+                    name = item.split('<')[0]
+                    lat = '<MISSING>'
+                    lng = '<MISSING>'
+                    hours = '<MISSING>'
+                    store = '<MISSING>'
+                    typ = '<MISSING>'
+                    lurl = '<MISSING>'
+                    zc = '<MISSING>'
+                    add = item.split('target="_blank">')[1].split('<')[0]
+                    phone = item.split('href="tel:')[1].split('"')[0]
+                    country = 'US'
+                    add = add.replace('&rsquo;',"'")
+                    yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        if 'WEST LAFAYETTE, IN<br /></strong>' in line:
+            items = line.split('<strong>')
+            state = 'IN'
+            city = 'West Lafayette'
+            for item in items:
+                if '<a href="https://goo.gl/maps/' in item:
+                    website = 'puccinissmilingteeth.com'
+                    name = item.split('<')[0]
+                    lat = '<MISSING>'
+                    lng = '<MISSING>'
+                    hours = '<MISSING>'
+                    store = '<MISSING>'
+                    typ = '<MISSING>'
+                    lurl = '<MISSING>'
+                    zc = '<MISSING>'
+                    add = item.split('target="_blank">')[1].split('<')[0]
+                    phone = item.split('href="tel:')[1].split('"')[0]
+                    country = 'US'
+                    yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
