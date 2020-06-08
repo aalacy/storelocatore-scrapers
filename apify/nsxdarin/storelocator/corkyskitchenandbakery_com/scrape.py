@@ -17,7 +17,7 @@ def fetch_data():
     locs = []
     url = 'https://www.corkyskitchenandbakery.com/locations'
     r = session.get(url, headers=headers)
-    website = 'bojangles.com'
+    website = 'corkyskitchenandbakery.com'
     typ = '<MISSING>'
     country = 'US'
     loc = '<MISSING>'
