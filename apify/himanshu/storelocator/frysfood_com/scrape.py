@@ -4,11 +4,8 @@ from bs4 import BeautifulSoup
 import re
 import sgzip
 import json
-
-
-
 session = SgRequests()
-
+import requests
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -19,11 +16,6 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
-
-
-
-
 def fetch_data():
     locator_domain = 'https://www.frysfood.com'
     addresses = []
@@ -41,8 +33,11 @@ def fetch_data():
             'content-type' : 'application/json;charset=UTF-8'
         }
         data = r'{"query":"\n      query storeSearch($searchText: String!, $filters: [String]!) {\n        storeSearch(searchText: $searchText, filters: $filters) {\n          stores {\n            ...storeSearchResult\n          }\n          fuel {\n            ...storeSearchResult\n          }\n          shouldShowFuelMessage\n        }\n      }\n      \n  fragment storeSearchResult on Store {\n    banner\n    vanityName\n    divisionNumber\n    storeNumber\n    phoneNumber\n    showWeeklyAd\n    showShopThisStoreAndPreferredStoreButtons\n    storeType\n    distance\n    latitude\n    longitude\n    tz\n    ungroupedFormattedHours {\n      displayName\n      displayHours\n      isToday\n    }\n    address {\n      addressLine1\n      addressLine2\n      city\n      countryCode\n      stateCode\n      zip\n    }\n    pharmacy {\n      phoneNumber\n    }\n    departments {\n      code\n    }\n    fulfillmentMethods{\n      hasPickup\n      hasDelivery\n    }\n  }\n","variables":{"searchText":"'+str(zip_code)+'","filters":[]},"operationName":"storeSearch"}'
-        r = session.post('https://www.frysfood.com/stores/api/graphql', headers=headers,data=data)
-        datas = r.json()['data']['storeSearch']['stores']
+        r = requests.post('https://www.frysfood.com/stores/api/graphql', headers=headers,data=data)
+        try:
+            datas = r.json()['data']['storeSearch']['stores']
+        except:
+            pass
         for key in datas:
             location_name = key['vanityName']
             street_address = key['address']['addressLine1']
@@ -63,7 +58,7 @@ def fetch_data():
             else:
                 hours_of_operation =  "<MISSING>"
             page_url = "https://www.frysfood.com/stores/details/"+str(key['divisionNumber'])+"/"+str(store_number)
-        
+            #print(page_url)
             store = []
             store.append(locator_domain if locator_domain else '<MISSING>')
             store.append(location_name if location_name else '<MISSING>')
@@ -82,12 +77,14 @@ def fetch_data():
             if store[2] in addresses:
                 continue
             addresses.append(store[2])
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
+            #print("data = " + str(store))
+            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
             yield store
-
         ###fuel store
-        datas1 = r.json()['data']['storeSearch']['fuel']
+        try:
+            datas1 = r.json()['data']['storeSearch']['fuel']
+        except:
+            pass
         for key1 in datas1:
             location_name = key1['vanityName']
             street_address = key1['address']['addressLine1']
@@ -129,11 +126,11 @@ def fetch_data():
             # print("data = " + str(store))
             # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
             yield store
-    
-        if len(datas)+len(datas1) < MAX_RESULTS:
+        final_data = datas + datas1
+        if len(final_data) < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
-        elif len(datas)+len(datas1) == MAX_RESULTS:
+        elif len(final_data) == MAX_RESULTS:
             # print("max count update")
             search.max_count_update(result_coords)
         else:
@@ -142,5 +139,4 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
 scrape()

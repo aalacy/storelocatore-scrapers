@@ -64,7 +64,7 @@ def fetch_data():
                 # print('~~~~~~~~~~~~~~~~~~~~~~~~~`')
             else:
                 hours = cont.find('p',class_='f25')
-                ist_hours = list(hours.stripped_strings)
+                list_hours = list(hours.stripped_strings)
                 hours_of_operation = " ".join(" ".join(list_hours).strip().split(':')[1:]).strip()
             details = cont.find(lambda tag: (tag.name == 'p') and "Call:" in tag.text)
             if details !=None:
