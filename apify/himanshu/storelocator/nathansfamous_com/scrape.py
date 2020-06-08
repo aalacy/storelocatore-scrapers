@@ -4,22 +4,16 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
-
 def fetch_data():
-
-
     return_main_object = []
     addresses = []
     search = sgzip.ClosestNSearch()
@@ -28,7 +22,6 @@ def fetch_data():
     MAX_DISTANCE = 25
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
-
     base_url = "https://www.nathansfamous.com"
     headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"}
     output = []
@@ -38,18 +31,13 @@ def fetch_data():
             r = session.get("https://locator.smfmsvc.com/api/v1/locations?client_id=156&brand_id=ACTP&product_id=ANY&product_type=agg&zip="+str(search.current_zip)+"&search_radius="+str(MAX_DISTANCE),headers=headers).json()
         except:
             continue
-        
-        
         # if "STORE" not in r['RESULTS']['STORES']:
         #     continue
         if "STORE" in r['RESULTS']['STORES']:
             current_results_len = len(r['RESULTS']['STORES']['STORE'])
-            for loc in r['RESULTS']['STORES']['STORE']:
-                
+            for loc in r['RESULTS']['STORES']['STORE']:  
                 if type(loc)==str:
                     continue
-
-
                 hour=''
                 address=loc['ADDRESS']
                 city=loc['CITY']
@@ -83,8 +71,6 @@ def fetch_data():
                 addresses.append(store[2])
                 # print("store-------------",store)
                 yield store
-              
-
         if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
@@ -93,8 +79,7 @@ def fetch_data():
             search.max_count_update(result_coords)
         else:
             raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
-       
+        zip_code = search.next_zip()    
 def scrape():
     data = fetch_data()
     write_output(data)
