@@ -30,8 +30,6 @@ def fetch_data():
     country = 'US'
     store = '<MISSING>'
     hours = '<MISSING>'
-    lat = '<MISSING>'
-    lng = '<MISSING>'
     for loc in locs:
         print('Pulling Location %s...' % loc)
         name = ''
@@ -39,6 +37,8 @@ def fetch_data():
         city = ''
         state = ''
         zc = ''
+        lat = ''
+        lng = ''
         phone = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
@@ -58,6 +58,9 @@ def fetch_data():
                 zc = addinfo.rsplit(' ',1)[1]
             if '<br><a href="tel:' in line2:
                 phone = line2.split('<br><a href="tel:')[1].split('"')[0]
+            if 'data-center-lat="' in line2:
+                lat = line2.split('data-center-lat="')[1].split('"')[0]
+                lng = line2.split('data-center-lng="')[1].split('"')[0]
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
