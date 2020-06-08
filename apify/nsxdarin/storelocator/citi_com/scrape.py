@@ -74,6 +74,8 @@ def fetch_data():
                                 ids.add(store)
                                 country = 'US'
                                 print('Pulling Store ID #%s...' % store)
+                                if '-Closing' in name:
+                                    name = name.split('-Closing')[0]
                                 yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
         if len(array) <= MAX_RESULTS:
             #print("max distance update")
