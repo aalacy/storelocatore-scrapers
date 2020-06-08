@@ -69,6 +69,10 @@ def fetch_data():
                 city = 'COLUMBUS'
             if '/' in city:
                 city = city.split('/')[0]
+            if '261 Lincoln' in add:
+                zc = '43230'
+            if '!' in zc:
+                zc = zc.split('!')[0]
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
