@@ -66,6 +66,8 @@ def fetch_data():
                         if store not in ids:
                             ids.append(store)
                             print('Pulling Store ID #%s...' % store)
+                            if '0' not in hours:
+                                hours = '<MISSING>'
                             yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
