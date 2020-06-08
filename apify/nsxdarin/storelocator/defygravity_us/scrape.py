@@ -1,0 +1,68 @@
+import csv
+import urllib2
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        for row in data:
+            writer.writerow(row)
+
+def fetch_data():
+    locs = []
+    url = 'http://www.defygravity.us/'
+    r = session.get(url, headers=headers)
+    website = 'defygravity.us'
+    typ = '<MISSING>'
+    country = 'US'
+    store = '<MISSING>'
+    lat = '<MISSING>'
+    lng = '<MISSING>'
+    for line in r.iter_lines():
+        if '<li><a href="http://www.' in line:
+            locs.append(line.split('href="')[1].split('"')[0])
+    for loc in locs:
+        add = ''
+        city = ''
+        state = ''
+        zc = ''
+        phone = ''
+        hours = ''
+        HFound = False
+        r2 = session.get(loc, headers=headers)
+        lines = r2.iter_lines()
+        for line2 in lines:
+            if 'property="og:title" content="' in line2:
+                name = line2.split('property="og:title" content="')[1].split(' - ')[0]
+            if '<a href="tel:' in line2:
+                phone = line2.split('<a href="tel:')[1].split('"')[0]
+            if '<a href="https://maps.google.com/?q=' in line2 and '-->' not in line2:
+                add = line2.split('">')[1].split('<')[0]
+                city = line2.split('<br>')[1].split(',')[0]
+                state = line2.split('<br>')[1].split(',')[1].strip().split(' ')[0]
+                zc = line2.split('</a>')[0].rsplit(' ',1)[1]
+            if 'aria-labelledby="hours-menu">' in line2:
+                HFound = True
+            if HFound and '</ul>' in line2:
+                HFound = False
+            if HFound and '<li>' in line2:
+                g = next(lines)
+                h = next(lines)
+                hrs = g.strip().replace('\r','').replace('\t','').replace('\n','') + ': ' + h.split('<')[0].strip().replace('\t','')
+                if hours == '':
+                    hours = hrs
+                else:
+                    hours = hours + '; ' + hrs
+        if add != '':
+            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()
