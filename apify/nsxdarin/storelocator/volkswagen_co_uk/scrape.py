@@ -70,6 +70,11 @@ def fetch_data():
                                 hours = hours + '; ' + hrs
                 except:
                     hours = '<MISSING>'
+        if 'GL56 0XW' in zc:
+            city = 'Moreton-In-Marsh'
+            add = '<MISSING>'
+        if 'Channel Islands Guernsey Volkswagen' in name:
+            phone = '01481235441'
         yield [website, lurl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
