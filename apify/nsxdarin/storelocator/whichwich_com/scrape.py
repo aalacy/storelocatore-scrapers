@@ -4,6 +4,7 @@ from sgrequests import SgRequests
 import json
 from sgzip import sgzip
 
+
 session = SgRequests()
 headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36',
            'content-type': 'application/x-www-form-urlencoded',
@@ -35,7 +36,7 @@ def fetch_data():
                    }
         r = session.post(url, headers=headers, data=payload)
         for line in r.iter_lines():
-            if '<script type="text/javascript">value=' in line:
+            if 'value = [{"id":"' in line:
                 items = line.split('"id":"')
                 for item in items:
                     if '"api_id":"' in item:
