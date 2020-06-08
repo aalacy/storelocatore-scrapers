@@ -52,7 +52,10 @@ def fetch_data():
                 add = line2.split('"street":"')[1].split('"')[0]
                 city = line2.split(',"city":"')[1].split('"')[0]
                 zc = line2.split('postalCode":"')[1].split('"')[0]
-                phone = line2.split(',"phoneNumber":"')[1].split('"')[0]
+                try:
+                    phone = line2.split(',"phoneNumber":"')[1].split('"')[0]
+                except:
+                    phone = '<MISSING>'
                 lurl = line2.split('"website":"')[1].split('"')[0]
                 try:
                     days = line2.split('"businessHours":{"days":[{')[1].split('}]}},')[0].split('"dayOfWeek":')
