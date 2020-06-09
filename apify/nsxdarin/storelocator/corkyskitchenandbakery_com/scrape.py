@@ -39,6 +39,8 @@ def fetch_data():
                     if '0' not in hours:
                         hours = '<MISSING>'
                     name = city
+                    if '0000' in phone:
+                        phone = '<MISSING>'
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
