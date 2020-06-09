@@ -24,8 +24,8 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes=['gb'])
-    MAX_RESULTS = 20
-    MAX_DISTANCE = 50  
+    MAX_RESULTS = 50
+    MAX_DISTANCE = 20 
     coord = search.next_coord()
     base_url = "https://www.bmw.co.uk/"
 
@@ -42,7 +42,7 @@ def fetch_data():
             if data['address_line_1']:
                 street_address+= data['address_line_1']
             if data['address_line_2']:
-                street_address+= data['address_line_2']
+                street_address+= " "+data['address_line_2']
             if data['address_line_3']:
                 street_address+= " "+ data['address_line_3']
             city = data['town']
