@@ -75,6 +75,8 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + '; ' + hrs
+        if hours == '':
+            hours = '<MISSING>'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
