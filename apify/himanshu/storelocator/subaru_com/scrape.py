@@ -30,7 +30,7 @@ def fetch_data():
         lat = data['dealer']['location']['latitude']
         lng = data['dealer']['location']['longitude']
         page_url = data['dealer']['siteUrl']
-        print(page_url)
+        #print(page_url)
         url = session.get(page_url).url
         soup = bs(session.get(url).text, "lxml")
         if soup.find("div",{"id":"hours1-app-root"}):

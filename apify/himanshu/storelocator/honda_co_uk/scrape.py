@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup as bs
 import re
 import json
 from datetime import datetime
-
 session = SgRequests()
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -57,7 +56,7 @@ def fetch_data():
             hours = " ".join(list(location_soup.find("div",{"class":"wrapperInner dealerColDetails"}).stripped_strings))
         except:
             hours = "<MISSING>"
-    
+        
         store = []
         store.append(base_url)
         store.append(location_name)
@@ -74,7 +73,8 @@ def fetch_data():
         store.append(hours)
         store.append(page_url)     
     
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        # store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        #print(store)
         yield store
       
     

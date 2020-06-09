@@ -94,7 +94,7 @@ def fetch_data():
         # hours_of_operation = (mp1['hours']).replace('</time></td></tr><tr><td>',", ").replace("</td><td><time>"," ").replace('</td><td>Closed</td></tr><tr><td>'," Closed,").replace("</td><td>Closed</td></tr></table>"," Closed").replace("<table role=""presentation"" class=""wpsl-opening-hours"">"," ")
         store_number = mp1['id']
         store = []
-        store.append("https://www.kia.com/uk/")
+        store.append("https://www.subaru.com/uk/")
         store.append(location_name if location_name else "<MISSING>") 
         store.append(street_address if street_address else "<MISSING>")
         store.append(city if city else "<MISSING>")
