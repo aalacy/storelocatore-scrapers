@@ -1,84 +1,84 @@
 import csv
-from sgrequests import SgRequests
+import requests
 from bs4 import BeautifulSoup
 import re
 import json
-import unicodedata
-
-
-session = SgRequests()
-
+import time
+from sgrequests import SgRequests
+session = SgRequests() 
 def write_output(data):
-    with open('data.csv', mode='w') as output_file:
+    with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", 'page_url'])
         # Body
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
-    base_url= "https://www.fitrepublicusa.com/locations"
-    r = session.get(base_url)
-    soup= BeautifulSoup(r.text,"lxml")
-    store_name=[]
-    store_detail=[]
-    return_main_object=[]
-    # print(soup)
-
+    address = []
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
+    base_url = "https://www.fitrepublicusa.com/"
+    r = session.get("https://www.fitrepublicusa.com/locations")
+    soup = BeautifulSoup(r.text, "lxml")
     k= soup.find("div",{"class":"sqs-block html-block sqs-block-html","id":"block-17db0418b04d7073c0cc"}).find_all("p")
-    
-
+    _dict = {}
     for i in k:
         store=[]
-        link =  i.find("a")['href']
-        if "map=" in link:
-            lat = i.find("a")['href'].split("map=")[-1].split(',')[0]
-            lng = i.find("a")['href'].split("map=")[-1].split(',')[1]
-        elif len(i.find_all("a")) > 1 and "map=" in i.find_all("a")[1]["href"]:
-            lat = i.find_all("a")[1]['href'].split("map=")[-1].split(',')[0]
-            lng = i.find_all("a")[1]['href'].split("map=")[-1].split(',')[1]
+        kp = i.find("a")
+        # print(i.find("strong"))
+        if kp != None:
+            link = kp['href']
+            
+            if "map=" in link:
+                lat = link.split("map=")[-1].split(',')[0]
+                lng = i.find("a")['href'].split("map=")[-1].split(',')[1]
+                _dict[i.find("strong").text] = {"lat":lat,"lng":lng}
+            elif len(i.find_all("a")) > 1 and "map=" in i.find_all("a")[1]["href"]:
+                lat = i.find_all("a")[1]['href'].split("map=")[-1].split(',')[0]
+                lng = i.find_all("a")[1]['href'].split("map=")[-1].split(',')[1]
+                _dict[i.find("strong").text] = {"lat":lat,"lng":lng}
+            else:
+                lat = "<MISSING>"
+                lng = '<MISSING>'
         else:
             lat = "<MISSING>"
             lng = '<MISSING>'
-        name = list(i.stripped_strings)[0]
-        st = list(i.stripped_strings)[1].split("-")[0]
-        phone = "-".join(list(i.stripped_strings)[1].split("-")[1:]).strip()
-        city = list(i.stripped_strings)[2].split(",")[0]
-        state = list(i.stripped_strings)[2].split(",")[1].split( )[0]
-        zip1 = list(i.stripped_strings)[2].split(",")[1].split( )[-1].replace("MO","64468")
-        # print("================")
-
-        store.append("https://www.fitrepublicusa.com")
-        store.append(name)
-        store.append(st)
-        store.append(city)
-        store.append(state)
-        store.append(zip1)
+    # print(_dict)
+    data = list(soup.find_all("div",{"class":"sqs-block-content"})[3].stripped_strings)
+    del data[0]
+    for i in range(0,len(data),4):
+        location_name = data[i]
+        if location_name in _dict:
+            latitude = (_dict[location_name]['lat'])
+            longitude = (_dict[location_name]['lng'])
+        else:
+            latitude = "<MISSING>"
+            longitude = '<MISSING>'
+        street_address = data[i+1].split("-")[0]
+        phone ="".join(data[i+1].split("-")[1:]).strip()
+        city = data[i+2].split(",")[0]
+        state = data[i+2].split(",")[1].split(" ")[1]
+        zipp = data[i+2].split(",")[1].split(" ")[-1].replace("MO","64468")
+        store = []
+        store.append(base_url if base_url else "<MISSING>")
+        store.append(location_name if location_name else "<MISSING>") 
+        store.append(street_address if street_address else "<MISSING>")
+        store.append(city if city else "<MISSING>")
+        store.append(state if state else "<MISSING>")
+        store.append(zipp if zipp else "<MISSING>")
         store.append("US")
+        store.append("<MISSING>") 
+        store.append(phone if phone else "<MISSING>")
         store.append("<MISSING>")
-        store.append(phone)
-        store.append("<MISSING>")
-        store.append(lat)
-        store.append(lng)
+        store.append(latitude if latitude else "<MISSING>")
+        store.append(longitude if longitude else "<MISSING>")
         store.append("<MISSING>")
         store.append("https://www.fitrepublicusa.com/locations")
-        for i in range(len(store)):
-            if type(store[i]) == str:
-                store[i] = ''.join((c for c in unicodedata.normalize('NFD', store[i]) if unicodedata.category(c) != 'Mn'))
-        store = [x.replace("–","-") if type(x) == str else x for x in store]
-        store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
-        yield store
 
-
+        yield store 
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
-
-

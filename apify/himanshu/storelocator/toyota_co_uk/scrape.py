@@ -4,7 +4,42 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as bs
 import re
 import json
+import time
 session = SgRequests()
+
+
+def request_wrapper(url,method,headers,data=None):
+	request_counter = 0
+	if method == "get":
+		while True:
+			try:
+				r = requests.get(url,headers=headers)
+				return r
+				break
+			except:
+				time.sleep(2)
+				request_counter = request_counter + 1
+				if request_counter > 10:
+					return None
+					break
+	elif method == "post":
+		while True:
+			try:
+				if data:
+					r = requests.post(url,headers=headers,data=data)
+				else:
+					r = requests.post(url,headers=headers)
+				return r
+				break
+			except:
+				time.sleep(2)
+				request_counter = request_counter + 1
+				if request_counter > 10:
+					return None
+					break
+	else:
+		return None
+
 
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
@@ -27,14 +62,19 @@ def fetch_data():
     for data in soup['dealers']:
         street_address1=''
         location_name = data['name']
+        # print(location_name)
         street_address1 = data['address']['address1'].strip()
         if street_address1:
             street_address1=street_address1
-
         street_address =street_address1+ ' '+ data['address']['address'].strip()
         city = data['address']['city']
-        state = data['address']['_region'].replace('Co. ','').strip()
+        state = data['address']['_region']
         zipp = data['address']['zip']
+        hours="<MISSING>"
+        hours = ''
+        for i in data['openingDays']:
+            hours += ' '+(i['startDay'] + ' - '+i['endDay'] +' '+ i['hours'][0]['startTime']+' '+ i['hours'][0]['endTime'])
+        # print(hours)
         phone = data['phone']
         if "geo" in  data['address']:
             lat = data['address']['geo']['lat']
@@ -44,13 +84,17 @@ def fetch_data():
             lng ="<MISSING>"
         page_url = data['url']
         store_number = "<MISSING>"
-        hours="<MISSING>"
-        try:
-            hours = " ".join(list(bs(session.get(page_url+"/about-us#anchor-views-opening_hours-block_3").content, "lxml").find("div",{"class":"views-row views-row-1 views-row-odd views-row-first views-row-last zero-dep"}).stripped_strings))
-        except:
-            hours="<MISSING>"
+       
+        headers = {
+		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+	    }
+        # print(page_url+"/about-us#anchor-views-opening_hours-block_3")
+        # r = request_wrapper(page_url+"/about-us#anchor-views-opening_hours-block_3","get", headers=headers)
+        # try:
+        #     hours = " ".join(list(bs(r.content, "lxml").find("div",{"class":"views-row views-row-1 views-row-odd views-row-first views-row-last zero-dep"}).stripped_strings))
+        # except:
+        #     hours="<MISSING>"
         
-        result_coords.append((lat,lng))
         store = []
         store.append(base_url)
         store.append(location_name)
