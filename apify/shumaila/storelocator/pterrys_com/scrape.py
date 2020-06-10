@@ -4,7 +4,17 @@ from bs4 import BeautifulSoup
 import csv
 import string
 import re, time, usaddress
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
+
+def get_driver():
+    options = Options()
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument("--disable-notifications")   
+   
+    return webdriver.Chrome('C:\\Users\\Dell\\local\\chromedriver.exe', chrome_options=options)
 
 
 
@@ -22,43 +32,22 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
-    p = 1
-    url = 'https://pterrys.com'
+    p = 0
+    url = 'https://pterrys.com/locations'
     page = requests.get(url)
-    #driver = get_driver()
-    #driver.get(url)
-    #time.sleep(2)
-    soup = BeautifulSoup(page.text, "html.parser")    
-    maindiv = soup.find('ul', {'id': 'navTopLevel'})   
-    repo_list = maindiv.findAll('li')    
-    cleanr = re.compile('<.*?>')
-    pattern = re.compile(r'\s\s+')
-    repo_list = repo_list[3]    
-    mainul = repo_list.find('ul')
-    repo_list = mainul.findAll('li')
-    links = []
-    for repo in repo_list:
-        link = repo.find('a')
-        link = "https://pterrys.com"+link['href']
-        #print(link)
-        page = requests.get(link)
-        soup = BeautifulSoup(page.text, "html.parser")
-        try:
-            div_list = soup.findAll('div',{'class':'item itemPreview hasImg hasHoverEffect hasHoverEffect--grayscale'})
-            #print(len(div_list))
-            for div in div_list:
-                link = div.find('a')
-                link = "https://pterrys.com"+link['href']
-                #print(link)
-                links.append(link)
-        except:
-            links.append(link)
-        
+    
+    soup = BeautifulSoup(page.text, "html.parser")
+   
+    repo_list = soup.findAll('div',{'class':'itemImg'})
+    
+   
 
-    for link in links:
+    for link in repo_list:
+        link = link.find('a')
+        link = "https://pterrys.com"+link['href']
         page = requests.get(link)
         soup = BeautifulSoup(page.text, "html.parser")
-        maindiv = soup.find('itemsCollectionContent items_1mQtEPqTMK39ewnd gridView cols3 itmPd3 itmBw0 itmSy0 txa0')
+        maindiv = soup.find('div',{'class':'itemsCollectionContent'})
         title = soup.find('title').text
         start = title.find("-")
         title = title[0:start]
@@ -66,15 +55,18 @@ def fetch_data():
             ltype = soup.find('div',{'class':'blockInnerContent'}).text
         except:
             ltype = "<MISSING>"
-        div_list = soup.findAll('div',{'class':'item itemPreview'})
+        div_list = maindiv.findAll('div',{'class':'item'})
         
         detail = div_list[0]
         li_list = detail.findAll('li')
         street = li_list[0].text
         state = li_list[1].text
         address = street + " " + state
+        address = address.replace('Get Directions','')
+        print(address)
         address = usaddress.parse(address)
-        #print(address)
+        print(address)
+        
         i = 0
         street = ""
         city = ""
@@ -82,8 +74,7 @@ def fetch_data():
         pcode = ""
         while i < len(address):
             temp = address[i]
-            if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or \
-                    temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
+            if temp[1].find("Address") != -1 or temp[1].find("Occupancy") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("Building") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
                 "USPSBoxID") != -1:
                 street = street + " " + temp[0]
             if temp[1].find("PlaceName") != -1:
@@ -103,37 +94,32 @@ def fetch_data():
         state = state.replace(",", "")
         if city.find("Building H ") > -1:
             city = city.replace("Building H ","")
+            street = street + ' Building H'
 
         state = state.lstrip()
         pcode = pcode.lstrip()
 
-        #print(link)
-        #print(title)
-        #print(street)
-        #print(city)
-        #print(state)
-        #print(pcode)
-        #print(ltype)
     
         detail = div_list[1]
         hours = ""
         li_list = detail.findAll('li')
         for hdetail in li_list:
-            hours = hours + " | " + hdetail.text
-        try:
+            hours = hours + " " + hdetail.text
+        '''try:
            hours = hours + " |" + detail.find('p').text
         except:
-            pass
+            pass'''
 
-        hours = hours[3:len(hours)]
-        print(hours)
-
+        #hours = hours[3:len(hours)]
+        hours = hours.lstrip().replace('am',' am ').replace('pm',' pm ').replace('Break',' Break').replace('  ',' ')
+        #print(hours)
+       
         detail = div_list[2]
         phone = detail.find('li').text
         start = phone.find(' ')
         if start != -1:
             phone = phone[0:start]
-        print(phone)
+        #print(phone)
         if len(phone)< 3:
             phone = "<MISSING>"
         if len(street)< 3:
@@ -163,6 +149,8 @@ def fetch_data():
             "<MISSING>",
             hours
         ])
+        #print(p,data[p])
+        p = p + 1
 
     return data         
         
