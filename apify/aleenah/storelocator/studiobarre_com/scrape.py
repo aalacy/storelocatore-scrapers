@@ -2,8 +2,7 @@ import csv
 from sgselenium import SgSelenium
 import re
 from bs4 import BeautifulSoup
-import requests
-import time
+
 
 driver = SgSelenium().chrome()
 
@@ -62,16 +61,23 @@ def fetch_data():
 
             street.append(st.replace("Great Falls",""))
         for h in h5s:
-            a= h.find("a")
-            locs.append(a.text)
-            page_url.append(a.get('href'))
+            a= h.find_all("a")
+            if a !=[]:
+                locs.append(a[0].text)
+                page_url.append(a[0].get('href'))
+            else:
+                locs.append(h.text)
+                page_url.append("https://"+h.text.strip().lower()+".studiobarre.com/")
 
     for url in page_url:
+        print(url)
+        
         driver.get(url)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         spans = soup.find_all('span', {'class': 'elementor-icon-list-text'})
         phones.append(re.sub(r'[\{\}a-z ]*',"",spans[1].text.strip()))
+        print(re.sub(r'[\{\}a-z ]*',"",spans[1].text.strip()))
 
         try:
             div = driver.find_element_by_xpath("/html/body/div[1]/div[1]/div/div/div/section[4]")
@@ -126,8 +132,10 @@ def fetch_data():
         all.append(row)
     return all
 
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
