@@ -20,9 +20,6 @@ def write_output(data):
 
 
 def fetch_data():
-    
-      
-    list_of_urls=[]
     base_url = "https://www.spar.co.uk"
  
     headers = {
@@ -34,13 +31,11 @@ def fetch_data():
     for inex,link in enumerate(soup.find_all("a")):
         if "/store-locator/" in link['href']:
             page_url = base_url + link['href']
-            # list_of_urls.append(page_url)
+            if "https://www.spar.co.uk/store-locator/hal24301" in page_url:
+                continue  
+            
             r1= requests.get(page_url)
             soup1 = BeautifulSoup(r1.text, "lxml")
-            # print("---",len(list_of_urls))
-            # data1 = _send_multiple_rq(list_of_urls)
-            # for index,q in enumerate(data1):
-            # print("----------------qqqqqq",q)
             
             full = list(soup1.find("div",{"class":"store-details__contact"}).stripped_strings)
             if soup1.find("span",{"class":"page__notice-title"}):
@@ -52,7 +47,6 @@ def fetch_data():
             for index,w in enumerate(full):
                 if  "Contact us" in w:
                     del full[index]
-                    # full= full[index]
                     
             full1 = [re.sub(r"\s+", " ",x).replace('\n', '').replace("\r",'').replace('\t','').strip().lstrip().rstrip() for x in full]
             stopwords=','
@@ -70,23 +64,19 @@ def fetch_data():
             except:
                 state = "<MISSING>"
             if len(full2)==4:
-                state = full2[-2]
+                state = full2[-1]
                 city = full2[-2]
-
-                # print(page_url)
                 street_address = " ".join(full2[:-2])
-                # print(street_address)
-                # print("--------------------44444 ",full2)
+               
             elif len(full2)==5:
-                # 
                 city=full2[-3]
                 state=full2[-2]
                 street_address = " ".join(full2[:-3])
-                # print("--------------------555555 ",full2)
+                
             elif len(full2)==3:
                 street_address  = " ".join(full2[:-2])
                 city = full2[-2]
-                # print(page_url)
+                
                 city_state=full2[-2].split(",")
                 if len(city_state)==0:
                     city = city_state[0]
@@ -96,19 +86,9 @@ def fetch_data():
                 else:
                     city = " ".join(city_state).strip()
 
-                # print(full2[-2].split(","))
-                # print("--------------------333333333333 ",full2)
-
-
             addr = json.loads(soup1.find(lambda tag : (tag.name == "script") and "latitude" in tag.text).text)
             location_name = addr['name']
             street_address = street_address.replace(location_name,'')
-            # try:
-            #     street_address = addr['address']['streetAddress']
-            # except:
-            #     street_address = "<MISSING>"
-            
-            
             try:
                 zipp = addr['address']['postalCode']
             except:
@@ -124,13 +104,10 @@ def fetch_data():
             elif "CLOSED" in time:
                 hours = time
             else:
-                # print(time)
                 data = re.findall(r'\d{1,3}:\d{1,3}\s+\d{1,3}:\d{1,3}',time)
-                # print(data)
                 hours = ''
                 day = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
                 for hour in range(len(data)):
-                    # print(data[hour].split(" ")[-1])
                     start_time = datetime.strptime(data[hour].split(" ")[0],"%H:%M").strftime("%I:%M:%p")
                     end_time = datetime.strptime(data[hour].split(" ")[-1],"%H:%M").strftime("%I:%M:%p")
                     hours+= day[hour] +" "+ str(start_time) +" "+ str(end_time) +" "

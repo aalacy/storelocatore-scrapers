@@ -41,6 +41,10 @@ def fetch_data():
         else:
             latitude.append(j.attrs['src'].split("!2d")[-1].split("&ll=")[-1].split("!2m")[0].split("&spn")[0].split("!3d")[0].split(',')[0])
             longitude.append(j.attrs['src'].split("!2d")[-1].split("&ll=")[-1].split("!2m")[0].split("&spn")[0].split("!3d")[0].split(',')[1])    
+    
+    phone[3]="310.362.3062"
+    phone[4]="310.561.8898"
+    #print(phone)
     for index,i in enumerate(k):
         if  list(i.stripped_strings) !=[]:
             tem_var=[]
@@ -55,7 +59,9 @@ def fetch_data():
                 else:
                     hours = "<MISSING>"
             else:
-                hours = (" ".join(list(i.stripped_strings)[-15:]).split('com')[-1])
+                hours = (" ".join(list(i.stripped_strings)[-15:]).split('com')[-1]).strip()
+            if "90026" in zipp:
+                continue
             store_name.append(city)
             tem_var.append(st)
             tem_var.append(city)
@@ -69,7 +75,7 @@ def fetch_data():
             tem_var.append(longitude[index])
             tem_var.append(hours)
             tem_var.append(base_url)
-            store_detail.append(tem_var)
+            store_detail.append(tem_var)        
     for i in range(len(store_name)):
         store = list()
         store.append("https://www.erewhonmarket.com")
@@ -81,3 +87,4 @@ def scrape():
     data = fetch_data()
     write_output(data)
 scrape()
+
