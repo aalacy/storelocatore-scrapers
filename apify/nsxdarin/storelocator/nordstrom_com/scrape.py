@@ -28,7 +28,7 @@ def fetch_data():
                 for item in items:
                     if ',"address":"' in item:
                         website = 'nordstrom.com'
-                        country = 'US'
+                        country = item.split('"country":"')[1].split('"')[0]
                         name = item.split('"name":"')[1].split('"')[0]
                         add = item.split(',"address":"')[1].split('"')[0]
                         city = item.split('"city":"')[1].split('"')[0]
@@ -43,7 +43,10 @@ def fetch_data():
                         loc = 'https://shop.nordstrom.com/store-details/' + item.split('"path":"')[1].split('"')[0]
                         store = item.split(',')[0]
                         typ = item.split('"type":"')[1].split('"')[0]
-                        yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+                        if 'United' in country and store not in ids:
+                            ids.append(store)
+                            country = 'US'
+                            yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
