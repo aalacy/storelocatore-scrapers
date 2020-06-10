@@ -30,28 +30,13 @@ def fetch_data():
         lat = data['dealer']['location']['latitude']
         lng = data['dealer']['location']['longitude']
         page_url = data['dealer']['siteUrl']
-        #print(page_url)
-        url = session.get(page_url).url
+        
+        url = session.get(page_url).url + "dealership/directions.htm"
         soup = bs(session.get(url).text, "lxml")
-        if soup.find("div",{"id":"hours1-app-root"}):
-            hours = " ".join(list(soup.find("div",{"id":"hours1-app-root"}).stripped_strings))
-        else:
-            soup = bs(session.get(url+"navigation-fragments/service-hours.htm?referrer=%2F").text, "lxml")
-            try:
-                try:
-                    hours = " ".join(list(soup.find("ul",{"class":"ddc-list-columns ddc-hours consolidated ddc-list-items list-unstyled"}).stripped_strings))
-                except:
-                    hours = " ".join(list(soup.find("ul",{"class":"ddc-list-columns ddc-hours ddc-list-items list-unstyled"}).stripped_strings))
-            except:
-                soup = bs(session.get(url+"navigation-fragments/parts-hours.htm?referrer=%2F").text, "lxml")
-                try:
-                    try:
-                        hours = " ".join(list(soup.find("ul",{"class":"ddc-list-columns ddc-hours consolidated ddc-list-items list-unstyled"}).stripped_strings))
-                    except:
-                        hours = " ".join(list(soup.find("ul",{"class":"ddc-list-columns ddc-hours ddc-list-items list-unstyled"}).stripped_strings))
-                except:
-                    hours = "<MISSING>"
-   
+        try:
+            hours = " ".join(list(soup.find("div",{"data-widget-id":"hours1"}).stripped_strings)).replace("Hours","").replace("SALES HOURS","").strip()
+        except:
+            hours = "<MISSING>"
         store = []
         store.append(base_url)
         store.append(location_name)
