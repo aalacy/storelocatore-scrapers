@@ -57,6 +57,13 @@ def fetch_data():
         except:
             hours = "<MISSING>"
         
+        if "Erdington" in street_address:
+            street_address = street_address.replace("Erdington","").strip()
+            city = "Erdington"
+            state = "Birmingham"
+        if "London" in state or "London." in state:
+            state = "<MISSING>"
+            city = "London"
         store = []
         store.append(base_url)
         store.append(location_name)
@@ -73,7 +80,7 @@ def fetch_data():
         store.append(hours)
         store.append(page_url)     
     
-        # store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         #print(store)
         yield store
       

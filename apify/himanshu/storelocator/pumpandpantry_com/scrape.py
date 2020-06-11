@@ -13,13 +13,10 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
-
 def fetch_data():
-
     locator_domain = 'https://pumpandpantry.com/location-list/' 
     to_scrape = locator_domain
     page = session.get(to_scrape)
-    assert page.status_code == 200
     soup = BeautifulSoup(page.content, 'html.parser')
     stores = soup.find_all('div', {'class': 'panel-grid panel-has-style'})
     hours_arr = []
@@ -27,7 +24,7 @@ def fetch_data():
         store_number= list(st.stripped_strings)[0]
         street_address = list(st.stripped_strings)[1]
         city = list(st.stripped_strings)[2].split(",")[0]
-        state = list(st.stripped_strings)[2].split(",")[1]
+        state = list(st.stripped_strings)[2].split(",")[1].strip()
         zip_code = list(st.stripped_strings)[2].split(",")[2]
         phone = list(st.stripped_strings)[3]
         hours_arr = list(st.stripped_strings)[4]
@@ -35,19 +32,14 @@ def fetch_data():
         soup1 = BeautifulSoup(session.get(page_url).text, 'html.parser')
         name = soup1.find("div",{"class":"sow-headline-container"}).text.strip()
         tag_phone = soup1.find(lambda tag: (tag.name == "script") and "store_locator_options" in tag.text.strip()).text.split("store_locator_options =")[1].replace("/* ]]> */",'').replace("};",'}')
-        # print(json.loads(tag_phone)['mapDefaultLat'])
-        
-        # exit()
         country_code = 'US'
         location_type = '<MISSING>'
         lat = json.loads(tag_phone)['mapDefaultLat']
         long = json.loads(tag_phone)['mapDefaultLng']
         hours = '<MISSING>'
-        store_data = ["https://pumpandpantry.com/", name, street_address, city, state.strip(), zip_code.strip(), country_code,
+        store_data = ["https://pumpandpantry.com/", name, street_address, city, state, zip_code, country_code,
                      store_number.replace("#",''), phone, location_type, lat, long, hours_arr.replace("View Store Details","<MISSING>"),page_url]
-        # print(store_data)
-        yield store_data
-    
+        yield store_data   
 def scrape():
     data = fetch_data()
     write_output(data)
