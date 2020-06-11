@@ -11,9 +11,9 @@ options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
 #driver=webdriver.Chrome('C:\chromedriver.exe')#, options=options)
-#chrome_path = '/Users/Dell/local/chromedriver'
-#driver = webdriver.Chrome(chrome_path)
-driver = webdriver.Chrome("chromedriver", options=options)
+#chrome_path = 'c:\\Users\\Dell\\local\\chromedriver'
+driver = webdriver.Chrome('c:\\Users\\Dell\\local\\chromedriver', options=options)
+#driver = webdriver.Chrome("chromedriver", options=options)
 
 
 def write_output(data):
@@ -21,13 +21,17 @@ def write_output(data):
     df.to_csv('data.csv', index=False,encoding='utf-8')
 
 def fetch_data():
+    
+    p = 0
     data={'locator_domain':[],'location_name':[],'street_address':[],'city':[], 'state':[], 'zip':[], 'country_code':[], 'store_number':[],'phone':[], 'location_type':[], 'latitude':[], 'longitude':[], 'hours_of_operation':[],'page_url':[]}
     driver.get('https://piesandpints.net/store-locations/')
+
 
     locations_urls=[i.get_attribute('href') for i in driver.find_elements_by_xpath("//ul[@class='social-location']//a[contains(@href,'beermenus')]")]
 
     for url in locations_urls:
         driver.get(url)
+        #print(url)
         sleep(1)
         data['locator_domain'].append('https://piesandpints.net')
         data['page_url'].append(url)
@@ -36,7 +40,8 @@ def fetch_data():
             span.click()
         except:
             pass
-        data['location_name'].append(driver.find_element_by_xpath('//h1[@class="mb-0 text-biggest"]').text)
+        #oup = BeautifulSoup(driver.page_source,'html.parser')
+        data['location_name'].append(driver.find_element_by_tag_name('h1').text)
         loc_data=driver.find_element_by_xpath('//li[@class="pure-list-item lead-by-icon"][1]').text
         geo_data=driver.find_element_by_xpath('//li[@class="pure-list-item lead-by-icon"][1]/a').get_attribute('href')
         storeid = driver.find_element_by_xpath('//li[@class="pure-list-item lead-by-icon"][1]/a').get_attribute('data-bar-id')
@@ -64,11 +69,11 @@ def fetch_data():
 
         data['country_code'].append('US')
 
-        #driver.get(geo_data)
-        #sleep(5)
-        #lat, lon = parse_geo(driver.current_url)
-        data['latitude'].append("<MISSING>")
-        data['longitude'].append("<MISSING>")
+        
+        data['latitude'].append('<MISSING>')
+        data['longitude'].append('<MISSING>')
+
+       
 
     driver.close()
     return data
