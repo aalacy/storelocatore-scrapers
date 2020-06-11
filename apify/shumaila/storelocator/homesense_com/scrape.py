@@ -20,9 +20,9 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
-    p = 1
+    p = 0
     #shopvgs.com
-    url = 'https://us.homesense.com/locator'
+    url = 'https://us.homesense.com/all-stores'
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
     #print(soup)
@@ -33,7 +33,7 @@ def fetch_data():
     cleanr = re.compile('<.*?>')
     pattern = re.compile(r'\s\s+')
     for repo in repo_list:
-        state = repo.find("h5").text
+        state = repo.find("h2").text
         start = state.find(",")
         city = state[0:start]
         start = start + 2
@@ -64,25 +64,17 @@ def fetch_data():
                 hours = hours[1:len(hours)-1]
             else:
                 hours = hours[1].text
-                hours = re.sub(pattern, "|", hours)
+                hours = re.sub(pattern, " ", hours)
                 hours = hours[1:len(hours) - 1]
-
+                
         except:
             hours = "<MISSING>"
 
+        hours = hours.replace('AM',' AM ').replace('PM',' PM ')
 
-        #print(address)
-        #print(title)
-        #print(street)
-        #print(city)
-        #print(state)
-        #print(pcode)
-        #print(phone)
-        #print(hours)
-        #print(".................")
         data.append([
             'https://us.homesense.com/',
-            'https://us.homesense.com/locator',
+            'https://us.homesense.com/all-stores',
             title,
             street,
             city,
@@ -96,6 +88,8 @@ def fetch_data():
             "<MISSING>",
             hours
         ])
+        #print(p,data[p])
+        p += 1
 
 
 
