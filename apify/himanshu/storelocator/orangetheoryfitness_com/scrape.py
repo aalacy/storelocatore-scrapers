@@ -9,7 +9,7 @@ def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url","response"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         for row in data:
             writer.writerow(row)
 def fetch_data():
@@ -19,7 +19,7 @@ def fetch_data():
         for data in json_data:
             page_url = base_url + data['studioURL']
             store_number = data['studioID']
-            location_data = requests.get("https://www.orangetheory.com/bin/otf/studios?studioId="+str(store_number)).json()
+            location_data = requests.get("https://api.orangetheory.co/partners/studios/v2?latitude=&longitude=&distance=&country=&studioId="+str(store_number)).json()
             for loc in location_data['data'][0]:
                 location_name = loc['studioName']
                 street_address = re.sub(r'\s+'," ",loc['studioLocation']['physicalAddress'])
