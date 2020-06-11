@@ -129,6 +129,13 @@ def fetch_data():
                             city = full[-1].split(",")[0]
                             state =  " ".join(full[-1].split(",")[-1].split( )[:-1])
                             zipp = full[-1].split(",")[-1].split( )[-1]
+
+                if street_address == "Oncology/Hematology at Montefiore":
+                    street_address = "60 East 208th Street"
+                    city = "Bronx"
+                    state = "NY"
+                    zipp = "10467"
+                
                 store = []
                 store.append(base_url if base_url else "<MISSING>")
                 store.append(location_name if location_name else "<MISSING>") 
@@ -145,6 +152,9 @@ def fetch_data():
                 store.append("<MISSING>")
                 store.append("https://www.montefiore.org/cancer-contact")
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                if (str(store[2])) in addresses:
+                    continue
+                addresses.append(str(store[2]))
                 # yield store 
                 temp.append(store)
 
@@ -193,6 +203,9 @@ def fetch_data():
                     
                         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                             store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+                        if store[2] in addresses:
+                            continue
+                        addresses.append(store[2])
                         # yield store
                         # print(store)
                         temp.append(store)
@@ -251,6 +264,9 @@ def fetch_data():
                         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                             store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                        if store[2] in addresses:
+                            continue
+                        addresses.append(store[2])
                         # yield store
                         temp.append(store)
                         
@@ -298,6 +314,9 @@ def fetch_data():
                                     store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                                     store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                                     store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                                    if store[2] in addresses:
+                                        continue
+                                    addresses.append(store[2])
                                     # yield store
                                     # print(store)
                                     temp.append(store)
@@ -346,6 +365,9 @@ def fetch_data():
                         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                        if store[2] in addresses:
+                            continue
+                        addresses.append(store[2])
                         # yield store
                         # print(store)
                         temp.append(store)
@@ -380,6 +402,9 @@ def fetch_data():
                         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                        if store[2] in addresses:
+                            continue
+                        addresses.append(store[2])
                         # yield store
                         # print(store)
                         temp.append(store)
@@ -407,9 +432,9 @@ def fetch_data():
                         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-                        if (str(store[1])+str(store[2])) in addresses:
+                        if (str(store[2])) in addresses:
                             continue
-                        addresses.append(str(store[1])+str(store[2]))
+                        addresses.append(str(store[2]))
                         # yield store
                         # print(store)
                         temp.append(store)
@@ -435,6 +460,9 @@ def fetch_data():
                             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
                             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                            if store[2] in addresses:
+                                continue
+                            addresses.append(store[2])
                             # yield store
                             # print(store)
                             temp.append(store)
@@ -486,6 +514,9 @@ def fetch_data():
             store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+            if store[2] in addresses:
+                continue
+            addresses.append(store[2])
             # yield store
             # print(store)
             temp.append(store)
@@ -550,9 +581,12 @@ def fetch_data():
                         city =" ".join(address).split("Address: ")[1].split("\\")[0].split(",")[1].strip()
                         state =  " ".join(address).split("Address: ")[1].split("\\")[0].split(",")[-1].split()[0]
                         zipp = " ".join(address).split("Address: ")[1].split("\\")[0].split(",")[-1].split()[-1]
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+        store = [locator_domain, location_name, street_address.replace("Rd.","Road"), city, state, zipp, country_code,
                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        if store[2] in addresses:
+            continue
+        addresses.append(store[2])
         # yield store
         # print(store) 
         temp.append(store)  
