@@ -1,11 +1,21 @@
 import csv
 import re
 import time
-from sgselenium import SgSelenium
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
+
+
+options = Options()
+options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36")
+#driver = webdriver.Chrome("C:\chromedriver.exe", options=options)
+#driver = webdriver.Chrome("chromedriver", options=options)
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -16,6 +26,7 @@ def write_output(data):
         # Body
         for row in data:
             writer.writerow(row)
+
 
 def fetch_data():
     # Your scraper here
@@ -39,15 +50,15 @@ def fetch_data():
     timing = []
     ids=[]
     page_url=[]
-    driver = SgSelenium().chrome(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36")
+    driver = webdriver.Chrome("chromedriver", options=options)
     driver.get("https://rockyrococo.com/locations")
 
     time.sleep(15)
-    driver.switch_to.frame(driver.find_element_by_xpath("/html/body/div[6]/div[2]/div[2]/div[2]/div[1]/div[2]/div[2]/div[2]/div[3]/iframe"))
+    driver.switch_to.frame(driver.find_element_by_id("bullseye_iframe"))
 
     #print("here")
     for us in US_states:
-        #print(us)
+        print(us)
         driver.find_element_by_id('txtCityStateZip').clear()
         driver.find_element_by_id('txtCityStateZip').send_keys(us)
         driver.find_element_by_id("ContentPlaceHolder1_searchButton").click()
@@ -73,9 +84,9 @@ def fetch_data():
             long.append(metas[1].get("content"))
             page_url.append(ul.find('ul',{'class':'resultsDetailLinks'}).find('a').get('href'))
 
-    print(len(page_url))
-    print(page_url)
-    print("here")
+    #print(len(page_url))
+    #print(page_url)
+    #print("here")
 
     for url in page_url:  #for timing
         print(url)
@@ -84,14 +95,16 @@ def fetch_data():
             element = WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, '/html/body/div[6]/div[2]/div[2]/div[2]/div[1]/div[2]/div[2]/div[1]/div[2]/div[2]/div[2]')))
         except:
             timing.append("<MISSING>")
-            print("passed")
+            #print("passed")
             continue
         #tex=driver.find_element_by_xpath('/html/body/div[6]/div[2]/div[2]/div[2]/div[1]/div[2]/div[2]/div[1]/div[2]/div[2]/div[2]').text
         time.sleep(1)
         tex=element.text
 
+
         tim = re.findall(r'Hours:(.*pm)',tex,re.DOTALL)[0].strip().replace("\n"," ")
         timing.append(tim)
+
 
     all = []
     for i in range(0, len(locs)):
@@ -114,8 +127,10 @@ def fetch_data():
         all.append(row)
     return all
 
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
