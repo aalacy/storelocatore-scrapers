@@ -12,6 +12,8 @@ class Scrape(base.Spider):
         r = requests.get(self.base_url+'stores_jsonp/?callback=jQuery112408348595095024478_1564832094867')
         locations = json.loads(re.findall(r'.+?\((.+)\)', r.text)[0])
         for location in locations:
+            if location['field_location_type'][0]['value'] != "grm" or location['field_location_type'][0]['value'] != "store":
+                continue
             item = base.Item(location)
             item.add_value('locator_domain', self.locator_domain)
             item.add_value('location_name', location['title'] or "<MISSING>")
