@@ -9,6 +9,7 @@ import json
 from datetime import datetime
 import sgzip
 session = SgRequests()
+import requests
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -53,9 +54,13 @@ def fetch_data():
             lat = data['latitude']
             lng = data['longitude']
             page_url = data['url']
+            #print(page_url)
             
-            
-        
+            soup = bs(session.get(page_url+"/contact-us/").text, "lxml")
+            if page_url == "https://www.buchananbmw.co.uk":
+                hours = "<MISSING>"
+            else:
+                hours = " ".join(list(soup.find("section",{"class":"opening-hours"}).stripped_strings)).replace("Opening Hours","").strip()
             
             
             result_coords.append((lat,lng))
@@ -72,7 +77,7 @@ def fetch_data():
             store.append("<MISSING>")
             store.append(lat)
             store.append(lng)
-            store.append("<MISSING>")
+            store.append(hours)
             store.append(page_url)     
         
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]

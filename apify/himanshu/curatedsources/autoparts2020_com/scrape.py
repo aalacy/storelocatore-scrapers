@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
+requests.packages.urllib3.disable_warnings()
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -15,8 +16,11 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
+    headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
+    }
     base_url = "https://autoparts2020.com"
-    r = requests.get("https://autoparts2020.com/locations/locator/?distance=100000&partStore=true&query=90002&serviceDealer=false")
+    r = requests.get("https://autoparts2020.com/locations/locator/?distance=100000&partStore=true&query=90002&serviceDealer=false",headers=headers,verify=False)
     data = r.json()["hits"]
     return_main_object = []
     for store_data in data:

@@ -44,9 +44,13 @@ def fetch_data():
             phone=loc[3].replace('PH:','').strip()
         city=ct[0].strip()
         state=ct[1].strip().split(' ')[0].strip()
-        zip=ct[1].strip().split(' ')[-1].strip()
-        # print(loc[-1])
-        hour=re.sub("\s\s+", " ", loc[-1])
+        zipp=ct[1].strip().split(' ')[-1].strip()
+        
+        
+        hour= re.sub(r"\s+", " ", loc[-1])
+
+        if "Hours" in loc[-2]:
+            hour+= " " + re.sub(r"\s+", " ", loc[-2])
         lat = lat_and_log[name]['latitude']
         lng = lat_and_log[name]['longitude']
         
@@ -59,16 +63,17 @@ def fetch_data():
         store.append(address)
         store.append(city)
         store.append(state)
-        store.append(zip)
+        store.append(zipp)
         store.append("US")
         store.append("<MISSING>")
         store.append(phone)
         store.append("<MISSING>")
         store.append(lat)
         store.append(lng)
-        store.append(hour)
+        store.append(hour.replace('Hours: ',''))
         # print()
-        store.append("https://capmat.com/"+lat_and_log[name]['aboutUrl'] if lat_and_log[name]['aboutUrl'] != None else "<MISSING>" )
+        store.append("https://capmat.com/"+lat_and_log[name]['aboutUrl'] if lat_and_log[name]['aboutUrl'] != None else "<NISSING>" )
+        store = [str(x).replace("–","-").encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         return_main_object.append(store)
     return return_main_object
 
