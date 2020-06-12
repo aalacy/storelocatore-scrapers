@@ -60,18 +60,13 @@ def fetch_data():
 
     base_url = "https://www.infiniti.ca"
     list_of_urls=[]
-    # list_of_urls.append( "{\"r\":\"1000\",\"zip\":%s,\"requestType\":\"dotcom\",\"s\":\"1000\"}"%('"{}"'.format(str(85029))))
     while zip_code:
         result_coords = []
         # print(zip_code)
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
-        # print("https://us.nissan-api.net/v2/dealers?size=50&isMarketingDealer=true&location="+str(zip_code)+"&serviceFilterType=AND&include=openingHours")
-        
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))        
         list_of_urls.append("https://us.nissan-api.net/v2/dealers?size=50&isMarketingDealer=true&location="+str(zip_code)+"&serviceFilterType=AND&include=openingHours")  
-
-        # if len(list_of_urls)==2:
+        # if len(list_of_urls)==5:
         #     break
-        
               
         if current_results_len < MAX_RESULTS:
             search.max_distance_update(MAX_DISTANCE)
@@ -118,16 +113,17 @@ def fetch_data():
                 else:
                     phone = "<MISSING>"  
                 page_url = location['contact']['websites'][0]['url']
-                hours =''
-                day=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
+                hours_of_operation =''
+                day=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
                 for h in location["openingHours"]['regularOpeningHours']:
-
-                    weekDay=day[h['weekDay']-1]
                     if "openIntervals" in h:
+                        weekDay=day[h['weekDay']-1]
                         for q in h['openIntervals']:
-                            hours +=' ' +weekDay+' open '+q['openFrom']+' colse '+ q['openUntil']
+                            hours_of_operation +=' ' +weekDay+' open '+q['openFrom']+' colse '+ q['openUntil']
                     else:
-                        hours += ' ' +day[h['weekDay']-1]+ ' '+"closed"
+                        weekDay=day[h['weekDay']-1]
+                        hours_of_operation += ' ' +day[h['weekDay']-1]+ ' '+"closed"
+                # print(hours_of_operation)
                 # try:
                 #     r1 = requests.get(page_url ,headers=headers)
                 # except:

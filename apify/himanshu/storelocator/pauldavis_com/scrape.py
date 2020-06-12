@@ -33,7 +33,11 @@ def fetch_data():
         location_name = loc['name']
         if "fr-Paul Davis Location" in location_name:
             continue
-        street_address = loc['address']
+       
+        if "," in loc['address']:
+            street_address = loc['address'].split(",")[0]
+        else:
+            street_address = loc['address'].replace(",","").strip()
         city = loc['city']
         state = loc['state']
         zipp = loc['postal']
@@ -135,7 +139,7 @@ def fetch_data():
                     state = data_soup.find_all('p',class_='info')[2].text.split(",")[1].replace(".","").split()[0]
                     zipp = data_soup.find_all('p',class_='info')[2].text.split(",")[1].replace(".","").split()[1]
                 
-                phone_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(phone))[-1]
+                
   
                 location_name = "<MISSING>"
                 latitude = "<MISSING>"
@@ -146,13 +150,13 @@ def fetch_data():
             store = []
             store.append(base_url)
             store.append(location_name)
-            store.append(street_address)
+            store.append(street_address.replace(",","").strip())
             store.append(city)
             store.append(state)
             store.append(zipp)
             store.append(country_code)
             store.append("<MISSING>") 
-            store.append(phone_list)
+            store.append(phone)
             store.append("<MISSING>")
             store.append(latitude)
             store.append(longitude)
@@ -162,7 +166,7 @@ def fetch_data():
                 continue
             addresses.append(store[2])
             store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            
+            # print(store)
             yield store
 
 def scrape():

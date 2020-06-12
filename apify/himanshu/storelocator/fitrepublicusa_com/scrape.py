@@ -57,7 +57,7 @@ def fetch_data():
             latitude = "<MISSING>"
             longitude = '<MISSING>'
         street_address = data[i+1].split("-")[0]
-        phone ="".join(data[i+1].split("-")[1:]).strip()
+        phone =" ".join(data[i+1].split("-")[1:]).strip()
         city = data[i+2].split(",")[0]
         state = data[i+2].split(",")[1].split(" ")[1]
         zipp = data[i+2].split(",")[1].split(" ")[-1].replace("MO","64468")

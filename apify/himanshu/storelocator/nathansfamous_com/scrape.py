@@ -26,16 +26,18 @@ def fetch_data():
     headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"}
     output = []
     while zip_code:
+        print(zip_code)
         result_coords =[]
         try:
-            r = session.get("https://locator.smfmsvc.com/api/v1/locations?client_id=156&brand_id=ACTP&product_id=ANY&product_type=agg&zip="+str(search.current_zip)+"&search_radius="+str(MAX_DISTANCE),headers=headers).json()
+            r = requests.get("https://locator.smfmsvc.com/api/v1/locations?client_id=156&brand_id=ACTP&product_id=ANY&product_type=agg&zip="+str(search.current_zip)+"&search_radius="+str(MAX_DISTANCE),headers=headers).json()
         except:
             continue
         # if "STORE" not in r['RESULTS']['STORES']:
         #     continue
         if "STORE" in r['RESULTS']['STORES']:
             current_results_len = len(r['RESULTS']['STORES']['STORE'])
-            for loc in r['RESULTS']['STORES']['STORE']:  
+            for loc in r['RESULTS']['STORES']['STORE']:
+                print(loc)  
                 if type(loc)==str:
                     continue
                 hour=''
@@ -69,7 +71,7 @@ def fetch_data():
                 if store[2] in addresses:
                     continue
                 addresses.append(store[2])
-                # print("store-------------",store)
+                print("store-------------",store)
                 yield store
         if current_results_len < MAX_RESULTS:
             # print("max distance update")

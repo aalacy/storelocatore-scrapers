@@ -3,16 +3,35 @@ from bs4 import BeautifulSoup
 import re
 import json
 import sgzip
+from random import choice
 # import datetime
 # from datetime import datetime
 import requests
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8",newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         for row in data:
             writer.writerow(row)
+
+def get_proxy():
+    url = "https://www.sslproxies.org/"
+    r = requests.get(url)
+    soup = BeautifulSoup(r.content, "html5lib")
+    return {'https': (choice(list(map(lambda x:x[0]+':'+x[1],list(zip(map(lambda x:x.text,soup.findAll('td')[::8]),map(lambda x:x.text,soup.findAll('td')[1::8])))))))}
+
+    
+def proxy_request(request_type, url, **kwargs):
+    while 1:
+        try:
+            proxy = get_proxy()
+            # print("Using Proxy {}".format(proxy))
+            r = requests.request(request_type, url, proxies=proxy, timeout=5, **kwargs)
+            break
+        except:
+            pass
+    return r
 def fetch_data():
     #print("start")
     search = sgzip.ClosestNSearch()
@@ -31,7 +50,7 @@ def fetch_data():
     while zip_code:
         result_coords = []
         #print("zip_code === " + str(zip_code))
-        print("remaining zip =====" + str(len(search.zipcodes)))
+        # print("remaining zip =====" + str(len(search.zipcodes)))
         url = "https://www.betfred.com/services/gis/searchstores"
         payload = "{\"SearchLocation\":\" "+str(zip_code)+", UK\",\"MaximumShops\":10,\"MaximumDistance\":5}"
         headers = {
@@ -42,8 +61,6 @@ def fetch_data():
             'Postman-Token': "3c1ecc49-46ce-46e0-9b1e-fdbe4cc065f2,fe8dde9f-a9f4-4533-93bc-31dc8ea517fa",
             'Host': "www.betfred.com",
             'Accept-Encoding': "gzip, deflate",
-            'Content-Length': "72",
-            # 'Cookie': "visid_incap_2254385=hjSkdKv+RkqMtjWwTAxSi6Vuvl4AAAAAQUIPAAAAAACR3BBQrL8/DL7LLA5GhBNv; nlbi_2254385=5f8jYykSo3o565vYUZa94AAAAACesR1rz6NtVnLS33FEVwCJ; incap_ses_47_2254385=uv/PFOHBhgE1lgwnePqmAJZvvl4AAAAA9y9mBXWwGEC3gUUk6DRG8g==",
             'Connection': "keep-alive",
             'cache-control': "no-cache"
             }
@@ -55,7 +72,7 @@ def fetch_data():
                     store_number = loc["ShopNumber"]
                     location_name = loc["Title"]
                     if len(loc["Address"].split(",")) > 1:
-                        street_address = loc["Address"].split(",")[0].strip()
+                        street_address = " ".join(loc["Address"].split(",")[:-1]).strip()
                         city = loc["Address"].split(",")[-1].strip()
                         # raw_address = "<MISSING>"
                     elif len(loc["Address"].split("  ")) > 1:
@@ -87,11 +104,12 @@ def fetch_data():
 
                         store = [str(x).encode('ascii','ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
 
-                        #print("data = " + str(store))
-                        #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+                        # print("data = " + str(store))
+                        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                         yield store
         except:
-            # print(response)
+            # response = proxy_request("POST", url, data=payload, headers=headers)
+            # print(response.content)
             search.max_distance_update(MAX_DISTANCE)
             # continue        
         if current_results_len < MAX_RESULTS:
