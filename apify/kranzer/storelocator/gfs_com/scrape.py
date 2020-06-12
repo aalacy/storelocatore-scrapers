@@ -12,8 +12,13 @@ class Scrape(base.Spider):
         r = requests.get(self.base_url+'stores_jsonp/?callback=jQuery112408348595095024478_1564832094867')
         locations = json.loads(re.findall(r'.+?\((.+)\)', r.text)[0])
         for location in locations:
-            if location['field_location_type'][0]['value'] != "grm" or location['field_location_type'][0]['value'] != "store":
+            type = location['field_location_type'][0]['value']
+            if type != "grm" or type != "store":
                 continue
+            if type == "grm":
+                type = "Gordon Restaurant Market"
+            elif type == "store":
+                type = "Gordon Food Service Stores"
             item = base.Item(location)
             item.add_value('locator_domain', self.locator_domain)
             item.add_value('location_name', location['title'] or "<MISSING>")
@@ -24,7 +29,7 @@ class Scrape(base.Spider):
             item.add_value('country_code', location['field_address'][0]['country'] or "<MISSING>")
             item.add_value('store_number', location['nid'] or "<MISSING>")
             item.add_value('phone', location['field_phone'][0]['safe_value'] or "<MISSING>")
-            item.add_value('location_type', location['field_location_type'][0]['value'] or "<MISSING>")
+            item.add_value('location_type', type )
             item.add_value('latitude', location['field_latitude'][0]['value'] or "<MISSING>")
             item.add_value('longitude', location['field_longitude'][0]['value'] or "<MISSING>")
             item.add_value('hours_of_operation', remove_tags(location['field_hours'][0]['safe_value'].replace('<br>', '; ')).strip() or "<MISSING>")
