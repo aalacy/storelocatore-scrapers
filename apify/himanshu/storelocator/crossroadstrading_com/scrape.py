@@ -48,16 +48,27 @@ def fetch_data():
                 zipp = full[-1].replace("Culver City 90066",'Culver City, 90066').split(",")[-1].strip().split( )[-1]
                 city = full[-1].replace("Culver City 90066",'Culver City, 90066').split(",")[0]
             name = title[index1].text.strip()
-            try:
-                page_url = title[index1].find("a")['href']
-            except:
-                page_url="<MISSING>"
+            hours_of_operation=''
+      
 
             latitude = str(tag_lat[index1]).split("new google.maps.LatLng(")[1].split(");")[0].split(",")[0]
             longitude = str(tag_lat[index1]).split("new google.maps.LatLng(")[1].split(");")[0].split(",")[1]
             full = list(i.stripped_strings)
             # phone = list(i.stripped_strings)[6].replace(" ",'').replace(".",' ')
             hours_of_operation = " ".join(list(i.stripped_strings)[10:])
+
+
+            try:
+                page_url = title[index1].find("a")['href']
+                r1 = session.get(page_url,headers=headers)
+                soup1 = BeautifulSoup(r1.text,"lxml")
+                try:
+                    hours_of_operation =" ".join(list(soup1.find("ul",{"class":"store-hours"}).stripped_strings))
+                except :
+                    hours_of_operation = hours_of_operation
+
+            except:
+                page_url="<MISSING>"
 
             phone =''
             data = list(i.stripped_strings)
@@ -82,7 +93,7 @@ def fetch_data():
             store.append(hours_of_operation if hours_of_operation else "<MISSING>")
             store.append(page_url)
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-            #print("----------------------",store)
+            # print("----------------------",store)
             yield store
      
 

@@ -90,6 +90,7 @@ def fetch_data():
         if "Williamsburg" in location_name:
             continue
         cols = driver.find_element_by_css_selector('div.info').find_elements_by_css_selector('div.col-sm-6')
+        # print(cols[1].text)
         try:
             phone_number = cols[0].find_element_by_css_selector('a.number').text
         except:
@@ -112,8 +113,8 @@ def fetch_data():
             zip_code =  '07030'
         else:
             street_address, city, state, zip_code = parse_address(addy)
-        hours = cols[1].text.replace('\n', ' ').replace('Studio Hours', '').strip().encode('ascii', 'ignore').decode('ascii').strip()
-
+        hours = cols[1].text.replace('\n', ' ').replace('Studio Hours', '').strip()
+        # print(hours)
         obj = driver.execute_script('return gmwMapObjects')['unik']['locations'][0]
         lat = obj['lat']
         longit = obj['lng']

@@ -58,6 +58,8 @@ def fetch_data():
             
             tem_var.append("https://www.petros.com/")
             tem_var.append(name)
+            if "2 Market Square" in street_address:
+                hours ="Sundays-Thursdays: 11 AM – 6 PM Fridays & Saturdays: 11 AM – 8 PM"
             tem_var.append(street_address)
             tem_var.append(city)
             tem_var.append(state.strip())
@@ -85,7 +87,7 @@ def fetch_data():
             if len(full) != 0:
                 hours = " ".join(full[-3:-1]).replace("Unit A Southern Pines, NC 28387",'<MISSING>')
                 name = full[0]
-                street_address = " ".join(full[1:3])
+                street_address = " ".join(full[1:3]).replace('Love’s Travel Center ','').replace('#236 ','')
                 phone = list(p1.stripped_strings)[-1]
                 city = full[-4].split(',')[0]
                 state = full[-4].split(',')[1].split( )[0]
@@ -122,8 +124,6 @@ def fetch_data():
                 del full[0]
             street_address=''
             if full[1][0].isdigit():
-         
-                # print(full)
                 name = full[0]
                 street_address = full[1]
                 
@@ -145,6 +145,12 @@ def fetch_data():
                 # full.insert(0,"Hours")
                 hours = " ".join(" ".join(full[4:-1]).split("Hours:")[1:]).strip().replace("*Note: Dining room closes one hour earlier than close time",'')
             # print(street_address)
+            if "2 Market Square" in street_address:
+                hours = "Sundays-Thursdays: 11 AM – 6 PM Fridays & Saturdays: 11 AM – 8 PM"
+            if "2217 North Charles Sevier Blvd." in street_address:
+                hours = "Mondays – Sundays: 11 AM – 8 PM"
+            if "1427 W Lamar Alexander Pkwy" in street_address:
+                hours ="Mondays – Saturdays: 10 AM – 9 PM Sundays: 11 AM – 9 PM"
             tem_var.append("https://www.petros.com/")
             tem_var.append(name)
             tem_var.append(street_address)
