@@ -80,7 +80,7 @@ def fetch_data():
             store.append("https://crossroadstrading.com")
             store.append(name)
             store_number = "<MISSING>"
-            store.append(street_address if street_address else "<MISSING>")
+            store.append(street_address.replace('Westpark Plaza, ','') if street_address else "<MISSING>")
             store.append(city if city else "<MISSING>")
             store.append(state if state else "<MISSING>")
             store.append(zipp if zipp else "<MISSING>")

@@ -45,7 +45,7 @@ def fetch_data():
                 lat=loc['LATITUDE']
                 lng=loc['LONGITUDE']
                 name=loc['NAME'].lower()
-                storeno=loc['STORE_ID']
+                # storeno=loc['STORE_ID']
                 zip=loc['ZIP']
                 country="US"
                 state=loc['STATE']
@@ -60,7 +60,7 @@ def fetch_data():
                 store.append(state if state else "<MISSING>")
                 store.append(zip if zip else "<MISSING>")
                 store.append(country if country else "<MISSING>")
-                store.append(storeno if storeno else "<MISSING>")
+                store.append("<MISSING>")
                 store.append(phone if phone else "<MISSING>")
                 store.append("<MISSING>")
                 store.append(lat if lat else "<MISSING>")
