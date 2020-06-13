@@ -10,10 +10,10 @@ options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument("user-agent= 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'")
-#driver=webdriver.Chrome('C:\chromedriver.exe')#, options=options)
-#chrome_path = 'c:\\Users\\Dell\\local\\chromedriver'
-driver = webdriver.Chrome('c:\\Users\\Dell\\local\\chromedriver', options=options)
-#driver = webdriver.Chrome("chromedriver", options=options)
+
+#driver = webdriver.Chrome('c:\\Users\\Dell\\local\\chromedriver', options=options)
+driver = webdriver.Chrome('chromedriver', options=options)
+
 
 
 def write_output(data):
@@ -28,8 +28,15 @@ def fetch_data():
 
 
     locations_urls=[i.get_attribute('href') for i in driver.find_elements_by_xpath("//ul[@class='social-location']//a[contains(@href,'beermenus')]")]
+    phone_urls = driver.find_elements_by_class_name('address-phone')
+    phones = []
+    for k in range(0,len(phone_urls)):
+        phones.append(phone_urls[k].find_element_by_tag_name('a').get_attribute('href'))
 
-    for url in locations_urls:
+    #for url in locations_urls:
+    
+    for k in range(0,len(locations_urls)):
+        url = locations_urls[k]
         driver.get(url)
         #print(url)
         sleep(1)
@@ -55,7 +62,13 @@ def fetch_data():
         try:
             data['phone'].append(driver.find_element_by_xpath('//li[@class="pure-list-item lead-by-icon"][3]').text)
         except:
-            data['phone'].append('<MISSING>')
+            data['phone'].append(phones[k].replace('tel:',''))
+           # data['phone'].append('<MISSING>')
+
+        #if data['phone'] == '<MISSING>':
+            
+
+        
 
         try:
             hours = driver.find_element_by_xpath('//li[@class="pure-list-item lead-by-icon"][4]').text
@@ -72,6 +85,7 @@ def fetch_data():
         
         data['latitude'].append('<MISSING>')
         data['longitude'].append('<MISSING>')
+        
 
        
 
