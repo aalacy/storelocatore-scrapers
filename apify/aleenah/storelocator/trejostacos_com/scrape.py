@@ -21,42 +21,59 @@ all=[]
 def fetch_data():
     # Your scraper here
     page_url=[]
-    res=session.get("https://www.yelp.com/search?find_desc=Trejos+Tacos&find_loc=Los+Angeles%2C+CA")
+    res=session.get("https://www.trejostacos.com/")
     soup = BeautifulSoup(res.text, 'html.parser')
-    urls = soup.find_all('a', {'class': 'lemon--a__373c0__IEZFH link__373c0__1G70M link-color--inherit__373c0__3dzpk link-size--inherit__373c0__1VFlE'})
+    urls = soup.find('div', {'data-controller-folder': 'locations'}).find_all('a')
 
 
     for url in urls:
-        if "Trejos" in url.text or "Trejo’s" in url.text:
-            url="https://www.yelp.com"+url.get('href')
-            print(url)
+        url = "https://www.trejostacos.com"+url.get('href')
+        print(url)
+        res = session.get(url)
+        soup = BeautifulSoup(res.text, 'html.parser')
+        loc = soup.find('h1').text.strip()
+        if "429 Too Many Requests" in loc:
             res = session.get(url)
             soup = BeautifulSoup(res.text, 'html.parser')
-            tim = soup.find('table', {'class': 'lemon--table__373c0__2clZZ hours-table__373c0__2cULu table__373c0__3JVzr table--simple__373c0__3lyDA'}).text.replace("Mon"," Mon ").replace("Tue"," Tue ").replace("Wed"," Wed ").replace("Thu"," Thu ").replace("Fri"," Fri ").replace("Sat"," Sat ").replace("Sun"," Sun ").strip()
-            if tim=="":
-                tim="<MISSING>"
-
-            street = soup.find('span', {'itemprop': 'streetAddress'}).text.replace("StS","St S").strip()
-            #print(street)
-            city=soup.find('span', {'itemprop': 'addressLocality'}).text
-            state=soup.find('span', {'itemprop': 'addressRegion'}).text
-            country=soup.find('meta', {'itemprop': 'addressCountry'}).get('content')
-            zip=soup.find('span', {'itemprop': 'postalCode'}).text
-            phone=soup.find('span', {'itemprop': 'telephone'}).text.strip()
             loc = soup.find('h1').text.strip()
-            #print(loc)
-            img=soup.find('img', {'alt': 'Map'}).get('src')
-            lat,long=re.findall(r'center=([\d\.]+)%2C([\d\.\-]+)&',img)[0]
-            #print(lat,long)
+        h2s=soup.find_all('h2')
+        """try:
+            coord=h2s[0].find('a').get('href')
+            lat,long= re.findall(r'/@(-?[\d\.]+),(-?[\d\.]+)',coord)[0]
+        except:
+            """
+        coord = soup.find('div', {'class': 'sqs-block map-block sqs-block-map sized vsize-12'}).get('data-block-json')
+        #print(coord)
+        #street=re.findall(r'"addressLine1":"([^"]+)"',coord)[0]
+        #csz=re.findall(r'"addressLine2":"([^"]+)"',coord)[0].split(',')
+        #city=csz[0].strip()
+        #state=csz[1].strip()
+        #zip=csz[2].strip()
+        lat =re.findall(r'"markerLat":(-?[\d\.]+)',coord)[0]
+        long = re.findall(r'"markerLng":(-?[\d\.]+)',coord)[0]
+        try:
+            phone=h2s[0].find_all('a')[1].text
+        except:
+            phone="<MISSING>"
+        #print(str(h2s[0]))
+        street,city,sz=re.findall(r'>(.*)<br/>(.*),(.*)</a>',str(h2s[0]))[0]
+       # print(str(h2s[0]))
+        sz=sz.strip().split(" ")
+        state=sz[0]
+        zip=sz[1].replace('</a><br/><a','')
+        street =street.split('>')[-1]
+        #print(street, city, phone)
+        tim=h2s[1].text.replace('DAY','DAY ').replace('  ',' ')
+        print(tim)
 
-            all.append([
+        all.append([
                 "https://www.trejostacos.com",
                 loc,
                 street,
                 city,
                 state,
                 zip,
-                country,
+                'US',
                 "<MISSING>",  # store #
                 phone,  # phone
                 "<MISSING>",  # type
@@ -64,24 +81,7 @@ def fetch_data():
                 long,  # long
                 tim,  # timing
                 url])
-    """for url in urls: #for official trejos website temoprariliy don due to corona virus
-        url="https://www.trejostacos.com"+url.get('href')
-        print(url)
-        driver.get(url)
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        print(soup)
-        p = soup.find('div', {'class': 'sqs-block-content'}).find_all('p')
-        print(soup.find('div', {'class': 'sqs-block-content'}).text)
-        street=p[0].text
-        addr=p[1].text.strip().split(",")
-        city=addr[0].strip()
-        addr=addr[1].strip().split(" ")
-        state=addr[0]
-        zip=addr[1]
-        phone=p[2].find('a').text.strip()
-        tim= re.findall(r'HOURS(.*)-------------------------------------------',soup.find('div', {'class': 'sqs-block-content'}).text,re.DOTALL)[0]
-        print(phone)
-        print(tim)"""
+
     return all
 
 def scrape():
