@@ -28,6 +28,7 @@ def fetch_data():
         zip_code = list(st.stripped_strings)[2].split(",")[2]
         phone = list(st.stripped_strings)[3]
         hours_arr = list(st.stripped_strings)[4]
+        # print( list(st.stripped_strings))
         page_url = st.find("a")['href']
         soup1 = BeautifulSoup(session.get(page_url).text, 'html.parser')
         name = soup1.find("div",{"class":"sow-headline-container"}).text.strip()
@@ -37,6 +38,8 @@ def fetch_data():
         lat = json.loads(tag_phone)['mapDefaultLat']
         long = json.loads(tag_phone)['mapDefaultLng']
         hours = '<MISSING>'
+        if "400 W Elk St" in street_address:
+            hours_arr="M-F 4:30 AM - 10 PM Sat 5:30 AM - 10 PM Sun 6:30 AM - 10 PM"
         store_data = ["https://pumpandpantry.com/", name, street_address, city, state, zip_code, country_code,
                      store_number.replace("#",''), phone, location_type, lat, long, hours_arr.replace("View Store Details","<MISSING>"),page_url]
         yield store_data   

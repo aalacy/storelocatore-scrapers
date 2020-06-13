@@ -39,7 +39,7 @@ def fetch_data():
             street_address+= " "+ address.text
         city = location_soup.find("span",{"itemprop":"addressLocality"}).text
         try:
-            state = location_soup.find("span",{"itemprop":"addressRegion"}).text
+            state = location_soup.find("span",{"itemprop":"addressRegion"}).text.replace(".","")
         except:
             state = "<MISSING>"
         zipp = location_soup.find("span",{"itemprop":"postalCode"}).text
@@ -61,9 +61,6 @@ def fetch_data():
             street_address = street_address.replace("Erdington","").strip()
             city = "Erdington"
             state = "Birmingham"
-        if "London" in state or "London." in state:
-            state = "<MISSING>"
-            city = "London"
         store = []
         store.append(base_url)
         store.append(location_name)
@@ -81,7 +78,7 @@ def fetch_data():
         store.append(page_url)     
     
         store = [str(x).replace("–","-").encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
-        #print(store)
+        
         yield store
       
     

@@ -9,7 +9,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation",'page_url'])
         # Body
         for row in data:
             writer.writerow(row)
@@ -23,14 +23,14 @@ def fetch_data():
 
     for url in soup.find("ul",{"class":"sub-menu"}).find_all("a"):
         page_url = url['href']
+        if page_url == "https://www.redorestaurant.com/o-lounge/":
+            continue
         location_soup = bs(session.get(page_url).text, "lxml")
 
 
         row = location_soup.find("div",{"class":"et_pb_row et_pb_row_2"}).find_all("div",{"class":re.compile("et_pb_text_align_left et_pb_bg_layout_light")})
         
         addr = list(row[0].find("div",{"class":"et_pb_text_inner"}).stripped_strings)
-        if page_url == "https://www.redorestaurant.com/o-lounge/":
-            addr = list(location_soup.find_all("div",{"class":"et_pb_text_inner"})[5].stripped_strings)
         if len(addr) == 14:
             del addr[3]
         
@@ -46,8 +46,6 @@ def fetch_data():
     
 
         hours = " ".join(list(row[1].stripped_strings))
-        if page_url == "https://www.redorestaurant.com/o-lounge/":
-            hours = 'Open daily'
         
         store = []
         store.append(base_url)

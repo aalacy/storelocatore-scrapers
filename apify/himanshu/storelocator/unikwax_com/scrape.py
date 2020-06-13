@@ -112,7 +112,8 @@ def fetch_data():
             zip_code =  '07030'
         else:
             street_address, city, state, zip_code = parse_address(addy)
-        hours = cols[1].text.replace('\n', ' ').replace('Studio Hours', '').strip()
+        hours = cols[1].text.replace('\n', ' ').replace('Studio Hours', '').strip().encode('ascii', 'ignore').decode('ascii').strip()
+
         obj = driver.execute_script('return gmwMapObjects')['unik']['locations'][0]
         lat = obj['lat']
         longit = obj['lng']
@@ -122,6 +123,7 @@ def fetch_data():
         page_url = link
         store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code, 
                     store_number, phone_number, location_type, lat, longit, hours, page_url]
+        # print(store_data)
         all_store_data.append(store_data)
     driver.quit()
     return all_store_data

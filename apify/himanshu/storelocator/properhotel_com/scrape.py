@@ -52,8 +52,8 @@ def fetch_data():
             store=[]
             store.append(base_url)
             store.append(city if city else "<MISSING>")
-            store.append(address if address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
+            store.append(address.replace("Entrance at ",'') if address else "<MISSING>")
+            store.append(city.replace("Downtown L.A.",'Los Angeles') if city else "<MISSING>")
             store.append(state if state else "<MISSING>")
             store.append(zipp if zipp else "<MISSING>")
             store.append(country if country else "<MISSING>")
