@@ -17,7 +17,10 @@ def fetch_data():
     for country_url in ['https://www.orangetheory.com/bin/otf/getStudioPagesDetail.en_ca.json','https://www.orangetheory.com/bin/otf/getStudioPagesDetail.en_us.json']:
         json_data = requests.get(country_url).json()['data']
         for data in json_data:
-            page_url = base_url + data['studioURL']
+            if "https" in data['studioURL']:
+                page_url = data['studioURL']
+            else:
+                page_url = base_url + data['studioURL']
             store_number = data['studioID']
             location_data = requests.get("https://api.orangetheory.co/partners/studios/v2?latitude=&longitude=&distance=&country=&studioId="+str(store_number)).json()
             for loc in location_data['data'][0]:

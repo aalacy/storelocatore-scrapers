@@ -5,6 +5,7 @@ import re
 import json
 import sgzip
 session = SgRequests()
+import requests
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -26,26 +27,24 @@ def fetch_data():
     headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"}
     output = []
     while zip_code:
-        print(zip_code)
         result_coords =[]
         try:
             r = requests.get("https://locator.smfmsvc.com/api/v1/locations?client_id=156&brand_id=ACTP&product_id=ANY&product_type=agg&zip="+str(search.current_zip)+"&search_radius="+str(MAX_DISTANCE),headers=headers).json()
         except:
-            continue
+            pass
         # if "STORE" not in r['RESULTS']['STORES']:
         #     continue
         if "STORE" in r['RESULTS']['STORES']:
             current_results_len = len(r['RESULTS']['STORES']['STORE'])
-            for loc in r['RESULTS']['STORES']['STORE']:
-                print(loc)  
+            for loc in r['RESULTS']['STORES']['STORE']:  
                 if type(loc)==str:
                     continue
                 hour=''
-                address=loc['ADDRESS']
-                city=loc['CITY']
+                address=loc['ADDRESS'].replace("'",'').lower()
+                city=loc['CITY'].lower()
                 lat=loc['LATITUDE']
                 lng=loc['LONGITUDE']
-                name=loc['NAME']
+                name=loc['NAME'].lower()
                 storeno=loc['STORE_ID']
                 zip=loc['ZIP']
                 country="US"

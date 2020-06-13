@@ -7,6 +7,7 @@ import json
 import sgzip
 from concurrent.futures import ThreadPoolExecutor
 session = SgRequests()
+requests.packages.urllib3.disable_warnings()
 
 
 def get_url(data):
@@ -18,7 +19,7 @@ def get_url(data):
 
 
 
-    data = requests.get(data,headers=headers)
+    data = requests.get(data,headers=headers,verify=False)
     try:
         return data
     except:
@@ -76,7 +77,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize()
     MAX_RESULTS = 70
-    MAX_DISTANCE = 20
+    MAX_DISTANCE = 35
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()  
    
@@ -84,13 +85,14 @@ def fetch_data():
     list_of_urls=[]
     while zip_code:
         # if len(list_of_urls)==5:
-        print(zip_code)
+        #print(zip_code)
         print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
         get_url='https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE)
         list_of_urls.append(get_url)
         # if len(list_of_urls)==5:
         #     break
+
         # try:
         #     k = session.get(get_url,headers=headers).json()   
         # except:
@@ -108,13 +110,14 @@ def fetch_data():
         zip_code = search.next_zip()
 
     data = _send_multiple_rq(list_of_urls)
+    k={}
     for r in data:
         try:
             k = r.json()
         except:
             pass
         name =''
-        if k != None and k !=[]:
+        if k != None and k !=[] and  "Dealers" in k:
             current_results_len = len(k['Dealers'])
             for i in k['Dealers']:
                 h1= i['Departments']
@@ -140,7 +143,6 @@ def fetch_data():
                     time = time.replace(" Sales ","<MISSING>")
                 if "Url" in i:
                     page_url = i['Url']
-                result_coords.append((latitude, longitude))
                 tem_var =[]
                 tem_var.append("https://www.honda.com/")
                 tem_var.append(name if name else "<MISSING>" )

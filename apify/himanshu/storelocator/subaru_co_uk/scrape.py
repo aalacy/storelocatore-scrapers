@@ -5,8 +5,7 @@ import re
 import json
 import sgzip
 import time
-from sgrequests import SgRequests
-session = SgRequests() 
+
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -65,7 +64,7 @@ def fetch_data():
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
     
     while coord:
-        # print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords =[]
         location_url = "https://www.subaru.co.uk/wp-admin/admin-ajax.php?action=store_search&lat="+str(coord)+"&lng="+str(coord)+"&max_results=25&search_radius=50&autoload=1"
         r = request_wrapper(location_url,"get",headers=headers)
