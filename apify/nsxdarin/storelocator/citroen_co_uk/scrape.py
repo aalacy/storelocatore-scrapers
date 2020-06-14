@@ -44,7 +44,7 @@ def fetch_data():
         lines = r2.iter_lines()
         for line2 in lines:
             if '"edealerName" : "' in line2:
-                name = line2.split('"edealerName" : "')[1].split('"')[0].title()
+                name = line2.split('"edealerName" : "')[1].split('"')[0].title().replace('&Amp;','&').replace('&amp;','&')
             if '"brand" : "' in line2:
                 typ = line2.split('"brand" : "')[1].split('"')[0].title()
             if '"edealerIDLocal" : "' in line2:
@@ -52,7 +52,7 @@ def fetch_data():
             if '"edealerCity" : "' in line2:
                 city = line2.split('"edealerCity" : "')[1].split('"')[0].title()
             if '"edealerAddress" : "' in line2:
-                add = line2.split('"edealerAddress" : "')[1].split('"')[0].title()
+                add = line2.split('"edealerAddress" : "')[1].split('"')[0].title().replace('&Amp;','&').replace('&amp;','&')
             if '"edealerPostalCode" : "' in line2:
                 zc = line2.split('"edealerPostalCode" : "')[1].split('"')[0]
             if '"edealerRegion" : "' in line2:
