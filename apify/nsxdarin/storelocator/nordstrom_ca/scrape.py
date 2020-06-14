@@ -48,7 +48,7 @@ def fetch_data():
                         if store not in ids and 'Canada' in country:
                             country = 'CA'
                             ids.append(store)
-                            yield [website, name, add, city, state, zc, country, store, phone, typ, llat, llng, hours]
+                            yield [website, loc, name, add, city, state, zc, country, store, phone, typ, llat, llng, hours]
 
 
             
