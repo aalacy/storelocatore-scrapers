@@ -36,6 +36,7 @@ def fetch_data():
                     lng = item.split('%5C%22coordinates%5C%22:%5B')[1].split(',')[1].split('%')[0]
                     hours = '<MISSING>'
                     loc = '<MISSING>'
+                    add = add.replace('%C3%A8','e').replace('%C3%A9','e').replace('%C3%B4','o')
                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
