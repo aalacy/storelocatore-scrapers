@@ -15,7 +15,7 @@ CANADA_STATE_VARIATIONS = {'ab', 'alberta', 'bc', 'british columbia', 'mb', 'man
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         for row in data:
             writer.writerow(row)
 
@@ -61,14 +61,17 @@ def fetch_data(search):
                         except:
                             phone = '<MISSING>'
                         hrs = item.split('{"day":"')
-                        hours = '<MISSING>'
+                        hours = ''
                         for hr in hrs:
                             if '"time":"' in hr:
                                 if hours == '':
                                     hours = hr.split('"')[0] + ': ' + hr.split('"time":"')[1].split('"')[0]
                                 else:
                                     hours = hours + '; ' + hr.split('"')[0] + ': ' + hr.split('"time":"')[1].split('"')[0]
-                        locations.append([website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours])
+                        if hours == '':
+                            hours = '<MISSING>'
+                        loc = '<MISSING>'
+                        locations.append([website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours])
         if not coords: print("zip returned no results: {}".format(search.current_zip))
         search.max_count_update(coords)
         code = search.next_zip()
