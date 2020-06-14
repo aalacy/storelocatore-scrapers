@@ -1,0 +1,68 @@
+import csv
+import urllib2
+from sgrequests import SgRequests
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+
+def write_output(data):
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        for row in data:
+            writer.writerow(row)
+
+def fetch_data():
+    locs = []
+    coords = []
+    url = 'https://sharpeclothing.com/our-stores/'
+    r = session.get(url, headers=headers)
+    for line in r.iter_lines():
+        if '<h3 class="post-name h5"><a href="https://sharpeclothing.com/' in line:
+            locs.append(line.split('href="')[1].split('"')[0])
+        if 'var marker_object = cspm_new_pin_object' in line:
+            cid = line.split('var marker_object = cspm_new_pin_object')[1].split(',')[1].strip().replace("'",'')
+            clat = line.split('var marker_object = cspm_new_pin_object')[1].split(',')[2].strip()
+            clng = line.split('var marker_object = cspm_new_pin_object')[1].split(',')[3].strip()
+            coords.append(cid + '|' + clat + '|' + clng)
+    for loc in locs:
+        print('Pulling Location %s...' % loc)
+        website = 'sharpeclothing.com'
+        typ = '<MISSING>'
+        hours = ''
+        name = ''
+        add = ''
+        city = ''
+        state = ''
+        country = 'US'
+        lat = '<MISSING>'
+        lng = '<MISSING>'
+        store = '<MISSING>'
+        phone = ''
+        r2 = session.get(loc, headers=headers)
+        for line2 in r2.iter_lines():
+            if '<title>' in line2:
+                name = line2.split('<title>')[1].split(' - ')[0]
+                city = name.split(',')[0].strip()
+                state = name.split(',')[1].strip()
+            if '<p><a href="https://goo.gl/' in line2:
+                add = line2.split('<p><a href="https://goo.gl/')[1].split('>')[1].split(city)[0].strip()
+            if 'a href="tel:' in line2:
+                phone = line2.split('a href="tel:')[1].split('"')[0]
+            if ',"post_id":"' in line2:
+                store = line2.split(',"post_id":"')[1].split('"')[0]
+        for coord in coords:
+            if store == coord.split('|')[0]:
+                lat = coord.split('|')[1]
+                lng = coord.split('|')[2]
+        if hours == '':
+            hours = '<MISSING>'
+        zc = '<MISSING>'
+        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+
+def scrape():
+    data = fetch_data()
+    write_output(data)
+
+scrape()
