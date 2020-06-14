@@ -40,7 +40,7 @@ def fetch_data():
         lines = r2.iter_lines()
         for line2 in lines:
             if '<div class="c-header__dealer-name">' in line2:
-                name = line2.split('<div class="c-header__dealer-name">')[1].split('<')[0]
+                name = line2.split('<div class="c-header__dealer-name">')[1].split('<')[0].replace('&#039;',"'")
             if 'data-sales-lat="' in line2:
                 lat = line2.split('data-sales-lat="')[1].split('"')[0]
             if 'data-sales-lng="' in line2:
@@ -50,28 +50,30 @@ def fetch_data():
             if '<div class="c-footer__info-address">' in line2 and add == '':
                 g = next(lines).strip().replace('\r','').replace('\n','').replace('\t','')
                 if g.count(',') == 3:
-                    add = g.split(',')[0].strip()
-                    city = g.split(',')[1].strip()
+                    add = g.split(',')[0].strip().replace('&#039;',"'")
+                    city = g.split(',')[1].strip().replace('&#039;',"'")
                     state = g.split(',')[2].strip()
                     zc = g.split(',')[3].strip()
                 if g.count(',') == 2:
-                    add = g.split(',')[0].strip()
-                    city = g.split(',')[1].strip()
+                    add = g.split(',')[0].strip().replace('&#039;',"'")
+                    city = g.split(',')[1].strip().replace('&#039;',"'")
                     state = '<MISSING>'
                     zc = g.split(',')[2].strip()
                 if g.count(',') == 4:
-                    add = g.split(',')[0] + ' ' + g.split(',')[1]
-                    city = g.split(',')[2].strip()
+                    add = g.split(',')[0].replace('&#039;',"'") + ' ' + g.split(',')[1].replace('&#039;',"'")
+                    city = g.split(',')[2].strip().replace('&#039;',"'")
                     state = g.split(',')[3].strip()
                     zc = g.split(',')[4].strip()
                 if g.count(',') == 5:
                     add = g.split(',')[0] + ' ' + g.split(',')[1] + ' ' + g.split(',')[2]
-                    city = g.split(',')[3].strip()
+                    add = add.replace('&#039;',"'")
+                    city = g.split(',')[3].strip().replace('&#039;',"'")
                     state = g.split(',')[4].strip()
                     zc = g.split(',')[5].strip()
                 if g.count(',') == 6:
                     add = g.split(',')[0] + ' ' + g.split(',')[1] + ' ' + g.split(',')[2] + ' ' + g.split(',')[3]
-                    city = g.split(',')[4].strip()
+                    add = add.replace('&#039;',"'")
+                    city = g.split(',')[4].strip().replace('&#039;',"'")
                     state = g.split(',')[5].strip()
                     zc = g.split(',')[6].strip()
                 add = add.replace('  ',' ').replace('  ',' ').strip()
@@ -83,6 +85,8 @@ def fetch_data():
                     hours = hrs
                 else:
                     hours = hours + '; ' + hrs
+            if '&' in phone:
+                phone = phone.split('&')[0].strip()
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
