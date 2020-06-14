@@ -46,8 +46,10 @@ def fetch_data():
                 name = line2.split('<title>')[1].split(' - ')[0]
                 city = name.split(',')[0].strip()
                 state = name.split(',')[1].strip()
-            if '<p><a href="https://goo.gl/' in line2:
+            if 'href="https://goo.gl/maps/' in line2 and 'Get Directions' not in line2:
                 add = line2.split('<p><a href="https://goo.gl/')[1].split('>')[1].split(city)[0].strip()
+                if '&nbsp;' in line:
+                    zc = line.split('&nbsp;')[1].split('<')[0]
             if 'a href="tel:' in line2:
                 phone = line2.split('a href="tel:')[1].split('"')[0]
             if ',"post_id":"' in line2:
@@ -58,7 +60,10 @@ def fetch_data():
                 lng = coord.split('|')[2]
         if hours == '':
             hours = '<MISSING>'
-        zc = '<MISSING>'
+        if phone == '':
+            phone = '<MISSING>'
+        if zc == '':
+            zc = '<MISSING>'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
