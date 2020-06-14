@@ -22,19 +22,24 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
-    p = 1
+    p = 0
     url = 'https://www.romeospizza.com/locations/'
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
-    repo_list = soup.findAll('div', {'class': 'elementor-widget-container'})
+    repo_list = soup.find('div', {'id': 'eID-'})
+    repo_list = repo_list.findAll('a')
     
-    #print(len(repo_list))
+    print(len(repo_list))
     for repo in repo_list:
-        link = repo.find('a')
-        try:
-            link = link['href']
+        #link = repo.find('a')
+        link = repo['href']
+        if link.find('Order') == -1:
+           
             if len(link) > 3:
-                page = requests.get(link)
+                try:
+                    page = requests.get(link)
+                except:
+                    pass
                 soup = BeautifulSoup(page.text, "html.parser")
                 title = soup.find('div',{'class':'Location-Name lp-param lp-param-locationName'}).text
                 #street = soup.find('div',{'class':'Address-line Address-streetOne'})
@@ -54,7 +59,7 @@ def fetch_data():
                 detail = soup.findAll('tr',{'class':'hours-row'})
                 hours = ""
                 for det in detail:
-                    hours = hours + "| "+ det.text
+                    hours = hours + " "+ det.text
 
                 map = soup.find('a',{'class':'btn btn-primary directions-cta btn-lg lp-param lp-param-routableCoordinate lp-param-getDirectionsText'})
                 map = map['href']
@@ -70,36 +75,27 @@ def fetch_data():
                 temp = state[start:end]
                 pcode = state[end:len(state)]
                 state = temp
-                #print(link)
-                #print(title)
-                #print(street)
-                #print(city)
-                #print(state)
-                #print(pcode)
-                #print(phone)
-                #print(lat)
-                #print(longt)
-                #print(hours)
-                #print("...............")
+                hours = hours.replace('day','day ')
                 data.append([
-            'https://www.romeospizza.com/',
-            link,
-            title,
-            street,
-            city,
-            state,
-            pcode,
-            'US',
-            "<MISSING>",
-            phone,
-            "<MISSING>",
-            lat,
-            longt,
-            hours
-        ])
+                            'https://www.romeospizza.com/',
+                            link,
+                            title,
+                            street,
+                            city,
+                            state,
+                            pcode,
+                            'US',
+                            "<MISSING>",
+                            phone,
+                            "<MISSING>",
+                            lat,
+                            longt,
+                            hours
+                        ])
+                #print(p,data[p])
+                p += 1
                 
-        except:
-            pass
+       
         
     return data
 
