@@ -23,10 +23,10 @@ def get_driver():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    options.add_argument("--disable-notifications")
-    return webdriver.Chrome('chromedriver', chrome_options=options)
+    options.add_argument("--disable-notifications")  
     #chrome_path = 'c:\\Users\\Dell\\local\\chromedriver.exe'
     #return webdriver.Chrome(chrome_path,chrome_options=options)
+    return webdriver.Chrome('chromedriver',chrome_options=options)
 
 def fetch_data():
     # Your scraper here
@@ -42,7 +42,7 @@ def fetch_data():
        
     except:
         pass
-    time.sleep(1)
+    time.sleep(3)
     #driver.back()
     
     soup = BeautifulSoup(driver.page_source, "html.parser")
@@ -121,7 +121,7 @@ def fetch_data():
                             "<MISSING>",
                             hours
                         ])
-        #print(p,data[p])
+        print(p,data[p])
         p += 1
         
         
