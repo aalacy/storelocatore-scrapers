@@ -73,6 +73,8 @@ def fetch_data():
                 zc = '43230'
             if '!' in zc:
                 zc = zc.split('!')[0]
+            if '1951 E' in add or '261 Lincoln' in add:
+                city = '<MISSING>'
             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
