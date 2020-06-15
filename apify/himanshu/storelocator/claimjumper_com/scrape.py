@@ -26,7 +26,7 @@ def fetch_data():
     for loc in soup.find_all("p",class_="locationsList"):
         add = list(loc.stripped_strings)
         street_address = add[1].strip()
-        city = add[2].split(",")[0].strip()
+        city = add[2].split(",")[0].strip().replace("Tualatin","Portland")
         location_name = add[0].strip()
         state = add[2].split(",")[1].split()[0].strip()
         zipp = add[2].split(",")[1].split()[-1].strip()
@@ -34,7 +34,7 @@ def fetch_data():
         phone = add[-1].strip()
         location_type = "<MISSING>"
         store_number = "<MISSING>"
-        page_url = "http://claimjumper.com"+loc.find("a",class_="locationLink")["href"].strip()
+        page_url = "https://www.claimjumper.com"+loc.find("a",class_="locationLink")["href"].strip()
         r1 = session.get(page_url,headers=headers)
         soup1 = BeautifulSoup(r1.text,"lxml")
         try:
@@ -58,12 +58,16 @@ def fetch_data():
                 hours_of_operation = " ".join(list(soup1.find("h5",class_="hoursHeader").parent.stripped_strings)).replace("hours","").strip()
             except:
                 hours_of_operation= "<MISSING>"
-            latitude = "33.378910"
-            longitude = "-111.964780"
+            latitude = soup1.find("span",{"id":"jsLat"}).text.strip()
+            longitude = soup1.find("span",{"id":"jsLong"}).text.strip()
+            # if "-93.234120" in longitude:
+            #     hours_of_operation = hours_of_operation
+        
         store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
         store_number, phone, location_type, latitude, longitude, hours_of_operation,page_url]
+        
 
-        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        store = [str(x).replace("–","-").encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         yield store
         # print(store)
         
