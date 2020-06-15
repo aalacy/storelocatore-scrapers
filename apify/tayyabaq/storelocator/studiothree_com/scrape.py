@@ -1,24 +1,23 @@
 import csv
-import os
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 import re, time
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
+
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
+
 
 def write_output(data):
-    with open('data.csv', mode='wb') as output_file:
+    with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
-            if row:
-                writer.writerow(row)
-def get_driver():
-    options = Options() 
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    return webdriver.Chrome('chromedriver', chrome_options=options)
+            writer.writerow(row)
+
 
 def parse_geo(url):
     lon = re.findall(r'(--?[\d\.]*)', url)[0]
@@ -27,42 +26,64 @@ def parse_geo(url):
 
 def fetch_data():
     #Variables
-    data=[]; latitude=[];longitude=[];zipcode=[];location_name=[];location_type=[];city=[];street_address=[]; state=[]; phone=[]
-    #Driver
-    driver =  get_driver()
-    #Get site
-    driver.get('https://studiothree.com/')
-    time.sleep(6)
+    data=[]
+    url = 'https://studiothree.com/location/'
+    r = session.get(url, headers=headers, verify=False)
+    p = 0
+    soup =BeautifulSoup(r.text, "html.parser")
     # Fetch stores
-    stores=driver.find_elements_by_class_name("two-col-f")
-    loc=driver.find_elements_by_link_text("DIRECTIONS")
-    for n in range(0,len(stores)-2):
-        location_name.append(stores[n].text.split("\n")[0])
-        street_address.append(stores[n].text.split("\n")[1])
-        city.append(stores[n].text.split("\n")[2].split(", ")[0])
-        state.append(stores[n].text.split("\n")[2].split(",")[1].split()[0])
-        zipcode.append(stores[n].text.split("\n")[2].split(",")[1].split()[1])
-        phone.append(stores[n].text.split("\n")[3])
-        lat, lon = parse_geo(loc[n].get_attribute('href'))
-        latitude.append(lat)
-        longitude.append(lon)
-    for n in range(0,len(location_name)): 
+    divlist = soup.findAll('div',{'class':'two-col-f'})
+    print(len(divlist))
+    for n in range(0,len(divlist)-2):
+        title = divlist[n].find('h6').text
+        try:
+            street = divlist[n].find('span',{'itemprop':'streetAddress'}).text
+        except:
+            street = '<MISSING>'
+        try:
+            city = divlist[n].find('span',{'itemprop':'addressLocality'}).text
+        except:
+            city = '<MISSING>'
+        try:
+            state = divlist[n].find('span',{'itemprop':'addressRegion'}).text
+        except:
+            state = '<MISSING>'
+        try:
+            pcode = divlist[n].find('span',{'itemprop':'postalCode'}).text
+        except:
+            pcode = '<MISSING>'
+        try:
+            phone = divlist[n].find('p',{'itemprop':'telephone'}).text
+        except:
+            phone = '<MISSING>'
+        try:
+           
+            coord = divlist[n].find('a')['href']
+            lat, longt = parse_geo(coord)
+        except:
+            lat =  '<MISSING>'
+            longt =  '<MISSING>'
+            
         data.append([
-            'https://studiothree.com/',
-            location_name[n],
-            street_address[n],
-            city[n],
-            state[n],
-            zipcode[n],
-            'US',
-            '<MISSING>',
-            phone[n],
-            '<MISSING>',
-            latitude[n],
-            longitude[n],
-            '<MISSING>'
-        ])
-    driver.quit()
+                        'https://studiothree.com/',
+                        'https://studiothree.com/location/',                   
+                        title,
+                        street,
+                        city,
+                        state,
+                        pcode,
+                        'US',
+                        '<MISSING>',
+                        phone,
+                        '<MISSING>',
+                        lat,
+                        longt,
+                        '<MISSING>'
+                    ])
+        #print(p,data[p])
+        #p += 1
+        
+   
     return data
 
 def scrape():
