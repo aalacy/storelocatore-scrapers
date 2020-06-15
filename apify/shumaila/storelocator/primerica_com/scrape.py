@@ -71,7 +71,8 @@ def fetch_data():
                                 alink = li_list[m].find('a')                       
                                 title = alink.text
                                 alink = alink['href']
-                                #alink = 'http://www.primerica.com/dmchoury'
+                                
+                                #print(alink)
                                 page3 = session.get(alink, headers=headers, verify=False)                    
                                 time.sleep(1)
                                 soup3 = BeautifulSoup(page3.text, "html.parser")                            
@@ -80,6 +81,7 @@ def fetch_data():
                                 address = cleanr.sub(' ', str(address))
                                 address = re.sub(pattern,' ',address).lstrip()
                                 #print(address)
+                                addrm = address
                                 address = usaddress.parse(address)
                                 i = 0
                                 street = ""
@@ -88,8 +90,7 @@ def fetch_data():
                                 pcode = ""
                                 while i < len(address):
                                     temp = address[i]
-                                    if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or \
-                                            temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
+                                    if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
                                         "USPSBoxID") != -1:
                                         street = street + " " + temp[0]
                                     if temp[1].find("PlaceName") != -1:
@@ -101,10 +102,7 @@ def fetch_data():
                                     i += 1
 
                                
-                                street = street.lstrip().replace(',','')
-                                city = city.lstrip().replace(',','')
-                                state = state.lstrip().replace(',','')
-                                pcode = pcode.lstrip().replace(',','')
+                                
                                 
                                 phone = soup3.find('div',{'class':'telephoneLabel'}).text
                                 phone = phone.replace('Office: ','')
@@ -127,7 +125,26 @@ def fetch_data():
                                     phone = "<MISSING>"
                                 i = 0
                                 flag = True
-                                #print("Data", len(data))
+                                if len(state) > 2 and state !="<MISSING>" and  pcode == "<MISSING>":
+                                    print('enter')
+                                    state = state.lstrip()
+                                    state = state[0:2]
+                                    pcode = addrm[addrm.find(state)+2:len(addrm)]
+                                if state == "<MISSING>" and  pcode == "<MISSING>" or len(pcode) < 5:
+                                    print("YES")
+                                    street,state = addrm.split(', ')
+                                    state = state.lstrip()
+                                    state,pcode = state.split(' ',1)
+                                    pcode = pcode.lstrip()
+                                    temp = []
+                                    city = street.split(' ')[-1]
+                                    #city = temp[-1]
+                                    street = street.replace(city,'')
+                                    
+                                street = street.lstrip().replace(',','')
+                                city = city.lstrip().replace(',','')
+                                state = state.lstrip().replace(',','')
+                                pcode = pcode.lstrip().replace(',','')
                                 try:
                                     for i in range(0,len(data)):                                        
                                         #print(i, pcode,data[i][6])
@@ -141,6 +158,7 @@ def fetch_data():
                                 if state == "NF":
                                     state = "NL"
                                 if state == "PQ":
+                                    
                                     state = "QC"
                                 if flag:
                                     data.append([
@@ -150,7 +168,7 @@ def fetch_data():
                                             street,
                                             city,
                                             state,
-                                            pcode,
+                                            pcode.rstrip(),
                                             ccode,
                                             "<MISSING>",
                                             phone,
@@ -163,6 +181,7 @@ def fetch_data():
                                 #print(street,city,state,pcode,phone)
                                     #print(p,data[p])
                                     p += 1
+                                    #input()
                                 #input()
                                 
                             except Exception as e:
