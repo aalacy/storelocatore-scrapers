@@ -1,3 +1,4 @@
+# -*- coding: cp1252 -*-
 import csv
 import urllib2
 from sgrequests import SgRequests
@@ -18,10 +19,12 @@ def fetch_data():
     url = 'https://www.blackwalnutcafe.com/locations/'
     r = session.get(url, headers=headers)
     for line in r.iter_lines():
+        if '<p class="address">' in line:
+            zcode = line.split('<p class="address">')[1].split('<')[0].rsplit(' ',1)[1]
         if 'See Location Details</a>' in line:
-            locs.append(line.split('href="')[1].split('"')[0])
+            locs.append(line.split('href="')[1].split('"')[0] + '|' + zcode)
     for loc in locs:
-        print('Pulling Location %s...' % loc)
+        print('Pulling Location %s...' % loc.split('|')[0])
         website = 'blackwalnutcafe.com'
         typ = '<MISSING>'
         hours = ''
@@ -34,7 +37,8 @@ def fetch_data():
         lng = '<MISSING>'
         store = '<MISSING>'
         phone = ''
-        r2 = session.get(loc, headers=headers)
+        zc = loc.split('|')[1]
+        r2 = session.get(loc.split('|')[0], headers=headers)
         lines = r2.iter_lines()
         for line2 in lines:
             if '<title>' in line2:
@@ -53,7 +57,6 @@ def fetch_data():
                 add = add.strip()
                 city = h.split(',')[0]
                 state = h.split(',')[1].strip().split(' ')[0]
-                zc = h.split('<')[0].rsplit(' ',1)[1]
             if 'itemprop="latitude" content="' in line2:
                 lat = line2.split('itemprop="latitude" content="')[1].split('"')[0]
             if 'itemprop="longitude" content="' in line2:
@@ -66,9 +69,9 @@ def fetch_data():
                     hours = hours + '; ' + hrs
         if hours == '':
             hours = '<MISSING>'
+        hours = hours.replace(' – ','-')
         hours = hours.replace('&#8211;','-')
-        zc = '<MISSING>'
-        yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        yield [website, loc.split('|')[0], name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
