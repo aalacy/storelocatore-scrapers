@@ -81,7 +81,7 @@ def fetch_data():
                 store.append(zipp if zipp else "<MISSING>")
                 store.append("US")
                 store.append("<MISSING>")
-                store.append(phone if phone else "<MISSING>")
+                store.append("<MISSING>")
                 store.append("<MISSING>")
                 store.append(latitude if latitude else "<MISSING>")
                 store.append(longitude if longitude else "<MISSING>")
@@ -127,9 +127,6 @@ def fetch_data():
                 store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
                 # print("----------------------",store)
                 yield store
-                
-    
-
 
 def scrape():
     data = fetch_data()

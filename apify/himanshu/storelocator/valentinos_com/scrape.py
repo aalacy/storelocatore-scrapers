@@ -30,6 +30,9 @@ def fetch_data():
         phone = (i['post_meta_fields']['phone'][0])
         hours_of_operation  =" ".join( list(BeautifulSoup(i['post_meta_fields']['hours'][0],'lxml').stripped_strings)).replace("\r\n"," ").split("Dining Room")[0].split("Buffet")[0].split('Party Rooms')[0]
         page_url = i['link']
+        # print(page_url)
+        # "https://valentinos-omaha-la-vista-72nd-giles-rd.securebrygid.com/zgrid/themes/843/intro/index.jsp"
+        # "https://valentinos-omaha-south-132nd-center-st.securebrygid.com/zgrid/themes/843/intro/index.jsp"
         store_number = i['id']
         store = []
         store.append(base_url if base_url else "<MISSING>")
