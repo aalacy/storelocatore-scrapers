@@ -1,35 +1,11 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import requests
 import json
 import sgzip
-from concurrent.futures import ThreadPoolExecutor
-session = SgRequests()
-requests.packages.urllib3.disable_warnings()
 
 
-def get_url(data):
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
-        "content-type": "application/json;charset=UTF-8",
-        'X-Requested-With':"XMLHttpRequest"    
-    }
-
-
-
-    data = requests.get(data,headers=headers,verify=False)
-    try:
-        return data
-    except:
-        pass
-
-def _send_multiple_rq(vk):
-    with ThreadPoolExecutor(max_workers=len(vk)) as pool:
-        # for data in list(pool.map(get_url,list_of_urls)):
-        return list(pool.map(get_url,vk))
-                # print(data.text)
 
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
@@ -82,38 +58,22 @@ def fetch_data():
     zip_code = search.next_zip()  
    
     address=[]
-    list_of_urls=[]
     while zip_code:
         # if len(list_of_urls)==5:
+
+        k={}
         #print(zip_code)
         print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords = []
         get_url='https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE)
-        list_of_urls.append(get_url)
-        # if len(list_of_urls)==5:
-        #     break
 
-        # try:
-        #     k = session.get(get_url,headers=headers).json()   
-        # except:
-        #     pass
-        #print('https://owners.honda.com/service-maintenance/dealer-search?zip='+str(zip_code)+'&searchRadius='+str(MAX_DISTANCE))
-
-        if current_results_len < MAX_RESULTS:
-            # print("max distance update")
-            search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
-
-    data = _send_multiple_rq(list_of_urls)
-    k={}
-    for r in data:
+        headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',
+        "content-type": "application/json;charset=UTF-8",
+        'X-Requested-With':"XMLHttpRequest"    
+        }
         try:
-            k = r.json()
+            k = requests.get(get_url,headers=headers).json()
         except:
             pass
         name =''
@@ -163,6 +123,20 @@ def fetch_data():
                     continue
                 addresses.append(tem_var[2])
                 yield tem_var
+    
+      
+        if current_results_len < MAX_RESULTS:
+            # print("max distance update")
+            search.max_distance_update(MAX_DISTANCE)
+        elif current_results_len == MAX_RESULTS:
+            # print("max count update")
+            search.max_count_update(result_coords)
+        else:
+            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+        zip_code = search.next_zip()
+
+    # data = _send_multiple_rq(list_of_urls)
+   
 def scrape():
     data = fetch_data()
     write_output(data)
