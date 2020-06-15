@@ -20,6 +20,7 @@ def write_output(data):
 
 
 def fetch_data():
+    addresses = []
     
     url = "https://www.google.com/maps/vt?pb=!1m4!1m3!1i9!2i140!3i192!1m4!1m3!1i9!2i140!3i193!1m4!1m3!1i9!2i141!3i192!1m4!1m3!1i9!2i141!3i193!1m4!1m3!1i9!2i140!3i194!1m4!1m3!1i9!2i141!3i194!1m4!1m3!1i9!2i142!3i192!1m4!1m3!1i9!2i142!3i193!1m4!1m3!1i9!2i143!3i192!1m4!1m3!1i9!2i143!3i193!1m4!1m3!1i9!2i142!3i194!1m4!1m3!1i9!2i143!3i194!2m3!1e0!2sm!3i516231764!2m43!1e2!2sspotlight!4m2!1sgid!2sgkigfbUHJKAzuvMRGjcwbA!5i1!8m36!11e11!12m19!3m1!3s0x0%3A0x2b91b0ef5aab2dbf!3m1!3s0x0%3A0x75b8d84fbd536d87!3m1!3s0x0%3A0x30491ea7ca95e375!3m1!3s0x0%3A0x714778b0ae298301!3m1!3s0x0%3A0x7bf24080c34f4f5!3m1!3s0x0%3A0xfaad827a4e11d859!3m1!3s0x0%3A0xe903608cfb2b91bb!3m1!3s0x0%3A0xb1303661a9326f96!10b0!11b1!20e3!13m12!2shh%2Chplexp%2Ca!14b1!18m5!5b0!6b0!9b1!12b1!16b0!22m3!6e2!7e3!8e2!19u14!19u29!3m12!2sen-US!3sUS!5e289!12m4!1e68!2m2!1sset!2sRoadmap!12m3!1e37!2m1!1ssmartmaps!4e3!12m1!5b1&client=google-maps-embed&token=32784"
     response = requests.request("GET", url).json()
@@ -55,6 +56,9 @@ def fetch_data():
                 store.append(longitude if longitude else "<MISSING>")
                 store.append(hours_of_operation if hours_of_operation else "<MISSING>")
                 store.append("<MISSING>")
+                if store[2] in addresses :
+                    continue
+                addresses.append(store[2])
                 yield store
                 # print("~~~~~~~~~~~~~~~~~~~~~~~~~",store)
 

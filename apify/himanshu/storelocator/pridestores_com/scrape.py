@@ -4,7 +4,7 @@ import pdb
 import requests
 from lxml import etree
 import json
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs
 
 base_url = 'https://pridestores.com'
 
@@ -31,6 +31,17 @@ def fetch_data():
     #   'x-xsrf-token': '1591764301|qXg8PlC4AODi',
     'Content-Type': 'application/json'
     }
+    dics={}
+    ldata = bs(session.get("https://www.pridestores.com/wl").text,'lxml')
+    lats = ldata.find(lambda tag: (tag.name == "script" or tag.name == "h2") and "var serviceTopology" in tag.text.strip()).text.split("var publicModel =")[1].split("var googleAnalytics")[0].replace('"};','"}')
+    for q in json.loads(lats)['htmlEmbeds']:
+        #print(len( json.loads(q['content']['html'].replace("</script>",'').replace("<script type='application/ld+json'>",''))['hasMap']))
+        for gmap in json.loads(q['content']['html'].replace("</script>",'').replace("<script type='application/ld+json'>",''))['hasMap']:
+            
+            lat = gmap.split("/@")[1].split(',')[0]
+            log = gmap.split("/@")[1].split(',')[1]
+            dics[gmap.split("place/")[-1].split(',')[0].replace("+",' ').lower()] = {"lat":lat,"log":log}
+    # print(dics)
 
     request = session.post(url, headers=headers, data="[\"Locations\",null,[{\"city\":\"asc\"}],0,32,null,null]")
 
@@ -49,12 +60,15 @@ def fetch_data():
         # print("https://www.pridestores.com"+store['url'])
         page_url = "https://www.pridestores.com"+store['url']
         r = requests.get("https://www.pridestores.com"+store['url'])
-        soup = BeautifulSoup(r.text,"html.parser")
-        a = soup.find_all("a",{"href":re.compile("https://www.google.com/maps")})
-        # if a!=[]:
-        #     latitude=soup.find_all("a",{"href":re.compile("https://www.google.com/maps")})[0]['data-content'].split("/@")[1].split(",")[1]
-        #     print(soup.find_all("a",{"href":re.compile("https://www.google.com/maps")})[0]['data-content'].split("/@")[1].split(",")[2])
-        # print( soup.find_all("div",{"class":"txtNew","data-packed":"true"})[1].text)
+        soup = bs(r.text,"html.parser")
+
+        # lats = soup.find(lambda tag: (tag.name == "script" or tag.name == "h2") and "var serviceTopology" in tag.text.strip()).text.split("var publicModel =")[1].split("var googleAnalytics")[0].replace('"};','"}')
+        # for q in json.loads(lats)['htmlEmbeds']:
+        #     for gmap in json.loads(q['content']['html'].replace("</script>",'').replace("<script type='application/ld+json'>",''))['hasMap']:
+        #         lat = gmap.split("/@")[1].split(',')[0]
+        #         log = gmap.split("/@")[1].split(',')[1]
+        #         print(gmap.split("place/")[-1].split(',')[0].replace("+",' '))
+
         if index==0:
             try:
                 location_name = soup.find_all("div",{"class":"txtNew","data-packed":"true"})[1].text
@@ -80,6 +94,15 @@ def fetch_data():
         store1=[]
         store1.append("https://www.pridestores.com/")
         store1.append(location_name)
+        #print(street_address.lower())
+        if street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st') in dics:
+            # print( dics[street_address.lower().replace("n.",'n') ])
+            latitude = dics[street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st') ]['lat']
+            longitude = dics[street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st') ]['log']
+        else:
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+
         store1.append(street_address)
         store1.append(city)
         store1.append(state)
@@ -88,8 +111,8 @@ def fetch_data():
         store1.append("<MISSING>")
         store1.append(phone if phone else "<MISSING>")
         store1.append("<MISSING>")
-        store1.append("<MISSING>")
-        store1.append( "<MISSING>")
+        store1.append(latitude)
+        store1.append(longitude)
         store1.append(hours if hours else "<MISSING>")
         store1.append(page_url)
      
