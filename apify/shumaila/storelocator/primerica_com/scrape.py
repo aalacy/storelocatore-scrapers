@@ -71,10 +71,11 @@ def fetch_data():
                                 alink = li_list[m].find('a')                       
                                 title = alink.text
                                 alink = alink['href']
-                                
+                                address =''
+                                addrm  = ''
                                 #print(alink)
                                 page3 = session.get(alink, headers=headers, verify=False)                    
-                                time.sleep(1)
+                                time.sleep(2)
                                 soup3 = BeautifulSoup(page3.text, "html.parser")                            
                                 address = soup3.find('div',{'class':'officeInfoDataWidth'})
                                 cleanr = re.compile(r'<[^>]+>')
@@ -125,13 +126,13 @@ def fetch_data():
                                     phone = "<MISSING>"
                                 i = 0
                                 flag = True
-                                if len(state) > 2 and state !="<MISSING>" and  pcode == "<MISSING>":
-                                    print('enter')
+                                if len(state) > 2 and state !="<MISSING>" and  pcode == "<MISSING>" and sec == 1:
+                                   # print('enter')
                                     state = state.lstrip()
                                     state = state[0:2]
                                     pcode = addrm[addrm.find(state)+2:len(addrm)]
-                                if state == "<MISSING>" and  pcode == "<MISSING>" or len(pcode) < 5:
-                                    print("YES")
+                                if (sec == 1) and (state == "<MISSING>" and  pcode == "<MISSING>") or (len(pcode) < 5):
+                                    #print("YES")
                                     street,state = addrm.split(', ')
                                     state = state.lstrip()
                                     state,pcode = state.split(' ',1)
@@ -144,11 +145,11 @@ def fetch_data():
                                 street = street.lstrip().replace(',','')
                                 city = city.lstrip().replace(',','')
                                 state = state.lstrip().replace(',','')
-                                pcode = pcode.lstrip().replace(',','')
+                                pcode = pcode.lstrip().replace(',','').rstrip()
                                 try:
                                     for i in range(0,len(data)):                                        
                                         #print(i, pcode,data[i][6])
-                                        if pcode == data[i][6]:
+                                        if alink == data[i][1] and title == data[i][2]:
                                             #print("exist")
                                             flag = False
                                             break
