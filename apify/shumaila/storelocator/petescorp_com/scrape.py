@@ -1,10 +1,14 @@
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from sgrequests import SgRequests
+import html
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
+    'content-type': 'application/x-www-form-urlencoded'
+}
+
 
 
 def write_output(data):
@@ -18,93 +22,67 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_driver():
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument("--disable-notifications")  
-    #chrome_path = 'c:\\Users\\Dell\\local\\chromedriver.exe'
-    #return webdriver.Chrome(chrome_path,chrome_options=options)
-    return webdriver.Chrome('chromedriver',chrome_options=options)
-
 def fetch_data():
-    # Your scraper here
+
     data = []
-    url = 'https://petescorp.com/home-page/store-locator/'
-    driver = get_driver()
-
-    #time.sleep(3)
-    driver.set_page_load_timeout(60)
-    p = 0
-    try:
-        driver.get(url)
-       
-    except:
-        pass
-    time.sleep(3)
-    #driver.back()
     
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-   
-    link_list = soup.findAll('div', {'class': 'results_wrapper'})
-    print(len(link_list))
-
-    for repo in link_list:
-        #store = repo['id']
-        #store = store.replace('slp_results_wrapper_','')
-        title = repo.find('span',{'class':'location_name'}).text
-        start = title.find('PETES')
-        start = title.find(' ',start)+1
-        end = title.find(' ',start)
-        if end == -1:
-            end = len(title)
-        store = title[start:end]
-        street = repo.find('span',{'class':'slp_result_street'}).text
-        detail =  repo.find('span',{'class':'slp_result_citystatezip'}).text
-        city = detail[0:detail.find(',')]
-        detail = detail[detail.find(',')+1:len(detail)]
-        detail = detail.lstrip()
-        state = detail[0:detail.find(' ')]
-        pcode = detail[detail.find(' ')+1:len(detail)]
-        phone = repo.find('span',{'class':'slp_result_phone'}).text
-        hours = repo.find('span',{'class':'slp_result_hours'}).text
+    payload = {
+    'action': 'csl_ajax_onload',
+    'address': '',
+    'formdata': 'addressInput%3D',
+    'lat': '37.09024',
+    'lng': '-95.712891',
+    'options%5Bdistance_unit%5D': 'miles',
+    'options%5Bdropdown_style%5D': 'none',
+    'options%5Bignore_radius%5D': '0',
+    'options%5Bimmediately_show_locations%5D': '1',
+    'options%5Binitial_radius%5D': '',
+    'options%5Blabel_directions%5D': 'Directions',
+    'options%5Blabel_email%5D': '',
+    'options%5Blabel_fax%5D': 'Fax',
+    'options%5Blabel_phone%5D': 'Phone',
+    'options%5Blabel_website%5D': 'Website',
+    'options%5Bloading_indicator%5D': '',
+    'options%5Bmap_center%5D': 'United+States',
+    'options%5Bmap_center_lat%5D': '37.09024',
+    'options%5Bmap_center_lng%5D': '-95.712891',
+    'options%5Bmap_domain%5D': 'maps.google.com',
+    'options%5Bmap_end_icon%5D': 'http%3A%2F%2Fpetescorp.com%2Fwp-content%2Fuploads%2F2019%2F06%2FPetes-Map-Logo.png',
+    'options%5Bmap_home_icon%5D': 'https%3A%2F%2Fpetescorp.com%2Fwp-content%2Fplugins%2Fstore-locator-le%2Fimages%2Ficons%2Fbulb_orange.png',
+    'options%5Bmap_region%5D': 'us',
+    'options%5Bmap_type%5D': 'roadmap',
+    'options%5Bno_autozoom%5D': '0',
+    'options%5Buse_sensor%5D': 'false',
+    'options%5Bzoom_level%5D': '12',
+    'options%5Bzoom_tweak%5D': '0',
+    'radius': ''
+    }
+    p = 0
+    session = SgRequests()
+    r = session.post('https://petescorp.com/wp-admin/admin-ajax.php', headers=headers, data=payload)
+    r.raise_for_status()
+    data_dict = r.json()
+    for location in data_dict['response']:
+        lat = html.unescape(location['lat'])
+        longt = html.unescape(location['lng'])
+        title = html.unescape(location['name'])
+        store = html.unescape(location['id'])
+        hours = html.unescape(location['hours'])
+        phone = html.unescape(location['phone'])
+        street = html.unescape(location['address'])
+        city = html.unescape(location['city'])
+        state = html.unescape(location['state'])
+        pcode = html.unescape(location['zip'])
         hours = hours.replace('am', ' am')
         hours = hours.replace('AM', ' AM')
         hours = hours.replace('PM', ' PM')
         hours = hours.replace('pm', ' pm')
         hours = hours.replace('-', ' - ')
         hours = hours.replace('OPEN ','')
-        '''direction = repo.find('span',{'class':'slp_result_directions'}).find('a')
-        direction = direction['href']
-        #print(direction)
-        driver.get(direction)
-        time.sleep(3)
-        link = driver.current_url
-        start = link.find('@')+1
-        end = link.find(',',start)
-        lat = link[start:end]
-        start = end + 1
-        end = link.find(',',start)
-        longt = link[start:end]'''
-        if len(hours) < 3:
-            hours = "<MISSING>"
-        if len(phone) < 3:
-            phone = "<MISSING>"
-        if len(pcode) < 3:
-            pcode = "<MISSING>"
-        if len(state) < 2:
-            state = "<MISSING>"
-        if len(city) < 3:
-            city = "<MISSING>"
-        if len(street) < 3:
-            street = "<MISSING>"
         if len(store) < 1 or len(store)>5:
             store = "<MISSING>"
-            
-        
-        #print(link)
-        
+        if len(hours) < 2:
+            hours = '<MISSING>'
         data.append([
                             'https://petescorp.com/',
                             'https://petescorp.com/home-page/store-locator/',                   
@@ -117,15 +95,15 @@ def fetch_data():
                             store,
                             phone,
                             "<MISSING>",
-                            "<MISSING>",
-                            "<MISSING>",
+                            lat,
+                            longt,
                             hours
                         ])
-        print(p,data[p])
+        #print(p,data[p])
         p += 1
-        
-        
-    driver.quit()   
+       
+    
+    
     return data
 
 
