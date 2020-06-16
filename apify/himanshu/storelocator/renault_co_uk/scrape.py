@@ -6,6 +6,9 @@ import json
 import sgzip
 import requests
 session = SgRequests()
+
+
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -19,7 +22,7 @@ def write_output(data):
 
 def fetch_data():
     MAX_RESULTS = 50
-    MAX_DISTANCE = 30
+    MAX_DISTANCE = 20
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes=['UK'])
     zip_code = search.next_zip()
@@ -30,7 +33,7 @@ def fetch_data():
     
     while zip_code:
         result_coords =[]
-        #print("remaining zipcodes: " + str(len(search.zipcodes)))
+        print("remaining zipcodes: " + str(len(search.zipcodes)))
 
         url = "https://dealerlocator.renault.co.uk/data/GetDealersList"
         payload = 'postcode='+str(zip_code)
@@ -64,9 +67,10 @@ def fetch_data():
                 hours=""
                 if data['OpeningHours'] != None:
                     for h in data['OpeningHours']:
+                        # print(h)
                         if h["Value"] != None:
                             if h["Value"]:
-                                hours = h["Label"]+ ' '+h["Value"]
+                                hours = hours+ ' '+h["Label"]+ ' '+h["Value"]
                 else:
                     hours = "<MISSING>"
                 result_coords.append((lat,lng))

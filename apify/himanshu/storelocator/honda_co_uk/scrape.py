@@ -61,6 +61,10 @@ def fetch_data():
             street_address = street_address.replace("Erdington","").strip()
             city = "Erdington"
             state = "Birmingham"
+        if "Wandsworth" in street_address:
+            street_address = "60-62 West Hill Road"
+            city = "Wandsworth"
+            state = "London"
         store = []
         store.append(base_url)
         store.append(location_name)
