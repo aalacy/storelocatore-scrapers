@@ -1,9 +1,9 @@
 import csv
 import urllib2
-import requests
+from sgrequests import SgRequests
 import json
 
-session = requests.Session()
+session = SgRequests()
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'}
 
 def write_output(data):
@@ -15,29 +15,26 @@ def write_output(data):
 
 def fetch_data():
     locs = []
-    url = 'https://locations.wafflehouse.com/api/587d236eeb89fb17504336db/locations-details?locale=en_US&ids='
+    url = 'https://wafflehouse.locally.com/stores/conversion_data?has_data=true&company_id=117995&store_mode=&style=&color=&upc=&category=&inline=1&show_links_in_list=&parent_domain=&map_center_lat=40&map_center_lng=-95&map_distance_diag=1000000&sort_by=proximity&no_variants=0&only_retailer_id=&dealers_company_id=&only_store_id=false&uses_alt_coords=false&q=false&zoom_level=4'
     r = session.get(url, headers=headers, stream=True)
-    for item in json.loads(r.content)['features']:
+    for item in json.loads(r.content)['markers']:
         opinfo = '<MISSING>'
-        name = item['properties']['name']
-        store = item['properties']['branch']
-        add = item['properties']['addressLine1']
-        add2 = item['properties']['addressLine2']
-        add = add + ' ' + add2
-        add = add.strip()
+        name = item['name']
+        store = item['id']
+        add = item['address']
         if "u'isClosed': True" in str(item):
             opinfo = 'TEMPORARILY CLOSED'
-        city = item['properties']['city']
-        state = item['properties']['province']
-        zc = item['properties']['postalCode']
-        phone = item['properties']['phoneNumber']
-        lat = item['geometry']['coordinates'][0]
-        lng = item['geometry']['coordinates'][1]
+        city = item['city']
+        state = item['state']
+        zc = item['zip']
+        phone = item['phone']
+        lat = item['lat']
+        lng = item['lng']
         country = 'US'
         website = 'wafflehouse.com'
         typ = 'Restaurant'
         hours = '24/7'
-        loc = 'https://locations.wafflehouse.com/' + item['properties']['slug']
+        loc = '<MISSING>'
         yield [website, loc, name, opinfo, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
