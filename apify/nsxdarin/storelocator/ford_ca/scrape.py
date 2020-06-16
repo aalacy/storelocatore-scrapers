@@ -22,50 +22,56 @@ def fetch_data():
         ccity = loc.split(',')[0].strip()
         cprov = loc.split(',')[1].strip()
         url = 'https://www.ford.ca/services/dealer/Dealers.json?make=Ford&radius=500&filter=&minDealers=1&maxDealers=100&city=' + ccity + '&province=' + cprov
-        r = session.get(url, headers=headers)
-        if '"Dealer":[{' in r.content:
-            for item in json.loads(r.content)['Response']['Dealer']:
-                lng = item['Longitude']
-                lat = item['Latitude']
-                name = item['Name']
-                typ = item['dealerType']
-                website = 'ford.ca'
-                purl = item['URL']
-                hours = ''
-                add = item['Address']['Street1'] + ' ' + item['Address']['Street2'] + ' ' + item['Address']['Street3']
-                add = add.strip()
-                city = item['Address']['City']
-                state = item['Address']['Province']
-                country = item['Address']['Country'][:2]
-                zc = item['Address']['PostalCode']
-                store = item['SalesCode']
-                phone = item['Phone']
-                daytext = str(item['SalesHours'])
-                daytext = daytext.replace("'",'"')
-                daytext = daytext.replace('u"','"').replace(' {','{')
-                days = daytext.split(',{')
-                for day in days:
-                    if '"name": "' in day:
-                        dname = day.split('"name": "')[1].split('"')[0]
-                        if '"closed": "true"' in day:
-                            hrs = 'Closed'
-                        else:
-                            hrs = day.split('"open": "')[1].split('"')[0] + '-' + day.split('"close": "')[1].split('"')[0]
-                        if hours == '':
-                            hours = dname + ': ' + hrs
-                        else:
-                            hours = hours + '; ' + dname + ': ' + hrs
-                try:
-                    purl = item['URL']
-                except:
-                    purl = '<MISSING>'
-                if store not in ids:
-                    ids.append(store)
-                    if hours == '':
-                        hours = '<MISSING>'
-                    if phone == '':
-                        phone = '<MISSING>'
-                    yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+        LocFound = True
+        while LocFound:
+            try:
+                LocFound = False
+                r = session.get(url, headers=headers, timeout=10)
+                if '"Dealer":[{' in r.content:
+                    for item in json.loads(r.content)['Response']['Dealer']:
+                        lng = item['Longitude']
+                        lat = item['Latitude']
+                        name = item['Name']
+                        typ = item['dealerType']
+                        website = 'ford.ca'
+                        purl = item['URL']
+                        hours = ''
+                        add = item['Address']['Street1'] + ' ' + item['Address']['Street2'] + ' ' + item['Address']['Street3']
+                        add = add.strip()
+                        city = item['Address']['City']
+                        state = item['Address']['Province']
+                        country = item['Address']['Country'][:2]
+                        zc = item['Address']['PostalCode']
+                        store = item['SalesCode']
+                        phone = item['Phone']
+                        daytext = str(item['SalesHours'])
+                        daytext = daytext.replace("'",'"')
+                        daytext = daytext.replace('u"','"').replace(' {','{')
+                        days = daytext.split(',{')
+                        for day in days:
+                            if '"name": "' in day:
+                                dname = day.split('"name": "')[1].split('"')[0]
+                                if '"closed": "true"' in day:
+                                    hrs = 'Closed'
+                                else:
+                                    hrs = day.split('"open": "')[1].split('"')[0] + '-' + day.split('"close": "')[1].split('"')[0]
+                                if hours == '':
+                                    hours = dname + ': ' + hrs
+                                else:
+                                    hours = hours + '; ' + dname + ': ' + hrs
+                        try:
+                            purl = item['URL']
+                        except:
+                            purl = '<MISSING>'
+                        if store not in ids:
+                            ids.append(store)
+                            if hours == '':
+                                hours = '<MISSING>'
+                            if phone == '':
+                                phone = '<MISSING>'
+                            yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            except:
+                LocFound = True
 
 def scrape():
     data = fetch_data()
