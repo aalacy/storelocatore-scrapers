@@ -33,7 +33,7 @@ def fetch_data():
         country = 'US'
         website = 'wafflehouse.com'
         typ = 'Restaurant'
-        hours = '24/7'
+        hours = 'Mon-Sun: 24 Hours'
         loc = '<MISSING>'
         yield [website, loc, name, opinfo, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
