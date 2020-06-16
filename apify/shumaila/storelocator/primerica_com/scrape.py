@@ -80,28 +80,30 @@ def fetch_data():
                                 address = soup3.find('div',{'class':'officeInfoDataWidth'})
                                 cleanr = re.compile(r'<[^>]+>')
                                 address = cleanr.sub(' ', str(address))
-                                address = re.sub(pattern,' ',address).lstrip()
                                 #print(address)
-                                addrm = address
-                                address = usaddress.parse(address)
+                                address = re.sub(pattern,'\n',address).lstrip()
+                                address= address.splitlines()
+                                #print(address)
+                                city = ''
+                                state = ''
                                 i = 0
-                                street = ""
-                                city = ""
-                                state = ""
-                                pcode = ""
-                                while i < len(address):
-                                    temp = address[i]
-                                    if temp[1].find("Address") != -1 or temp[1].find("Street") != -1 or temp[1].find("Recipient") != -1 or temp[1].find("BuildingName") != -1 or temp[1].find("USPSBoxType") != -1 or temp[1].find(
-                                        "USPSBoxID") != -1:
-                                        street = street + " " + temp[0]
-                                    if temp[1].find("PlaceName") != -1:
-                                        city = city + " " + temp[0]
-                                    if temp[1].find("StateName") != -1:
-                                        state = state + " " + temp[0]
-                                    if temp[1].find("ZipCode") != -1:
-                                        pcode = pcode + " " + temp[0]
+                                street = address[i]
+                                i += 1
+                                if address[i].find(',') == -1:
+                                    street = street + ' ' +address[i]
                                     i += 1
-
+                                else:
+                                    city,state = address[i].split(', ')
+                                   
+                                
+                                if address[i].find(',') > -1:
+                                    city,state = address[i].split(', ')
+                                    
+                                i += 1
+                                pcode = address[i]                                  
+                                    
+                                #print(street, city,state,pcode)    
+                                    
                                
                                 
                                 
@@ -126,21 +128,7 @@ def fetch_data():
                                     phone = "<MISSING>"
                                 i = 0
                                 flag = True
-                                if len(state) > 2 and state !="<MISSING>" and  pcode == "<MISSING>" and sec == 1:
-                                   # print('enter')
-                                    state = state.lstrip()
-                                    state = state[0:2]
-                                    pcode = addrm[addrm.find(state)+2:len(addrm)]
-                                if (sec == 1) and (state == "<MISSING>" and  pcode == "<MISSING>") or (len(pcode) < 5):
-                                    #print("YES")
-                                    street,state = addrm.split(', ')
-                                    state = state.lstrip()
-                                    state,pcode = state.split(' ',1)
-                                    pcode = pcode.lstrip()
-                                    temp = []
-                                    city = street.split(' ')[-1]
-                                    #city = temp[-1]
-                                    street = street.replace(city,'')
+                               
                                     
                                 street = street.lstrip().replace(',','')
                                 city = city.lstrip().replace(',','')
