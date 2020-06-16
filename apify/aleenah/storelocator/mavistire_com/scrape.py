@@ -36,7 +36,10 @@ def fetch_data():
         try:
             data = soup.find('table').find_all('script')[2].text
         except:
-            continue #closed
+            try:
+                data = soup.find('table').find('script', {'language': 'javascript'}).text
+            except:
+                continue #closed
         jsonValue = '{%s}' % (data.partition('{')[2].rpartition('}')[0],)
         #print("["+jsonValue.replace("\'", "\"").replace(':"','":"').replace('",','","').replace('{','{"').replace(',"{',',{').replace(',Lng:','","Lng":"').replace('"Lat:','"Lat":"').replace(',fillcolor','","fillcolor')+"]")
 
