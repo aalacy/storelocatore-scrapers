@@ -81,7 +81,7 @@ def fetch_data():
                 store.append(zipp if zipp else "<MISSING>")
                 store.append("US")
                 store.append("<MISSING>")
-                store.append("<MISSING>")
+                store.append(phone_numbers)
                 store.append("<MISSING>")
                 store.append(latitude if latitude else "<MISSING>")
                 store.append(longitude if longitude else "<MISSING>")

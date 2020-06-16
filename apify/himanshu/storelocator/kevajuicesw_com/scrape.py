@@ -12,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -37,6 +37,9 @@ def fetch_data():
         store.append("http://www.kevajuicesw.com")
         store.append(name)
         store.append(lcoation_details[0])
+        if len(lcoation_details) == 1:
+            continue
+        # else:
         store.append(lcoation_details[1].split(",")[0])
         if len(lcoation_details[1].split(",")) > 2:
             store[-2] = store[-2] + lcoation_details[1].split(",")[0]
@@ -52,10 +55,15 @@ def fetch_data():
         store.append("US")
         store.append(name.split("#")[1].split(" ")[0])
         store.append(lcoation_details[-1] if len(lcoation_details) == 3 else location_hours[0])
-        store.append("location_hours")
         store.append("<MISSING>")
         store.append("<MISSING>")
-        store.append(" ".join(location_hours) if len(lcoation_details) == 3 else " ".join(list(p_tags[3].stripped_strings)))
+        store.append("<MISSING>")
+        hours = " ".join(location_hours) if len(lcoation_details) == 3 else " ".join(list(p_tags[3].stripped_strings))
+        if "Temporary Closed" in hours :
+            hours = "<MISSING>"
+        final_hours = (hours.replace("Hours ","").replace("(Drive Thru Only)",""))
+        store.append(final_hours)
+        store.append("http://www.kevajuicesw.com/locations/")
         return_main_object.append(store)
     return return_main_object
 

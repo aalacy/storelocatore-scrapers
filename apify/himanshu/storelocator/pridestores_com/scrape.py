@@ -35,7 +35,7 @@ def fetch_data():
     ldata = bs(session.get("https://www.pridestores.com/wl").text,'lxml')
     lats = ldata.find(lambda tag: (tag.name == "script" or tag.name == "h2") and "var serviceTopology" in tag.text.strip()).text.split("var publicModel =")[1].split("var googleAnalytics")[0].replace('"};','"}')
     for q in json.loads(lats)['htmlEmbeds']:
-        #print(len( json.loads(q['content']['html'].replace("</script>",'').replace("<script type='application/ld+json'>",''))['hasMap']))
+        # print(len( json.loads(q['content']['html'].replace("</script>",'').replace("<script type='application/ld+json'>",''))['hasMap']))
         for gmap in json.loads(q['content']['html'].replace("</script>",'').replace("<script type='application/ld+json'>",''))['hasMap']:
             
             lat = gmap.split("/@")[1].split(',')[0]
@@ -94,7 +94,7 @@ def fetch_data():
         store1=[]
         store1.append("https://www.pridestores.com/")
         store1.append(location_name)
-        #print(street_address.lower())
+        # print(street_address.lower())
         if street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st') in dics:
             # print( dics[street_address.lower().replace("n.",'n') ])
             latitude = dics[street_address.lower().replace("n.",'n').replace("234 east main st",'234 e main st') ]['lat']
@@ -114,7 +114,8 @@ def fetch_data():
         store1.append(latitude)
         store1.append(longitude)
         store1.append(hours if hours else "<MISSING>")
-        store1.append(page_url)
+        # if 
+        store1.append(page_url.lower())
      
         store1 = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store1]
         # print("----------------------",store1)
