@@ -40,6 +40,7 @@ def fetch_data():
         lng = '<MISSING>'
         store = '<MISSING>'
         phone = ''
+        zc = ''
         r2 = session.get(loc, headers=headers)
         for line2 in r2.iter_lines():
             if '<title>' in line2:
