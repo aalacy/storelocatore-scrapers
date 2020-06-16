@@ -68,9 +68,10 @@ def fetch_data():
                         for m in range(0, len(li_list)):
                             try:
                                 address = ''
-                                alink = li_list[m].find('a')                       
+                                alink = li_list[m].find('a')
+                                
                                 title = alink.text
-                                alink = alink['href']
+                                alink = alink['href']                               
                                 address =''
                                 addrm  = ''
                                 #print(alink)
@@ -83,7 +84,7 @@ def fetch_data():
                                 #print(address)
                                 address = re.sub(pattern,'\n',address).lstrip()
                                 address= address.splitlines()
-                                #print(address)
+                                print(address)
                                 city = ''
                                 state = ''
                                 i = 0
@@ -100,7 +101,13 @@ def fetch_data():
                                     city,state = address[i].split(', ')
                                     
                                 i += 1
-                                pcode = address[i]                                  
+                                pcode = address[i]
+                                if len(state) > 4:
+                                    street  = address[0] +' '+ address[1]
+                                    city, state = address[2].split(',',1)
+                                    state = state.lstrip()
+                                    pcode = address[3]
+                                    
                                     
                                 #print(street, city,state,pcode)    
                                     
