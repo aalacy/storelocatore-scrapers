@@ -92,7 +92,7 @@ def fetch_data():
                                         phone = '<MISSING>'
                                     if zc == '':
                                         zc = '<MISSING>'
-                                    stinfo = add + '|' + city + '|' + state
+                                    stinfo = name + '|' + add + '|' + city + '|' + state
                                     if stinfo not in alllocs and add != '':
                                         alllocs.append(stinfo)
                                         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
@@ -162,7 +162,7 @@ def fetch_data():
                                     phone = '<MISSING>'
                                 if zc == '':
                                     zc = '<MISSING>'
-                                stinfo = add + '|' + city + '|' + state
+                                stinfo = name + '|' + add + '|' + city + '|' + state
                                 if stinfo not in alllocs:
                                     alllocs.append(stinfo)
                                     yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
