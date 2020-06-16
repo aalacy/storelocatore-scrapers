@@ -9,7 +9,6 @@ import json
 from datetime import datetime
 import sgzip
 session = SgRequests()
-import requests
 def write_output(data):
     with open('data.csv', mode='w', newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -25,17 +24,21 @@ def fetch_data():
     addresses = []
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes=['gb'])
-    MAX_RESULTS = 50
-    MAX_DISTANCE = 20 
+    MAX_RESULTS = 100
+    MAX_DISTANCE = 20
     coord = search.next_coord()
     base_url = "https://www.bmw.co.uk/"
 
     while coord:
         # print("remaining zipcodes: " + str(len(search.zipcodes)))
+       
         result_coords = []
         json_data = session.get("https://discover.bmw.co.uk/proxy/api/dealers?q="+str(coord[0])+","+str(coord[1])+"&type=new").json()
         
+        
         for data in json_data:
+            if "message" in data:
+                continue
             
             location_name = data['dealer_name']
             street_address = ''
@@ -54,14 +57,15 @@ def fetch_data():
             lat = data['latitude']
             lng = data['longitude']
             page_url = data['url']
-            #print(page_url)
-            
-            soup = bs(session.get(page_url+"/contact-us/").text, "lxml")
-            if page_url == "https://www.buchananbmw.co.uk":
-                hours = "<MISSING>"
+           
+            if page_url:
+                if page_url == "https://www.buchananbmw.co.uk" or page_url == "https://www.ridgewaysalisburybmw.co.uk":
+                    hours = "<MISSING>"
+                else:
+                    soup = bs(session.get(page_url+"/contact-us/").text, "lxml")
+                    hours = " ".join(list(soup.find("section",{"class":"opening-hours"}).stripped_strings)).replace("Opening Hours","").strip()
             else:
-                hours = " ".join(list(soup.find("section",{"class":"opening-hours"}).stripped_strings)).replace("Opening Hours","").strip()
-            
+                hours = "<MISSING>"
             
             result_coords.append((lat,lng))
             store = []
