@@ -27,13 +27,11 @@ def fetch_data():
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
     repo_list = soup.find('div', {'id': 'eID-'})
-    repo_list = repo_list.findAll('a')
+    repo_list = repo_list.findAll('a')    
     
-    print(len(repo_list))
-    for repo in repo_list:
-        #link = repo.find('a')
+    for repo in repo_list:       
         link = repo['href']
-        if link.find('Order') == -1:
+        if repo.text.find('More Info') > -1:
            
             if len(link) > 3:
                 try:
@@ -41,7 +39,7 @@ def fetch_data():
                 except:
                     pass
                 soup = BeautifulSoup(page.text, "html.parser")
-                title = soup.find('div',{'class':'Location-Name lp-param lp-param-locationName'}).text
+                #title = soup.find('div',{'class':'Location-Name'}).text
                 #street = soup.find('div',{'class':'Address-line Address-streetOne'})
                 address = soup.findAll('div',{'class':'Address-line'})
                 #print(len(address))
@@ -76,6 +74,7 @@ def fetch_data():
                 pcode = state[end:len(state)]
                 state = temp
                 hours = hours.replace('day','day ')
+                title = city
                 data.append([
                             'https://www.romeospizza.com/',
                             link,
@@ -93,6 +92,7 @@ def fetch_data():
                             hours
                         ])
                 #print(p,data[p])
+                #print(time.strftime("%H:%M:%S", time.localtime(time.time())))
                 p += 1
                 
        
