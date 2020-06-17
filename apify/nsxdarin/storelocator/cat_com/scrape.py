@@ -28,7 +28,10 @@ def fetch_data():
                     name = item.split(',"dealerName":"')[1].split('"')[0]
                     lat = item.split('"latitude":')[1].split(',')[0]
                     lng = item.split('"longitude":')[1].split(',')[0]
-                    country = item.split('"countryCode":"')[1].split('"')[0]
+                    try:
+                        country = item.split('"countryCode":"')[1].split('"')[0]
+                    except:
+                        country = ''
                     add = item.split('"siteAddress":"')[1].split('"')[0] + ' ' + item.split('"siteAddress1":"')[1].split('"')[0]
                     add = add.strip()
                     pnums = item.split('"phoneNumberTypeId":')
