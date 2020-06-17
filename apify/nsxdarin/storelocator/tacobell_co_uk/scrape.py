@@ -61,7 +61,7 @@ def fetch_data():
                 else:
                     try:
                         hours = 'Mon: ' + line2.split('<td class="c-hours-details-row-day">Mon')[1].split('<span class="c-hours-details-row-intervals-instance-open">')[1].split('<')[0] + '-' + line2.split('<td class="c-hours-details-row-day">Mon')[1].split('<span class="c-hours-details-row-intervals-instance-close">')[1].split('<')[0]
-                    else:
+                    except:
                         hours = 'Mon: Closed'
                     try:
                         hours = hours + '; Tue: ' + line2.split('<td class="c-hours-details-row-day">Tue')[1].split('<span class="c-hours-details-row-intervals-instance-open">')[1].split('<')[0] + '-' + line2.split('<td class="c-hours-details-row-day">Tue')[1].split('<span class="c-hours-details-row-intervals-instance-close">')[1].split('<')[0]
