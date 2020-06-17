@@ -6,7 +6,6 @@ import json
 import sgzip
 import time
 
-
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -51,8 +50,8 @@ def request_wrapper(url,method,headers,data=None):
        return None
 
 def fetch_data():
-    MAX_RESULTS = 60
-    MAX_DISTANCE = 100
+    MAX_RESULTS = 50
+    MAX_DISTANCE = 40
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes=['UK'])
     coord = search.next_coord()
@@ -64,13 +63,15 @@ def fetch_data():
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36',}
     
     while coord:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
+        if len(search.zipcodes) == 0:
+            break
+        # print("remaining zipcodes: " + str(len(search.zipcodes)))
         result_coords =[]
         location_url = "https://www.subaru.co.uk/wp-admin/admin-ajax.php?action=store_search&lat="+str(coord)+"&lng="+str(coord)+"&max_results=25&search_radius=50&autoload=1"
         r = request_wrapper(location_url,"get",headers=headers)
         try:
             soup = r.json()
-            response = len(r.json())
+            current_results_len = len(r.json())
         except:
             pass
         for mp1 in soup:
@@ -79,6 +80,10 @@ def fetch_data():
             city = mp1['city']
             state = mp1['state']
             zipp = mp1['zip']
+
+            if street_address in adressessess :
+                continue
+            adressessess.append(street_address)
             country_code = mp1['country']
             phone =  mp1['phone']
             latitude = mp1['lat']
@@ -124,16 +129,14 @@ def fetch_data():
             store.append(longitude if longitude else "<MISSING>")
             store.append(hours_of_operation.replace('\n','').strip() if hours_of_operation else "<MISSING>")
             store.append(page_url if page_url else "<MISSING>")
+           
             # print("~~~~~~~~~~~~~~~~ ",store)
-            if store[2] in adressessess :
-                continue
-            adressessess.append(store[2])
             store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             yield store
-        if response < MAX_RESULTS:
+        if current_results_len < MAX_RESULTS:
             # print("max distance update")
             search.max_distance_update(MAX_DISTANCE)
-        elif response == MAX_RESULTS:
+        elif current_results_len == MAX_RESULTS:
             # print("max count update")
             search.max_count_update(result_coords)
         else:

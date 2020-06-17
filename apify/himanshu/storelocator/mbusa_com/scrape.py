@@ -50,7 +50,7 @@ def fetch_data():
             
                 if soup.find("div",{"class":re.compile("module-container js-module mod-department-hours mod-department-hours-theme2 mod-department-hours-theme2")}).find("a",{"class":"js-popover"}):
                 
-                    hr = soup.find("div",{"class":re.compile("module-container js-module mod-department-hours mod-department-hours-theme2 mod-department-hours-theme2")}).find("a",{"class":"js-popover"})['data-content']
+                    hr = soup.find_all("div",{"class":re.compile("module-container js-module mod-department-hours mod-department-hours-theme2 mod-department-hours-theme2")})[-1].find("a",{"class":"js-popover"})['data-content']
                     hours = " ".join(list(bs(hr, "lxml").find("table").stripped_strings))
                 elif soup.find("a",{"class":"header-contact__link header-contact__hours-link header-contact__hours-link_showed js-popover js-hours"}):
                     hours = " ".join(list(bs(soup.find("a",{"class":"header-contact__link header-contact__hours-link header-contact__hours-link_showed js-popover js-hours"})['data-content'], "lxml").find("table").find("tbody").stripped_strings))

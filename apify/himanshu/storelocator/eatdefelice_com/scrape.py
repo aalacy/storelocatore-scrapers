@@ -55,17 +55,15 @@ def fetch_data():
                 store.append(latitude if latitude else "<MISSING>")
                 store.append(longitude if longitude else "<MISSING>")
                 store.append(hours_of_operation if hours_of_operation else "<MISSING>")
-                store.append("<MISSING>")
+                store.append("http://eatdefelice.com/locations/")
                 if store[2] in addresses :
                     continue
                 addresses.append(store[2])
+                if "21536" in zipp:
+                    continue
                 store = [x.encode('ascii', 'ignore').decode('ascii').strip() if type(x) == str else x for x in store]
                 yield store
                 # print("~~~~~~~~~~~~~~~~~~~~~~~~~",store)
-
-   
-     
-
 
 def scrape():
     data = fetch_data()

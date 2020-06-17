@@ -12,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -22,19 +22,19 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.lawlersbarbecue.com"
+    json_data = session.get("https://gusto-dataaccessapi.azurewebsites.net/api/v2/2099/Location").json()
+    phone_dict = {}
+    for data in json_data:
+        phone_dict[data['Phone']] = data['LocationID']
+    # print(phone_dict)
     r = session.get("https://www.lawlersbarbecue.com/locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
-    geo_object = {}
-    for location in soup.find_all("div",{'class':"row sqs-row"}):
-        if location.find("strong") == None:
-            continue
-        if location.find("iframe") == None:
-            continue
-        geo_object[location.find("strong").text.split(" -")[0].lower()] = location.find("iframe")["src"]
+
     for script in soup.find_all("script",{"type":'application/ld+json'}):
         if '"location":' in script.text:
             location_list = json.loads(script.text)["location"]
+            
             for store_data in location_list:
                 store = []
                 store.append("https://www.lawlersbarbecue.com")
@@ -48,17 +48,22 @@ def fetch_data():
                 store.append("US")
                 store.append("<MISSING>")
                 store.append(store_data["telephone"])
+                phone_data = store_data["telephone"].replace("+1(","").replace(")","").replace("-","").replace(" ","")
+                try:
+                    page_url = ("https://order-online.azurewebsites.net/2099/"+str(phone_dict[phone_data])+"/")
+                except:
+                    page_url = "<MISSING>"
                 store.append("law lers barbecue")
-                if "!3d" in geo_object[store_data["name"].lower()]:
-                    store.append(geo_object[store_data["name"].lower()].split("!3d")[1].split("!")[0])
-                    store.append(geo_object[store_data["name"].lower()].split("!2d")[1].split("!")[0])
-                else:
-                    store.append(geo_object[store_data["name"].lower()].split("!1d")[1].split("!")[0])
-                    store.append(geo_object[store_data["name"].lower()].split("!2d")[1].split("!")[0])
-                del geo_object[store_data["name"].lower()]
+                coords = session.get(store_data["image"]).url
+                
+                store.append(coords.split("/%40")[1].split(",")[0])
+                # print(coords.split("/%40")[1].split(",")[1])
+                store.append(coords.split("/%40")[1].split(",")[1])
                 store.append(" ".join(store_data["openingHours"]))
-                return_main_object.append(store)
-    return return_main_object
+                store.append(page_url)
+                if "37091" in store_data["address"]["postalCode"]:
+                    continue
+                yield store
 
 def scrape():
     data = fetch_data()
