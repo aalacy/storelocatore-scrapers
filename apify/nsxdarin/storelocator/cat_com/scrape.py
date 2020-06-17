@@ -44,13 +44,16 @@ def fetch_data():
                     zc = item.split(',"sitePostal":"')[1].split('"')[0]
                     typ = ''
                     snums = item.split('{"serviceId":')
+                    donetyps = []
                     for snum in snums:
                         if '"serviceDesc":"' in snum:
                             styp = snum.split('"serviceDesc":"')[1].split('"')[0]
                             if typ == '':
                                 typ = styp
                             else:
-                                typ = typ + ', ' + styp
+                                if styp not in donetyps:
+                                    donetyps.append(styp)
+                                    typ = typ + ', ' + styp
                     if '"storeHoursMon":""' in item:
                         hours = 'Mon: Closed'
                     else:
