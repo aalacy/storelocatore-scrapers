@@ -1,1 +1,1 @@
-Ignored  StreetAddressValidator:validateStreetAddress because one address is an airport "Los Angeles International Airport Southwest Airlines – Terminal One"
+Ignored StreetAddressHasNumber because one address is an airport "1 World Way Southwest Airlines Terminal One"
