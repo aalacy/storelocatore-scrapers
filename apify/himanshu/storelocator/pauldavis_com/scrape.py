@@ -107,14 +107,18 @@ def fetch_data():
             # except:
             #     continue
             data_soup = BeautifulSoup(data_r.text, "lxml")
-           
+            phone_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(data_soup.find("span",{"class":"phone-icon"}).text.strip()))
+            if phone_list:
+                phone = phone_list[0]
+            else:
+                phone = "<MISSING>"
             try:
-                location_name = data_soup.find("span",{"itemprop":"name"}).text
+                location_name = re.sub(r'\s+'," ",data_soup.find("span",{"itemprop":"name"}).text)
                 street_address = data_soup.find("span",{"itemprop":"streetAddress"}).text
                 city =  data_soup.find("span",{"itemprop":"addressLocality"}).text
                 state = data_soup.find("span",{"itemprop":"addressRegion"}).text
                 zipp = data_soup.find("span",{"itemprop":"postalCode"}).text
-                phone = data_soup.find("span",{"itemprop":"telephone"}).text
+                # phone = data_soup.find("span",{"itemprop":"telephone"}).text
                 coord = session.get(data_soup.find("link",{"itemprop":"hasMap"})['href']).url
                 latitude = coord.split("@")[1].split(",")[0]
                 longitude = coord.split("@")[1].split(",")[1]
@@ -125,15 +129,15 @@ def fetch_data():
                     city = data_soup.find_all('p',class_='info')[2].text.split(',')[0]
                     state = data_soup.find_all('p',class_='info')[2].text.split(',')[1].split(' ')[1].replace('.','')
                     zipp = data_soup.find_all('p',class_='info')[2].text.split(',')[1].split(' ')[2]
-                    phone = data_soup.find_all('p',class_='info')[0].text
+                    # phone = data_soup.find_all('p',class_='info')[0].text
                 elif len(data_soup.find_all('p',class_='info')) == 5:
                     street_address = data_soup.find_all('p',class_='info')[2].text
                     city = data_soup.find_all('p',class_='info')[3].text.split(',')[0]
                     state = data_soup.find_all('p',class_='info')[3].text.split(',')[1].split(' ')[1].replace('.','')
                     zipp = data_soup.find_all('p',class_='info')[3].text.split(',')[1].split(' ')[2]
-                    phone = data_soup.find_all('p',class_='info')[0].text
+                    # phone = data_soup.find_all('p',class_='info')[0].text
                 else:
-                    phone = data_soup.find_all('p',class_='info')[0].text
+                    # phone = data_soup.find_all('p',class_='info')[0].text
                     street_address = data_soup.find_all('p',class_='info')[1].text
                     city = data_soup.find_all('p',class_='info')[2].text.split(",")[0]
                     state = data_soup.find_all('p',class_='info')[2].text.split(",")[1].replace(".","").split()[0]

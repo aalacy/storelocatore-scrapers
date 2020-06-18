@@ -55,7 +55,7 @@ def fetch_data():
                 elif soup.find("a",{"class":"header-contact__link header-contact__hours-link header-contact__hours-link_showed js-popover js-hours"}):
                     hours = " ".join(list(bs(soup.find("a",{"class":"header-contact__link header-contact__hours-link header-contact__hours-link_showed js-popover js-hours"})['data-content'], "lxml").find("table").find("tbody").stripped_strings))
                 else:
-                    hours = "<MISSING>"
+                    hours = "<INACCESSIBLE>"
             elif soup.find("li",{"class":"footer-address blue-color"}):
                 
                 soup = bs(session.get(soup.find("li",{"class":"footer-address blue-color"}).find("a")['href']).text, "lxml")
@@ -68,7 +68,7 @@ def fetch_data():
                     hours = " ".join(list(soup.find("dl",{"class":"hours-box"}).stripped_strings))
                 else:
                     
-                    hours = "<MISSING>"
+                    hours = "<INACCESSIBLE>"
 
 
             else:
@@ -86,7 +86,7 @@ def fetch_data():
                         except:
                             hours = " ".join(list(soup.find("ul",{"class":"ddc-list-1 dictionary-list ddc-hours consolidated ddc-list-items list-unstyled"}).stripped_strings))
                     else:
-                        hours = "<MISSING>"
+                        hours = "<INACCESSIBLE>"
         
     
     
