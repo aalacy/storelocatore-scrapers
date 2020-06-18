@@ -1,4 +1,4 @@
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import re
@@ -9,7 +9,7 @@ def write_output(data):
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
 		# Header
-		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
 		# Body
 		for row in data:
 			writer.writerow(row)
@@ -19,15 +19,17 @@ def fetch_data():
 	base_link = "https://www.thelittlebeet.com/locations"
 
 	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	headers = {'User-Agent' : user_agent}
+	HEADERS = {'User-Agent' : user_agent}
 
-	req = requests.get(base_link, headers=headers)
+	session = SgRequests()
+	req = session.get(base_link, headers = HEADERS)
 
 	try:
 		base = BeautifulSoup(req.text,"lxml")
+		print("Got today page")
 	except (BaseException):
-		print ('[!] Error Occured. ')
-		print ('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	items = base.findAll('div', attrs={'class': 'location__body'})
 
@@ -37,10 +39,13 @@ def fetch_data():
 		location_name = item.find('h2').text.strip()
 		print (location_name)
 		raw_data = str(item.find('div', attrs={'class': 'sqs-block-content'}).p).replace("<p>","").replace("</p>","").split('<br/>')
-		street_address = (raw_data[0][raw_data[0].find(">") +1 :] + raw_data[1]).replace("&amp;","&")
-		city = raw_data[2][:raw_data[2].find(',')].strip()
-		state = raw_data[2][raw_data[2].find(',')+1:raw_data[2].rfind(' ')].strip()
-		zip_code = raw_data[2][raw_data[2].rfind(' ')+1:].strip()
+		if len(raw_data) > 2:			
+			street_address = (raw_data[0][raw_data[0].find(">") +1 :] + " " + raw_data[1]).replace("&amp;","&").replace("  "," ")
+		else:			
+			street_address = raw_data[0][raw_data[0].find(">") +1 :].strip()
+		city = raw_data[-1][:raw_data[-1].find(',')].strip()
+		state = raw_data[-1][raw_data[-1].find(',')+1:raw_data[-1].rfind(' ')].strip()
+		zip_code = raw_data[-1][raw_data[-1].rfind(' ')+1:].strip()
 		country_code = "US"
 		store_number = "<MISSING>"
 		try:
@@ -49,7 +54,7 @@ def fetch_data():
 		except:
 			phone = "<MISSING>"
 		location_type = "<MISSING>"
-		raw_gps = item.findAll('p')[1].a['href']
+		raw_gps = item.find('a', string="Get Directions")['href']
 		start_point = raw_gps.find("@") + 1
 		latitude = raw_gps[start_point:raw_gps.find(",",start_point)]
 		comma_point = raw_gps.find(",",start_point)
@@ -64,7 +69,7 @@ def fetch_data():
 		hours_of_operation = re.sub(' +', ' ', hours_of_operation)
 
 
-		data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
 	return data
 
