@@ -1,17 +1,15 @@
 import csv
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs
 import re
 import json
-import time
+from datetime import datetime
 import sgzip
 from sgrequests import SgRequests
+session = SgRequests()
 import requests
 
-
-session = SgRequests()
-
 def write_output(data):
-    with open('data.csv', mode='w', encoding="utf-8") as output_file:
+    with open('data.csv', mode='w', encoding="utf-8", newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
@@ -23,145 +21,120 @@ def write_output(data):
 
 def fetch_data():
     addresses = []
-    addresses5=[]
-    search = sgzip.ClosestNSearch()    
-    search.initialize(country_codes=["US"])
-    MAX_RESULTS = 300
-    MAX_DISTANCE = 22
-    current_results_len = 0     # need to update with no of count.
-    zip_code = search.next_zip()
-    while zip_code:
-        print("remaining zipcodes: " + str(len(search.zipcodes)))
-        result_coords = []
-        base_url = "https://www.napaonline.com"
-        headers = {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.116 Safari/537.36',
-        'accept': 'text/html, */*; q=0.01'
-        }
-        #print("https://www.napaonline.com/en/store-finder?q="+str(zip_code)+"&sort=true")
-        try:
-            r = requests.get("https://www.napaonline.com/en/store-finder?q="+str(zip_code)+"&sort=true", headers=headers)
-        except:
-            pass
-        soup = BeautifulSoup(r.text, "lxml")
-        latitude = []
-        longitude = []
-        if soup.find("div", {"id":"map_canvas"}) != None:
-            json_data = json.loads(soup.find("div", {"id":"map_canvas"})['data-stores'])
-            
-            for i in range(len(json_data)):
-                latitude.append(json_data['store'+str(i)]['latitude'])
-                longitude.append((json_data['store'+str(i)]['longitude']))
+    base_url = "https://www.napaonline.com"
+    headers = {
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.116 Safari/537.36',
+            'accept': 'text/html, */*; q=0.01'
+            }
 
-        data_len = len(soup.find_all("div",{"class":"pure-g"}))
-        for index,data in enumerate(soup.find_all("div",{"class":"pure-g"})):
-            page_url = base_url + data.find("a",{"class":"storeWebsiteLink"})['href']
-            location_name = re.sub(r'\s+'," ",data.find("a",{"class":"storeWebsiteLink"}).text)
-            street_address = (data.find("div",{"class":"address-1"}).text + str(data.find("div",{"class":"address-2"}).text)).strip()
-            addr = re.sub(r'\s+'," ",(data.find_all("div",{"class":"address-2"})[-1].text)).replace("Punta Gorda, FL, FL 33950","Punta Gorda, FL 33950")
-            city = addr.split(",")[0]
-            state = addr.split(",")[1].split(" ")[1]
-            zipp = addr.split(",")[1].split(" ")[2].replace("00000","<MISSING>")
-            if state == "32330":
-                state = "<MISSING>"
-                zipp = "32330"
-            if state == "21960":
-                state = "<MISSING>"
-                zipp = "21960"
-            if state == "96799":
-                state = "<MISSING>"
-                zipp = "96799"
-            if state == "St.":
-                state = "St. Croix"
-                zipp = "00820"
-            if state == "96929":
-                state = "<MISSING>"
-                zipp = "96929"
-            store_number = page_url.split("/")[-1]
-            phone = re.sub(r'\s+'," ",data.find("div",{"class":"phone"}).text)
-            if phone == " 0 ":
-                phone = "<MISSING>"
-            location_type = "Auto Parts"
-            hours = " ".join(list(data.find("div",{"class":"store-hours"}).stripped_strings)).replace('Shop this Store','').replace("no online reservations Reserve Online Not Available. Why? We' re sorry, this store does not participate in Reserve Online. Please choose another store.",'').strip()
+    soup = bs(requests.get("https://www.napaonline.com/en/auto-parts-stores-near-me", headers=headers).text, "lxml")
 
-            store = []
-            store.append(base_url)
-            store.append(location_name if location_name else "<MISSING>")
-            store.append(street_address if street_address else "<MISSING>")
-            store.append(city if city else "<MISSING>")
-            store.append(state.replace("00000","<MISSING>" if state else "<MISSING>") if state else "<MISSING>")
-            store.append(zipp if zipp else "<MISSING>")
-            store.append("US")
-            store.append(store_number if store_number else "<MISSING>")
-            store.append(phone if phone else "<MISSING>")
-            store.append(location_type if location_type else "<MISSING>")
-            store.append(latitude[index] if latitude[index] else "<MISSING>")
-            store.append(longitude[index] if longitude[index] else "<MISSING>")
-            store.append(hours if hours else "<MISSING>")
-            store.append(page_url if page_url else "<MISSING>")
-            if store[2] in addresses:
-                continue
-            addresses.append(store[2])
-            # print("data ====="+str(store))
-            # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-            yield store
-        
-        try:
-            r1=''
-            r1 = requests.get("https://www.napaonline.com/api/storelocator/nearby-stores?storeType=ACMEC&location="+str(zip_code)+"&sortBy=1&language=en", headers=headers).json()
-        except:
-            pass
-        # soup1 = BeautifulSoup(r1.text, "lxml")
-        current_results_len= data_len
 
-        if "DetailResponse" in r1:
-            current_results_len= data_len+len(r1['DetailResponse'])
+    for link in soup.find("div",{"class":"store-browse-content"}).find_all("a"):
+        state_url = base_url+link['href']
 
-            for data in r1['DetailResponse']:
-                state=data['Basic']['address'].split(",")[-2]
-                city = data['Basic']['address'].split(",")[-3]
-                street_address=(" ".join(data['Basic']['address'].split(",")[:-3]))
-                hour = ''
-                for h in data['Basic']['StoreHours']['hours']:
-                    hour = hour + ' '+ h
-                us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(data['Basic']['address']))
-                if us_zip_list:
-                    zipp = us_zip_list[-1]
-                    country_code = "US"
+        state_soup = bs(requests.get(state_url, headers=headers).text, "lxml")
+        for url in state_soup.find("div",{"class":"store-browse-content"}).find_all("a"):
+            if "/en/auto-parts-stores-near-me/nc/wilmington" in url['href']:
+                soup = bs(requests.get(base_url + url['href'], headers=headers).text, "lxml")
+                    
+                for link in soup.find_all("div",{"class":"store-browse-store-detail"}):
+                    page_url = base_url + link.a['href']
+                    print(page_url)
+                    location_soup = bs(requests.get(page_url, headers=headers).text, "lxml")
 
-                store_number=data['Basic']['facilityId']
-                store = []
-                store.append("https://www.napaonline.com/")
-                store.append(data['Basic']['facilityName'] if data['Basic']['facilityName'] else "<MISSING>")
-                store.append(street_address if street_address else "<MISSING>")
-                store.append(city if city else "<MISSING>")
-                store.append(state.replace("00000","<MISSING>" if state else "<MISSING>") if state else "<MISSING>")
-                store.append(zipp if zipp else "<MISSING>")
-                store.append("US")
-                store.append(store_number if store_number else "<MISSING>")
-                store.append(data['Basic']['facilityPhoneNumber'] if data['Basic']['facilityPhoneNumber'] else "<MISSING>")
-                store.append("Auto Care")
-                store.append(data['Basic']['StoreGeoLocation']['latitude'] if data['Basic']['StoreGeoLocation']['latitude'] else "<MISSING>")
-                store.append(data['Basic']['StoreGeoLocation']['longitude'] if data['Basic']['StoreGeoLocation']['longitude'] else "<MISSING>")
-                store.append(hour.replace("|",":") if hour else "<MISSING>")
-                store.append("https://www.napaonline.com/en/autocare/?facilityId="+str(store_number))
-                if store[2] in addresses5:
-                    continue
-                addresses5.append(store[2])
-                # print("data ====="+str(store))
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`")
-                yield store
-        
-       
-        if current_results_len < MAX_RESULTS:
-                # print("max distance update")
-                search.max_distance_update(MAX_DISTANCE)
-        elif current_results_len == MAX_RESULTS:
-            # print("max count update")
-            search.max_count_update(result_coords)
-        else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
-        zip_code = search.next_zip()
+                    data = json.loads(location_soup.find(lambda tag: (tag.name == "script" and '"streetAddress"' in tag.text)).text)
+                    location_name = data['name']
+                    street_address = data['address']['streetAddress']
+                    city = data['address']['addressLocality']
+                    state = data['address']['addressRegion']
+                    zipp = data['address']['postalCode']
+                    country_code = data['address']['addressCountry']
+                    store_number = data['@id']
+                    try:
+                        phone = data['telephone']
+                    except:
+                        phone = "<MISSING>"
+                    location_type = data['@type']
+                    latitude = data['geo']['latitude']
+                    longitude = data['geo']['longitude']
+                    hours = ''
+                    for hr in data['openingHoursSpecification']:
+                        hours+= " " + hr['dayOfWeek'][0] +" "+ datetime.strptime(hr['opens'],"%H:%M:%S").strftime("%I:%M %p") +" - "+datetime.strptime(hr['closes'],"%H:%M:%S").strftime("%I:%M %p")+" "
+                    
+                    store = [base_url, location_name, street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours.strip(), page_url]               
+                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                    if store[2] in addresses:
+                        continue
+                    addresses.append(store[2])
+                    yield store
+            else:
+                if "(1)" in url.text:
+                    
+                    page_url = requests.get(base_url+url['href'],headers=headers).url
+                    print(page_url)
+                    location_soup = bs(requests.get(page_url, headers=headers).text, "lxml")
+
+                    data = json.loads(location_soup.find(lambda tag: (tag.name == "script" and '"streetAddress"' in tag.text)).text)
+                    location_name = data['name']
+                    street_address = data['address']['streetAddress']
+                    city = data['address']['addressLocality']
+                    state = data['address']['addressRegion']
+                    zipp = data['address']['postalCode']
+                    country_code = data['address']['addressCountry']
+                    store_number = data['@id']
+                    try:
+                        phone = data['telephone']
+                    except:
+                        phone = "<MISSING>"
+                    location_type = data['@type']
+                    latitude = data['geo']['latitude']
+                    longitude = data['geo']['longitude']
+                    hours = ''
+                    for hr in data['openingHoursSpecification']:
+                        hours+= " " + hr['dayOfWeek'][0] +" "+ datetime.strptime(hr['opens'],"%H:%M:%S").strftime("%I:%M %p") +" - "+datetime.strptime(hr['closes'],"%H:%M:%S").strftime("%I:%M %p")+" "
+                    
+                    store = [base_url, location_name, street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours.strip(), page_url]
+                    store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                    if store[2] in addresses:
+                        continue
+                    addresses.append(store[2])
+                    yield store
+
+                else:
+                    soup = bs(requests.get(base_url + url['href'], headers=headers).text, "lxml")
+                    
+                    for link in soup.find_all("div",{"class":"store-browse-store-detail"}):
+                        page_url = base_url + link.a['href']
+                        print(page_url)
+                        location_soup = bs(requests.get(page_url, headers=headers).text, "lxml")
+
+                        data = json.loads(location_soup.find(lambda tag: (tag.name == "script" and '"streetAddress"' in tag.text)).text)
+                        location_name = data['name']
+                        street_address = data['address']['streetAddress']
+                        city = data['address']['addressLocality']
+                        state = data['address']['addressRegion']
+                        zipp = data['address']['postalCode']
+                        country_code = data['address']['addressCountry']
+                        store_number = data['@id']
+                        try:
+                            phone = data['telephone']
+                        except:
+                            phone = "<MISSING>"
+                        location_type = data['@type']
+                        latitude = data['geo']['latitude']
+                        longitude = data['geo']['longitude']
+                        hours = ''
+                        for hr in data['openingHoursSpecification']:
+                            hours+= " " + hr['dayOfWeek'][0] +" "+ datetime.strptime(hr['opens'],"%H:%M:%S").strftime("%I:%M %p") +" - "+datetime.strptime(hr['closes'],"%H:%M:%S").strftime("%I:%M %p")+" "
+                        
+                        store = [base_url, location_name, street_address, city, state, zipp, country_code,store_number, phone, location_type, latitude, longitude, hours.strip(), page_url]               
+                        store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+                        if store[2] in addresses:
+                            continue
+                        addresses.append(store[2])
+                        yield store
+
 
 
 def scrape():
@@ -170,3 +143,10 @@ def scrape():
 
 scrape()
 
+# "https://www.napaonline.com/api/storelocator/nearby-stores?storeType=ACMEC&location=85029&sortBy=2&language=en&page=1&distanceSearch=100"
+# "https://www.napaonline.com/api/storelocator/nearby-stores?storeType=ACCOL&location=85029&sortBy=2&language=en&distanceSearch=100"
+# "https://www.napaonline.com/api/storelocator/nearby-stores?storeType=ACTSC&location=85029&sortBy=2&language=en&distanceSearch=100"
+
+
+
+Wiccan_faith@hotmail.com
