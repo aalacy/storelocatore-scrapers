@@ -1,62 +1,79 @@
 const Apify = require('apify');
-const request=require('request');
-const cheerio=require('cheerio');
+const request = require('request');
+const cheerio = require('cheerio');
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const csvWriter = createCsvWriter({
+    path: 'out.csv',
+    header: [
+        { id: 'locator_domain', title: 'locator_domain' },
+        { id: 'location_name', title: 'location_name' },
+        { id: 'street_address', title: 'street_address' },
+        { id: 'city', title: 'city' },
+        { id: 'state', title: 'state' },
+        { id: 'zip', title: 'zip' },
+        { id: 'country_code', title: 'country_code' },
+        { id: 'store_number', title: 'store_number' },
+        { id: 'phone', title: 'phone' },
+        { id: 'location_type', title: 'location_type' },
+        { id: 'latitude', title: 'latitude' },
+        { id: 'longitude', title: 'longitude' },
+        { id: 'hours_of_operation', title: 'hours_of_operation' },
+        { id: 'page_url', title: 'page_url' },
+    ]
+});
 
 var url = 'https://www.tradewindsmarkets.com/locations/';
 
-async function scrape(){
-   return new Promise(async (resolve,reject)=>{
-    request(url,(err,res,html)=>{
+async function scrape() {
+    return new Promise(async(resolve, reject) => {
+        request(url, (err, res, html) => {
 
-        if(!err && res.statusCode==200){
+            if (!err && res.statusCode == 200) {
 
-            const $  =cheerio.load(html);
+                const $ = cheerio.load(html);
 
-              var items=[];
-              var main = $('.acf-map').find('.marker') ;
-               function mainhead(i)
-                {
+                var items = [];
+                var main = $('.locations-list').find('li');
 
-                    if(main.length>i)
+                function mainhead(i) {
 
-                          {
-                           var link = $(main[i]).find('a').attr('href');
-                            request(link,(err,res,html)=>{
-                              if(!err && res.statusCode==200){
-                                const $  =cheerio.load(html);
+                    if (main.length > i)
 
-                                var location_name = $('.interior-masthead').find('h1').text() ;
+                    {
+                        var link = $(main[i]).find('a').attr('href');
+                        // console.log(link);
+                        // exit();
+                        request(link, (err, res, html) => {
+                            if (!err && res.statusCode == 200) {
+                                const $ = cheerio.load(html);
+
+                                var location_name = $('.interior-masthead').find('h1').text();
 
                                 var phone = $('.primary').find('p').eq(0).text().trim();
 
-                                var latitude = $('.marker').attr('data-lat');
+                                // var latitude = $('.marker').attr('data-lat');
 
-                                var longitude = $('.marker').attr('data-lng');
+                                // var longitude = $('.marker').attr('data-lng');
 
-                                var address_temp =$('.primary').find('p').eq(1).text().trim();
+                                var address_temp = $('.primary').find('p').eq(1).text().trim();
 
                                 var address_temp1 = address_temp.split(',');
-                                   if(address_temp1.length == 4)
-                                    {
-                                      var address = address_temp1[0];
-                                      var city = address_temp1[1];
-                                      var state_temp = address_temp1[2];
-                                      var state_temp1 = state_temp.split(' '); 
-                                      if(state_temp1.length == 3){
+                                if (address_temp1.length == 4) {
+                                    var address = address_temp1[0];
+                                    var city = address_temp1[1];
+                                    var state_temp = address_temp1[2];
+                                    var state_temp1 = state_temp.split(' ');
+                                    if (state_temp1.length == 3) {
 
-                                            
+
 
                                         var state = state_temp1[1];
 
                                         var zip = state_temp1[2];
 
-            
 
-                                    }
 
-            
-
-                                    else{
+                                    } else {
 
                                         var state = state_temp1[1];
 
@@ -64,9 +81,7 @@ async function scrape(){
 
                                     }
 
-                                }
-
-                                else if(address_temp1.length == 5){
+                                } else if (address_temp1.length == 5) {
 
                                     var address = address_temp1[0];
 
@@ -76,69 +91,72 @@ async function scrape(){
 
                                     var zip = '<MISSING>';
 
-                                 }
-                                            
-                                             items.push({
+                                }
 
-                                                                locator_domain : 'https://www.tradewindsmarkets.com/',
+                                items.push({
 
-                                                                location_name : location_name,
+                                    locator_domain: 'https://www.tradewindsmarkets.com/',
 
-                                                                street_address : address,
+                                    location_name: location_name,
 
-                                                                city:city,
+                                    street_address: address,
 
-                                                                state:state,
+                                    city: city,
 
-                                                                zip:zip,
+                                    state: state,
 
-                                                                country_code: 'US',
+                                    zip: zip,
 
-                                                                store_number:'<MISSING>',
+                                    country_code: 'US',
 
-                                                                phone:phone,
+                                    store_number: '<MISSING>',
 
-                                                                location_type:'tradewindsmarkets',
+                                    phone: phone,
 
-                                                                latitude:latitude,
+                                    location_type: '<MISSING>',
 
-                                                                longitude :longitude,
+                                    latitude: '<MISSING>',
 
-                                                                hours_of_operation:'<MISSING>'
+                                    longitude: '<MISSING>',
 
-                                                              }); 
-                                                                mainhead(i+1);
-                                                         }
-                                               });
-                                } 
+                                    hours_of_operation: '<MISSING>',
 
-                        else{
+                                    page_url: link
 
-                                           
 
-                            resolve(items);
+                                });
+                                mainhead(i + 1);
+                            }
+                        });
+                    } else {
 
-                        
 
-                           }
 
-                        } 
+                        resolve(items);
 
-                        
 
-                        mainhead(0);                  
 
-            }          
+                    }
 
-     });
- });
+                }
 
- }
 
- 
-Apify.main(async () => {
-const data = await scrape();
- 
 
-     await Apify.pushData(data);
- });
+                mainhead(0);
+
+            }
+
+        });
+    });
+
+}
+
+
+Apify.main(async() => {
+    const data = await scrape();
+    csvWriter
+        .writeRecords(data)
+        .then(() => console.log('The CSV file was written successfully'));
+
+    await Apify.pushData(data);
+});

@@ -3,8 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "apify": "^0.15.2",
+    "apify": "^0.15.5",
     "country-list": "^2.1.1",
+    "csv-writer": "^1.6.0",
     "latlng-to-zip": "0.0.2",
     "zipcodes": "^8.0.0"
   },

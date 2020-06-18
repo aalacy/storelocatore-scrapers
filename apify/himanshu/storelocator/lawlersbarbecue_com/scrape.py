@@ -1,11 +1,8 @@
 import csv
-from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
-session = SgRequests()
+import requests
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -22,48 +19,53 @@ def fetch_data():
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
     base_url = "https://www.lawlersbarbecue.com"
-    json_data = session.get("https://gusto-dataaccessapi.azurewebsites.net/api/v2/2099/Location").json()
+    json_data = requests.get("https://gusto-dataaccessapi.azurewebsites.net/api/v2/2099/Location").json()
     phone_dict = {}
-    for data in json_data:
-        phone_dict[data['Phone']] = data['LocationID']
-    # print(phone_dict)
-    r = session.get("https://www.lawlersbarbecue.com/locations",headers=headers)
+    h={}
+    
+    r = requests.get("https://www.lawlersbarbecue.com/locations",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
-    return_main_object = []
-
     for script in soup.find_all("script",{"type":'application/ld+json'}):
         if '"location":' in script.text:
             location_list = json.loads(script.text)["location"]
-            
             for store_data in location_list:
-                store = []
-                store.append("https://www.lawlersbarbecue.com")
-                store.append(store_data["name"])
-                if " - " in store_data["name"]:
-                    store_data["name"] = store_data["name"].split(" - ")[1]
-                store.append(store_data["address"]["streetAddress"])
-                store.append(store_data["address"]["addressLocality"])
-                store.append(store_data["address"]["addressRegion"])
-                store.append(store_data["address"]["postalCode"])
-                store.append("US")
-                store.append("<MISSING>")
-                store.append(store_data["telephone"])
                 phone_data = store_data["telephone"].replace("+1(","").replace(")","").replace("-","").replace(" ","")
-                try:
-                    page_url = ("https://order-online.azurewebsites.net/2099/"+str(phone_dict[phone_data])+"/")
-                except:
-                    page_url = "<MISSING>"
-                store.append("law lers barbecue")
-                coords = session.get(store_data["image"]).url
-                
-                store.append(coords.split("/%40")[1].split(",")[0])
-                # print(coords.split("/%40")[1].split(",")[1])
-                store.append(coords.split("/%40")[1].split(",")[1])
-                store.append(" ".join(store_data["openingHours"]))
-                store.append(page_url)
-                if "37091" in store_data["address"]["postalCode"]:
-                    continue
-                yield store
+                h[phone_data]=" ".join(store_data["openingHours"])          
+
+    for data in json_data:
+        # print(data)
+        store = []
+        store.append("https://www.lawlersbarbecue.com")
+        # print()
+        store.append(" ".join(data["Name"].replace("#",'').strip().split( )[1:]))
+        phone_data = data['Phone'].replace("+1(","").replace(")","").replace("-","").replace(" ","")
+        store.append(data['Address'])
+        store.append(data["City"])
+        store.append(data["State"])
+        store.append(data["PostalCode"])
+        store.append("US")
+        store.append(data['LocationID'])
+        phones = ('(%s) %s-%s' % tuple(re.findall(r'\d{4}$|\d{3}', data['Phone'])))
+        # print(data['Phone'])
+        store.append(phones)
+        try:
+            page_url = ("https://order-online.azurewebsites.net/2099/"+str(data['LocationID'])+"/")
+        except:
+            page_url = "<MISSING>"
+        store.append("<MISSING>")
+        store.append(data['Latitude'])
+        store.append(data['Longitude'])
+        
+        if phone_data in h:
+            store.append(h[phone_data])
+        else:
+            store.append("Mon - Sat 10:30AM – 8PM")
+        store.append(page_url)
+        if "1894 Winchester Rd NE" in store:
+            pass
+        else:
+            yield store
+
 
 def scrape():
     data = fetch_data()
