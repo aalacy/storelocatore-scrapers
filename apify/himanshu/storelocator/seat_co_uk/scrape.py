@@ -68,11 +68,13 @@ def fetch_data():
                 }
                 # data = session.get("https://api.lakeside.seat-store.co.uk/api/v1/config", headers=headers).json()['content']['translations']['en_GB']['departments']['store']
                 # **************************************************************************************************
-                # 2020-06-18: When running in Docker, the host name api.lakeside.seat-store.co.uk doesn't resolve. 
-                #   Perhaps related to it pointing to a wildcard subdomain *.seat-prod.motortrak.com.
-                #   But it works if we change it to api.lakeside.seat-prod.motortrak.com !
-                #   Same for the below section that was accessing api.whitecity.seat-store.co.uk ... 
-                #   Had to changer that to api.whitecity.seat-prod.motortrak.com
+                # 2020-06-18: When running in Docker, the host name api.lakeside.seat-store.co.uk doesn't resolve
+                #   when getting it with requests or even wget. Strangely tools like dig and nslookup resolve it fine
+                #   from inside the container. Perhaps the problem is related to it pointing to a wildcard subdomain 
+                #   (*.seat-prod.motortrak.com).
+                #   The solution was to change the API call to api.lakeside.seat-prod.motortrak.com. 
+                #   Also the same goes for the below section that was accessing api.whitecity.seat-store.co.uk ... 
+                #   Had to change that to api.whitecity.seat-prod.motortrak.com
                 # **************************************************************************************************
                 data = session.get("https://api.lakeside.seat-prod.motortrak.com/api/v1/config", verify=False, 
                                    headers=headers).json()['content']['translations']['en_GB']['departments']['store']
