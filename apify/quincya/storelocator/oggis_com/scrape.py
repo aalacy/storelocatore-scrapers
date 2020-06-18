@@ -62,23 +62,23 @@ def fetch_data():
         links = item.find('div', attrs={'class': 'result_links'})
         link = links.findAll('a')[0]['href']
         
-        if location_name == "Del Mar":
+        directions = links.findAll('a')[1]['href']
+        latitude = directions[directions.rfind("=")+1:directions.rfind(",")].strip()
+        longitude = directions[directions.rfind(",")+1:directions.rfind("(")].strip()
+        comma_point = directions.find(",")
+        if latitude == "":
+            latitude = directions[directions.find("@")+1:comma_point].strip()
+            longitude = directions[directions.find(",")+1:directions.rfind(",",comma_point)].strip()
+            if longitude:
+                if not latitude:
+                    comma_point = longitude.rfind(",")
+                    latitude = longitude[longitude.find("@")+1:comma_point].strip()
+                    longitude = longitude[comma_point+1:].strip()                    
+        
+        if location_name == "Del Mar" and latitude == "32.7286969":
             # Set as missing since it is duplicated
             latitude = "<MISSING>"
             longitude = "<MISSING>"
-        else:
-            directions = links.findAll('a')[1]['href']
-            latitude = directions[directions.rfind("=")+1:directions.rfind(",")].strip()
-            longitude = directions[directions.rfind(",")+1:directions.rfind("(")].strip()
-            comma_point = directions.find(",")
-            if latitude == "":
-                latitude = directions[directions.find("@")+1:comma_point].strip()
-                longitude = directions[directions.find(",")+1:directions.rfind(",",comma_point)].strip()
-                if longitude:
-                    if not latitude:
-                        comma_point = longitude.rfind(",")
-                        latitude = longitude[longitude.find("@")+1:comma_point].strip()
-                        longitude = longitude[comma_point+1:].strip()
         
         phone = item.find('div', attrs={'class': 'result_address'})
         phone = phone.find('a').text
@@ -99,7 +99,15 @@ def fetch_data():
 
             try:
                 section = new_base.findAll('section', attrs={'class': 'av_textblock_section'})[1]
-                hours_of_operation = section.find('div', attrs={'id': 'lbmb_hours'}).text.replace("\n"," ").replace("\r","").replace("*","").replace("<strong>","").replace("</strong>","").replace("<br>"," ").encode('utf-8').strip()
+                hours_of_operation = section.find('div', attrs={'id': 'lbmb_hours'}).text.replace("\n"," ").replace("\r","").replace("*","")\
+                .replace("<strong>","").replace("</strong>","").replace("<br>"," ").replace("Temporarily Closed  ","Temporarily Closed ").strip()
+                
+                if "  " in hours_of_operation:
+                    hours_of_operation = hours_of_operation[:hours_of_operation.find("  ")].strip()
+                
+                if "Open 9:30am every" in hours_of_operation or "Open at" in hours_of_operation:
+                    hours_of_operation = hours_of_operation[:hours_of_operation.find("Open")].strip()
+
             except:
                 pass
         if not hours_of_operation:
