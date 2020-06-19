@@ -12,6 +12,7 @@ def get_driver():
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--window-size=1920,1080')
     return webdriver.Chrome('chromedriver', chrome_options=options)
 
 def write_output(data):
@@ -59,7 +60,7 @@ def fetch_data():
 		if len(raw_data) == 2:
 			street_address = raw_data[0][raw_data[0].find("span>")+5:raw_data[0].rfind("<!")]
 		else:
-			for row in raw_data[:-1]:
+			for row in raw_data[:-2]:
 				row = row.replace("<!-- -->","").replace("\xa0", " ")
 				next_address = row[row.rfind("<span>")+6:]
 				street_address = street_address + " " + next_address
@@ -74,7 +75,7 @@ def fetch_data():
 		phone = item.findAll('p')[1].text.strip()
 		location_type = "<MISSING>"
 
-		hours_of_operation = item.find('div', attrs={'class': 'hours-times'}).text.replace("\xa0", " ")
+		hours_of_operation = item.find('div', attrs={'class': 'hours'}).text.replace("\xa0", " ").replace("pmF","pm F").replace("pmS","pm S")
 		hours_of_operation = re.sub(' +', ' ', hours_of_operation)
 
 		try:
