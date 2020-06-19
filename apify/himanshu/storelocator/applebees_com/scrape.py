@@ -1,20 +1,23 @@
 import csv
 from bs4 import BeautifulSoup
 import time
+import random
 import re
-from selenium.webdriver import DesiredCapabilities
-from selenium.webdriver import Firefox
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
+import json
+from seleniumwire import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.expected_conditions import presence_of_element_located
 from selenium.common.exceptions import TimeoutException
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 import platform
-system = platform.system()
+
 
 show_logs = False
+
+thread_local = threading.local()
 
 
 def log(*args, **kwargs):
@@ -23,47 +26,143 @@ def log(*args, **kwargs):
     print("")
 
 
-def get_driver():
+def get_time():
+    t = time.localtime()
+    return time.strftime("%H:%M:%S", t)
 
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
 
-    # profile = webdriver.FirefoxProfile('C:\\Users\\01\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\3fz3yyhy.default-release')
-    profile = webdriver.FirefoxProfile()
+def firefox(user_agent=None, executable_path=None, headless=True):
 
-    # PROXY_HOST = "127.12.12.123"
-    # PROXY_PORT = "1234"
+    DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
 
-    if 'PROXY_PASSWORD' not in os.environ:
-        raise SystemExit(
-            "Proxy password required. Please set PROXY_PASSWORD environment variable.")
-    else:
-        DEFAULT_PROXY_URL = "groups-RESIDENTIAL,country-us:{}@proxy.apify.com"
-        PROXY_PORT = "8000"
+    firefox_options = webdriver.FirefoxOptions()
+    seleniumwire_options = {
+        'verify_ssl': True,
+        'connection_keep_alive': True
+    }
+
+    if 'PROXY_PASSWORD' in os.environ:
+        log('configuring proxy ...')
         proxy_password = os.environ["PROXY_PASSWORD"]
         url = os.environ["PROXY_URL"] if 'PROXY_URL' in os.environ else DEFAULT_PROXY_URL
         proxy_url = url.format(proxy_password)
-        # log('proxy_url', proxy_url)
+        seleniumwire_options = {
+            'connection_timeout': None,
+            'proxy': {
+                'https': proxy_url,
+                'http': proxy_url
+            }
+        }
 
-    profile.set_preference("network.proxy.type", 1)
-    profile.set_preference("network.proxy.http", proxy_url)
-    profile.set_preference("network.proxy.http_port", int(PROXY_PORT))
+    if user_agent:
+        firefox_options.add_argument('--user-agent=%s' % user_agent)
+
+    if not executable_path:
+        executable_path = 'geckodriver'
+
+    if headless:
+        firefox_options.add_argument('--headless')
+
+    firefox_options.add_argument('--no-sandbox')
+    firefox_options.add_argument('--disable-dev-shm-usage')
+    firefox_options.add_argument('--window-size=1920,1080')
+
+    capabilities = webdriver.DesiredCapabilities.FIREFOX.copy()
+    capabilities['locationContextEnabled'] = False
+
+    profile = webdriver.FirefoxProfile()
     profile.set_preference("dom.webdriver.enabled", False)
     profile.set_preference('useAutomationExtension', False)
+    profile.set_preference("dom.webnotifications.enabled", False)
+    profile.set_preference("geo.enabled", False)
+    profile.set_preference("geo.provider.use_corelocation", False)
+    profile.set_preference("geo.prompt.testing", False)
+    profile.set_preference("geo.prompt.testing.allow", False)
     profile.update_preferences()
-    desired = DesiredCapabilities.FIREFOX
 
-    # return Firefox(firefox_profile=profile, desired_capabilities=desired,options=options)
+    driver = webdriver.Firefox(desired_capabilities=capabilities, firefox_profile=profile, executable_path=executable_path, firefox_options=firefox_options,
+                               seleniumwire_options=seleniumwire_options)
 
+    driver.set_page_load_timeout(20)
+
+    # avoid loading any of these third-party requests ...
+    # locally it works rewriting to about:blank, but that resulted in dns errors when run in docker
+    driver.rewrite_rules = [
+        (r'(https?://)(.*)facebook(.*)', r'https://httpbin.org/status/200'),
+        (r'(https?://)(.*)googleapis(.*)', r'https://httpbin.org/status/200'),
+        (r'(https?://)(.*)contentsquare(.*)', r'https://httpbin.org/status/200'),
+        (r'(https?://)(.*)gstatic(.*)', r'https://httpbin.org/status/200'),
+        (r'(https?://)(.*)twitter(.*)', r'https://httpbin.org/status/200'),
+        (r'(https?://)(.*)pinterest(.*)', r'https://httpbin.org/status/200'),
+        (r'(https?://)(.*)bing(.*)', r'https://httpbin.org/status/200'),
+        (r'(https?://)(.*)google-analytics(.*)', r'https://httpbin.org/status/200'),
+        (r'(https?://)(.*)doubleclick(.*)', r'https://httpbin.org/status/200'),
+        (r'(https?://)(.*)pinimg(.*)', r'https://httpbin.org/status/200'),
+        (r'(https?://)(.*)google(.*)', r'https://httpbin.org/status/200'),
+        (r'(https?://)(.*)adxcel-ec2(.*)', r'https://httpbin.org/status/200'),
+        (r'(https?://)(.*)fontawesome(.*)', r'https://httpbin.org/status/200'),
+        (r'(https?://)(.*)googletagmanager(.*)', r'https://httpbin.org/status/200'),
+        (r'(https?://)(.*)myfonts(.*)', r'https://httpbin.org/status/200'),
+        # (r'(https?://)(.*)apple(.*)', r'about:blank'), # this one appears to be required for some reason (?)
+    ]
+
+    return driver
+
+
+def create_driver():
+    user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1309.0 Safari/537.17'
+    executable_path = None
+    system = platform.system()
     if "linux" in system.lower():
-        return Firefox(executable_path='./geckodriver', firefox_profile=profile, desired_capabilities=desired, options=options)
+        executable_path = './geckodriver'
     elif "darwin" in system.lower():
-        return Firefox(executable_path='./geckodriver-mac', firefox_profile=profile, desired_capabilities=desired, options=options)
+        executable_path = './geckodriver-mac'
     else:
-        return Firefox(executable_path='geckodriver.exe', firefox_profile=profile, desired_capabilities=desired, options=options)
+        executable_path = 'geckodriver.exe'
+
+    return firefox(executable_path=executable_path, user_agent=user_agent, headless=True)
+
+
+def get_driver(reset=False, check_proxy_IP=False):
+    # give each thread its own driver object.
+    # note: when using Apify proxy with seleniumwire, it appears that the IP is automatically rotated between every request.
+
+    if (not hasattr(thread_local, "driver")) or (reset == True):
+        log(f'Creating driver for thread {threading.current_thread().ident}')
+
+        if (hasattr(thread_local, "driver")):
+            # thread_local.driver.close()
+            thread_local.driver.quit()
+            del thread_local.driver
+
+        thread_local.driver = create_driver()
+        if check_proxy_IP:
+            # log the IP address this proxy is using
+            # ip = get_ip(thread_local.driver, wait=WebDriverWait(thread_local.driver, 15))
+            # log(ip)
+            wait = WebDriverWait(thread_local.driver, 15)
+            thread_local.driver.get('view-source:https://ipv4.jsonip.com/')
+            try:
+                pre = wait.until(presence_of_element_located(
+                    (By.TAG_NAME, "pre"))).text
+                data = json.loads(pre)
+                del thread_local.driver.requests
+                log(f'Thread {threading.current_thread().ident} IP: {data["ip"]}')
+            except TimeoutException as exto:
+                log(f'Thread {threading.current_thread().ident} timed out waiting for IP check: {exto}')
+            except Exception as ex:
+                log(f'Exception on thread {threading.current_thread().ident}: {ex}')
+
+    return thread_local.driver
+
+
+def quit_driver():
+    # optionally, we can call this after each request is finished to ensure a new driver is created for the next request.
+    # this slows down the script a lot, but it's the only way I've found to make sure all the drivers on every thread are cleaned up
+    #   after the thread pool finishes. probably not an issue in production b/c the docker container is ephemeral.
+    if (hasattr(thread_local, "driver")):
+        thread_local.driver.quit()
+        del thread_local.driver
 
 
 def write_output(data):
@@ -78,151 +177,151 @@ def write_output(data):
             writer.writerow(row)
 
 
-def fetch_data():
-    addresses = []
-    base_url = "https://www.applebees.com/"
-    locator_domain = base_url
-    location_name = ""
-    street_address = ""
-    city = ""
-    state = ""
-    zipp = ""
-    country_code = "US"
-    store_number = ""
-    phone = ""
-    location_type = "presidentebarandgrill"
-    latitude = ""
-    longitude = ""
-    raw_address = ""
-    hours_of_operation = ""
-    driver = get_driver()
-    wait = WebDriverWait(driver, 30)
+def get_stores(url, reset=False, attempts=1):
+    stores = []
+    max_attempts = 5
+    if attempts > max_attempts:
+        log(f'----- max attempts ({max_attempts}) exceeded getting stores from {url}, giving up -----')
+        return stores
 
-    list_urls = []
-    driver.get("https://www.applebees.com/en/sitemap")
-    soup = BeautifulSoup(driver.page_source, "lxml")
-    for link in soup.find("div", class_="site-map").find_all("ul")[7:]:
-        for a in link.find_all("a", class_="nav-link"):
-            a = "https://www.applebees.com"+a["href"]
-            # log(a)
-            list_urls.append(a)
-    dict_urls = {i: list_urls[i] for i in range(0, len(list_urls))}
-    log(dict_urls)
+    driver = get_driver(reset=reset)
 
-    index1 = 0
-    for q in range(0, len(dict_urls), 5):
-        if q == 0:
-            index1 = 0
-            pass
+    req = None
+    try:
+        log(f'getting - -> {url} with thread {threading.current_thread().ident} (attempt: {attempts})')
+        driver.get(url)
+
+        # Wait for the API request/response to complete
+        #   https://pypi.org/project/selenium-wire/#waiting-for-a-request
+        req = driver.wait_for_request(
+            '/api/sitecore/Locations/LocationSearchAsync', timeout=120)
+        if not req.response:
+            log(f'no response for {req.path}')
         else:
-            for data1 in range(index1, q):
-                if data1 in dict_urls:
-                    log("data1 == ", data1, "index1 == ", index1, "q == ", q)
-                    try:
-                        log('getting --> ', dict_urls[data1])
-                        driver.get(dict_urls[data1])
-                        wait.until(presence_of_element_located(
-                            (By.CSS_SELECTOR, "div#location-cards-wrapper div.owl-item")))
-                    except TimeoutException as texc:
-                        log('------- timeout error getting: ',
-                            dict_urls[data1], texc)
-                        log('------- closing driver, getting new one ...')
-                        driver.close()
-                        time.sleep(2)
-                        driver = get_driver()
-                        wait = WebDriverWait(driver, 30)
-                        driver.get(dict_urls[data1])
-                        wait.until(presence_of_element_located(
-                            (By.CSS_SELECTOR, "div#location-cards-wrapper div.owl-item")))
-                    except Exception as ex:
-                        log("------- exception getting: ",
-                            dict_urls[data1], ex)
-                        continue
+            log(f'----{url} -- {req.path} -- status {req.response.status_code}')
 
-                    soup1 = BeautifulSoup(driver.page_source, "lxml")
-                    loc_section = soup1.find(
-                        "div", {"id": "location-cards-wrapper"})
-                    loc_blocks = loc_section.find_all("div", class_="owl-item")
-                    log('loc blocks found: ', len(loc_blocks))
-                    for loc_block in loc_blocks:
-                        country_code = loc_block.find(
-                            "input", {"name": "location-country"})["value"]
-                        geo_code = loc_block.find(
-                            "input", {"name": "location-country"}).nextSibling.nextSibling
-                        latitude = geo_code["value"].split(",")[0]
-                        longitude = geo_code["value"].split(",")[
-                            1].split("?")[0]
-                        page_url_anchor_tag = loc_block.find(
-                            "div", class_="map-list-item-header").find("a")
-                        page_url = "<MISSING>" if page_url_anchor_tag is None else "https://www.applebees.com" + \
-                            page_url_anchor_tag["href"]
-                        location_name = loc_block.find(
-                            "div", class_="map-list-item-header").find("span", class_="location-name").text.strip()
-                        address = loc_block.find("div", class_="address").find(
-                            "a", {"title": "Get Directions"})
-                        address_list = list(address.stripped_strings)
-                        street_address = " ".join(address_list[:-1]).strip()
-                        city = address_list[-1].split(",")[0].strip()
-                        state = address_list[-1].split(
-                            ",")[1].split()[0].strip()
-                        zipp = address_list[-1].split(
-                            ",")[1].split()[-1].strip()
-                        phone = loc_block.find(
-                            "a", class_="data-ga phone js-phone-mask").text.strip()
-                        store_number = "<MISSING>"
+    except TimeoutException as texc:
+        log(f'------- timeout error on thread {threading.current_thread().ident}: {url} ', texc)
+        log(f'------- resetting driver on {threading.current_thread().ident} ...')
+        time.sleep(2)
+        return get_stores(url, reset=True, attempts=attempts+1)
+    except Exception as ex:
+        log("------- exception getting: ", url, ex)
+        time.sleep(2)
+        return get_stores(url, reset=True, attempts=attempts+1)
 
-                        hours_of_operation = ""
-                        if page_url == "<MISSING>" or page_url in addresses:
-                            log(f'already have {page_url} ... skipping request')
-                        else:
-                            try:
-                                log('getting --> ', page_url)
-                                driver.get(page_url)
-                                wait.until(presence_of_element_located(
-                                    (By.CSS_SELECTOR, "div.hours")))
-                            except TimeoutException as texc:
-                                log('------- timeout error getting: ',
-                                    page_url, texc)
-                                log('------- closing driver, getting new one ...')
-                                driver.close()
-                                time.sleep(2)
-                                driver = get_driver()
-                                wait = WebDriverWait(driver, 30)
-                                driver.get(page_url)
-                                wait.until(presence_of_element_located(
-                                    (By.CSS_SELECTOR, "div.hours")))
-                            except Exception as ex:
-                                log("------- exception getting: ", page_url, ex)
-                                hours_of_operation = "<MISSING>"
+    if not req:
+        log('************ no API request found :( **************')
+        raise SystemExit
 
-                            soup2 = BeautifulSoup(driver.page_source, "lxml")
-                            try:
-                                hours_of_operation = " ".join(
-                                    list(soup2.find("div", class_="hours").stripped_strings))
-                            except:
-                                hours_of_operation = "<MISSING>"
+    data = json.loads(req.response.body)
 
-                        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+    # clear the captured requests, otherwise they don't get overwritten on the next request (!)
+    #   - this was so confusing the first few times b/c the scraper would only find a handful of locations
+    del driver.requests
 
-                        if str(store[-1]) not in addresses:
-                            addresses.append(str(store[-1]))
+    for location in data['Locations']:
 
-                            store = [x if x else "<MISSING>" for x in store]
+        base_url = "https://www.applebees.com"
+        locator_domain = base_url
+        location_type = "presidentebarandgrill"
 
-                            log("data = " + str(store))
-                            log(
-                                '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                            yield store
-                        else:
-                            log('~~~~~~~~~~~ already have this store')
-            index1 += 5
-            log('----- closing driver, getting new one -----')
-            driver.close()
-            driver = get_driver()
-            wait = WebDriverWait(driver, 30)
+        loc = location["Location"]
+        country_code = loc["Country"]
+        latitude = loc["Coordinates"]["Latitude"]
+        longitude = loc["Coordinates"]["Longitude"]
+        page_url = base_url + \
+            loc["WebsiteUrl"] if loc["WebsiteUrl"] else '<MISSING>'
+        location_name = loc["Name"]
+        street_address = loc["Street"]
+        city = loc["City"]
+        state = loc["State"]
+        zipp = loc["Zip"]
+        store_number = loc["StoreNumber"]
 
-    driver.quit()
+        phone = location["Contact"]["Phone"]
+
+        days_of_operation = location["HoursOfOperation"]["DaysOfOperation"]
+        hours = [
+            f'{day["DayofWeek"]}: {day["OpenHours"] or "Closed"}{" - " + day["CloseHours"] if day["OpenHours"] else ""}' for day in days_of_operation]
+        hours_of_operation = ", ".join(hours)
+
+        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
+                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
+
+        log(store)
+
+        stores.append(store)
+
+    # quit_driver()
+    return stores
+
+
+def get_city_urls(reset=False, attempts=1):
+    log('getting city page urls')
+    max_attempts = 5
+    sitemap_url = "https://www.applebees.com/en/sitemap"
+    city_urls = []
+
+    if attempts > max_attempts:
+        print(f'Max attempts ({max_attempts}) exceeded getting city urls from {sitemap_url}')
+        quit_driver()
+        raise SystemExit
+
+    try:
+        driver = get_driver(reset=reset)
+        driver.get(sitemap_url)
+    except Exception as ex:
+        log(f'----- exception getting {sitemap_url} : {ex} \n trying again ...')
+        return get_city_urls(reset=True, attempts=attempts+1)
+
+    status_code = driver.requests[0].response.status_code if driver.requests[0].response else None
+    log('status: ', status_code)
+    # print('driver.requests[0] body', driver.requests[0].response.body)
+    # print('driver.page_source', driver.page_source)
+
+    if status_code == 403 or 'Access denied' in driver.title:
+        print(f'Status code: {status_code}')
+        print('Access denied, trying again ... ')
+        return get_city_urls(reset=True, attempts=attempts+1)
+    else:
+        wait = WebDriverWait(driver, 30)
+        wait.until(presence_of_element_located(
+            (By.CSS_SELECTOR, "div.site-map ul a.nav-link")))
+        soup = BeautifulSoup(driver.page_source, "lxml")
+        for link in soup.find("div", class_="site-map").find_all("ul")[7:]:
+            for a in link.find_all("a", class_="nav-link"):
+                a = "https://www.applebees.com"+a["href"]
+                city_urls.append(a)
+
+        log(f'found {len(city_urls)} city urls')
+        quit_driver()
+        return city_urls
+
+
+def fetch_data():
+
+    city_urls = get_city_urls()
+
+    all_stores = []
+    max_worker_threads = 8
+    with ThreadPoolExecutor(max_workers=max_worker_threads) as executor:
+        futures = [executor.submit(get_stores, url) for url in city_urls]
+        for result in as_completed(futures):
+            stores_in_city = result.result()
+            all_stores.extend(stores_in_city)
+
+    log(f'finished ThreadPoolExecutor with {len(all_stores)} total stores')
+
+    unique_location_urls = []
+    for store in all_stores:
+        page_url = str(store[-1])
+        if page_url not in unique_location_urls:
+            unique_location_urls.append(page_url)
+            store = [x if x else "<MISSING>" for x in store]
+            log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            log("data = " + str(store))
+            yield store
 
 
 def scrape():
@@ -230,4 +329,6 @@ def scrape():
     write_output(data)
 
 
+log(f'starting script at {get_time()}')
 scrape()
+log(f'finished script at {get_time()}')
