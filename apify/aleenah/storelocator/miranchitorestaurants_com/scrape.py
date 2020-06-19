@@ -28,9 +28,12 @@ def fetch_data():
     for script in scripts:
         jso = json.loads(re.findall(r'{.*}',str(script))[0])
         tim=' '.join(jso['openingHours']).replace('Mo','Monday').replace('Tu','Tuesday').replace('We','Wednesday').replace('Th','Thursday').replace('Fr','Friday').replace('Sa','Saturday').replace('Su','Sunday').strip()
+        loc=jso['address']['addressLocality']
+        lat,long=re.findall(r'"lat":(-?[\d\.]+),"lng":(-?[\d\.]+),"menuLandingPageUrl":null,"name":"'+loc.strip(),str(soup))[0]
+        print(lat,long,loc)
         all.append([
             "https://www.miranchitorestaurants.com/",
-            jso['address']['addressLocality'],    #name
+            loc,    #name
             jso['address']['streetAddress'],
             jso['address']['addressLocality'],
             jso['address']['addressRegion'],
@@ -39,8 +42,8 @@ def fetch_data():
             "<MISSING>",  # store #
             jso['address']['telephone'],  # phone
             jso['@type'],  # type
-            "<MISSING>",  # lat
-            "<MISSING>",  # long
+            lat,  # lat
+            long,  # long
             tim,  # timing
             "https://www.miranchitorestaurants.com/"])
     return all
