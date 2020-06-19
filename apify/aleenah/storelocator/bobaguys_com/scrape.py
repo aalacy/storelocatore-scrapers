@@ -13,72 +13,85 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
+
+all = []
 def fetch_data():
     # Your scraper here
-    locs = []
-    street = []
-    states=[]
-    cities = []
-    types=[]
-    phones = []
-    zips = []
-    long = []
-    lat = []
-    timing = []
-    ids=[]
-    page_url=[]
-    urls=["http://www.bobaguys.com/locations","http://www.bobaguys.com/los-angeles","http://www.bobaguys.com/new-york-locations"]
+    res = requests.get("https://www.bobaguys.com/")
+    soup = BeautifulSoup(res.text, 'html.parser')
+    #print(soup.find('li', {'class': 'folder'}))
+    urls = soup.find('li', {'class': 'folder'}).find_all('a')
+    del urls[0]
+
     for url in urls:
+        url = "https://www.bobaguys.com"+url.get('href')
         res = requests.get(url)
+
         soup = BeautifulSoup(res.text, 'html.parser')
-        divs = soup.find_all('div', {'class': 'row sqs-row'})
-        del divs[0]
-        del divs[0]
-        del divs[-1]
-        del divs[-1]
+        divs = soup.find_all('div', {'class': 'col sqs-col-4 span-4'})
+        if len(divs)==0:
+            divs = soup.find_all('div', {'class': 'col sqs-col-6 span-6'})
+        print(url)
+        #print(len(divs))
         for div in divs:
-            tdivs = div.find_all('div', {'class': 'col sqs-col-6 span-6'})
-            lc=tdivs[0].find("div").get("data-block-json")
-            lat.append(re.findall(r'"mapLat":(-?[\d\.]*)',lc)[0])
-            long.append(re.findall(r'"mapLng":(-?[\d\.]*)',lc)[0])
-            locs.append(re.findall(r'"addressTitle":"([^"]*)"', lc)[0])
-            street.append(re.findall(r'"addressLine1":"([^"]*)"', lc)[0])
-            addr=re.findall(r'"addressLine2":"([^"]*)"', lc)[0].replace(",","")
-            if addr=="":
-                addr=re.findall(r'St\.(.*)Monday',tdivs[1].text)[0]
-            print(addr)
-            z=addr.split(" ")[-1].strip()
-            s=addr.split(" ")[-2].strip()
-            zips.append(z)
 
-            states.append(s.upper())
-            cities.append(addr.replace(z,"").replace(s,"").strip())
-            timing.append(re.findall(r'Monday.*pm|Monday.*PM',tdivs[1].text)[0].replace('\xa0',""))
-            page_url.append(url)
+            ps=div.find('div',{'class':'sqs-block html-block sqs-block-html'}).find_all('p')
+            #print(len(ps))
+            #print(ps[0])
+            if len(ps)==2:
+                #print(ps[1])
+                try:
+                    loc,street,city,state,zip=re.findall(r'<strong>(.*)</strong><br/>(.*)<br/>(.*), ([A-Z]{2}) ([\d]{5})</p>',str(ps[0]))[0]
+                except:
+                    try:
+                        loc, street, city, state, zip = re.findall(r'<strong>(.*)</strong><br/>(.*)<br/>(.*) ([A-Z]{2}) ([\d]{5})</p>', str(ps[0]))[0]
+                    except:
+                        loc, street, city, zip=re.findall(r'<strong>(.*)</strong><br/>(.*)<br/>(.*) ([\d]{5})</p>', str(ps[0]))[0]
+                        state="<MISSING>"
+                if "Temporarily Closed" in str(ps[1]):
+                    tim="<MISSING>"
+                    type = "Temporarily Closed"
+                else:
+                    tim=ps[1].text.replace('mS','m S').replace('dS','d S')
+                    type = "Open"
+            else:
+                try:
+                    loc, street, city, state, zip =re.findall(r'<strong>(.*)</strong><br/>(.*)<br/>(.*), ([A-Z]{2}) ([\d]{5}).*<strong>', str(ps[0]))[0]
+                except:
+                    loc, street, city, state, zip =re.findall(r'<strong>(.*)<br/></strong>(.*)<br/>(.*), ([A-Z]{2}) ([\d]{5}).*<strong>', str(ps[0]))[0]
+                if "Temporarily Closed" in str(ps[0]):
+                    tim="<MISSING>"
+                    type = "Temporarily Closed"
+                else:
+                    type="Open"
+                    tim=ps[0].find_all('strong')[1].text
+                    if tim.strip()=="":
+                        tim="".join(re.findall(r'.*<strong>(.*)</strong>(.*)</p>',str(ps[0]))[0])
+            all.append([
+                "https://www.bobaguys.com",
+                loc,
+                street,
+                city,
+                state,
+                zip,
+                "US",
+                "<MISSING>",  # store #
+                "<MISSING>",  # phone
+                type,  # type
+                "<MISSING>",  # lat
+                "<MISSING>",  # long
+                tim,  # timing
+                url])
 
-    all = []
-    for i in range(0, len(locs)):
-        row = []
-        row.append("http://www.bobaguys.com")
-        row.append(locs[i])
-        row.append(street[i])
-        row.append(cities[i])
-        row.append(states[i])
-        row.append(zips[i])
-        row.append("US")
-        row.append("<MISSING>")  # store #
-        row.append("<MISSING>")  # phone
-        row.append("<MISSING>")  # type
-        row.append(lat[i])  # lat
-        row.append(long[i])  # long
-        row.append(timing[i])  # timing
-        row.append(page_url[i])  # page url
 
-        all.append(row)
+
+
     return all
+
 
 def scrape():
     data = fetch_data()
     write_output(data)
+
 
 scrape()
