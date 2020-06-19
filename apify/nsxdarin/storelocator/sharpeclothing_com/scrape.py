@@ -48,7 +48,7 @@ def fetch_data():
                 city = name.split(',')[0].strip()
                 state = name.split(',')[1].strip()
             if 'href="https://goo.gl/maps/' in line2 and 'Get Directions' not in line2:
-                add = line2.split('<p><a href="https://goo.gl/')[1].split('>')[1].split(city)[0].strip()
+                add = line2.split('href="https://goo.gl/')[1].split('>')[1].split(city)[0].strip()
                 if '&nbsp;' in line:
                     zc = line.split('&nbsp;')[1].split('<')[0]
             if 'a href="tel:' in line2:
