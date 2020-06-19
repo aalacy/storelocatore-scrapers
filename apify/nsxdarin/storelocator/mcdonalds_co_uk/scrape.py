@@ -101,7 +101,7 @@ def get_stores_from_coords(coord, radius, maxResults):
         except:
             hours = '<MISSING>'
         typ = 'Restaurant'
-        loc = '<MISSING>'
+        loc = 'https://www.mcdonalds.com/gb/en-gb/location/' + item['properties']['identifiers']['storeIdentifier']['identifierValue'] + '.html'
         store_number = item['properties']['identifiers']['storeIdentifier'][1]['identifierValue']
         lat = item['geometry']['coordinates'][1]
         lng = item['geometry']['coordinates'][0]
