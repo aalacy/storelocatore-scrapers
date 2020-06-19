@@ -19,12 +19,7 @@ def write_output(data):
             writer.writerow(row)
 
 def fetch_data():
-    # addresses = []
-    # r_headers = {
-    #     'Accept': '*/*',
-    #     'Content-Type': 'application/json; charset=UTF-8',    
-        
-    # }
+    addressesess=[]
     headers = {
     'content-type': "application/x-www-form-urlencoded",
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
@@ -35,22 +30,27 @@ def fetch_data():
     for r_loc in r_list:
         
         r = session.get(r_loc,headers=headers).json()
-        addressesess=[]
+        
         for index,anchor in enumerate(r):
             if index >=1:
                 # print(anchor['a'])
                 soup = BeautifulSoup(anchor['a'],'lxml')
                 state = soup.find("span",{"class":"storecity"}).text.lower()
                 zipp = soup.find("span",{"class":"storepostalcode"}).text
+                
                 street_address = anchor['ad'].split(",")[0]
                 city = anchor['ad'].split(",")[1].strip().lower()
                 location_name = anchor['n']
                 store_number = location_name.split()[-1].strip()
+                if "BS16 5UJ" in zipp :
+                    street_address = city
+                    city = state
+
                 # print(store_number)
-                if anchor["w"]:
-                    page_url =  anchor["w"]
-                else:
-                    page_url = "<MISSING>"
+                # if anchor["w"]:
+                #     page_url =  anchor["w"]
+                # else:
+                page_url = "<MISSING>"
                 phone = anchor['p']
                 hours ='mon '+anchor['mon']+ ' tue ' + anchor['tue']+' wed '+ anchor['wed']+ ' thu ' + anchor['thu']+' fri '+anchor['fri']+' sat '+anchor['sat']+' sun '+anchor['sun']
                 location_type = "<MISSING>"
@@ -59,7 +59,7 @@ def fetch_data():
                 store = []
                 store.append('http://ladbrokes.com')
                 store.append(location_name)
-                store.append(street_address)
+                store.append(street_address.replace("Shoping Centre","").replace("Shopping Centre",""))
                 store.append(city)
                 store.append(state)
                 store.append(zipp if zipp else "<MISSING>")

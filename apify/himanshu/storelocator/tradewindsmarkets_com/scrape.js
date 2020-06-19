@@ -3,7 +3,7 @@ const request = require('request');
 const cheerio = require('cheerio');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const csvWriter = createCsvWriter({
-    path: 'out.csv',
+    path: 'data.csv',
     header: [
         { id: 'locator_domain', title: 'locator_domain' },
         { id: 'location_name', title: 'location_name' },
