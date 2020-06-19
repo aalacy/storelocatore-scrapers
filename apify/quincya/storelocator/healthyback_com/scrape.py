@@ -1,10 +1,11 @@
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
+import re
+import time
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-import time
-import re
 
 def get_driver():
     options = Options() 
@@ -20,7 +21,7 @@ def write_output(data):
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
 		# Header
-		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "email"])
+		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "email"])
 		# Body
 		for row in data:
 			writer.writerow(row)
@@ -30,15 +31,17 @@ def fetch_data():
 	base_link = "https://www.healthyback.com/store-locator"
 
 	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	headers = {'User-Agent' : user_agent}
+	HEADERS = {'User-Agent' : user_agent}
 
-	req = requests.get(base_link, headers=headers)
+	session = SgRequests()
+	req = session.get(base_link, headers = HEADERS)
 
 	try:
 		base = BeautifulSoup(req.text,"lxml")
+		print("Got today page")
 	except (BaseException):
-		print ('[!] Error Occured. ')
-		print ('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	content = base.find('div', attrs={'class': 'abs-blocks-2columns'})
 	items = content.findAll('tr')
@@ -51,26 +54,21 @@ def fetch_data():
 		print (location_name)
 		
 		lines = item.findAll('p')
-		if len(lines) == 2:
-			location_type = lines[0].text.strip()
-			raw_line = str(lines[1]).replace('<p>',"").replace('\n',"").replace("</a>","").strip().split('<br/>')
-		else:
-			location_type = "<MISSING>"
-			raw_line = str(lines[0]).replace('<p>',"").replace('\n',"").replace("</a>","").strip().split('<br/>')
+		location_type = lines[0].text.strip()
+		raw_line = str(lines[-1]).replace('<p>',"").replace('\n',"").replace("</a>","").replace("\xa0","").strip().split('<br/>')[-3]
 
-		raw_line = raw_line[1]
 		street_address = item.find('a').text.strip()
 		city = raw_line[:raw_line.rfind(',')].strip()
 		state = raw_line[raw_line.rfind(',')+1:raw_line.rfind(' ')].strip()
 		zip_code = raw_line[raw_line.rfind(' ')+1:].strip()
 		country_code = "US"
 		store_number = "<MISSING>"
-		phone = re.findall("[[\d]{3}-[\d]{3}-[\d]{4}", item.text)[0]
+		phone = re.findall("[[\d]{3}-[\d]{3}-[\d]{4}", item.text.strip())[0]
 
 		try:
-			map_link =item.find('a')['href']
+			map_link = item.find('a')['href']
 			driver.get(map_link)
-			time.sleep(4)
+			time.sleep(5)
 			raw_gps = driver.current_url
 			start_point = raw_gps.find("@") + 1
 			latitude = raw_gps[start_point:raw_gps.find(',',start_point)]
@@ -79,10 +77,15 @@ def fetch_data():
 		except:
 			latitude = "<MISSING>"
 			longitude = "<MISSING>"
-		hours_of_operation = "<MISSING>"
+
+		hours_of_operation = ""
+		hours = base.find(class_="column main").find_all("p")[1:3]
+		for hour in hours:
+			hours_of_operation = (hours_of_operation + " " + hour.get_text(separator=u' ').replace("\n"," ").replace("\xa0","").strip()).strip()
+
 		email = item.findAll('a')[-1].text.strip()
 
-		data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation, email])
+		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation, email])
 	driver.close()
 	return data
 
