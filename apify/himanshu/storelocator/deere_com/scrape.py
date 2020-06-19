@@ -67,10 +67,14 @@ def fetch_data():
                     store_number = "<MISSING>"
                     hours=""
                     hours = "<MISSING>"
-                    if len(zipp1) != 5:
-                        index = 5
-                        char = '-'
-                        zipp1 = zipp1[:index] + char + zipp1[index + 1:]
+
+                    try:
+                        if len(zipp1) != 5 and type(int(zipp1))==int:
+                            index = 5
+                            char = '-'
+                            zipp1 = zipp1[:index] + char + zipp1[index + 1:]
+                    except:
+                        zipp1 =zipp1
                     store = [] 
                     store.append(base_url)
                     store.append(location_name)

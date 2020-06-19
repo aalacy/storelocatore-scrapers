@@ -3,6 +3,13 @@ from bs4 import BeautifulSoup
 import re
 import json
 import requests
+import csv
+from sgrequests import SgRequests
+from bs4 import BeautifulSoup
+import re
+import json
+session = SgRequests()
+
 
 def write_output(data):
     with open('data.csv', mode='w',encoding="utf-8") as output_file:
@@ -46,7 +53,6 @@ def fetch_data():
         store.append("US")
         store.append(data['LocationID'])
         phones = ('(%s) %s-%s' % tuple(re.findall(r'\d{4}$|\d{3}', data['Phone'])))
-        # print(data['Phone'])
         store.append(phones)
         try:
             page_url = ("https://order-online.azurewebsites.net/2099/"+str(data['LocationID'])+"/")
@@ -61,10 +67,7 @@ def fetch_data():
         else:
             store.append("Mon - Sat 10:30AM – 8PM")
         store.append(page_url)
-        if "1894 Winchester Rd NE" in store:
-            pass
-        else:
-            yield store
+        yield store
 
 
 def scrape():
