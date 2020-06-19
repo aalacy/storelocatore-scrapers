@@ -52,7 +52,13 @@ def fetch_data():
             try:
                 street_addr = tagged['AddressNumber'] + " " + tagged['StreetNamePreDirectional'] + " " + tagged['StreetName'].replace('\n', '')
             except:
-                street_addr = tagged['StreetNamePreDirectional'] + " " + tagged['StreetName'].replace('\n', '')
+                try:
+                    street_addr = tagged['StreetNamePreDirectional'] + " " + tagged['StreetName'].replace('\n', '')
+                except:
+                    try:
+                        street_addr =  tagged['StreetName'].replace('\n', '')
+                    except:
+                        street_addr = "<MISSING>"
         state = tagged['StateName']
         city = tagged['PlaceName'].replace('\n', '')
         zipcode = tagged['ZipCode']
