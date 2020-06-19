@@ -71,7 +71,7 @@ def fetch_data():
                                 alink = li_list[m].find('a')
                                 
                                 title = alink.text
-                                alink = alink['href']                               
+                                alink = alink['href']                                
                                 address =''
                                 addrm  = ''
                                 #print(alink)
@@ -79,12 +79,15 @@ def fetch_data():
                                 time.sleep(2)
                                 soup3 = BeautifulSoup(page3.text, "html.parser")                            
                                 address = soup3.find('div',{'class':'officeInfoDataWidth'})
+                                
                                 cleanr = re.compile(r'<[^>]+>')
+                               
                                 address = cleanr.sub(' ', str(address))
                                 #print(address)
                                 address = re.sub(pattern,'\n',address).lstrip()
                                 address= address.splitlines()
-                                print(address)
+                              
+                                
                                 city = ''
                                 state = ''
                                 i = 0
@@ -151,6 +154,10 @@ def fetch_data():
                                     
                                 except Exception as e:
                                     print(e)
+                                if pcode.find('-') == -1 and sec == 0 and pcode != '<MISSING>' :
+                                    pcode = pcode[0:5] + '-' +pcode[5:len(pcode)]
+
+                               
                                 if state == "NF":
                                     state = "NL"
                                 if state == "PQ":
