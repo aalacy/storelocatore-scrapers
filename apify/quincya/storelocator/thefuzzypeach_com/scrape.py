@@ -1,4 +1,4 @@
-import requests
+from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import csv
 import re
@@ -8,7 +8,7 @@ def write_output(data):
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
 		# Header
-		writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+		writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
 		# Body
 		for row in data:
 			writer.writerow(row)
@@ -18,15 +18,17 @@ def fetch_data():
 	base_link = "https://www.thefuzzypeach.com/find-a-location"
 
 	user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
-	headers = {'User-Agent' : user_agent}
+	HEADERS = {'User-Agent' : user_agent}
 
-	req = requests.get(base_link, headers=headers)
+	session = SgRequests()
+	req = session.get(base_link, headers = HEADERS)
 
 	try:
 		base = BeautifulSoup(req.text,"lxml")
+		print("Got today page")
 	except (BaseException):
-		print ('[!] Error Occured. ')
-		print ('[?] Check whether system is Online.')
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
 
 	items = base.findAll('tr')
 	items.pop(0)
@@ -48,11 +50,13 @@ def fetch_data():
 		if len(str(item.find('td', attrs={'class': 'views-field views-field-field-fundraising'}))) > 80:
 			offer.append("Fundraising")
 		location_type = ', '.join(offer)
+		if not location_type:
+			location_type = "<MISSING>"
 		latitude = item.find('div', attrs={'class': 'hidden'}).get('data-lat') 
 		longitude = item.find('div', attrs={'class': 'hidden'}).get('data-long')
 		hours_of_operation = "<MISSING>"
 
-		data.append([locator_domain, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
 
 	return data
 
