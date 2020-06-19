@@ -3,7 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup as BS
 import re
 import json
-
+import requests
 
 
 session = SgRequests()
@@ -22,7 +22,7 @@ def write_output(data):
 
 def fetch_data():
     base_url1="https://www.powr.io/plugins/map/wix_view.json?cacheKiller=1565172087400&compId=comp-jcccswek&deviceType=desktop&height=462&instance=yHGw_8WbCn7m6c6pR2XU186ZyTI_PDlSOhco9oNrjxk.eyJpbnN0YW5jZUlkIjoiN2IwNWYwOWYtMjE1NC00YTQxLTlmYmQtODc4Yzg5YTU4MWQ2IiwiYXBwRGVmSWQiOiIxMzQwYzVlZC1hYWM1LTIzZWYtNjkzYy1lZDIyMTY1Y2ZkODQiLCJzaWduRGF0ZSI6IjIwMTktMDgtMDdUMTA6NDE6NDAuNzQzWiIsInVpZCI6bnVsbCwicGVybWlzc2lvbnMiOm51bGwsImlwQW5kUG9ydCI6IjEyMy4yMDEuMjI2LjEyOC8zMzQ5NCIsInZlbmRvclByb2R1Y3RJZCI6ImJ1c2luZXNzIiwiZGVtb01vZGUiOmZhbHNlLCJhaWQiOiI1N2Q5YjhmMS1jYmIzLTRmNGMtOWJmZC0zMTI3YTZkMGQ2ZWIiLCJzaXRlT3duZXJJZCI6IjkxOGU5NTAxLTQwMGMtNDcwNS1iM2VlLTc2ZDI5NWYxM2Y2ZiJ9&locale=en&pageId=e97g9&siteRevision=349&viewMode=site&width=733"
-    json_data = session.get(base_url1).json()['content']['locations']
+    json_data = requests.get(base_url1).json()['content']['locations']
     lat_lng = {}
     for coords in json_data:
         lat_lng[coords['name'].replace("<p>","").replace("</p>","").replace("65th","65th Street").replace("Gateways Oaks","Gateway Oaks").replace("Elsie Ave","Elsie").replace("Stevens Creek","Steven's Creek")] = {"lat":coords['lat'],"lng":coords['lng']}
@@ -31,10 +31,11 @@ def fetch_data():
     
     base_url= "https://www.thesandwichspot.com/"
     
-    soup= BS(session.get("https://www.thesandwichspot.com/locations").text,"lxml")
+    soup= BS(requests.get("https://www.thesandwichspot.com/locations").text,"lxml")
 
     for div in soup.find_all("div",{"id":re.compile("inlineContent-gridContainer")})[2:33]:
         location_name = div.find("h4").text
+        print(location_name)
         addr = list(div.find_all("div",{"data-packed":"false"})[1].stripped_strings)
         street_address = addr[0].replace("\xa0"," ")
         if len(addr[1].split(",")) == 3:
