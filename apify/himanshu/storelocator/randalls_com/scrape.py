@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import requests
 
 
 session = SgRequests()
@@ -42,22 +43,19 @@ def parser(location_soup,page_url):
     city = location_soup.find("span",{'class':"c-address-city"}).text
     state = location_soup.find("abbr",{'class':"c-address-state"}).text
     store_zip = location_soup.find("span",{'class':"c-address-postal-code"}).text
-    if location_soup.find("span",{'itemprop':"telephone"}) == None:
+    if location_soup.find("div",{'itemprop':"telephone"}) == None:
         phone = "<MISSING>"
     else:
-        phone = location_soup.find("span",{'itemprop':"telephone"}).text
+        phone = location_soup.find("div",{'itemprop':"telephone"}).text
+        # print(phone)
+    ho1= location_soup.find("table",{"class":"c-hours-details"}).text
+    # c-hours-details 
+    ho = (ho1.replace('PM',"PM ").replace("Day of the WeekHours","Store Hours ").replace("y","y ").strip())
     hours = ""
-    hours = hours + " " + location_soup.find("h2",{"class":"LocationInfo-hoursTitle"}).text.strip() + " " + " ".join(list(location_soup.find("table",{'class':"c-location-hours-details"}).stripped_strings))
-    if location_soup.find("div",{'data-analytics-type':"nap"}):
-        pharmacy_id = location_soup.find("div",{'data-analytics-type':"nap"})["data-pharmacy-id"]
-        hours_request = session.get("https://local.randalls.com/pharmacydata/" + str(pharmacy_id).lower() + ".json",headers=headers)
-        hour_data = hours_request.json()["hours"]["days"]
-        hours = hours + " Pharmacy Hours "
-        for hour in hour_data:
-            if hour["intervals"] == []:
-                hours = hours + " " + hour["day"] + " Closed"
-            else:
-                hours = hours + " " + hour["day"] + " " + convert_time(hour["intervals"][0]["start"]) + " - " + convert_time(hour["intervals"][0]["end"])
+    hours =  location_soup.find_all("div",{"class":"Core-hoursSection"})[-1].text.split('Day of the WeekHours')[1].replace("Visit Pharmacy Page","").replace('PM',"PM ").replace("y","y ").strip()
+    hours_of_operation = (str(ho)+", Pharmacy Hours : "+str(hours))
+    if "2727 Exposition Blvd" in street_address:
+        hours_of_operation = str(ho)
     lat = location_soup.find("meta",{'itemprop':"latitude"})["content"]
     lng = location_soup.find("meta",{'itemprop':"longitude"})["content"]
     store = []
@@ -73,35 +71,48 @@ def parser(location_soup,page_url):
     store.append("<MISSING>")
     store.append(lat)
     store.append(lng)
-    store.append(hours)
+    store.append(hours_of_operation)
     store.append(page_url)
     return store
 
 def fetch_data():
     base_url = "https://randalls.com"
-    r = session.get("https://local.randalls.com/index.html",headers=headers)
+    r = requests.get("https://local.randalls.com/index.html",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     return_main_object = []
-    for states in soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
+    for states in soup.find_all("a",{'class':"Directory-listLink"}):
+        # print("https://local.randalls.com/"+states["href"])
+        
         if states["href"].count("/") == 2:
-            location_request = session.get("https://local.randalls.com/" + states["href"].replace("../",""),headers=headers)
+            
+            location_request = requests.get("https://local.randalls.com/" + states["href"].replace("../",""),headers=headers)
             location_soup = BeautifulSoup(location_request.text,"lxml")
+            
+            
             store_data = parser(location_soup,"https://local.randalls.com/" + states["href"].replace("../",""))
             yield store_data
         else:
-            state_request = session.get("https://local.randalls.com/" + states["href"],headers=headers)
+            
+            state_request = requests.get("https://local.randalls.com/" + states["href"],headers=headers)
+            
             state_soup = BeautifulSoup(state_request.text,"lxml")
-            for city in state_soup.find_all("a",{'class':"c-directory-list-content-item-link"}):
+            # print(state_soup)
+            for city in state_soup.find_all("a",{'class':"Directory-listLink"}):
                 if city["href"].count("/") == 2:
-                    location_request = session.get("https://local.randalls.com/" + city["href"].replace("../",""),headers=headers)
+                    
+                    location_request = requests.get("https://local.randalls.com/" + city["href"].replace("../",""),headers=headers)
                     location_soup = BeautifulSoup(location_request.text,"lxml")
                     store_data = parser(location_soup,"https://local.randalls.com/" + city["href"].replace("../",""))
                     yield store_data
                 else:
-                    city_request = session.get("https://local.randalls.com/" + city["href"].replace("../",""),headers=headers)
+                    
+                    city_request = requests.get("https://local.randalls.com/" + city["href"].replace("../",""),headers=headers)
+                    # print(city_request)
                     city_soup = BeautifulSoup(city_request.text,"lxml")
-                    for location in city_soup.find_all("a",{'class':"Teaser-nameLink"}):
-                        location_request = session.get("https://local.randalls.com/" + location["href"].replace("../",""),headers=headers)
+                    
+                    for location in city_soup.find_all("a",{'class':"Teaser-titleLink"}):
+                        
+                        location_request = requests.get("https://local.randalls.com/" + location["href"].replace("../",""),headers=headers)
                         location_soup = BeautifulSoup(location_request.text,"lxml")
                         store_data = parser(location_soup,"https://local.randalls.com/" + location["href"].replace("../",""))
                         yield store_data
