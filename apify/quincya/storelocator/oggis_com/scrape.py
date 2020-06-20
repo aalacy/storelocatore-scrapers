@@ -107,6 +107,12 @@ def fetch_data():
                 
                 if "Open 9:30am every" in hours_of_operation or "Open at" in hours_of_operation:
                     hours_of_operation = hours_of_operation[:hours_of_operation.find("Open")].strip()
+                
+                if "Breakfast" in hours_of_operation:
+                    hours_of_operation = hours_of_operation[:hours_of_operation.find("Breakfast")].strip()
+                
+                if "NFL" in hours_of_operation:
+                    hours_of_operation = hours_of_operation[:hours_of_operation.find("NFL")].strip()
 
             except:
                 pass
