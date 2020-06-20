@@ -19,7 +19,7 @@ def write_output(data):
 def fetch_data():
     # Your scraper here
     data = []
-    p = 1
+    p = 0
     url = 'https://www.flightfitnfun.com/'
     page = requests.get(url)
     soup = BeautifulSoup(page.text, "html.parser")
@@ -33,10 +33,11 @@ def fetch_data():
         link = link['href']
         print(link)
         if link.find("flightfitnfun") > -1:
+            print('1')
             page = requests.get(link)
             soup = BeautifulSoup(page.text, "html.parser")
-            detail = soup.find('script', {'type': 'application/ld+json'})
-            detail = str(detail)
+            detail = soup.findAll('script', {'type': 'application/ld+json'})
+            detail = str(detail[1])
             start = detail.find('"name"')
             start = detail.find(":", start) + 2
             end = detail.find('"', start)
@@ -58,9 +59,12 @@ def fetch_data():
             end = detail.find('"', start)
             pcode = detail[start:end]
             start = detail.find('"telephone"', end)
-            start = detail.find(":", start) + 2
-            end = detail.find('"', start)
-            phone = detail[start:end]
+            if start > -1:
+                start = detail.find(":", start) + 2
+                end = detail.find('"', start)
+                phone = detail[start:end]
+            else:
+                phone = '<MISSING>'
             start = detail.find('"openingHours"', end)
             start = detail.find(":", start) + 2
             end = detail.find('"', start)
@@ -68,9 +72,12 @@ def fetch_data():
             hours = hours.replace(",", "|")
             soup = str(soup)
             start = soup.find('businessId')
-            start = soup.find(':',start) + 3
-            end = soup.find("'",start)
-            store = soup[start:end]
+            if start == -1:
+                store = '<MISSING>'
+            else:
+                start = soup.find(':',start) + 3
+                end = soup.find("'",start)
+                store = soup[start:end]
             if len(pcode) == 4:
                 pcode = '0' + str(pcode)
             lat = "<MISSING>"
@@ -79,7 +86,7 @@ def fetch_data():
 
 
         else:
-
+            print('2')
             link1 = link + "directions/"
             page = requests.get(link1)
             soup = BeautifulSoup(page.text, "html.parser")
@@ -137,21 +144,7 @@ def fetch_data():
             store = "<MISSING>"
 
 
-
-
-        print(title)
-        print(store)
-        print(street)
-        print(city)
-        print(state)
-        print(pcode)
-        print(phone)
-        print(lat)
-        print(longt)
-        print(hours)
-        print(p)
-        p += 1
-        print('..................')
+       
         data.append([
             url,
             link,
@@ -168,6 +161,10 @@ def fetch_data():
             longt,
             hours
         ])
+        #print(p,data[p])
+        p += 1
+        #print('..................')
+        
     return data
 
 
