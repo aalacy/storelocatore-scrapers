@@ -1,200 +1,117 @@
-import csv
-import json
-
 import requests
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
+from bs4 import BeautifulSoup
+import csv
+import string
+import re, time
+import html
+from sgrequests import SgRequests
 
+session = SgRequests()
+headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+           }
 
-COMPANY_URL = "https://www.pridestaff.com"
-CHROME_DRIVER_PATH = "chromedriver"
-
-# ZM See if you can abstract out methods like this one 
-# in a base class to reuse them
 def write_output(data):
-    with open("data.csv", mode="w") as output_file:
-        writer = csv.writer(
-            output_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_ALL
-        )
+    with open('data.csv', mode='w') as output_file:
+        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(
-            [
-                "locator_domain",
-                "location_name",
-                "street_address",
-                "city",
-                "state",
-                "zip",
-                "country_code",
-                "store_number",
-                "phone",
-                "location_type",
-                "latitude",
-                "longitude",
-                "hours_of_operation",
-            ]
-        )
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
 
 
 def fetch_data():
-    # store data
-    locations_titles = []
-    street_addresses = []
-    cities = []
-    states = []
-    zip_codes = []
-    phone_numbers = []
-    countries = []
-    long_lat_dict = {}
+    # Your scraper here
     data = []
-
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    driver = webdriver.Chrome(CHROME_DRIVER_PATH, options=options)
-    driver.get(COMPANY_URL)
-
-    # Fetch store urls from location menu
-    store_url = driver.find_elements_by_css_selector(
-        "nav.site-nav > ul.ml-0.mb-0 > li:nth-child(3) > a"
-    )[0].get_attribute("href")
-    driver.get(store_url)
-
-    # Get all locations url
-    listing_urls = [
-        listing_url.get_attribute("href")
-        for listing_url in driver.find_elements_by_css_selector(
-            "div.row.row-cell--third.locations > div > ul.noaftermath > li > a"
-        )
-    ]
-
-    for listing_url in listing_urls:
-        driver.get(listing_url)
-
-        # ZM Putting your crawler on sleep to wait for page to return is a 
-        # nondeterministic operation. Some sites may take longer than others 
-        # to load. I would advise checking for something on the requested
-        # website that you expect to find there. Some examples of that would
-        # be site name, page title, login link, etc.
-        
-        # Wait until element appears - 10 secs max
-        wait = WebDriverWait(driver, 10)
-        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, ".h2.center")))
-
-        # Extract location information
-        location_title = driver.find_element(By.CSS_SELECTOR, ".h2.center").text
-
-        # Wait for location to be loaded
-        wait = WebDriverWait(driver, 10)
-        wait.until(
-            ec.visibility_of_element_located((By.CLASS_NAME, "location-address"))
-        )
-        address_info = [
-            location_info.text
-            for location_info in driver.find_elements_by_css_selector(
-                "ul.location-address.noaftermath > li"
-            )
-        ]
-        if "Coming Soon" in address_info[0]:
-            pass
-        else:
-            street_address = " ".join(address_info[:-1])
-            city = address_info[-1].split(",")[0]
-            state = address_info[-1].split(",")[1].strip().split(" ")[0]
-            zip_code = address_info[-1].split(",")[1].strip().split(" ")[1]
-
-            # Wait for location to be loaded
-            wait = WebDriverWait(driver, 10)
-            wait.until(
-                ec.visibility_of_element_located((By.CLASS_NAME, "location-contact"))
-            )
-            try:
-                # If the phone number exists
-                phone_number = driver.find_element_by_css_selector(
-                    "ul.location-contact > li:nth-child(1) > a"
-                ).text
-            except:
-                phone_number = "<MISSING>"
-
-        # Store information
-        locations_titles.append(location_title)
-        street_addresses.append(street_address)
-        cities.append(city)
-        states.append(state)
-        zip_codes.append(zip_code)
-        phone_numbers.append(phone_number)
-        countries.append("US")
-
-    # extract coordinates
+    p = 0
     url = "https://www.pridestaff.com/wp-admin/admin-ajax.php"
     req_data = {"action": "get_locations_ajax"}
-    body = json.loads(requests.post(url, data=req_data).text)
+    r = session.post(url, data=req_data)
+    cleanr = re.compile(r'<[^>]+>')
+    r.raise_for_status()
+    data_dict = r.json()
+    #print(data_dict)
+    for location in data_dict:
+        #print(location)
+        lat = location['coord']['lat']
+        longt = location['coord']['lng']
+        det = location['info']
+        soup = BeautifulSoup(str(det),'html.parser')
+        title = soup.find('strong').text
+        link = soup.find('a')['href']        
+        soup = str(det)
+        start = soup.find('<br>')       
+        end = soup.find('<a',start)
+        address = soup[start:end]
+        start = address.find('>')+1
+        end = address.find('<',start)
+        street = address[start:end]
+        start = end + 1
+        start = address.find('>',start)+1
+        end = address.find('<',start)
 
-    # ZM You can extract address from "info" in the JSON you get from above
-    # info: "<strong>Houston (Southeast)</strong><br>10001 Almeda Genoa Road<br>Suite A<br>Houston, TX 77075<br><a href="http://www.pridestaff.com/houstonse">View Location &raquo;</a><br><a href="https://www.google.com/maps/dir/?api=1&destination=10001+Almeda+Genoa+Road+Suite+A+Houston%2C+TX+77075">Get Directions &raquo;</a>"
+        #print(address[start:end])
+        try:
+            city,state = address[start:end].split(', ',1)
+        except:
+            street = street + ' '+ address[start:end]
+            
+            start = end + 1
+            start = address.find('>',start)+1
+            end = address.find('<',start)
+            print(address[start:end])
+            city,state = address[start:end].split(', ',1)
+            
+            
+        state = state.lstrip()
+        state,pcode = state.split(' ',1)
+        if street.lower().find('coming') == -1:
+            r = session.get(link)
+            soup = BeautifulSoup(r.text,'html.parser')
+            try:
+                phone = soup.find('ul',{'class':'location-contact'}).find('a')['href']
+            except:
+                phone='<MISSING>'
+            phone = phone.replace('tel:','').replace('.','-')
+            
+        #print(link)
+        if street.lower().find('coming') == -1:
+            data.append([
+                            'https://www.pridestaff.com/',
+                            link,                   
+                            title,
+                            street,
+                            city.lstrip(),
+                            state.lstrip(),
+                            pcode.lstrip(),
+                            'US',
+                            '<MISSING>',
+                            phone,
+                            '<MISSING>',
+                            lat,
+                            longt,
+                            '<MISSING>'
+                        ])
+            #print(p,data[p])
+            p += 1
+        
+        
+        
+        
 
-    for info in body:
-        long_lat_dict[
-            info["info"].split("</strong>")[0].replace("<strong>", "").strip()
-        ] = [info["coord"]["lat"], info["coord"]["lng"]]
-
-    for (
-        locations_title,
-        street_address,
-        city,
-        state,
-        zipcode,
-        phone_number,
-        country,
-    ) in zip(
-        locations_titles,
-        street_addresses,
-        cities,
-        states,
-        zip_codes,
-        phone_numbers,
-        countries,
-    ):
-        # ZM See if you can avoid hard coding
-        if (
-            long_lat_dict[locations_title.replace("PrideStaff", "").strip()][0]
-            == 32.3182314
-        ):
-            pass
-        else:
-            data.append(
-                [
-                    COMPANY_URL,
-                    locations_title,
-                    street_address,
-                    city,
-                    state,
-                    zipcode,
-                    country,
-                    "<MISSING>",
-                    phone_number,
-                    "<MISSING>",
-                    long_lat_dict[locations_title.replace("PrideStaff", "").strip()][0],
-                    long_lat_dict[locations_title.replace("PrideStaff", "").strip()][1],
-                    "<MISSING>",
-                ]
-            )
-
-    driver.quit()
+        
+       
+        
+   
+    
     return data
 
 
 def scrape():
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-
+    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
 
 scrape()
