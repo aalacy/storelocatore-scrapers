@@ -105,7 +105,7 @@ def fetch_data():
 		state = raw_data[-1][raw_data[-1].find(',')+1:raw_data[-1].rfind(' ')].strip()
 		zip_code = raw_data[-1][raw_data[-1].rfind(' ')+1:].strip()
 		if len(zip_code) < 5:
-			zip_code = "<INACCESSIBLE>"
+			zip_code = "0" + zip_code
 		country_code = "US"
 
 		store_number = "<MISSING>"
