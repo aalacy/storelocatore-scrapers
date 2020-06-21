@@ -77,11 +77,14 @@ def fetch_data():
     for state, store_urls in store_urls_by_state:
         for store_url in store_urls:
             driver.get(store_url)
-            script = [
+            try:
+                script = [
                 script.get_attribute('innerText')
                 for script in driver.find_elements_by_css_selector("script:not([src])[type='text/javascript']")
                 if 'singleLocation' in script.get_attribute('innerText')
             ][0]
+            except:
+                continue #new location
             store_data = json.loads(
                 re.findall(r'Snappy = ({.*})', script)[0]
             )['singleLocation']
