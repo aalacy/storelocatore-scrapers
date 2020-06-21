@@ -45,7 +45,7 @@ def fetch_data():
             lat,  # lat
             long,  # long
             tim,  # timing
-            "https://www.miranchitorestaurants.com/"+loc.strip().replace(' ','-')])
+            "https://www.miranchitorestaurants.com/"+loc.strip().lower().replace(' ','-')])
     return all
 
 def scrape():
