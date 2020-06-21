@@ -45,7 +45,7 @@ re_get_hours_section = re.compile('<div class="storeLocatorHours">(.+?)</div>')
 re_get_hours_days = re.compile('<span><span>(.+?)</span>(.+?)</span>')
 
 
-def sleep(min=1, max=3):
+def sleep(min=2, max=5):
     duration = random.randint(min, max)
     # log('sleeping ', duration)
     time.sleep(duration)
@@ -64,10 +64,10 @@ def write_output(data):
             writer.writerow(row)
 
 
-def get_session():
+def get_session(reset=False):
   # give each thread its own session object.
   # when using proxy, each thread's session will have a unique IP, and we'll switch IPs every 10 requests
-  if (not hasattr(thread_local, "session")) or (hasattr(thread_local, "request_count") and thread_local.request_count == 10):
+  if (not hasattr(thread_local, "session")) or (hasattr(thread_local, "request_count") and thread_local.request_count == 10) or (reset==True):
     thread_local.session = SgRequests()
     # print out what the new IP is ...
     if show_logs == True:
@@ -140,7 +140,11 @@ def search_zip(zip):
     return get_json_data(r.text)["features"]
 
 
-def get_location(loc):
+def get_location(loc, reset_session=False, attempts=1):
+    max_attempts = 5
+    if attempts > max_attempts: 
+        raise SystemExit(f"Max attempts ({max_attempts}) exceeded getting location {loc['storenumber']}")
+
     props = loc["properties"]
     store_id = props["storenumber"]
     website = 'gnc.com'
@@ -157,7 +161,7 @@ def get_location(loc):
     lng = loc["geometry"]["coordinates"][0]
     country = 'US'
 
-    session = get_session()
+    session = get_session(reset=reset_session)
     sleep()
 
     try: 
@@ -167,16 +171,22 @@ def get_location(loc):
         # attempt to handle "cannot connect to proxy, timed out"
         log(f'ProxyError: {proxy_err}')
         log('resetting session')
-        session = get_session()
+        session = get_session(reset=True)
         r = session.get(url, headers=get_headers)
         r.raise_for_status()
 
     increment_request_count()
     log(f'Pulling Store {url}')
+
+    if 'px-captcha' in r.text:
+        log('CAPTCHA, resetting and trying again')
+        return get_location(loc, reset_session=True, attempts=attempts+1)
+
     phone = get_phone(r.text)
     hours = get_hours(r.text)
 
-    return [website, url, name, addr, city, state, zc, country, store_id, phone, typ, lat, lng, hours]
+    location = [website, url, name, addr, city, state, zc, country, store_id, phone, typ, lat, lng, hours]
+    return [x if x else "<MISSING>" for x in location]
 
 
 def fetch_data():
@@ -208,6 +218,5 @@ def fetch_data():
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()
