@@ -1,7 +1,7 @@
 # coding=UTF-8
 
 import csv
-import requests
+# import requests
 from bs4 import BeautifulSoup as BS
 import re
 import json
