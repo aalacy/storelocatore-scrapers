@@ -33,11 +33,8 @@ def fetch_data():
         location_name = loc['name']
         if "fr-Paul Davis Location" in location_name:
             continue
-       
-        if "," in loc['address']:
-            street_address = loc['address'].split(",")[0]
-        else:
-            street_address = loc['address'].replace(",","").strip()
+
+        street_address = loc['address'].replace(",","").replace("Hanwell N.B. E3E 2E7","").strip()
         city = loc['city']
         state = loc['state']
         zipp = loc['postal']
