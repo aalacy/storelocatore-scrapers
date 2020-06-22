@@ -1,16 +1,10 @@
+#https://www.sears.com/stores.html
 
-import requests
 from bs4 import BeautifulSoup
 import csv
 import string
 import re, time
-import usaddress
-from sgrequests import SgRequests
-
-session = SgRequests()
-headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
-           }
-
+import requests
 
 
 def write_output(data):
@@ -18,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain","page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -26,199 +20,153 @@ def write_output(data):
 
 def fetch_data():
     # Your scraper here
-    data = []    
-    p = 0
-    url = 'http://www.primerica.com/public/locations.html'
-    page = session.get(url, headers=headers, verify=False)
+    
+
+    data = []
+    links = []
+    p = 1
+    k =0
+    pattern = re.compile(r'\s\s+')
+    url = "https://www.sears.com/stores.html"
+    page = requests.get(url)
+
     soup = BeautifulSoup(page.text, "html.parser")
-    maidiv = soup.find('main')
-    mainsection = maidiv.findAll('section',{'class':'content locList'})
-    #print(len(mainsection))
-    sec = 0
-    while sec < 2:
-        if sec == 0:
-            ccode = "US"
-        if sec == 1:
-            ccode = "CA"
-        rep_list = mainsection[sec].findAll('a')       
-        cleanr = re.compile('<.*?>')
-        pattern = re.compile(r'\s\s+')
-        for rep in rep_list:            
-            link = "http://www.primerica.com/public/" + rep['href']            
-            #print(link)           
-            try:
-               
-                page1 = session.get(link, headers=headers, verify=False)                    
-                time.sleep(1)
-                soup1 = BeautifulSoup(page1.text, "html.parser")
-                maindiv = soup1.find('main')
-                xip_list = maindiv.findAll('a')
-                print("len = ",len(xip_list))
-               
-                for xip in xip_list:                    
-                    try:
-                        pcode = xip.text
-                        #print('http://www.primerica.com'+xip['href'])
-                        page2 = session.get('http://www.primerica.com'+xip['href'], headers=headers, verify=False)                    
-                        time.sleep(1)
-                        soup2 = BeautifulSoup(page2.text, "html.parser")                   
-                        mainul = soup2.find('ul',{'class':'agent-list'})
-                        li_list = mainul.findAll('li')
-                        #print(len(li_list))
-                        for m in range(0, len(li_list)):
-                            try:
-                                address = ''
-                                alink = li_list[m].find('a')
-                                
-                                title = alink.text
-                                alink = alink['href']                                
-                                address =''
-                                addrm  = ''
-                                #print(alink)
-                                page3 = session.get(alink, headers=headers, verify=False)                    
-                                time.sleep(2)
-                                soup3 = BeautifulSoup(page3.text, "html.parser")                            
-                                address = soup3.find('div',{'class':'officeInfoDataWidth'})
-                                
-                                cleanr = re.compile(r'<[^>]+>')
-                               
-                                address = cleanr.sub(' ', str(address))
-                                #print(address)
-                                address = re.sub(pattern,'\n',address).lstrip()
-                                address= address.splitlines()
-                              
-                                
-                                city = ''
-                                state = ''
-                                i = 0
-                                street = address[i]
-                                i += 1
-                                if address[i].find(',') == -1:
-                                    street = street + ' ' +address[i]
-                                    i += 1
-                                else:
-                                    city,state = address[i].split(', ')
-                                   
-                                
-                                if address[i].find(',') > -1:
-                                    city,state = address[i].split(', ')
-                                    
-                                i += 1
-                                pcode = address[i]
-                                if len(state) > 4:
-                                    street  = address[0] +' '+ address[1]
-                                    city, state = address[2].split(',',1)
-                                    state = state.lstrip()
-                                    pcode = address[3]
-                                    
-                                    
-                                #print(street, city,state,pcode)    
-                                    
-                               
-                                
-                                
-                                phone = soup3.find('div',{'class':'telephoneLabel'}).text
-                                phone = phone.replace('Office: ','')
-                                phone = phone.replace("Mobile","")
-                                phone = phone.replace(":","")
-                                phone = phone.strip()
-                                if len(phone) < 2:
-                                    phone = "<MISSING>"
-                                if len(street) < 2 :
-                                    street = "<MISSING>"
-                                if len(city) < 2:
-                                    city  = "<MISSING>"                        
-                                if len(state) < 2 :
-                                    state = "<MISSING>"
-
-                                if len(pcode) < 2:
-                                    pcode = "<MISSING>"
-
-                                if len(phone) < 11:
-                                    phone = "<MISSING>"
-                                i = 0
-                                flag = True
-                               
-                                    
-                                street = street.lstrip().replace(',','')
-                                city = city.lstrip().replace(',','')
-                                state = state.lstrip().replace(',','')
-                                pcode = pcode.lstrip().replace(',','').rstrip()
+    mainul = soup.find('ul',{'id':'stateList'})
+    statelist = mainul.findAll('a')
+    for state in statelist:
+        if state['href'].find('404') == -1:
+            statelink = "https://www.sears.com" + state['href']
+            #print(statelink)
+            flag1 = True
+            while flag1:
+                try:
+                    page1 = requests.get(statelink)
+                    soup1 = BeautifulSoup(page1.text, "html.parser")
+                    maindiv = soup1.find('div', {'id': 'cityList'})
+                    linklist = maindiv.findAll('a',{'itemprop':'url'})
+                    for blinks in linklist:
+                        link = blinks['href']
+                        if link.find("http") == -1 and blinks.text.find("Sears Store") > -1 :
+                            #print("enter")
+                            link = "https://www.sears.com" + link
+                            print(link)
+                            flag = True
+                            while flag:
                                 try:
+                                    page2 = requests.get(link)
+                                    soup2 = BeautifulSoup(page2.text, "html.parser")
+                                    try:
+                                        title = soup2.find('h1').text
+                                    except:
+                                        title = soup2.find('small', {'itemprop': 'name'}).text
+
+                                    title = re.sub(pattern, " ", title)
+                                    start = title.find("#")
+                                    if start != -1:
+                                        start = start + 2
+                                        store = title[start:len(title)]
+                                    else:
+                                        store = "<MISSING>"
+                                    try:
+                                        street = soup2.find('span',{'itemprop':'streetAddress'}).text
+                                        street = street.lstrip()
+                                    except:
+                                        street = "<MISSING>"
+                                    try:
+                                        city = soup2.find('span', {'itemprop': 'addressLocality'}).text
+                                        city = city.lstrip()
+                                    except:
+                                        city = "<MISSING>"
+                                    try:
+                                        state = soup2.find('span', {'itemprop': 'addressRegion'}).text
+                                        state = state.lstrip()
+                                    except:
+                                        state = "<MISSING>"
+                                    try:
+                                        pcode = soup2.find('span', {'itemprop': 'postalCode'}).text
+                                    except:
+                                        pcode = "<MISSING>"
+                                    try:
+                                        phone = soup2.find('span', {'itemprop': 'telephone'}).text
+                                    except:
+                                        phone = "<MISSING>"
+                                    try:
+                                        hourd = soup2.findAll('tr',{'itemprop':'openingHoursSpecification'})
+                                        hours = ""
+                                        for hour in hourd:
+
+                                            hours = hours + hour.text + " "
+                                            hours = re.sub(pattern, " ", hours)
+                                    except:
+                                        hours = "<MISSING>"
+                                    try:
+                                        soup2 = str(soup2)
+                                        start = soup2.find('lat =')
+                                        start = soup2.find('=',start) + 2
+                                        #print(start)
+                                        end = soup2.find(',',start)
+                                        lat = soup2[start:end]
+                                        start = soup2.find('lon =')
+                                        start = soup2.find('=',start) + 2
+                                        end = soup2.find(',', start)
+                                        longt = soup2[start:end]
+                                    except:
+                                        lat =  "<MISSING>"
+                                        longt =  "<MISSING>"
+                                    hours = hours.replace("\n"," ")
+                                    hours = hours.strip()
+                                    title = title.lstrip()
+                                    title = title.encode('ascii', 'ignore').decode('ascii')
+                                    title = title.replace('Sears','Sears ')
+                                    title = title.replace('  ',' ')
+                                    flag = True
                                     for i in range(0,len(data)):                                        
                                         #print(i, pcode,data[i][6])
-                                        if alink == data[i][1] and title == data[i][2]:
+                                        if link == data[i][1] and title == data[i][2]:
                                             #print("exist")
                                             flag = False
                                             break
-                                    
+                                    if flag and title.lower().find('find your next closest Store') == -1 or link.lower().find('closed') == -1:
+                                        data.append([
+                                        'https://www.sears.com/',
+                                        link,
+                                        title,
+                                        street,
+                                        city,
+                                        state,
+                                        pcode,
+                                        'US',
+                                        store,
+                                        phone,
+                                        "<MISSING>",
+                                        lat,
+                                        longt,
+                                        hours
+                                    ])
+                                        #print(k,data[k])
+                                        k += 1
+                                        flag = False
                                 except Exception as e:
-                                    print(e)
-                                if pcode.find('-') == -1 and sec == 0 and pcode != '<MISSING>' :
-                                    pcode = pcode[0:5] + '-' +pcode[5:len(pcode)]
+                                    print(link)
+                                    print("error",e)
+                                    pass
 
-                               
-                                if state == "NF":
-                                    state = "NL"
-                                if state == "PQ":
-                                    
-                                    state = "QC"
-                                if flag:
-                                    data.append([
-                                            'http://www.primerica.com/',
-                                            alink,
-                                            title,
-                                            street,
-                                            city,
-                                            state,
-                                            pcode.rstrip(),
-                                            ccode,
-                                            "<MISSING>",
-                                            phone,
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                            "<MISSING>",
-                                        ])
-                                    
-                                #print(street,city,state,pcode,phone)
-                                    #print(p,data[p])
-                                    p += 1
-                                    #input()
-                                #input()
-                                
-                            except Exception as e:
-                                print(e)
-                                pass
-                               
-                    except Exception as e:
-                        print(e)
-                        pass
-                        
+                    flag1 = False
+
+                except Exception as e:
+                    print(statelink)
+                    print("error",e)
+                    pass
 
 
-                    #break
-            except Exception as e:
-                print(e)
-                pass
-
-            #driver1.quit()
-            #break
-        sec += 1
-        #if sec == 1:
-            #break
 
     return data
 
 
-
-
 def scrape():
-
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
     data = fetch_data()
     write_output(data)
-    print(time.strftime("%H:%M:%S", time.localtime(time.time())))
-
+    #5:46
 
 scrape()
+
