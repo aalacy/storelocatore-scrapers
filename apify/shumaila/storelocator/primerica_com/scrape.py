@@ -154,7 +154,7 @@ def fetch_data():
                                     
                                 except Exception as e:
                                     print(e)
-                                if pcode.find('-') == -1 and sec == 0 and pcode != '<MISSING>' :
+                                if pcode.find('-') == -1 and sec == 0 and pcode != '<MISSING>' and len(pcode) > 6 :
                                     pcode = pcode[0:5] + '-' +pcode[5:len(pcode)]
 
                                
