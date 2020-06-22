@@ -49,11 +49,14 @@ def fetch_data():
                         if link.find("http") == -1 and blinks.text.find("Sears Store") > -1 :
                             #print("enter")
                             link = "https://www.sears.com" + link
-                            print(link)
+                            #print(link)
                             flag = True
                             while flag:
                                 try:
                                     page2 = requests.get(link)
+                                    if page2.url != link and "store-closed-404" in page2.url:
+                                        flag = False
+                                        continue
                                     soup2 = BeautifulSoup(page2.text, "html.parser")
                                     try:
                                         title = soup2.find('h1').text
