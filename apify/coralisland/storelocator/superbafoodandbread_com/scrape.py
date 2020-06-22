@@ -50,7 +50,7 @@ def fetch_data():
         details = eliminate_space(store.xpath('.//text()'))
         output = []
         if len(details) > 3:
-            if "coming soon" in details[0]:
+            if "coming soon" in details[0].lower():
                 continue
             geo_loc = validate(store.xpath('.//a/@href')).split('/@')[1].split(',17z')[0].split(',')
             output.append(base_url) # url
