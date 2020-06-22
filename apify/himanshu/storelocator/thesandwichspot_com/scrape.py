@@ -35,7 +35,7 @@ def fetch_data():
 
     for div in soup.find_all("div",{"id":re.compile("inlineContent-gridContainer")})[2:33]:
         location_name = div.find("h4").text
-        print(location_name)
+        #print(location_name)
         addr = list(div.find_all("div",{"data-packed":"false"})[1].stripped_strings)
         street_address = addr[0].replace("\xa0"," ")
         if len(addr[1].split(",")) == 3:
@@ -53,7 +53,7 @@ def fetch_data():
         lng = lat_lng[location_name]['lng']
         
         page_url = div.find_all("a")[-1]['href']
-        location_soup = BS(session.get(page_url).text, "lxml")
+        location_soup = BS(requests.get(page_url).text, "lxml")
        
         hours = " ".join(list(location_soup.find_all("div",{"class":"txtNew"})[4].stripped_strings)).split("HOURS:")[1]
         store = [base_url, location_name, street_address, city, state, zipp, "US","<MISSING>", phone, "<MISSING>", lat, lng, hours.strip(), page_url]
