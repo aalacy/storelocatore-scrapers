@@ -3,98 +3,60 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
-
-
-
 session = SgRequests()
-
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
                             quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
-
-
 def fetch_data():
     base_url = "https://www.wingsetc.com"
-    r = session.get(
-        'https://www.wingsetc.com/locations/?CallAjax=GetLocations')
+    r = session.get('https://wingsetc.com/wp-admin/admin-ajax.php?action=store_search&lat=41.07927&lng=-85.13935&max_results=100000&search_radius=1000&autoload=1')
     data = r.json()
-    addresses = []
+    address = []
     hours_of_operation = "<MISSING>"
     for i in data:
-        locator_domain = base_url
-        location_name = i['FranchiseLocationName']
-        street_address = i['Address1']
-        city = i['City']
-        state = i['State']
-        zipp = i['ZipCode']
-        phone = i['Phone']
-        latitude = i['Latitude']
-        longitude = i['Longitude']
-        store_number = i['FranchiseLocationID']
-        country_code = "US"
+        location_name = i['store']
+        street_address = i['address']+""+i['address2']
+        city = i['city']
+        state = i['state']
+        zipp = i['zip']
+        phone = i['phone']
+        latitude = i['lat']
+        longitude = i['lng']
+        store_number = i['store_number']
+        country_code = i['country']
         location_type = "<MISSING>"
-        page_url = base_url + i['Path']
-        r1 = session.get(page_url)
-        soup1 = BeautifulSoup(r1.text,"lxml")
-        #print(page_url)
-        try:
-            hours_of_operation = " ".join(list(soup1.find("div",{"class":"local-hours ui-repeater"}).stripped_strings)[1:])
-        except:
-            hours_of_operation  ="<MISSING>"
-        # print(" ".join(list(soup1.find("div",{"class":"local-hours ui-repeater"}).stripped_strings)[1:]))
-        # # exit()
-        # hour = i['LocationHours']
-        # if hour != None:
-        #     hours = i['LocationHours'].split('[')
-        #     hr = []
-        #     for h in hours:
-        #         if "" != h:
-        #             # print(h)
-        #             # print('~~~~~~~~~~~~```````~~~~~')
-
-        #             hour_list = "[" + h
-        #             hours1 = " ".join(hour_list.split(':')[
-        #                 1:-2]).replace(',"OpenTime"', '').replace(',"CloseTime"', '').replace(',"Closed"', '').replace('"', "").split()
-
-        #             hours1.insert(-3, ' - ')
-        #             h1 = ":".join(
-        #                 hours1).replace(': - :', ' - ').strip()
-        #             hr.append(h1)
-        #     if hr == []:
-        #         hours_of_operation = "<MISSING>"
-        #     else:
-        #         hours_of_operation = " , ".join(hr)
-
-        # else:
-        #     hours_of_operation = "<MISSING>"
-        # print(hours_of_operation)
-        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-
-        store = [locator_domain, location_name, street_address, city, state, zipp, country_code,
-                 store_number, phone, location_type, latitude, longitude, hours_of_operation, page_url]
-
-        if str(store[1]) + str(store[2]) not in addresses and country_code:
-            addresses.append(str(store[1]) + str(store[2]))
-
-            store = [str(x).encode('ascii', 'ignore').decode(
-                'ascii').strip() if x else "<MISSING>" for x in store]
-            # print("data = " + str(store))
-            # print(
-            #     '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            yield store
-
-
+        page_url = i['url']
+        hours_of_operation = str(i['hours']).replace("<ul><li><strong>","").replace('</strong> <time>'," - ").replace("</time></li><li><strong>",", ").replace("</time></li></ul>","")
+        store = []
+        store.append(base_url if base_url else "<MISSING>")
+        store.append(location_name if location_name else "<MISSING>") 
+        store.append(street_address if street_address else "<MISSING>")
+        store.append(city if city else "<MISSING>")
+        store.append(state if state else "<MISSING>")
+        store.append(zipp if zipp else "<MISSING>")
+        store.append(country_code if country_code else "<MISSING>")
+        store.append(store_number if store_number else"<MISSING>") 
+        store.append(phone if phone else "<MISSING>")
+        store.append(location_type if location_type else "<MISSING>")
+        store.append(latitude if latitude else "<MISSING>")
+        store.append(longitude if longitude else "<MISSING>")
+        store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+        store.append(page_url if page_url else "<MISSING>")
+        # store = [x.encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
+        if store[2] in address :
+            continue
+        address.append(store[2])
+        if "Coming Soon!" in location_name:
+            continue
+        yield store
 def scrape():
     data = fetch_data()
     write_output(data)
-
-
 scrape()
