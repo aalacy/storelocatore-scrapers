@@ -1,0 +1,2 @@
+--ignore StreetAddressHasStateName (Confrimed scraped correctly)
+--ignore CountValidator --ignore StateLevelCountValidator (Site has 184 POI, validation expected 131)
