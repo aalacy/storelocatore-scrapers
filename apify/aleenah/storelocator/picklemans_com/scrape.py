@@ -33,7 +33,7 @@ def fetch_data():
         if a==[]:
             continue
         url="https://www.picklemans.com/"+a[0].get('href')
-        #print(url)
+        print(url)
         res = session.get(url)
         soup = BeautifulSoup(res.text, 'html.parser')
         try:
@@ -48,13 +48,25 @@ def fetch_data():
               state=soup.find_all('span', {'itemprop': 'addressLocality'})[1].text
         zip=soup.find('span', {'itemprop': 'postalCode'}).text
         phone=soup.find('span', {'itemprop': 'telephone'}).text
-        timl=soup.find_all('bd1')
-        if timl==[]:
+        timli=soup.find_all('bd1')
+        if timli==[]:
             timl=soup.find('h5').text
         else:
-            timl=timl[0].text
+            timl=timli[0].text
+            if "temporarily closed" in timl.lower():
+               type = re.findall(r'(Temporarily.*)',timl)[0].strip()
+               if "Hours:" not in timl:
+                   timl=timli[1].text
+            else:
+               type = "open"
         #print(timl)
-        tim=re.findall(r'Hours:(.*)',timl.replace("\n"," ").replace(".",""),re.DOTALL)[0].strip()
+        
+        try:
+           tim=re.findall(r'(Temporary Hours:.*)',timl.replace("\n"," ").replace(".",""),re.DOTALL)[0].strip().replace("\t","").replace("    ","")
+        except:
+           tim=re.findall(r'Hours:(.*)',timl.replace("\n"," ").replace(".",""),re.DOTALL)[0].strip()
+           if "Hours:" in tim:
+              tim=re.findall(r'Hours:(.*)',tim)[0]
         #print(soup.find('iframe').get('src'))
         long,lat=re.findall(r'.*!2d(.*)!3d([\d\.]+)!',soup.find('iframe').get('src'))[0]
         #print(tim)
@@ -69,7 +81,7 @@ def fetch_data():
             'US',
             "<MISSING>",  # store #
             phone,  # phone
-            "<MISSING>",  # type
+            type,  # type
             lat,  # lat
             long,  # long
             tim,  # timing
