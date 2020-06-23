@@ -28,7 +28,7 @@ def fetch_data():
     search = sgzip.ClosestNSearch()
     search.initialize(country_codes=["CA"])
     MAX_RESULTS = 5
-    MAX_DISTANCE = 30
+    MAX_DISTANCE = 1
     current_results_len = 0     # need to update with no of count.
     zip_code = search.next_zip()
     base_url = "https://secondcup.com"
