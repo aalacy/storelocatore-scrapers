@@ -50,7 +50,10 @@ def fetch_data():
                 lng = line2.split('"longitude":"')[1].split('"')[0]
                 addinfo = line2.split('"address":{"title":"')[1].split('"')[0]
                 hours = line2.split('"hours":"')[1].split('"')[0]
-                phone = line2.split('"phone":"')[1].split('"')[0]
+                try:
+                    phone = line2.split('"phone_number":"')[1].split('"')[0]
+                except:
+                    phone = '<MISSING>'
                 purl = line2.split('"link":"')[1].split('"')[0].replace('\\','')
                 if addinfo.count(',') == 3:
                     add = addinfo.split(',')[0] + ' ' + addinfo.split(',')[1]
