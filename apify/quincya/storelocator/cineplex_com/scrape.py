@@ -5,6 +5,7 @@ import time
 from random import randint
 
 import pandas as pd
+import re
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
