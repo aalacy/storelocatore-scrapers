@@ -146,6 +146,8 @@ def fetch_data():
             if state in canada:
                 country = 'CA'
             if add != '':
+                if ':' in phone:
+                    phone = '<MISSING>'
                 yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
             else:
                 LocFound = True
