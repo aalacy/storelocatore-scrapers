@@ -31,7 +31,7 @@ def fetch_data():
     res=requests.get("https://www.joescrabshack.com/locations/all")
     soup = BeautifulSoup(res.text, 'html.parser')
     divs = soup.find_all('div', {'class': 'loc-results-box'})
-    divs=divs[53:]
+    divs=divs[45:]
     print(len(divs))
     for div in divs:
         a = div.find("h4").find('a')
