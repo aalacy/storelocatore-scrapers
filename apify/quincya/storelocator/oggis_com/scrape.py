@@ -119,7 +119,11 @@ def fetch_data():
         if not hours_of_operation:
             hours_of_operation = "<MISSING>"
 
-        data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+        location_data = [locator_domain, base_link, location_name, street_address, city, state, zip_code,
+                         country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation]
+        location_data = [x.encode('utf-8') for x in location_data]
+
+        data.append(location_data)
 
     return data
 
