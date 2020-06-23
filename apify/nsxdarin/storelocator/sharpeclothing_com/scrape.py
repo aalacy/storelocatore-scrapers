@@ -65,6 +65,11 @@ def fetch_data():
             phone = '<MISSING>'
         if zc == '':
             zc = '<MISSING>'
+        if 'joplin-mo' in loc:
+            add = '2702 Richard Joseph Boulevard Suite 109'
+            state = 'MO'
+            city = 'Joplin'
+            phone = '(417) 553-0399'
         yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
