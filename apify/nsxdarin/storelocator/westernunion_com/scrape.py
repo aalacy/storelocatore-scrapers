@@ -45,37 +45,37 @@ def fetch_data():
         phone = ''
         lat = ''
         lng = ''
+        store = loc.rsplit('/',1)[1]
+        print('Pulling Location %s...' % loc)
         r = session.get(loc, headers=headers)
         lines = r.iter_lines()
         AFound = False
         for line in lines:
-            if '<h1 class="offscreen">' in line:
-                name = line.split('<h1 class="offscreen">')[1].split('<')[0]
-                if 'Western Union Agent Location' in name:
-                    name = name.replace(name[:32], '')
-                    name = name.strip()
-            if 'itemprop="streetAddress">' in line and AFound is False:
+            if '"name":"' in line:
+                name = line.split('"name":"')[1].split('"')[0]
+            if '"streetAddress":"' in line and AFound is False:
                 AFound = True
-                add = line.split('itemprop="streetAddress">')[1].split('<')[0]
-            if 'itemprop="addressLocality">' in line:
-                city = line.split('itemprop="addressLocality">')[1].split('<')[0]
-            if 'itemprop="addressRegion">' in line:
-                state = line.split('itemprop="addressRegion">')[1].split('<')[0]
-            if 'itemprop="postalCode">' in line:
-                zc = line.split('itemprop="postalCode">')[1].split('<')[0]
-            if 'aria-label="Telephone">' in line:
-                phone = line.split('aria-label="Telephone">')[1].split('<')[0]
-            if 'itemprop="latitude" content="' in line:
-                lat = line.split('itemprop="latitude" content="')[1].split('"')[0]
-            if 'itemprop="longitude" content="' in line:
-                lng = line.split('itemprop="longitude" content="')[1].split('"')[0]
-            if '"id":"' in line:
-                store = line.split('"id":"')[1].split('"')[0]
-            if '<meta itemprop="openingHours" content="' in line:
-                if hours == '<MISSING>':
-                    hours = line.split('<meta itemprop="openingHours" content="')[1].split('"')[0]
-                else:
-                    hours = hours + '; ' + line.split('<meta itemprop="openingHours" content="')[1].split('"')[0]
+                add = line.split('"streetAddress":"')[1].split('"')[0]
+            if '"city":"' in line:
+                city = line.split('"city":"')[1].split('"')[0]
+            if '"state":"' in line:
+                state = line.split('"state":"')[1].split('"')[0]
+            if '"postal":"' in line:
+                zc = line.split('"postal":"')[1].split('"')[0]
+            if '"geoQualitySort":' in line:
+                phone = line.split('"geoQualitySort":')[1].split('"phone":"')[1].split('"')[0]
+            if '"latitude":' in line:
+                lat = line.split('"latitude":')[1].split(',')[0]
+            if '"longitude":' in line:
+                lng = line.split('"longitude":')[1].split(',')[0]
+            if '"monCloseTime":"' in line:
+                hours = 'Mon: ' + line.split('"monOpenTime":"')[1].split('"')[0] + '-' + line.split('"monCloseTime":"')[1].split('"')[0]
+                hours = hours + '; Tue: ' + line.split('"tueOpenTime":"')[1].split('"')[0] + '-' + line.split('"tueCloseTime":"')[1].split('"')[0]
+                hours = hours + '; Wed: ' + line.split('"wedOpenTime":"')[1].split('"')[0] + '-' + line.split('"wedCloseTime":"')[1].split('"')[0]
+                hours = hours + '; Thu: ' + line.split('"thuOpenTime":"')[1].split('"')[0] + '-' + line.split('"thuCloseTime":"')[1].split('"')[0]
+                hours = hours + '; Fri: ' + line.split('"friOpenTime":"')[1].split('"')[0] + '-' + line.split('"friCloseTime":"')[1].split('"')[0]
+                hours = hours + '; Sat: ' + line.split('"satOpenTime":"')[1].split('"')[0] + '-' + line.split('"satCloseTime":"')[1].split('"')[0]
+                hours = hours + '; Sun: ' + line.split('"sunOpenTime":"')[1].split('"')[0] + '-' + line.split('"sunCloseTime":"')[1].split('"')[0]
         yield [website, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
