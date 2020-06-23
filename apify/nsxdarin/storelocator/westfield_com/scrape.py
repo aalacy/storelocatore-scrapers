@@ -58,6 +58,23 @@ def fetch_data():
                 hours = hours.replace('<span class=" title-light">','').replace('<span>','').replace('</span>','').replace('<span class="title-separator">','; ').replace('  ',' ')
                 hours = hours.strip().replace(' ;',';')
         if add != '':
+            if 'annapolis' in loc.split('|')[0]:
+                add = '2002 Annapolis Mall'
+                city = 'Annapolis'
+                state = 'MD'
+                zc = '21401'
+            if ' (' in add:
+                add = add.split(' (')[0]
+            if 'brandon' in loc.split('|')[0]:
+                add = '459 Brandon Town Center'
+                city = 'Brandon'
+                state = 'FL'
+                zc = '33511'
+            if 'valencia' in add.split('|')[0]:
+                add = '24201 West Valencia Blvd Suite 150'
+                city = 'Valencia'
+                state = 'CA'
+                zc = '91355'
             yield [website, loc.split('|')[0], name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
