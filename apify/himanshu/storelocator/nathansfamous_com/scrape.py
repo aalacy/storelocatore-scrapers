@@ -3,7 +3,9 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import phonenumbers
 session = SgRequests()
+import requests
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -19,7 +21,7 @@ def fetch_data():
     base_url = "https://www.nathansfamous.com"
     headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"}
     output = []
-    r = session.get("https://restaurants.nathansfamous.com/locations/",headers=headers)
+    r = requests.get("https://restaurants.nathansfamous.com/locations/",headers=headers)
     soup = BeautifulSoup(r.text,"lxml")
     lat  =[]
     lng = []
@@ -48,7 +50,7 @@ def fetch_data():
                 else:
                     name = full[2:-2][:-1][0]
                     address = " ".join(full[2:-2][:-1][1:])
-                    print(full[2:-2][:-1][1:])
+                    # print(full[2:-2][:-1][1:])
             elif len(full[2:-2])==2:
                 state_list = re.findall(r' ([A-Z]{2})', str(full[2:-2][-1]))
                 us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(full[2:-2][-1]))
@@ -68,7 +70,22 @@ def fetch_data():
                 zipp = full[2:-2][0].split(",")[-1].split( )[1]
                 city  = full[2:-2][0].split(",")[-2].replace("5770 W. Irlo Bronson Memorial Hwy ",'')
                 address = full[2:-2][0].split(",")[0].replace("Kissimmee",'')
-
+            if "12475" in zipp :
+                state = "New York"
+                city = city.replace("Ruby New York","Ruby")
+            if "10580" in zipp :
+                state = "New York"
+                city = city.replace("Rye New York","Rye")
+            if "11364" in zipp :
+                state = "New York"
+                city = city.replace("Bayside New York","Bayside")
+            if "10121" in zipp :
+                state = "New York"
+                city = city.replace("New York New York","New York")
+            if "JFK Memorial Hwy. MM 82" in address:
+                state = "NY"
+                city = "New York"
+                address = address.replace('JFK Memorial Hwy. MM 82',"JFK Memorial Hwy. MM 82 Vesey St. & West St.")
             store = []
             store.append("http://nathansfamous.com/")
             store.append(name)
