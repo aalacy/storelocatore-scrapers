@@ -41,9 +41,9 @@ def fetch_data():
         for line2 in r2.iter_lines():
             if 'og:title" content="' in line2:
                 name = line2.split('og:title" content="')[1].split(' |')[0]
-                add = line2.split('<span class="c-address-street-1">')[1].split('<')[0]
+                add = line2.split('<span class="c-address-street-1">')[1].split('<')[0].strip()
                 try:
-                    add = line2.split('<span class="c-address-street-2">')[1].split('<')[0]
+                    add = add + ' ' + line2.split('<span class="c-address-street-2">')[1].split('<')[0]
                     add = add.strip()
                 except:
                     pass
