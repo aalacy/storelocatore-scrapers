@@ -1,0 +1,2 @@
+--ignore StreetAddressHasStateName (Confrimed scraped correctly)
+--ignore StateLevelCountValidator (Confrimed scraped correctly)
