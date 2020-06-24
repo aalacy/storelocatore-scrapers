@@ -1,49 +1,75 @@
+from requests.exceptions import RequestException
 import csv
 from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import sgzip
 import json
+
 session = SgRequests()
-import requests
+show_logs = False
+
+
+def log(*args, **kwargs):
+  if (show_logs == True):
+    print(" ".join(map(str, args)), **kwargs)
+
+
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
-        writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
+        writer = csv.writer(output_file, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_ALL)
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
-                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
+                         "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", "page_url"])
         # Body
         for row in data:
             writer.writerow(row)
+
+
 def fetch_data():
     locator_domain = 'https://www.frysfood.com'
     addresses = []
     search = sgzip.ClosestNSearch()
-    search.initialize(country_codes= ["US","CA"])
+    search.initialize(country_codes=["US", "CA"])
     MAX_RESULTS = 100
     MAX_DISTANCE = 100
     zip_code = search.next_zip()
+    session = SgRequests()
     while zip_code:
         result_coords = []
-        # print("zip_code === " + str(zip_code))
-        # print("ramiang zip =====" + str(len(search.zipcodes)))
+        log("zip_code === " + str(zip_code))
+        log("ramiang zip =====" + str(len(search.zipcodes)))
         headers = {
-            'User-Agent': "PostmanRuntime/7.19.0",
-            'content-type' : 'application/json;charset=UTF-8'
+            'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36",
+            'content-type': 'application/json;charset=UTF-8'
         }
         data = r'{"query":"\n      query storeSearch($searchText: String!, $filters: [String]!) {\n        storeSearch(searchText: $searchText, filters: $filters) {\n          stores {\n            ...storeSearchResult\n          }\n          fuel {\n            ...storeSearchResult\n          }\n          shouldShowFuelMessage\n        }\n      }\n      \n  fragment storeSearchResult on Store {\n    banner\n    vanityName\n    divisionNumber\n    storeNumber\n    phoneNumber\n    showWeeklyAd\n    showShopThisStoreAndPreferredStoreButtons\n    storeType\n    distance\n    latitude\n    longitude\n    tz\n    ungroupedFormattedHours {\n      displayName\n      displayHours\n      isToday\n    }\n    address {\n      addressLine1\n      addressLine2\n      city\n      countryCode\n      stateCode\n      zip\n    }\n    pharmacy {\n      phoneNumber\n    }\n    departments {\n      code\n    }\n    fulfillmentMethods{\n      hasPickup\n      hasDelivery\n    }\n  }\n","variables":{"searchText":"'+str(zip_code)+'","filters":[]},"operationName":"storeSearch"}'
-        r = requests.post('https://www.frysfood.com/stores/api/graphql', headers=headers,data=data)
+
+        try:
+            r = session.post(
+                'https://www.frysfood.com/stores/api/graphql', headers=headers, data=data)
+        except RequestException as ex:
+            log("--- RequestException -->", ex, 'resetting session')
+            # reset the session and try again
+            session = SgRequests()
+            r = session.post(
+                'https://www.frysfood.com/stores/api/graphql', headers=headers, data=data)
+
+        log('status code for search: ', r.status_code)
+
         try:
             datas = r.json()['data']['storeSearch']['stores']
-        except:
-            pass
+        except Exception as ex:
+            log(f'-------- exception parsing stores json for zip {zip_code} --------', ex, '---------')
+            # pass
+
         for key in datas:
             location_name = key['vanityName']
             street_address = key['address']['addressLine1']
             city = key['address']['city']
             state = key['address']['stateCode']
-            zipp =  key['address']['zip']
+            zipp = key['address']['zip']
             country_code = key['address']['countryCode']
             store_number = key['storeNumber']
             phone = key['phoneNumber']
@@ -53,12 +79,14 @@ def fetch_data():
             result_coords.append((latitude, longitude))
             hours_of_operation = ''
             if key['ungroupedFormattedHours']:
-                for hr in  key['ungroupedFormattedHours']:
-                    hours_of_operation += hr['displayName']+": "+ hr['displayHours']+", "
+                for hr in key['ungroupedFormattedHours']:
+                    hours_of_operation += hr['displayName'] + \
+                        ": " + hr['displayHours']+", "
             else:
-                hours_of_operation =  "<MISSING>"
-            page_url = "https://www.frysfood.com/stores/details/"+str(key['divisionNumber'])+"/"+str(store_number)
-            #print(page_url)
+                hours_of_operation = "<MISSING>"
+            page_url = "https://www.frysfood.com/stores/details/" + \
+                str(key['divisionNumber'])+"/"+str(store_number)
+            log(f'store loc: {page_url}')
             store = []
             store.append(locator_domain if locator_domain else '<MISSING>')
             store.append(location_name if location_name else '<MISSING>')
@@ -72,25 +100,30 @@ def fetch_data():
             store.append(location_type if location_type else '<MISSING>')
             store.append(latitude if latitude else '<MISSING>')
             store.append(longitude if longitude else '<MISSING>')
-            store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+            store.append(
+                hours_of_operation if hours_of_operation else '<MISSING>')
             store.append(page_url)
             if store[2] in addresses:
+                log(f'already have store {store[2]}')
                 continue
             addresses.append(store[2])
-            #print("data = " + str(store))
-            #print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
+            log("data = " + str(store))
+            log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
             yield store
+
         ###fuel store
         try:
             datas1 = r.json()['data']['storeSearch']['fuel']
-        except:
-            pass
+        except Exception as ex:
+            log(f'-------- exception parsing fuel stores for zip {zip_code} --------', ex, '---------')
+            # pass
+
         for key1 in datas1:
             location_name = key1['vanityName']
             street_address = key1['address']['addressLine1']
             city = key1['address']['city']
             state = key1['address']['stateCode']
-            zipp =  key1['address']['zip']
+            zipp = key1['address']['zip']
             country_code = key1['address']['countryCode']
             store_number = key1['storeNumber']
             phone = key1['phoneNumber']
@@ -100,11 +133,14 @@ def fetch_data():
             result_coords.append((latitude, longitude))
             hours_of_operation = ''
             if key1['ungroupedFormattedHours']:
-                for hr in  key1['ungroupedFormattedHours']:
-                    hours_of_operation += hr['displayName']+": "+ hr['displayHours']+", "
+                for hr in key1['ungroupedFormattedHours']:
+                    hours_of_operation += hr['displayName'] + \
+                        ": " + hr['displayHours']+", "
             else:
-                hours_of_operation =  "<MISSING>"
-            page_url = "https://www.frysfood.com/stores/details/"+str(key1['divisionNumber'])+"/"+str(store_number)
+                hours_of_operation = "<MISSING>"
+            page_url = "https://www.frysfood.com/stores/details/" + \
+                str(key1['divisionNumber'])+"/"+str(store_number)
+            log(f'fuel loc: {page_url}')
             store = []
             store.append(locator_domain if locator_domain else '<MISSING>')
             store.append(location_name if location_name else '<MISSING>')
@@ -118,25 +154,33 @@ def fetch_data():
             store.append(location_type if location_type else '<MISSING>')
             store.append(latitude if latitude else '<MISSING>')
             store.append(longitude if longitude else '<MISSING>')
-            store.append(hours_of_operation if hours_of_operation else '<MISSING>')
+            store.append(
+                hours_of_operation if hours_of_operation else '<MISSING>')
             store.append(page_url)
             if store[2] in addresses:
+                log(f'already have fuel store {store[2]}')
                 continue
             addresses.append(store[2])
-            # print("data = " + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
+            log("data = " + str(store))
+            log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',)
             yield store
+
         final_data = datas + datas1
         if len(final_data) < MAX_RESULTS:
-            # print("max distance update")
+            log("max distance update")
             search.max_distance_update(MAX_DISTANCE)
         elif len(final_data) == MAX_RESULTS:
-            # print("max count update")
+            log("max count update")
             search.max_count_update(result_coords)
         else:
-            raise Exception("expected at most " + str(MAX_RESULTS) + " results")
+            raise Exception("expected at most " +
+                            str(MAX_RESULTS) + " results")
         zip_code = search.next_zip()
+
+
 def scrape():
     data = fetch_data()
     write_output(data)
+
+
 scrape()
