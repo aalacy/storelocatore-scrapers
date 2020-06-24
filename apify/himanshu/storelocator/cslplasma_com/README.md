@@ -8,4 +8,4 @@ Please make sure that:
 * The resulting output passes https://github.com/SafeGraphInc/crawl-service/blob/master/scripts/validate.py
 
 
-address with no number, and  i cheked all data is true this webiste
+address with no number,zipcode not in state and  i cheked all data is true this webiste
