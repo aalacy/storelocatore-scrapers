@@ -68,6 +68,8 @@ def fetch_data():
                     zc = addinfo.split(',')[2].strip().split(' ')[1]
                     add = add.strip().replace('  ',' ')
         country = 'US'
+        if 'Delivery - ' in hours:
+            hours = hours.split('Delivery - ')[1]
         yield [website, purl, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
