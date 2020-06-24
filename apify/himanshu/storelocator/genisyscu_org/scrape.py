@@ -29,7 +29,7 @@ def fetch_data():
                 data_new =  (li.find("a")['href'])
                 page_url= base_url + data_new
                 location_name = li.find("a").text.strip()
-                location_type = "ATMs And Credit Union"
+                location_type = "Genisys Branch"
                 r1 = session.get(page_url,headers=headers)
                 soup1 = BeautifulSoup(r1.text,"lxml")
                 try:
@@ -68,12 +68,50 @@ def fetch_data():
                 store.append(location_type if location_type else "<MISSING>")
                 store.append(latitude if latitude else "<MISSING>")
                 store.append(longitude if longitude else "<MISSING>")
-                store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+                store.append(hours_of_operation.replace('Branch Hours ','') if hours_of_operation else "<MISSING>")
                 store.append(page_url if page_url else "<MISSING>")
                 # if store[2] in address :
                 #     continue
                 # address.append(store[2])
                 yield store 
+    r1 = session.get("https://www.genisyscu.org/atmbranch-locator?street=&search=&state=&radius=50&options%5B%5D=atms#",headers=headers)
+    soup1 = BeautifulSoup(r1.text,"lxml")
+    data7 = (soup1.find_all("div",{"class":"loc_list"}))
+    for i in data7:
+        data8 = (i.find_all("div",{"class":"listbox"}))
+        for j in data8:
+            data9 = (j.find_all("p")[-1])
+            street_address = str(data9).split("<br/>")[0].replace('<p>',"").replace(".","").replace("Points Dr","Point Dr")
+            state = data9.text.split(",")[1].split(" ")[1]
+            zipp = data9.text.split(",")[1].split(" ")[-1]
+            city = str(data9).split("<br/>")[1].split(",")[0]
+            location_name = j.find("a").text.strip()
+            phone = "<MISSING>"
+            latitude = "<MISSING>"
+            longitude = "<MISSING>"
+            hours_of_operation = "<MISSING>"
+            page_url = "https://www.genisyscu.org/atmbranch-locator?street=&search=&state=&radius=50&options%5B%5D=atms#"
+            store = []
+            store.append(base_url if base_url else "<MISSING>")
+            store.append(location_name if location_name else "<MISSING>") 
+            store.append(street_address if street_address else "<MISSING>")
+            store.append(city if city else "<MISSING>")
+            store.append(state if state else "<MISSING>")
+            store.append(zipp if zipp else "<MISSING>")
+            store.append("US")
+            store.append("<MISSING>") 
+            store.append(phone if phone else "<MISSING>")
+            store.append("ATM Location")
+            store.append(latitude if latitude else "<MISSING>")
+            store.append(longitude if longitude else "<MISSING>")
+            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+            store.append(page_url if page_url else "<MISSING>")
+            if store[2] in address :
+                continue
+            address.append(store[2])
+            yield store 
+          
+    
 def scrape():
     data = fetch_data()
     write_output(data)
