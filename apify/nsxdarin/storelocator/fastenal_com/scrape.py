@@ -71,7 +71,7 @@ def fetch_data():
                 HFound = True
             if HFound and '<div' in line2:
                 HFound = False
-            if HFound and 'day' in line2:
+            if HFound and '<p>' in line2:
                 hrs = line2.strip().replace('\t','').replace('\n','').replace('\r','')
                 hrs = hrs.replace('<p>','').replace('</p>','')
                 if hours == '':
@@ -87,7 +87,8 @@ def fetch_data():
             city = city.replace('&#039;',"'").replace('&amp;','&')
             hours = hours.replace('&#039;',"'").replace('&amp;','&')
             add = add.replace('&#039;',"'").replace('&amp;','&')
-            yield [website, loc.split('|')[0], name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
+            if 'MN100' not in name:
+                yield [website, loc.split('|')[0], name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
     data = fetch_data()
