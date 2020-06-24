@@ -6,7 +6,7 @@ from random import randint
 import re
 
 def write_output(data):
-	with open('data.csv', mode='w') as output_file:
+	with open('data.csv', mode='w', encoding="utf-8") as output_file:
 		writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
 		# Header
@@ -82,7 +82,13 @@ def fetch_data():
 
 		locator_domain = "getregionalcash.com"
 
-		location_name = item.find(class_="LocationName-brand").text.strip() + " " + item.find(class_="LocationName-geo").text.strip()
+		city = item.find('span', attrs={'itemprop': 'addressLocality'}).text.strip()
+		location_name_geo = item.find(class_="LocationName-geo").text.strip()
+
+		if "1719 Wilma Rudolph" in location_name_geo:
+			location_name_geo = city
+
+		location_name = item.find(class_="LocationName-brand").text.strip() + " " + location_name_geo
 		print(location_name)
 
 		branch_manager = item.find(class_="LocationInfo-manager").text.replace("Branch Manager:","").strip()
@@ -92,8 +98,7 @@ def fetch_data():
 			street_address = street_address.strip()
 		except:
 			pass
-
-		city = item.find(class_="LocationName-geo").text.strip()
+		
 		state = item.find(class_="c-address-state").text.strip()
 		zip_code = item.find(class_="c-address-postal-code").text.strip()
 		country_code = "US"
@@ -125,7 +130,10 @@ def fetch_data():
 		if not hours_of_operation:
 			hours_of_operation = "<MISSING>"
 
-		data.append([locator_domain, final_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation, branch_manager])
+		location_data = [locator_domain, final_link, location_name, street_address, city, state, zip_code,
+						country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation, branch_manager]
+
+		data.append(location_data)
 
 	return data
 
