@@ -114,7 +114,7 @@ def search_page_init(attempts=0):
         # reset the session and try again
         session = SgRequests()
         # check IP if logging enabled
-        if show_logs = True:
+        if show_logs:
             r = session.get('https://jsonip.com/')
             log(f"--- New IP for session: {r.json()['ip']}")
         search_page_init(attempts+1)
