@@ -92,9 +92,9 @@ def fetch_data():
 		print(location_name)
 
 		branch_manager = item.find(class_="LocationInfo-manager").text.replace("Branch Manager:","").strip()
-		street_address = item.find(class_="c-address-street-1").text.strip()
+		street_address = item.find(class_="c-address-street-1").text.replace("\u200b","").strip()
 		try:
-			street_address = street_address + " " + item.find(class_="c-address-street-2 break-before").text.strip()
+			street_address = street_address + " " + item.find(class_="c-address-street-2 break-before").text.replace("\u200b","").strip()
 			street_address = street_address.strip()
 		except:
 			pass
