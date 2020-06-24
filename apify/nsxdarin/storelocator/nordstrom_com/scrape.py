@@ -46,6 +46,7 @@ def fetch_data():
                         if 'United' in country and store not in ids:
                             ids.append(store)
                             country = 'US'
+                            hours = hours.replace('|','; ')
                             yield [website, loc, name, add, city, state, zc, country, store, phone, typ, lat, lng, hours]
 
 def scrape():
