@@ -47,7 +47,7 @@ def fetch_data():
             state = q['state']
             zipp = q['postalCode']
             phone = q['phone']
-            page_url= "https://www.plowhearth.com"+q['url']
+            page_url= "https://www.plowhearth.com"+q['url'].replace(' ','')
             name= q['displayName']
             try:
                 hours=' '.join('{} : {}'.format(key, value) for key, value in q['openings'].items())

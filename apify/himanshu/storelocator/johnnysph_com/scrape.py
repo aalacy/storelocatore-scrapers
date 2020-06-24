@@ -2,7 +2,7 @@ import csv
 import re
 import pdb
 import requests
-#from lxml import etree
+from lxml import etree
 import json
 from bs4 import BeautifulSoup as bs
 
@@ -32,6 +32,7 @@ def fetch_data():
                 href = soup1.find("a")['href']
                 name  = soup1.find("a").text
                 if href not in url:
+                    # 
                     url.append(href)
                     full = soup1.find("span",{"class":"address"}).text.split(",")
                     if "USA" in full[-1]:
@@ -41,6 +42,15 @@ def fetch_data():
                     city = full[:-1][-1]
                     street_address = " ".join(full[:-2])
                     page_url = href
+                    soup2 = bs(requests.get(href).text,'lxml')
+                    phone='<MISSING>'
+                    try:
+                        soup3 = bs(requests.get(soup2.find("a",{"class":"btn-jph medium-grey btn-submit-order"})['href']).text,'lxml')
+                        phone=(list(soup3.find("div",{"id":"viewOrderFrame"}).find("tr").stripped_strings)[-1])
+                    except:
+                        pass
+                        # print(href)
+                    # print(soup2)
                     lat = tag['lat']
                     lng =  tag['lng']
                     store = []
@@ -52,7 +62,7 @@ def fetch_data():
                     store.append(zipp)
                     store.append("US")
                     store.append("<MISSING>")
-                    store.append( "<MISSING>")
+                    store.append( phone)
                     store.append("<MISSING>")
                     store.append(lat.strip() if lat.strip() else "<MISSING>" )
                     store.append(lng.strip() if lng.strip() else "<MISSING>")
@@ -65,8 +75,8 @@ def fetch_data():
                     #          str else x for x in store]
                     store = [x.encode('ascii', 'ignore').decode(
                         'ascii').strip() if type(x) == str else x for x in store]
-                    #print("data ===" + str(store))
-                    #print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                    # print("data ===" + str(store))
+                    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~")
                     yield store
 
 
