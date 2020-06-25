@@ -78,7 +78,7 @@ def fetch_data():
 			print('[!] Error Occured. ')
 			print('[?] Check whether system is Online.')
 
-		locator_domain = "getregionalcash.com"
+		locator_domain = "golfgalaxy.com"
 
 		location_name = item.find("h1").text.strip().title()
 		print(location_name)
