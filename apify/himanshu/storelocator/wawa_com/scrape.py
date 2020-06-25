@@ -1,61 +1,15 @@
 import csv
 from bs4 import BeautifulSoup
-import requests
-# from sgrequests import SgRequests
+from sgrequests import SgRequests
 from random import choice
-# import http.client
 import re
 import json
-# import sgzip
 import ssl
 import urllib3
+import requests
 
+session = SgRequests()
 
-session = requests.Session()
-# session = SgRequests()
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    #print("Error##################")
-    # Legacy Python that doesn't verify HTTPS certificates by default
-    pass
-else:
-    # Handle target environment that doesn't support HTTPS verification
-    ssl._create_default_https_context = _create_unverified_https_context
-def get_proxy():
-    url = "https://www.sslproxies.org/"
-    r = session.get(url)
-    soup = BeautifulSoup(r.content, "html5lib")
-    return {'https': (choice(list(map(lambda x:x[0]+':'+x[1],list(zip(map(lambda x:x.text,soup.findAll('td')[::8]),map(lambda x:x.text,soup.findAll('td')[1::8])))))))}
-
-def proxy_request(request_type, url, **kwargs):
-    while 1:
-        try:
-            proxy = get_proxy()
-            #print("Using Proxy {}".format(proxy))
-            
-            r = requests.request(request_type, url, proxies=proxy, timeout=3, **kwargs)
-            if "CMSSiteMapList" not in r.text:
-                continue
-            else:
-              break
-        except:
-            pass
-    return r
-def proxy_request1(request_type, url, **kwargs):
-    while 1:
-        try:
-            proxy = get_proxy()
-            #print("Using Proxy {}".format(proxy))
-            
-            r = requests.request(request_type, url, proxies=proxy, timeout=3, **kwargs)
-            if "channel-content full-width" not in r.text:
-                continue
-            else:
-                break
-        except:
-            pass
-    return r
 def write_output(data):
     with open('data.csv', mode='w',newline="") as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -68,48 +22,41 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
-    
     urllib3.disable_warnings()
     base_url = "https://www.wawa.com"
    
-    
-    # r = proxy_request("get","https://www.wawa.com/site-map", verify=False, headers=headers)
-    # r = session.get(page_url, headers=r_headers, verify=False)
-    
-    response = session.get("https://www.wawa.com/site-map",verify= False)
-    cookies_json = session.cookies.get_dict()
+    sess = requests.session()
+    response = sess.get("https://www.wawa.com/site-map")
+    cookies_json = sess.cookies.get_dict()
     cookies_string = str(cookies_json).replace("{", "").replace("}", "").replace("'", "").replace(": ", "=").replace(",", ";")
-    # print(cookies_string)
     headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36',
     'Content-Type': 'application/json',
     'Cookie': cookies_string,
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9' 
     }
-    r = proxy_request("get","https://www.wawa.com/site-map", verify=False, headers=headers)
+    r = session.get("https://www.wawa.com/site-map", headers=headers)
+    print(r.content)
+    
     soup = BeautifulSoup(r.text,"lxml")
-    # print(soup.prettify())
     addresses = []
     for link in soup.find_all("ul",{"class":"CMSSiteMapList"})[-1].find_all("a",{"class":"CMSSiteMapLink"}):
         locator_domain = base_url
         store_number = link['href'].split("/")[2]
         page_url = base_url + link['href']
-        r = session.get(page_url,verify= False,headers = headers)
+        r = session.get(page_url, headers = headers)
         cookies_json = session.cookies.get_dict()
         cookies_string = str(cookies_json).replace("{", "").replace("}", "").replace("'", "").replace(": ", "=").replace(",", ";")
-        # print(cookies_string)
         headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36',
         'Content-Type': 'application/json',
         'Cookie': cookies_string,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9' 
         }
-        r = proxy_request1("get",page_url, verify=False, headers=headers)
+        r = session.get(page_url, headers=headers)
         soup = BeautifulSoup(r.text,"lxml")
         location_name = soup.find("span",{"itemprop":"name"}).text.strip()
-        # print(location_name)
         try:
             street_address = soup.find("span",{"itemprop":"streetAddress"}).text.strip()
         except:
@@ -149,15 +96,10 @@ def fetch_data():
         if str(store[2]) + str(store[-1]) not in addresses:
             addresses.append(str(store[2]) + str(store[-1]))
             store = [x if x else "<MISSING>" for x in store]
-            print("data = " + str(store))
-            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             yield store
 
-    
-    
 def scrape():
     data = fetch_data()
     write_output(data)
-
 
 scrape()
