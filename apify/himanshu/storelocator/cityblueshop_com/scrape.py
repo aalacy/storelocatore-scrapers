@@ -6,33 +6,7 @@ import json
 import ast
 from random import choice
 
-# def get_driver():
-#     options = Options()
-#     # options.add_argument('--headless')
-#     options.add_argument('--no-sandbox')
-#     options.add_argument('--disable-dev-shm-usage')
-#     options.add_argument('--window-size=1920,1080')
-#     return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
-
 session = SgRequests()
-
-def get_proxy():
-    url = "https://www.sslproxies.org/"
-    r = session.get(url)
-    soup = BeautifulSoup(r.content, "html5lib")
-    return {'https': (choice(list(map(lambda x:x[0]+':'+x[1],list(zip(map(lambda x:x.text,soup.findAll('td')[::8]),map(lambda x:x.text,soup.findAll('td')[1::8])))))))}
-    
-
-def proxy_request(request_type, url, **kwargs):
-    while 1:
-        try:
-            proxy = get_proxy()
-            # print("Using Proxy {}".format(proxy))
-            r = requests.request(request_type, url, proxies=proxy, timeout=5, **kwargs)
-            break
-        except:
-            pass
-    return r
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -45,26 +19,18 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-
 def fetch_data():
+    addresses = []
     return_main_object = []
-    # driver = get_driver()
-    addresses =[]
     base_url = "https://www.cityblueshop.com/pages/locations"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'
     }
-    # soup = BeautifulSoup(driver.page_source, "lxml")
-    # r = session.get(base_url,headers=headers)
 
-    # soup = BeautifulSoup(driver.page_source, "lxml")
-
-    r = proxy_request("get",base_url,headers=headers)
+    r = session.get(base_url,headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
-    # print(soup)
     for parts in soup.find_all("div", {"class": "rte-content colored-links"}):
         for semi_parts in parts.find_all("h3"):
-            # print(semi_parts.find("a")['href'])
             phone1 =''
             store_request = session.get(semi_parts.find("a")['href'])
             store_soup = BeautifulSoup(store_request.text, "lxml")
@@ -72,10 +38,8 @@ def fetch_data():
             for inner_parts in store_soup.find_all("div", {"class": "rte-content colored-links"}):
                 temp_storeaddresss = list(inner_parts.stripped_strings)
                 location_name = semi_parts.text
-                # print(location_name)
                 if len(temp_storeaddresss) ==7:
                     phone1 = temp_storeaddresss[2].replace("Ph: ","")
-                    # print(temp_storeaddresss[2].replace("Ph: ",""))
                     street_address = temp_storeaddresss[0].replace("\xa0","")
                     
                     city = temp_storeaddresss[1].replace("\xa0","").split(',')[0]
@@ -84,7 +48,6 @@ def fetch_data():
                     longitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[0]
                     latitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[-1].split("!2m")[0].split("!3m")[0]
                     hours = " ".join(temp_storeaddresss[-4:])
-                    # print(temp_storeaddresss[1].split(",")[-1].split( )[-1])
                 elif len(temp_storeaddresss) ==4:
                     if len(temp_storeaddresss[0].split(","))==2:
                         zipcode = temp_storeaddresss[0].split(",")[-1].split(" ")[-1]
@@ -174,7 +137,6 @@ def fetch_data():
                 return_object.append(longitude if longitude else "<MISSING>")
                 return_object.append(hours.encode('ascii', 'ignore').decode('ascii').strip() if hours else "<MISSING>")
                 return_object.append(page_url)
-               # print("return_object---------------------  ",return_object)
                 if return_object[2] in addresses:
                     continue
                 addresses.append(return_object[2])
