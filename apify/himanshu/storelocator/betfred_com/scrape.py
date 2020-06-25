@@ -4,9 +4,10 @@ import re
 import json
 import sgzip
 from random import choice
-# import datetime
-# from datetime import datetime
-import requests
+from sgrequests import SgRequests
+
+session = SgRequests()
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8",newline='') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -15,23 +16,6 @@ def write_output(data):
         for row in data:
             writer.writerow(row)
 
-def get_proxy():
-    url = "https://www.sslproxies.org/"
-    r = requests.get(url)
-    soup = BeautifulSoup(r.content, "html5lib")
-    return {'https': (choice(list(map(lambda x:x[0]+':'+x[1],list(zip(map(lambda x:x.text,soup.findAll('td')[::8]),map(lambda x:x.text,soup.findAll('td')[1::8])))))))}
-
-    
-def proxy_request(request_type, url, **kwargs):
-    while 1:
-        try:
-            proxy = get_proxy()
-            # print("Using Proxy {}".format(proxy))
-            r = requests.request(request_type, url, proxies=proxy, timeout=5, **kwargs)
-            break
-        except:
-            pass
-    return r
 def fetch_data():
     #print("start")
     search = sgzip.ClosestNSearch()
@@ -49,8 +33,6 @@ def fetch_data():
     result_coords = []
     while zip_code:
         result_coords = []
-        #print("zip_code === " + str(zip_code))
-        # print("remaining zip =====" + str(len(search.zipcodes)))
         url = "https://www.betfred.com/services/gis/searchstores"
         payload = "{\"SearchLocation\":\" "+str(zip_code)+", UK\",\"MaximumShops\":10,\"MaximumDistance\":5}"
         headers = {
@@ -65,7 +47,7 @@ def fetch_data():
             'cache-control': "no-cache"
             }
         try:
-            response = requests.request("POST", url, data=payload, headers=headers).json()
+            response = session.post(url, data=payload, headers=headers).json()
             if response["Stores"]:
                 current_results_len=len(response["Stores"])
                 for loc in response["Stores"]:
@@ -108,8 +90,6 @@ def fetch_data():
                         # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
                         yield store
         except:
-            # response = proxy_request("POST", url, data=payload, headers=headers)
-            # print(response.content)
             search.max_distance_update(MAX_DISTANCE)
             # continue        
         if current_results_len < MAX_RESULTS:
