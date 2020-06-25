@@ -55,7 +55,7 @@ def fetch_data():
             store.append( soup1.find("p",{"class":"o-breadcrumbs__text"}).text.split(",")[0])
             store.append(latitude if latitude else "<MISSING>")
             store.append(longitude if longitude else "<MISSING>")
-            store.append(hours_of_operation if hours_of_operation else "<MISSING>")
+            store.append(hours_of_operation.replace("N/A",'<MISSING>') if hours_of_operation else "<MISSING>")
             store.append(page_url if page_url else "<MISSING>")
             # print("~~~~~~~~~~~~~~~~~ ",store)
             # if store[2] in addressesss :

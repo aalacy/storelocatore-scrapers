@@ -7,6 +7,8 @@ import sgzip
 import time
 
 
+
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -89,17 +91,22 @@ def fetch_data():
         page_url=''
         hours_of_operation=''
         if mp1["url"]:
-            page_url = "https://www.simpsons-subaru.co.uk"
+            page_url =  mp1["url"]
             new_page_url =page_url+"/contact"
-            # print(page_url+"/contact")
+            #print(page_url+"/contact")
+
             r1 = request_wrapper(page_url+"/contact","get",headers=headers)
-            soup1 = BeautifulSoup(r1.text, "lxml")
             try:
-                new_page_url = "https://www.simpsons-subaru.co.uk"+soup1.find_all("div",{"class":"contact-location-box"})[-1].find("a")['href']
-                page_url = "https://www.simpsons-subaru.co.uk"+soup1.find_all("div",{"class":"contact-location-box"})[-1].find("a")['href']
+                soup1 = BeautifulSoup(r1.text, "lxml")
+            except:
+                pass
+            try:
+                new_page_url = mp1["url"]+soup1.find_all("div",{"class":"contact-location-box"})[-1].find("a")['href']
+                page_url = mp1["url"]+soup1.find_all("div",{"class":"contact-location-box"})[-1].find("a")['href']
                 r2 = request_wrapper(page_url,"get",headers=headers)
                 soup3 = BeautifulSoup(r2.text, "lxml")
                 # print("yes....................")
+                # print( list(soup3.find_all("div",{"class":"box flexi-height_child"})[1].stripped_strings))
                 try:state = list(soup3.find_all("div",{"class":"box flexi-height_child"})[1].stripped_strings)[-3].strip().split(",")[-2]
                 except:pass
                 try:phone = soup3.find("p",class_="telephone-box").text.strip().replace("Telephone: ",'')
@@ -128,7 +135,7 @@ def fetch_data():
         store.append(longitude if longitude else "<MISSING>")
         store.append(hours_of_operation.replace('\n','').strip() if hours_of_operation else "<MISSING>")
         store.append(new_page_url if new_page_url else "<MISSING>")
-        # print("~~~~~~~~~~~~~~~~ ",store)
+        #print("~~~~~~~~~~~~~~~~ ",store)
         store = [str(x).encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
         yield store
 
