@@ -4,7 +4,6 @@ import csv
 import time
 from random import randint
 
-import pandas as pd
 import re
 
 from selenium import webdriver
@@ -35,16 +34,24 @@ def fetch_data():
 	HEADERS = {'User-Agent' : user_agent}
 
 	session = SgRequests()
-	
-	df = pd.read_csv("canada_list.csv")
 
 	all_links = []
-	for row in df.values:
-		city = row[0]
-		prov = row[1]
 
-		search_link = "https://www.cineplex.com/Theatres/TheatreListings?LocationURL=%s-%s&Range=150" %(city,prov)
-			
+	page_num = 1
+	search_link = "https://www.cineplex.com/Theatres/TheatreListings?LocationURL=calgary&Range=5000&page=%s" %(page_num)
+
+	req = session.get(search_link, headers = HEADERS)
+	time.sleep(randint(1,2))
+	try:
+		base = BeautifulSoup(req.text,"lxml")
+	except (BaseException):
+		print('[!] Error Occured. ')
+		print('[?] Check whether system is Online.')
+
+	last_page_num = int(base.find_all(class_="page-num")[-1].text)
+	
+	for page_num in range(1,last_page_num+1):
+		search_link = "https://www.cineplex.com/Theatres/TheatreListings?LocationURL=calgary&Range=5000&page=%s" %(page_num)
 		req = session.get(search_link, headers = HEADERS)
 		time.sleep(randint(1,2))
 		try:
@@ -54,34 +61,13 @@ def fetch_data():
 			print('[!] Error Occured. ')
 			print('[?] Check whether system is Online.')
 
-		for i in range(20):
+		results = base.find_all(class_="showtime-theatre")
 
-			results = base.find_all(class_="showtime-theatre")
+		for result in results:
+			link = "https://www.cineplex.com" + result.find(class_="theatre-text").a['href']
 
-			for result in results:
-				link = "https://www.cineplex.com" + result.find(class_="theatre-text").a['href']
-
-				if link not in all_links:
-					all_links.append(link)
-
-			try:
-				next_page = base.find(id="page-next")
-				if next_page:
-					next_link = "https://www.cineplex.com" + next_page['href']
-			
-					req = session.get(next_link, headers = HEADERS)
-					time.sleep(randint(1,2))
-					try:
-						base = BeautifulSoup(req.text,"lxml")
-						print(next_link)
-					except (BaseException):
-						print('[!] Error Occured. ')
-						print('[?] Check whether system is Online.')
-						break
-				else:
-					break
-			except:
-				break
+			if link not in all_links:
+				all_links.append(link)
 
 	data = []
 	total_links = len(all_links)
