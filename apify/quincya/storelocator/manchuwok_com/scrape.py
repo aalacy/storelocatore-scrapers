@@ -7,7 +7,7 @@ import re
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+from selenium.webdriver.support.ui import Select
 
 def get_driver():
     options = Options() 
@@ -35,17 +35,21 @@ def fetch_data():
 	time.sleep(2)
 
 	driver.get(base_link)
-	time.sleep(8)
+	time.sleep(10)
 	
 	base = BeautifulSoup(driver.page_source,"lxml")
-	items = base.find_all(class_="results_wrapper")
+	items = base.find_all(class_="results_wrapper")	
 
 	data = []
-	for item in items:
-		locator_domain = "manchuwok.com"
+	found_zips = []
+	location_names = []
 
+	locator_domain = "manchuwok.com"
+
+	# Getting all names first
+	for i in range(len(items)):
+		item = items[i]
 		location_name = "Manchuwok " + item.find(class_="results_row_right_column").span.text.strip()
-		print(location_name)
 
 		street_address = item.find(class_="slp_result_address slp_result_street").text.strip()
 		try:
@@ -54,53 +58,104 @@ def fetch_data():
 		except:
 			pass
 
-		city_line = item.find(class_="slp_result_address slp_result_citystatezip").text.strip()
-		city_line = re.sub(' +', ' ', city_line)
-		city = city_line[:city_line.find(',')].strip()
-		state = city_line[city_line.find(',')+1:city_line.find(',')+4].strip()
-		if state == "PQ":
-			state = "QC"
-		zip_code = city_line[city_line.find(',')+4:city_line.rfind(',')].strip()
-		if "canada" in city_line.lower():
-			country_code = "CA"
-		else:
-			country_code = "US"
+		location_names.append([location_name, street_address])
 
-		store_number = "<MISSING>"
-		location_type = "<MISSING>"
+	for location in location_names:
 
-		try:
-			phone = item.find(class_="slp_result_address slp_result_phone").text.strip()
-			if not phone:
-				phone = "<MISSING>"
-		except:
-			phone = "<MISSING>"
+		got_loc = False
+		run_count = 0
+
+		while not got_loc and run_count < 3:
+			search_element = driver.find_element_by_id('addressInput')
+			search_element.clear()
+			time.sleep(randint(1,2))
+			search_element.send_keys(location[0] + " " + location[1])
+			time.sleep(randint(1,2))
+
+			# Setting to 5 miles
+			select = Select(driver.find_element_by_id('radiusSelect'))
+			select.select_by_visible_text('5 miles')
+			time.sleep(randint(1,2))
+
+			search_button = driver.find_element_by_id('addressSubmit')
+			driver.execute_script('arguments[0].click();', search_button)
+			time.sleep(randint(10,12))
+
+			sel_items = driver.find_elements_by_class_name("results_wrapper")
 		
-		hours_of_operation = item.find(class_="slp_result_contact slp_result_hours").text.replace("\n"," ").strip()
-		if not hours_of_operation:
-			hours_of_operation = "<MISSING>"
+			base = BeautifulSoup(driver.page_source,"lxml")
+			items = base.find_all(class_="results_wrapper")
 
-		try:
-			gmaps_link = item.find(class_="storelocatorlink")['href']
-			g_link = gmaps_link[:gmaps_link.find("?")+1] +  gmaps_link[gmaps_link.find("daddr"):]
-			driver.get(g_link)
-			time.sleep(randint(8,10))
+			location_name = location[0]
+			for i in range(0,len(items)):
 
-			map_link = driver.current_url
-			if "@" in map_link[map_link.rfind("/"):map_link.rfind("/")+3]:
-				latitude = "<MISSING>"
-				longitude = "<MISSING>"
-			else:
-				at_pos = map_link.rfind("@")
-				latitude = map_link[at_pos+1:map_link.find(",", at_pos)].strip()
-				longitude = map_link[map_link.find(",", at_pos)+1:map_link.find(",", at_pos+15)].strip()
-		except:
-			latitude = "<MISSING>"
-			longitude = "<MISSING>"
+				item = items[i]
+				
+				if location_name == "Manchuwok " + item.find(class_="results_row_right_column").span.text.strip():
+					print(location_name)
+					got_loc = True
 
-		data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+					street_address = item.find(class_="slp_result_address slp_result_street").text.strip()
+					try:
+						street_address = street_address + " " + item.find(class_="slp_result_address slp_result_street2").text.strip()
+						street_address = street_address.strip()
+					except:
+						pass
 
+					city_line = item.find(class_="slp_result_address slp_result_citystatezip").text.strip()
+					city_line = re.sub(' +', ' ', city_line)
+					city = city_line[:city_line.find(',')].strip()
+					state = city_line[city_line.find(',')+1:city_line.find(',')+4].strip()
+					if state == "PQ":
+						state = "QC"
+					zip_code = city_line[city_line.find(',')+4:city_line.rfind(',')].strip()
+					if "canada" in city_line.lower():
+						country_code = "CA"
+					else:
+						country_code = "US"
+
+					store_number = "<MISSING>"
+					location_type = "<MISSING>"
+
+					try:
+						phone = item.find(class_="slp_result_address slp_result_phone").text.strip()
+						if not phone:
+							phone = "<MISSING>"
+					except:
+						phone = "<MISSING>"
+					
+					hours_of_operation = item.find(class_="slp_result_contact slp_result_hours").text.replace("\n"," ").strip()
+					if not hours_of_operation:
+						hours_of_operation = "<MISSING>"
+
+					sel_items[i].click()
+					time.sleep(randint(3,4))
+					try:
+						raw_gps = driver.find_element_by_xpath("//*[(@title='Open this area in Google Maps (opens a new window)')]").get_attribute("href")
+						latitude = raw_gps[raw_gps.find("=")+1:raw_gps.find(",")].strip()
+						longitude = raw_gps[raw_gps.find(",")+1:raw_gps.find("&")].strip()
+
+						lat_long = latitude + "_" + longitude
+						if lat_long in found_zips:
+							latitude = "<MISSING>"
+							longitude = "<MISSING>"
+						else:
+							found_zips.append(lat_long)
+					except:
+						latitude = "<MISSING>"
+						longitude = "<MISSING>"
+
+					data.append([locator_domain, base_link, location_name, street_address, city, state, zip_code, country_code, store_number, phone, location_type, latitude, longitude, hours_of_operation])
+					break
+			if not got_loc:
+				print("Missed: " + location_name + "..  Retrying ..")
+				run_count = run_count + 1
 	return data
+
+	try:
+		driver.close()
+	except:
+		pass
 
 def scrape():
 	data = fetch_data()
