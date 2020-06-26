@@ -5,10 +5,10 @@ import re
 import json
 import time
 
+
 def write_output(data):
     with open('data.csv', mode='w', encoding="utf-8") as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation", 'page_url'])
@@ -71,12 +71,12 @@ def fetch_data():
             continue
         adressessess.append(street_address)
         country_code = mp1['country']
+        phone=''
         phone =  mp1['phone']
         latitude = mp1['lat']
         longitude = mp1['lng']
         hours_of_operation=''
         state=''
-        phone=''
         page_url=''
         new_page_url=''
         hours_of_operation=''
