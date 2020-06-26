@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 import json
 session = SgRequests()
+import requests
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',',
@@ -14,7 +15,7 @@ def write_output(data):
             writer.writerow(row)
 def fetch_data():
     base_url = "https://www.cslplasma.com"
-    r = session.get(base_url + "/locations/search-results-state")
+    r = requests.get(base_url + "/locations/search-results-state")
     soup = BeautifulSoup(r.text, "lxml")
     address = []
     return_main_object = []
@@ -22,7 +23,7 @@ def fetch_data():
     for option in soup.find('select',{"name": "SelectedState"}).find_all("option"):
         if option['value'] == "":
             continue
-        location_request = session.get(base_url + option['value'])
+        location_request = requests.get(base_url + option['value'])
         lcoation_soup = BeautifulSoup(location_request.text, 'lxml')
         for location in lcoation_soup.find_all("div", {"class": "center-search-item"}):
             store = []
@@ -45,8 +46,25 @@ def fetch_data():
                 if "javascript:togglePreferredCenter" in page_url1:
                     page_url1 = location.find_all("a")[0]['href']
                 page_url = (base_url+page_url1)
+                data_8 = page_url.split("-")[0].split("/")[-1]
+                if len(data_8) == 3:
+                    store_number = (data_8.replace("eau",'<MISSING>'))
+                else:
+                    store_number = ("<MISSING>")
                 latitude = "<MISSING>"
                 longitude = "<MISSING>"
+                if "30721" in zipp:
+                    city = "Dalton"
+                if "83651" in zipp:
+                    city = "Nampa"
+                if "62702" in zipp:
+                    city = "Springfield"
+                if "79924" in zipp:
+                    city = "El Paso"
+                if "65202" in zipp:
+                    city = "columbia"
+                if "23502" in zipp:
+                    city = "norfolk"
                 store = []
                 store.append("https://www.cslplasma.com")
                 store.append(name)
@@ -55,7 +73,7 @@ def fetch_data():
                 store.append(state)
                 store.append(zipp)
                 store.append("US")
-                store.append("<MISSING>")
+                store.append(store_number)
                 store.append(phone if phone != "" else "<MISSING>")
                 store.append("<MISSING>")
                 store.append(latitude)
