@@ -5,6 +5,7 @@ import re
 import json
 import ast
 from random import choice
+import usaddress
 
 session = SgRequests()
 
@@ -31,117 +32,63 @@ def fetch_data():
     soup = BeautifulSoup(r.text, "lxml")
     for parts in soup.find_all("div", {"class": "rte-content colored-links"}):
         for semi_parts in parts.find_all("h3"):
+            top_level_address = list(semi_parts.find_next_sibling().stripped_strings)[0]
+            tagged = usaddress.tag(top_level_address)[0]
+            if 'StateName' not in tagged:
+                continue
+            state = tagged['StateName']
+            city = tagged['PlaceName']
+            street_address = top_level_address.split(city)[0].strip().strip(',')
+            zipcode = tagged['ZipCode']
+            print(zipcode)
             phone1 =''
             store_request = session.get(semi_parts.find("a")['href'])
             store_soup = BeautifulSoup(store_request.text, "lxml")
             page_url = semi_parts.find("a")['href']
             for inner_parts in store_soup.find_all("div", {"class": "rte-content colored-links"}):
+                longitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[0]
+                latitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[-1].split("!2m")[0].split("!3m")[0]
                 temp_storeaddresss = list(inner_parts.stripped_strings)
                 location_name = semi_parts.text
                 if len(temp_storeaddresss) ==7:
                     phone1 = temp_storeaddresss[2].replace("Ph: ","")
                     street_address = temp_storeaddresss[0].replace("\xa0","")
-                    
-                    city = temp_storeaddresss[1].replace("\xa0","").split(',')[0]
-                    state =  temp_storeaddresss[1].replace("\xa0","").split(',')[0].replace("19147",'')
-                    zipcode =temp_storeaddresss[1].split(",")[-1].split( )[-1]
-                    longitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[0]
-                    latitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[-1].split("!2m")[0].split("!3m")[0]
                     hours = " ".join(temp_storeaddresss[-4:])
                 elif len(temp_storeaddresss) ==4:
-                    if len(temp_storeaddresss[0].split(","))==2:
-                        zipcode = temp_storeaddresss[0].split(",")[-1].split(" ")[-1]
-                        state = temp_storeaddresss[0].split(",")[-1].split(" ")[-2]
-                        city = temp_storeaddresss[0].split(",")[-1].split(" ")[-3]
-                        hours = " ".join(temp_storeaddresss[-2:])
-                        phone1 = temp_storeaddresss[-3]
-                        
-                        street_address= temp_storeaddresss[0].replace(" Wyncote PA 19095",'').replace(", DE 19703",'')
-                        
-                        longitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[0]
-                        latitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[-1].split("!2m")[0].split("!3m")[0]
-                        
-                    elif len(temp_storeaddresss[0].split(","))==4:
-                        state = temp_storeaddresss[0].split(",")[-1].split( )[-2]
-                        zipcode = temp_storeaddresss[0].split(",")[-1].split( )[-1]
-                        city = temp_storeaddresss[0].split(",")[-2]
-                        street_address = " ".join(temp_storeaddresss[0].split(",")[:-2])
-                        hours = " ".join(temp_storeaddresss[-2:])
-                        phone1 = temp_storeaddresss[-3]
-                        longitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[0]
-                        latitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[-1].split("!2m")[0].split("!3m")[0]
-                        
-                        # print(latitude)
-                        
-                    elif len(temp_storeaddresss[0].split(","))==3:
-                        street_address = temp_storeaddresss[0].split(",")[0]
-                        city = temp_storeaddresss[0].split(",")[1]
-                        # state = temp_storeaddresss[0].split(",")[2].split().strip().split( )[0]
-                        us_zip_list = re.findall(re.compile(r"\b[0-9]{5}(?:-[0-9]{4})?\b"), str(temp_storeaddresss[0].split(",")[2]))
-                        state_list = re.findall(r' ([A-Z]{2})', str(temp_storeaddresss[0].split(",")[2]))
-                        if us_zip_list:
-                            zipcode = us_zip_list[-1]
-
-                        if state_list:
-                            state = state_list[-1]
-                        hours = " ".join(temp_storeaddresss[-2:])
-                        phone1 = temp_storeaddresss[-3]
-                        
-                        longitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[0]
-                        latitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[-1].split("!2m")[0].split("!3m")[0]
-
+                    phone1 = temp_storeaddresss[-3]
+                    hours = " ".join(temp_storeaddresss[-2:])
                 elif len(temp_storeaddresss) ==5:
                     hours = " ".join(temp_storeaddresss[-2:])
-                    
                     if "Mon" in temp_storeaddresss[-2]:
                         hours = " ".join(temp_storeaddresss[-2:])
                     if "Mon" in temp_storeaddresss[-3]:
                         hours = " ".join(temp_storeaddresss[-3:])
-                    street_address = temp_storeaddresss[0].split(",")[0]
-                    
                     phone_list = re.findall(re.compile(r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(temp_storeaddresss))
                     if phone_list:
                         phone1 = phone_list[-1]
-                    
                     temp_storeaddresss.remove(phone1)
                     new = temp_storeaddresss[:-2]
                     if "Mon" in new[-1]:
                         del new[-1]
-                    state = new[-1].split(",")[-2]
-                    zipcode = new[-1].split(",")[-1].strip().split( )[-1]
-                    city = new[-1].split(",")[-2]
-                    # street_address = new[-1].split(",")[0]
-                    #print("~~~~~~~~~~~~~~~~~~~~~",street_address)
-                    longitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[0]
-                    latitude = inner_parts.find("iframe")['src'].split("!2d")[-1].split("!3d")[-1].split("!2m")[0].split("!3m")[0]
-            if "138-140 East State Street" in street_address:
-                zipcode = "08608"
-            if '333 Naamans Rd' in street_address:
-                city = 'Claymont'    
-
             return_object =[]
-            if "1330 Franklin Mills Circle" in street_address:
-                pass
-            else:
-                return_object.append("https://www.cityblueshop.com")
-                return_object.append(location_name.encode('ascii', 'ignore').decode('ascii').strip() if location_name else "<MISSING>")
-                return_object.append(street_address.encode('ascii', 'ignore').decode('ascii').strip().replace('333 Naamans Rd Claymont','333 Naamans Rd').replace("4601Northfield","4601 Northfield") if street_address else "<MISSING>")
-                return_object.append(city.encode('ascii', 'ignore').decode('ascii').strip() if city else "<MISSING>")
-                return_object.append(state.encode('ascii', 'ignore').decode('ascii').strip().replace("Philadelphia","PA").replace("Upper Darby","PA").replace("East Cleveland","OH").replace("North Randall","OH") if state.replace("Philadelphia","PA").replace("Upper Darby","PA").replace("Upper Darby","PA") else "<MISSING>")
-                return_object.append(zipcode if zipcode else "<MISSING>")
-                return_object.append("US")
-                return_object.append("<MISSING>")
-                return_object.append(str(phone1).encode('ascii', 'ignore').decode('ascii').strip().replace("Ph:","") if phone1 else "<MISSING>")
-                return_object.append("<MISSING>")
-                return_object.append(latitude if latitude else "<MISSING>")
-                return_object.append(longitude if longitude else "<MISSING>")
-                return_object.append(hours.encode('ascii', 'ignore').decode('ascii').strip() if hours else "<MISSING>")
-                return_object.append(page_url)
-                if return_object[2] in addresses:
-                    continue
-                addresses.append(return_object[2])
-                yield return_object
-
+            return_object.append("https://www.cityblueshop.com")
+            return_object.append(location_name.encode('ascii', 'ignore').decode('ascii').strip() if location_name else "<MISSING>")
+            return_object.append(street_address.encode('ascii', 'ignore').decode('ascii').strip().replace('333 Naamans Rd Claymont','333 Naamans Rd').replace("4601Northfield","4601 Northfield") if street_address else "<MISSING>")
+            return_object.append(city.encode('ascii', 'ignore').decode('ascii').strip() if city else "<MISSING>")
+            return_object.append(state.encode('ascii', 'ignore').decode('ascii').strip().replace("Philadelphia","PA").replace("Upper Darby","PA").replace("East Cleveland","OH").replace("North Randall","OH") if state.replace("Philadelphia","PA").replace("Upper Darby","PA").replace("Upper Darby","PA") else "<MISSING>")
+            return_object.append(zipcode if zipcode else "<MISSING>")
+            return_object.append("US")
+            return_object.append("<MISSING>")
+            return_object.append(str(phone1).encode('ascii', 'ignore').decode('ascii').strip().replace("Ph:","") if phone1 else "<MISSING>")
+            return_object.append("<MISSING>")
+            return_object.append(latitude if latitude else "<MISSING>")
+            return_object.append(longitude if longitude else "<MISSING>")
+            return_object.append(hours.encode('ascii', 'ignore').decode('ascii').strip() if hours else "<MISSING>")
+            return_object.append(page_url)
+            if return_object[2] in addresses:
+                continue
+            addresses.append(return_object[2])
+            yield return_object
 
 def scrape():
     data = fetch_data()
