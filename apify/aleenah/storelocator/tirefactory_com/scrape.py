@@ -50,7 +50,7 @@ def fetch_data():
                                 csz=data[3].strip().split(',')
                                 print(csz)
                                 phone=data[4].strip()
-                                tim= data[9].strip().replace('M','Monday').replace('F','Friday')+" "+data[10].strip().replace('SAT','Saturday')+" "+data[11].strip().replace('SUN','Sinday')
+                                tim= data[9].strip().replace('M','Monday').replace('F','Friday')+" "+data[10].strip().replace('SAT','Saturday')+" "+data[11].strip().replace('SUN','Sunday')
                                 city=csz[0].strip()
                                 csz=csz[1].strip().split(' ')
                                 state = csz[0]
