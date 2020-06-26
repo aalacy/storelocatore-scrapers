@@ -7,6 +7,7 @@ import json
 import phonenumbers
 from ssl import SSLError
 import time
+import requests
 
 show_logs = False
 
@@ -57,13 +58,13 @@ def log(*args, **kwargs):
 
 
 def post_data(url, data, headers):
-    return session.post(url, headers=headers, data=data)
+    return requests.post(url, headers=headers, data=data)
 
 
 def get_data(url, headers):
-    global session
+    global requests
     try:
-      response = session.get(url, headers=headers)
+      response = requests.get(url, headers=headers)
       return response
     except SSLError as ssl_err:
       # attempt to handle "sslv3 alert bad record mac"
