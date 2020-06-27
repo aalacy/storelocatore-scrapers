@@ -5,7 +5,7 @@ import re
 import json
 import time
 session = SgRequests()
-
+import requests
 
 def write_output(data):
     with open('data.csv', mode='w', newline="") as output_file:
@@ -21,20 +21,20 @@ def fetch_data():
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
     }
     base_url= "https://www.kohls.com/stores.shtml"
-    r = session.get(base_url,headers=headers)
+    r = requests.get(base_url,headers=headers)
     address =[]
     soup= BeautifulSoup(r.text,"lxml")
     for state_link in soup.find("div",{"class":"tlsmap_list"}).find_all("a",{"class":"regionlist"}):
-        r1 = session.get(state_link['href'],headers=headers)
+        r1 = requests.get(state_link['href'],headers=headers)
         soup1 = BeautifulSoup(r1.text,"lxml")
         for city_link in soup1.find("div",{"class":"tlsmap_list"}).find_all("a",{"class":"citylist"}):
-            r2 = session.get(city_link['href'],headers=headers)
+            r2 = requests.get(city_link['href'],headers=headers)
             soup2 = BeautifulSoup(r2.text,"lxml")
             try:
                 for url in soup2.find("div",{"class":"tlsmap_list"}).find_all("span",{"class":"location-title"}):
                     page_url = url.find("a")['href']
                     store_number = page_url.split("-")[-1].split(".s")[0]
-                    r3 = session.get(page_url ,headers=headers)
+                    r3 = requests.get(page_url ,headers=headers)
                     soup3 = BeautifulSoup(r3.text,"lxml")
                     json_data = json.loads(re.sub(r"\s+", " ",soup3.find("script",{"type":"application/ld+json"}).text.strip()))
                     if type(json_data)==list: 
