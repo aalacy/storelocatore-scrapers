@@ -52,19 +52,20 @@ def fetch_data():
                     hours_list).replace("Hours:", "").strip()
             else:
                 hours_of_operation = "<MISSING>"
+            if "temporarily closed" in hours_of_operation:
+                hours_of_operation = "<MISSING>"
             tag_address = soup_loc.find(lambda tag: (tag.name == "p") and "Address:" in tag.text)
             
             address_list = list(tag_address.stripped_strings)
             if "Address:" in " ".join(address_list):
                 address_list.remove('Address:')
-
+            
             if address_list != []:
-                phone_list = re.findall(re.compile(
-                    r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(address_list[-1]))
-                if phone_list:
-                    phone = phone_list[-1].strip()
-                else:
-                    phone = "<MISSING>"
+                try:
+                    phone = tag_address.find("a")['href'].split(":")[1]
+                except:
+                    phone = address_list[-1].replace("FISH [","").replace("]","")
+                
                 street_address = " ".join(address_list[:-2]).strip()
                 city = address_list[-2].split(',')[0].strip()
                 state = " ".join(
@@ -72,13 +73,9 @@ def fetch_data():
                 zipp = address_list[-2].split(',')[-1].split()[-1].strip()
             else:
                 address_list = tag_address.find_next('p')
+                
                 list_add = list(address_list.stripped_strings)
-                phone_list = re.findall(re.compile(
-                    r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_add[-1]))
-                if phone_list:
-                    phone = phone_list[-1].strip()
-                else:
-                    phone = "<MISSING>"
+                phone = list_add[-1]
                 street_address = " ".join(list_add[:-2]).strip()
                 city = list_add[-2].split(',')[0].strip()
                 state = " ".join(
@@ -106,7 +103,7 @@ def fetch_data():
             store.append(longitude)
             store.append(hours_of_operation)
             store.append(page_url)
-            
+            store = [str(x).replace("–","-").encode('ascii', 'ignore').decode('ascii').strip() if x else "<MISSING>" for x in store]
             return_main_object.append(store)
     return return_main_object
 
