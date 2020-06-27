@@ -27,70 +27,59 @@ def fetch_data():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36'
     }
-    headers1 = {
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36',
-        'referrer': 'https://google.com',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Pragma': 'no-cache',
-    }
     url = "https://fishcitygrill.com/locations/"
     r = session.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "lxml")
     return_main_object = []
-    address = []
     exists = soup.find('div', {'class', 'theme-content'})
     if exists:
         for data in exists.findAll('a'):
             page_url = data.get('href')
             locator_domain = "https://fishcitygrill.com/"
-            location_name = data.text.replace(
-                '– NOW OPEN!', '').replace('&', '').strip()
-            # print(location_name)
-            r_loc = session.get(page_url, headers=headers1)
+            if "COMING SOON!" in data.text:
+                continue
+            location_name = data.text.replace('– NOW OPEN!', '').replace('&', '').strip()
+        
+            r_loc = session.get(page_url)
             soup_loc = BeautifulSoup(r_loc.text, 'lxml')
-            # div = soup_loc.find('div', class_='mk-main-wrapper-holder')
-            # info = div.find('div', class_='vc_column-inner ')
-            tag_hours = soup_loc.find(lambda tag: (
-                tag.name == "strong") and "Hours:" == tag.text.strip())
+
+            tag_hours = soup_loc.find(lambda tag: (tag.name == "p") and "Hours:" in tag.text)
+            
             if tag_hours != None:
-                hours_list = list(tag_hours.parent.parent.stripped_strings)
+                hours_list = list(tag_hours.stripped_strings)
                 hours_list = [el.replace('\xa0', ' ') for el in hours_list]
                 hours_of_operation = " ".join(
                     hours_list).replace("Hours:", "").strip()
             else:
                 hours_of_operation = "<MISSING>"
-            tag_address = soup_loc.find(lambda tag: (
-                tag.name == "strong" or tag.name == "b") and "Address:" == tag.text.strip())
-
-            address_list = list(tag_address.parent.parent.stripped_strings)
+            tag_address = soup_loc.find(lambda tag: (tag.name == "p") and "Address:" in tag.text)
+            
+            address_list = list(tag_address.stripped_strings)
             if "Address:" in " ".join(address_list):
                 address_list.remove('Address:')
+
             if address_list != []:
                 phone_list = re.findall(re.compile(
-                    ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(address_list[-1]))
+                    r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(address_list[-1]))
                 if phone_list:
                     phone = phone_list[-1].strip()
                 else:
                     phone = "<MISSING>"
                 street_address = " ".join(address_list[:-2]).strip()
-                # print(street_address)
                 city = address_list[-2].split(',')[0].strip()
                 state = " ".join(
                     address_list[-2].split(',')[-1].split()[:-1]).strip()
                 zipp = address_list[-2].split(',')[-1].split()[-1].strip()
             else:
-                address_list = tag_address.parent.parent.find_next('p')
+                address_list = tag_address.find_next('p')
                 list_add = list(address_list.stripped_strings)
                 phone_list = re.findall(re.compile(
-                    ".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_add[-1]))
+                    r".?(\(?\d{3}\D{0,3}\d{3}\D{0,3}\d{4}).?"), str(list_add[-1]))
                 if phone_list:
                     phone = phone_list[-1].strip()
                 else:
                     phone = "<MISSING>"
                 street_address = " ".join(list_add[:-2]).strip()
-                # print(street_address)
                 city = list_add[-2].split(',')[0].strip()
                 state = " ".join(
                     list_add[-2].split(',')[-1].split()[:-1]).strip()
@@ -117,8 +106,7 @@ def fetch_data():
             store.append(longitude)
             store.append(hours_of_operation)
             store.append(page_url)
-            # print('data ==' + str(store))
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            
             return_main_object.append(store)
     return return_main_object
 
