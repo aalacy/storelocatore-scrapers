@@ -2,6 +2,8 @@ const Apify = require('apify');
 
 Apify.main(async () => {
 
+  // console.log('env', Apify.getEnv());
+
   const requestQueue = await Apify.openRequestQueue();
 
   await requestQueue.addRequest({
@@ -20,15 +22,18 @@ Apify.main(async () => {
   const launchPuppeteerOptions = {
     headless: true,
     stealth: true,
-    useChrome: true
+    useChrome: true,
+    useApifyProxy: true,
+    groups: ['RESIDENTIAL']
+    // groups: ['BUYPROXIES94952']
   };
 
-  const DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
-  const proxyPassword = process.env.PROXY_PASSWORD;
-  if (proxyPassword) {
-    const proxyUrl = (process.env.PROXY_URL || DEFAULT_PROXY_URL).replace('{}', proxyPassword);
-    launchPuppeteerOptions.proxyUrl = proxyUrl;
-  }
+  // const DEFAULT_PROXY_URL = "http://groups-RESIDENTIAL,country-us:{}@proxy.apify.com:8000/"
+  // const proxyPassword = process.env.PROXY_PASSWORD;
+  // if (proxyPassword) {
+  //   const proxyUrl = (process.env.PROXY_URL || DEFAULT_PROXY_URL).replace('{}', proxyPassword);
+  //   launchPuppeteerOptions.proxyUrl = proxyUrl;
+  // }
 
   const crawler = new Apify.PuppeteerCrawler({
     launchPuppeteerOptions,
