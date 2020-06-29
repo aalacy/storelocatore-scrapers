@@ -11,7 +11,6 @@ import json
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
         # Header
         writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code",
                          "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation","page_url"])
@@ -26,9 +25,9 @@ def fetch_data():
     store_detail=[]
     return_main_object=[]
     coutry="US"
-    urls = ["https://locations.aarons.com/us","https://locations.aarons.com/ca"]
+    urls = ["https://locations.aarons.com/pr","https://locations.aarons.com/us","https://locations.aarons.com/ca"]
     for index,q in enumerate(urls):
-        if index==0:
+        if index==0 or index==1:
             coutry = "US"
         else:
             coutry = "CA"
@@ -123,7 +122,11 @@ def fetch_data():
                         yield tem_var
                         # print("========================================",tem_var)
             else:
+
+                
                 one_link1 = "https://locations.aarons.com/"+i.find("a")['href']
+                if "https://locations.aarons.com/pr" in q:
+                    one_link1="https://locations.aarons.com/pr/rio-grande/centro-comercial-alturas-de-rio-grande"
                 page_url = one_link1
                 r5 = requests.get(one_link1)
                 soup5= BeautifulSoup(r5.text,"lxml")
@@ -133,7 +136,10 @@ def fetch_data():
                 except:
                     streetAddress1=''
                 streetAddress = soup5.find("span",{"class":"c-address-street-1"}).text.strip()+' '+streetAddress1
-                state = soup5.find("abbr",{"class":"c-address-state"}).text
+                try:
+                    state = soup5.find("abbr",{"class":"c-address-state"}).text
+                except:
+                    state="<MISSING>"
                 zip1 = soup5.find("span",{"class":"c-address-postal-code"}).text
                 city = soup5.find("span",{"class":"c-address-city"}).text
                 name = " ".join(list(soup5.find("span",{"class":"LocationName-brand"}).stripped_strings))
@@ -158,6 +164,7 @@ def fetch_data():
                 tem_var.append(page_url)
                 yield tem_var
                 # print("========================================",tem_var)
+         
     
 
 def scrape():
