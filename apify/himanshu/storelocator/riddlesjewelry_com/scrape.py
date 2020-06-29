@@ -49,20 +49,24 @@ def fetch_data():
         tem_var.append("riddlesjewelry")
         tem_var.append(latitude)
         tem_var.append(longitude)
-        tem_var.append("<MISSING>")
         data8 = str(city.replace(" ","_"))+"-"+str(state.replace(" ","_"))+"-"+str(zipcode)
-        data =("https://www.riddlesjewelry.com/riddles-jewelry-store"+"-"+str(data8))
+        data =("https://www.riddlesjewelry.com/riddles-jewelry-store"+"-"+str(data8)).replace('Dickinson-North_Dakota-58601',"Dickinson-North-Dakota-58601").replace("North_Dakota-58401",'NorthDakota-58401').replace("s-jewelry-store-Bloomington-Minnesota-55425",'-s-jewelry-mall-of-america').replace("s-jewelry-store-Dubuque-Iowa-52002","-s-jewelry-dubuque-iowa").replace("riddles-jewelry-store-Pueblo-Colorado-81008","pueblo-co-riddles-jewelry")
         if "2200 N Maple Ave" in street_address:
             data = data.replace("Dakota-57701","dakota-57701-44")
         if "2707 Mt Rushmore Rd" in street_address:
             data = data.replace("Dakota-57701","dakota-57701-45-45")
         if "202 Disk Drive" in street_address:
             data = data.replace("Dakota-57701","dakota-57701-45")
-            # print(data)
-        tem_var.append(data.replace('north_dakota_58601',"north-dakota-58601").replace("North_Dakota-58401",'NorthDakota-58401').replace("s-jewelry-store-Bloomington-Minnesota-55425",'-s-jewelry-mall-of-america').replace("s-jewelry-store-Dubuque-Iowa-52002","-s-jewelry-dubuque-iowa").replace("riddles-jewelry-store-Pueblo-Colorado-81008","pueblo-co-riddles-jewelry"))
-        
+        page_url = data
+        r1 = session.get(page_url,headers = headers)
+        soup1= BeautifulSoup(r1.text,"lxml")
+        try:
+            hours_of_operation = " ".join(list(soup1.find("table",{"class":"table table-hover table-striped"}).stripped_strings))
+        except:
+            hours_of_operation = ("<MISSING>")
+        tem_var.append(hours_of_operation)
+        tem_var.append(page_url)
         store_detail.append(tem_var)
-        # print(tem_var) 
     for i in range(len(store_name)):
         store = list()
         store.append("https://www.riddlesjewelry.com")

@@ -8,6 +8,8 @@ from selenium.webdriver.firefox.options import Options
 import platform
 system = platform.system()
 
+
+
 def get_driver():
     options = Options()
     options.add_argument('--headless')
@@ -18,6 +20,7 @@ def get_driver():
         return webdriver.Firefox(executable_path='./geckodriver', options=options)        
     else:
         return webdriver.Firefox(executable_path='geckodriver.exe', options=options)
+
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -34,41 +37,26 @@ def write_output(data):
 
 def fetch_data():
     driver = get_driver()
-    driver.get(
-        "https://signarama.com/location/")
-    s = requests.Session()
-    cookies_list = driver.get_cookies()
-    cookies_json = {}
-    for cookie in cookies_list:
-        cookies_json[cookie['name']] = cookie['value']
-    cookies_string = str(cookies_json).replace("{", "").replace("}", "").replace("'", "").replace(": ", "=").replace(
-        ",", ";")
-    kp = cookies_string
-    news2 = str(kp).split( )[-2]+" _fbp=fb.1.1592806746301.1420733007; "+kp.split( )[-1]+'; '+kp.split( )[0]+" sucuri_cloudproxy_uuid_305525f9b=44dbc42e1263d648bf758fba9816a9fd; sucuri_cloudproxy_uuid_127ef07d9=447667094fb7d3236b5160ffe6d8878c; sucuri_cloudproxy_uuid_dbb23d1d5=6be6fcc15dbdb40c610ca8cd0e8b1e2c; sar_url=ri-north-kingstown"
-    headers = {
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        'cookie': str(news2),
-        'sec-fetch-dest': 'document',
-        'sec-fetch-mode': 'navigate',
-        'sec-fetch-site': 'same-origin',
-        'sec-fetch-user': '?1',
-        'upgrade-insecure-requests': '1',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Safari/537.36'
-    }
+    url=['https://signarama.com/location/usa/alabama/', 'https://signarama.com/location/usa/arizona/', 'https://signarama.com/location/usa/arkansas/', 'https://signarama.com/location/usa/california/', 'https://signarama.com/location/usa/colorado/', 'https://signarama.com/location/usa/connecticut/', 'https://signarama.com/location/usa/delaware/', 'https://signarama.com/location/usa/florida/', 'https://signarama.com/location/usa/georgia/', 'https://signarama.com/location/usa/hawaii/', 'https://signarama.com/location/usa/illinois/', 'https://signarama.com/location/usa/indiana/', 'https://signarama.com/location/usa/iowa/', 'https://signarama.com/location/usa/kentucky/', 'https://signarama.com/location/usa/louisiana/', 'https://signarama.com/location/usa/maine/', 'https://signarama.com/location/usa/maryland/', 'https://signarama.com/location/usa/massachusetts/', 'https://signarama.com/location/usa/michigan/', 'https://signarama.com/location/usa/minnesota/', 'https://signarama.com/location/usa/missouri/', 'https://signarama.com/location/usa/nevada/', 'https://signarama.com/location/usa/new-hampshire/', 'https://signarama.com/location/usa/new-jersey/', 'https://signarama.com/location/usa/new-mexico/', 'https://signarama.com/location/usa/new-york/', 'https://signarama.com/location/usa/north-carolina/', 'https://signarama.com/location/usa/north-dakota/', 'https://signarama.com/location/usa/ohio/', 'https://signarama.com/location/usa/oklahoma/', 'https://signarama.com/location/usa/pennsylvania/', 'https://signarama.com/location/usa/rhode-island/', 'https://signarama.com/location/usa/south-carolina/', 'https://signarama.com/location/usa/south-dakota/', 'https://signarama.com/location/usa/tennessee/', 'https://signarama.com/location/usa/texas/', 'https://signarama.com/location/usa/utah/', 'https://signarama.com/location/usa/vermont/', 'https://signarama.com/location/usa/virginia/', 'https://signarama.com/location/usa/washington/', 'https://signarama.com/location/usa/washington-dc/', 'https://signarama.com/location/usa/wisconsin/']
     return_main_object = []
     base_url = "https://signarama.com/"
-    soup = bs(requests.get("https://signarama.com/location/locator.php?q=", headers=headers).text,'lxml')
-    for tag in soup.find("div",{"class":"locations"}).find_all("a"):
-        soup1 = bs(requests.get("https://signarama.com"+tag['href'], headers=headers).text,'lxml')
+    list1=[]
+    for tag in url:
+        driver.get(tag)
+        soup1 = bs(driver.page_source,'lxml')
         for d in soup1.find_all("div",{"class":"col-lg-3 p-1 my-3"}):
             phone = list(d.stripped_strings)[-2]
+            # print(phone)
             city = list(d.stripped_strings)[-3].split(',')[0]
             state =list(d.stripped_strings)[-3].split(',')[1].strip().split(" ")[0]
             zipp = list(d.stripped_strings)[-3].split(',')[1].strip().split(" ")[1]
             street_address = " ".join(list(d.find_all("p",{'class':"m-0"})[-1].stripped_strings)[:-1])
             name = d.find_all("a")[0].find("amp-img")['alt'].replace("Signarama ",'')
             page_url ="https://signarama.com"+d.find("a")['href']
-            soup3 = bs(requests.get(page_url, headers=headers).text,'lxml')
+            driver.get(page_url)
+            soup3 = bs(driver.page_source,'lxml')
+            # soup3 = bs(requests.get(page_url).text,'lxml')
+            # print(soup3)
             lat=''
             lng =''
             try:
