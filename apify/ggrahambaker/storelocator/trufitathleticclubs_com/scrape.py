@@ -1,14 +1,9 @@
 import csv
 import os
 from sgselenium import SgSelenium
+import json
+from bs4 import BeautifulSoup
 
-def addy_ext(addy):
-    address = addy.split(',')
-    city = address[0]
-    state_zip = address[1].strip().split(' ')
-    state = state_zip[0]
-    zip_code = state_zip[1]
-    return city, state, zip_code
 
 def write_output(data):
     with open('data.csv', mode='w') as output_file:
@@ -26,44 +21,51 @@ def fetch_data():
 
     driver = SgSelenium().chrome()
     driver.get(locator_domain + ext)
+    driver.implicitly_wait(10)
 
-    element = driver.find_element_by_xpath('//a[@data-target="#tx"]')
-    driver.execute_script("arguments[0].click();", element)
+    base = BeautifulSoup(driver.page_source,"lxml")
+    all_scripts = base.find_all("script")
+    for script in all_scripts:
+        script_str = str(script)
+        if "latitude" in script_str:
+            break
 
-    link_list = []
-    hrefs = driver.find_elements_by_xpath("//a[contains(@href, 'trufitathleticclubs.com/texas/clubs?club=')]")
-    for href in hrefs:
-        link_list.append(href.get_attribute('href'))
+    final_script = script_str[script_str.find("stores:")+8:script_str.rfind("]},")+2]
+    data_json = json.loads(final_script)
 
     all_store_data = []
-    for link in link_list:
-        driver.get(link)
-        driver.implicitly_wait(10)
+    found_gps = []
+    for location in data_json:
+        raw_data = data_json[location]
+        for data in raw_data:
 
-        location_name = driver.find_element_by_css_selector('h1.loc-title').text.replace('TRUFIT', '').strip()
+            location_name = data["ClubName"]
+            street_address = data["Address1"]
+            city = data["City"]
+            state = data["State"]
+            zip_code = data["ZipCode"]
+            phone_number = data["phone"]
 
-        info = driver.find_element_by_css_selector('div.infoWrap').find_element_by_css_selector('div.row')
+            hours = data["LocationHours"].replace("{","").replace('"',"").replace("}","")
 
-        cont = info.find_elements_by_css_selector('div')[0].text.split('\n')
+            country_code = 'US'
+            store_number = data["ClubId"]
+            location_type = '<MISSING>'
+            lat = data["latitude"]
+            longit = data["longitude"]
 
-        street_address = cont[0]
-        city, state, zip_code = addy_ext(cont[1])
-        phone_number = cont[2]
+            lat_long = lat + "_" + longit            
+            if lat_long in found_gps:
+                lat = '<MISSING>'
+                longit = '<MISSING>'
+            else:
+                found_gps.append(lat_long)
 
-        hours = ''
-        for c in cont[4:]:
-            hours += c + ' '
 
-        country_code = 'US'
-        store_number = '<MISSING>'
-        location_type = '<MISSING>'
-        lat = '<MISSING>'
-        longit = '<MISSING>'
-
-        page_url = link
-        store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                      store_number, phone_number, location_type, lat, longit, hours, page_url]
-        all_store_data.append(store_data)
+            page_url = locator_domain + ext
+            store_data = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
+                          store_number, phone_number, location_type, lat, longit, hours, page_url]
+            all_store_data.append(store_data)
 
     driver.quit()
     return all_store_data
