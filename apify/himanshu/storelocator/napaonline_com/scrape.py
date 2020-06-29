@@ -103,7 +103,7 @@ def get(url):
         increment_request_count()
 
     except (RequestException, OSError) as err:
-        # attempt to handle errors such as "cannot connect to proxy, timed out"
+        # attempt to handle 403 forbidden and other errors such as "cannot connect to proxy, timed out, etc"
         log(f'***** error getting {url} on thread {threading.current_thread().ident}')
         log(err)
         log('****** resetting session')
@@ -114,129 +114,103 @@ def get(url):
     return r
 
 
-def crawl_state_url(state_url, city_urls):
+def crawl_state_url(state_url):
+    city_urls = []
     state_soup = bs(get(state_url).text, "lxml")
     for url in state_soup.find("div", {"class": "store-browse-content"}).find_all("a"):
         city_urls.append(url)
+    return city_urls
+
+
+def scrape_one_in_city(url):
+    page_url = get(base_url+url['href']).url
+    # log(page_url)
+    location_soup = bs(get(page_url).text, "lxml")
+
+    data = json.loads(location_soup.find(lambda tag: (
+        tag.name == "script" and '"streetAddress"' in tag.text)).text)
+    location_name = data['name']
+    street_address = data['address']['streetAddress']
+    city = data['address']['addressLocality']
+    state = data['address']['addressRegion']
+    zipp = data['address']['postalCode']
+    country_code = data['address']['addressCountry']
+    store_number = data['@id']
+    try:
+        phone = data['telephone']
+    except:
+        phone = "<MISSING>"
+    location_type = data['@type']
+    latitude = data['geo']['latitude']
+    longitude = data['geo']['longitude']
+    hours = ''
+    for hr in data['openingHoursSpecification']:
+        hours += " " + hr['dayOfWeek'][0] + " " + datetime.strptime(hr['opens'], "%H:%M:%S").strftime(
+            "%I:%M %p") + " - "+datetime.strptime(hr['closes'], "%H:%M:%S").strftime("%I:%M %p")+" "
+
+    store = [base_url, location_name, street_address, city, state, zipp, country_code,
+             store_number, phone, location_type, latitude, longitude, hours.strip(), page_url]
+    store = [str(x).encode('ascii', 'ignore').decode(
+        'ascii').strip() if x else "<MISSING>" for x in store]
+    if store[2] in addresses:
+        return None
+    addresses.append(store[2])
+    return [store]
+
+
+def scrape_multiple_in_city(url):
+    stores = []
+    soup = bs(get(base_url + url['href']).text, "lxml")
+    for link in soup.find_all("div", {"class": "store-browse-store-detail"}):
+
+        page_url = base_url + link.a['href']
+        # log(page_url)
+        location_soup = bs(get(page_url).text, "lxml")
+
+        data = json.loads(location_soup.find(lambda tag: (
+            tag.name == "script" and '"streetAddress"' in tag.text)).text)
+        location_name = data['name']
+        street_address = data['address']['streetAddress']
+        city = data['address']['addressLocality']
+        state = data['address']['addressRegion']
+        zipp = data['address']['postalCode']
+        country_code = data['address']['addressCountry']
+        store_number = data['@id']
+        try:
+            phone = data['telephone']
+        except:
+            phone = "<MISSING>"
+        location_type = data['@type']
+        latitude = data['geo']['latitude']
+        longitude = data['geo']['longitude']
+        hours = ''
+        for hr in data['openingHoursSpecification']:
+            hours += " " + hr['dayOfWeek'][0] + " " + datetime.strptime(hr['opens'], "%H:%M:%S").strftime(
+                "%I:%M %p") + " - " + datetime.strptime(hr['closes'], "%H:%M:%S").strftime("%I:%M %p")+" "
+
+        store = [base_url, location_name, street_address, city, state, zipp, country_code,
+                 store_number, phone, location_type, latitude, longitude, hours.strip(), page_url]
+        store = [str(x).encode('ascii', 'ignore').decode(
+            'ascii').strip() if x else "<MISSING>" for x in store]
+
+        if store[2] in addresses:
+            continue
+        addresses.append(store[2])
+        stores.append(store)
+    return stores
 
 
 def crawl_city_url(url):
-
     if "/en/auto-parts-stores-near-me/nc/wilmington" in url['href']:
-        soup = bs(get(base_url + url['href']).text, "lxml")
-
-        for link in soup.find_all("div", {"class": "store-browse-store-detail"}):
-            page_url = base_url + link.a['href']
-            # log(page_url)
-            location_soup = bs(get(page_url).text, "lxml")
-
-            data = json.loads(location_soup.find(lambda tag: (
-                tag.name == "script" and '"streetAddress"' in tag.text)).text)
-            location_name = data['name']
-            street_address = data['address']['streetAddress']
-            city = data['address']['addressLocality']
-            state = data['address']['addressRegion']
-            zipp = data['address']['postalCode']
-            country_code = data['address']['addressCountry']
-            store_number = data['@id']
-            try:
-                phone = data['telephone']
-            except:
-                phone = "<MISSING>"
-            location_type = data['@type']
-            latitude = data['geo']['latitude']
-            longitude = data['geo']['longitude']
-            hours = ''
-            for hr in data['openingHoursSpecification']:
-                hours += " " + hr['dayOfWeek'][0] + " " + datetime.strptime(hr['opens'], "%H:%M:%S").strftime(
-                    "%I:%M %p") + " - "+datetime.strptime(hr['closes'], "%H:%M:%S").strftime("%I:%M %p")+" "
-
-            store = [base_url, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours.strip(), page_url]
-            store = [str(x).encode('ascii', 'ignore').decode(
-                'ascii').strip() if x else "<MISSING>" for x in store]
-            if store[2] in addresses:
-                return None
-            addresses.append(store[2])
-            return store
+        return scrape_multiple_in_city(url)
     else:
         if "(1)" in url.text:
-
-            page_url = get(base_url+url['href']).url
-            # log(page_url)
-            location_soup = bs(get(page_url).text, "lxml")
-
-            data = json.loads(location_soup.find(lambda tag: (
-                tag.name == "script" and '"streetAddress"' in tag.text)).text)
-            location_name = data['name']
-            street_address = data['address']['streetAddress']
-            city = data['address']['addressLocality']
-            state = data['address']['addressRegion']
-            zipp = data['address']['postalCode']
-            country_code = data['address']['addressCountry']
-            store_number = data['@id']
-            try:
-                phone = data['telephone']
-            except:
-                phone = "<MISSING>"
-            location_type = data['@type']
-            latitude = data['geo']['latitude']
-            longitude = data['geo']['longitude']
-            hours = ''
-            for hr in data['openingHoursSpecification']:
-                hours += " " + hr['dayOfWeek'][0] + " " + datetime.strptime(hr['opens'], "%H:%M:%S").strftime(
-                    "%I:%M %p") + " - "+datetime.strptime(hr['closes'], "%H:%M:%S").strftime("%I:%M %p")+" "
-
-            store = [base_url, location_name, street_address, city, state, zipp, country_code,
-                     store_number, phone, location_type, latitude, longitude, hours.strip(), page_url]
-            store = [str(x).encode('ascii', 'ignore').decode(
-                'ascii').strip() if x else "<MISSING>" for x in store]
-            if store[2] in addresses:
-                return None
-            addresses.append(store[2])
-            return store
-
+            return scrape_one_in_city(url)
         else:
-            soup = bs(get(base_url + url['href']).text, "lxml")
-
-            for link in soup.find_all("div", {"class": "store-browse-store-detail"}):
-                page_url = base_url + link.a['href']
-                # log(page_url)
-                location_soup = bs(get(page_url).text, "lxml")
-
-                data = json.loads(location_soup.find(lambda tag: (
-                    tag.name == "script" and '"streetAddress"' in tag.text)).text)
-                location_name = data['name']
-                street_address = data['address']['streetAddress']
-                city = data['address']['addressLocality']
-                state = data['address']['addressRegion']
-                zipp = data['address']['postalCode']
-                country_code = data['address']['addressCountry']
-                store_number = data['@id']
-                try:
-                    phone = data['telephone']
-                except:
-                    phone = "<MISSING>"
-                location_type = data['@type']
-                latitude = data['geo']['latitude']
-                longitude = data['geo']['longitude']
-                hours = ''
-                for hr in data['openingHoursSpecification']:
-                    hours += " " + hr['dayOfWeek'][0] + " " + datetime.strptime(hr['opens'], "%H:%M:%S").strftime(
-                        "%I:%M %p") + " - "+datetime.strptime(hr['closes'], "%H:%M:%S").strftime("%I:%M %p")+" "
-
-                store = [base_url, location_name, street_address, city, state, zipp, country_code,
-                         store_number, phone, location_type, latitude, longitude, hours.strip(), page_url]
-                store = [str(x).encode('ascii', 'ignore').decode(
-                    'ascii').strip() if x else "<MISSING>" for x in store]
-                if store[2] in addresses:
-                    return None
-                addresses.append(store[2])
-                return store
+            return scrape_multiple_in_city(url)
 
 
 def fetch_data():
-
     state_urls = []
     city_urls = []
     soup = bs(
@@ -246,21 +220,24 @@ def fetch_data():
         state_urls.append(base_url+link['href'])
 
     with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(crawl_state_url, url, city_urls)
-                   for url in state_urls]
+        futures = [executor.submit(crawl_state_url, url) for url in state_urls]
         for result in as_completed(futures):
-            location = result.result()
-            if location:
-                yield location
+            city_urls.extend(result.result())
 
     log(f'found {len(city_urls)} city urls')
+
+    # for testing with only one city ...
+    # city_urls = [{
+    #     'href': '/en/auto-parts-stores-near-me/nc/wilmington'
+    # }]
 
     with ThreadPoolExecutor(max_workers=8) as executor:
         futures = [executor.submit(crawl_city_url, url) for url in city_urls]
         for result in as_completed(futures):
-            location = result.result()
-            if location:
-                yield location
+            locations = result.result()
+            if locations:
+                for store in locations:
+                    yield store
 
 
 def scrape():
