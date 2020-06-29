@@ -40,7 +40,7 @@ def fetch_data():
         store.append(location_type if location_type else "<MISSING>")
         store.append(i['latitude'] if i['latitude'] else "<MISSING>")
         store.append(i['longitude'] if i['longitude'] else "<MISSING>")
-        store.append(str(i['custom_fields']).replace("[{'id': 873, 'name': 'Hours', 'value': '","").replace('}]',"").replace("}","").replace("{","").replace("\\n","").replace("PM","PM ").replace("AMSun","AM Sun").replace(" 'id': 1052, 'name': ","").replace("', 'value': "," - ").replace("AMSat","AM Sat").replace('Wash',"Wash ").replace('Car Care',"Car Care "))
+        store.append(str(i['custom_fields']).replace("[{'id': 873, 'name': 'Hours', 'value': '","").replace('}]',"").replace("}","").replace("{","").replace("\\n","").replace("PM","PM ").replace("AMSun","AM Sun").replace(" 'id': 1052, 'name': ","").replace("', 'value': "," - ").replace("AMSat","AM Sat").replace('Wash',"Wash ").replace('Car Care',"Car Care ").replace("'",""))
         store.append("https://tootntotum.com/locations")
         if store[2] in address :
             continue
