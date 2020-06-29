@@ -3,6 +3,7 @@ from sgrequests import SgRequests
 from bs4 import BeautifulSoup
 import re
 import json
+import time
 
 session = SgRequests()
 
@@ -11,7 +12,7 @@ def write_output(data):
         writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         # Header
-        writer.writerow(["locator_domain", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
+        writer.writerow(["locator_domain", "page_url", "location_name", "street_address", "city", "state", "zip", "country_code", "store_number", "phone", "location_type", "latitude", "longitude", "hours_of_operation"])
         # Body
         for row in data:
             writer.writerow(row)
@@ -29,69 +30,60 @@ def addy_extractor(src):
 
 def fetch_data():
 
-    locator_domain = 'https://www.procuts.com/'
+    base_link = 'http://www.procuts.com/salonlocator/default.asp'
+    locator_domain = 'procuts.com'
 
-    ext = 'salonlocator/default.asp?state=all&city=BROWNSVILLE'
-    ext2 = 'salonlocator/default.asp?state=all&city=CORPUS CHRISTI'
+    page = session.get(base_link)
+    time.sleep(2)
+    assert page.status_code == 200
 
-    to_scrape1 = locator_domain + ext
-    page1 = session.get(to_scrape1)
-    assert page1.status_code == 200
+    all_store_data = []
+    soup = BeautifulSoup(page.content, 'html.parser')
+    results = soup.find(id="result_CityList").find_all("li")
+    for result in results:
+        link = "http://www.procuts.com/salonlocator/" + result['onclick'].split('location=')[-1].replace("'","")
 
-    soup = BeautifulSoup(page1.content, 'html.parser')
-    pattern = re.compile('locations = ({"locations":.*);')
-    script = soup.find("script", text=pattern)
-    poi = json.loads(re.search(pattern, script.text).group(1))["locations"][0]
+        page = session.get(link)
+        time.sleep(2)
+        assert page.status_code == 200
+        soup = BeautifulSoup(page.content, 'html.parser')
 
-    lat = poi['latitude']
-    longit = poi['longitude']
+        pattern = re.compile('locations = ({"locations":.*);')
+        script = soup.find("script", text=pattern)
+        poi = json.loads(re.search(pattern, script.text).group(1))["locations"][0]
 
-    store = soup.find('div', {'class': 'result_LocationContainer'})
+        lat = poi['latitude']
+        longit = poi['longitude']
 
-    location_name = store.find('div', {'class': 'result_MallName'}).text
+        store = soup.find('div', {'class': 'result_LocationContainer'})
 
-    street_address = store.find('div', {'class': 'result_Street'}).text
-    city, state, zip_code = addy_extractor(store.find('div', {'class': 'result_Location'}).text)
-    phone_number = store.find('div', {'class': 'result_Phone'}).text
+        location_name = "PROCUTS - " + store.find('div', {'class': 'result_MallName'}).text
 
-    country_code = 'US'
-    store_number = '<MISSING>'
-    location_type = '<MISSING>'
-    hours = '<MISSING>'
+        street_address = store.find('div', {'class': 'result_Street'}).text
+        city, state, zip_code = addy_extractor(store.find('div', {'class': 'result_Location'}).text)
+        phone_number = store.find('div', {'class': 'result_Phone'}).text
 
-    sunrise_plaza = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                     store_number, phone_number, location_type, lat, longit, hours ]
+        country_code = 'US'
+        store_number = poi["salonid"]
+        location_type = '<MISSING>'
 
-    to_scrape2 = locator_domain + ext2
-    page2 = session.get(to_scrape2)
-    assert page2.status_code == 200
+        final_link = "http://www.procuts.com/salondetail/default.asp?salonid=" + store_number
 
-    soup = BeautifulSoup(page2.content, 'html.parser')
+        final_page = session.get(final_link)
+        time.sleep(2)
+        assert final_page.status_code == 200
+        final_soup = BeautifulSoup(final_page.content, 'html.parser')
 
-    soup = BeautifulSoup(page1.content, 'html.parser')
-    pattern = re.compile('locations = ({"locations":.*);')
-    script = soup.find("script", text=pattern)
-    poi = json.loads(re.search(pattern, script.text).group(1))["locations"][0]
-    lat = poi['latitude']
-    longit = poi['longitude']
+        raw_hours = final_soup.find(id="detailC").text
+        hours = raw_hours.replace("\n"," ").replace("PM","PM ").strip()
+        hours_of_operation = (re.sub(' +', ' ', hours)).strip()
 
-    store = soup.find('div', {'class': 'result_LocationContainer'})
+        if not hours_of_operation:
+            hours_of_operation = "<MISSING>"
 
-    location_name = store.find('div', {'class': 'result_MallName'}).text
 
-    street_address = store.find('div', {'class': 'result_Street'}).text
-    city, state, zip_code = addy_extractor(store.find('div', {'class': 'result_Location'}).text)
-    phone_number = store.find('div', {'class': 'result_Phone'}).text
-
-    country_code = 'US'
-    store_number = '<MISSING>'
-    location_type = '<MISSING>'
-    hours = '<MISSING>'
-
-    cim_center = [locator_domain, location_name, street_address, city, state, zip_code, country_code,
-                     store_number, phone_number, location_type, lat, longit, hours ]
-
-    all_store_data = [sunrise_plaza, cim_center]
+        all_store_data.append([locator_domain, final_link, location_name, street_address, city, state, zip_code, country_code,
+                         store_number, phone_number, location_type, lat, longit, hours_of_operation])
     
     return all_store_data
 
