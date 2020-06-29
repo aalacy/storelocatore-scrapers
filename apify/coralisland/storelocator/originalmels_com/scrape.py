@@ -105,7 +105,7 @@ def fetch_data():
             store_hours = eliminate_space(store[2].xpath('.//text()'))
             hours = ''
             for hour in store_hours:
-                if hour.lower().find('am')> -1 or hour.lower().find('pm') > -1:
+                if hour.lower().find('am')> -1 or hour.lower().find('pm') > -1 or hour.lower().find('24/7')> -1:
                     hours = hours + ' ' + hour
            
             hours = hours.lstrip().replace('am',' am').replace('pm',' pm')
