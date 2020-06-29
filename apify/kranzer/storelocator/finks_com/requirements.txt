@@ -1,6 +1,4 @@
-bs4==0.0.1
-requests==2.11.1
-w3lib
-sgvalidator==0.0.19
-lxml
-usaddress
+lxml==4.3.3
+sgrequests
+selenium==3.141.0
+beautifulsoup4==4.7.1
